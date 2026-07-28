@@ -12,14 +12,23 @@ describe('Virtual Buttons', () => {
     expect(() => buildVirtualButtonUrl('', 1)).toThrow(/access code/i);
   });
 
-  it('triggers via GET', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: true });
+  it('triggers via GET using no-cors mode', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ type: 'opaque' });
+
     await expect(triggerVirtualButton({ accessCode: 'abc', buttonId: 1, fetchImpl })).resolves.toBe(true);
+
     expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(fetchImpl).toHaveBeenCalledWith(
+      expect.stringContaining('virtualButton=1'),
+      expect.objectContaining({ method: 'GET', mode: 'no-cors', cache: 'no-store' })
+    );
   });
 
-  it('throws on failed response', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 500 });
-    await expect(triggerVirtualButton({ accessCode: 'abc', buttonId: 1, fetchImpl })).rejects.toThrow('500');
+  it('propagates a network failure', async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new TypeError('Network request failed'));
+
+    await expect(triggerVirtualButton({ accessCode: 'abc', buttonId: 1, fetchImpl })).rejects.toThrow(
+      'Network request failed'
+    );
   });
 });
