@@ -63,7 +63,13 @@ const shellContext = {
 initialiseHeader(elements);
 watchNetwork(elements.network);
 initialiseBattery(elements.battery);
-initialiseWeather(elements.weather, CONFIG.weather);
+initialiseWeather(elements.weather, CONFIG.weather, {
+  headerElements: {
+    icon: document.querySelector('#shell-weather-icon'),
+    temp: document.querySelector('#shell-weather-temp'),
+    text: document.querySelector('#shell-weather-text')
+  }
+});
 if (!isHouseSitterExperience()) {
   startMyDayCalendarService();
 }
@@ -81,6 +87,7 @@ createAppShell({
   shellTagline: document.querySelector('#shell-tagline'),
   homeButton: document.querySelector('#shell-home-button'),
   statusStrip: document.querySelector('#shell-status'),
+  shellHeaderWeather: document.querySelector('#shell-header-weather'),
   shellFooter: document.querySelector('#shell-footer'),
   bottomNav: document.querySelector('#shell-bottom-nav'),
   shellContext

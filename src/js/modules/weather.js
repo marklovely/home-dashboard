@@ -50,8 +50,15 @@ export function applyWeatherToStatusStrip(elements, weatherState) {
  * @param {{ fetchImpl?: typeof fetch }} [dependencies]
  */
 export function initialiseWeather(elements, _config, dependencies = {}) {
+  /** @type {Array<{ icon?: HTMLElement | null, temp: HTMLElement, text: HTMLElement }>} */
+  const targets = [elements];
+  if (dependencies.headerElements) {
+    targets.push(dependencies.headerElements);
+  }
   subscribeWeatherState((weatherState) => {
-    applyWeatherToStatusStrip(elements, weatherState);
+    for (const target of targets) {
+      applyWeatherToStatusStrip(target, weatherState);
+    }
   });
   startWeatherAutoRefresh(dependencies.fetchImpl);
 }
