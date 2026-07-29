@@ -86,8 +86,28 @@ button { font: inherit; }
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+}
+
+/* Weather: scroll the page (mouse wheel on Mac) instead of a nested panel */
+body.is-weather-route {
+  overflow-y: auto;
+  height: auto;
+  min-height: 100dvh;
+}
+body.is-weather-route .hub-shell {
+  min-height: 100dvh;
+  height: auto;
+  grid-template-rows: auto auto auto;
+}
+body.is-weather-route .app-viewport {
+  overflow: visible;
+  display: block;
+  min-height: auto;
+}
+body.is-weather-route .app-viewport > .weather-app--premium {
+  overflow: visible;
+  max-height: none;
+  min-height: auto;
 }
 .app-viewport.is-active {
   animation: app-view-enter 240ms ease;
@@ -1080,26 +1100,28 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  overflow: hidden;
+  overflow: visible;
+  padding-right: 2px;
 }
 .weather-daily-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 3.5rem 2.5rem 2.25rem minmax(48px, 1fr) 2.75rem;
   align-items: center;
   gap: 8px;
-  padding: 12px 14px;
+  padding: 12px 14px 12px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+  box-sizing: border-box;
 }
 .weather-daily-row:last-child {
   border-bottom: none;
 }
 .weather-daily-label {
-  flex: 0 0 3.5rem;
   font-weight: 700;
   font-size: 1.02rem;
   white-space: nowrap;
 }
 .weather-daily-icon-stack {
-  flex: 0 0 2.5rem;
   display: grid;
   justify-items: center;
   gap: 2px;
@@ -1116,7 +1138,6 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   letter-spacing: -0.02em;
 }
 .weather-daily-low {
-  flex: 0 0 2.25rem;
   text-align: right;
   font-size: 1rem;
   font-weight: 600;
@@ -1124,19 +1145,20 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   font-variant-numeric: tabular-nums;
 }
 .weather-daily-bar {
-  flex: 1 1 auto;
-  min-width: 48px;
   position: relative;
   height: 6px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
+  min-width: 0;
+  width: 100%;
 }
 .weather-daily-high {
-  flex: 0 0 2.75rem;
   text-align: right;
   font-size: 1.05rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  justify-self: end;
+  padding-left: 4px;
 }
 .weather-daily-bar-fill {
   position: absolute;
