@@ -1,4 +1,5 @@
 import { ensureApiBaseUrl, getApiBaseUrl } from '../api/apiBase.js';
+import { withApiCredentials } from '../api/accessFetch.js';
 import { setOwnerAccessToken } from './ownerAccessToken.js';
 
 /** @typedef {'success' | 'invalid' | 'rate_limited' | 'unavailable'} OwnerAuthResult */
@@ -26,12 +27,14 @@ export async function authenticateOwnerPin(pin, fetchImpl = fetch) {
   if (!base) return 'unavailable';
 
   try {
-    const response = await fetchImpl(`${base}/api/auth/owner`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin }),
-      cache: 'no-store'
-    });
+    const response = await fetchImpl(
+      `${base}/api/auth/owner`,
+      withApiCredentials({
+        method: 'POST',
+        body: JSON.stringify({ pin }),
+        cache: 'no-store'
+      })
+    );
     if (response.status === 200) {
       try {
         const body = await response.json();

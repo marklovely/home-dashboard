@@ -61,7 +61,10 @@ describe('weatherService', () => {
     });
     const state = await refreshWeather(fetchImpl);
     expect(state.status).toBe('ready');
-    expect(fetchImpl).toHaveBeenCalledWith('https://api.example.test/api/weather', { cache: 'no-store' });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://api.example.test/api/weather',
+      expect.objectContaining({ cache: 'no-store', credentials: 'include' })
+    );
     expect(String(fetchImpl.mock.calls[0][0])).not.toContain('open-meteo');
   });
 

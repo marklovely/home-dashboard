@@ -9,12 +9,19 @@ import {
 import { setWeatherCache } from '../src/weather/weatherCache.js';
 import { SAMPLE_AIR_QUALITY, SAMPLE_OPEN_METEO_FORECAST } from './fixtures/openMeteoSample.js';
 import { handleRequest } from '../src/index.js';
+import { createAccessTestEnv, signTestAccessJwt, withAccessJwt } from './accessTestHelpers.js';
 
 const env = {
   HOME_LATITUDE: '50.88',
   HOME_LONGITUDE: '-1.03',
   ALLOWED_ORIGINS: 'http://localhost:5173'
 };
+
+const accessEnv = createAccessTestEnv({
+  HOME_LATITUDE: '50.88',
+  HOME_LONGITUDE: '-1.03',
+  ALLOWED_ORIGINS: 'http://localhost:5173'
+});
 
 beforeEach(() => {
   resetWeatherCacheForTests();
@@ -140,9 +147,10 @@ describe('GET /api/weather', () => {
       }
       return new Response(JSON.stringify(SAMPLE_OPEN_METEO_FORECAST), { status: 200 });
     });
+    const token = await signTestAccessJwt('owner@example.com', accessEnv);
     const response = await handleRequest(
-      new Request('https://worker.test/api/weather', { method: 'GET' }),
-      env,
+      new Request('https://worker.test/api/weather', withAccessJwt(token, { method: 'GET' })),
+      accessEnv,
       fetchImpl
     );
     expect(response.status).toBe(200);
