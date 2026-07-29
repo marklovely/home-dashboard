@@ -1,5 +1,5 @@
 import { defineApp } from '../../components/App/defineApp.js';
-import { isHouseSitterMode, getModeConfig } from '../../modes/modeConfig.js';
+import { isHouseSitterMode } from '../../modes/modeConfig.js';
 import { getWidgetById } from '../../services/widgetRegistry.js';
 import { mountSitterControlsGrid } from '../../widgets/Controls/sitterControlsGrid.js';
 
@@ -48,10 +48,10 @@ export function mountControlsApp(viewport, context) {
  */
 function controlsSummary(context) {
   if (isHouseSitterMode()) {
-    const count = getModeConfig().controls?.allowedButtonIds.length ?? 0;
+    const count = context.config.buttons?.length ?? 0;
     return {
-      title: `${count} home controls`,
-      subtitle: 'Lights and bedtime'
+      title: `${count} home control${count === 1 ? '' : 's'}`,
+      subtitle: 'Lighting, heating, and scenes'
     };
   }
   const count = context.config.buttons?.length ?? 0;

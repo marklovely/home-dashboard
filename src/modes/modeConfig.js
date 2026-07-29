@@ -1,4 +1,4 @@
-import { AppMode, getAppMode, isHouseSitterMode } from './appMode.js';
+import { isHouseSitterExperience } from '../auth/userMode.js';
 
 /** @typedef {{ id: string, route: string, label: string, iconId: string }} ShellNavItem */
 
@@ -19,7 +19,7 @@ import { AppMode, getAppMode, isHouseSitterMode } from './appMode.js';
  * @property {boolean} showControlsFooter
  * @property {boolean} showHomeWelcomeGreeting
  * @property {boolean} showHelpCard
- * @property {{ allowedButtonIds: number[], labels: Record<number, { title: string, subtitle: string }> } | null} controls
+ * @property {{ labels: Record<number, { title: string, subtitle: string }> } | null} controls
  * @property {Record<string, string>} appTitleOverrides
  */
 
@@ -60,7 +60,6 @@ const houseSitterConfig = {
   showHomeWelcomeGreeting: false,
   showHelpCard: true,
   controls: {
-    allowedButtonIds: [1, 2, 9],
     labels: {
       1: { title: 'Downstairs Lights', subtitle: 'Turn on the main lights' },
       2: { title: 'Bedtime', subtitle: 'Settle the house for the night' },
@@ -72,17 +71,11 @@ const houseSitterConfig = {
   }
 };
 
-/** @type {Record<AppModeId, ModeConfig>} */
-export const modeConfig = {
-  [AppMode.Owner]: ownerConfig,
-  [AppMode.HouseSitter]: houseSitterConfig
-};
-
 export function getModeConfig() {
-  return modeConfig[getAppMode()];
+  return isHouseSitterExperience() ? houseSitterConfig : ownerConfig;
 }
 
-export { isHouseSitterMode };
+export { isHouseSitterExperience as isHouseSitterMode };
 
 /**
  * @param {import('../types/app.js').App} app

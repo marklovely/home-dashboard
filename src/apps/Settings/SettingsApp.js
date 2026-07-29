@@ -1,4 +1,7 @@
 import { defineApp } from '../../components/App/defineApp.js';
+import { isHomeDeployment } from '../../auth/deploymentMode.js';
+import { canReturnToHouseSitterMode } from '../../auth/ownerSession.js';
+import { setUserMode, UserMode } from '../../auth/userMode.js';
 import { profiles } from '../../profiles/index.js';
 import { getActiveProfileId, setActiveProfileId } from '../../services/profileService.js';
 import { getActiveTheme, setActiveTheme } from '../../services/themeService.js';
@@ -12,11 +15,19 @@ function mountSettingsApp(viewport, context, onProfileChange) {
   page.className = 'app-page settings-app';
   page.setAttribute('aria-label', 'Settings');
 
-  page.append(
+  const groups = [
     createSettingsGroup('Profile', createProfileField(onProfileChange)),
     createSettingsGroup('Theme', createThemeField()),
     createSettingsGroup('About', createAboutField())
-  );
+  ];
+
+  if (canReturnToHouseSitterMode()) {
+    groups.unshift(
+      createSettingsGroup('Guest mode', createReturnToHouseSitterField(context, onProfileChange))
+    );
+  }
+
+  page.append(...groups);
 
   viewport.replaceChildren(page);
 }
@@ -33,6 +44,25 @@ function createSettingsGroup(legend, body) {
   heading.textContent = legend;
   fieldset.append(heading, body);
   return fieldset;
+}
+
+/** @param {import('../../types/app.js').ShellContext} context @param {() => void} onProfileChange */
+function createReturnToHouseSitterField(context, onProfileChange) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'settings-action-button';
+  button.textContent = 'Return to House Sitter Mode';
+  button.addEventListener('click', () => {
+    setUserMode(UserMode.HouseSitter);
+    setActiveProfileId('housesitter');
+    context.navigate('home');
+    onProfileChange();
+    context.refreshShell?.();
+  });
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options';
+  wrap.append(button);
+  return wrap;
 }
 
 /** @param {() => void} onProfileChange */
@@ -52,6 +82,9 @@ function createProfileField(onProfileChange) {
     input.addEventListener('change', () => {
       if (!input.checked) return;
       setActiveProfileId(/** @type {import('../../types/app.js').ProfileId} */ (profile.id));
+      if (isHomeDeployment()) {
+        setUserMode(profile.id === 'housesitter' ? UserMode.HouseSitter : UserMode.Owner);
+      }
       onProfileChange();
     });
     const text = document.createElement('span');

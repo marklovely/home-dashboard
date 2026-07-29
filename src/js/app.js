@@ -10,13 +10,14 @@ import { initTheme } from '../services/themeService.js';
 import '../apps/index.js';
 import '../widgets/index.js';
 import { preloadPrivateConfig } from '../services/privateConfigService.js';
-import { isHouseSitterMode } from '../modes/modeConfig.js';
+import { isHouseSitterExperience } from '../auth/userMode.js';
+import { attachOwnerAccessGesture } from '../auth/ownerAccessGesture.js';
 
 initTheme();
 void preloadPrivateConfig();
 
 const networkHint = document.querySelector('#shell-status .status-card:last-child span:last-child');
-if (networkHint && isHouseSitterMode()) {
+if (networkHint && isHouseSitterExperience()) {
   networkHint.textContent = 'Connected';
 }
 
@@ -79,6 +80,27 @@ createAppShell({
   bottomNav: document.querySelector('#shell-bottom-nav'),
   shellContext
 });
+
+attachOwnerAccessGesture({
+  logoElements: [
+    document.querySelector('#shell-eyebrow'),
+    document.querySelector('#shell-chrome-title'),
+    document.querySelector('.shell-chrome-title-block')
+  ],
+  holdFeedbackElement: document.querySelector('.shell-chrome-title-block'),
+  dialogHost: document.querySelector('#owner-access-host'),
+  onOwnerUnlocked: () => shellContext.refreshShell?.()
+});
+
+if (import.meta.env.DEV) {
+  import('../auth/deploymentMode.js').then(({ isHomeDeployment }) => {
+    if (isHomeDeployment()) {
+      console.warn(
+        '[Lovely Home] Owner access (home deployment only): click and hold the “LOVELY HOME” title (top left) for 5 seconds, then enter your PIN. Requires VITE_DEPLOYMENT_MODE=home and VITE_OWNER_PIN in .env.local.'
+      );
+    }
+  });
+}
 
 subscribeWeatherSnapshot(() => {
   if (getCurrentRoute() === HOME_ROUTE) {

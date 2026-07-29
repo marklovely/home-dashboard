@@ -6,6 +6,7 @@ import { applyShellBranding } from './shellBranding.js';
 import { mountShellBottomNav, syncShellBottomNav } from './bottomNav.js';
 import { getCurrentRoute, HOME_ROUTE, initRouter, navigate, subscribeToRoute } from './router.js';
 import { subscribeToProfileChange } from '../services/profileService.js';
+import { subscribeToUserMode } from '../auth/userMode.js';
 
 /**
  * @param {Object} options
@@ -54,7 +55,8 @@ export function createAppShell({
       shellTagline.hidden = !(isHome && branding.homeTagline);
       if (!shellTagline.hidden) shellTagline.textContent = branding.homeTagline ?? '';
     }
-    homeButton.hidden = Boolean(mode.bottomNav?.length);
+    homeButton.hidden = Boolean(mode.bottomNav?.length && isHome);
+    homeButton.textContent = isHome ? 'Home' : '← Home';
     homeButton.setAttribute('aria-current', isHome ? 'page' : 'false');
 
     mountShellBottomNav(bottomNav, (target) => shellContext.navigate(target));
@@ -89,6 +91,10 @@ export function createAppShell({
 
   subscribeToRoute(renderRoute);
   subscribeToProfileChange(() => {
+    renderRoute(getCurrentRoute());
+  });
+  subscribeToUserMode(() => {
+    applyShellBranding({ shellEyebrow, shellTagline });
     renderRoute(getCurrentRoute());
   });
   initRouter(getAppById);
