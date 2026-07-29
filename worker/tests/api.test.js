@@ -87,6 +87,12 @@ describe('cors', () => {
     expect(resolveCorsOrigin('https://evil.example', env.ALLOWED_ORIGINS)).toBeNull();
   });
 
+  it('allows Cloudflare Pages preview hosts via wildcard', () => {
+    expect(
+      resolveCorsOrigin('https://feature-abc.home-dashboard.pages.dev', 'https://*.pages.dev')
+    ).toBe('https://feature-abc.home-dashboard.pages.dev');
+  });
+
   it('blocks disallowed browser origin on private-config', async () => {
     const response = await handleRequest(
       new Request('https://worker.test/api/private-config', {
