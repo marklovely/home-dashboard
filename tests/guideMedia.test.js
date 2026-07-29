@@ -74,7 +74,7 @@ describe('hero image rendering', () => {
     const topic = getGuideTopic('hot-and-cold-water-machine');
     expect(topic).toBeTruthy();
     const context = {
-      config: { accessCode: 'test', buttons: [] },
+      config: { buttons: [] },
       toast: document.createElement('div'),
       lastCommand: document.createElement('div')
     };

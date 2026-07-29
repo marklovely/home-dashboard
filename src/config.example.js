@@ -1,5 +1,4 @@
 export const CONFIG = {
-  accessCode: 'PASTE_YOUR_VIRTUAL_BUTTONS_ACCESS_CODE_HERE',
   weather: {
     latitude: null,
     longitude: null,

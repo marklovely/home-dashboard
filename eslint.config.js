@@ -17,7 +17,18 @@ export default [
     }
   },
   {
-    files: ['tests/**/*.js', 'vitest.config.js'],
+    files: ['worker/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.node }
+    },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }]
+    }
+  },
+  {
+    files: ['tests/**/*.js', 'vitest.config.js', 'scripts/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
