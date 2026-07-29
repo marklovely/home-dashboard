@@ -1,10 +1,10 @@
-import IcalExpander from 'ical-expander';
 import {
   HOME_TIMEZONE,
   formatOffsetIso,
   localDateKey,
   rangeBounds
 } from './timezone.js';
+import { getIcalExpanderConstructor } from './icalExpanderLoader.js';
 
 /**
  * @param {string} uid
@@ -102,24 +102,50 @@ function mapOccurrence(occurrence, asOf, rangeFrom, rangeTo) {
   };
 }
 
+function mapSingleEventSafe(event, asOf, rangeFrom, rangeTo) {
+  try {
+    return mapSingleEvent(event, asOf, rangeFrom, rangeTo);
+  } catch {
+    return null;
+  }
+}
+
+function mapOccurrenceSafe(occurrence, asOf, rangeFrom, rangeTo) {
+  try {
+    return mapOccurrence(occurrence, asOf, rangeFrom, rangeTo);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * @param {string} icsText
  * @param {Date} [asOf]
  */
 export function parseAndExpandIcs(icsText, asOf = new Date()) {
   const { startUtc, endUtc, from, to } = rangeBounds(asOf);
+  const IcalExpander = getIcalExpanderConstructor();
   const expander = new IcalExpander({ ics: icsText, maxIterations: 5000, skipInvalidDates: true });
-  const { events, occurrences } = expander.between(startUtc, endUtc);
+
+  let events = [];
+  let occurrences = [];
+  try {
+    ({ events, occurrences } = expander.between(startUtc, endUtc));
+  } catch {
+    const error = new Error('CALENDAR_PARSE');
+    error.code = 'CALENDAR_PARSE';
+    throw error;
+  }
 
   /** @type {import('./calendarTypes.js').NormalizedCalendarEvent[]} */
   const normalized = [];
 
   for (const event of events) {
-    const mapped = mapSingleEvent(event, asOf, from, to);
+    const mapped = mapSingleEventSafe(event, asOf, from, to);
     if (mapped) normalized.push(mapped);
   }
   for (const occurrence of occurrences) {
-    const mapped = mapOccurrence(occurrence, asOf, from, to);
+    const mapped = mapOccurrenceSafe(occurrence, asOf, from, to);
     if (mapped) normalized.push(mapped);
   }
 

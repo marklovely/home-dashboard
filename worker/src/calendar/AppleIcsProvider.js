@@ -26,6 +26,27 @@ export class AppleIcsProvider {
    * @param {Date} [asOf]
    */
   async fetchCalendar(asOf = new Date()) {
+    try {
+      return await this.fetchCalendarInner(asOf);
+    } catch (error) {
+      if (typeof error?.code === 'string') throw error;
+      console.error(
+        JSON.stringify({
+          event: 'calendar_unhandled',
+          name: error?.name,
+          detail: String(error?.message ?? '').slice(0, 160)
+        })
+      );
+      const wrapped = new Error('CALENDAR_RUNTIME');
+      wrapped.code = 'CALENDAR_RUNTIME';
+      throw wrapped;
+    }
+  }
+
+  /**
+   * @param {Date} [asOf]
+   */
+  async fetchCalendarInner(asOf = new Date()) {
     const url = this.getFeedUrl();
     if (!url) {
       const error = new Error('CALENDAR_NOT_CONFIGURED');
