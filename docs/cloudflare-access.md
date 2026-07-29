@@ -20,7 +20,8 @@ Lovely Home role
 
 Step-by-step checklist (Phase 1 before DNS, Phase 2 for `dashboard.lovely-home.co.uk`), AUD/secret commands, and smoke-test curls:
 
-**[cloudflare-access-runbook.md](./cloudflare-access-runbook.md)**
+- **[cloudflare-access-setup-guide.md](./cloudflare-access-setup-guide.md)** — **start here** (click-by-click Zero Trust, Pages, Wrangler)
+- [cloudflare-access-runbook.md](./cloudflare-access-runbook.md) — checklist, smoke tests, rollback
 
 ## Manual Cloudflare configuration
 

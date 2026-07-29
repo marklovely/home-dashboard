@@ -106,8 +106,9 @@ The browser sends only the code (for example `POST /api/button/VB01`).
 
 Production API routes require a valid **Cloudflare Access** JWT and server-side roles. See:
 
+- [cloudflare-access-setup-guide.md](./cloudflare-access-setup-guide.md) — **step-by-step Cloudflare UI instructions**
 - [cloudflare-access.md](./cloudflare-access.md) — model and API matrix  
-- [cloudflare-access-runbook.md](./cloudflare-access-runbook.md) — **deployment checklist** (start with Pages + Worker hostnames while `dashboard.lovely-home.co.uk` DNS is pending)
+- [cloudflare-access-runbook.md](./cloudflare-access-runbook.md) — deployment checklist and smoke tests
 
 After deploy, set `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, and `OWNER_EMAILS` on the Worker before the dashboard can use weather, controls, or private config.
 
