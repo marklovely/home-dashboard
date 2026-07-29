@@ -252,7 +252,7 @@ GET /api/weather (Cloudflare Worker)
         ├── 15-minute in-memory cache (`worker/src/weather/weatherCache.js`)
         ├── Provider abstraction (`WeatherProvider` / `OpenMeteoProvider`)
         ├── Mapping to stable JSON (`mapOpenMeteo.js`)
-        └── Rule-based advice (`adviceEngine.js`)
+        └── Rule-based weather insights (`adviceEngine.js`) — informative tone (may/might/could/consider); not safety directives (those belong in House Guide)
         │
         ▼
 Open-Meteo forecast + air-quality APIs
@@ -260,7 +260,7 @@ Open-Meteo forecast + air-quality APIs
 
 **Home location** is configured on the Worker (`HOME_LATITUDE`, `HOME_LONGITUDE` in `worker/wrangler.toml` `[vars]`). The frontend sends no coordinates.
 
-**Frontend:** `src/services/weatherService.js` refreshes every **15 minutes** and on startup; `src/apps/Weather/WeatherApp.js` renders current conditions, hourly/daily forecasts, and advice; Lucide icons via `src/weather/renderWeatherIcon.js`.
+**Frontend:** `src/services/weatherService.js` refreshes every **15 minutes** and on startup; `src/apps/Weather/WeatherApp.js` renders current conditions, hourly/daily forecasts, and insights; Lucide icons via `src/weather/renderWeatherIcon.js`.
 
 **Offline / upstream failure:** If Open-Meteo is unreachable, the Worker serves the last cached payload when available; the UI shows age labels (`Updated N minutes ago`) and a graceful unavailable state when no data exists.
 

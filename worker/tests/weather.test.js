@@ -52,7 +52,20 @@ describe('weather advice audiences', () => {
     expect(advice.some((item) => /gardening/i.test(item.detail))).toBe(false);
   });
 
-  it('keeps owner gardening tips for dry days', () => {
+  it('uses informative language for house sitters', () => {
+    const payload = mapOpenMeteoToDashboard(SAMPLE_OPEN_METEO_FORECAST, null, {
+      fetchedAt: new Date().toISOString(),
+      fromCache: false,
+      stale: false
+    });
+    payload.today.high = 29;
+    const advice = generateWeatherAdvice(payload, 'house-sitter');
+    const text = advice.map((item) => `${item.title} ${item.detail}`).join(' ');
+    expect(text).toMatch(/may|might|could|consider/i);
+    expect(text).not.toMatch(/\bmust\b|\brequired\b|\bshould\b/i);
+  });
+
+  it('mentions gardening only for owner dry-day insights', () => {
     const payload = mapOpenMeteoToDashboard(SAMPLE_OPEN_METEO_FORECAST, null, {
       fetchedAt: new Date().toISOString(),
       fromCache: false,
@@ -78,7 +91,7 @@ describe('dashboard alerts', () => {
       rainChance: index === 0 ? 70 : 5
     }));
     const alert = buildDashboardAlert(payload);
-    expect(alert?.label).toMatch(/Rain in/);
+    expect(alert?.label).toMatch(/Rain might arrive in/);
   });
 });
 
