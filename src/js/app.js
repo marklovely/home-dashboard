@@ -6,7 +6,7 @@ import { watchNetwork } from './modules/network.js';
 import { initialiseWeather } from './modules/weather.js';
 import { getActiveProfileId } from '../services/profileService.js';
 import { getWidgetsForProfile } from '../services/widgetRegistry.js';
-import '../widgets/Alexa/index.js';
+import '../widgets/index.js';
 
 const elements = {
   greeting: document.querySelector('#greeting'),
