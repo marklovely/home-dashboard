@@ -9,12 +9,11 @@
     "check": "vitest run"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.19",
-    "vitest": "~2.1.9",
+    "@cloudflare/vitest-pool-workers": "^0.19.0",
+    "vitest": "^4.1.10",
     "wrangler": "^4.0.0"
   },
   "dependencies": {
-    "ical-expander": "^3.2.0",
     "ical.js": "^2.2.1"
   }
 }

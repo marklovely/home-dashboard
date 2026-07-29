@@ -317,7 +317,7 @@ GET /api/calendar  (Authorization: Bearer owner token)
         ├── Owner session token (issued on successful PIN auth, memory-only in browser)
         ├── 5-minute normalized cache (`worker/src/calendar/calendarCache.js`)
         ├── Provider abstraction (`CalendarProvider` / `AppleIcsProvider`)
-        ├── ICS parse + recurrence expansion (`ical-expander` + `ical.js`)
+        ├── ICS parse + recurrence expansion (`ical.js`, Apple VTIMEZONE from feed)
         └── Europe/London date grouping and data minimisation
         │
         ▼

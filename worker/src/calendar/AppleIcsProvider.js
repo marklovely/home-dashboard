@@ -112,8 +112,9 @@ export class AppleIcsProvider {
 
     try {
       return parseAndExpandIcs(icsText, asOf);
-    } catch {
-      console.error(JSON.stringify({ event: 'calendar_parse_failed' }));
+    } catch (parseError) {
+      const detail = parseError instanceof Error ? parseError.message.slice(0, 160) : 'parse_failed';
+      console.error(JSON.stringify({ event: 'calendar_parse_failed', detail }));
       const error = new Error('CALENDAR_PARSE');
       error.code = 'CALENDAR_PARSE';
       throw error;
