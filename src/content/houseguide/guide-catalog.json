@@ -1,0 +1,351 @@
+{
+  "version": 2,
+  "homeSummaryTitle": "Everything you need to know",
+  "homeSummarySubtitle": "Arrival • Kitchen • Wi-Fi • Scooter • Emergency",
+  "media": {
+    "hot-water-machine": {
+      "file": "hot-water-machine.jpg",
+      "alt": "Hot water machine in the kitchen"
+    },
+    "tv-remote": {
+      "file": "tv-remote.jpg",
+      "alt": "TV remote in the lounge"
+    },
+    "fuse-box": {
+      "file": "fuse-box.jpg",
+      "alt": "Fuse box"
+    },
+    "water-stop-tap": {
+      "file": "water-stop-tap.jpg",
+      "alt": "Water stop tap"
+    },
+    "ev-charger": {
+      "file": "ev-charger.jpg",
+      "alt": "EV charger"
+    },
+    "bbq": {
+      "file": "bbq.jpg",
+      "alt": "Garden BBQ"
+    }
+  },
+  "categories": [
+    {
+      "id": "arrival",
+      "title": "Arrival",
+      "cardSubtitle": "Parking • Keys • EV charging",
+      "iconId": "key-round",
+      "accent": "#8b7cff",
+      "searchTerms": ["arrival", "parking", "keys", "check in"],
+      "topics": [
+        {
+          "id": "arrival",
+          "title": "Arrival",
+          "subtitle": "Getting settled",
+          "summary": "When you first arrive",
+          "searchTerms": ["arrival", "parking", "keys"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": []
+        },
+        {
+          "id": "ev-charger",
+          "title": "EV Charger",
+          "subtitle": "Electric vehicle charging",
+          "summary": "Using the charger on arrival",
+          "searchTerms": ["ev", "charger", "electric", "car"],
+          "blocks": [
+            { "type": "heroImage", "mediaId": "ev-charger", "caption": "EV charger" },
+            { "type": "text", "content": "Content coming soon." }
+          ],
+          "actions": []
+        }
+      ]
+    },
+    {
+      "id": "scooter",
+      "title": "Scooter",
+      "cardSubtitle": "Walks • Feeding • Routine",
+      "iconId": "dog",
+      "accent": "#ff9f43",
+      "searchTerms": ["scooter", "dog", "pet"],
+      "topics": [
+        {
+          "id": "scooter",
+          "title": "Scooter",
+          "subtitle": "Your house companion",
+          "summary": "Daily care",
+          "searchTerms": ["scooter", "dog", "walk", "feeding"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": []
+        }
+      ]
+    },
+    {
+      "id": "kitchen",
+      "title": "Kitchen",
+      "cardSubtitle": "Hot water • Washing • Appliances",
+      "iconId": "chef-hat",
+      "accent": "#f4b64f",
+      "searchTerms": ["kitchen", "cook", "appliances"],
+      "topics": [
+        {
+          "id": "kitchen",
+          "title": "Kitchen",
+          "subtitle": "Overview",
+          "summary": "Using the kitchen",
+          "searchTerms": ["kitchen"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": []
+        },
+        {
+          "id": "hot-water-machine",
+          "title": "Hot Water Machine",
+          "subtitle": "Boiling water tap",
+          "summary": "Instant hot water for drinks",
+          "searchTerms": [
+            "hot water",
+            "hot water machine",
+            "kettle",
+            "boiling water",
+            "tea",
+            "coffee",
+            "tap"
+          ],
+          "blocks": [
+            { "type": "heroImage", "mediaId": "hot-water-machine", "caption": "Hot water machine" },
+            { "type": "text", "heading": "Instructions", "content": "Content coming soon." }
+          ],
+          "actions": []
+        },
+        {
+          "id": "washing-machine",
+          "title": "Washing Machine",
+          "subtitle": "Laundry",
+          "summary": "Using the washing machine",
+          "searchTerms": ["washing", "laundry", "washer"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": []
+        }
+      ]
+    },
+    {
+      "id": "heating-utilities",
+      "title": "Heating & Utilities",
+      "cardSubtitle": "Thermostat • Water • Lighting",
+      "iconId": "flame",
+      "accent": "#ff6b6b",
+      "searchTerms": ["heating", "utilities", "thermostat", "lights"],
+      "topics": [
+        {
+          "id": "heating",
+          "title": "Heating",
+          "subtitle": "Hallway thermostat",
+          "summary": "Keeping the house comfortable",
+          "searchTerms": ["heating", "heat", "thermostat", "temperature", "warm"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": [
+            { "type": "alexa", "buttonId": 7, "label": "Heat to 20°C" },
+            { "type": "alexa", "buttonId": 8, "label": "Heat to 9°C" }
+          ]
+        },
+        {
+          "id": "lights",
+          "title": "Lights",
+          "subtitle": "Downstairs lighting",
+          "summary": "Quick lighting control",
+          "searchTerms": ["lights", "lighting", "downstairs", "lounge"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": [{ "type": "alexa", "buttonId": 3, "label": "Downstairs On" }]
+        },
+        {
+          "id": "water-stop-tap",
+          "title": "Water Stop Tap",
+          "subtitle": "Stop the water supply",
+          "summary": "Locating the stop tap",
+          "searchTerms": ["water", "stop tap", "leak", "utilities"],
+          "blocks": [
+            { "type": "heroImage", "mediaId": "water-stop-tap", "caption": "Water stop tap" },
+            { "type": "text", "content": "Content coming soon." }
+          ],
+          "actions": [{ "type": "navigate", "topicId": "emergency", "label": "Emergency help" }]
+        }
+      ]
+    },
+    {
+      "id": "tv",
+      "title": "TV & Entertainment",
+      "cardSubtitle": "Remote • Streaming • Sound",
+      "iconId": "monitor",
+      "accent": "#d16dff",
+      "searchTerms": ["tv", "television", "netflix", "movie", "streaming"],
+      "topics": [
+        {
+          "id": "tv-entertainment",
+          "title": "TV & Entertainment",
+          "subtitle": "Lounge setup",
+          "summary": "Watching TV and streaming",
+          "searchTerms": ["tv", "television", "netflix", "movie", "watch", "remote", "streaming"],
+          "blocks": [
+            { "type": "heroImage", "mediaId": "tv-remote", "caption": "TV remote" },
+            { "type": "text", "content": "Content coming soon." }
+          ],
+          "actions": [{ "type": "alexa", "buttonId": 2, "label": "Watch Movie" }]
+        }
+      ]
+    },
+    {
+      "id": "bathrooms",
+      "title": "Bathrooms",
+      "cardSubtitle": "Showers • Taps • Supplies",
+      "iconId": "shower-head",
+      "accent": "#4da8ff",
+      "searchTerms": ["bathroom", "shower", "bath"],
+      "topics": [
+        {
+          "id": "bathrooms",
+          "title": "Bathrooms",
+          "subtitle": "Around the house",
+          "summary": "Using the bathrooms",
+          "searchTerms": ["bathroom", "shower", "bath", "toilet"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": []
+        }
+      ]
+    },
+    {
+      "id": "garden",
+      "title": "Garden",
+      "cardSubtitle": "Outdoor space • BBQ",
+      "iconId": "trees",
+      "accent": "#28d17c",
+      "searchTerms": ["garden", "outside", "bbq", "barbecue"],
+      "topics": [
+        {
+          "id": "garden",
+          "title": "Garden",
+          "subtitle": "Outdoor areas",
+          "summary": "Using the garden",
+          "searchTerms": ["garden", "outside", "lawn"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": []
+        },
+        {
+          "id": "bbq",
+          "title": "BBQ",
+          "subtitle": "Barbecue",
+          "summary": "Using the BBQ",
+          "searchTerms": ["bbq", "barbecue", "grill"],
+          "blocks": [
+            { "type": "heroImage", "mediaId": "bbq", "caption": "BBQ" },
+            { "type": "text", "content": "Content coming soon." }
+          ],
+          "actions": []
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "cardSubtitle": "Alarms • Locks • Access",
+      "iconId": "shield",
+      "accent": "#6f7b8f",
+      "searchTerms": ["security", "alarm", "lock"],
+      "topics": [
+        {
+          "id": "security",
+          "title": "Security",
+          "subtitle": "Keeping the home secure",
+          "summary": "Alarms and access",
+          "searchTerms": ["security", "alarm", "lock", "key"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": []
+        }
+      ]
+    },
+    {
+      "id": "wifi",
+      "title": "Wi-Fi",
+      "cardSubtitle": "Network • Password • Guests",
+      "iconId": "wifi",
+      "accent": "#28d17c",
+      "searchTerms": ["wifi", "wi-fi", "internet", "password", "network"],
+      "topics": [
+        {
+          "id": "wifi",
+          "title": "Wi-Fi",
+          "subtitle": "Stay connected",
+          "summary": "Join the home network",
+          "searchTerms": ["wifi", "wi-fi", "internet", "password", "network"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": [
+            {
+              "type": "panel",
+              "label": "Show Wi-Fi details",
+              "heading": "Wi-Fi",
+              "items": [
+                { "label": "Network name", "value": "Add when ready" },
+                { "label": "Password", "value": "Add when ready" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "local",
+      "title": "Local Area",
+      "cardSubtitle": "Shops • Walks • Food",
+      "iconId": "map-pin",
+      "accent": "#8b7cff",
+      "searchTerms": ["local", "shop", "food", "walk", "area"],
+      "topics": [
+        {
+          "id": "local-area",
+          "title": "Local Recommendations",
+          "subtitle": "Nearby essentials",
+          "summary": "Around the neighbourhood",
+          "searchTerms": ["local", "shop", "food", "walk", "pizza", "takeaway"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": []
+        }
+      ]
+    },
+    {
+      "id": "emergency",
+      "title": "Emergency",
+      "cardSubtitle": "Contacts • Utilities • Safety",
+      "iconId": "siren",
+      "accent": "#ff5f6d",
+      "searchTerms": ["emergency", "urgent", "help", "999"],
+      "topics": [
+        {
+          "id": "emergency",
+          "title": "Emergency Contacts",
+          "subtitle": "When something goes wrong",
+          "summary": "Who to call first",
+          "searchTerms": ["emergency", "homeowner", "owners", "urgent", "contact"],
+          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "actions": [
+            {
+              "type": "panel",
+              "label": "Call owners",
+              "heading": "Owners",
+              "items": [{ "label": "Phone", "value": "Add contact number when ready" }]
+            }
+          ]
+        },
+        {
+          "id": "fuse-box",
+          "title": "Fuse Box",
+          "subtitle": "Electrical supply",
+          "summary": "Locating the fuse box",
+          "searchTerms": ["fuse", "electric", "power", "trip"],
+          "blocks": [
+            { "type": "heroImage", "mediaId": "fuse-box", "caption": "Fuse box" },
+            { "type": "text", "content": "Content coming soon." }
+          ],
+          "actions": [{ "type": "navigate", "topicId": "emergency", "label": "Emergency contacts" }]
+        }
+      ]
+    }
+  ]
+}
