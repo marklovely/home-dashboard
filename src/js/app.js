@@ -1,11 +1,16 @@
 import { CONFIG } from '../config.js';
 import { initialiseHeader } from '../components/Header/Header.js';
 import { createAppShell, HOME_ROUTE, navigate } from '../shell/AppShell.js';
+import { getCurrentRoute } from '../shell/router.js';
+import { subscribeWeatherSnapshot } from '../services/homeWeatherSnapshot.js';
 import { initialiseBattery } from './modules/battery.js';
 import { watchNetwork } from './modules/network.js';
 import { initialiseWeather } from './modules/weather.js';
+import { initTheme } from '../services/themeService.js';
 import '../apps/index.js';
 import '../widgets/index.js';
+
+initTheme();
 
 const elements = {
   greeting: document.querySelector('#greeting'),
@@ -49,15 +54,25 @@ watchNetwork(elements.network);
 initialiseBattery(elements.battery);
 initialiseWeather(elements.weather, CONFIG.weather);
 
+const versionLabel = document.querySelector('#shell-version-label');
+if (versionLabel && typeof __APP_VERSION__ !== 'undefined') {
+  versionLabel.textContent = `Home Hub v${__APP_VERSION__}`;
+}
+
 createAppShell({
   viewport: document.querySelector('#app-viewport'),
-  homeHeader: document.querySelector('#shell-home-header'),
-  appNav: document.querySelector('#shell-nav'),
+  homeWelcome: document.querySelector('#shell-home-welcome'),
+  shellChromeTitle: document.querySelector('#shell-chrome-title'),
   homeButton: document.querySelector('#shell-home-button'),
-  appTitle: document.querySelector('#shell-app-title'),
   statusStrip: document.querySelector('#shell-status'),
   shellFooter: document.querySelector('#shell-footer'),
   shellContext
+});
+
+subscribeWeatherSnapshot(() => {
+  if (getCurrentRoute() === HOME_ROUTE) {
+    shellContext.refreshShell?.();
+  }
 });
 
 registerServiceWorker();

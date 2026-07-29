@@ -1,12 +1,6 @@
-import { definePlaceholderApp } from '../placeholder.js';
 import { registerApp } from '../../services/appRegistry.js';
+import { plexApp } from './PlexApp.js';
 
-registerApp(
-  definePlaceholderApp({
-    id: 'plex',
-    title: 'Plex',
-    icon: '🎬',
-    accent: '#d16dff',
-    profiles: ['owner', 'housesitter']
-  })
-);
+registerApp(plexApp);
+
+export { plexApp };
