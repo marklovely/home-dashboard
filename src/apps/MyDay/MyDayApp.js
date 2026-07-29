@@ -1,4 +1,5 @@
 import { defineApp } from '../../components/App/defineApp.js';
+import { promptOwnerPinUnlock } from '../../auth/ownerAccessGesture.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
 import {
   formatDayHeading,
@@ -112,8 +113,21 @@ function renderMyDayApp(viewport) {
     const message = document.createElement('p');
     message.className = 'my-day-status';
     message.textContent =
-      'My Day uses your personal calendar. Unlock owner access with your PIN to view it.';
+      'My Day uses your personal calendar. Enter your owner PIN once per session to load it.';
     page.append(message);
+
+    const unlock = document.createElement('button');
+    unlock.type = 'button';
+    unlock.className = 'my-day-unlock-button';
+    unlock.textContent = 'Enter owner PIN';
+    unlock.addEventListener('click', () => {
+      promptOwnerPinUnlock({
+        onSuccess: () => {
+          void refreshMyDayCalendar().finally(() => renderMyDayApp(viewport));
+        }
+      });
+    });
+    page.append(unlock);
     viewport.append(page);
     return;
   }

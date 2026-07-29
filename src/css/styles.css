@@ -1530,6 +1530,22 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   line-height: 1.5;
   color: var(--muted);
 }
+.my-day-unlock-button {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #8b7cff 45%, var(--border));
+  background: color-mix(in srgb, #8b7cff 18%, transparent);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.my-day-unlock-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, #8b7cff 55%, transparent);
+  outline-offset: 2px;
+}
 .my-day-stale-notice {
   padding: 12px 14px;
   border-radius: 14px;
