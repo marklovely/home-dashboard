@@ -1,10 +1,12 @@
 /**
- * Loads optional house-specific values from private-content.local.json (gitignored).
- * Falls back safely when values are absent — never show undefined or broken UI.
+ * Protected values: Worker API (production) with optional local JSON override for development.
  */
-
-/** @type {Record<string, unknown> | null} */
-let cached = null;
+import {
+  getPrivateConfigStatus,
+  getPrivateConfigValue,
+  isPrivateConfigLoading,
+  preloadPrivateConfig
+} from '../../services/privateConfigService.js';
 
 const PLACEHOLDER_CONTACT =
   'Contact details will be available once secure house-sitter access is enabled.';
@@ -14,41 +16,14 @@ const PLACEHOLDER_LOCKBOX =
   'Lockbox access will be available once secure house-sitter access is enabled.';
 const PLACEHOLDER_ADDRESS =
   'Full address details will be available once secure house-sitter access is enabled.';
-
-/**
- * @param {Record<string, unknown>} root
- * @param {string} path
- * @returns {unknown}
- */
-function getByPath(root, path) {
-  return path.split('.').reduce((acc, key) => {
-    if (acc && typeof acc === 'object' && key in acc) {
-      return /** @type {Record<string, unknown>} */ (acc)[key];
-    }
-    return undefined;
-  }, /** @type {unknown} */ (root));
-}
-
-/**
- * Attempt to load local private content (Vite glob, optional file).
- */
-function loadPrivateContent() {
-  if (cached !== null) return cached;
-  cached = {};
-  const modules = import.meta.glob('../private-content.local.json', { eager: true });
-  const entry = modules['../private-content.local.json'];
-  if (entry && typeof entry === 'object' && 'default' in entry) {
-    cached = /** @type {Record<string, unknown>} */ (entry.default);
-  }
-  return cached;
-}
+const PLACEHOLDER_LOADING = 'Loading secure details…';
 
 /**
  * @param {string} key Dot path, e.g. wifi.password
  * @returns {string | undefined}
  */
 export function getProtectedString(key) {
-  const value = getByPath(loadPrivateContent() ?? {}, key);
+  const value = getPrivateConfigValue(key);
   if (typeof value === 'string' && value.trim()) return value.trim();
   return undefined;
 }
@@ -58,6 +33,8 @@ export function getProtectedString(key) {
  * @param {'contact' | 'wifi' | 'lockbox' | 'address' | 'generic'} kind
  */
 export function getProtectedDisplayValue(key, kind = 'generic') {
+  if (isPrivateConfigLoading()) return PLACEHOLDER_LOADING;
+
   const resolved = getProtectedString(key);
   if (resolved) return resolved;
   if (kind === 'wifi') return PLACEHOLDER_WIFI;
@@ -72,6 +49,9 @@ export function hasProtectedValue(key) {
 }
 
 export function getWifiDetailsForPanel() {
+  if (isPrivateConfigLoading()) {
+    return [{ label: 'Wi-Fi', value: PLACEHOLDER_LOADING }];
+  }
   const ssid = getProtectedString('wifi.ssid');
   const password = getProtectedString('wifi.password');
   if (ssid && password) {
@@ -82,3 +62,5 @@ export function getWifiDetailsForPanel() {
   }
   return [{ label: 'Wi-Fi', value: PLACEHOLDER_WIFI }];
 }
+
+export { preloadPrivateConfig, getPrivateConfigStatus };

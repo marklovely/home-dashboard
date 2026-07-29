@@ -34,7 +34,7 @@ jobs:
       - name: Verify
         run: npm run check
         env:
-          VITE_VIRTUAL_BUTTONS_ACCESS_CODE: ${{ secrets.VIRTUAL_BUTTONS_ACCESS_CODE }}
+          VITE_API_BASE_URL: https://example.workers.dev
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

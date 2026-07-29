@@ -64,7 +64,7 @@ describe('house guide search aliases', () => {
 describe('house guide landing layout', () => {
   it('places search above category grid', () => {
     const context = {
-      config: { accessCode: 'test', buttons: [] },
+      config: { buttons: [] },
       toast: document.createElement('div'),
       lastCommand: document.createElement('div')
     };

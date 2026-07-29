@@ -9,6 +9,20 @@ export function createApiClient(fetchImpl = fetch) {
      */
     async get(url, init = {}) {
       return fetchImpl(url, { ...init, method: 'GET' });
+    },
+    /**
+     * @param {string | URL} url
+     * @param {RequestInit} [init]
+     */
+    async post(url, init = {}) {
+      return fetchImpl(url, {
+        ...init,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init.headers ?? {})
+        }
+      });
     }
   };
 }

@@ -4,6 +4,8 @@ coverage/
 .DS_Store
 src/.env.local
 .env.local
+worker/.dev.vars
+worker/node_modules/
 .venv-guide/
 src/content/houseguide/source/*.pdf
 src/content/houseguide/source/extracted-text.txt

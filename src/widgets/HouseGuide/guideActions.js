@@ -13,7 +13,7 @@ export function runGuideAction(action, context, openTopic) {
       showToast(context.toast, 'You are offline');
       return false;
     }
-    void triggerVirtualButton({ accessCode: context.config.accessCode, buttonId: action.buttonId })
+    void triggerVirtualButton({ buttonId: action.buttonId })
       .then(() => showToast(context.toast, `✓ ${action.label}`))
       .catch((error) => {
         console.error(error);
