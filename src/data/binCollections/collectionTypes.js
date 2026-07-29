@@ -19,7 +19,7 @@
  * @property {CollectionTypeId} id
  * @property {string} displayName
  * @property {string} binDescription Plain bin / container wording (no emoji)
- * @property {string} emoji Colour cue alongside icon and label (not colour-only)
+ * @property {string} [emoji] Optional colour cue for Home launcher card only
  * @property {string} iconId Lucide icon key for renderBinCollectionIcon
  * @property {string} cssModifier BEM modifier for styling (not sole differentiator)
  */
@@ -30,7 +30,7 @@ export const COLLECTION_TYPES = {
     id: 'rubbish',
     displayName: 'Rubbish',
     emoji: '🟢',
-    binDescription: 'Green wheelie bin — household rubbish',
+    binDescription: 'Green wheelie bin',
     iconId: 'trash-2',
     cssModifier: 'rubbish'
   },
@@ -38,7 +38,7 @@ export const COLLECTION_TYPES = {
     id: 'recycling',
     displayName: 'Recycling & glass',
     emoji: '⚫',
-    binDescription: 'Black wheelie bin — recycling, plus glass box',
+    binDescription: 'Black wheelie bin + glass box',
     iconId: 'recycle',
     cssModifier: 'recycling'
   },
@@ -46,7 +46,7 @@ export const COLLECTION_TYPES = {
     id: 'gardenWaste',
     displayName: 'Garden waste',
     emoji: '🟫',
-    binDescription: 'Brown wheelie bin — garden waste',
+    binDescription: 'Brown wheelie bin',
     iconId: 'leaf',
     cssModifier: 'garden-waste'
   }
@@ -56,7 +56,10 @@ export const COLLECTION_TYPES = {
  * @param {CollectionTypeDefinition | ReturnType<typeof getCollectionType>} typeDef
  */
 export function formatBinLabel(typeDef) {
-  return `${typeDef.emoji} ${typeDef.binDescription}`;
+  if (typeDef.emoji) {
+    return `${typeDef.emoji} ${typeDef.binDescription}`;
+  }
+  return typeDef.binDescription;
 }
 
 /** @param {CollectionTypeId | 'rubbish' | 'recycling'} typeId */
