@@ -1,43 +1,44 @@
 import { renderHomeScreen } from '../apps/Home/renderHome.js';
 import { getAppById, getAppsForProfile } from '../services/appRegistry.js';
-import { getActiveProfileId } from '../services/profileService.js';
-import { HOME_ROUTE, initRouter, navigate, subscribeToRoute } from './router.js';
+import { getActiveProfileId, subscribeToProfileChange } from '../services/profileService.js';
+import { getCurrentRoute, HOME_ROUTE, initRouter, navigate, subscribeToRoute } from './router.js';
 
 /**
  * @param {Object} options
  * @param {HTMLElement} options.viewport
- * @param {HTMLElement} options.homeHeader
- * @param {HTMLElement} options.appNav
+ * @param {HTMLElement} options.homeWelcome
+ * @param {HTMLElement} options.shellChromeTitle
  * @param {HTMLElement} options.homeButton
- * @param {HTMLElement} options.appTitle
  * @param {HTMLElement} options.statusStrip
  * @param {HTMLElement} options.shellFooter
  * @param {import('../types/app.js').ShellContext} options.shellContext
  */
 export function createAppShell({
   viewport,
-  homeHeader,
-  appNav,
+  homeWelcome,
+  shellChromeTitle,
   homeButton,
-  appTitle,
   statusStrip,
   shellFooter,
   shellContext
 }) {
+  /** @param {string} route */
   const renderRoute = (route) => {
     viewport.classList.remove('is-active');
     void viewport.offsetWidth;
     viewport.classList.add('is-active');
 
     const isHome = route === HOME_ROUTE;
-    homeHeader.hidden = !isHome;
-    appNav.hidden = isHome;
+    homeWelcome.hidden = !isHome;
     statusStrip.hidden = !isHome;
     shellFooter.hidden = route !== 'controls';
 
+    shellChromeTitle.textContent = isHome ? 'Home Hub' : (getAppById(route)?.title ?? 'Home Hub');
+    homeButton.setAttribute('aria-current', isHome ? 'page' : 'false');
+
     if (isHome) {
       document.title = 'Home Hub';
-      renderHomeScreen(viewport, getAppsForProfile(getActiveProfileId()), shellContext.navigate);
+      void renderHomeScreen(viewport, getAppsForProfile(getActiveProfileId()), shellContext);
       return;
     }
 
@@ -48,13 +49,19 @@ export function createAppShell({
     }
 
     document.title = `${app.title} · Home Hub`;
-    appTitle.textContent = app.title;
     app.mount(viewport, shellContext);
+  };
+
+  shellContext.refreshShell = () => {
+    renderRoute(getCurrentRoute());
   };
 
   homeButton.addEventListener('click', () => shellContext.navigate(HOME_ROUTE));
 
   subscribeToRoute(renderRoute);
+  subscribeToProfileChange(() => {
+    renderRoute(getCurrentRoute());
+  });
   initRouter(getAppById);
 }
 

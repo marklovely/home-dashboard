@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en-GB">
+<html lang="en-GB" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#10131a" />
-    <meta name="description" content="A tablet-first home hub for controls, guides, and household apps." />
+    <meta name="description" content="Lovely Home Hub — a tablet-first home platform for controls, guides, and household apps." />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icons/icon-192.png" />
     <link rel="apple-touch-icon" href="./icons/icon-192.png" />
@@ -14,22 +14,22 @@
   <body>
     <main class="hub-shell">
       <header class="shell-header">
-        <div id="shell-home-header" class="shell-home-header">
-          <section>
-            <p class="eyebrow">HOME</p>
-            <h1 id="greeting">Good afternoon</h1>
-            <p id="date" class="subtle"></p>
-          </section>
+        <div class="shell-chrome">
+          <button type="button" id="shell-home-button" class="shell-home-button">Home</button>
+          <div class="shell-chrome-title-block">
+            <p class="eyebrow">LOVELY HOME HUB</p>
+            <h1 id="shell-chrome-title" class="shell-chrome-title">Home Hub</h1>
+          </div>
           <section class="clock-block" aria-label="Current time">
             <div id="clock" class="clock">--:--</div>
             <div id="seconds" class="seconds">--</div>
           </section>
         </div>
 
-        <nav id="shell-nav" class="shell-nav" aria-label="Application navigation" hidden>
-          <button type="button" id="shell-home-button" class="shell-home-button">Home</button>
-          <h1 id="shell-app-title" class="shell-app-title">App</h1>
-        </nav>
+        <div id="shell-home-welcome" class="shell-home-welcome">
+          <h2 id="greeting" class="home-greeting">Good afternoon</h2>
+          <p id="date" class="subtle home-date"></p>
+        </div>
 
         <section id="shell-status" class="status-strip" aria-label="Home status">
           <div class="status-card weather-card">
@@ -60,7 +60,7 @@
 
       <footer id="shell-footer" class="footer shell-footer" hidden>
         <span id="last-command">No command sent yet</span>
-        <span>Home Hub v1.0.1</span>
+        <span id="shell-version-label">Home Hub</span>
       </footer>
     </main>
 

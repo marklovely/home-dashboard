@@ -1,3 +1,5 @@
+import { defineApp } from '../../components/App/defineApp.js';
+import { HOUSE_GUIDE_PAGES } from '../../content/houseguide/pages.js';
 import { getWidgetById } from '../../services/widgetRegistry.js';
 
 /**
@@ -28,11 +30,22 @@ export function mountHouseGuideApp(viewport, context) {
   viewport.replaceChildren(page);
 }
 
-export const houseGuideApp = {
+function houseGuideSummary() {
+  const count = HOUSE_GUIDE_PAGES.length;
+  return {
+    title: `${count} guides available`,
+    subtitle: 'Markdown house guide'
+  };
+}
+
+export const houseGuideApp = defineApp({
   id: 'house-guide',
   title: 'House Guide',
-  icon: '📖',
+  iconId: 'book-open',
+  description: 'Read the house guide and search topics',
+  capabilities: ['search', 'offline', 'markdown'],
   accent: '#f4b64f',
   profiles: ['owner', 'housesitter'],
+  summary: houseGuideSummary,
   mount: mountHouseGuideApp
-};
+});
