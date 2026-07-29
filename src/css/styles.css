@@ -11,6 +11,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
 body {
   min-height: 100vh;
@@ -21,6 +22,132 @@ body {
   overscroll-behavior: none;
 }
 button { font: inherit; }
+
+.hub-shell {
+  min-height: 100vh;
+  padding: clamp(18px, 3vw, 34px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(16px, 2.2vw, 24px);
+}
+.shell-header { display: grid; gap: clamp(14px, 2vw, 20px); }
+.shell-home-header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; width: 100%; }
+.shell-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+.shell-home-button {
+  min-height: 52px;
+  min-width: 120px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.shell-home-button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+.shell-home-button:active { transform: scale(0.98); }
+.shell-app-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  line-height: 1.1;
+}
+.app-viewport {
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+.app-viewport.is-active {
+  animation: app-view-enter 240ms ease;
+}
+@keyframes app-view-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.app-page {
+  height: 100%;
+  min-height: 0;
+}
+.home-screen {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.home-launcher {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 20px);
+}
+.home-launcher-card {
+  --accent: #8b7cff;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 28px;
+  padding: clamp(16px, 2.5vw, 24px);
+  text-align: left;
+  color: var(--text);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 18%, var(--surface)), var(--surface));
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: 0;
+  transition: transform 140ms ease, filter 140ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.home-launcher-card:active { transform: scale(0.98); filter: brightness(1.08); }
+.home-launcher-card:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+.home-launcher-icon { font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1; }
+.home-launcher-title { font-size: clamp(1.05rem, 2.2vw, 1.35rem); font-weight: 800; letter-spacing: -0.02em; }
+.controls-app { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.controls-grid { padding-bottom: 8px; }
+.house-guide-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+.house-guide-app .house-guide {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.house-guide-app .house-guide-home {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.coming-soon-app {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  height: 100%;
+  text-align: center;
+  padding: 24px;
+}
+.coming-soon-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+}
+.coming-soon-message {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  font-weight: 600;
+}
 
 .app-shell {
   min-height: 100vh;
@@ -278,11 +405,12 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 @media (max-width: 900px) {
   .button-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .house-guide-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-launcher { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
   .status-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 620px) {
-  .app-shell { padding: 16px; }
-  .topbar { align-items: flex-end; }
+  .hub-shell, .app-shell { padding: 16px; }
+  .shell-home-header { align-items: flex-end; }
   .clock { font-size: 2.8rem; }
   .seconds { display: none; }
   .status-strip { grid-template-columns: 1fr; }
@@ -292,8 +420,8 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   .footer { flex-direction: column; }
 }
 @media (orientation: landscape) and (max-height: 650px) {
-  .app-shell { padding: 14px 18px; gap: 12px; }
-  .topbar h1 { font-size: 1.7rem; }
+  .hub-shell, .app-shell { padding: 14px 18px; gap: 12px; }
+  .shell-home-header h1 { font-size: 1.7rem; }
   .clock { font-size: 3rem; }
   .status-card { padding: 9px 12px; }
   .routine-button { min-height: 112px; padding: 14px; }
