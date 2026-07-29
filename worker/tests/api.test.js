@@ -18,7 +18,7 @@ describe('health', () => {
     const response = await handleRequest(new Request('https://worker.test/api/health'), env);
     const body = await response.json();
     expect(response.status).toBe(200);
-    expect(body).toEqual({ status: 'ok', service: 'lovely-home-hub-api' });
+    expect(body).toEqual({ status: 'ok', service: 'lovely-home-hub-api', apiVersion: 2 });
     expect(JSON.stringify(body)).not.toContain('test-access-code');
   });
 });
