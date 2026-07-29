@@ -13,6 +13,7 @@ import { preloadPrivateConfig } from '../services/privateConfigService.js';
 import { isHouseSitterExperience } from '../auth/userMode.js';
 import { attachOwnerAccessGesture } from '../auth/ownerAccessGesture.js';
 import { registerOwnerLockNavigation } from '../auth/ownerLock.js';
+import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
 
 initTheme();
 void preloadPrivateConfig();
@@ -63,6 +64,9 @@ initialiseHeader(elements);
 watchNetwork(elements.network);
 initialiseBattery(elements.battery);
 initialiseWeather(elements.weather, CONFIG.weather);
+if (!isHouseSitterExperience()) {
+  startMyDayCalendarService();
+}
 
 const versionLabel = document.querySelector('#shell-version-label');
 if (versionLabel && typeof __APP_VERSION__ !== 'undefined') {

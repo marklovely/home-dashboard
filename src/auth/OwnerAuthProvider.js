@@ -1,4 +1,5 @@
 import { ensureApiBaseUrl, getApiBaseUrl } from '../api/apiBase.js';
+import { setOwnerAccessToken } from './ownerAccessToken.js';
 
 /** @typedef {'success' | 'invalid' | 'rate_limited' | 'unavailable'} OwnerAuthResult */
 
@@ -31,6 +32,17 @@ export async function authenticateOwnerPin(pin, fetchImpl = fetch) {
       body: JSON.stringify({ pin }),
       cache: 'no-store'
     });
+    if (response.status === 200) {
+      try {
+        const body = await response.json();
+        if (body?.token && body?.expiresAt) {
+          setOwnerAccessToken(body.token, body.expiresAt);
+        }
+      } catch {
+        /* token optional for backwards compatibility */
+      }
+      return 'success';
+    }
     return resultFromResponse(response);
   } catch {
     return 'unavailable';
