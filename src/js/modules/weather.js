@@ -1,51 +1,83 @@
-import { fetchWeatherForecast } from '../../api/weather.js';
-import { setWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
+import {
+  startWeatherAutoRefresh,
+  subscribeWeatherState
+} from '../../services/weatherService.js';
+import { renderWeatherIcon } from '../../weather/renderWeatherIcon.js';
 
-const WEATHER_CODES = {
-  0: ['Clear', '☀'], 1: ['Mainly clear', '◒'], 2: ['Partly cloudy', '◒'], 3: ['Overcast', '☁'],
-  45: ['Fog', '≋'], 48: ['Fog', '≋'], 51: ['Drizzle', '☂'], 53: ['Drizzle', '☂'], 55: ['Drizzle', '☂'],
-  61: ['Rain', '☂'], 63: ['Rain', '☂'], 65: ['Heavy rain', '☂'], 71: ['Snow', '❄'], 73: ['Snow', '❄'],
-  75: ['Heavy snow', '❄'], 80: ['Showers', '☂'], 81: ['Showers', '☂'], 82: ['Heavy showers', '☂'],
-  95: ['Thunderstorm', 'ϟ'], 96: ['Thunderstorm', 'ϟ'], 99: ['Thunderstorm', 'ϟ']
-};
-
-export function describeWeather(code) {
-  const [text, icon] = WEATHER_CODES[code] ?? ['Weather', '◌'];
-  return { text, icon };
+/**
+ * @param {HTMLElement | null} iconHost
+ * @param {string} iconId
+ */
+function renderStatusIcon(iconHost, iconId) {
+  if (!iconHost) return;
+  iconHost.replaceChildren();
+  iconHost.append(renderWeatherIcon(iconId, { size: 22, className: 'weather-status-icon' }));
 }
 
-export async function resolveCoordinates(config, geolocation = navigator.geolocation) {
-  if (Number.isFinite(config.latitude) && Number.isFinite(config.longitude)) {
+/**
+ * @param {{ icon?: HTMLElement | null, temp: HTMLElement, text: HTMLElement }} elements
+ * @param {import('../../services/weatherService.js').WeatherState} weatherState
+ */
+export function applyWeatherToStatusStrip(elements, weatherState) {
+  const iconHost = elements.icon instanceof HTMLElement ? elements.icon : null;
+
+  if (weatherState.status === 'ready' && weatherState.data) {
+    const { current } = weatherState.data;
+    elements.temp.textContent = `${current.temperature}°`;
+    elements.text.textContent = current.condition;
+    renderStatusIcon(iconHost, current.icon);
+    return;
+  }
+
+  if (weatherState.status === 'loading') {
+    elements.temp.textContent = '…';
+    elements.text.textContent = 'Loading weather';
+    if (iconHost) iconHost.replaceChildren();
+    return;
+  }
+
+  elements.temp.textContent = 'Weather';
+  elements.text.textContent =
+    weatherState.message === 'API not configured'
+      ? 'API not configured'
+      : 'Unavailable';
+  renderStatusIcon(iconHost, 'cloudy');
+}
+
+/**
+ * @param {{ icon?: HTMLElement | null, temp: HTMLElement, text: HTMLElement }} elements
+ * @param {Object} [_config]
+ * @param {{ fetchImpl?: typeof fetch }} [dependencies]
+ */
+export function initialiseWeather(elements, _config, dependencies = {}) {
+  subscribeWeatherState((weatherState) => {
+    applyWeatherToStatusStrip(elements, weatherState);
+  });
+  startWeatherAutoRefresh(dependencies.fetchImpl);
+}
+
+/** @deprecated Use Worker-backed weather icons via condition strings. */
+export function describeWeather(code) {
+  const map = {
+    0: { text: 'Clear', icon: 'clear' },
+    2: { text: 'Partly Cloudy', icon: 'partly-cloudy' },
+    3: { text: 'Overcast', icon: 'cloudy' }
+  };
+  return map[code] ?? { text: 'Weather', icon: 'cloudy' };
+}
+
+/** @deprecated Location is configured on the Worker. */
+export async function resolveCoordinates(config) {
+  if (Number.isFinite(config?.latitude) && Number.isFinite(config?.longitude)) {
     return { latitude: config.latitude, longitude: config.longitude };
   }
-  if (!geolocation) throw new Error('Location unavailable');
-  return new Promise((resolve, reject) => {
-    geolocation.getCurrentPosition(
-      ({ coords }) => resolve({ latitude: coords.latitude, longitude: coords.longitude }),
-      reject,
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 3600000 }
-    );
-  });
+  return { latitude: 0, longitude: 0 };
 }
 
-export async function fetchWeather({ latitude, longitude, fetchImpl }) {
-  return fetchWeatherForecast({ latitude, longitude, fetchImpl });
-}
-
-export async function initialiseWeather(elements, config, dependencies = {}) {
-  try {
-    const coordinates = await resolveCoordinates(config, dependencies.geolocation);
-    const data = await fetchWeatherForecast({ ...coordinates, fetchImpl: dependencies.fetchImpl });
-    const description = describeWeather(data.current.weather_code);
-    const tempText = `${Math.round(data.current.temperature_2m)}°C`;
-    elements.temp.textContent = tempText;
-    elements.text.textContent = description.text;
-    elements.icon.textContent = description.icon;
-    setWeatherSnapshot({ title: tempText, subtitle: description.text });
-  } catch {
-    elements.temp.textContent = 'Weather';
-    elements.text.textContent = 'Location unavailable';
-    elements.icon.textContent = '◌';
-    setWeatherSnapshot({ title: '—', subtitle: 'Location unavailable' });
-  }
+/** @deprecated Use weatherService / weatherApi instead. */
+export async function fetchWeather({ fetchImpl } = {}) {
+  const { fetchDashboardWeather } = await import('../../api/weatherApi.js');
+  const result = await fetchDashboardWeather(fetchImpl);
+  if (!result.ok) throw new Error(result.message);
+  return result.data;
 }

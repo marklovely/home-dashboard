@@ -1,80 +1,194 @@
 import { defineApp } from '../../components/App/defineApp.js';
-import { fetchWeatherForecast } from '../../api/weather.js';
-import { describeWeather, resolveCoordinates } from '../../js/modules/weather.js';
+import {
+  formatWeatherAge,
+  getWeatherState,
+  refreshWeather,
+  subscribeWeatherState
+} from '../../services/weatherService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
+import { renderWeatherIcon } from '../../weather/renderWeatherIcon.js';
+import { renderSevenDayForecast } from '../../weather/renderSevenDayForecast.js';
 
 /**
- * @param {HTMLElement} host
+ * @param {HTMLElement} parent
  * @param {string} label
- * @param {string} temp
- * @param {string} detail
+ * @param {string} value
  */
-function renderForecastRow(host, label, temp, detail) {
-  const row = document.createElement('div');
-  row.className = 'weather-forecast-row';
-  row.innerHTML = `<span class="weather-forecast-label">${label}</span><strong class="weather-forecast-temp">${temp}</strong><span class="weather-forecast-detail">${detail}</span>`;
-  host.append(row);
+function statCell(parent, label, value) {
+  const cell = document.createElement('div');
+  cell.className = 'weather-stat';
+  cell.innerHTML = `<span class="weather-stat-label">${label}</span><strong class="weather-stat-value">${value}</strong>`;
+  parent.append(cell);
+}
+
+/**
+ * @param {import('../../services/weatherTypes.js').DashboardWeather} data
+ * @param {HTMLElement} page
+ */
+function renderWeatherPage(data, page) {
+  page.replaceChildren();
+  page.className = 'app-page weather-app weather-app--premium';
+
+  const meta = document.createElement('p');
+  meta.className = 'weather-meta subtle';
+  const age = formatWeatherAge(data.meta.updatedAt);
+  meta.textContent = data.meta.stale ? `${age} · showing last good forecast` : age;
+
+  const currentSection = document.createElement('section');
+  currentSection.className = 'weather-section weather-current-section';
+  currentSection.setAttribute('aria-label', 'Current conditions');
+
+  const hero = document.createElement('div');
+  hero.className = 'weather-current-hero';
+  const iconWrap = document.createElement('div');
+  iconWrap.className = 'weather-current-icon';
+  iconWrap.append(renderWeatherIcon(data.current.icon, { size: 72, className: 'weather-hero-svg' }));
+  const temp = document.createElement('p');
+  temp.className = 'weather-current-temp';
+  temp.textContent = `${data.current.temperature}°`;
+  const condition = document.createElement('p');
+  condition.className = 'weather-current-condition';
+  condition.textContent = data.current.condition;
+  const feels = document.createElement('p');
+  feels.className = 'weather-current-feels subtle';
+  feels.textContent = `Feels like ${data.current.feelsLike}°`;
+
+  const sunTimes = document.createElement('p');
+  sunTimes.className = 'weather-sun-times';
+  sunTimes.innerHTML = `<strong>Sunrise</strong> ${data.today.sunrise || '—'} · <strong>Sunset</strong> ${data.today.sunset || '—'}`;
+
+  hero.append(iconWrap, temp, condition, feels, sunTimes);
+
+  const stats = document.createElement('div');
+  stats.className = 'weather-current-stats';
+  statCell(stats, 'Wind', `${data.current.windDirection} ${data.current.windSpeed} mph`);
+  statCell(stats, 'Humidity', `${data.current.humidity}%`);
+  statCell(stats, 'UV index', String(data.current.uvIndex));
+  statCell(stats, 'Air quality', data.current.airQuality);
+  statCell(stats, 'Sunrise', data.today.sunrise || '—');
+  statCell(stats, 'Sunset', data.today.sunset || '—');
+
+  currentSection.append(hero, stats);
+
+  const todaySection = document.createElement('section');
+  todaySection.className = 'weather-section';
+  todaySection.innerHTML = '<h2 class="weather-section-title">Today\'s summary</h2>';
+  const todayGrid = document.createElement('div');
+  todayGrid.className = 'weather-today-grid';
+  statCell(todayGrid, 'High', `${data.today.high}°`);
+  statCell(todayGrid, 'Low', `${data.today.low}°`);
+  statCell(todayGrid, 'Rain', `${data.today.rainChance}%`);
+  todaySection.append(todayGrid);
+
+  const hourlySection = document.createElement('section');
+  hourlySection.className = 'weather-section weather-hourly-section';
+  hourlySection.innerHTML = '<h2 class="weather-section-title">Hourly forecast</h2>';
+  const hourlyScroller = document.createElement('div');
+  hourlyScroller.className = 'weather-hourly-scroller';
+  hourlyScroller.setAttribute('tabindex', '0');
+  hourlyScroller.setAttribute('aria-label', 'Hourly forecast');
+  const hourlyTrack = document.createElement('div');
+  hourlyTrack.className = 'weather-hourly-track';
+  for (const hour of data.hourly) {
+    const card = document.createElement('article');
+    card.className = 'weather-hourly-card';
+    const icon = renderWeatherIcon(hour.icon, { size: 28 });
+    card.append(
+      Object.assign(document.createElement('span'), { className: 'weather-hourly-time', textContent: hour.label }),
+      icon,
+      Object.assign(document.createElement('strong'), { className: 'weather-hourly-temp', textContent: `${hour.temperature}°` }),
+      Object.assign(document.createElement('span'), { className: 'subtle', textContent: `${hour.rainChance}% rain` }),
+      Object.assign(document.createElement('span'), { className: 'subtle', textContent: `${hour.windSpeed} mph` })
+    );
+    hourlyTrack.append(card);
+  }
+  hourlyScroller.append(hourlyTrack);
+  hourlySection.append(hourlyScroller);
+
+  const adviceSection = document.createElement('section');
+  adviceSection.className = 'weather-section weather-advice-section';
+  adviceSection.innerHTML = '<h2 class="weather-section-title">Weather insights</h2>';
+  const adviceList = document.createElement('div');
+  adviceList.className = 'weather-advice-list';
+  for (const item of data.advice) {
+    const card = document.createElement('article');
+    card.className = 'weather-advice-card';
+    card.append(
+      renderWeatherIcon(item.icon, { size: 32, className: 'weather-advice-icon' }),
+      Object.assign(document.createElement('div'), {
+        className: 'weather-advice-copy',
+        innerHTML: `<strong>${item.title}</strong><p class="subtle">${item.detail}</p>`
+      })
+    );
+    adviceList.append(card);
+  }
+  adviceSection.append(adviceList);
+
+  const dailySection = renderSevenDayForecast(data.daily, data.current.temperature);
+
+  page.append(meta, adviceSection, currentSection, todaySection, hourlySection, dailySection);
+}
+
+/**
+ * @param {HTMLElement} page
+ * @param {string} title
+ * @param {string} detail
+ * @param {string} [updatedLabel]
+ */
+function renderUnavailable(page, title, detail, updatedLabel) {
+  page.replaceChildren();
+  page.className = 'app-page weather-app weather-offline';
+  const block = document.createElement('div');
+  block.className = 'weather-unavailable';
+  block.innerHTML = `<h2>${title}</h2><p>${detail}</p>`;
+  if (updatedLabel) {
+    const updated = document.createElement('p');
+    updated.className = 'subtle';
+    updated.textContent = updatedLabel;
+    block.append(updated);
+  }
+  page.append(block);
 }
 
 /**
  * @param {HTMLElement} viewport
- * @param {import('../../types/app.js').ShellContext} context
  */
-async function mountWeatherDetail(viewport, context) {
+function mountWeatherDetail(viewport) {
   viewport.replaceChildren();
   const page = document.createElement('section');
   page.className = 'app-page weather-app';
   page.setAttribute('aria-label', 'Weather');
-
-  const status = document.createElement('p');
-  status.className = 'weather-status subtle';
-  status.textContent = 'Loading forecast…';
-  page.append(status);
+  page.innerHTML = '<p class="weather-status subtle">Loading forecast…</p>';
   viewport.append(page);
 
-  try {
-    const coordinates = await resolveCoordinates(context.config.weather);
-    const data = await fetchWeatherForecast(coordinates);
-    const current = describeWeather(data.current.weather_code);
-    page.replaceChildren();
-
-    const hero = document.createElement('div');
-    hero.className = 'weather-hero';
-    hero.innerHTML = `<span class="weather-hero-icon">${current.icon}</span><p class="weather-hero-temp">${Math.round(data.current.temperature_2m)}°C</p><p class="weather-hero-text">${current.text}</p>`;
-
-    const list = document.createElement('div');
-    list.className = 'weather-forecast-list';
-
-    const daily = data.daily;
-    if (daily?.time?.length) {
-      const labels = ['Today', 'Tomorrow', 'Day after'];
-      for (let index = 0; index < Math.min(3, daily.time.length); index += 1) {
-        const code = daily.weather_code[index];
-        const description = describeWeather(code);
-        const max = Math.round(daily.temperature_2m_max[index]);
-        const min = Math.round(daily.temperature_2m_min[index]);
-        renderForecastRow(list, labels[index] ?? daily.time[index], `${max}°`, `${description.text} · low ${min}°`);
-      }
+  const renderFromState = () => {
+    const state = getWeatherState();
+    if (state.status === 'loading' || state.status === 'idle') return;
+    if (state.status === 'ready' && state.data) {
+      renderWeatherPage(state.data, page);
+      return;
     }
+    const last = state.data;
+    if (last) {
+      renderWeatherPage(last, page);
+      return;
+    }
+    renderUnavailable(page, 'Weather currently unavailable.', state.message || 'Please try again later.');
+  };
 
-    page.append(hero, list);
-  } catch {
-    page.replaceChildren();
-    const friendly = document.createElement('div');
-    friendly.className = 'weather-offline';
-    friendly.innerHTML =
-      '<h2>Weather unavailable</h2><p>We could not load a forecast right now. House Guide, Scooter, Emergency, and Home Controls still work offline.</p>';
-    page.append(friendly);
-  }
+  const unsubscribe = subscribeWeatherState(renderFromState);
+  void refreshWeather().finally(renderFromState);
+
+  return () => unsubscribe();
 }
 
 export const weatherApp = defineApp({
   id: 'weather',
   title: 'Weather',
   iconId: 'cloud-sun',
-  description: 'Forecast and current conditions',
-  capabilities: ['forecast', 'current-conditions'],
+  description: 'Forecast and intelligent advice for home',
+  capabilities: ['forecast', 'current-conditions', 'advice'],
   accent: '#4da8ff',
   profiles: ['owner', 'housesitter'],
   summary: () => {
@@ -82,9 +196,9 @@ export const weatherApp = defineApp({
     if (isHouseSitterMode() && snapshot.subtitle?.includes('unavailable')) {
       return { title: 'Weather', subtitle: 'Tap for forecast' };
     }
-    return snapshot;
+    return { title: snapshot.title, subtitle: snapshot.subtitle };
   },
-  mount(viewport, context) {
-    void mountWeatherDetail(viewport, context);
+  mount(viewport) {
+    return mountWeatherDetail(viewport);
   }
 });
