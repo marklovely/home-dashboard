@@ -136,23 +136,37 @@ Two independent concepts live under `src/auth/`:
 
 ### Owner authentication (home deployment)
 
-Hidden access only — **long-press the “Lovely Home” eyebrow for five seconds** while in house sitter user mode. No visible Owner button.
-
-Flow:
+Hidden access only — **long-press the “Lovely Home” title block for five seconds** while in house sitter user mode.
 
 ```
-Long press logo → PIN dialog (`src/components/OwnerAccess/ownerPinDialog.js`)
-        → OwnerAuthProvider (`src/auth/OwnerAuthProvider.js`)
-        → local PIN (`VITE_OWNER_PIN`) or POST `/api/auth/owner` on the Worker
-        → in-memory session (`src/auth/ownerSession.js`)
-        → owner user mode
+Long press → PIN pad (`src/components/OwnerAccess/ownerPinDialog.js`)
+        → ownerAuthProvider.authenticate(pin) (`src/auth/OwnerAuthProvider.js`)
+        → POST `/api/auth/owner` on the Cloudflare Worker
+        → in-memory session + inactivity watch (`src/auth/ownerSession.js`, `src/auth/ownerInactivity.js`)
+        → owner user mode + owner profile
 ```
 
-- **PIN** is validated only inside `OwnerAuthProvider` (never logged or stored).
-- **Session** is memory-only: cleared on refresh, restart, or **Return to House Sitter Mode** in Settings (shown after PIN unlock).
-- **Worker placeholder:** `POST /api/auth/owner` returns **501 Not Implemented** today so the UI can switch to server-side validation later without redesign.
+**Never use `VITE_OWNER_PIN`.** Vite env vars are compiled into the browser bundle. The owner PIN must exist only as the Worker secret **`OWNER_PIN`** (`npx wrangler secret put OWNER_PIN` in the Worker project).
 
-House sitter **experience** (guest UI) is unchanged from the House Sitter Mode PR; owner **experience** is unchanged when user mode is owner.
+| Response | Meaning |
+|----------|---------|
+| HTTP 200 `{ ok: true, authenticated: true }` | Unlock owner mode |
+| HTTP 401 | Wrong PIN (generic message in UI) |
+| HTTP 429 | Rate limited (Durable Object tracks failures per client IP) |
+| HTTP 503 | Worker secret not configured |
+
+**Rate limiting:** `OwnerAuthLimiter` SQLite-backed Durable Object (`OWNER_AUTH_LIMITER` binding) stores failed attempts per client key. More than five failures within ten minutes returns HTTP 429 until the window expires or a successful login clears the counter. The Worker migration uses `new_sqlite_classes` (required on the Workers free plan).
+
+**Session:** Memory-only. Refresh or restart clears owner access. **`OWNER_INACTIVITY_TIMEOUT_MS`** (five minutes) in `src/auth/ownerInactivity.js` auto-locks via `lockToHouseSitterMode()` — same path as **Return to House Sitter Mode** in Settings.
+
+**Cloudflare configuration**
+
+| Surface | Variables |
+|---------|-----------|
+| **Pages** (frontend) | `VITE_DEPLOYMENT_MODE=home`, `VITE_API_BASE_URL=https://<worker-hostname>` |
+| **Worker** (secrets) | `OWNER_PIN` — not Pages, not git, not wrangler `[vars]` |
+
+House sitter **experience** (guest UI) is unchanged; owner **experience** is unchanged when user mode is owner.
 
 The **Emergency** app (`src/apps/Emergency/`) surfaces call cards and deep-links into House Guide topics without duplicating catalog content.
 

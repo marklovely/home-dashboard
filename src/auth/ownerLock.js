@@ -1,0 +1,44 @@
+import { setActiveProfileId } from '../services/profileService.js';
+import { setUserMode, UserMode } from './userMode.js';
+import {
+  clearOwnerPinSession,
+  markOwnerUnlockedByPin,
+  stopOwnerInactivityWatch
+} from './ownerSession.js';
+import { startOwnerInactivityWatch } from './ownerInactivity.js';
+
+/** @type {(() => void) | null} */
+let navigateHomeHandler = null;
+
+/**
+ * @param {() => void} navigateHome
+ */
+export function registerOwnerLockNavigation(navigateHome) {
+  navigateHomeHandler = navigateHome;
+}
+
+/**
+ * Clears owner access and restores the house sitter experience.
+ * @param {() => void} [navigateHome]
+ */
+export function lockToHouseSitterMode(navigateHome = navigateHomeHandler ?? undefined) {
+  stopOwnerInactivityWatch();
+  clearOwnerPinSession();
+  setUserMode(UserMode.HouseSitter);
+  setActiveProfileId('housesitter');
+  navigateHome?.();
+}
+
+/**
+ * @param {() => void} [refreshShell]
+ */
+export function completeOwnerUnlock(refreshShell) {
+  setActiveProfileId('owner');
+  setUserMode(UserMode.Owner);
+  markOwnerUnlockedByPin();
+  startOwnerInactivityWatch(() => {
+    lockToHouseSitterMode();
+    refreshShell?.();
+  });
+  refreshShell?.();
+}

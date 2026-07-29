@@ -3,4 +3,13 @@ main = "src/index.js"
 compatibility_date = "2024-12-01"
 
 [vars]
-ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,https://marklovely.github.io"
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://marklovely.github.io,https://*.pages.dev"
+
+[[durable_objects.bindings]]
+name = "OWNER_AUTH_LIMITER"
+class_name = "OwnerAuthLimiter"
+
+# Free Workers plan requires SQLite-backed Durable Objects (new_sqlite_classes).
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["OwnerAuthLimiter"]

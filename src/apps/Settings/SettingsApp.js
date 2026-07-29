@@ -1,5 +1,6 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { isHomeDeployment } from '../../auth/deploymentMode.js';
+import { lockToHouseSitterMode } from '../../auth/ownerLock.js';
 import { canReturnToHouseSitterMode } from '../../auth/ownerSession.js';
 import { setUserMode, UserMode } from '../../auth/userMode.js';
 import { profiles } from '../../profiles/index.js';
@@ -53,11 +54,11 @@ function createReturnToHouseSitterField(context, onProfileChange) {
   button.className = 'settings-action-button';
   button.textContent = 'Return to House Sitter Mode';
   button.addEventListener('click', () => {
-    setUserMode(UserMode.HouseSitter);
-    setActiveProfileId('housesitter');
-    context.navigate('home');
-    onProfileChange();
-    context.refreshShell?.();
+    lockToHouseSitterMode(() => {
+      context.navigate('home');
+      onProfileChange();
+      context.refreshShell?.();
+    });
   });
   const wrap = document.createElement('div');
   wrap.className = 'settings-options';

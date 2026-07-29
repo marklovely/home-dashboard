@@ -1,25 +1,71 @@
-import { notImplemented } from '../lib/errors.js';
+import { timingSafeEqualString } from '../lib/timingSafeEqual.js';
+import {
+  ensureOwnerAuthAllowed,
+  recordOwnerAuthFailure,
+  recordOwnerAuthSuccess
+} from '../lib/ownerAuthRateLimitClient.js';
 
 /**
- * Placeholder for future server-side owner authentication.
+ * @param {boolean} authenticated
+ * @param {number} status
+ * @param {string} [error]
+ */
+function authJson(authenticated, status, error) {
+  const body = {
+    ok: authenticated,
+    authenticated
+  };
+  if (error) body.error = error;
+  return Response.json(body, { status });
+}
+
+/**
+ * @param {unknown} pin
+ */
+function normalizePin(pin) {
+  if (typeof pin !== 'string') return null;
+  const trimmed = pin.trim();
+  if (!/^\d{4}$/.test(trimmed)) return null;
+  return trimmed;
+}
+
+/**
  * @param {Request} request
  * @param {string} correlationId
+ * @param {Record<string, string | undefined>} env
  */
-export async function handleOwnerAuth(request, correlationId) {
+export async function handleOwnerAuth(request, correlationId, env) {
   if (request.method !== 'POST') {
-    return notImplemented(correlationId, 'Owner authentication is not available yet.');
+    return authJson(false, 405, 'Method not allowed');
+  }
+
+  const configuredPin = env.OWNER_PIN?.trim();
+  if (!configuredPin) {
+    return authJson(false, 503, 'Owner access is unavailable');
+  }
+
+  if (!(await ensureOwnerAuthAllowed(request, env))) {
+    return authJson(false, 429, 'Too many attempts. Try again later.');
   }
 
   let body;
   try {
     body = await request.json();
   } catch {
-    return notImplemented(correlationId, 'Owner authentication is not available yet.');
+    return authJson(false, 400, 'Invalid request');
   }
 
-  if (body && typeof body.pin === 'string') {
-    // PIN must never be logged.
+  const pin = normalizePin(body?.pin);
+  if (!pin) {
+    return authJson(false, 400, 'Invalid request');
   }
 
-  return notImplemented(correlationId, 'Owner authentication is not available yet.');
+  const valid = timingSafeEqualString(pin, configuredPin);
+  if (valid) {
+    await recordOwnerAuthSuccess(request, env);
+    return authJson(true, 200);
+  }
+
+  await recordOwnerAuthFailure(request, env);
+  return authJson(false, 401, 'Invalid credentials');
 }

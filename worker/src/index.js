@@ -53,7 +53,7 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
   } else if (url.pathname === '/api/private-config' && request.method === 'GET') {
     response = handlePrivateConfig(env);
   } else if (url.pathname === '/api/auth/owner') {
-    response = await handleOwnerAuth(request, correlationId);
+    response = await handleOwnerAuth(request, correlationId, env);
   } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {
     const buttonParam = decodeURIComponent(url.pathname.slice('/api/button/'.length));
     response = await handleButtonPress(request, buttonParam, env, correlationId, fetchImpl);
@@ -85,6 +85,8 @@ function safeLog(method, path, status, correlationId, buttonCode) {
   };
   console.log(JSON.stringify(entry));
 }
+
+export { OwnerAuthLimiter } from './durable/OwnerAuthLimiter.js';
 
 export default {
   async fetch(request, env, _ctx) {
