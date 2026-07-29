@@ -55,7 +55,8 @@ export function createAppShell({
       shellTagline.hidden = !(isHome && branding.homeTagline);
       if (!shellTagline.hidden) shellTagline.textContent = branding.homeTagline ?? '';
     }
-    homeButton.hidden = Boolean(mode.bottomNav?.length);
+    homeButton.hidden = Boolean(mode.bottomNav?.length && isHome);
+    homeButton.textContent = isHome ? 'Home' : '← Home';
     homeButton.setAttribute('aria-current', isHome ? 'page' : 'false');
 
     mountShellBottomNav(bottomNav, (target) => shellContext.navigate(target));

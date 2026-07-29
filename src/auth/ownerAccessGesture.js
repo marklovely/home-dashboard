@@ -1,18 +1,15 @@
-import { isHomeDeployment } from '../auth/deploymentMode.js';
-import { isHouseSitterExperience } from '../auth/userMode.js';
+import { isHomeDeployment } from './deploymentMode.js';
+import { isHouseSitterExperience } from './userMode.js';
 import { openOwnerPinDialog } from '../components/OwnerAccess/ownerPinDialog.js';
 
 const HOLD_MS = 5000;
 
 /**
- * @param {Object} options
- * @param {HTMLElement} options.logoElement
- * @param {HTMLElement} options.dialogHost
- * @param {() => void} [options.onOwnerUnlocked]
+ * @param {HTMLElement} element
+ * @param {() => void} onHoldComplete
+ * @param {(active: boolean) => void} [onHoldStateChange]
  */
-export function attachOwnerAccessGesture({ logoElement, dialogHost, onOwnerUnlocked }) {
-  if (!logoElement || !dialogHost) return;
-
+function attachHoldTarget(element, onHoldComplete, onHoldStateChange) {
   /** @type {number | null} */
   let holdTimer = null;
 
@@ -21,28 +18,58 @@ export function attachOwnerAccessGesture({ logoElement, dialogHost, onOwnerUnloc
       window.clearTimeout(holdTimer);
       holdTimer = null;
     }
+    onHoldStateChange?.(false);
   };
 
-  const canUseGesture = () => isHomeDeployment() && isHouseSitterExperience();
-
   const startHold = () => {
-    if (!canUseGesture()) return;
     clearHold();
+    onHoldStateChange?.(true);
     holdTimer = window.setTimeout(() => {
       holdTimer = null;
-      if (!canUseGesture()) return;
-      openOwnerPinDialog({
-        host: dialogHost,
-        onSuccess: () => onOwnerUnlocked?.()
-      });
+      onHoldStateChange?.(false);
+      onHoldComplete();
     }, HOLD_MS);
   };
 
-  logoElement.addEventListener('pointerdown', startHold);
-  logoElement.addEventListener('pointerup', clearHold);
-  logoElement.addEventListener('pointerleave', clearHold);
-  logoElement.addEventListener('pointercancel', clearHold);
-  logoElement.addEventListener('contextmenu', (event) => {
-    if (canUseGesture()) event.preventDefault();
+  element.addEventListener('pointerdown', (event) => {
+    if ('button' in event && event.button !== 0) return;
+    startHold();
   });
+  element.addEventListener('pointerup', clearHold);
+  element.addEventListener('pointercancel', clearHold);
+  element.addEventListener('contextmenu', (event) => {
+    if (isHomeDeployment() && isHouseSitterExperience()) event.preventDefault();
+  });
+}
+
+/**
+ * @param {Object} options
+ * @param {HTMLElement | HTMLElement[]} options.logoElements
+ * @param {HTMLElement} [options.holdFeedbackElement]
+ * @param {HTMLElement} options.dialogHost
+ * @param {() => void} [options.onOwnerUnlocked]
+ */
+export function attachOwnerAccessGesture({ logoElements, holdFeedbackElement, dialogHost, onOwnerUnlocked }) {
+  const targets = (Array.isArray(logoElements) ? logoElements : [logoElements]).filter(Boolean);
+  if (!targets.length || !dialogHost) return;
+
+  const canUseGesture = () => isHomeDeployment() && isHouseSitterExperience();
+
+  const openDialog = () => {
+    if (!canUseGesture()) return;
+    openOwnerPinDialog({
+      host: dialogHost,
+      onSuccess: () => onOwnerUnlocked?.()
+    });
+  };
+
+  const onHoldStateChange = (active) => {
+    if (holdFeedbackElement) {
+      holdFeedbackElement.classList.toggle('is-owner-hold-active', active && canUseGesture());
+    }
+  };
+
+  for (const element of targets) {
+    attachHoldTarget(element, openDialog, onHoldStateChange);
+  }
 }

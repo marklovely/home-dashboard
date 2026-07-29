@@ -19,7 +19,7 @@ import { isHouseSitterExperience } from '../auth/userMode.js';
  * @property {boolean} showControlsFooter
  * @property {boolean} showHomeWelcomeGreeting
  * @property {boolean} showHelpCard
- * @property {{ allowedButtonIds: number[], labels: Record<number, { title: string, subtitle: string }> } | null} controls
+ * @property {{ labels: Record<number, { title: string, subtitle: string }> } | null} controls
  * @property {Record<string, string>} appTitleOverrides
  */
 
@@ -60,7 +60,6 @@ const houseSitterConfig = {
   showHomeWelcomeGreeting: false,
   showHelpCard: true,
   controls: {
-    allowedButtonIds: [1, 2, 9],
     labels: {
       1: { title: 'Downstairs Lights', subtitle: 'Turn on the main lights' },
       2: { title: 'Bedtime', subtitle: 'Settle the house for the night' },

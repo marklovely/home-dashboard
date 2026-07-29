@@ -4,15 +4,20 @@ import { showToast } from '../../js/modules/toast.js';
 import { createRoutineButton } from '../Alexa/buttons.js';
 
 /**
+ * @param {string} subtitle
+ */
+function sitterFriendlySubtitle(subtitle) {
+  if (!subtitle) return '';
+  if (/virtual button/i.test(subtitle)) return '';
+  return subtitle;
+}
+
+/**
  * @param {import('../../types/widget.js').WidgetContext} context
  */
 export function mountSitterControlsGrid(context) {
-  const mode = getModeConfig();
-  const rules = mode.controls;
-  if (!rules) return document.createDocumentFragment();
-
-  const allowed = new Set(rules.allowedButtonIds);
-  const buttons = (context.config.buttons ?? []).filter((button) => allowed.has(button.id));
+  const rules = getModeConfig().controls;
+  const buttons = context.config.buttons ?? [];
 
   const fragment = document.createDocumentFragment();
   const grid = document.createElement('section');
@@ -20,11 +25,11 @@ export function mountSitterControlsGrid(context) {
   grid.setAttribute('aria-label', 'Home controls');
 
   for (const button of buttons) {
-    const labels = rules.labels[button.id];
+    const labels = rules?.labels?.[button.id];
     const display = {
       ...button,
       title: labels?.title ?? button.title,
-      subtitle: labels?.subtitle ?? button.subtitle ?? ''
+      subtitle: sitterFriendlySubtitle(labels?.subtitle ?? button.subtitle ?? '')
     };
     const element = createRoutineButton(display, async (pressed, el) => {
       if (!navigator.onLine) {
