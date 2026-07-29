@@ -6,7 +6,7 @@ const APP_DISPLAY_ORDER = [
   'bins',
   'emergency',
   'plex',
-  'calendar',
+  'my-day',
   'settings'
 ];
 

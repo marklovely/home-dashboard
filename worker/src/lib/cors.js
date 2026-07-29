@@ -28,7 +28,7 @@ export function corsHeaders(allowedOrigin) {
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Correlation-Id',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Correlation-Id',
     Vary: 'Origin'
   };
 }

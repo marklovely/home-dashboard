@@ -1512,6 +1512,107 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   outline-offset: 2px;
 }
 
+.my-day-app {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 3vw, 24px);
+  max-width: 42rem;
+}
+.my-day-greeting {
+  margin: 0;
+  font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+  font-weight: 800;
+}
+.my-day-status,
+.my-day-stale-notice,
+.my-day-empty-line {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.my-day-unlock-button {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #8b7cff 45%, var(--border));
+  background: color-mix(in srgb, #8b7cff 18%, transparent);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.my-day-unlock-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, #8b7cff 55%, transparent);
+  outline-offset: 2px;
+}
+.my-day-stale-notice {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+}
+.my-day-section-title {
+  margin: 12px 0 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.my-day-event-list {
+  display: grid;
+  gap: 12px;
+}
+.my-day-event {
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 6px;
+}
+.my-day-event-time {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.my-day-event-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.my-day-event-location {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.my-day-badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid rgba(139, 124, 255, 0.35);
+  background: rgba(139, 124, 255, 0.12);
+}
+.my-day-badge--subtle {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+}
+.my-day-later {
+  display: grid;
+  gap: 8px;
+}
+
 .owner-access-host { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
 .owner-access-host:not(:empty) { pointer-events: auto; }
 .owner-pin-overlay {

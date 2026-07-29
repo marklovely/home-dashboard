@@ -63,7 +63,15 @@ export async function handleOwnerAuth(request, correlationId, env) {
   const valid = timingSafeEqualString(pin, configuredPin);
   if (valid) {
     await recordOwnerAuthSuccess(request, env);
-    return authJson(true, 200);
+    const { issueOwnerToken } = await import('../lib/ownerToken.js');
+    const session = await issueOwnerToken(env);
+    if (session) {
+      return Response.json(
+        { ok: true, authenticated: true, token: session.token, expiresAt: session.expiresAt },
+        { status: 200 }
+      );
+    }
+    return authJson(false, 503, 'Owner session unavailable');
   }
 
   await recordOwnerAuthFailure(request, env);
