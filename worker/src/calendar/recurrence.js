@@ -4,7 +4,7 @@ import {
   localDateKey,
   rangeBounds
 } from './timezone.js';
-import { getIcalExpanderConstructor } from './icalExpanderLoader.js';
+import { parseIcsRoot } from './appleIcsExpand.js';
 
 /**
  * @param {string} uid
@@ -17,7 +17,7 @@ export function stableEventId(uid, recurrenceId) {
 }
 
 /**
- * @param {import('ical.js').Event | import('ical-expander').IcalExpanderEvent} eventLike
+ * @param {import('ical.js').Event} eventLike
  */
 function isCancelled(eventLike) {
   let status = eventLike.status?.toString?.()?.toLowerCase?.() ?? eventLike.status;
@@ -48,7 +48,7 @@ export function isEventRelevantNow(start, end, allDay, asOf, rangeFrom, rangeTo)
 }
 
 /**
- * @param {import('ical-expander').IcalExpanderEvent} event
+ * @param {import('ical.js').Event} event
  * @param {Date} asOf
  * @param {string} rangeFrom
  * @param {string} rangeTo
@@ -74,7 +74,7 @@ function mapSingleEvent(event, asOf, rangeFrom, rangeTo) {
 }
 
 /**
- * @param {import('ical-expander').IcalExpanderOccurrence} occurrence
+ * @param {{ item: import('ical.js').Event; startDate: import('ical.js').Time; endDate: import('ical.js').Time }} occurrence
  * @param {Date} asOf
  * @param {string} rangeFrom
  * @param {string} rangeTo
@@ -124,18 +124,7 @@ function mapOccurrenceSafe(occurrence, asOf, rangeFrom, rangeTo) {
  */
 export function parseAndExpandIcs(icsText, asOf = new Date()) {
   const { startUtc, endUtc, from, to } = rangeBounds(asOf);
-  const IcalExpander = getIcalExpanderConstructor();
-  const expander = new IcalExpander({ ics: icsText, maxIterations: 5000, skipInvalidDates: true });
-
-  let events = [];
-  let occurrences = [];
-  try {
-    ({ events, occurrences } = expander.between(startUtc, endUtc));
-  } catch {
-    const error = new Error('CALENDAR_PARSE');
-    error.code = 'CALENDAR_PARSE';
-    throw error;
-  }
+  const { events, occurrences } = parseIcsRoot(icsText, startUtc, endUtc);
 
   /** @type {import('./calendarTypes.js').NormalizedCalendarEvent[]} */
   const normalized = [];
