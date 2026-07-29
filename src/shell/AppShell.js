@@ -64,7 +64,7 @@ export function createAppShell({
 
     if (isHome) {
       document.title = branding.documentTitleBase;
-      document.body.classList.remove('is-weather-route');
+      document.body.classList.remove('is-weather-route', 'is-bins-route');
       void renderModeHomeScreen(viewport, getVisibleApps(), shellContext);
       return;
     }
@@ -81,7 +81,9 @@ export function createAppShell({
     }
 
     document.title = `${getAppDisplayTitle(app)} · ${branding.documentTitleBase}`;
-    document.body.classList.toggle('is-weather-route', route === 'weather');
+    document.body.classList.remove('is-weather-route', 'is-bins-route');
+    if (route === 'weather') document.body.classList.add('is-weather-route');
+    if (route === 'bins') document.body.classList.add('is-bins-route');
     app.mount(viewport, shellContext);
   };
 
