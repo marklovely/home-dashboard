@@ -1,12 +1,16 @@
+/** Where bins go on collection eve (informative, not a command). */
+export const BIN_PUT_OUT_LOCATION =
+  'the end of the road as you turn into the close from Wagtail Road';
+
 /**
  * Informative copy for the Bin Collection app (not reminders or commands).
  * @param {boolean} houseSitter
  */
 export function getCollectionTimingIntro(houseSitter) {
   if (houseSitter) {
-    return 'Collections are normally from 6am. Bins are usually at the end of the road the night before.';
+    return `Collections are normally from 6am. Bins are usually at ${BIN_PUT_OUT_LOCATION} the night before.`;
   }
-  return 'Collection from 6am. Bins at the end of the road the night before.';
+  return `Collection from 6am. Bins at ${BIN_PUT_OUT_LOCATION} the night before.`;
 }
 
 /**
@@ -25,18 +29,17 @@ export function getBankHolidayNote(event, houseSitter, timing) {
 /**
  * @param {string} displayName
  * @param {import('../services/binCollectionService.js').DaysUntilResult} timing
- * @param {string} binDescription
+ * @param {string} binLabel Emoji + bin wording from `formatBinLabel`
  * @param {boolean} houseSitter
  */
-export function getHouseSitterCollectionSentence(displayName, timing, binDescription, houseSitter) {
+export function getHouseSitterCollectionSentence(displayName, timing, binLabel, houseSitter) {
   if (!houseSitter) return null;
   const nameLower = displayName.replace('& glass', 'and glass');
   let when;
   if (timing.days === 0) when = 'today';
   else if (timing.days === 1) when = 'tomorrow';
   else when = `on ${timing.dateLabel}`;
-  const article = timing.days === 1 ? 'is' : 'are';
-  return `${nameLower} is collected ${when}. The ${binDescription.toLowerCase()} ${article} used for this collection.`;
+  return `${nameLower} is collected ${when}. Use ${binLabel} for this collection.`;
 }
 
 /**

@@ -18,7 +18,8 @@
  * @typedef {Object} CollectionTypeDefinition
  * @property {CollectionTypeId} id
  * @property {string} displayName
- * @property {string} binDescription
+ * @property {string} binDescription Plain bin / container wording (no emoji)
+ * @property {string} emoji Colour cue alongside icon and label (not colour-only)
  * @property {string} iconId Lucide icon key for renderBinCollectionIcon
  * @property {string} cssModifier BEM modifier for styling (not sole differentiator)
  */
@@ -28,25 +29,35 @@ export const COLLECTION_TYPES = {
   rubbish: {
     id: 'rubbish',
     displayName: 'Rubbish',
-    binDescription: 'Green bin',
+    emoji: '🟢',
+    binDescription: 'Green wheelie bin — household rubbish',
     iconId: 'trash-2',
     cssModifier: 'rubbish'
   },
   recycling: {
     id: 'recycling',
     displayName: 'Recycling & glass',
-    binDescription: 'Black bin and glass box',
+    emoji: '⚫',
+    binDescription: 'Black wheelie bin — recycling, plus glass box',
     iconId: 'recycle',
     cssModifier: 'recycling'
   },
   gardenWaste: {
     id: 'gardenWaste',
     displayName: 'Garden waste',
-    binDescription: 'Brown bin',
+    emoji: '🟫',
+    binDescription: 'Brown wheelie bin — garden waste',
     iconId: 'leaf',
     cssModifier: 'garden-waste'
   }
 };
+
+/**
+ * @param {CollectionTypeDefinition | ReturnType<typeof getCollectionType>} typeDef
+ */
+export function formatBinLabel(typeDef) {
+  return `${typeDef.emoji} ${typeDef.binDescription}`;
+}
 
 /** @param {CollectionTypeId | 'rubbish' | 'recycling'} typeId */
 export function getCollectionType(typeId) {

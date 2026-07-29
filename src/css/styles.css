@@ -1319,6 +1319,8 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .bins-timeline-type { margin: 2px 0 0; font-weight: 700; }
 .bins-timeline-bins { margin: 2px 0 0; font-size: 0.92rem; }
 .bins-practical { display: grid; gap: 8px; line-height: 1.45; }
+.bins-timing-intro { margin: 0; }
+.bins-put-out-location { font-weight: 800; color: inherit; }
 .bins-garden-details {
   border: 1px solid var(--border);
   border-radius: 14px;
