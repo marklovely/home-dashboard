@@ -69,10 +69,11 @@ curl -s "https://<your-worker>.workers.dev/api/health"
 
 ## CORS
 
-`ALLOWED_ORIGINS` in `wrangler.toml` (or Worker vars) lists permitted browser origins:
+`ALLOWED_ORIGINS` in `wrangler.toml` lists permitted browser origins:
 
-- Local Vite (`http://localhost:5173`, `http://127.0.0.1:5173`)
-- GitHub Pages / Cloudflare Pages production URL
+- Local Vite (`http://localhost:5173`, `http://127.0.0.1:5173`, preview on `:4173`)
+- GitHub Pages (`https://marklovely.github.io`)
+- Cloudflare Pages (`https://*.pages.dev` — production and preview hostnames)
 - Add `https://dashboard.lovely-home.co.uk` when the custom domain is live
 
 Preview deployments: add a pattern such as `https://*.pages.dev` when supported, or list known preview hostnames.
