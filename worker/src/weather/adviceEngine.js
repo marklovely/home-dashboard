@@ -42,23 +42,23 @@ export function generateWeatherAdvice(weather, audience = 'owner') {
   if (heavyRainSoon || afternoonRain || rainChance >= 60) {
     advice.push({
       icon: 'rain',
-      title: houseSitter ? 'Rain expected later today.' : 'Rain expected this afternoon.',
+      title: houseSitter ? 'Rain may arrive later today.' : 'Rain may arrive this afternoon.',
       detail: houseSitter
-        ? 'Walk Scooter before it starts — towel him off if he gets wet.'
-        : 'Consider walking Scooter earlier.'
+        ? 'An earlier walk with Scooter might stay drier. A towel could help if he gets wet.'
+        : 'You might prefer to walk Scooter earlier while it is still dry.'
     });
   } else if (rainChance <= 15 && !upcomingHours.some((h) => (h.rainChance ?? 0) > 30)) {
     advice.push(
       houseSitter
         ? {
             icon: 'dog',
-            title: 'Dry weather today.',
-            detail: 'A good day for Scooter’s usual walks — bring water if you stay out long.'
+            title: 'It may stay mostly dry today.',
+            detail: 'Walks with Scooter could be pleasant; water might be worth bringing on longer outings.'
           }
         : {
             icon: 'garden',
-            title: 'Dry weather today.',
-            detail: 'Good opportunity for gardening.'
+            title: 'It may stay mostly dry today.',
+            detail: 'You might find it a good opportunity for gardening if that was already on your mind.'
           }
     );
   }
@@ -66,10 +66,10 @@ export function generateWeatherAdvice(weather, audience = 'owner') {
   if (Number.isFinite(high) && high >= 28) {
     advice.push({
       icon: 'dog',
-      title: houseSitter ? 'Very warm for Scooter.' : 'Very warm today.',
+      title: 'It may feel very warm.',
       detail: houseSitter
-        ? 'Walk early or late, stick to shade, and offer plenty of water.'
-        : 'Early morning or evening walks are recommended.'
+        ? 'Shadier times and extra water could help Scooter stay comfortable on walks.'
+        : 'Early or late walks with Scooter might feel more comfortable than the middle of the day.'
     });
   }
 
@@ -78,13 +78,13 @@ export function generateWeatherAdvice(weather, audience = 'owner') {
       houseSitter
         ? {
             icon: 'cold',
-            title: 'Cold overnight.',
-            detail: 'Keep Scooter’s evening walk brief and dry him off when you come in.'
+            title: 'It may turn cold overnight.',
+            detail: 'A shorter evening walk might suit Scooter; drying off could help when you come in.'
           }
         : {
             icon: 'cold',
-            title: 'Cold overnight.',
-            detail: 'Check outdoor taps.'
+            title: 'It may turn cold overnight.',
+            detail: 'Outdoor taps might be worth a glance if frost is a concern.'
           }
     );
   }
@@ -94,13 +94,13 @@ export function generateWeatherAdvice(weather, audience = 'owner') {
       houseSitter
         ? {
             icon: 'wind',
-            title: 'Windy today.',
-            detail: 'Keep Scooter on a lead in open areas — gusts can unsettle smaller dogs.'
+            title: 'It might be windy.',
+            detail: 'Scooter may feel more settled on a lead in open areas if gusts pick up.'
           }
         : {
             icon: 'wind',
-            title: 'Strong winds expected.',
-            detail: 'Secure lightweight garden furniture.'
+            title: 'It might be windy.',
+            detail: 'Light garden furniture could shift; you might consider securing it if needed.'
           }
     );
   }
@@ -108,10 +108,10 @@ export function generateWeatherAdvice(weather, audience = 'owner') {
   if (uv >= 6) {
     advice.push({
       icon: 'sun',
-      title: 'High UV today.',
+      title: 'UV may be high.',
       detail: houseSitter
-        ? 'Use sunscreen on walks with Scooter and favour shady routes.'
-        : 'Consider sunscreen if spending time outdoors.'
+        ? 'Sunscreen and shadier routes might be worth considering on walks with Scooter.'
+        : 'Consider sunscreen if you might spend extended time outdoors.'
     });
   }
 
@@ -120,13 +120,13 @@ export function generateWeatherAdvice(weather, audience = 'owner') {
       houseSitter
         ? {
             icon: 'dog',
-            title: 'Comfortable for Scooter.',
-            detail: 'Routine walks and garden time should be fine today.'
+            title: 'Conditions may suit Scooter.',
+            detail: 'Usual walks and time in the garden could feel comfortable today.'
           }
         : {
             icon: 'home',
-            title: 'Enjoy the day.',
-            detail: 'Conditions look comfortable at home.'
+            title: 'Comfortable conditions.',
+            detail: 'The forecast suggests a pleasant day at home.'
           }
     );
   }
@@ -143,7 +143,7 @@ export function buildDashboardAlert(weather, audience = 'owner') {
   const high = weather.today?.high ?? weather.daily[0]?.high;
   if (Number.isFinite(high) && high >= 28) {
     return {
-      label: audience === 'house-sitter' ? 'Hot day — care for Scooter' : 'High Heat Today',
+      label: audience === 'house-sitter' ? 'Heat may be high today' : 'Heat may be high today',
       icon: 'sun'
     };
   }
@@ -156,9 +156,8 @@ export function buildDashboardAlert(weather, audience = 'owner') {
     if (hoursAway > 6) break;
     if ((hour.rainChance ?? 0) >= 50) {
       const rounded = Math.max(1, Math.round(hoursAway));
-      const rainLabel = `Rain in ${rounded} hour${rounded === 1 ? '' : 's'}`;
       return {
-        label: audience === 'house-sitter' ? `${rainLabel} — plan Scooter’s walk` : rainLabel,
+        label: `Rain might arrive in ${rounded} hour${rounded === 1 ? '' : 's'}`,
         icon: 'rain'
       };
     }
