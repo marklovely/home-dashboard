@@ -207,5 +207,8 @@ export function myDayUnavailableMessage(message) {
   if (message === 'CALENDAR_PARSE') {
     return 'Your calendar feed was retrieved but could not be read. Check Worker logs or try republishing the Apple calendar link.';
   }
+  if (message === 'CALENDAR_RUNTIME') {
+    return 'My Day could not start the calendar parser on the Worker. Redeploy the latest Worker build from the My Day branch.';
+  }
   return 'My Day is temporarily unavailable. Unlock with your owner PIN again after confirming the Worker is deployed with APPLE_CALENDAR_ICS_URL.';
 }
