@@ -1,4 +1,4 @@
-import { isHomeDeployment } from './deploymentMode.js';
+import { isOwnerAccessAllowed } from './deploymentMode.js';
 import { isHouseSitterExperience } from './userMode.js';
 import { openOwnerPinDialog } from '../components/OwnerAccess/ownerPinDialog.js';
 
@@ -38,7 +38,7 @@ function attachHoldTarget(element, onHoldComplete, onHoldStateChange) {
   element.addEventListener('pointerup', clearHold);
   element.addEventListener('pointercancel', clearHold);
   element.addEventListener('contextmenu', (event) => {
-    if (isHomeDeployment() && isHouseSitterExperience()) event.preventDefault();
+    if (isOwnerAccessAllowed() && isHouseSitterExperience()) event.preventDefault();
   });
 }
 
@@ -53,7 +53,7 @@ export function attachOwnerAccessGesture({ logoElements, holdFeedbackElement, di
   const targets = (Array.isArray(logoElements) ? logoElements : [logoElements]).filter(Boolean);
   if (!targets.length || !dialogHost) return;
 
-  const canUseGesture = () => isHomeDeployment() && isHouseSitterExperience();
+  const canUseGesture = () => isOwnerAccessAllowed() && isHouseSitterExperience();
 
   const openDialog = () => {
     if (!canUseGesture()) return;

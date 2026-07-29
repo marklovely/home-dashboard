@@ -12,6 +12,7 @@ import '../widgets/index.js';
 import { preloadPrivateConfig } from '../services/privateConfigService.js';
 import { isHouseSitterExperience } from '../auth/userMode.js';
 import { attachOwnerAccessGesture } from '../auth/ownerAccessGesture.js';
+import { registerOwnerLockNavigation } from '../auth/ownerLock.js';
 
 initTheme();
 void preloadPrivateConfig();
@@ -81,6 +82,11 @@ createAppShell({
   shellContext
 });
 
+registerOwnerLockNavigation(() => {
+  navigate(HOME_ROUTE);
+  shellContext.refreshShell?.();
+});
+
 attachOwnerAccessGesture({
   logoElements: [
     document.querySelector('#shell-eyebrow'),
@@ -91,16 +97,6 @@ attachOwnerAccessGesture({
   dialogHost: document.querySelector('#owner-access-host'),
   onOwnerUnlocked: () => shellContext.refreshShell?.()
 });
-
-if (import.meta.env.DEV) {
-  import('../auth/deploymentMode.js').then(({ isHomeDeployment }) => {
-    if (isHomeDeployment()) {
-      console.warn(
-        '[Lovely Home] Owner access (home deployment only): click and hold the “LOVELY HOME” title (top left) for 5 seconds, then enter your PIN. Requires VITE_DEPLOYMENT_MODE=home and VITE_OWNER_PIN in .env.local.'
-      );
-    }
-  });
-}
 
 subscribeWeatherSnapshot(() => {
   if (getCurrentRoute() === HOME_ROUTE) {
