@@ -6,6 +6,7 @@ import {
   stopOwnerInactivityWatch
 } from './ownerSession.js';
 import { clearOwnerAccessToken } from './ownerAccessToken.js';
+import { lockOwner } from './deviceSessionStore.js';
 import { startOwnerInactivityWatch } from './ownerInactivity.js';
 import { refreshMyDayCalendar } from '../services/myDayCalendarService.js';
 
@@ -40,8 +41,9 @@ export function completeOwnerUnlock(refreshShell) {
   setUserMode(UserMode.Owner);
   markOwnerUnlockedByPin();
   startOwnerInactivityWatch(() => {
-    lockToHouseSitterMode();
-    refreshShell?.();
+    void lockOwner(() => {
+      refreshShell?.();
+    });
   });
   void refreshMyDayCalendar();
   refreshShell?.();

@@ -1,7 +1,7 @@
 import { isAllowedButtonCode, BUTTON_CODE_TO_VIRTUAL_ID, normalizeButtonCode } from '../lib/buttonAllowlist.js';
 import { jsonError } from '../lib/errors.js';
 import { triggerVirtualButtonUpstream } from '../services/virtualButtons.js';
-import { authenticateRequest } from '../lib/requestAuth.js';
+import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
 import { isControlAllowedForRole } from '../lib/controlPermissions.js';
 import { ensureControlActionAllowed } from '../lib/controlRateLimitClient.js';
 import { identityForLogs } from '../lib/auditLog.js';
@@ -30,17 +30,20 @@ export async function handleButtonPress(request, buttonParam, env, correlationId
     return jsonError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Use application/json.', { correlationId });
   }
 
-  const auth = await authenticateRequest(request, env, fetchImpl);
-  if (!auth.ok) {
-    return jsonError(auth.status, auth.code, 'Authentication required.', { correlationId });
+  const gate = await requireAnyDeviceSession(request, env);
+  if (!gate.ok) {
+    return jsonError(gate.status, gate.code, 'Authentication required.', { correlationId });
   }
+  const auth = gate.access;
+
+  const effectiveRole = gate.session.mode === 'owner' ? auth.role : 'house-sitter';
 
   const code = normalizeButtonCode(buttonParam);
   if (!code || !isAllowedButtonCode(code)) {
     logControlAction({
       correlationId,
       action: buttonParam,
-      role: auth.role,
+      role: effectiveRole,
       identity: identityForLogs(auth.email),
       success: false,
       reason: 'UNKNOWN_BUTTON'
@@ -48,11 +51,11 @@ export async function handleButtonPress(request, buttonParam, env, correlationId
     return jsonError(404, 'UNKNOWN_BUTTON', 'This control is not available.', { correlationId });
   }
 
-  if (!isControlAllowedForRole(code, auth.role)) {
+  if (!isControlAllowedForRole(code, effectiveRole)) {
     logControlAction({
       correlationId,
       action: code,
-      role: auth.role,
+      role: effectiveRole,
       identity: identityForLogs(auth.email),
       success: false,
       reason: 'FORBIDDEN'
@@ -65,7 +68,7 @@ export async function handleButtonPress(request, buttonParam, env, correlationId
     logControlAction({
       correlationId,
       action: code,
-      role: auth.role,
+      role: effectiveRole,
       identity: identityForLogs(auth.email),
       success: false,
       reason: rate.reason ?? 'RATE_LIMITED'
@@ -91,7 +94,7 @@ export async function handleButtonPress(request, buttonParam, env, correlationId
     logControlAction({
       correlationId,
       action: code,
-      role: auth.role,
+      role: effectiveRole,
       identity: identityForLogs(auth.email),
       success: true
     });
@@ -100,7 +103,7 @@ export async function handleButtonPress(request, buttonParam, env, correlationId
     logControlAction({
       correlationId,
       action: code,
-      role: auth.role,
+      role: effectiveRole,
       identity: identityForLogs(auth.email),
       success: false,
       reason: 'UPSTREAM_ERROR'

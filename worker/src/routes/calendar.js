@@ -1,4 +1,5 @@
-import { authenticateRequest, hasRequiredRole } from '../lib/requestAuth.js';
+import { requireOwnerDeviceMode, renewOwnerSessionIfActive } from '../lib/deviceSessionAuth.js';
+import { attachDeviceSessionCookie } from '../lib/deviceSession.js';
 
 /**
  * @param {Request} request
@@ -10,23 +11,24 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
-  const auth = await authenticateRequest(request, env, fetchImpl);
-  if (!auth.ok) {
-    return Response.json({ error: 'Unauthorized', code: auth.code }, { status: auth.status });
-  }
-
-  if (!hasRequiredRole(auth, 'owner')) {
-    return Response.json({ error: 'Forbidden', code: 'FORBIDDEN' }, { status: 403 });
+  const gate = await requireOwnerDeviceMode(request, env);
+  if (!gate.ok) {
+    return Response.json({ error: 'Forbidden', code: gate.code }, { status: gate.status });
   }
 
   const { getHomeCalendar } = await import('../calendar/calendarService.js');
 
   try {
     const payload = await getHomeCalendar(env, fetchImpl);
-    return Response.json(payload, {
+    let response = Response.json(payload, {
       status: 200,
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store' }
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
     });
+    const renewed = await renewOwnerSessionIfActive(gate.session.claims, env);
+    if (renewed) {
+      response = attachDeviceSessionCookie(response, renewed.cookieValue, renewed.claims);
+    }
+    return response;
   } catch (error) {
     const feedConfigured = Boolean(env.APPLE_CALENDAR_ICS_URL?.trim());
     /** @type {Record<string, unknown>} */

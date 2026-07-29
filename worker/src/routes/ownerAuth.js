@@ -5,6 +5,7 @@ import {
   recordOwnerAuthSuccess
 } from '../lib/ownerAuthRateLimitClient.js';
 import { authenticateRequest, hasRequiredRole } from '../lib/requestAuth.js';
+import { issueOwnerSessionResponse } from '../lib/deviceSessionAuth.js';
 
 /**
  * @param {boolean} authenticated
@@ -56,7 +57,7 @@ export async function handleOwnerAuth(request, correlationId, env, fetchImpl = f
   }
 
   if (!(await ensureOwnerAuthAllowed(request, env))) {
-    return authJson(false, 429, 'Too many attempts. Try again later.');
+    return authJson(false, 429, 'Too many attempts. Please wait before trying again.');
   }
 
   let body;
@@ -78,15 +79,7 @@ export async function handleOwnerAuth(request, correlationId, env, fetchImpl = f
   const valid = timingSafeEqualString(pin, configuredPin);
   if (valid) {
     await recordOwnerAuthSuccess(request, env);
-    const { issueOwnerToken } = await import('../lib/ownerToken.js');
-    const session = await issueOwnerToken(env);
-    if (session) {
-      return Response.json(
-        { ok: true, authenticated: true, token: session.token, expiresAt: session.expiresAt },
-        { status: 200 }
-      );
-    }
-    return authJson(false, 503, 'Owner session unavailable');
+    return issueOwnerSessionResponse(env);
   }
 
   await recordOwnerAuthFailure(request, env);

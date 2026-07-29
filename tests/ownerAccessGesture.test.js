@@ -47,7 +47,7 @@ describe('owner access gesture', () => {
     expect(host.querySelector('.owner-pin-overlay')).toBeTruthy();
   });
 
-  it('opens dialog in owner mode when private session token is missing', () => {
+  it('does not open dialog while already in owner mode', () => {
     vi.useFakeTimers();
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'home');
     resetUserModeForTests();
@@ -59,6 +59,6 @@ describe('owner access gesture', () => {
 
     logo.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     vi.advanceTimersByTime(5000);
-    expect(host.querySelector('.owner-pin-overlay')).toBeTruthy();
+    expect(host.querySelector('.owner-pin-overlay')).toBeNull();
   });
 });

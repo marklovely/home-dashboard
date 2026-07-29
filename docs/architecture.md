@@ -304,6 +304,67 @@ See [bin-collection-maintenance.md](./bin-collection-maintenance.md) for the exa
 
 UI layout and screenshot maintenance: [bin-collection-ui.md](./bin-collection-ui.md).
 
+## Device mode (House Sitter vs Owner)
+
+Two independent security layers protect the wall tablet:
+
+| Layer | Question | Mechanism |
+|-------|----------|-----------|
+| **Cloudflare Access** | Who may reach the site? | Mark and Donna’s approved emails + emailed OTP |
+| **Device mode** | What may this tablet show and call? | Signed HTTP-only cookie issued by the Worker |
+
+Cloudflare Access stays enabled for the whole site. A valid Access session alone does **not** unlock Owner Mode or owner-only APIs.
+
+### Signed device session cookie
+
+- **Name:** `lovely_home_device_session`
+- **Attributes:** `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`
+- **Signing:** HMAC-SHA256 over a base64url JSON payload using Worker secret `OWNER_SESSION_SECRET`
+- **Authority:** The Worker validates the cookie on every protected route. React state, `localStorage`, and `sessionStorage` are never authoritative.
+- **Safe default:** Missing, invalid, expired, or tampered cookies → **House Sitter Mode**
+
+**Durations:**
+
+- House Sitter Mode — ~30 days (renewed on use when past half TTL)
+- Owner Mode — 30 minutes inactivity, 4 hours absolute maximum (server-enforced)
+
+Session JSON responses use `Cache-Control: no-store` and never expose cookie bytes or signing material.
+
+### API endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/device-session` | Current mode (from cookie) |
+| POST | `/api/device-mode` | `{ "mode": "sitter" }` — owner device session only |
+| POST | `/api/auth/owner` | PIN → short-lived owner device session |
+| POST | `/api/auth/lock` | Revoke owner session → persistent sitter cookie |
+
+Owner-only routes (`/api/calendar`, `/api/private-config`, …) require **Access owner identity + valid owner device session**. House-sitter-safe controls still require Access + device session; effective control role follows device mode (sitter mode limits buttons even if Access identity is an owner).
+
+The Pages API proxy forwards the browser `Cookie` header and returns Worker `Set-Cookie` headers so device sessions work same-origin.
+
+### Sitter handover (before leaving)
+
+1. Confirm the tablet is authenticated through Cloudflare Access.
+2. Unlock Owner Mode (hidden gesture + PIN).
+3. In Settings, choose **Enable House Sitter Mode** and confirm.
+4. Refresh the browser — the dashboard should remain in House Sitter Mode.
+5. Confirm House Controls work.
+6. Confirm My Day and other owner-only apps are absent.
+
+### Return home
+
+1. Use the hidden owner gesture.
+2. Enter the owner PIN.
+3. Confirm Owner Mode loads.
+4. Reauthenticate through Cloudflare Access if its session has expired (the signed sitter device cookie then continues to keep the tablet in House Sitter Mode until owners unlock again).
+
+### Required Worker secrets
+
+- `OWNER_PIN` — compared server-side only (never in frontend bundle)
+- `OWNER_SESSION_SECRET` — device session signing
+- `OWNER_EMAILS` — comma-separated owner emails for Access role mapping
+
 ## My Day (owner-only calendar)
 
 **My Day** is a read-only personal agenda for the wall dashboard — not a full calendar replacement. It shows today, tomorrow, and the next six days from Mark’s **private Apple published ICS feed**.
@@ -312,9 +373,9 @@ UI layout and screenshot maintenance: [bin-collection-ui.md](./bin-collection-ui
 My Day app + Home card (owner only)
         │
         ▼
-GET /api/calendar  (Authorization: Bearer owner token)
+GET /api/calendar  (valid owner device session cookie + Access owner)
         │
-        ├── Owner session token (issued on successful PIN auth, memory-only in browser)
+        ├── Signed owner device session (issued on successful PIN auth; HttpOnly cookie)
         ├── 5-minute normalized cache (`worker/src/calendar/calendarCache.js`)
         ├── Provider abstraction (`CalendarProvider` / `AppleIcsProvider`)
         ├── ICS parse + recurrence expansion (`ical.js`, Apple VTIMEZONE from feed)
@@ -325,7 +386,7 @@ Apple private ICS URL (Worker secret `APPLE_CALENDAR_ICS_URL` only)
 ```
 
 - **House Sitter Mode:** My Day is not registered, not routed, and **no calendar HTTP requests** are made.
-- **Authorization:** `/api/calendar` requires a short-lived bearer token from `POST /api/auth/owner` (signed with `OWNER_SESSION_SECRET` or `OWNER_PIN`).
+- **Authorization:** `/api/calendar` requires Cloudflare Access owner identity and a valid **owner** device session cookie (from `POST /api/auth/owner`).
 - **Stale fallback:** If Apple is unreachable, the Worker serves the last cached normalized payload with `stale: true`.
 - **Read-only:** No create/edit/delete; no month grid.
 

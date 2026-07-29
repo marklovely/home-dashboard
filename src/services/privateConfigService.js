@@ -116,6 +116,13 @@ export function isPrivateConfigLoading() {
   return status === 'loading';
 }
 
+/** Clears cached owner-only config from memory. */
+export function clearPrivateConfigSession() {
+  status = 'idle';
+  sessionCache = null;
+  inflight = null;
+}
+
 /** Test helper */
 export function resetPrivateConfigForTests() {
   status = 'idle';
