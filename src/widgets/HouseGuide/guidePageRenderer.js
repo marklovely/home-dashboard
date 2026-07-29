@@ -1,27 +1,41 @@
-import { getGuideMediaCatalog } from '../../content/houseguide/providers/jsonGuideProvider.js';
-import { resolveGuideMediaById } from '../../content/houseguide/guideMedia.js';
+import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
 import { getProtectedDisplayValue } from '../../content/houseguide/privateContent.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createGuidePanelOverlay, runGuideAction } from './guideActions.js';
+import { renderGuideMediaFallback, wireGuideImageLightbox } from './guideImageUi.js';
 import { highlightGuideText } from './highlight.js';
 
-const catalogMedia = getGuideMediaCatalog();
+/**
+ * @param {string} url
+ * @param {string} alt
+ */
+function createGuideImageElement(url, alt) {
+  const img = document.createElement('img');
+  img.src = url;
+  img.alt = alt;
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  wireGuideImageLightbox(img);
+  return img;
+}
 
 /**
  * @param {import('../../types/guideContent.js').GuideBlock} block
- * @returns {HTMLElement | null}
+ * @returns {HTMLElement}
  */
 function renderBlock(block) {
   if (block.type === 'heroImage') {
-    const resolved = resolveGuideMediaById(block.mediaId, catalogMedia);
-    if (!resolved) return null;
+    const resolved = resolveGuideMedia(block.mediaId);
+    if (!resolved.ok) {
+      return renderGuideMediaFallback({
+        mediaId: block.mediaId,
+        expectedFilename: resolved.expectedFilename
+      });
+    }
+
     const figure = document.createElement('figure');
     figure.className = 'guide-hero-image';
-    const img = document.createElement('img');
-    img.src = resolved.url;
-    img.alt = resolved.alt;
-    img.loading = 'lazy';
-    figure.append(img);
+    figure.append(createGuideImageElement(resolved.url, resolved.alt));
     if (block.caption) {
       const caption = document.createElement('figcaption');
       caption.className = 'guide-hero-caption';
@@ -32,10 +46,6 @@ function renderBlock(block) {
   }
 
   if (block.type === 'gallery') {
-    const images = (block.mediaIds ?? [])
-      .map((id) => resolveGuideMediaById(id, catalogMedia))
-      .filter(Boolean);
-    if (images.length === 0) return null;
     const wrap = document.createElement('section');
     wrap.className = 'guide-gallery';
     if (block.heading) {
@@ -46,12 +56,23 @@ function renderBlock(block) {
     }
     const grid = document.createElement('div');
     grid.className = 'guide-gallery-grid';
-    for (const image of images) {
-      const img = document.createElement('img');
-      img.src = image.url;
-      img.alt = image.alt;
-      img.loading = 'lazy';
-      grid.append(img);
+    let rendered = 0;
+    for (const mediaId of block.mediaIds ?? []) {
+      const resolved = resolveGuideMedia(mediaId);
+      if (!resolved.ok) {
+        grid.append(
+          renderGuideMediaFallback({
+            mediaId,
+            expectedFilename: resolved.expectedFilename
+          })
+        );
+        continue;
+      }
+      rendered += 1;
+      grid.append(createGuideImageElement(resolved.url, resolved.alt));
+    }
+    if (rendered === 0 && (block.mediaIds ?? []).length === 0) {
+      return wrap;
     }
     wrap.append(grid);
     return wrap;

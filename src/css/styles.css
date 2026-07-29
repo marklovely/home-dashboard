@@ -561,12 +561,66 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid var(--border);
+  background: var(--surface-2);
 }
-.guide-hero-image img {
+.guide-hero-image img,
+.guide-gallery-grid img {
   display: block;
   width: 100%;
-  max-height: 280px;
-  object-fit: cover;
+  max-height: min(52vh, 420px);
+  object-fit: contain;
+  object-position: center;
+  background: color-mix(in srgb, var(--surface-2) 80%, black);
+}
+.guide-media-tappable {
+  cursor: zoom-in;
+}
+.guide-hero-image-unresolved {
+  padding: 16px;
+  min-height: 88px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+.guide-media-fallback {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 600;
+}
+.guide-media-fallback-hint {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.guide-image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(8, 10, 14, 0.88);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.guide-image-lightbox-img {
+  max-width: min(960px, 100%);
+  max-height: min(88vh, 900px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+.guide-image-lightbox-close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
 }
 .guide-hero-caption {
   padding: 10px 14px;
@@ -582,8 +636,8 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .guide-gallery-grid img {
   width: 100%;
   border-radius: 14px;
-  object-fit: cover;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: auto;
+  max-height: min(40vh, 320px);
 }
 .guide-step-list {
   margin: 0;
