@@ -6,7 +6,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      include: ['src/js/**/*.js'],
+      include: ['src/js/**/*.js', 'src/api/**/*.js', 'src/widgets/**/*.js', 'src/components/**/*.js', 'src/services/**/*.js'],
       exclude: ['src/js/app.js']
     }
   }
