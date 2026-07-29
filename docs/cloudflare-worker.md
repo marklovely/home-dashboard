@@ -39,6 +39,8 @@ For production, set in **Cloudflare Pages** (frontend project only):
 - `VITE_API_BASE_URL` — your `*.workers.dev` URL (or custom API hostname)
 - `VITE_DEPLOYMENT_MODE=home` — for the full hub tablet (or `house-sitter` for guest-only builds)
 
+Set the **same** `VITE_API_BASE_URL` (and deployment mode) for **Preview** environment variables, not only Production. PR preview builds use the Preview scope; without it, weather and other Worker features show as unavailable.
+
 Do **not** set `VITE_OWNER_PIN` on Pages. Owner PIN validation runs only on the Worker via the `OWNER_PIN` secret (see below).
 
 ## Deploy Worker
