@@ -3,22 +3,21 @@
  */
 
 /**
- * @typedef {'controls' | 'panel'} WidgetLayout
- */
-
-/**
- * @typedef {Object} WidgetContext
+ * @typedef {Object} ShellContext
  * @property {import('../config.js').CONFIG extends infer C ? C : never} config
  * @property {HTMLElement} toast
  * @property {HTMLElement} lastCommand
+ * @property {(appId: string) => void} navigate
  */
 
 /**
- * @typedef {Object} Widget
+ * @typedef {Object} App
  * @property {string} id
+ * @property {string} title
+ * @property {string} icon
+ * @property {string} [accent]
  * @property {ProfileId[]} profiles
- * @property {WidgetLayout} [layout] Defaults to `controls` (inline routine buttons).
- * @property {(context: WidgetContext) => DocumentFragment | HTMLElement} mount
+ * @property {(viewport: HTMLElement, context: ShellContext) => void} mount
  */
 
 export {};
