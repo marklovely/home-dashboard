@@ -286,7 +286,7 @@ export function getBinCollectionHomeSummary(asOfDate = new Date(), options = {})
 
   return {
     title: typeDef.displayName,
-    subtitle: lines.slice(1).join('\n')
+    subtitle: lines.slice(1).join(' · ')
   };
 }
 
