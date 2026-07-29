@@ -60,10 +60,10 @@ function renderWeatherPage(data, page) {
   stats.className = 'weather-current-stats';
   statCell(stats, 'Wind', `${data.current.windDirection} ${data.current.windSpeed} mph`);
   statCell(stats, 'Humidity', `${data.current.humidity}%`);
-  statCell(stats, 'UV', String(data.current.uvIndex));
+  statCell(stats, 'UV index', String(data.current.uvIndex));
   statCell(stats, 'Air quality', data.current.airQuality);
-  statCell(stats, 'Sunrise', data.today.sunrise);
-  statCell(stats, 'Sunset', data.today.sunset);
+  statCell(stats, 'Sunrise', data.today.sunrise || '—');
+  statCell(stats, 'Sunset', data.today.sunset || '—');
 
   currentSection.append(hero, stats);
 

@@ -75,7 +75,9 @@ button { font: inherit; }
 }
 .app-viewport {
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   position: relative;
 }
 .app-viewport.is-active {
@@ -86,7 +88,6 @@ button { font: inherit; }
   to { opacity: 1; transform: translateY(0); }
 }
 .app-page {
-  height: 100%;
   min-height: 0;
 }
 .home-screen {
@@ -848,6 +849,9 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
+.mode-house-sitter .weather-app--premium {
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+}
 .mode-house-sitter .shell-chrome-title-block.is-owner-hold-active {
   outline: 2px solid color-mix(in srgb, #8b7cff 55%, transparent);
   outline-offset: 4px;
@@ -988,7 +992,11 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .weather-forecast-label { color: var(--muted); font-weight: 600; }
 .weather-forecast-temp { font-size: 1.2rem; font-weight: 800; }
 
-.weather-app--premium { display: grid; gap: 22px; padding-bottom: 24px; }
+.weather-app--premium {
+  display: grid;
+  gap: 22px;
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+}
 .weather-meta { margin: 0; }
 .weather-section-title { margin: 0 0 12px; font-size: 1.1rem; font-weight: 800; }
 .weather-current-hero { display: grid; gap: 6px; margin-bottom: 8px; }
@@ -1051,10 +1059,10 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 }
 .weather-daily-row {
   display: grid;
-  grid-template-columns: 4.25rem 2.75rem 2.35rem minmax(0, 1fr) 2.35rem;
+  grid-template-columns: 3.75rem 2.75rem 2.1rem minmax(0, 1fr) 2.1rem;
   align-items: center;
   column-gap: 8px;
-  padding: 12px 14px;
+  padding: 12px 12px 12px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .weather-daily-row:last-child {
