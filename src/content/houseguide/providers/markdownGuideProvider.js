@@ -1,23 +1,14 @@
 /**
- * Legacy Markdown content provider (adapter).
- * Converts Markdown files into guide pages for tooling/migration.
- * The interactive UI uses the JSON provider via guideService.
+ * Legacy Markdown adapter — runtime content lives in guide-catalog.json.
  */
-import { HOUSE_GUIDE_PAGES } from '../pages.js';
-import guideData from '../guide-data.json';
-
-/** @type {import('../../../types/guideContent.js').GuideCatalog} */
-const jsonCatalog = guideData;
-
-/**
- * @returns {import('../../../types/guideContent.js').GuideTopicCard[]}
- */
-export function listTopicsFromMarkdown() {
-  return jsonCatalog.topics;
-}
+import { listCategoriesFromJson } from './providers/jsonGuideProvider.js';
 
 export function getMarkdownProviderNote() {
-  return 'Markdown files under src/content/houseguide/*.md are legacy; normalize to guide-data.json for the app.';
+  return 'Legacy Markdown under src/content/houseguide/*.md is source material only; normalize via npm run guide:extract.';
 }
 
-export { HOUSE_GUIDE_PAGES };
+export function listTopicsFromMarkdown() {
+  return listCategoriesFromJson().flatMap((category) => category.topics);
+}
+
+export { HOUSE_GUIDE_PAGES } from '../pages.js';

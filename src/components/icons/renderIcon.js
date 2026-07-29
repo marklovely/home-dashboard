@@ -7,12 +7,16 @@ import {
   Dog,
   Droplets,
   Flame,
+  KeyRound,
   Lightbulb,
   MapPin,
   Monitor,
   Settings,
+  Shield,
+  ShowerHead,
   Siren,
   Trash2,
+  Trees,
   Wifi,
   createElement
 } from 'lucide';
@@ -33,7 +37,11 @@ const ICON_NODES = {
   droplets: Droplets,
   wifi: Wifi,
   siren: Siren,
-  'map-pin': MapPin
+  'map-pin': MapPin,
+  'key-round': KeyRound,
+  'shower-head': ShowerHead,
+  trees: Trees,
+  shield: Shield
 };
 
 /**
