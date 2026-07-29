@@ -6,6 +6,7 @@ import { handleOwnerAuth } from './routes/ownerAuth.js';
 import { handleWeather } from './routes/weather.js';
 import { handleCalendar } from './routes/calendar.js';
 import { methodNotAllowed, notFound } from './lib/errors.js';
+import { bindFetch } from './lib/boundFetch.js';
 
 /**
  * @param {string} [headerValue]
@@ -21,6 +22,7 @@ function correlationIdFrom(headerValue) {
  * @param {typeof fetch} fetchImpl
  */
 export async function handleRequest(request, env, fetchImpl = fetch) {
+  const fetchBound = bindFetch(fetchImpl);
   const correlationId = correlationIdFrom(request.headers.get('X-Correlation-Id'));
   const allowedOrigin = resolveCorsOrigin(request.headers.get('Origin') ?? undefined, env.ALLOWED_ORIGINS ?? '');
 
@@ -55,14 +57,14 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
   } else if (url.pathname === '/api/private-config' && request.method === 'GET') {
     response = handlePrivateConfig(env);
   } else if (url.pathname === '/api/weather' && request.method === 'GET') {
-    response = await handleWeather(request, env, fetchImpl);
+    response = await handleWeather(request, env, fetchBound);
   } else if (url.pathname === '/api/auth/owner') {
     response = await handleOwnerAuth(request, correlationId, env);
   } else if (url.pathname === '/api/calendar' && request.method === 'GET') {
-    response = await handleCalendar(request, env, fetchImpl);
+    response = await handleCalendar(request, env, fetchBound);
   } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {
     const buttonParam = decodeURIComponent(url.pathname.slice('/api/button/'.length));
-    response = await handleButtonPress(request, buttonParam, env, correlationId, fetchImpl);
+    response = await handleButtonPress(request, buttonParam, env, correlationId, fetchBound);
   } else if (url.pathname.startsWith('/api/button/')) {
     response = methodNotAllowed(correlationId);
   } else {
