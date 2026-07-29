@@ -103,6 +103,12 @@ function topicHaystack(topic) {
       if (block.type === 'contact' || block.type === 'keyValues') {
         return (block.items ?? []).flatMap((item) => [item.label, item.value]);
       }
+      if (block.type === 'place') {
+        return [block.name, block.address, block.description, block.website].filter(Boolean);
+      }
+      if (block.type === 'protected') {
+        return [block.label];
+      }
       return [];
     })
     .join(' ');
@@ -122,18 +128,45 @@ function topicHaystack(topic) {
 
 /** @type {Record<string, { topicId: string, bonus: number }[]>} */
 const SEARCH_ALIASES = {
-  television: [{ topicId: 'tv-entertainment', bonus: 8 }],
-  tv: [{ topicId: 'tv-entertainment', bonus: 6 }],
-  netflix: [{ topicId: 'tv-entertainment', bonus: 8 }],
-  wifi: [{ topicId: 'wifi', bonus: 6 }],
-  'wi-fi': [{ topicId: 'wifi', bonus: 6 }],
-  password: [{ topicId: 'wifi', bonus: 4 }],
-  heating: [{ topicId: 'heating', bonus: 8 }],
-  heat: [{ topicId: 'heating', bonus: 5 }],
-  kettle: [{ topicId: 'hot-water-machine', bonus: 10 }],
-  tea: [{ topicId: 'hot-water-machine', bonus: 8 }],
-  'boiling water': [{ topicId: 'hot-water-machine', bonus: 10 }],
-  'hot water': [{ topicId: 'hot-water-machine', bonus: 6 }]
+  television: [
+    { topicId: 'turning-on-tv', bonus: 6 },
+    { topicId: 'streaming-services', bonus: 8 },
+    { topicId: 'selecting-apple-tv', bonus: 7 }
+  ],
+  tv: [
+    { topicId: 'turning-on-tv', bonus: 6 },
+    { topicId: 'streaming-services', bonus: 6 }
+  ],
+  netflix: [{ topicId: 'streaming-services', bonus: 10 }],
+  prime: [{ topicId: 'streaming-services', bonus: 8 }],
+  'apple tv': [{ topicId: 'selecting-apple-tv', bonus: 10 }],
+  remote: [{ topicId: 'turning-on-tv', bonus: 8 }],
+  source: [{ topicId: 'selecting-apple-tv', bonus: 8 }],
+  input: [{ topicId: 'selecting-apple-tv', bonus: 7 }],
+  wifi: [{ topicId: 'connecting', bonus: 8 }],
+  'wi-fi': [{ topicId: 'connecting', bonus: 8 }],
+  password: [{ topicId: 'connecting', bonus: 5 }],
+  heating: [{ topicId: 'nest-heating', bonus: 8 }],
+  heat: [{ topicId: 'nest-heating', bonus: 5 }],
+  kettle: [{ topicId: 'hot-and-cold-water-machine', bonus: 12 }],
+  tea: [{ topicId: 'hot-and-cold-water-machine', bonus: 10 }],
+  coffee: [{ topicId: 'hot-and-cold-water-machine', bonus: 8 }],
+  'boiling water': [{ topicId: 'hot-and-cold-water-machine', bonus: 12 }],
+  'hot tap': [{ topicId: 'hot-and-cold-water-machine', bonus: 10 }],
+  'hot water': [{ topicId: 'hot-and-cold-water-machine', bonus: 6 }],
+  'dog food': [{ topicId: 'feeding', bonus: 10 }],
+  'feed scooter': [{ topicId: 'feeding', bonus: 12 }],
+  dinner: [{ topicId: 'feeding', bonus: 6 }],
+  breakfast: [{ topicId: 'feeding', bonus: 6 }],
+  stopcock: [{ topicId: 'water-stop-tap', bonus: 12 }],
+  'stop cock': [{ topicId: 'water-stop-tap', bonus: 12 }],
+  'water leak': [{ topicId: 'water-stop-tap', bonus: 8 }],
+  'turn water off': [{ topicId: 'water-stop-tap', bonus: 10 }],
+  rubbish: [{ topicId: 'rubbish-recycling', bonus: 10 }],
+  trash: [{ topicId: 'rubbish-recycling', bonus: 10 }],
+  recycling: [{ topicId: 'rubbish-recycling', bonus: 8 }],
+  'wheelie bin': [{ topicId: 'rubbish-recycling', bonus: 8 }],
+  bins: [{ topicId: 'rubbish-recycling', bonus: 8 }]
 };
 
 /**

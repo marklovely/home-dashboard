@@ -313,10 +313,59 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 }
 .house-guide-explore {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr;
   gap: clamp(14px, 2vw, 18px);
   min-height: 0;
   flex: 1;
+}
+.guide-search-field-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+}
+.guide-search-clear {
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.guide-protected-placeholder {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: clamp(0.92rem, 1.6vw, 1rem);
+}
+.guide-place-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  display: grid;
+  gap: 6px;
+}
+.guide-place-name {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.guide-place-address,
+.guide-place-description {
+  margin: 0;
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
+  line-height: 1.45;
+}
+.guide-place-tag {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.guide-place-link {
+  color: #9eb6ff;
+  font-weight: 600;
 }
 .house-guide-intro-title {
   margin: 0;
