@@ -1,163 +1,141 @@
 import { defineWidget } from '../../components/Widget/defineWidget.js';
-import { getHouseGuideMarkdown, getHouseGuidePage, loadHouseGuideCatalog } from '../../content/houseguide/index.js';
-import { renderHouseGuideMarkdown } from './markdown.js';
-import { highlightSearchText, searchHouseGuidePages } from './search.js';
+import { getGuidePage, listGuideTopics, searchGuideTopics } from '../../services/guideService.js';
+import { renderGuideCategoryCard, renderGuideTopicPage } from './guidePageRenderer.js';
 
-function createGuideTile(page, onOpen) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'guide-tile routine-button';
-  button.dataset.slug = page.slug;
-  button.style.setProperty('--accent', page.accent);
-  button.setAttribute('aria-label', page.title);
-
-  const icon = document.createElement('span');
-  icon.className = 'button-icon';
-  icon.textContent = page.icon;
-
-  const title = document.createElement('span');
-  title.className = 'button-title guide-tile-title';
-  title.textContent = page.shortTitle;
-
-  const subtitle = document.createElement('span');
-  subtitle.className = 'button-subtitle';
-  subtitle.textContent = page.title;
-
-  button.append(icon, title, subtitle);
-  button.addEventListener('click', () => onOpen(page.slug));
-  return button;
-}
-
-function createHouseGuideRoot() {
-  const catalog = loadHouseGuideCatalog();
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ */
+function createInteractiveHouseGuide(context) {
   const root = document.createElement('section');
-  root.className = 'widget-panel house-guide';
+  root.className = 'widget-panel house-guide house-guide-interactive';
   root.setAttribute('aria-label', 'House guide');
 
-  const homeView = document.createElement('div');
-  homeView.className = 'house-guide-home';
+  const exploreView = document.createElement('div');
+  exploreView.className = 'house-guide-explore';
 
-  const title = document.createElement('h2');
-  title.className = 'house-guide-title';
-  title.textContent = 'House Guide';
-
-  const tileGrid = document.createElement('div');
-  tileGrid.className = 'house-guide-tiles';
-  tileGrid.setAttribute('role', 'list');
-
-  const tilesBySlug = new Map();
-  for (const page of catalog.pages) {
-    const tile = createGuideTile(page, openArticle);
-    tile.setAttribute('role', 'listitem');
-    tilesBySlug.set(page.slug, tile);
-    tileGrid.append(tile);
-  }
+  const intro = document.createElement('div');
+  intro.className = 'house-guide-intro';
+  const introTitle = document.createElement('h2');
+  introTitle.className = 'house-guide-intro-title';
+  introTitle.textContent = 'Explore the home';
+  const introText = document.createElement('p');
+  introText.className = 'house-guide-intro-text';
+  introText.textContent = 'Choose a room or topic, or ask a question below.';
+  intro.append(introTitle, introText);
 
   const searchWrap = document.createElement('div');
   searchWrap.className = 'house-guide-search';
-
   const searchLabel = document.createElement('label');
   searchLabel.className = 'guide-search-label';
   searchLabel.setAttribute('for', 'house-guide-search');
-  searchLabel.textContent = 'Search the guide';
-
+  searchLabel.textContent = 'What do you need help with?';
   const searchInput = document.createElement('input');
   searchInput.id = 'house-guide-search';
   searchInput.className = 'guide-search-input';
   searchInput.type = 'search';
-  searchInput.placeholder = 'Search titles and guide text…';
+  searchInput.placeholder = 'Try heating, Wi-Fi, television…';
   searchInput.setAttribute('autocomplete', 'off');
   searchInput.setAttribute('enterkeyhint', 'search');
-
   const searchStatus = document.createElement('p');
   searchStatus.className = 'guide-search-status subtle';
   searchStatus.setAttribute('aria-live', 'polite');
-
   searchWrap.append(searchLabel, searchInput, searchStatus);
-  homeView.append(title, tileGrid, searchWrap);
 
-  const articleView = document.createElement('article');
-  articleView.className = 'house-guide-article';
-  articleView.hidden = true;
-  articleView.inert = true;
+  const tileGrid = document.createElement('div');
+  tileGrid.className = 'guide-category-grid';
+  tileGrid.setAttribute('role', 'list');
 
-  const backButton = document.createElement('button');
-  backButton.type = 'button';
-  backButton.className = 'guide-back-button';
-  backButton.textContent = '← Back to guide';
+  exploreView.append(intro, tileGrid, searchWrap);
 
-  const articleTitle = document.createElement('h2');
-  articleTitle.className = 'house-guide-article-title';
+  const topicHost = document.createElement('div');
+  topicHost.className = 'house-guide-topic-host';
+  topicHost.hidden = true;
+  topicHost.inert = true;
 
-  const articleBody = document.createElement('div');
-  articleBody.className = 'guide-markdown';
+  root.append(exploreView, topicHost);
 
-  articleView.append(backButton, articleTitle, articleBody);
-  root.append(homeView, articleView);
+  /** @type {Map<string, HTMLElement>} */
+  const cardsById = new Map();
 
-  let activeSlug = null;
+  function rebuildCards(topics, query = '') {
+    tileGrid.replaceChildren();
+    cardsById.clear();
+    for (const topic of topics) {
+      const card = renderGuideCategoryCard(topic, () => openTopic(topic.id), query);
+      card.setAttribute('role', 'listitem');
+      cardsById.set(topic.id, card);
+      tileGrid.append(card);
+    }
+  }
 
   function applySearch() {
     const query = searchInput.value;
-    const matches = searchHouseGuidePages(query, catalog.pages, catalog.markdownBySlug);
-    let visibleCount = 0;
+    const topics = searchGuideTopics(query);
+    rebuildCards(topics, query);
 
-    for (const page of catalog.pages) {
-      const tile = tilesBySlug.get(page.slug);
-      const isMatch = matches.has(page.slug);
-      tile.hidden = !isMatch;
-      tile.classList.toggle('is-search-match', Boolean(query.trim()) && isMatch);
-      tile.classList.toggle('is-search-hidden', Boolean(query.trim()) && !isMatch);
-
-      const titleEl = tile.querySelector('.guide-tile-title');
-      if (titleEl) {
-        titleEl.innerHTML = highlightSearchText(page.shortTitle, query);
-      }
-      if (isMatch) visibleCount += 1;
-    }
-
-    if (query.trim()) {
-      searchStatus.textContent =
-        visibleCount === 0 ? 'No matching guide pages.' : `${visibleCount} matching page${visibleCount === 1 ? '' : 's'}.`;
-    } else {
+    if (!query.trim()) {
       searchStatus.textContent = '';
+      return;
     }
+
+    if (topics.length === 0) {
+      searchStatus.textContent = 'No matches — try heating, Wi-Fi, or television.';
+      return;
+    }
+
+    if (topics.length === 1) {
+      searchStatus.textContent = `Showing ${topics[0].title}`;
+      return;
+    }
+
+    searchStatus.textContent = `${topics.length} topics match your search.`;
   }
 
-  function openArticle(slug) {
-    const page = getHouseGuidePage(slug);
-    if (!page) return;
-    activeSlug = slug;
-    const markdown = getHouseGuideMarkdown(slug);
-    articleTitle.textContent = page.title;
-    articleBody.innerHTML = renderHouseGuideMarkdown(markdown);
-    homeView.hidden = true;
-    articleView.hidden = false;
-    articleView.inert = false;
-    homeView.inert = true;
-    backButton.focus();
-  }
-
-  function closeArticle() {
-    activeSlug = null;
-    articleView.hidden = true;
-    articleView.inert = true;
-    homeView.hidden = false;
-    homeView.inert = false;
+  function showExplore() {
+    topicHost.hidden = true;
+    topicHost.inert = true;
+    topicHost.replaceChildren();
+    exploreView.hidden = false;
+    exploreView.inert = false;
     searchInput.focus();
   }
 
-  searchInput.addEventListener('input', applySearch);
-  backButton.addEventListener('click', closeArticle);
+  function openTopic(topicId) {
+    const page = getGuidePage(topicId);
+    if (!page) return;
 
-  root.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && activeSlug) {
+    exploreView.hidden = true;
+    exploreView.inert = true;
+    topicHost.hidden = false;
+    topicHost.inert = false;
+    topicHost.replaceChildren(
+      renderGuideTopicPage(
+        page,
+        context,
+        showExplore,
+        openTopic
+      )
+    );
+  }
+
+  searchInput.addEventListener('input', applySearch);
+  searchInput.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    const best = searchGuideTopics(searchInput.value)[0];
+    if (best) {
       event.preventDefault();
-      closeArticle();
+      openTopic(best.id);
     }
   });
 
-  applySearch();
+  root.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !topicHost.hidden) {
+      event.preventDefault();
+      showExplore();
+    }
+  });
+
+  rebuildCards(listGuideTopics());
   return root;
 }
 
@@ -165,7 +143,7 @@ export const houseGuideWidget = defineWidget({
   id: 'house-guide',
   layout: 'panel',
   profiles: ['owner', 'housesitter'],
-  mount() {
-    return createHouseGuideRoot();
+  mount(context) {
+    return createInteractiveHouseGuide(context);
   }
 });

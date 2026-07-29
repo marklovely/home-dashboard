@@ -1,5 +1,5 @@
 import { defineApp } from '../../components/App/defineApp.js';
-import { HOUSE_GUIDE_PAGES } from '../../content/houseguide/pages.js';
+import { getGuideHomeSummary } from '../../services/guideService.js';
 import { getWidgetById } from '../../services/widgetRegistry.js';
 
 /**
@@ -31,19 +31,15 @@ export function mountHouseGuideApp(viewport, context) {
 }
 
 function houseGuideSummary() {
-  const count = HOUSE_GUIDE_PAGES.length;
-  return {
-    title: `${count} guides available`,
-    subtitle: 'Markdown house guide'
-  };
+  return getGuideHomeSummary();
 }
 
 export const houseGuideApp = defineApp({
   id: 'house-guide',
   title: 'House Guide',
   iconId: 'book-open',
-  description: 'Read the house guide and search topics',
-  capabilities: ['search', 'offline', 'markdown'],
+  description: 'Explore rooms, appliances, and help for living in the home',
+  capabilities: ['search', 'offline', 'quick-actions', 'home-info'],
   accent: '#f4b64f',
   profiles: ['owner', 'housesitter'],
   summary: houseGuideSummary,
