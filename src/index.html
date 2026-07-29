@@ -17,8 +17,9 @@
         <div class="shell-chrome">
           <button type="button" id="shell-home-button" class="shell-home-button">Home</button>
           <div class="shell-chrome-title-block">
-            <p class="eyebrow">LOVELY HOME HUB</p>
+            <p id="shell-eyebrow" class="eyebrow">LOVELY HOME HUB</p>
             <h1 id="shell-chrome-title" class="shell-chrome-title">Home Hub</h1>
+            <p id="shell-tagline" class="shell-tagline subtle" hidden></p>
           </div>
           <section class="clock-block" aria-label="Current time">
             <div id="clock" class="clock">--:--</div>
@@ -57,6 +58,8 @@
       </header>
 
       <div id="app-viewport" class="app-viewport" aria-live="polite"></div>
+
+      <nav id="shell-bottom-nav" class="shell-bottom-nav" hidden aria-label="Main navigation"></nav>
 
       <footer id="shell-footer" class="footer shell-footer" hidden>
         <span id="last-command">No command sent yet</span>

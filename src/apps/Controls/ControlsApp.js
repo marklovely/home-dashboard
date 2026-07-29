@@ -1,5 +1,7 @@
 import { defineApp } from '../../components/App/defineApp.js';
+import { isHouseSitterMode, getModeConfig } from '../../modes/modeConfig.js';
 import { getWidgetById } from '../../services/widgetRegistry.js';
+import { mountSitterControlsGrid } from '../../widgets/Controls/sitterControlsGrid.js';
 
 /**
  * @param {Node} mounted
@@ -17,14 +19,20 @@ function collectMountedNodes(mounted) {
  * @param {import('../../types/app.js').ShellContext} context
  */
 export function mountControlsApp(viewport, context) {
+  const page = document.createElement('div');
+  page.className = 'app-page controls-app';
+
+  if (isHouseSitterMode()) {
+    page.append(...collectMountedNodes(mountSitterControlsGrid(context)));
+    viewport.replaceChildren(page);
+    return;
+  }
+
   const widget = getWidgetById('alexa');
   if (!widget) {
     viewport.replaceChildren();
     return;
   }
-
-  const page = document.createElement('div');
-  page.className = 'app-page controls-app';
 
   const grid = document.createElement('section');
   grid.className = 'button-grid controls-grid';
@@ -39,6 +47,13 @@ export function mountControlsApp(viewport, context) {
  * @param {import('../../types/app.js').ShellContext} context
  */
 function controlsSummary(context) {
+  if (isHouseSitterMode()) {
+    const count = getModeConfig().controls?.allowedButtonIds.length ?? 0;
+    return {
+      title: `${count} home controls`,
+      subtitle: 'Lights and bedtime'
+    };
+  }
   const count = context.config.buttons?.length ?? 0;
   return {
     title: `${count} routine${count === 1 ? '' : 's'} available`,

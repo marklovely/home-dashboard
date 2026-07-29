@@ -10,9 +10,15 @@ import { initTheme } from '../services/themeService.js';
 import '../apps/index.js';
 import '../widgets/index.js';
 import { preloadPrivateConfig } from '../services/privateConfigService.js';
+import { isHouseSitterMode } from '../modes/modeConfig.js';
 
 initTheme();
 void preloadPrivateConfig();
+
+const networkHint = document.querySelector('#shell-status .status-card:last-child span:last-child');
+if (networkHint && isHouseSitterMode()) {
+  networkHint.textContent = 'Connected';
+}
 
 const elements = {
   greeting: document.querySelector('#greeting'),
@@ -64,10 +70,13 @@ if (versionLabel && typeof __APP_VERSION__ !== 'undefined') {
 createAppShell({
   viewport: document.querySelector('#app-viewport'),
   homeWelcome: document.querySelector('#shell-home-welcome'),
+  shellEyebrow: document.querySelector('#shell-eyebrow'),
   shellChromeTitle: document.querySelector('#shell-chrome-title'),
+  shellTagline: document.querySelector('#shell-tagline'),
   homeButton: document.querySelector('#shell-home-button'),
   statusStrip: document.querySelector('#shell-status'),
   shellFooter: document.querySelector('#shell-footer'),
+  bottomNav: document.querySelector('#shell-bottom-nav'),
   shellContext
 });
 
