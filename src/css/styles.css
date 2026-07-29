@@ -1039,8 +1039,32 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   letter-spacing: 0.2em;
   font-weight: 700;
 }
-.owner-pin-error { margin: 0; color: #ff8a96; }
-.owner-pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.owner-pin-indicators {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  font-size: 1.4rem;
+  letter-spacing: 0.08em;
+  min-height: 2rem;
+}
+.owner-pin-dot { line-height: 1; }
+.owner-pin-error-title { margin: 0; font-weight: 800; color: #ff8a96; }
+.owner-pin-error-detail { margin: 0; color: var(--muted); }
+.owner-pin-panel--shake {
+  animation: owner-pin-shake 420ms ease;
+}
+@keyframes owner-pin-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .owner-pin-panel--shake { animation: none; }
+}
+.owner-pin-keypad { display: grid; gap: 10px; }
+.owner-pin-keypad-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .owner-pin-key {
   min-height: 56px;
   border-radius: 14px;

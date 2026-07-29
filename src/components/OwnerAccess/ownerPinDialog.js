@@ -1,8 +1,23 @@
-import { OwnerAuthProvider } from '../../auth/OwnerAuthProvider.js';
-import { markOwnerUnlockedByPin } from '../../auth/ownerSession.js';
-import { setUserMode, UserMode } from '../../auth/userMode.js';
-import { isHomeDeployment } from '../../auth/deploymentMode.js';
-import { setActiveProfileId } from '../../services/profileService.js';
+import { isOwnerAccessAllowed } from '../../auth/deploymentMode.js';
+import { ownerAuthProvider } from '../../auth/OwnerAuthProvider.js';
+import { completeOwnerUnlock } from '../../auth/ownerLock.js';
+
+const PIN_LENGTH = 4;
+
+/**
+ * @param {HTMLElement} container
+ * @param {number} filled
+ */
+function renderPinIndicators(container, filled) {
+  container.replaceChildren();
+  for (let index = 0; index < PIN_LENGTH; index += 1) {
+    const dot = document.createElement('span');
+    dot.className = 'owner-pin-dot';
+    dot.setAttribute('aria-hidden', 'true');
+    dot.textContent = index < filled ? '●' : '○';
+    container.append(dot);
+  }
+}
 
 /**
  * @param {Object} options
@@ -11,6 +26,8 @@ import { setActiveProfileId } from '../../services/profileService.js';
  * @param {() => void} [options.onSuccess]
  */
 export function openOwnerPinDialog({ host, onClose, onSuccess }) {
+  if (!isOwnerAccessAllowed()) return;
+
   host.replaceChildren();
 
   const overlay = document.createElement('div');
@@ -18,6 +35,8 @@ export function openOwnerPinDialog({ host, onClose, onSuccess }) {
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-label', 'Owner Access');
+
+  overlay.tabIndex = -1;
 
   const panel = document.createElement('div');
   panel.className = 'owner-pin-panel';
@@ -30,89 +49,152 @@ export function openOwnerPinDialog({ host, onClose, onSuccess }) {
   prompt.className = 'owner-pin-prompt';
   prompt.textContent = 'Enter PIN';
 
-  const display = document.createElement('div');
-  display.className = 'owner-pin-display';
-  display.setAttribute('aria-live', 'polite');
-  display.textContent = 'Enter PIN';
+  const indicators = document.createElement('div');
+  indicators.className = 'owner-pin-indicators';
+  indicators.setAttribute('aria-live', 'polite');
 
-  const error = document.createElement('p');
-  error.className = 'owner-pin-error';
-  error.hidden = true;
+  const errorTitle = document.createElement('p');
+  errorTitle.className = 'owner-pin-error-title';
+  errorTitle.hidden = true;
 
-  if (isHomeDeployment() && !OwnerAuthProvider.isPinConfigured()) {
-    error.textContent =
-      'Owner PIN is not configured for this build. Add VITE_OWNER_PIN in Cloudflare Pages and redeploy.';
-    error.hidden = false;
-  }
+  const errorDetail = document.createElement('p');
+  errorDetail.className = 'owner-pin-error-detail';
+  errorDetail.hidden = true;
 
   /** @type {string[]} */
   let digits = [];
+  let pending = false;
 
-  function renderDigits() {
-    display.textContent = digits.length ? '•'.repeat(digits.length) : 'Enter PIN';
+  function clearError() {
+    errorTitle.hidden = true;
+    errorDetail.hidden = true;
+    panel.classList.remove('owner-pin-panel--shake');
+  }
+
+  function showError(titleText, detailText) {
+    errorTitle.textContent = titleText;
+    errorDetail.textContent = detailText;
+    errorTitle.hidden = false;
+    errorDetail.hidden = false;
+    panel.classList.remove('owner-pin-panel--shake');
+    void panel.offsetWidth;
+    panel.classList.add('owner-pin-panel--shake');
+  }
+
+  function closeDialog() {
+    digits = [];
+    host.replaceChildren();
+    onClose?.();
+  }
+
+  function setKeypadEnabled(enabled) {
+    for (const button of keypad.querySelectorAll('button')) {
+      button.disabled = !enabled;
+    }
   }
 
   async function submitPin() {
-    if (digits.length === 0) return;
-    if (!OwnerAuthProvider.isPinConfigured()) return;
+    if (pending || digits.length !== PIN_LENGTH) return;
+    pending = true;
+    setKeypadEnabled(false);
+    clearError();
     const pin = digits.join('');
     digits = [];
-    renderDigits();
-    const ok = await OwnerAuthProvider.validatePin(pin);
-    if (ok) {
-      setActiveProfileId('owner');
-      setUserMode(UserMode.Owner);
-      markOwnerUnlockedByPin();
+    renderPinIndicators(indicators, 0);
+
+    const result = await ownerAuthProvider.authenticate(pin);
+    pending = false;
+    setKeypadEnabled(true);
+
+    if (result === 'success') {
+      completeOwnerUnlock(onSuccess);
       host.replaceChildren();
-      onSuccess?.();
       return;
     }
-    error.textContent = 'Incorrect PIN. Guest mode is unchanged.';
-    error.hidden = false;
+
+    if (result === 'rate_limited') {
+      showError('Too many attempts', 'Please try again later');
+      return;
+    }
+    if (result === 'unavailable') {
+      showError('Owner access is temporarily unavailable', '');
+      return;
+    }
+    showError('Incorrect PIN', 'Please try again');
   }
+
+  function pushDigit(digit) {
+    if (pending || digits.length >= PIN_LENGTH) return;
+    clearError();
+    digits.push(digit);
+    renderPinIndicators(indicators, digits.length);
+    if (digits.length === PIN_LENGTH) {
+      void submitPin();
+    }
+  }
+
+  function backspace() {
+    if (pending || digits.length === 0) return;
+    clearError();
+    digits.pop();
+    renderPinIndicators(indicators, digits.length);
+  }
+
+  renderPinIndicators(indicators, 0);
 
   const keypad = document.createElement('div');
   keypad.className = 'owner-pin-keypad';
 
-  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'enter'];
-  for (const key of keys) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'owner-pin-key';
-    if (key === 'clear') {
-      button.textContent = 'Clear';
-      button.addEventListener('click', () => {
-        digits = [];
-        error.hidden = true;
-        renderDigits();
-      });
-    } else if (key === 'enter') {
-      button.textContent = 'OK';
-      button.classList.add('owner-pin-key--enter');
-      button.addEventListener('click', () => void submitPin());
-    } else {
-      button.textContent = key;
-      button.addEventListener('click', () => {
-        if (digits.length >= 8) return;
-        error.hidden = true;
-        digits.push(key);
-        renderDigits();
-      });
+  const layout = [
+    ['1', '2', '3'],
+    ['4', '5', '6'],
+    ['7', '8', '9'],
+    ['backspace', '0', 'cancel']
+  ];
+
+  for (const row of layout) {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'owner-pin-keypad-row';
+    for (const key of row) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'owner-pin-key';
+      if (key === 'backspace') {
+        button.textContent = '⌫';
+        button.setAttribute('aria-label', 'Backspace');
+        button.addEventListener('click', backspace);
+      } else if (key === 'cancel') {
+        button.textContent = 'Cancel';
+        button.addEventListener('click', closeDialog);
+      } else {
+        button.textContent = key;
+        button.setAttribute('aria-label', `Digit ${key}`);
+        button.addEventListener('click', () => pushDigit(key));
+      }
+      rowEl.append(button);
     }
-    keypad.append(button);
+    keypad.append(rowEl);
   }
 
-  const cancel = document.createElement('button');
-  cancel.type = 'button';
-  cancel.className = 'owner-pin-cancel';
-  cancel.textContent = 'Cancel';
-  cancel.addEventListener('click', () => {
-    host.replaceChildren();
-    onClose?.();
+  overlay.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeDialog();
+      return;
+    }
+    if (event.key === 'Backspace') {
+      event.preventDefault();
+      backspace();
+      return;
+    }
+    if (/^\d$/.test(event.key)) {
+      event.preventDefault();
+      pushDigit(event.key);
+    }
   });
 
-  panel.append(title, prompt, display, error, keypad, cancel);
+  panel.append(title, prompt, indicators, errorTitle, errorDetail, keypad);
   overlay.append(panel);
   host.append(overlay);
-  cancel.focus();
+  overlay.focus();
 }

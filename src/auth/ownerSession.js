@@ -13,9 +13,6 @@ export function isOwnerPinSessionActive() {
   return unlockedByPin;
 }
 
-/**
- * Owner may return to the guest experience after PIN unlock on a home deployment tablet.
- */
 export function canReturnToHouseSitterMode() {
   return unlockedByPin;
 }
@@ -24,3 +21,5 @@ export function canReturnToHouseSitterMode() {
 export function resetOwnerSessionForTests() {
   unlockedByPin = false;
 }
+
+export { stopOwnerInactivityWatch } from './ownerInactivity.js';

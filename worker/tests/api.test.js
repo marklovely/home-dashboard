@@ -4,9 +4,13 @@ import { buildPrivateConfig } from '../src/routes/privateConfig.js';
 import { isAllowedButtonCode, normalizeButtonCode } from '../src/lib/buttonAllowlist.js';
 import { resolveCorsOrigin } from '../src/lib/cors.js';
 
+import { createTestOwnerAuthLimiter } from './testOwnerAuthLimiter.js';
+
 const env = {
   VIRTUAL_BUTTONS_ACCESS_CODE: 'test-access-code',
   ALLOWED_ORIGINS: 'https://app.example,http://localhost:5173',
+  OWNER_PIN: '1234',
+  OWNER_AUTH_LIMITER: createTestOwnerAuthLimiter(),
   PRIVATE_WIFI_SSID: 'Net',
   PRIVATE_WIFI_PASSWORD: 'Pass',
   PRIVATE_MARK_PHONE: '111',
@@ -95,18 +99,97 @@ describe('cors', () => {
 });
 
 describe('owner auth', () => {
-  it('returns 501 until server-side auth is implemented', async () => {
+  it('returns 200 for correct PIN', async () => {
+    const response = await handleRequest(
+      new Request('https://worker.test/api/auth/owner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.1' },
+        body: JSON.stringify({ pin: '1234' })
+      }),
+      env
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ ok: true, authenticated: true });
+    expect(JSON.stringify(body)).not.toContain('1234');
+  });
+
+  it('returns 401 for incorrect PIN', async () => {
+    const response = await handleRequest(
+      new Request('https://worker.test/api/auth/owner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.2' },
+        body: JSON.stringify({ pin: '0000' })
+      }),
+      env
+    );
+    expect(response.status).toBe(401);
+    const body = await response.json();
+    expect(body.authenticated).toBe(false);
+    expect(body.error).toBe('Invalid credentials');
+  });
+
+  it('returns 400 for malformed PIN', async () => {
+    const response = await handleRequest(
+      new Request('https://worker.test/api/auth/owner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: '12' })
+      }),
+      env
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it('returns 503 when OWNER_PIN secret is missing', async () => {
     const response = await handleRequest(
       new Request('https://worker.test/api/auth/owner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: '1234' })
       }),
+      { ...env, OWNER_PIN: undefined }
+    );
+    expect(response.status).toBe(503);
+    const body = await response.json();
+    expect(body.error).toBe('Owner access is unavailable');
+  });
+
+  it('rate limits after repeated failures', async () => {
+    const limiterEnv = {
+      ...env,
+      OWNER_AUTH_LIMITER: createTestOwnerAuthLimiter()
+    };
+    const requestInit = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.99' },
+      body: JSON.stringify({ pin: '0000' })
+    };
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await handleRequest(
+        new Request('https://worker.test/api/auth/owner', requestInit),
+        limiterEnv
+      );
+      expect(response.status).toBe(401);
+    }
+    const blocked = await handleRequest(
+      new Request('https://worker.test/api/auth/owner', requestInit),
+      limiterEnv
+    );
+    expect(blocked.status).toBe(429);
+    const body = await blocked.json();
+    expect(body.error).toMatch(/Too many attempts/i);
+  });
+
+  it('supports CORS preflight for allowed origins', async () => {
+    const response = await handleRequest(
+      new Request('https://worker.test/api/auth/owner', {
+        method: 'OPTIONS',
+        headers: { Origin: 'http://localhost:5173' }
+      }),
       env
     );
-    expect(response.status).toBe(501);
-    const body = await response.json();
-    expect(body.error.code).toBe('NOT_IMPLEMENTED');
-    expect(JSON.stringify(body)).not.toContain('1234');
+    expect(response.status).toBe(204);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
   });
 });

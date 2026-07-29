@@ -26,6 +26,11 @@ export function isHouseSitterDeployment() {
   return getDeploymentMode() === DeploymentMode.HouseSitter;
 }
 
+/** Hidden owner gesture and PIN auth are only permitted on home deployments. */
+export function isOwnerAccessAllowed() {
+  return isHomeDeployment();
+}
+
 /**
  * @returns {'owner' | 'house-sitter'}
  */

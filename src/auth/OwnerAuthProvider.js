@@ -1,77 +1,44 @@
 import { getApiBaseUrl } from '../api/apiBase.js';
 
-/**
- * @param {string} expected
- * @param {string} actual
- */
-function constantTimeEqual(expected, actual) {
-  if (expected.length !== actual.length) return false;
-  let mismatch = 0;
-  for (let index = 0; index < expected.length; index += 1) {
-    mismatch |= expected.charCodeAt(index) ^ actual.charCodeAt(index);
-  }
-  return mismatch === 0;
-}
-
-export function isOwnerPinConfiguredAtBuild() {
-  return Boolean(String(import.meta.env.VITE_OWNER_PIN ?? '').trim());
-}
-
-function configuredLocalPin() {
-  return String(import.meta.env.VITE_OWNER_PIN ?? '').trim();
-}
+/** @typedef {'success' | 'invalid' | 'rate_limited' | 'unavailable'} OwnerAuthResult */
 
 /**
- * @param {string} pin
+ * @param {Response} response
+ * @returns {Promise<OwnerAuthResult>}
  */
-function validateLocalOwnerPin(pin) {
-  const configured = configuredLocalPin();
-  if (!configured) return false;
-  return constantTimeEqual(configured, pin.trim());
+async function resultFromResponse(response) {
+  if (response.status === 200) return 'success';
+  if (response.status === 401) return 'invalid';
+  if (response.status === 429) return 'rate_limited';
+  if (response.status === 503) return 'unavailable';
+  return 'unavailable';
 }
 
 /**
  * @param {string} pin
  * @param {typeof fetch} [fetchImpl]
- * @returns {Promise<'not_implemented' | boolean>}
+ * @returns {Promise<OwnerAuthResult>}
  */
-async function validateOwnerPinViaWorker(pin, fetchImpl = fetch) {
+export async function authenticateOwnerPin(pin, fetchImpl = fetch) {
   const base = getApiBaseUrl();
-  if (!base) return 'not_implemented';
+  if (!base) return 'unavailable';
 
   try {
     const response = await fetchImpl(`${base}/api/auth/owner`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin: pin.trim() }),
+      body: JSON.stringify({ pin }),
       cache: 'no-store'
     });
-    if (response.status === 501 || response.status === 404) return 'not_implemented';
-    if (response.ok) return true;
-    if (response.status === 401 || response.status === 403) return false;
-    return 'not_implemented';
+    return resultFromResponse(response);
   } catch {
-    return 'not_implemented';
+    return 'unavailable';
   }
 }
 
-/**
- * @param {string} pin
- * @param {typeof fetch} [fetchImpl]
- * @returns {Promise<boolean>}
- */
-export async function validateOwnerPin(pin, fetchImpl) {
-  if (isOwnerPinConfiguredAtBuild()) {
-    return validateLocalOwnerPin(pin);
-  }
-
-  const remote = await validateOwnerPinViaWorker(pin, fetchImpl);
-  if (remote === true) return true;
-  if (remote === false) return false;
-  return validateLocalOwnerPin(pin);
-}
-
-export const OwnerAuthProvider = {
-  validatePin: validateOwnerPin,
-  isPinConfigured: isOwnerPinConfiguredAtBuild
+export const ownerAuthProvider = {
+  authenticate: authenticateOwnerPin
 };
+
+/** @deprecated */
+export const OwnerAuthProvider = ownerAuthProvider;

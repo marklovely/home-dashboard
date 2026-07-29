@@ -8,6 +8,7 @@ Proxies Alexa Virtual Buttons and serves private house configuration to the Home
 |--------|------|---------|
 | GET | `/api/health` | Liveness check |
 | POST | `/api/button/:code` | Trigger allowlisted control (`VB01` … `VB09`) |
+| POST | `/api/auth/owner` | Validate owner PIN (JSON body `{ "pin": "...." }`; secret `OWNER_PIN`) |
 | GET | `/api/private-config` | Wi-Fi, contacts, home address (no lockbox in v1) |
 
 ## Local development
@@ -37,6 +38,9 @@ Use `wrangler secret put` — never commit real values:
 - `PRIVATE_DONNA_PHONE`
 - `PRIVATE_DONNA_EMAIL`
 - `PRIVATE_HOME_ADDRESS`
+- `OWNER_PIN` (four-digit owner unlock; never in Pages or frontend env)
+
+**Bindings:** `OWNER_AUTH_LIMITER` — Durable Object class `OwnerAuthLimiter` for failed-attempt rate limiting (five failures per ten minutes per client IP).
 
 Update `ALLOWED_ORIGINS` in `wrangler.toml` or as a secret/var when adding `dashboard.lovely-home.co.uk` and Cloudflare Pages preview hosts.
 
