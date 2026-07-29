@@ -102,6 +102,22 @@ describe('cors', () => {
     );
     expect(response.status).toBe(403);
   });
+
+  it('allows Authorization on calendar preflight', async () => {
+    const response = await handleRequest(
+      new Request('https://worker.test/api/calendar', {
+        method: 'OPTIONS',
+        headers: {
+          Origin: 'http://localhost:5173',
+          'Access-Control-Request-Method': 'GET',
+          'Access-Control-Request-Headers': 'authorization'
+        }
+      }),
+      env
+    );
+    expect(response.status).toBe(204);
+    expect(response.headers.get('Access-Control-Allow-Headers')).toMatch(/Authorization/);
+  });
 });
 
 describe('owner auth', () => {
