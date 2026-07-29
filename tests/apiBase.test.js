@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ensureApiBaseUrl,
+  buildApiUrl,
   getApiBaseUrl,
   isApiConfigured,
   resetApiBaseForTests
@@ -33,5 +34,10 @@ describe('apiBase', () => {
 
     expect(getApiBaseUrl()).toBe('https://from-json.test');
     expect(fetch).toHaveBeenCalledWith('./runtime-config.json', { cache: 'no-store' });
+  });
+
+  it('buildApiUrl uses same-origin path when base is empty', () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    expect(buildApiUrl('/api/button/VB01')).toBe('/api/button/VB01');
   });
 });

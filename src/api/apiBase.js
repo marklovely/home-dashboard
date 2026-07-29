@@ -29,8 +29,21 @@ export function getApiBaseUrl() {
   return runtimeResolvedBase ?? '';
 }
 
+/**
+ * Absolute Worker URL or same-origin path when using the Pages `/api` proxy.
+ * @param {string} path Must start with `/api/` (e.g. `/api/weather`).
+ * @returns {string}
+ */
+export function buildApiUrl(path) {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  const base = getApiBaseUrl();
+  return base ? `${base}${normalized}` : normalized;
+}
+
 export function isApiConfigured() {
-  return Boolean(getApiBaseUrl());
+  if (readBuildTimeBaseUrl()) return true;
+  if (runtimeResolvedBase) return true;
+  return true;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
+import { ensureApiBaseUrl, buildApiUrl } from './apiBase.js';
 import { resolveApiClient } from './client.js';
 import { withApiCredentials } from './accessFetch.js';
 
@@ -19,15 +19,9 @@ export function formatButtonCode(buttonId) {
  */
 export async function pressButton(buttonCode, fetchImpl) {
   await ensureApiBaseUrl();
-  const base = getApiBaseUrl();
-  if (!base) {
-    throw new Error(
-      'API base URL is not configured. Set VITE_API_BASE_URL in the project root .env.local (local dev) or Cloudflare Pages environment variables, then restart dev or redeploy.'
-    );
-  }
   const normalized = buttonCode.trim().toUpperCase();
   const client = resolveApiClient(fetchImpl);
-  const url = `${base}/api/button/${encodeURIComponent(normalized)}`;
+  const url = buildApiUrl(`/api/button/${encodeURIComponent(normalized)}`);
   const response = await client.post(url, withApiCredentials({ cache: 'no-store', body: '{}' }));
   if (!response.ok) {
     let message = 'Could not trigger this control.';

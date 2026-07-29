@@ -97,16 +97,19 @@ npm run deploy
 
 Confirm **ControlActionLimiter** migration applies. Note the deployed `*.workers.dev` URL matches `VITE_API_BASE_URL` on Pages.
 
-### 4. Pages environment variables
+### 4. Pages environment variables (dashboard site only)
 
-**Workers & Pages → home-dashboard → Settings → Environment variables**
+**Not** the Worker. Path: **[dash.cloudflare.com](https://dash.cloudflare.com/) → Workers & Pages → Pages → `home-dashboard` → Settings → Environment variables / Variables and Secrets.**
+
+See **Step 8** in [cloudflare-access-setup-guide.md](./cloudflare-access-setup-guide.md) for click-by-click instructions.
 
 | Variable | Production | Preview |
 |----------|------------|---------|
-| `VITE_API_BASE_URL` | `https://lovely-home-hub-api.<subdomain>.workers.dev` | **Same** |
+| `VITE_API_BASE_URL` | **Delete** or leave unset (same-origin `/api`) | **Same** |
+| `WORKER_API_ORIGIN` | `https://lovely-home-hub-api.<subdomain>.workers.dev` | **Same** |
 | `VITE_DEPLOYMENT_MODE` | `home` or `house-sitter` per build | Same as needed |
 
-Redeploy Pages after changes.
+Redeploy Pages (**Deployments → Retry deployment**) after changes so `VITE_*` is rebuilt.
 
 ### 5. Pages CSP (SPA shell)
 

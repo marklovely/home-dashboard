@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { formatButtonCode, pressButton, buttonApi } from '../src/api/buttonApi.js';
+import { formatButtonCode, buttonApi } from '../src/api/buttonApi.js';
 
 describe('buttonApi', () => {
   it('formats numeric IDs as VB codes', () => {
@@ -23,12 +23,18 @@ describe('buttonApi', () => {
     vi.unstubAllEnvs();
   });
 
-  it('requires API base URL', async () => {
+  it('posts same-origin when API base URL is empty (Pages proxy)', async () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
     const { resetApiBaseForTests } = await import('../src/api/apiBase.js');
     resetApiBaseForTests();
-    await expect(pressButton('VB01')).rejects.toThrow(/API base URL/i);
+
+    await buttonApi.press('VB01', fetchImpl);
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      '/api/button/VB01',
+      expect.objectContaining({ method: 'POST' })
+    );
     vi.unstubAllEnvs();
   });
 });

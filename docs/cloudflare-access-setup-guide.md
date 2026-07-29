@@ -213,18 +213,58 @@ Should print **401** (good).
 
 ---
 
-## Step 8 — Configure Cloudflare Pages environment variables
+## Step 8 — Pages env vars (routines / API proxy)
 
-1. Dashboard → **Workers & Pages** → your **Pages** project → **Settings** → **Environment variables**.
-2. Add or edit:
+These settings live on your **Pages site** (the dashboard HTML), **not** on the **`lovely-home-hub-api` Worker**.  
+Worker secrets (`CF_ACCESS_*`, `OWNER_EMAILS`, etc.) are configured separately in **Step 6** — do not mix them up.
 
-| Variable name | Value | Environments |
-|---------------|--------|--------------|
-| `VITE_API_BASE_URL` | `https://lovely-home-hub-api.YOUR-SUBDOMAIN.workers.dev` (no trailing slash) | **Production** and **Preview** |
-| `VITE_DEPLOYMENT_MODE` | `home` (owner hub) or `house-sitter` (guest tablet build) | Production (and Preview if needed) |
+Official references:
 
-3. **Save**.
-4. **Deployments** → **Retry deployment** on the latest production build (or push a commit) so the new env vars are baked into the JS bundle.
+- [Pages build environment variables](https://developers.cloudflare.com/pages/configuration/build-configuration/#environment-variables)
+- [Pages Functions environment variables](https://developers.cloudflare.com/pages/functions/bindings/#environment-variables) (dashboard label may say **Variables and Secrets**)
+
+### Where to click (dashboard)
+
+1. Open **[Cloudflare dashboard](https://dash.cloudflare.com/)** and choose your account.
+2. In the **left sidebar**, click **Workers & Pages** (this is **not** **Zero Trust**, **not** **DNS**, **not** **R2**).
+3. On the Workers & Pages screen, open the **Pages** list (if you only see Workers, use the **Pages** tab or filter at the top).
+4. Click your **dashboard Pages project** — the one whose live URL is **`home-dashboard-a11.pages.dev`** (confirm under that project’s **Custom domains** or latest **Deployments**).  
+   Do **not** open **`lovely-home-hub-api`** here; that row is the **Worker API**, not the website.
+5. Open the project’s **Settings** (top navigation on the project, not account-wide Settings).
+6. Find **Environment variables** and/or **Variables and Secrets** (Cloudflare uses both names in docs; it is the same place to add plain text vars for build + Functions).
+7. Click **Add** / **Add variable** (Type: **Plaintext** is fine for these URLs).
+
+Cloudflare only gives **two** scopes for Pages vars: **Production** and **Preview**. Repeat each change for **both** unless you intentionally only use production.
+
+### What to set (for routines after Access)
+
+| Variable | What to do | Value |
+|----------|------------|--------|
+| `VITE_API_BASE_URL` | **Remove** the variable if it is set to your `*.workers.dev` URL, **or** edit it and clear the value so the built app uses same-origin `/api/...`. | *(no value — delete the row or leave unset)* |
+| `WORKER_API_ORIGIN` | **Add** (or edit) this on the **Pages** project only. | `https://lovely-home-hub-api.mark-lovely67.workers.dev` (no trailing `/`) |
+| `VITE_DEPLOYMENT_MODE` | Keep as you already have it. | `home` or `house-sitter` |
+
+Why:
+
+- **`VITE_API_BASE_URL`** is baked into the frontend at **build** time. If it points at `workers.dev`, the browser POSTs routines cross-origin and Access can **403 the OPTIONS preflight**.
+- **`WORKER_API_ORIGIN`** is read at **runtime** by the Pages Function `functions/api/[[path]].js`, which proxies `https://<your-pages-host>/api/*` to the Worker and forwards `Cf-Access-Jwt-Assertion`.
+
+**Local dev:** use `.env.local` at the repo root with `VITE_API_BASE_URL=http://127.0.0.1:8787` only on your Mac — nothing to set in Cloudflare for local.
+
+### Redeploy (required)
+
+Changing `VITE_*` does **not** update the live JS until a new build runs.
+
+1. Stay on the same **Pages** project → **Deployments**.
+2. On the latest **Production** deployment, open **⋯** → **Retry deployment** (or push a commit to trigger a build).
+
+After deploy, DevTools → **Network**: tapping a routine should show **POST** to  
+`https://home-dashboard-a11.pages.dev/api/button/VB01`, **not** to `workers.dev`.
+
+### If you cannot find “Environment variables”
+
+- You are almost certainly inside the **Worker** (`lovely-home-hub-api`) or **Zero Trust** — go back to **Workers & Pages** → **Pages** → **home-dashboard** → **Settings**.
+- If the UI only shows **Bindings**, scroll the Settings page; **Variables and Secrets** / **Environment variables** is a separate section on the same Settings page per [Cloudflare’s bindings doc](https://developers.cloudflare.com/pages/functions/bindings/#environment-variables).
 
 ---
 
@@ -245,6 +285,7 @@ Should print **401** (good).
 | Dashboard loads, weather “unavailable”, API 401 | Complete Step 4 (Worker Access app); same email policies |
 | API 503 | Step 6 secrets missing or Worker not redeployed after secrets |
 | CORS error in console | Worker `ALLOWED_ORIGINS` must include your Pages origin; redeploy Worker from latest `wrangler.toml` |
+| Routines / controls do nothing; OPTIONS to `workers.dev` is **403** | Use Step 8 proxy: clear `VITE_API_BASE_URL`, set `WORKER_API_ORIGIN`, redeploy Pages |
 | Calendar 403 for you | Your login email must be in `OWNER_EMAILS`, not just Access Owners policy |
 
 ---
@@ -278,7 +319,7 @@ Worker CORS already lists `https://dashboard.lovely-home.co.uk` in `worker/wrang
 | Who can open the website | Zero Trust → Access → Applications → Policies |
 | Who is “owner” for calendar/API | Worker secret `OWNER_EMAILS` |
 | Worker validates JWT | Secrets `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD` |
-| API URL in the app | Pages → Settings → Environment variables → `VITE_API_BASE_URL` |
+| API URL in the app | **Pages** project Settings → env vars (`WORKER_API_ORIGIN` + no `VITE_API_BASE_URL`); local → `.env.local` |
 | CORS allowed origins | `worker/wrangler.toml` → `ALLOWED_ORIGINS` |
 
 More detail: [cloudflare-access-runbook.md](./cloudflare-access-runbook.md) · [cloudflare-access.md](./cloudflare-access.md)

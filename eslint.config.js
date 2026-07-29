@@ -28,6 +28,17 @@ export default [
     }
   },
   {
+    files: ['functions/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.worker }
+    },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }]
+    }
+  },
+  {
     files: ['tests/**/*.js', 'vitest.config.js', 'scripts/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
