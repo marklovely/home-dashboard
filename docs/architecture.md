@@ -181,6 +181,10 @@ Concept search across categories and topics with aliases (e.g. `kettle` / `tea` 
 
 Legacy Markdown under `src/content/houseguide/*.md` remains optional source material until extraction fills the catalog.
 
+## Cloudflare Worker API
+
+Virtual Buttons and private house values are served through a Cloudflare Worker — see [cloudflare-worker.md](./cloudflare-worker.md). The PWA uses `VITE_API_BASE_URL`; the Virtual Buttons access code never ships to the browser.
+
 ## Adding a new application
 
 1. Create `src/apps/MyApp/MyAppApp.js` and `index.js` with `registerApp()`.

@@ -1,0 +1,16 @@
+{
+  "name": "lovely-home-hub-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "check": "vitest run"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.19",
+    "vitest": "~2.1.9",
+    "wrangler": "^4.0.0"
+  }
+}

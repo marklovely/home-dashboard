@@ -1,5 +1,4 @@
 export const CONFIG = {
-  accessCode: import.meta.env.VITE_VIRTUAL_BUTTONS_ACCESS_CODE ?? '',
   weather: {
     latitude: null,
     longitude: null,
