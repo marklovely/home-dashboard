@@ -20,7 +20,7 @@ npx wrangler secret put OWNER_SESSION_SECRET
 
 5. **Confirm** `OWNER_PIN` is already set for owner unlock.
 6. **Deploy Worker** again if secrets were added after the last deploy: `npm run deploy` in `worker/`.
-7. **Pages:** ensure `VITE_API_BASE_URL` points at the Worker hostname (Preview + Production).
+7. **Pages:** ensure `VITE_API_BASE_URL` points at the Worker hostname (**Preview and Production**). PR preview URLs (`*.pages.dev`) fail My Day with “API not configured” if Preview env vars are empty.
 8. **On the hub:** unlock **Owner access** with PIN once per session. My Day fetches calendar data only while a valid in-memory bearer token exists.
 
 ## Revoking a exposed feed

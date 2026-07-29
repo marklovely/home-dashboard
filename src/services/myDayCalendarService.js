@@ -123,7 +123,11 @@ export function getMyDayHomeSummary(asOf = new Date()) {
     return { title: 'My Day', subtitle: 'Loading…' };
   }
   if (state.status === 'unavailable' && !state.data) {
-    return { title: 'My Day', subtitle: 'Temporarily unavailable' };
+    const subtitle =
+      state.message === 'API not configured'
+        ? 'API URL not configured'
+        : 'Temporarily unavailable';
+    return { title: 'My Day', subtitle };
   }
   const summary = buildHomeCardSummary(state.data, asOf);
   return {
