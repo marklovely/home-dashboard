@@ -1,5 +1,6 @@
 import { verifyAccessJwt, isAccessConfigured } from './accessJwt.js';
 import { readAccessJwtFromRequest } from './accessJwtFromRequest.js';
+import { verifyHubProxyAccessEmail } from './hubProxyAuth.js';
 import { resolveRoleFromEmail } from './accessRoles.js';
 
 /** @typedef {'owner' | 'house-sitter'} LovelyHomeRole */
@@ -30,17 +31,22 @@ export async function authenticateRequest(request, env, fetchImpl = fetch) {
   }
 
   const token = readAccessJwtFromRequest(request);
-  if (!token) {
-    return { ok: false, status: 401, code: 'UNAUTHENTICATED' };
+  if (token) {
+    const verified = await verifyAccessJwt(token, env, fetchImpl);
+    if (!verified.ok) {
+      return { ok: false, status: 401, code: 'INVALID_TOKEN' };
+    }
+    const role = resolveRoleFromEmail(verified.email, env);
+    return { ok: true, email: verified.email, role };
   }
 
-  const verified = await verifyAccessJwt(token, env, fetchImpl);
-  if (!verified.ok) {
-    return { ok: false, status: 401, code: 'INVALID_TOKEN' };
+  const proxyEmail = await verifyHubProxyAccessEmail(request, env);
+  if (proxyEmail) {
+    const role = resolveRoleFromEmail(proxyEmail, env);
+    return { ok: true, email: proxyEmail, role };
   }
 
-  const role = resolveRoleFromEmail(verified.email, env);
-  return { ok: true, email: verified.email, role };
+  return { ok: false, status: 401, code: 'UNAUTHENTICATED' };
 }
 
 /**

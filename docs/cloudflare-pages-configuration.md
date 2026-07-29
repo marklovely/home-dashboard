@@ -18,6 +18,8 @@ There is **no** `wrangler.toml` at the repo root (that file would lock env vars 
 |------|--------|
 | `WORKER_API_ORIGIN` | `https://lovely-home-hub-api.mark-lovely67.workers.dev` |
 | `VITE_DEPLOYMENT_MODE` | `home` |
+| `CF_ACCESS_TEAM_DOMAIN` | Your Zero Trust team (e.g. `mark-lovely67.cloudflareaccess.com` **without** `https://`) |
+| `HUB_PROXY_SECRET` | Long random string — **same value** as Worker secret `HUB_PROXY_SECRET` (see below) |
 
 `VITE_API_BASE_URL` is **optional** on Pages — production builds ignore it for API calls and use `/api` instead. You may leave it set to the Worker URL for clarity; it does not change production behaviour.
 
@@ -43,6 +45,23 @@ npx wrangler secret put CF_ACCESS_AUD
 Paste: **`WORKER_APP_AUD,PAGES_APP_AUD`** (comma between the two hex strings from Zero Trust → Access → each application → Application Audience).
 
 No Worker redeploy needed after a secret update.
+
+### 4. Worker + Pages secret `HUB_PROXY_SECRET`
+
+When `/api/*` requests do not carry `CF_Authorization` (common on Pages), the proxy resolves your identity via Cloudflare **`get-identity`** and forwards a **signed** email to the Worker.
+
+Set the **same** secret on both:
+
+```bash
+cd worker
+npx wrangler secret put HUB_PROXY_SECRET
+```
+
+Pages → **Settings → Environment variables** → add plaintext **`HUB_PROXY_SECRET`** (Production + Preview) with the identical value, then **redeploy Pages**.
+
+Also set **`CF_ACCESS_TEAM_DOMAIN`** on Pages (plaintext), matching the Worker team host (e.g. `your-team.cloudflareaccess.com`).
+
+Redeploy **Worker** after adding `HUB_PROXY_SECRET` there.
 
 ### 3. Browser after deploy
 
