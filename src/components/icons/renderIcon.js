@@ -4,13 +4,18 @@ import {
   Clapperboard,
   ChefHat,
   CloudSun,
+  Cross,
   Dog,
   Droplets,
   Flame,
+  HeartPulse,
+  Home,
   KeyRound,
   Lightbulb,
   MapPin,
   Monitor,
+  NotebookPen,
+  Phone,
   Settings,
   Shield,
   ShowerHead,
@@ -18,6 +23,7 @@ import {
   Trash2,
   Trees,
   Wifi,
+  Zap,
   createElement
 } from 'lucide';
 
@@ -41,7 +47,13 @@ const ICON_NODES = {
   'key-round': KeyRound,
   'shower-head': ShowerHead,
   trees: Trees,
-  shield: Shield
+  shield: Shield,
+  home: Home,
+  phone: Phone,
+  'heart-pulse': HeartPulse,
+  zap: Zap,
+  cross: Cross,
+  notebook: NotebookPen
 };
 
 /**

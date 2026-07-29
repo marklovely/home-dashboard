@@ -144,7 +144,7 @@ export const settingsApp = defineApp({
   description: 'Profile, display, and about this hub',
   capabilities: ['configuration', 'profiles', 'theme'],
   accent: '#aeb7c6',
-  profiles: ['owner', 'housesitter'],
+  profiles: ['owner'],
   summary: settingsSummary,
   mount(viewport, context) {
     mountSettingsApp(viewport, context, () => {
