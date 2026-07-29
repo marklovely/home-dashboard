@@ -1,12 +1,6 @@
-import { definePlaceholderApp } from '../placeholder.js';
 import { registerApp } from '../../services/appRegistry.js';
+import { binsApp } from './BinsApp.js';
 
-registerApp(
-  definePlaceholderApp({
-    id: 'bins',
-    title: 'Bin Collection',
-    icon: '🗑',
-    accent: '#28d17c',
-    profiles: ['owner', 'housesitter']
-  })
-);
+registerApp(binsApp);
+
+export { binsApp };

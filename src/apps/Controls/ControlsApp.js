@@ -1,3 +1,4 @@
+import { defineApp } from '../../components/App/defineApp.js';
 import { getWidgetById } from '../../services/widgetRegistry.js';
 
 /**
@@ -34,11 +35,25 @@ export function mountControlsApp(viewport, context) {
   viewport.replaceChildren(page);
 }
 
-export const controlsApp = {
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ */
+function controlsSummary(context) {
+  const count = context.config.buttons?.length ?? 0;
+  return {
+    title: `${count} routine${count === 1 ? '' : 's'} available`,
+    subtitle: 'Virtual Buttons ready'
+  };
+}
+
+export const controlsApp = defineApp({
   id: 'controls',
   title: 'Controls',
-  icon: '🏠',
+  iconId: 'lightbulb',
+  description: 'Control lighting, heating, and scenes',
+  capabilities: ['lighting', 'heating', 'scenes'],
   accent: '#8b7cff',
   profiles: ['owner', 'housesitter'],
+  summary: controlsSummary,
   mount: mountControlsApp
-};
+});

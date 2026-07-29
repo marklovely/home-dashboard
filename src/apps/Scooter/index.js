@@ -1,12 +1,6 @@
-import { definePlaceholderApp } from '../placeholder.js';
 import { registerApp } from '../../services/appRegistry.js';
+import { scooterApp } from './ScooterApp.js';
 
-registerApp(
-  definePlaceholderApp({
-    id: 'scooter',
-    title: 'Scooter',
-    icon: '🐶',
-    accent: '#ff9f43',
-    profiles: ['owner', 'housesitter']
-  })
-);
+registerApp(scooterApp);
+
+export { scooterApp };

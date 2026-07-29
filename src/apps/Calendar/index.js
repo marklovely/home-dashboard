@@ -1,12 +1,6 @@
-import { definePlaceholderApp } from '../placeholder.js';
 import { registerApp } from '../../services/appRegistry.js';
+import { calendarApp } from './CalendarApp.js';
 
-registerApp(
-  definePlaceholderApp({
-    id: 'calendar',
-    title: 'Calendar',
-    icon: '📅',
-    accent: '#6f7b8f',
-    profiles: ['owner', 'housesitter']
-  })
-);
+registerApp(calendarApp);
+
+export { calendarApp };

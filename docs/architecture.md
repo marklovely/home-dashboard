@@ -21,10 +21,17 @@ App Shell
 ├── Bins App (placeholder)
 ├── Plex App (placeholder)
 ├── Calendar App (placeholder)
-└── Settings App (placeholder)
+└── Settings App (configuration)
 ```
 
-An **App** represents a user task (“Control the house”, “Read the guide”). A **Widget** is a reusable component with no knowledge of other apps. This keeps the home screen from becoming a dumping ground for every feature.
+An **App** represents a user task (“Control the house”, “Read the guide”). A **Widget** is a reusable component with no knowledge of other apps. The product identity is **Home Hub** (Lovely Home Hub in chrome copy)—a coherent platform, not a single-purpose dashboard.
+
+## Navigation philosophy
+
+- **Always know where you are:** persistent chrome shows a **Home** button and the current destination title.
+- **One tap home:** Home returns to the launcher without reload.
+- **Focus by destination:** each app owns the full viewport; unrelated widgets are not stacked on one scrollable page.
+- **Calm transitions:** the viewport fades/slides slightly when routes change (CSS only, no framework router).
 
 ## App Shell
 
@@ -32,12 +39,43 @@ Location: `src/shell/`
 
 The shell owns:
 
-- Header (greeting, clock, status strip on Home)
-- Navigation (Home button + app title when inside an app)
+- Persistent chrome (Home button, destination title, clock)
+- Home-only welcome line (greeting + date) and status strip
 - Viewport (`#app-viewport`) where the active app mounts
 - Client-side routing (`src/shell/router.js`, hash routes `#/controls`, …)
+- Profile change reactions (rebuild Home launcher immediately)
 
-`src/js/app.js` bootstraps the shell, status services (weather, battery, network), and loads app/widget registrations. **Apps do not import each other.**
+## Application metadata
+
+Apps are declared with `defineApp()` (`src/components/App/defineApp.js`) and registered in `src/services/appRegistry.js`.
+
+Each app exports metadata rather than hardcoding Home cards:
+
+| Field | Purpose |
+|-------|---------|
+| `id`, `title`, `iconId` | Identity and Lucide icon (`src/components/icons/renderIcon.js`) |
+| `description` | Accessibility / future search |
+| `capabilities` | Tags for future search, voice, automation, AI (not all used yet) |
+| `profiles` | Who can see the app on Home |
+| `accent` | Card theming |
+| `summary(context)` | Optional live card data on Home |
+| `mount(viewport, context)` | Full-screen app UI |
+
+Example capabilities: Controls → `lighting`, `heating`, `scenes`; House Guide → `search`, `offline`, `markdown`.
+
+## Application summaries
+
+Optional `summary(shellContext)` returns `{ title, subtitle? }`. Home cards render this as **live information** (e.g. routine count, weather snapshot, “Coming Soon”). Summaries are async-capable; the launcher fills cards after mount.
+
+Weather summaries read `src/services/homeWeatherSnapshot.js`, updated when the status strip weather service loads.
+
+## Settings application
+
+`src/apps/Settings/SettingsApp.js` is the first real configuration app:
+
+- **Profile** — owner / house sitter; updates `profileService` and refreshes Home without reload
+- **Theme** — dark (active), light/auto disabled for now (`themeService`)
+- **About** — version (`__APP_VERSION__`), build time (`__BUILD_TIME__` from Vite), current profile
 
 ## Applications
 
@@ -55,7 +93,8 @@ Each app folder contains:
 | Home | Default launcher (`renderHomeScreen`); not registered in the app registry |
 | Controls | Mounts the **Alexa** widget (Virtual Buttons) |
 | House Guide | Mounts the **House Guide** widget (Markdown + search) |
-| Others | “Coming Soon” placeholders |
+| Settings | Profile, theme (dark), about |
+| Others | Focused placeholders with summaries where useful |
 
 Apps declare `profiles: ['owner', 'housesitter']` (or subsets). `getAppsForProfile()` drives the Home launcher cards.
 
