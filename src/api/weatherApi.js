@@ -1,4 +1,4 @@
-import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
+import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
 
 /** @typedef {import('../services/weatherTypes.js').DashboardWeather} DashboardWeather */
@@ -14,15 +14,14 @@ import { withApiCredentials } from './accessFetch.js';
  */
 export async function fetchDashboardWeather({ audience = 'owner', fetchImpl = fetch } = {}) {
   await ensureApiBaseUrl();
-  const base = getApiBaseUrl();
-  if (!base) {
+  if (!isApiConfigured()) {
     return { ok: false, status: 0, message: 'API not configured' };
   }
 
   const query = audience === 'house-sitter' ? '?audience=house-sitter' : '';
 
   try {
-    const response = await fetchImpl(`${base}/api/weather${query}`, withApiCredentials({ cache: 'no-store' }));
+    const response = await fetchImpl(buildApiUrl(`/api/weather${query}`), withApiCredentials({ cache: 'no-store' }));
     const body = await response.json();
     if (!response.ok) {
       return {

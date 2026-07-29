@@ -28,7 +28,7 @@ describe('buttonApi', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
     const { resetApiBaseForTests } = await import('../src/api/apiBase.js');
     resetApiBaseForTests();
-    await expect(pressButton('VB01')).rejects.toThrow(/API base URL/i);
+    await expect(pressButton('VB01')).rejects.toThrow(/API not configured/i);
     vi.unstubAllEnvs();
   });
 });

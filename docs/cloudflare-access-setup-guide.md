@@ -213,18 +213,20 @@ Should print **401** (good).
 
 ---
 
-## Step 8 — Configure Cloudflare Pages environment variables
+## Step 8 — Pages environment variables
 
-1. Dashboard → **Workers & Pages** → your **Pages** project → **Settings** → **Environment variables**.
-2. Add or edit:
+Production API traffic uses **same-origin `/api/*`** (Pages Function). See **[cloudflare-pages-configuration.md](./cloudflare-pages-configuration.md)** for the full checklist (`WORKER_API_ORIGIN`, **`HUB_API` binding**, dual `CF_ACCESS_AUD`).
 
-| Variable name | Value | Environments |
-|---------------|--------|--------------|
-| `VITE_API_BASE_URL` | `https://lovely-home-hub-api.YOUR-SUBDOMAIN.workers.dev` (no trailing slash) | **Production** and **Preview** |
-| `VITE_DEPLOYMENT_MODE` | `home` (owner hub) or `house-sitter` (guest tablet build) | Production (and Preview if needed) |
+Minimum plaintext vars on Pages project **`home-dashboard`** (Production **and** Preview):
 
-3. **Save**.
-4. **Deployments** → **Retry deployment** on the latest production build (or push a commit) so the new env vars are baked into the JS bundle.
+| Variable | Value |
+|----------|--------|
+| `WORKER_API_ORIGIN` | `https://lovely-home-hub-api.mark-lovely67.workers.dev` |
+| `VITE_DEPLOYMENT_MODE` | `home` or `house-sitter` |
+
+Add **Settings → Bindings → Service binding** `HUB_API` → `lovely-home-hub-api`, then redeploy.
+
+Do **not** add a `wrangler.toml` at the repo root for Pages.
 
 ---
 

@@ -50,6 +50,16 @@ describe('Cloudflare Access authentication', () => {
     expect(response.status).toBe(401);
   });
 
+  it('accepts JWT when CF_ACCESS_AUD lists multiple audiences', async () => {
+    const env = createAccessTestEnv({ CF_ACCESS_AUD: 'test-audience,pages-app-aud' });
+    const token = await signTestAccessJwt('owner@example.com', env, { aud: 'pages-app-aud' });
+    const response = await handleRequest(
+      new Request('https://worker.test/api/session', withAccessJwt(token)),
+      withTestLimiters(env)
+    );
+    expect(response.status).toBe(200);
+  });
+
   it('returns house-sitter role for allowed non-owner email', async () => {
     const token = await sitterJwt();
     const response = await handleRequest(

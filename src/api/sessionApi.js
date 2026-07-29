@@ -1,4 +1,4 @@
-import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
+import { ensureApiBaseUrl, buildApiUrl } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
 
 /**
@@ -6,13 +6,9 @@ import { withApiCredentials } from './accessFetch.js';
  */
 export async function fetchSession({ fetchImpl = fetch } = {}) {
   await ensureApiBaseUrl();
-  const base = getApiBaseUrl();
-  if (!base) {
-    return { ok: false, status: 503, data: null };
-  }
 
   try {
-    const response = await fetchImpl(`${base}/api/session`, withApiCredentials({ cache: 'no-store' }));
+    const response = await fetchImpl(buildApiUrl('/api/session'), withApiCredentials({ cache: 'no-store' }));
     const data = await response.json();
     if (!response.ok) {
       return { ok: false, status: response.status, data };

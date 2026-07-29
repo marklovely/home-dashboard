@@ -1,4 +1,4 @@
-import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
+import { ensureApiBaseUrl, buildApiUrl } from './apiBase.js';
 import { resolveApiClient } from './client.js';
 import { withApiCredentials } from './accessFetch.js';
 
@@ -15,10 +15,8 @@ import { withApiCredentials } from './accessFetch.js';
  */
 export async function fetchPrivateConfigFromApi(fetchImpl) {
   await ensureApiBaseUrl();
-  const base = getApiBaseUrl();
-  if (!base) return null;
   const client = resolveApiClient(fetchImpl);
-  const response = await client.get(`${base}/api/private-config`, withApiCredentials({ cache: 'no-store' }));
+  const response = await client.get(buildApiUrl('/api/private-config'), withApiCredentials({ cache: 'no-store' }));
   if (!response.ok) return null;
   return /** @type {WorkerPrivateConfig} */ (await response.json());
 }

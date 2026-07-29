@@ -1,4 +1,4 @@
-import { ensureApiBaseUrl, getApiBaseUrl } from '../api/apiBase.js';
+import { ensureApiBaseUrl, buildApiUrl } from '../api/apiBase.js';
 import { withApiCredentials } from '../api/accessFetch.js';
 import { setOwnerAccessToken } from './ownerAccessToken.js';
 
@@ -23,12 +23,10 @@ async function resultFromResponse(response) {
  */
 export async function authenticateOwnerPin(pin, fetchImpl = fetch) {
   await ensureApiBaseUrl();
-  const base = getApiBaseUrl();
-  if (!base) return 'unavailable';
 
   try {
     const response = await fetchImpl(
-      `${base}/api/auth/owner`,
+      buildApiUrl('/api/auth/owner'),
       withApiCredentials({
         method: 'POST',
         body: JSON.stringify({ pin }),
