@@ -71,21 +71,25 @@ export async function refreshWeather(fetchImpl = fetch) {
   notify();
 
   const result = await fetchDashboardWeather(fetchImpl);
-  if (result.ok) {
-    state = { status: 'ready', data: result.data, message: '' };
-    applySnapshotFromData(result.data);
-  } else {
-    if (state.data) {
-      state = {
-        status: 'ready',
-        data: state.data,
-        message: result.message
-      };
+    if (result.ok) {
+      state = { status: 'ready', data: result.data, message: '' };
+      applySnapshotFromData(result.data);
     } else {
-      state = { status: 'unavailable', data: null, message: result.message };
-      setWeatherSnapshot({ title: '—', subtitle: 'Weather unavailable', icon: 'cloudy', condition: '' });
+      if (state.data) {
+        state = {
+          status: 'ready',
+          data: state.data,
+          message: result.message
+        };
+      } else {
+        const subtitle =
+          result.message === 'API not configured'
+            ? 'Set VITE_API_BASE_URL on Pages'
+            : 'Weather unavailable';
+        state = { status: 'unavailable', data: null, message: result.message };
+        setWeatherSnapshot({ title: '—', subtitle, icon: 'cloudy', condition: '' });
+      }
     }
-  }
   notify();
   return state;
 }

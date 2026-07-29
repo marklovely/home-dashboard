@@ -37,7 +37,10 @@ export function applyWeatherToStatusStrip(elements, weatherState) {
   }
 
   elements.temp.textContent = 'Weather';
-  elements.text.textContent = 'Unavailable';
+  elements.text.textContent =
+    weatherState.message === 'API not configured'
+      ? 'API not configured'
+      : 'Unavailable';
   renderStatusIcon(iconHost, 'cloudy');
 }
 
