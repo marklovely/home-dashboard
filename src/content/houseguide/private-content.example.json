@@ -1,0 +1,24 @@
+{
+  "contacts": {
+    "mark": {
+      "name": "Mark Lovely",
+      "phone": "00000000000",
+      "email": "mark.example@example.com"
+    },
+    "donna": {
+      "name": "Donna Powell",
+      "phone": "00000000000",
+      "email": "donna.example@example.com"
+    }
+  },
+  "address": {
+    "full": "Example Street, Example Town, EX1 1MP"
+  },
+  "wifi": {
+    "ssid": "ExampleNetwork",
+    "password": "example-password"
+  },
+  "lockbox": {
+    "code": "0000"
+  }
+}

@@ -30,32 +30,54 @@ function createInteractiveHouseGuide(context) {
   introTitle.textContent = 'Explore the home';
   const introText = document.createElement('p');
   introText.className = 'house-guide-intro-text';
-  introText.textContent = 'Browse by area, pick an appliance, or search below.';
+  introText.textContent = 'Choose a room or topic, or search for what you need.';
   intro.append(introTitle, introText);
+
+  const searchShell = document.createElement('div');
+  searchShell.className = 'guide-search';
+  searchShell.dataset.guideSearch = 'true';
 
   const searchWrap = document.createElement('div');
   searchWrap.className = 'house-guide-search';
+
   const searchLabel = document.createElement('label');
   searchLabel.className = 'guide-search-label';
   searchLabel.setAttribute('for', 'house-guide-search');
   searchLabel.textContent = 'What do you need help with?';
+
+  const searchFieldRow = document.createElement('div');
+  searchFieldRow.className = 'guide-search-field-row';
+
   const searchInput = document.createElement('input');
   searchInput.id = 'house-guide-search';
   searchInput.className = 'guide-search-input';
   searchInput.type = 'search';
-  searchInput.placeholder = 'Try kettle, Netflix, heating…';
+  searchInput.placeholder = 'Try heating, Netflix, boiling water, bins…';
   searchInput.setAttribute('autocomplete', 'off');
   searchInput.setAttribute('enterkeyhint', 'search');
+  searchInput.setAttribute('inputmode', 'search');
+
+  const clearButton = document.createElement('button');
+  clearButton.type = 'button';
+  clearButton.className = 'guide-search-clear';
+  clearButton.hidden = true;
+  clearButton.setAttribute('aria-label', 'Clear search');
+  clearButton.textContent = 'Clear';
+
+  searchFieldRow.append(searchInput, clearButton);
+  searchWrap.append(searchLabel, searchFieldRow);
+
   const searchStatus = document.createElement('p');
   searchStatus.className = 'guide-search-status subtle';
   searchStatus.setAttribute('aria-live', 'polite');
-  searchWrap.append(searchLabel, searchInput, searchStatus);
+
+  searchShell.append(searchWrap, searchStatus);
 
   const tileGrid = document.createElement('div');
   tileGrid.className = 'guide-category-grid';
   tileGrid.setAttribute('role', 'list');
 
-  exploreView.append(intro, tileGrid, searchWrap);
+  exploreView.append(intro, searchShell, tileGrid);
 
   const topicHost = document.createElement('div');
   topicHost.className = 'house-guide-topic-host';
@@ -166,6 +188,7 @@ function createInteractiveHouseGuide(context) {
 
   function applySearch() {
     const query = searchInput.value;
+    clearButton.hidden = !query.trim();
     rebuildCategoryGrid(query);
 
     if (!query.trim()) {
@@ -175,7 +198,7 @@ function createInteractiveHouseGuide(context) {
 
     const topics = searchGuideTopics(query);
     if (topics.length === 0) {
-      searchStatus.textContent = 'No matches — try kettle, Wi-Fi, or Netflix.';
+      searchStatus.textContent = 'Nothing matched — try heating, Wi-Fi, or Scooter feeding.';
       return;
     }
 
@@ -186,6 +209,12 @@ function createInteractiveHouseGuide(context) {
 
     searchStatus.textContent = `${topics.length} topics match your search.`;
   }
+
+  clearButton.addEventListener('click', () => {
+    searchInput.value = '';
+    applySearch();
+    searchInput.focus();
+  });
 
   searchInput.addEventListener('input', applySearch);
   searchInput.addEventListener('keydown', (event) => {

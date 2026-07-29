@@ -92,7 +92,25 @@
  * @property {string} content
  */
 
-/** @typedef {GuideBlockText | GuideBlockSteps | GuideBlockCallout | GuideBlockHeroImage | GuideBlockGallery | GuideBlockLocation | GuideBlockContact | GuideBlockKeyValues | GuideBlockCollapsible} GuideBlock */
+/**
+ * @typedef {Object} GuideBlockPlace
+ * @property {'place'} type
+ * @property {string} name
+ * @property {string} address
+ * @property {string} [description]
+ * @property {boolean} [dogFriendly]
+ * @property {string} [website]
+ */
+
+/**
+ * @typedef {Object} GuideBlockProtected
+ * @property {'protected'} type
+ * @property {'contact' | 'wifi' | 'lockbox' | 'address' | 'generic'} kind
+ * @property {string} label
+ * @property {string} key
+ */
+
+/** @typedef {GuideBlockText | GuideBlockSteps | GuideBlockCallout | GuideBlockHeroImage | GuideBlockGallery | GuideBlockLocation | GuideBlockContact | GuideBlockKeyValues | GuideBlockCollapsible | GuideBlockPlace | GuideBlockProtected} GuideBlock */
 
 /**
  * @typedef {Object} GuideActionAlexa

@@ -148,6 +148,14 @@ Media (images under src/content/houseguide/media/)
 - **Content Provider** — `jsonGuideProvider.js` reads `guide-catalog.json` (version 2). Legacy `.md` files are not rendered; use `npm run guide:extract` after adding `source/house-guide.pdf`.
 - **Blocks** — composable content types in `src/types/guideContent.js`. Hero and gallery blocks resolve images via `guideMedia.js` when files exist in `media/`.
 
+### Protected house-specific values
+
+Public guide copy lives in `guide-catalog.json`. Values that must not ship in public source control use **`protected` blocks** with dot-path keys resolved from `private-content.local.json` (gitignored). Copy `private-content.example.json` to `private-content.local.json` on a trusted device.
+
+When keys are missing, the UI shows safe placeholders (for example Wi-Fi details once secure house-sitter access is enabled) — never `undefined`, empty buttons, or broken QR codes.
+
+Future: serve protected values from Cloudflare Access–protected Workers or environment-backed config at deploy time, not from the static Pages bundle.
+
 ### Content pipeline (PDF not served in-app)
 
 `source/house-guide.pdf` → `npm run guide:extract` → normalise into **guide-catalog.json** + contextual **media/** files → application.

@@ -1,5 +1,6 @@
 import { getGuideMediaCatalog } from '../../content/houseguide/providers/jsonGuideProvider.js';
 import { resolveGuideMediaById } from '../../content/houseguide/guideMedia.js';
+import { getProtectedDisplayValue } from '../../content/houseguide/privateContent.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createGuidePanelOverlay, runGuideAction } from './guideActions.js';
 import { highlightGuideText } from './highlight.js';
@@ -99,6 +100,58 @@ function renderBlock(block) {
     body.className = 'guide-section-body';
     body.textContent = block.content;
     section.append(heading, body);
+    return section;
+  }
+
+  if (block.type === 'place') {
+    const card = document.createElement('article');
+    card.className = 'guide-place-card';
+    const name = document.createElement('h3');
+    name.className = 'guide-place-name';
+    name.textContent = block.name;
+    const address = document.createElement('p');
+    address.className = 'guide-place-address';
+    address.textContent = block.address;
+    card.append(name, address);
+    if (block.description) {
+      const description = document.createElement('p');
+      description.className = 'guide-place-description';
+      description.textContent = block.description;
+      card.append(description);
+    }
+    if (typeof block.dogFriendly === 'boolean') {
+      const tag = document.createElement('p');
+      tag.className = 'guide-place-tag';
+      tag.textContent = block.dogFriendly ? 'Dog friendly' : 'Not dog friendly';
+      card.append(tag);
+    }
+    if (block.website) {
+      const link = document.createElement('a');
+      link.className = 'guide-place-link';
+      link.href = block.website;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'Website';
+      card.append(link);
+    }
+    return card;
+  }
+
+  if (block.type === 'protected') {
+    const value = getProtectedDisplayValue(block.key, block.kind ?? 'generic');
+    const section = document.createElement('section');
+    section.className = 'guide-section guide-section-protected';
+    const list = document.createElement('dl');
+    list.className = 'guide-value-list';
+    const dt = document.createElement('dt');
+    dt.textContent = block.label;
+    const dd = document.createElement('dd');
+    dd.textContent = value;
+    if (value.includes('secure house-sitter')) {
+      dd.classList.add('guide-protected-placeholder');
+    }
+    list.append(dt, dd);
+    section.append(list);
     return section;
   }
 
