@@ -34,18 +34,39 @@ export class AppleIcsProvider {
     }
 
     const response = await this.fetchImpl(url, {
-      headers: { Accept: 'text/calendar' },
-      cf: { cacheTtl: 0 }
+      headers: {
+        Accept: 'text/calendar,text/plain,*/*',
+        'User-Agent': 'LovelyHomeHub-Calendar/1.0'
+      },
+      cf: { cacheTtl: 0 },
+      redirect: 'follow'
     });
 
     if (!response.ok) {
+      console.error(JSON.stringify({ event: 'calendar_upstream_http', status: response.status }));
       const error = new Error('CALENDAR_UPSTREAM');
       error.code = 'CALENDAR_UPSTREAM';
+      error.upstreamStatus = response.status;
       throw error;
     }
 
     const icsText = await response.text();
-    return parseAndExpandIcs(icsText, asOf);
+    if (!icsText.includes('BEGIN:VCALENDAR')) {
+      console.error(JSON.stringify({ event: 'calendar_upstream_invalid_body' }));
+      const error = new Error('CALENDAR_UPSTREAM');
+      error.code = 'CALENDAR_UPSTREAM';
+      error.upstreamStatus = 502;
+      throw error;
+    }
+
+    try {
+      return parseAndExpandIcs(icsText, asOf);
+    } catch {
+      console.error(JSON.stringify({ event: 'calendar_parse_failed' }));
+      const error = new Error('CALENDAR_PARSE');
+      error.code = 'CALENDAR_PARSE';
+      throw error;
+    }
   }
 }
 

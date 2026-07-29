@@ -8,7 +8,8 @@ import {
   groupEventsByLocalDate,
   isEventHappeningNow,
   localDateKeyFromIso,
-  minutesUntilStart
+  minutesUntilStart,
+  myDayUnavailableMessage
 } from '../../services/myDayFormat.js';
 import {
   getMyDayHomeSummary,
@@ -135,13 +136,7 @@ function renderMyDayApp(viewport) {
   if (state.status === 'unavailable' && !state.data) {
     const message = document.createElement('p');
     message.className = 'my-day-status';
-    if (state.message === 'API not configured') {
-      message.textContent =
-        'The dashboard API is not configured for this site. Set VITE_API_BASE_URL on Cloudflare Pages (Preview and Production) to your Worker URL, then redeploy.';
-    } else {
-      message.textContent =
-        'My Day is temporarily unavailable. Confirm the Worker is deployed with APPLE_CALENDAR_ICS_URL, then unlock again with your owner PIN.';
-    }
+    message.textContent = myDayUnavailableMessage(state.message);
     page.append(message);
     viewport.append(page);
     return;

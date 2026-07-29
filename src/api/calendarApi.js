@@ -29,7 +29,17 @@ export async function fetchMyDayCalendar({ fetchImpl = fetch } = {}) {
       return { ok: false, status: 401, message: 'Owner authorization required', data: null };
     }
     if (!response.ok) {
-      return { ok: false, status: response.status, message: 'Calendar unavailable', data: null };
+      let code = 'Calendar unavailable';
+      try {
+        const errBody = await response.json();
+        if (typeof errBody?.code === 'string') code = errBody.code;
+        if (typeof errBody?.upstreamStatus === 'number') {
+          code = `${code}:${errBody.upstreamStatus}`;
+        }
+      } catch {
+        /* ignore */
+      }
+      return { ok: false, status: response.status, message: code, data: null };
     }
 
     const data = await response.json();

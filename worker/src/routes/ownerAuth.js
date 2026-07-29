@@ -71,7 +71,7 @@ export async function handleOwnerAuth(request, correlationId, env) {
         { status: 200 }
       );
     }
-    return authJson(true, 200);
+    return authJson(false, 503, 'Owner session unavailable');
   }
 
   await recordOwnerAuthFailure(request, env);

@@ -23,6 +23,33 @@ npx wrangler secret put OWNER_SESSION_SECRET
 7. **Pages:** ensure `VITE_API_BASE_URL` points at the Worker hostname (**Preview and Production**). PR preview URLs (`*.pages.dev`) fail My Day with “API not configured” if Preview env vars are empty.
 8. **On the hub:** unlock **Owner access** with PIN once per session. My Day fetches calendar data only while a valid in-memory bearer token exists.
 
+## Troubleshooting My Day
+
+After owner PIN unlock, open DevTools → **Network** → **`calendar`**:
+
+| HTTP status | Meaning |
+|-------------|---------|
+| **401** | No valid bearer token — use **Enter owner PIN** again. |
+| **503** + `CALENDAR_NOT_CONFIGURED` | Secret missing on Worker — run `npx wrangler secret put APPLE_CALENDAR_ICS_URL`. |
+| **503** + `CALENDAR_UPSTREAM` | Worker cannot download the Apple feed — wrong URL, revoked link, or Apple HTTP error (see `upstreamStatus` in JSON). |
+| **200** | Backend OK — if UI still fails, hard-refresh the Pages preview. |
+
+Test from a terminal (replace PIN):
+
+```bash
+TOKEN=$(curl -sS -X POST "https://<worker>/api/auth/owner" \
+  -H "Content-Type: application/json" \
+  -d '{"pin":"YOUR_PIN"}' | jq -r .token)
+
+curl -sS -w "\nHTTP %{http_code}\n" \
+  -H "Authorization: Bearer $TOKEN" \
+  "https://<worker>/api/calendar"
+```
+
+The auth response **must** include `"token"` and `"expiresAt"`. If PIN succeeds but `token` is null, redeploy the Worker from the My Day branch.
+
+Live logs: `cd worker && npx wrangler tail`
+
 ## Revoking a exposed feed
 
 If the ICS URL is ever leaked:

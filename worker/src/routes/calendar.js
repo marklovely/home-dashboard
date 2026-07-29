@@ -24,8 +24,15 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
     });
   } catch (error) {
     if (error?.code === 'CALENDAR_NOT_CONFIGURED') {
-      return Response.json({ error: 'Calendar unavailable' }, { status: 503 });
+      return Response.json({ error: 'Calendar unavailable', code: 'CALENDAR_NOT_CONFIGURED' }, { status: 503 });
     }
-    return Response.json({ error: 'Calendar temporarily unavailable' }, { status: 503 });
+    const body = {
+      error: 'Calendar temporarily unavailable',
+      code: typeof error?.code === 'string' ? error.code : 'UNKNOWN'
+    };
+    if (typeof error?.upstreamStatus === 'number') {
+      body.upstreamStatus = error.upstreamStatus;
+    }
+    return Response.json(body, { status: 503 });
   }
 }
