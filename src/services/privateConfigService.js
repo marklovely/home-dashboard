@@ -1,5 +1,5 @@
 import { fetchPrivateConfigFromApi } from '../api/privateConfigApi.js';
-import { isApiConfigured } from '../api/apiBase.js';
+import { ensureApiBaseUrl, isApiConfigured } from '../api/apiBase.js';
 
 /** @type {'idle' | 'loading' | 'loaded' | 'error'} */
 let status = 'idle';
@@ -64,6 +64,7 @@ export async function preloadPrivateConfig(fetchImpl) {
   inflight = (async () => {
     status = 'loading';
     const merged = loadLocalPrivateContent();
+    await ensureApiBaseUrl();
     if (isApiConfigured()) {
       try {
         const payload = await fetchPrivateConfigFromApi(fetchImpl);

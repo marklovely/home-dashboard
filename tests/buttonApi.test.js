@@ -25,6 +25,9 @@ describe('buttonApi', () => {
 
   it('requires API base URL', async () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+    const { resetApiBaseForTests } = await import('../src/api/apiBase.js');
+    resetApiBaseForTests();
     await expect(pressButton('VB01')).rejects.toThrow(/API base URL/i);
     vi.unstubAllEnvs();
   });
