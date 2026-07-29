@@ -16,7 +16,7 @@ function createTriggerHandler(context) {
     element.classList.add('is-pressing');
     navigator.vibrate?.(35);
     try {
-      await triggerVirtualButton({ accessCode: context.config.accessCode, buttonId: button.id });
+      await triggerVirtualButton({ buttonId: button.id });
       showToast(context.toast, `✓ ${button.title} activated`);
       context.lastCommand.textContent = `${button.title} · ${formatTime(new Date())}`;
     } catch (error) {

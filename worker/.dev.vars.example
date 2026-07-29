@@ -1,0 +1,10 @@
+# Copy to worker/.dev.vars (gitignored) for local wrangler dev.
+VIRTUAL_BUTTONS_ACCESS_CODE=replace-with-your-code
+PRIVATE_WIFI_SSID=ExampleNetwork
+PRIVATE_WIFI_PASSWORD=example-password
+PRIVATE_MARK_PHONE=00000000000
+PRIVATE_MARK_EMAIL=mark.example@example.com
+PRIVATE_DONNA_PHONE=00000000000
+PRIVATE_DONNA_EMAIL=donna.example@example.com
+PRIVATE_HOME_ADDRESS=Example Street, Example Town
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173

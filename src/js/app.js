@@ -9,8 +9,10 @@ import { initialiseWeather } from './modules/weather.js';
 import { initTheme } from '../services/themeService.js';
 import '../apps/index.js';
 import '../widgets/index.js';
+import { preloadPrivateConfig } from '../services/privateConfigService.js';
 
 initTheme();
+void preloadPrivateConfig();
 
 const elements = {
   greeting: document.querySelector('#greeting'),
