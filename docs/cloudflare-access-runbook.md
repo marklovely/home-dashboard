@@ -97,19 +97,16 @@ npm run deploy
 
 Confirm **ControlActionLimiter** migration applies. Note the deployed `*.workers.dev` URL matches `VITE_API_BASE_URL` on Pages.
 
-### 4. Pages environment variables (dashboard site only)
+### 4. Pages environment variables
 
-**Not** the Worker. Path: **[dash.cloudflare.com](https://dash.cloudflare.com/) → Workers & Pages → Pages → `home-dashboard` → Settings → Environment variables / Variables and Secrets.**
-
-See **Step 8** in [cloudflare-access-setup-guide.md](./cloudflare-access-setup-guide.md) for click-by-click instructions.
+See **[cloudflare-pages-configuration.md](./cloudflare-pages-configuration.md)** (stable setup).
 
 | Variable | Production | Preview |
 |----------|------------|---------|
-| `VITE_API_BASE_URL` | **Delete** or leave unset (same-origin `/api`) | **Same** |
-| `WORKER_API_ORIGIN` | `https://lovely-home-hub-api.<subdomain>.workers.dev` | **Same** |
-| `VITE_DEPLOYMENT_MODE` | `home` or `house-sitter` per build | Same as needed |
+| `VITE_API_BASE_URL` | `https://lovely-home-hub-api.<subdomain>.workers.dev` | **Same** |
+| `VITE_DEPLOYMENT_MODE` | `home` or `house-sitter` | Same as needed |
 
-Redeploy Pages (**Deployments → Retry deployment**) after changes so `VITE_*` is rebuilt.
+Redeploy Pages after changes. Production should build from **`main`** (no root `wrangler.toml`).
 
 ### 5. Pages CSP (SPA shell)
 
