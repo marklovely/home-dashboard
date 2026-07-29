@@ -6,6 +6,7 @@
 import { accessJwtProbe, extractAccessJwtFromRequest } from './accessJwtExtract.js';
 import { fetchAccessIdentityEmail, listCookieNames, resolvePagesAccessIdentity } from './accessIdentity.js';
 import { attachHubProxyAuthHeaders } from './hubProxySign.js';
+import { middlewareAccessEmail, middlewareAccessValidated } from './middlewareAccess.js';
 
 /** @type {string[]} */
 const FORWARD_REQUEST_HEADERS = [
@@ -36,8 +37,9 @@ function normalizePath(pathParam) {
 /**
  * @param {Request} request
  * @param {Record<string, string | undefined>} env
+ * @param {unknown} [middlewareData]
  */
-async function buildForwardInit(request, env) {
+async function buildForwardInit(request, env, middlewareData) {
   const headers = new Headers();
   for (const [key, value] of request.headers.entries()) {
     const lower = key.toLowerCase();
@@ -46,14 +48,19 @@ async function buildForwardInit(request, env) {
     }
   }
 
-  const identity = await resolvePagesAccessIdentity(request, env);
-  if (identity && 'jwt' in identity) {
-    headers.set('Cf-Access-Jwt-Assertion', identity.jwt);
-  } else if (identity && 'email' in identity) {
-    await attachHubProxyAuthHeaders(headers, identity.email, env);
+  const middlewareEmail = middlewareAccessEmail(middlewareData);
+  if (middlewareEmail) {
+    await attachHubProxyAuthHeaders(headers, middlewareEmail, env);
   } else {
-    const jwt = extractAccessJwtFromRequest(request);
-    if (jwt) headers.set('Cf-Access-Jwt-Assertion', jwt);
+    const identity = await resolvePagesAccessIdentity(request, env);
+    if (identity && 'jwt' in identity) {
+      headers.set('Cf-Access-Jwt-Assertion', identity.jwt);
+    } else if (identity && 'email' in identity) {
+      await attachHubProxyAuthHeaders(headers, identity.email, env);
+    } else {
+      const jwt = extractAccessJwtFromRequest(request);
+      if (jwt) headers.set('Cf-Access-Jwt-Assertion', jwt);
+    }
   }
 
   /** @type {RequestInit} */
@@ -90,7 +97,7 @@ async function fetchWorkerHealth(env) {
  * @param {{ request: Request, env: Record<string, unknown>, params: { path?: string | string[] } }} context
  */
 export async function onRequest(context) {
-  const { request, env, params } = context;
+  const { request, env, params, data } = context;
   const pagesEnv = /** @type {Record<string, string | undefined>} */ (env);
 
   if (request.method === 'OPTIONS') {
@@ -114,17 +121,28 @@ export async function onRequest(context) {
         hasCookieHeader: Boolean(request.headers.get('Cookie')?.trim()),
         cookieNames: listCookieNames(request),
         getIdentityOk,
+        accessPluginConfigured: Boolean(
+          pagesEnv.CF_ACCESS_TEAM_DOMAIN?.trim() && pagesEnv.CF_ACCESS_AUD_PAGES?.trim()
+        ),
+        middlewareAccessValidated: middlewareAccessValidated(data),
+        middlewareEmailPresent: Boolean(middlewareAccessEmail(data)),
         hubProxySecretConfigured: Boolean(pagesEnv.HUB_PROXY_SECRET?.trim()),
         cfAccessTeamDomainConfigured: Boolean(pagesEnv.CF_ACCESS_TEAM_DOMAIN?.trim()),
+        cfAccessAudPagesConfigured: Boolean(pagesEnv.CF_ACCESS_AUD_PAGES?.trim()),
         usesHubApiBinding: Boolean(
           env.HUB_API && typeof env.HUB_API === 'object' && 'fetch' in env.HUB_API
         ),
         usesWorkerOriginFallback: Boolean(workerApiOrigin(pagesEnv)),
         workerHealth,
         hints: {
-          deviceSession404: 'Deploy latest lovely-home-hub-api Worker (apiVersion 2 includes /api/device-session).',
-          canForwardJwtFalse:
-            'Set Pages env CF_ACCESS_TEAM_DOMAIN + HUB_PROXY_SECRET (same value as Worker secret), redeploy Pages and Worker.'
+          noCookies:
+            'No Cookie header on /api — you may have an Access BYPASS for /api, or you opened this URL without completing Cloudflare login on this hostname. Remove /api bypass rules; load the dashboard home first, then retry.',
+          pagesEnv:
+            'Set Pages (Production): CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD_PAGES (Pages app AUD only), HUB_PROXY_SECRET (match Worker). Redeploy Pages.',
+          workerEnv:
+            'Worker: HUB_PROXY_SECRET + redeploy. workerHealth.apiVersion should be 2.',
+          middleware:
+            'After Pages env is set, /api/access-probe should show middlewareAccessValidated:true when logged in, or redirect to Cloudflare OTP — not anonymous JSON.'
         }
       },
       { headers: { 'Cache-Control': 'no-store' } }
@@ -133,7 +151,7 @@ export async function onRequest(context) {
 
   const incoming = new URL(request.url);
   const pathAndQuery = `/api/${suffix}${incoming.search}`;
-  const init = await buildForwardInit(request, pagesEnv);
+  const init = await buildForwardInit(request, pagesEnv, data);
 
   const hubApi = env.HUB_API;
   if (hubApi && typeof hubApi === 'object' && 'fetch' in hubApi && typeof hubApi.fetch === 'function') {

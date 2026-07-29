@@ -18,8 +18,9 @@ There is **no** `wrangler.toml` at the repo root (that file would lock env vars 
 |------|--------|
 | `WORKER_API_ORIGIN` | `https://lovely-home-hub-api.mark-lovely67.workers.dev` |
 | `VITE_DEPLOYMENT_MODE` | `home` |
-| `CF_ACCESS_TEAM_DOMAIN` | Your Zero Trust team (e.g. `mark-lovely67.cloudflareaccess.com` **without** `https://`) |
-| `HUB_PROXY_SECRET` | Long random string — **same value** as Worker secret `HUB_PROXY_SECRET` (see below) |
+| `CF_ACCESS_TEAM_DOMAIN` | Your Zero Trust team host, e.g. `mark-lovely67.cloudflareaccess.com` (no `https://`) |
+| `CF_ACCESS_AUD_PAGES` | **Pages** Access application AUD tag only (hex from Zero Trust → Access → your **Pages** app) |
+| `HUB_PROXY_SECRET` | Long random string — **same value** as Worker secret `HUB_PROXY_SECRET` (see §4) |
 
 `VITE_API_BASE_URL` is **optional** on Pages — production builds ignore it for API calls and use `/api` instead. You may leave it set to the Worker URL for clarity; it does not change production behaviour.
 
@@ -45,6 +46,12 @@ npx wrangler secret put CF_ACCESS_AUD
 Paste: **`WORKER_APP_AUD,PAGES_APP_AUD`** (comma between the two hex strings from Zero Trust → Access → each application → Application Audience).
 
 No Worker redeploy needed after a secret update.
+
+### 3. Pages Access middleware (`functions/_middleware.js`)
+
+The repo includes the official **Cloudflare Access Pages plugin**. It validates Access on **`/api/*`** (not only static HTML). It requires **`CF_ACCESS_TEAM_DOMAIN`** and **`CF_ACCESS_AUD_PAGES`** on the Pages project (step 1).
+
+**Zero Trust → Access → Applications:** ensure there is **no Bypass policy** for `/api` or `/api/*` on your Pages hostname. If `/api` is bypassed, probes show `hasCookieHeader: false` and the Worker returns **401** for everything.
 
 ### 4. Worker + Pages secret `HUB_PROXY_SECRET`
 
