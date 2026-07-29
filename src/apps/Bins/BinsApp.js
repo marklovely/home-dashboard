@@ -24,6 +24,33 @@ import {
 } from './binCollectionCopy.js';
 
 /**
+ * @param {boolean} houseSitter
+ * @returns {HTMLElement}
+ */
+function createPutOutNotice(houseSitter) {
+  const notice = document.createElement('aside');
+  notice.className = 'bins-put-out-notice';
+  notice.setAttribute('aria-label', 'Collection time and where bins go');
+
+  const timingIntro = document.createElement('p');
+  timingIntro.className = 'bins-timing-intro';
+  const location = document.createElement('strong');
+  location.className = 'bins-put-out-location';
+  location.textContent = BIN_PUT_OUT_LOCATION;
+  if (houseSitter) {
+    timingIntro.append(
+      'Collections are normally from 6am. Bins are usually at ',
+      location,
+      ' the night before.'
+    );
+  } else {
+    timingIntro.append('Collection from 6am. Bins at ', location, ' the night before.');
+  }
+  notice.append(timingIntro);
+  return notice;
+}
+
+/**
  * @param {HTMLElement} host
  * @param {ReturnType<typeof describeCollectionEvent>} event
  * @param {boolean} houseSitter
@@ -103,6 +130,7 @@ function mountBinsApp(viewport, context) {
   }
 
   const heroEvent = describeCollectionEvent(next, asOf);
+  const putOutNotice = createPutOutNotice(houseSitter);
 
   const hero = document.createElement('header');
   hero.className = 'bins-hero';
