@@ -10,9 +10,9 @@ describe('guide service', () => {
     expect(summary.subtitle.length).toBeGreaterThan(0);
   });
 
-  it('finds TV when searching television', () => {
-    const results = searchGuideTopics('television');
-    expect(results[0]?.id).toBe('tv');
+  it('finds TV when searching television or Netflix', () => {
+    expect(searchGuideTopics('television')[0]?.id).toBe('tv-entertainment');
+    expect(searchGuideTopics('Netflix')[0]?.id).toBe('tv-entertainment');
   });
 
   it('finds Wi-Fi for wifi and password concepts', () => {
@@ -22,6 +22,12 @@ describe('guide service', () => {
 
   it('surfaces heating immediately', () => {
     expect(findBestGuideTopic('heating')?.id).toBe('heating');
+  });
+
+  it('finds Hot Water Machine for kettle, tea, and boiling water', () => {
+    expect(findBestGuideTopic('kettle')?.id).toBe('hot-water-machine');
+    expect(findBestGuideTopic('tea')?.id).toBe('hot-water-machine');
+    expect(findBestGuideTopic('boiling water')?.id).toBe('hot-water-machine');
   });
 
   it('highlights matched substrings in titles', () => {

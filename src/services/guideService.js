@@ -1,27 +1,57 @@
 import {
+  getCategoryFromJson,
   getHomeSummaryFromJson,
-  getPageFromJson,
-  listTopicsFromJson,
+  getTopicContextFromJson,
+  getTopicFromJson,
+  listCategoriesFromJson,
+  listTopicCardsFromJson,
   searchTopicsFromJson
 } from '../content/houseguide/providers/jsonGuideProvider.js';
 
 /**
- * Guide service — UI talks only to this layer, not to Markdown/JSON files directly.
+ * Guide service — UI talks only to this layer, not to raw JSON or PDF.
  */
 
 /**
- * @returns {import('../types/guideContent.js').GuideTopicCard[]}
+ * @returns {import('../types/guideContent.js').GuideCategory[]}
+ */
+export function listGuideCategories() {
+  return listCategoriesFromJson();
+}
+
+/**
+ * @param {string} categoryId
+ * @returns {import('../types/guideContent.js').GuideCategory | undefined}
+ */
+export function getGuideCategory(categoryId) {
+  return getCategoryFromJson(categoryId);
+}
+
+/**
+ * @returns {import('../types/guideContent.js').GuideTopicSearchHit[]}
  */
 export function listGuideTopics() {
-  return listTopicsFromJson();
+  return listTopicCardsFromJson();
 }
 
 /**
  * @param {string} topicId
- * @returns {import('../types/guideContent.js').GuidePage | undefined}
+ * @returns {import('../types/guideContent.js').GuideTopic | undefined}
  */
+export function getGuideTopic(topicId) {
+  return getTopicFromJson(topicId);
+}
+
+/** @deprecated Use getGuideTopic */
 export function getGuidePage(topicId) {
-  return getPageFromJson(topicId);
+  return getGuideTopic(topicId);
+}
+
+/**
+ * @param {string} topicId
+ */
+export function getGuideTopicContext(topicId) {
+  return getTopicContextFromJson(topicId);
 }
 
 /**
@@ -33,7 +63,7 @@ export function getGuideHomeSummary() {
 
 /**
  * @param {string} query
- * @returns {import('../types/guideContent.js').GuideTopicCard[]}
+ * @returns {import('../types/guideContent.js').GuideTopicSearchHit[]}
  */
 export function searchGuideTopics(query) {
   return searchTopicsFromJson(query);
@@ -41,9 +71,8 @@ export function searchGuideTopics(query) {
 
 /**
  * @param {string} query
- * @returns {import('../types/guideContent.js').GuideTopicCard | undefined}
+ * @returns {import('../types/guideContent.js').GuideTopicSearchHit | undefined}
  */
 export function findBestGuideTopic(query) {
-  const results = searchGuideTopics(query);
-  return results[0];
+  return searchGuideTopics(query)[0];
 }

@@ -503,6 +503,49 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 }
 .guide-panel-list dt { color: var(--muted); font-size: 0.82rem; }
 .guide-panel-list dd { margin: 0; font-weight: 700; font-size: 1.05rem; }
+.guide-callout-note {
+  background: color-mix(in srgb, #4da8ff 12%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, #4da8ff 25%, transparent);
+}
+.guide-hero-image {
+  margin: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.guide-hero-image img {
+  display: block;
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+}
+.guide-hero-caption {
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: var(--surface-2);
+}
+.guide-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.guide-gallery-grid img {
+  width: 100%;
+  border-radius: 14px;
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+}
+.guide-step-list {
+  margin: 0;
+  padding-left: 1.25em;
+  line-height: 1.55;
+}
+.guide-topic-list {
+  display: grid;
+  gap: clamp(14px, 2vw, 18px);
+}
+.guide-category-header { display: grid; gap: 6px; }
 .guide-panel-close {
   min-height: 48px;
   border-radius: 999px;

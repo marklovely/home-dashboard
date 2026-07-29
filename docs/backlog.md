@@ -2,7 +2,7 @@
 
 ## House Guide
 
-- [ ] Transcribe TrustedHousesitters / owner guide content into `src/content/houseguide/*.md`
+- [ ] Add `src/content/houseguide/source/house-guide.pdf` and run `npm run guide:extract` to populate `guide-catalog.json` and `media/`
 - [ ] Add deep linking to individual guide pages
 - [ ] Profile-specific page visibility (e.g. owner-only notes)
 - [ ] Optional build-time search index for very large guides

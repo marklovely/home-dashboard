@@ -128,29 +128,50 @@ Content Provider (adapter)
 Structured JSON today · Markdown/PDF/API later
 ```
 
-- **Guide Service** — single facade for the widget and Home summary: `listGuideTopics`, `getGuidePage`, `searchGuideTopics`, `findBestGuideTopic`, `getGuideHomeSummary`.
-- **Content Provider** — pluggable source of truth. The app uses `jsonGuideProvider.js`, which reads `src/content/houseguide/guide-data.json`. A **markdownGuideProvider** exists for legacy `.md` files and migration tooling only; the running app does not render Markdown to users.
-- **Content model** — topics (landing cards) and pages (title, subtitle, summary, typed sections, optional actions). Types live in `src/types/guideContent.js`. Sections support plain text, tips, warnings, key/value rows, and collapsible blocks; the schema is intended to grow (images, video, QR) without rewriting the widget.
+### Structured content model (v2)
 
-### Recommended content pipeline (PDF not served in-app)
+```
+House Guide
+    ↓
+Categories (Arrival, Kitchen, …)
+    ↓
+Topics (Hot Water Machine, Heating, …)
+    ↓
+Blocks (text, steps, tip, warning, heroImage, gallery, …)
+    ↓
+Actions (Alexa, panel, navigate)
+    ↓
+Media (images under src/content/houseguide/media/)
+```
 
-Trusted source (e.g. housesitter PDF) → extract once → normalise → **structured JSON** → application. The PDF is never loaded directly in the PWA.
+- **Guide Service** — facade: `listGuideCategories`, `getGuideCategory`, `getGuideTopic`, `searchGuideTopics`, `getGuideHomeSummary`.
+- **Content Provider** — `jsonGuideProvider.js` reads `guide-catalog.json` (version 2). Legacy `.md` files are not rendered; use `npm run guide:extract` after adding `source/house-guide.pdf`.
+- **Blocks** — composable content types in `src/types/guideContent.js`. Hero and gallery blocks resolve images via `guideMedia.js` when files exist in `media/`.
+
+### Content pipeline (PDF not served in-app)
+
+`source/house-guide.pdf` → `npm run guide:extract` → normalise into **guide-catalog.json** + contextual **media/** files → application.
+
+### Navigation
+
+Users browse **areas of the home** (categories), then **topics** (appliances, systems), then block-based detail pages—not document sections or page numbers.
 
 ### Quick actions
 
-Guide pages may declare `actions` in JSON. `src/widgets/HouseGuide/guideActions.js` executes them from a small registry (e.g. Alexa virtual buttons via `triggerVirtualButton`, in-app panels, navigate to another topic). Layout code does not hardcode specific buttons; new actions are data-driven.
+Topic-level `actions` in JSON; executed by `guideActions.js` (Alexa virtual buttons, detail panels, cross-topic navigation).
 
 ### Search
 
-Search matches **concepts** (titles, subtitles, keywords, synonyms)—not filenames or document types. Example: `television` → TV & Entertainment; `wifi` → Wi-Fi.
+Concept search across categories and topics with aliases (e.g. `kettle` / `tea` → Hot Water Machine; `Netflix` → TV & Entertainment).
 
 ### Presentation
 
-- **Landing** — large category cards (rooms/topics) with short subtitles.
-- **Topic pages** — rich sections plus optional Quick Actions.
-- **Home card** — meaningful summary from `getGuideHomeSummary()` (e.g. topic subtitles joined), not a guide count.
+- **Landing** — category cards for house areas.
+- **Category** — topic list within that area.
+- **Topic** — blocks + optional Quick Actions.
+- **Home card** — meaningful summary strings, not document counts.
 
-Legacy Markdown under `src/content/houseguide/*.md` and `pages.js` may remain as source material until content is normalised into `guide-data.json`.
+Legacy Markdown under `src/content/houseguide/*.md` remains optional source material until extraction fills the catalog.
 
 ## Adding a new application
 
