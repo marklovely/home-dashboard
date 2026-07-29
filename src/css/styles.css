@@ -1318,6 +1318,18 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .bins-timeline-when { margin: 0; font-weight: 800; font-size: 1.05rem; }
 .bins-timeline-type { margin: 2px 0 0; font-weight: 700; }
 .bins-timeline-bins { margin: 2px 0 0; font-size: 0.92rem; }
+.bins-put-out-notice {
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(40, 209, 124, 0.35);
+  background: rgba(40, 209, 124, 0.08);
+}
+.bins-put-out-notice .bins-timing-intro {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  font-weight: 600;
+}
 .bins-practical { display: grid; gap: 8px; line-height: 1.45; }
 .bins-timing-intro { margin: 0; }
 .bins-put-out-location { font-weight: 800; color: inherit; }
