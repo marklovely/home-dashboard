@@ -75,10 +75,19 @@ button { font: inherit; }
 }
 .app-viewport {
   min-height: 0;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.app-viewport > .weather-app--premium {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  position: relative;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 .app-viewport.is-active {
   animation: app-view-enter 240ms ease;
@@ -845,12 +854,15 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   min-height: 100dvh;
 }
 .mode-house-sitter .app-viewport {
+  overflow: hidden;
+}
+.mode-house-sitter .app-viewport > .weather-app--premium,
+.mode-house-sitter .app-viewport > .home-screen--sitter {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-}
-.mode-house-sitter .weather-app--premium {
-  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
 }
 .mode-house-sitter .shell-chrome-title-block.is-owner-hold-active {
   outline: 2px solid color-mix(in srgb, #8b7cff 55%, transparent);
@@ -1010,6 +1022,19 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 }
 .weather-current-condition { margin: 0; font-size: 1.35rem; font-weight: 700; }
 .weather-current-feels { margin: 0; font-size: 1.05rem; }
+.weather-sun-times {
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 210, 122, 0.08);
+  border: 1px solid rgba(255, 210, 122, 0.15);
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+.weather-sun-times strong {
+  color: #ffd27a;
+  font-weight: 800;
+}
 .weather-current-stats,
 .weather-today-grid {
   display: grid;
@@ -1058,22 +1083,23 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   overflow: hidden;
 }
 .weather-daily-row {
-  display: grid;
-  grid-template-columns: 3.75rem 2.75rem 2.1rem minmax(0, 1fr) 2.1rem;
+  display: flex;
   align-items: center;
-  column-gap: 8px;
-  padding: 12px 12px 12px 14px;
+  gap: 8px;
+  padding: 12px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .weather-daily-row:last-child {
   border-bottom: none;
 }
 .weather-daily-label {
+  flex: 0 0 3.5rem;
   font-weight: 700;
   font-size: 1.02rem;
   white-space: nowrap;
 }
 .weather-daily-icon-stack {
+  flex: 0 0 2.5rem;
   display: grid;
   justify-items: center;
   gap: 2px;
@@ -1090,24 +1116,27 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   letter-spacing: -0.02em;
 }
 .weather-daily-low {
+  flex: 0 0 2.25rem;
   text-align: right;
   font-size: 1rem;
   font-weight: 600;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-.weather-daily-high {
-  text-align: left;
-  font-size: 1.05rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
 .weather-daily-bar {
+  flex: 1 1 auto;
+  min-width: 48px;
   position: relative;
   height: 6px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
-  min-width: 0;
+}
+.weather-daily-high {
+  flex: 0 0 2.75rem;
+  text-align: right;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 .weather-daily-bar-fill {
   position: absolute;
