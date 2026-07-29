@@ -1,4 +1,5 @@
 import ICAL from 'ical.js';
+import { normalizeIcsText } from './icsNormalize.js';
 
 const MAX_RECURRENCE_ITERATIONS = 5000;
 
@@ -134,7 +135,8 @@ export function expandIcsComponentBetween(root, after, before) {
  * @param {Date} before
  */
 export function parseIcsRoot(icsText, after, before) {
-  const jcal = ICAL.parse(icsText);
+  const normalized = normalizeIcsText(icsText);
+  const jcal = ICAL.parse(normalized);
   const root = new ICAL.Component(jcal);
   return expandIcsComponentBetween(root, after, before);
 }
