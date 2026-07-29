@@ -54,7 +54,12 @@ function renderWeatherPage(data, page) {
   const feels = document.createElement('p');
   feels.className = 'weather-current-feels subtle';
   feels.textContent = `Feels like ${data.current.feelsLike}°`;
-  hero.append(iconWrap, temp, condition, feels);
+
+  const sunTimes = document.createElement('p');
+  sunTimes.className = 'weather-sun-times';
+  sunTimes.innerHTML = `<strong>Sunrise</strong> ${data.today.sunrise || '—'} · <strong>Sunset</strong> ${data.today.sunset || '—'}`;
+
+  hero.append(iconWrap, temp, condition, feels, sunTimes);
 
   const stats = document.createElement('div');
   stats.className = 'weather-current-stats';
