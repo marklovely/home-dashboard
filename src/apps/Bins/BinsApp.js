@@ -15,55 +15,55 @@ import {
   getUpcomingCollections,
   isScheduleExpired
 } from '../../services/binCollectionService.js';
-import { openHouseGuideTopic } from '../../services/guideNavigation.js';
 import {
-  BIN_PUT_OUT_LOCATION,
+  COUNCIL_RECYCLING_URL,
   getBankHolidayNote,
-  getHouseSitterCollectionSentence,
+  getCollectionInformationCopy,
   getMissedBinNote
 } from './binCollectionCopy.js';
 
 /**
- * @param {boolean} houseSitter
  * @returns {HTMLElement}
  */
-function createPutOutNotice(houseSitter) {
-  const notice = document.createElement('aside');
-  notice.className = 'bins-put-out-notice';
-  notice.setAttribute('aria-label', 'Collection time and where bins go');
+function createCollectionInformationPanel() {
+  const copy = getCollectionInformationCopy();
+  const panel = document.createElement('aside');
+  panel.className = 'bins-collection-info';
+  panel.setAttribute('aria-labelledby', 'bins-collection-info-title');
 
-  const timingIntro = document.createElement('p');
-  timingIntro.className = 'bins-timing-intro';
-  const location = document.createElement('strong');
-  location.className = 'bins-put-out-location';
-  location.textContent = BIN_PUT_OUT_LOCATION;
-  if (houseSitter) {
-    timingIntro.append(
-      'Collections are normally from 6am. Bins are usually at ',
-      location,
-      ' the night before.'
-    );
-  } else {
-    timingIntro.append('Collection from 6am. Bins at ', location, ' the night before.');
-  }
-  notice.append(timingIntro);
-  return notice;
+  const title = document.createElement('h2');
+  title.id = 'bins-collection-info-title';
+  title.className = 'bins-collection-info-title';
+  title.textContent = copy.title;
+
+  const begin = document.createElement('p');
+  begin.className = 'bins-collection-info-line';
+  begin.textContent = copy.beginLine;
+
+  const location = document.createElement('p');
+  location.className = 'bins-collection-info-line';
+  location.textContent = copy.locationLine;
+
+  panel.append(title, begin, location);
+  return panel;
 }
 
 /**
  * @param {HTMLElement} host
  * @param {ReturnType<typeof describeCollectionEvent>} event
  * @param {boolean} houseSitter
- * @param {{ compact?: boolean }} [options]
  */
-function renderEventRow(host, event, houseSitter, options = {}) {
-  const { compact = false } = options;
+function renderEventRow(host, event, houseSitter) {
   const row = document.createElement('article');
   row.className = `bins-timeline-item bins-timeline-item--${event.cssModifier}`;
+  if (event.type === 'gardenWaste') {
+    row.classList.add('bins-timeline-item--secondary');
+  }
+  row.setAttribute('role', 'listitem');
 
   const iconWrap = document.createElement('span');
   iconWrap.className = 'bins-timeline-icon';
-  iconWrap.append(renderBinCollectionIcon(event.iconId, { size: compact ? 22 : 26 }));
+  iconWrap.append(renderBinCollectionIcon(event.iconId, { size: 26, className: 'bins-type-icon' }));
 
   const body = document.createElement('div');
   body.className = 'bins-timeline-body';
@@ -74,11 +74,11 @@ function renderEventRow(host, event, houseSitter, options = {}) {
 
   const title = document.createElement('p');
   title.className = 'bins-timeline-type';
-  title.textContent = `${event.emoji} ${event.displayName}`;
+  title.textContent = event.displayName;
 
   const bins = document.createElement('p');
-  bins.className = 'bins-timeline-bins subtle';
-  bins.textContent = event.binLabel;
+  bins.className = 'bins-timeline-bins';
+  bins.textContent = event.binDescription;
 
   body.append(when, title, bins);
 
@@ -94,10 +94,63 @@ function renderEventRow(host, event, houseSitter, options = {}) {
 }
 
 /**
+ * @param {HTMLElement} card
+ * @param {ReturnType<typeof describeCollectionEvent>} described
+ * @param {string} label
+ * @param {boolean} secondary
+ */
+function fillSummaryCard(card, described, label, secondary) {
+  card.className = `bins-summary-card bins-summary-card--${described.cssModifier}`;
+  if (secondary) card.classList.add('bins-summary-card--secondary');
+
+  const heading = document.createElement('h3');
+  heading.textContent = label;
+  card.append(heading);
+
+  const row = document.createElement('div');
+  row.className = 'bins-summary-row';
+  const iconWrap = document.createElement('span');
+  iconWrap.className = 'bins-summary-icon';
+  iconWrap.append(renderBinCollectionIcon(described.iconId, { size: 24, className: 'bins-type-icon' }));
+
+  const text = document.createElement('div');
+  text.className = 'bins-summary-text';
+  const typeLine = document.createElement('p');
+  typeLine.className = 'bins-summary-type';
+  typeLine.textContent = described.displayName;
+  const whenLine = document.createElement('p');
+  whenLine.className = 'bins-summary-when';
+  whenLine.textContent = `${described.timing.relative} · ${described.timing.weekdayLabel}`;
+  text.append(typeLine, whenLine);
+  row.append(iconWrap, text);
+  card.append(row);
+}
+
+/**
+ * @param {HTMLElement} list
+ * @param {string[]} items
+ * @param {'accepted' | 'rejected'} kind
+ */
+function appendGardenMaterialList(list, items, kind) {
+  const iconId = kind === 'accepted' ? 'check' : 'x';
+  for (const item of items) {
+    const li = document.createElement('li');
+    li.className = `bins-garden-list-item bins-garden-list-item--${kind}`;
+    const icon = document.createElement('span');
+    icon.className = 'bins-garden-list-icon';
+    icon.append(renderBinCollectionIcon(iconId, { size: 16 }));
+    const label = document.createElement('span');
+    label.textContent = item;
+    li.append(icon, label);
+    list.append(li);
+  }
+}
+
+/**
  * @param {HTMLElement} viewport
  * @param {import('../../types/app.js').ShellContext} context
  */
-function mountBinsApp(viewport, context) {
+function mountBinsApp(viewport, _context) {
   viewport.replaceChildren();
   const houseSitter = isHouseSitterMode();
   const asOf = new Date();
@@ -130,10 +183,10 @@ function mountBinsApp(viewport, context) {
   }
 
   const heroEvent = describeCollectionEvent(next, asOf);
-  const putOutNotice = createPutOutNotice(houseSitter);
+  const infoPanel = createCollectionInformationPanel();
 
   const hero = document.createElement('header');
-  hero.className = 'bins-hero';
+  hero.className = `bins-hero bins-hero--${heroEvent.cssModifier}`;
 
   const heroLabel = document.createElement('p');
   heroLabel.className = 'bins-hero-eyebrow';
@@ -141,11 +194,11 @@ function mountBinsApp(viewport, context) {
 
   const heroIcon = document.createElement('span');
   heroIcon.className = `bins-hero-icon bins-hero-icon--${heroEvent.cssModifier}`;
-  heroIcon.append(renderBinCollectionIcon(heroEvent.iconId, { size: 40 }));
+  heroIcon.append(renderBinCollectionIcon(heroEvent.iconId, { size: 40, className: 'bins-type-icon' }));
 
   const heroTitle = document.createElement('h2');
   heroTitle.className = 'bins-hero-title';
-  heroTitle.textContent = `${heroEvent.emoji} ${heroEvent.displayName}`;
+  heroTitle.textContent = heroEvent.displayName;
 
   const heroDate = document.createElement('p');
   heroDate.className = 'bins-hero-date';
@@ -160,8 +213,8 @@ function mountBinsApp(viewport, context) {
     : heroEvent.timing.relative;
 
   const heroBins = document.createElement('p');
-  heroBins.className = 'bins-hero-bins subtle';
-  heroBins.textContent = heroEvent.binLabel;
+  heroBins.className = 'bins-hero-bins';
+  heroBins.textContent = heroEvent.binDescription;
 
   if (heroEvent.bankHolidayChange) {
     const badge = document.createElement('span');
@@ -172,41 +225,20 @@ function mountBinsApp(viewport, context) {
 
   hero.append(heroLabel, heroIcon, heroTitle, heroDate, heroRelative, heroBins);
 
-  const sitterLine = getHouseSitterCollectionSentence(
-    heroEvent.displayName,
-    heroEvent.timing,
-    heroEvent.binLabel,
-    houseSitter
-  );
-  if (sitterLine) {
-    const info = document.createElement('p');
-    info.className = 'bins-info-line';
-    info.textContent = sitterLine;
-    hero.append(info);
-  }
-
   const summaryGrid = document.createElement('div');
   summaryGrid.className = 'bins-summary-grid';
 
   const householdNext = getNextHouseholdCollection(asOf);
   const gardenNext = getNextGardenWasteCollection(asOf);
 
-  for (const [label, event] of [
-    ['Next household collection', householdNext],
-    ['Next garden waste', gardenNext]
-  ]) {
-    if (!event) continue;
+  if (householdNext) {
     const card = document.createElement('div');
-    card.className = 'bins-summary-card';
-    const described = describeCollectionEvent(event, asOf);
-    card.innerHTML = `<h3>${label}</h3>`;
-    const typeLine = document.createElement('p');
-    typeLine.className = 'bins-summary-type';
-    typeLine.textContent = described.displayName;
-    const whenLine = document.createElement('p');
-    whenLine.className = 'bins-summary-when';
-    whenLine.textContent = `${described.timing.relative} · ${described.timing.weekdayLabel}`;
-    card.append(typeLine, whenLine);
+    fillSummaryCard(card, describeCollectionEvent(householdNext, asOf), 'Next household collection', false);
+    summaryGrid.append(card);
+  }
+  if (gardenNext) {
+    const card = document.createElement('div');
+    fillSummaryCard(card, describeCollectionEvent(gardenNext, asOf), 'Next garden waste', true);
     summaryGrid.append(card);
   }
 
@@ -242,37 +274,41 @@ function mountBinsApp(viewport, context) {
   gardenSummary.textContent = 'What goes in the brown bin?';
   gardenDetails.append(gardenSummary);
 
+  const acceptedGroup = document.createElement('div');
+  acceptedGroup.className = 'bins-garden-group';
+  const acceptedHeading = document.createElement('p');
+  acceptedHeading.className = 'bins-garden-group-title';
+  acceptedHeading.textContent = 'Accepted';
   const accepted = document.createElement('ul');
   accepted.className = 'bins-garden-list';
-  for (const item of GARDEN_WASTE_ACCEPTED) {
-    const li = document.createElement('li');
-    li.textContent = item;
-    accepted.append(li);
-  }
+  appendGardenMaterialList(accepted, GARDEN_WASTE_ACCEPTED, 'accepted');
+  acceptedGroup.append(acceptedHeading, accepted);
+
+  const notGroup = document.createElement('div');
+  notGroup.className = 'bins-garden-group';
   const notHeading = document.createElement('p');
-  notHeading.className = 'bins-garden-not-heading';
+  notHeading.className = 'bins-garden-group-title';
   notHeading.textContent = 'Not accepted';
   const notAccepted = document.createElement('ul');
   notAccepted.className = 'bins-garden-list bins-garden-list--not';
-  for (const item of GARDEN_WASTE_NOT_ACCEPTED) {
-    const li = document.createElement('li');
-    li.textContent = item;
-    notAccepted.append(li);
-  }
-  gardenDetails.append(accepted, notHeading, notAccepted);
+  appendGardenMaterialList(notAccepted, GARDEN_WASTE_NOT_ACCEPTED, 'rejected');
+  notGroup.append(notHeading, notAccepted);
 
-  const guide = document.createElement('button');
-  guide.type = 'button';
+  gardenDetails.append(acceptedGroup, notGroup);
+
+  const guide = document.createElement('a');
   guide.className = 'bins-guide-link';
-  guide.textContent = 'More about bins and recycling';
-  guide.addEventListener('click', () => openHouseGuideTopic(context, 'rubbish-recycling'));
+  guide.href = COUNCIL_RECYCLING_URL;
+  guide.target = '_blank';
+  guide.rel = 'noopener noreferrer';
+  guide.textContent = 'Council recycling guidance ↗';
 
   const footer = document.createElement('p');
   footer.className = 'bins-source subtle';
   footer.textContent = `Schedule: ${meta.household.source}, Calendar ${meta.household.calendar} & Round ${meta.gardenWaste.round} (${meta.household.validFrom}–${meta.validUntil}). Works offline.`;
 
   page.append(
-    putOutNotice,
+    infoPanel,
     hero,
     summaryGrid,
     upcomingHeading,

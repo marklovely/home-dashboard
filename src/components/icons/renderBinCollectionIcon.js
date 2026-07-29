@@ -1,10 +1,12 @@
-import { Leaf, Recycle, Trash2, createElement } from 'lucide';
+import { Check, Leaf, Recycle, Trash2, X, createElement } from 'lucide';
 
 /** @type {Record<string, import('lucide').IconNode>} */
 const BIN_ICON_NODES = {
   'trash-2': Trash2,
   recycle: Recycle,
-  leaf: Leaf
+  leaf: Leaf,
+  check: Check,
+  x: X
 };
 
 /**

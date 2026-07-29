@@ -298,6 +298,8 @@ Calendar 17 lists non-Friday collections with `bankHolidayChange: true` (e.g. Tu
 
 See [bin-collection-maintenance.md](./bin-collection-maintenance.md) for the exact files to edit when a new PDF arrives.
 
+UI layout and screenshot maintenance: [bin-collection-ui.md](./bin-collection-ui.md).
+
 ## Cloudflare Worker API
 
 Virtual Buttons and private house values are served through a Cloudflare Worker — see [cloudflare-worker.md](./cloudflare-worker.md). The PWA uses `VITE_API_BASE_URL`; the Virtual Buttons access code never ships to the browser.
