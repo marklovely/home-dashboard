@@ -2,6 +2,7 @@ import { OwnerAuthProvider } from '../../auth/OwnerAuthProvider.js';
 import { markOwnerUnlockedByPin } from '../../auth/ownerSession.js';
 import { setUserMode, UserMode } from '../../auth/userMode.js';
 import { isHomeDeployment } from '../../auth/deploymentMode.js';
+import { setActiveProfileId } from '../../services/profileService.js';
 
 /**
  * @param {Object} options
@@ -59,6 +60,7 @@ export function openOwnerPinDialog({ host, onClose, onSuccess }) {
     renderDigits();
     const ok = await OwnerAuthProvider.validatePin(pin);
     if (ok) {
+      setActiveProfileId('owner');
       setUserMode(UserMode.Owner);
       markOwnerUnlockedByPin();
       host.replaceChildren();

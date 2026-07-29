@@ -81,12 +81,16 @@ describe('owner authentication', () => {
   it('unlocking owner mode restores owner applications', () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'home');
     resetUserModeForTests();
+    setActiveProfileId('housesitter');
     setUserMode(UserMode.HouseSitter);
     markOwnerUnlockedByPin();
+    setActiveProfileId('owner');
     setUserMode(UserMode.Owner);
 
     const ids = getVisibleApps().map((app) => app.id);
     expect(ids).toContain('settings');
+    expect(ids).toContain('plex');
+    expect(ids).not.toContain('emergency');
     expect(getModeConfig().branding.eyebrow).toBe('LOVELY HOME HUB');
   });
 
