@@ -69,6 +69,8 @@ Logged into `https://home-dashboard-a11.pages.dev`, DevTools → Network:
 - Requests go to **`/api/weather`**, **`/api/session`**, etc. on **pages.dev**
 - Not to `lovely-home-hub-api...workers.dev`
 
+While logged in, open **`/api/access-probe`**. You want `canForwardJwt: true` and `usesHubApiBinding: true`. If `canForwardJwt` is false, Access is not reaching `/api/*`. If `usesHubApiBinding` is false, add the **HUB_API** binding and redeploy Pages. If weather works but PIN shows **Cloudflare Access session missing**, update Worker secret **`CF_ACCESS_AUD`** to include both Pages and Worker application AUD values (comma-separated).
+
 `curl` without your Access session is not a valid test of the dashboard.
 
 ---
