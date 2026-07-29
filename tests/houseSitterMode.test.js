@@ -22,7 +22,14 @@ describe('house sitter mode configuration', () => {
     resetUserModeForTests();
     const config = getModeConfig();
     expect(config.branding.eyebrow).toBe('LOVELY HOME');
-    expect(config.branding.homeTagline).toMatch(/during your stay/i);
+    expect(config.branding.homeTagline).toBeNull();
+    expect(config.sitterEssentialAppIds).toEqual([
+      'scooter',
+      'house-guide',
+      'controls',
+      'emergency'
+    ]);
+    expect(config.showSitterHeaderWeather).toBe(true);
   });
 
   it('keeps owner branding in owner user mode on home deployment', () => {

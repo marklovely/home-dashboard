@@ -19,6 +19,9 @@ import { isHouseSitterExperience } from '../auth/userMode.js';
  * @property {boolean} showControlsFooter
  * @property {boolean} showHomeWelcomeGreeting
  * @property {boolean} showHelpCard
+ * @property {boolean} showSitterHeaderWeather
+ * @property {string[]} sitterEssentialAppIds
+ * @property {string[]} sitterSecondaryAppIds
  * @property {{ labels: Record<number, { title: string, subtitle: string }> } | null} controls
  * @property {Record<string, string>} appTitleOverrides
  */
@@ -37,6 +40,9 @@ const ownerConfig = {
   showControlsFooter: true,
   showHomeWelcomeGreeting: true,
   showHelpCard: false,
+  showSitterHeaderWeather: false,
+  sitterEssentialAppIds: [],
+  sitterSecondaryAppIds: [],
   controls: null,
   appTitleOverrides: {}
 };
@@ -47,9 +53,11 @@ const houseSitterConfig = {
     eyebrow: 'LOVELY HOME',
     homeChromeTitle: 'Lovely Home',
     documentTitleBase: 'Lovely Home',
-    homeTagline: 'Everything you need during your stay'
+    homeTagline: null
   },
   homeAppIds: ['weather', 'scooter', 'house-guide', 'controls', 'bins', 'emergency'],
+  sitterEssentialAppIds: ['scooter', 'house-guide', 'controls', 'emergency'],
+  sitterSecondaryAppIds: ['weather', 'bins'],
   bottomNav: [
     { id: 'nav-home', route: 'home', label: 'Home', iconId: 'home' },
     { id: 'nav-guide', route: 'house-guide', label: 'House Guide', iconId: 'book-open' },
@@ -59,6 +67,7 @@ const houseSitterConfig = {
   showControlsFooter: false,
   showHomeWelcomeGreeting: false,
   showHelpCard: true,
+  showSitterHeaderWeather: true,
   controls: {
     labels: {
       1: { title: 'Downstairs Lights', subtitle: 'Turn on the main lights' },

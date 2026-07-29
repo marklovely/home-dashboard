@@ -311,6 +311,43 @@ body.is-bins-route .app-viewport > .bins-app {
 h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .subtle { margin: 8px 0 0; color: var(--muted); font-size: clamp(0.95rem, 1.8vw, 1.1rem); }
 .clock-block { display: flex; align-items: baseline; gap: 8px; text-align: right; }
+.shell-header-weather {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: right;
+  min-width: 0;
+}
+.shell-weather-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.shell-weather-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.shell-weather-copy strong {
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.shell-weather-copy .subtle {
+  font-size: 0.82rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12rem;
+}
+.mode-house-sitter.shell-route-home .shell-chrome {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: clamp(16px, 2.5vw, 28px);
+}
+.mode-house-sitter.shell-route-home .shell-home-button[hidden] + .shell-chrome-title-block {
+  grid-column: 1;
+}
 .clock { font-size: clamp(2.8rem, 8vw, 5.6rem); font-weight: 750; line-height: 0.9; letter-spacing: -0.055em; }
 .seconds { color: var(--muted); font-variant-numeric: tabular-nums; }
 
@@ -930,18 +967,162 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .shell-bottom-nav-icon { display: grid; place-items: center; }
 
 .home-screen--sitter {
-  display: grid;
-  gap: clamp(14px, 2vw, 20px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 3.2vw, 32px);
   overflow: visible;
   height: auto;
   min-height: min-content;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
+}
+.sitter-welcome-card {
+  display: grid;
+  gap: 10px;
+  max-width: none;
+  padding: clamp(22px, 3vw, 30px);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  box-shadow: var(--shadow-soft);
 }
 .sitter-welcome { display: grid; gap: 10px; max-width: 52rem; }
 .sitter-welcome-emoji { font-size: 2rem; margin: 0; }
 .sitter-welcome-title { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.02em; }
-.sitter-welcome-lead { margin: 0; font-size: 1.05rem; color: var(--text); }
+.sitter-welcome-lead { margin: 0; font-size: 1.05rem; color: var(--text); line-height: 1.45; }
 .sitter-welcome-body { margin: 0; color: var(--muted); line-height: 1.45; }
+.sitter-section { display: grid; gap: clamp(14px, 2vw, 18px); }
+.sitter-section-head { display: grid; gap: 4px; }
+.sitter-section-title {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.2vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.sitter-section-subtext {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+.sitter-essentials-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(16px, 2.5vw, 24px);
+  align-content: start;
+}
+.home-launcher-card--essential {
+  min-height: clamp(148px, 20vh, 196px);
+  padding: clamp(18px, 2.5vw, 24px);
+  border-radius: 24px;
+  justify-content: flex-start;
+  gap: 12px;
+}
+.home-launcher-card--essential .home-launcher-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+}
+.home-launcher-card--essential .home-launcher-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.home-launcher-card--essential .home-launcher-live-title {
+  font-size: clamp(1.2rem, 2.2vw, 1.45rem);
+}
+.home-launcher-card--essential .home-launcher-live-subtitle {
+  margin-top: 2px;
+}
+.sitter-secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 20px);
+}
+.sitter-info-card {
+  flex-direction: row;
+  align-items: center;
+  min-height: 88px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  gap: 14px;
+  background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface));
+  box-shadow: none;
+}
+.sitter-info-card .home-launcher-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  margin: 0;
+  flex-shrink: 0;
+}
+.sitter-info-card .home-launcher-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  text-align: left;
+}
+.sitter-info-card .home-launcher-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sitter-info-card .home-launcher-live-title {
+  font-size: clamp(1rem, 1.8vw, 1.12rem);
+  font-weight: 800;
+}
+.sitter-info-card .home-launcher-live-subtitle {
+  font-size: 0.85rem;
+}
+.sitter-help-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: clamp(18px, 2.5vw, 22px) clamp(20px, 3vw, 26px);
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.sitter-help-copy { display: grid; gap: 6px; flex: 1 1 16rem; min-width: 0; }
+.sitter-help-title { margin: 0; font-size: clamp(1.05rem, 2vw, 1.2rem); font-weight: 800; }
+.sitter-help-text { margin: 0; color: var(--muted); line-height: 1.45; max-width: 36rem; }
+.sitter-help-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #8b7cff 45%, transparent);
+  background: color-mix(in srgb, #8b7cff 18%, var(--surface-2));
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+.sitter-help-button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+.sitter-help-button:active { transform: scale(0.98); }
+.sitter-help-button-icon { stroke: currentColor; }
+@media (max-width: 960px) {
+  .sitter-essentials-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .sitter-secondary-grid { grid-template-columns: minmax(0, 1fr); }
+  .mode-house-sitter.shell-route-home .shell-chrome {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'title title'
+      'clock weather';
+  }
+  .mode-house-sitter.shell-route-home .shell-chrome-title-block { grid-area: title; }
+  .mode-house-sitter.shell-route-home .clock-block { grid-area: clock; justify-self: start; text-align: left; }
+  .mode-house-sitter.shell-route-home .shell-header-weather { grid-area: weather; justify-self: end; }
+}
 .home-launcher--sitter {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: minmax(140px, auto);
