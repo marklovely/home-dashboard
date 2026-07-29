@@ -1,0 +1,9 @@
+# Cloudflare Pages project config (API proxy service binding).
+# Worker API lives in worker/wrangler.toml — do not merge the two files.
+name = "home-dashboard"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-12-01"
+
+[[services]]
+binding = "HUB_API"
+service = "lovely-home-hub-api"

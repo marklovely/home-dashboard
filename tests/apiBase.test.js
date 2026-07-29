@@ -40,4 +40,10 @@ describe('apiBase', () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
     expect(buildApiUrl('/api/button/VB01')).toBe('/api/button/VB01');
   });
+
+  it('buildApiUrl uses same-origin on Pages host even when VITE points at Worker', () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://worker.example.test');
+    vi.stubGlobal('location', { hostname: 'feature-branch.home-dashboard-a11.pages.dev' });
+    expect(buildApiUrl('/api/weather')).toBe('/api/weather');
+  });
 });

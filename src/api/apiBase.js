@@ -21,6 +21,18 @@ function readBuildTimeBaseUrl() {
 }
 
 /**
+ * Hosted dashboard on Pages/custom domain uses the same-origin /api proxy.
+ * @returns {boolean}
+ */
+function shouldUsePagesApiProxy() {
+  if (typeof globalThis.location === 'undefined') return false;
+  const host = globalThis.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') return false;
+  if (host.endsWith('.pages.dev')) return true;
+  return host === 'dashboard.lovely-home.co.uk';
+}
+
+/**
  * @returns {string}
  */
 export function getApiBaseUrl() {
@@ -36,6 +48,7 @@ export function getApiBaseUrl() {
  */
 export function buildApiUrl(path) {
   const normalized = path.startsWith('/') ? path : `/${path}`;
+  if (shouldUsePagesApiProxy()) return normalized;
   const base = getApiBaseUrl();
   return base ? `${base}${normalized}` : normalized;
 }

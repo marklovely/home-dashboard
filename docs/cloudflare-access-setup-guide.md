@@ -123,11 +123,16 @@ The browser calls the Worker directly for weather, controls, Wi‑Fi, calendar, 
 
 7. **Save application**.
 
-### Step 4a — Copy the Application Audience (AUD)
+### Step 4a — Copy Application Audience (AUD) values
 
-1. Open the **Worker API** application you just created.
-2. On **Overview** (or **Quick actions**), find **Application Audience (AUD)** — a long hex string.
-3. Copy it somewhere safe → you will paste it into `CF_ACCESS_AUD` in Step 6.
+You need **both** Access applications’ AUD strings in one Worker secret (comma-separated):
+
+1. Open **Lovely Home — Pages production** (Step 3) → copy **Application Audience (AUD)** → call this **Pages AUD**.
+2. Open **Lovely Home — Worker API** (Step 4) → copy **Application Audience (AUD)** → call this **Worker AUD**.
+
+You will set `CF_ACCESS_AUD` in Step 6 to: `Worker AUD,Pages AUD` (comma, no spaces required).
+
+The Pages Function proxy forwards the **Pages** login JWT to the Worker; the Worker must accept that audience as well as the Worker app audience.
 
 ---
 
@@ -159,7 +164,7 @@ npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
 # Enter: your team name from Step 2 (e.g. mark-lovely67)
 
 npx wrangler secret put CF_ACCESS_AUD
-# Enter: the AUD string from Step 4a (Worker API app only)
+# Enter: Worker API AUD,Pages production AUD (comma-separated — see Step 4a)
 
 npx wrangler secret put OWNER_EMAILS
 # Enter: comma-separated owner emails only, e.g. mark@example.com,donna@example.com
@@ -247,7 +252,11 @@ Cloudflare only gives **two** scopes for Pages vars: **Production** and **Previe
 Why:
 
 - **`VITE_API_BASE_URL`** is baked into the frontend at **build** time. If it points at `workers.dev`, the browser POSTs routines cross-origin and Access can **403 the OPTIONS preflight**.
-- **`WORKER_API_ORIGIN`** is read at **runtime** by the Pages Function `functions/api/[[path]].js`, which proxies `https://<your-pages-host>/api/*` to the Worker and forwards `Cf-Access-Jwt-Assertion`.
+- **`WORKER_API_ORIGIN`** is read at **runtime** by the Pages Function `functions/api/[[path]].js` when the **HUB_API** service binding is unavailable (local dev). Production uses the binding in repo root `wrangler.toml` (`HUB_API` → `lovely-home-hub-api`).
+
+**Service binding (production / preview deploys):** Repo root `wrangler.toml` declares `HUB_API` → `lovely-home-hub-api`. After deploy, in Pages → **Settings** → **Bindings**, confirm **Service binding** `HUB_API` appears. If not, add **Settings** → **Bindings** → **Add** → **Service binding** → name `HUB_API`, service **`lovely-home-hub-api`**, then redeploy.
+
+**Worker secret:** `CF_ACCESS_AUD` must include **Pages + Worker** app AUD values (Step 4a). Without the Pages AUD, proxied `/api/*` calls return **401** for every feature.
 
 **Local dev:** use `.env.local` at the repo root with `VITE_API_BASE_URL=http://127.0.0.1:8787` only on your Mac — nothing to set in Cloudflare for local.
 
@@ -282,7 +291,7 @@ After deploy, DevTools → **Network**: tapping a routine should show **POST** t
 | What you see | Fix |
 |--------------|-----|
 | Access login never appears on Pages | Re-check Step 3 application domain matches exact Pages hostname |
-| Dashboard loads, weather “unavailable”, API 401 | Complete Step 4 (Worker Access app); same email policies |
+| Dashboard loads, all API 401 / nothing works on preview | `CF_ACCESS_AUD` on Worker must include **Pages app AUD**; confirm **HUB_API** service binding on Pages project |
 | API 503 | Step 6 secrets missing or Worker not redeployed after secrets |
 | CORS error in console | Worker `ALLOWED_ORIGINS` must include your Pages origin; redeploy Worker from latest `wrangler.toml` |
 | Routines / controls do nothing; OPTIONS to `workers.dev` is **403** | Use Step 8 proxy: clear `VITE_API_BASE_URL`, set `WORKER_API_ORIGIN`, redeploy Pages |

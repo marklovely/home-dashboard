@@ -10,7 +10,7 @@ PRIVATE_HOME_ADDRESS=Example Street, Example Town
 ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
 # Cloudflare Access (required for protected API routes in dev/tests):
 CF_ACCESS_TEAM_DOMAIN=your-team-name
-CF_ACCESS_AUD=your-access-application-aud
+CF_ACCESS_AUD=worker-api-app-aud,pages-production-app-aud
 CF_ACCESS_JWT_TEST_SECRET=local-dev-only-test-signing-secret
 OWNER_EMAILS=you@example.com
 # Add OWNER_PIN to worker/.dev.vars for local owner-auth testing (never commit the real value).
