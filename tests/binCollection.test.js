@@ -22,9 +22,9 @@ import {
   householdCollections
 } from '../src/services/binCollectionService.js';
 import {
-  BIN_PUT_OUT_LOCATION,
+  BIN_COLLECTION_LOCATION,
+  getCollectionInformationCopy,
   getCollectionTimingIntro,
-  getHouseSitterCollectionSentence,
   getMissedBinNote
 } from '../src/apps/Bins/binCollectionCopy.js';
 
@@ -89,8 +89,8 @@ describe('binCollectionService scheduling', () => {
     expect(next?.date).toBe('2026-07-31');
     const described = describeCollectionEvent(next, asOf);
     expect(described.displayName).toBe(COLLECTION_TYPES.recycling.displayName);
-    expect(described.binDescription).toBe('Black wheelie bin — recycling, plus glass box');
-    expect(described.binLabel).toContain('⚫');
+    expect(described.binDescription).toBe('Black wheelie bin + glass box');
+    expect(described.binLabel).toContain('Black wheelie bin');
   });
 
   it('returns collection today when due', () => {
@@ -178,19 +178,12 @@ describe('home card and wording', () => {
     expect(summary.subtitle).toMatch(/Garden waste/i);
   });
 
-  it('uses informative house sitter copy without commands', () => {
-    const intro = getCollectionTimingIntro(true);
-    expect(intro).not.toMatch(/must|Put the|Don't forget/i);
-    expect(intro).toMatch(/6am/i);
-    const sentence = getHouseSitterCollectionSentence(
-      'Recycling & glass',
-      getDaysUntil('2026-07-31', parseLocalDate('2026-07-30')),
-      formatBinLabel(COLLECTION_TYPES.recycling),
-      true
-    );
-    expect(sentence).toMatch(/collected tomorrow/i);
-    expect(sentence).toMatch(/Black wheelie bin/);
-    expect(sentence).not.toMatch(/Put the bins out/i);
+  it('uses informative copy without commands', () => {
+    const info = getCollectionInformationCopy();
+    expect(info.beginLine).toMatch(/normally begin from 6am/i);
+    expect(info.locationLine).toContain(BIN_COLLECTION_LOCATION);
+    expect(info.title).toBe('Collection information');
+    expect(getCollectionTimingIntro(true)).not.toMatch(/must|Put your|Don't forget|You must/i);
     expect(getMissedBinNote(true)).toMatch(/easthants\.gov\.uk/);
   });
 
@@ -210,9 +203,10 @@ describe('home card and wording', () => {
   });
 
   it('uses owner operational detail strings and Wagtail Road location', () => {
-    expect(getCollectionTimingIntro(false)).toMatch(/Collection from 6am/);
-    expect(getCollectionTimingIntro(true)).toContain(BIN_PUT_OUT_LOCATION);
-    expect(BIN_PUT_OUT_LOCATION).toMatch(/Wagtail Road/);
+    const info = getCollectionInformationCopy();
+    expect(info.beginLine).toMatch(/6am/);
+    expect(info.locationLine).toContain('Wagtail Road');
+    expect(BIN_COLLECTION_LOCATION).toMatch(/Wagtail Road/);
   });
 });
 
