@@ -1,60 +1,227 @@
 {
   "version": 2,
   "homeSummaryTitle": "Everything you need to know",
-  "homeSummarySubtitle": "Arrival • Kitchen • Wi-Fi • Scooter • Emergency",
+  "homeSummarySubtitle": "Appliances • Wi-Fi • Scooter",
   "media": {
-    "hot-water-machine": {
-      "file": "hot-water-machine.jpg",
-      "alt": "Hot water machine in the kitchen"
-    },
-    "tv-remote": {
-      "file": "tv-remote.jpg",
-      "alt": "TV remote in the lounge"
-    },
     "fuse-box": {
       "file": "fuse-box.jpg",
-      "alt": "Fuse box"
+      "alt": "Consumer unit in the garage"
     },
     "water-stop-tap": {
       "file": "water-stop-tap.jpg",
-      "alt": "Water stop tap"
+      "alt": "Main water stop tap under the kitchen sink"
     },
-    "ev-charger": {
-      "file": "ev-charger.jpg",
-      "alt": "EV charger"
+    "tv-remote-source-button": {
+      "file": "tv-remote-source-button.jpg",
+      "alt": "LG remote with Source button highlighted"
     },
-    "bbq": {
-      "file": "bbq.jpg",
-      "alt": "Garden BBQ"
+    "ev-charger-lockbox": {
+      "file": "ev-charger-lockbox.jpg",
+      "alt": "EV charger, outdoor socket and key lockbox"
+    },
+    "garden-hose-bins": {
+      "file": "garden-hose-bins.jpg",
+      "alt": "Retractable hose, outside tap and wheelie bins"
+    },
+    "weber-bbq": {
+      "file": "weber-bbq.jpg",
+      "alt": "Weber charcoal BBQ in the garden"
+    },
+    "hot-water-machine-controls": {
+      "file": "hot-water-machine-controls.jpg",
+      "alt": "Hot and cold filtered water machine controls"
     }
   },
   "categories": [
     {
       "id": "arrival",
       "title": "Arrival",
-      "cardSubtitle": "Parking • Keys • EV charging",
+      "cardSubtitle": "Directions • Keys • EV charging",
       "iconId": "key-round",
       "accent": "#8b7cff",
-      "searchTerms": ["arrival", "parking", "keys", "check in"],
+      "searchTerms": [
+        "arrival",
+        "finding",
+        "parking",
+        "lockbox",
+        "directions"
+      ],
       "topics": [
         {
-          "id": "arrival",
-          "title": "Arrival",
-          "subtitle": "Getting settled",
-          "summary": "When you first arrive",
-          "searchTerms": ["arrival", "parking", "keys"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "id": "finding-the-house",
+          "title": "Finding the House",
+          "subtitle": "Sat nav and the side road",
+          "summary": "How to reach the property",
+          "searchTerms": [
+            "finding",
+            "address",
+            "directions",
+            "sat nav",
+            "wagtail"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Sat nav will get you to Wagtail Road. The house is down a small side road opposite number 12 — drive to the end to reach the property."
+            },
+            {
+              "type": "protected",
+              "kind": "address",
+              "label": "Full address",
+              "key": "address.full"
+            },
+            {
+              "type": "tip",
+              "content": "Google Maps works well for the last few metres."
+            }
+          ],
           "actions": []
         },
         {
-          "id": "ev-charger",
-          "title": "EV Charger",
-          "subtitle": "Electric vehicle charging",
-          "summary": "Using the charger on arrival",
-          "searchTerms": ["ev", "charger", "electric", "car"],
+          "id": "parking-and-access",
+          "title": "Parking and Access",
+          "subtitle": "Where to leave the car",
+          "summary": "Parking on arrival",
+          "searchTerms": [
+            "parking",
+            "access",
+            "car"
+          ],
           "blocks": [
-            { "type": "heroImage", "mediaId": "ev-charger", "caption": "EV charger" },
-            { "type": "text", "content": "Content coming soon." }
+            {
+              "type": "text",
+              "content": "Use the small road at the end of Wagtail Road. There is space to park while you unload."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "spare-key-lockbox",
+          "title": "Spare Key and Lockbox",
+          "subtitle": "Secure spare key",
+          "summary": "Lockbox on the left of the house",
+          "searchTerms": [
+            "lockbox",
+            "spare key",
+            "key safe",
+            "code"
+          ],
+          "blocks": [
+            {
+              "type": "heroImage",
+              "mediaId": "ev-charger-lockbox",
+              "caption": "Key lockbox on the left-hand side of the house"
+            },
+            {
+              "type": "text",
+              "content": "A secure key lock box is on the left-hand side as you face the front. The access code is shared separately on arrival."
+            },
+            {
+              "type": "protected",
+              "kind": "lockbox",
+              "label": "Lockbox code",
+              "key": "lockbox.code"
+            },
+            {
+              "type": "note",
+              "content": "Return the spare key to the lock box before you leave."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "leaving-the-house",
+          "title": "Leaving the House",
+          "subtitle": "Before you go out",
+          "summary": "Lock up when you leave",
+          "searchTerms": [
+            "leaving",
+            "lock up",
+            "going out"
+          ],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Before you go",
+              "steps": [
+                "Lock the front door with the key (Yale-style lock — use the key).",
+                "Ensure patio doors are secured as needed.",
+                "Check Scooter is comfortable if she is staying in."
+              ]
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "ev-charger-outside-socket",
+          "title": "EV Charger and Outside Socket",
+          "subtitle": "Front of the house",
+          "summary": "Charging and outdoor power",
+          "searchTerms": [
+            "ev",
+            "charger",
+            "electric car",
+            "socket",
+            "outside plug"
+          ],
+          "blocks": [
+            {
+              "type": "heroImage",
+              "mediaId": "ev-charger-lockbox",
+              "caption": "EV charger and outdoor double socket at the front"
+            },
+            {
+              "type": "text",
+              "content": "An EV charger is at the front of the house. You're welcome to use it — please contact us beforehand so we can explain how it works."
+            },
+            {
+              "type": "note",
+              "content": "There is also an outdoor double socket at the front if you need outdoor power."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "public-transport-taxis",
+          "title": "Public Transport and Taxis",
+          "subtitle": "Getting around without a car",
+          "summary": "Buses, trains and taxis",
+          "searchTerms": [
+            "bus",
+            "train",
+            "taxi",
+            "uber",
+            "transport"
+          ],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "heading": "Buses",
+              "items": [
+                {
+                  "label": "Nearest stops",
+                  "value": "Around a 15-minute walk — No. 7 and No. 8 to Waterlooville and Portsmouth"
+                }
+              ]
+            },
+            {
+              "type": "keyValues",
+              "heading": "Trains",
+              "items": [
+                {
+                  "label": "Havant",
+                  "value": "About 15 minutes by car"
+                },
+                {
+                  "label": "Petersfield",
+                  "value": "About 20 minutes by car"
+                }
+              ]
+            },
+            {
+              "type": "tip",
+              "content": "Google Maps has live bus times. Uber is widely available; Vezu is a reliable local taxi firm."
+            }
           ],
           "actions": []
         }
@@ -63,66 +230,486 @@
     {
       "id": "scooter",
       "title": "Scooter",
-      "cardSubtitle": "Walks • Feeding • Routine",
+      "cardSubtitle": "Feeding • Walks • Bedtime",
       "iconId": "dog",
       "accent": "#ff9f43",
-      "searchTerms": ["scooter", "dog", "pet"],
+      "searchTerms": [
+        "scooter",
+        "dog",
+        "pet",
+        "jack russell"
+      ],
       "topics": [
         {
-          "id": "scooter",
-          "title": "Scooter",
-          "subtitle": "Your house companion",
-          "summary": "Daily care",
-          "searchTerms": ["scooter", "dog", "walk", "feeding"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "id": "at-a-glance",
+          "title": "At a Glance",
+          "subtitle": "Jack Russell, 5 years",
+          "summary": "Quick facts about Scooter",
+          "searchTerms": [
+            "scooter",
+            "dog",
+            "overview",
+            "pet"
+          ],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                {
+                  "label": "Breed",
+                  "value": "Jack Russell Terrier"
+                },
+                {
+                  "label": "Age",
+                  "value": "5"
+                },
+                {
+                  "label": "Health",
+                  "value": "Excellent — vaccinated, no medication"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "She is full of energy, loves people, and will happily become your shadow. Sofas and beds are allowed."
+            }
+          ],
           "actions": []
+        },
+        {
+          "id": "feeding",
+          "title": "Feeding",
+          "subtitle": "Twice daily meals",
+          "summary": "Morning and evening feeding",
+          "searchTerms": [
+            "dog food",
+            "feed scooter",
+            "feeding",
+            "breakfast",
+            "dinner",
+            "meals"
+          ],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Each meal",
+              "steps": [
+                "1 scoop of dry food",
+                "¼ tub of wet food",
+                "Feed once in the morning and once in the evening"
+              ]
+            },
+            {
+              "type": "tip",
+              "content": "She may not eat straight away — leave food down and refresh at the next meal if anything is left."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "walks-exercise",
+          "title": "Walks and Exercise",
+          "subtitle": "Ball games and recall",
+          "summary": "Walks and play",
+          "searchTerms": [
+            "walk",
+            "walks",
+            "exercise",
+            "ball",
+            "lead",
+            "recall"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "No strict walk routine — whenever you fancy going out, she'll be delighted. Excellent recall off-lead in open spaces."
+            },
+            {
+              "type": "warning",
+              "heading": "Near roads",
+              "content": "She is not very good near roads — use a lead for pavement walks."
+            },
+            {
+              "type": "tip",
+              "content": "She loves chasing a tennis ball; bringing it back is optional!"
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "bedtime",
+          "title": "Bedtime",
+          "subtitle": "Crate routine",
+          "summary": "Settling Scooter at night",
+          "searchTerms": [
+            "bedtime",
+            "crate",
+            "night",
+            "sleep"
+          ],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Bedtime phrase",
+              "steps": [
+                "Tell Scooter: \"It's bedtime for dogs.\"",
+                "She usually heads to the back door for a last toilet break.",
+                "Then into her crate.",
+                "If she whines briefly, a calm \"It's bedtime.\" usually settles her."
+              ]
+            }
+          ],
+          "actions": [
+            {
+              "type": "alexa",
+              "buttonId": 1,
+              "label": "Alexa bedtime routine"
+            }
+          ]
+        },
+        {
+          "id": "toilet-routine",
+          "title": "Toilet Routine",
+          "subtitle": "Bells at the back door",
+          "summary": "Letting Scooter out",
+          "searchTerms": [
+            "toilet",
+            "bells",
+            "back door",
+            "doorbell",
+            "outside"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "She nudges the bell hanging by the back door when she wants to go out. When ready to come back in, she presses the wireless dog doorbell outside."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "grooming-muddy-walks",
+          "title": "Grooming and Muddy Walks",
+          "subtitle": "After rolling in the wrong stuff",
+          "summary": "Shampoo and drying",
+          "searchTerms": [
+            "grooming",
+            "shower",
+            "muddy",
+            "smell",
+            "shampoo"
+          ],
+          "blocks": [
+            {
+              "type": "warning",
+              "content": "She sometimes rolls in deer or fox droppings — she needs a shower if that happens."
+            },
+            {
+              "type": "text",
+              "content": "Dog shampoo is in the en-suite bathroom. Towel dry, then use the hairdryer. More common in wet winter weather; she dislikes rain."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "leaving-scooter-alone",
+          "title": "Leaving Scooter Alone",
+          "subtitle": "Short outings",
+          "summary": "She can stay home briefly",
+          "searchTerms": [
+            "alone",
+            "leave",
+            "out",
+            "hours"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Scooter can be left on her own for a few hours while you explore. She loves curling up on the sofa after a walk."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "personality",
+          "title": "Personality",
+          "subtitle": "Calm and affectionate",
+          "summary": "What to expect",
+          "searchTerms": [
+            "personality",
+            "cuddles",
+            "behaviour",
+            "nervous"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Happy, affectionate, people-friendly and pet-friendly. Can be nervous with new noises but settles quickly. Loves cuddles and blankets — morning bed cuddles welcome if you're happy for her to join."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "veterinary-help",
+          "title": "Veterinary Help",
+          "subtitle": "Local vet details",
+          "summary": "If Scooter needs a vet",
+          "searchTerms": [
+            "vet",
+            "veterinary",
+            "pets at home",
+            "scooter ill"
+          ],
+          "blocks": [
+            {
+              "type": "contact",
+              "heading": "Vets 4 Pets",
+              "items": [
+                {
+                  "label": "Address",
+                  "value": "2 Hambledon Road, Waterlooville (inside Pets at Home)"
+                },
+                {
+                  "label": "Phone",
+                  "value": "023 9225 6510",
+                  "href": "tel:02392256510"
+                },
+                {
+                  "label": "Hours",
+                  "value": "9am–7pm Mon–Sat; closed Sunday"
+                },
+                {
+                  "label": "Out of hours",
+                  "value": "023 9225 6510",
+                  "href": "tel:02392256510"
+                }
+              ]
+            }
+          ],
+          "actions": [
+            {
+              "type": "navigate",
+              "topicId": "vet",
+              "label": "House emergency vet info"
+            }
+          ]
         }
       ]
     },
     {
       "id": "kitchen",
       "title": "Kitchen",
-      "cardSubtitle": "Hot water • Washing • Appliances",
+      "cardSubtitle": "Water machine • Laundry • Bins",
       "iconId": "chef-hat",
       "accent": "#f4b64f",
-      "searchTerms": ["kitchen", "cook", "appliances"],
+      "searchTerms": [
+        "kitchen",
+        "cook",
+        "appliances",
+        "food"
+      ],
       "topics": [
         {
-          "id": "kitchen",
-          "title": "Kitchen",
-          "subtitle": "Overview",
-          "summary": "Using the kitchen",
-          "searchTerms": ["kitchen"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
-          "actions": []
-        },
-        {
-          "id": "hot-water-machine",
-          "title": "Hot Water Machine",
-          "subtitle": "Boiling water tap",
-          "summary": "Instant hot water for drinks",
+          "id": "hot-and-cold-water-machine",
+          "title": "Hot and Cold Water Machine",
+          "subtitle": "No kettle — filtered instant hot and cold",
+          "summary": "Boiling and chilled water on tap",
           "searchTerms": [
             "hot water",
-            "hot water machine",
             "kettle",
-            "boiling water",
             "tea",
             "coffee",
-            "tap"
+            "boiling water",
+            "hot tap",
+            "cold water",
+            "filtered"
           ],
           "blocks": [
-            { "type": "heroImage", "mediaId": "hot-water-machine", "caption": "Hot water machine" },
-            { "type": "text", "heading": "Instructions", "content": "Content coming soon." }
+            {
+              "type": "heroImage",
+              "mediaId": "hot-water-machine-controls",
+              "caption": "Button layout on the water machine"
+            },
+            {
+              "type": "note",
+              "content": "There is no kettle — use this machine for tea, coffee and cooking water."
+            },
+            {
+              "type": "steps",
+              "heading": "Hot water",
+              "steps": [
+                "Press the bottom-left button to heat the water.",
+                "When ready, press the red button above it for about one mug of boiling water.",
+                "If unused for a while, allow a minute or two to heat up."
+              ]
+            },
+            {
+              "type": "steps",
+              "heading": "Cold filtered water",
+              "steps": [
+                "Top blue button — one glass of chilled water.",
+                "Bottom blue button — about 750 ml (ideal for a jug)."
+              ]
+            },
+            {
+              "type": "warning",
+              "heading": "Important",
+              "content": "The machine does not stop automatically when your cup or jug is full. Press any button to stop the flow before it overflows."
+            }
           ],
           "actions": []
         },
         {
-          "id": "washing-machine",
-          "title": "Washing Machine",
+          "id": "dishwasher",
+          "title": "Dishwasher",
+          "subtitle": "Program 3 works best",
+          "summary": "Using the dishwasher",
+          "searchTerms": [
+            "dishwasher",
+            "dishes",
+            "program 3"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Use program 3 for best results. Tablets are under the sink."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "fridge-freezer",
+          "title": "Fridge and Freezer Space",
+          "subtitle": "Your food storage",
+          "summary": "What you can use",
+          "searchTerms": [
+            "fridge",
+            "freezer",
+            "food storage"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The fridge by the washing machine off the kitchen is for your use, plus the top two freezer drawers. Please do not use the garage freezer or small fridge in the garage."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "tea-coffee-basics",
+          "title": "Tea, Coffee and Cooking Basics",
+          "subtitle": "Help yourself",
+          "summary": "Pantry staples",
+          "searchTerms": [
+            "tea",
+            "coffee",
+            "sugar",
+            "cooking",
+            "oil",
+            "spices"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tea, coffee, sugar and basics such as oil, herbs and spices are available — please help yourselves."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "additional-appliances",
+          "title": "Additional Appliances",
+          "subtitle": "Garage and cupboard extras",
+          "summary": "Sandwich toaster, blender and more",
+          "searchTerms": [
+            "air fryer",
+            "blender",
+            "sandwich toaster",
+            "garage",
+            "vacuum"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Feel free to use any appliance you need. Tumble dryer, vacuum and mop are in the garage (door from the lounge). Sandwich toaster and blender are under the air fryer cupboard."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "washing-tumble-dryer",
+          "title": "Washing Machine and Tumble Dryer",
           "subtitle": "Laundry",
-          "summary": "Using the washing machine",
-          "searchTerms": ["washing", "laundry", "washer"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "summary": "Washer in kitchen, dryer in garage",
+          "searchTerms": [
+            "washing",
+            "laundry",
+            "tumble dryer",
+            "washer"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Washing machine is in the kitchen. Tumble dryer is in the garage — access through the lounge."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "rubbish-recycling",
+          "title": "Rubbish and Recycling",
+          "subtitle": "Bins and collections",
+          "summary": "Kitchen bin and wheelies",
+          "searchTerms": [
+            "rubbish",
+            "trash",
+            "recycling",
+            "wheelie bin",
+            "bins"
+          ],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "heading": "Kitchen bin",
+              "items": [
+                {
+                  "label": "General waste",
+                  "value": "Top section"
+                },
+                {
+                  "label": "Recycling",
+                  "value": "Bottom drawer"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Spare liners are under the kitchen sink."
+            },
+            {
+              "type": "heroImage",
+              "mediaId": "garden-hose-bins",
+              "caption": "Wheelie bins down the side of the house"
+            },
+            {
+              "type": "keyValues",
+              "heading": "Wheelie bins (side of house)",
+              "items": [
+                {
+                  "label": "Black bin",
+                  "value": "Recycling"
+                },
+                {
+                  "label": "Green bin",
+                  "value": "General waste"
+                }
+              ]
+            },
+            {
+              "type": "tip",
+              "content": "Collections are fortnightly on alternate weeks. If your stay includes collection day, wheel the right bin to the end of the small road the evening before."
+            }
+          ],
           "actions": []
         }
       ]
@@ -130,83 +717,546 @@
     {
       "id": "heating-utilities",
       "title": "Heating & Utilities",
-      "cardSubtitle": "Thermostat • Water • Lighting",
+      "cardSubtitle": "Nest • Hot water • Fuse box",
       "iconId": "flame",
       "accent": "#ff6b6b",
-      "searchTerms": ["heating", "utilities", "thermostat", "lights"],
+      "searchTerms": [
+        "heating",
+        "nest",
+        "thermostat",
+        "utilities",
+        "hot water"
+      ],
       "topics": [
         {
-          "id": "heating",
-          "title": "Heating",
-          "subtitle": "Hallway thermostat",
-          "summary": "Keeping the house comfortable",
-          "searchTerms": ["heating", "heat", "thermostat", "temperature", "warm"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "id": "nest-heating",
+          "title": "Nest Heating Controls",
+          "subtitle": "Lounge thermostat",
+          "summary": "Turn heating on from Eco",
+          "searchTerms": [
+            "nest",
+            "thermostat",
+            "heating",
+            "eco"
+          ],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "If Eco mode is showing",
+              "steps": [
+                "Press the centre of the Nest thermostat.",
+                "Select the Heating icon (three horizontal lines).",
+                "Press the centre again to enable heating."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Outside scheduled times, turn the outer dial to your preferred temperature."
+            }
+          ],
           "actions": [
-            { "type": "alexa", "buttonId": 7, "label": "Heat to 20°C" },
-            { "type": "alexa", "buttonId": 8, "label": "Heat to 9°C" }
+            {
+              "type": "alexa",
+              "buttonId": 7,
+              "label": "Heat to 20°C"
+            },
+            {
+              "type": "alexa",
+              "buttonId": 8,
+              "label": "Heat to 9°C"
+            }
           ]
         },
         {
-          "id": "lights",
-          "title": "Lights",
-          "subtitle": "Downstairs lighting",
-          "summary": "Quick lighting control",
-          "searchTerms": ["lights", "lighting", "downstairs", "lounge"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
-          "actions": [{ "type": "alexa", "buttonId": 3, "label": "Downstairs On" }]
+          "id": "heating-schedule",
+          "title": "Heating Schedule",
+          "subtitle": "Automatic times",
+          "summary": "When heating runs",
+          "searchTerms": [
+            "heating schedule",
+            "timer",
+            "morning",
+            "evening",
+            "9 degrees"
+          ],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                {
+                  "label": "Morning",
+                  "value": "06:45 – 08:30"
+                },
+                {
+                  "label": "Evening",
+                  "value": "17:15 – 22:30"
+                }
+              ]
+            },
+            {
+              "type": "warning",
+              "content": "If you manually turn heating on after 10:30 pm, please set the thermostat back to 9°C before bed."
+            }
+          ],
+          "actions": [
+            {
+              "type": "alexa",
+              "buttonId": 8,
+              "label": "Heat to 9°C"
+            }
+          ]
+        },
+        {
+          "id": "hot-water-schedule",
+          "title": "Hot Water Schedule",
+          "subtitle": "Automatic heating windows",
+          "summary": "When hot water heats",
+          "searchTerms": [
+            "hot water",
+            "immersion",
+            "schedule"
+          ],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                {
+                  "label": "Morning",
+                  "value": "06:00 – 06:30"
+                },
+                {
+                  "label": "Evening",
+                  "value": "18:00 – 18:30"
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "content": "Outside these times the system heats more water automatically when needed."
+            }
+          ],
+          "actions": []
         },
         {
           "id": "water-stop-tap",
           "title": "Water Stop Tap",
-          "subtitle": "Stop the water supply",
-          "summary": "Locating the stop tap",
-          "searchTerms": ["water", "stop tap", "leak", "utilities"],
-          "blocks": [
-            { "type": "heroImage", "mediaId": "water-stop-tap", "caption": "Water stop tap" },
-            { "type": "text", "content": "Content coming soon." }
+          "subtitle": "Kitchen cupboard",
+          "summary": "Shut off the water supply",
+          "searchTerms": [
+            "stopcock",
+            "stop cock",
+            "water leak",
+            "turn water off",
+            "stop tap"
           ],
-          "actions": [{ "type": "navigate", "topicId": "emergency", "label": "Emergency help" }]
+          "blocks": [
+            {
+              "type": "heroImage",
+              "mediaId": "water-stop-tap",
+              "caption": "Stop tap at the back of the cupboard under the kitchen sink"
+            },
+            {
+              "type": "location",
+              "heading": "Location",
+              "content": "Main stop tap under the kitchen sink — at the back of the cupboard."
+            }
+          ],
+          "actions": [
+            {
+              "type": "navigate",
+              "topicId": "water-emergency",
+              "label": "Water emergency"
+            }
+          ]
+        },
+        {
+          "id": "fuse-box",
+          "title": "Fuse Box",
+          "subtitle": "Consumer unit in garage",
+          "summary": "Electrical supply",
+          "searchTerms": [
+            "fuse",
+            "fuse box",
+            "consumer unit",
+            "electric",
+            "trip"
+          ],
+          "blocks": [
+            {
+              "type": "heroImage",
+              "mediaId": "fuse-box",
+              "caption": "Consumer unit on the far wall of the garage"
+            },
+            {
+              "type": "text",
+              "content": "All circuits are clearly labelled."
+            }
+          ],
+          "actions": [
+            {
+              "type": "navigate",
+              "topicId": "electrical-emergency",
+              "label": "Electrical emergency"
+            }
+          ]
+        },
+        {
+          "id": "lighting-alexa",
+          "title": "Lighting and Alexa Commands",
+          "subtitle": "Voice lighting",
+          "summary": "Useful Alexa phrases",
+          "searchTerms": [
+            "lights",
+            "alexa",
+            "lighting",
+            "downstairs",
+            "bedtime"
+          ],
+          "blocks": [
+            {
+              "type": "collapsible",
+              "heading": "Downstairs and garage",
+              "content": "\"Alexa, turn downstairs on.\" / off — same for garage lights."
+            },
+            {
+              "type": "collapsible",
+              "heading": "Bedrooms",
+              "content": "\"Alexa, bedroom lights on.\" / off"
+            },
+            {
+              "type": "tip",
+              "content": "At bedtime say \"Alexa, bedtime.\" — turns off downstairs, garage and bedside lights and sets heating to 9°C overnight."
+            }
+          ],
+          "actions": [
+            {
+              "type": "alexa",
+              "buttonId": 3,
+              "label": "Downstairs on"
+            },
+            {
+              "type": "alexa",
+              "buttonId": 1,
+              "label": "Alexa bedtime"
+            }
+          ]
         }
       ]
     },
     {
       "id": "tv",
       "title": "TV & Entertainment",
-      "cardSubtitle": "Remote • Streaming • Sound",
+      "cardSubtitle": "Apple TV • Streaming • Sonos",
       "iconId": "monitor",
       "accent": "#d16dff",
-      "searchTerms": ["tv", "television", "netflix", "movie", "streaming"],
+      "searchTerms": [
+        "tv",
+        "television",
+        "netflix",
+        "streaming",
+        "sonos"
+      ],
       "topics": [
         {
-          "id": "tv-entertainment",
-          "title": "TV & Entertainment",
-          "subtitle": "Lounge setup",
-          "summary": "Watching TV and streaming",
-          "searchTerms": ["tv", "television", "netflix", "movie", "watch", "remote", "streaming"],
-          "blocks": [
-            { "type": "heroImage", "mediaId": "tv-remote", "caption": "TV remote" },
-            { "type": "text", "content": "Content coming soon." }
+          "id": "turning-on-tv",
+          "title": "Turning on the TV",
+          "subtitle": "LG remote on the sofa table",
+          "summary": "Power on and off",
+          "searchTerms": [
+            "tv",
+            "television",
+            "remote",
+            "power"
           ],
-          "actions": [{ "type": "alexa", "buttonId": 2, "label": "Watch Movie" }]
+          "blocks": [
+            {
+              "type": "heroImage",
+              "mediaId": "tv-remote-source-button",
+              "caption": "LG remote beside the sofa"
+            },
+            {
+              "type": "steps",
+              "steps": [
+                "Press the large red power button to turn the TV on and off."
+              ]
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "selecting-apple-tv",
+          "title": "Selecting Apple TV",
+          "subtitle": "Input 3 via Source",
+          "summary": "Watch streaming apps",
+          "searchTerms": [
+            "apple tv",
+            "input 3",
+            "source",
+            "hdmi"
+          ],
+          "blocks": [
+            {
+              "type": "heroImage",
+              "mediaId": "tv-remote-source-button",
+              "caption": "Source button below the navigation pad"
+            },
+            {
+              "type": "steps",
+              "heading": "Apple TV (Input 3)",
+              "steps": [
+                "Press the Source button (icon like a power cable beneath the four-way pad).",
+                "Select Input 3 – Apple TV."
+              ]
+            }
+          ],
+          "actions": [
+            {
+              "type": "alexa",
+              "buttonId": 2,
+              "label": "Watch movie"
+            }
+          ]
+        },
+        {
+          "id": "streaming-services",
+          "title": "Streaming Services",
+          "subtitle": "Apps on Apple TV",
+          "summary": "Netflix, Prime, BBC and more",
+          "searchTerms": [
+            "netflix",
+            "prime",
+            "iplayer",
+            "youtube",
+            "streaming"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Apple TV includes Netflix, Amazon Prime Video, Apple TV+, BBC iPlayer, ITVX, Channel 4 and YouTube. Sign in with your own accounts if needed — sign out before you leave."
+            }
+          ],
+          "actions": [
+            {
+              "type": "alexa",
+              "buttonId": 2,
+              "label": "Watch movie"
+            }
+          ]
+        },
+        {
+          "id": "airplay",
+          "title": "AirPlay",
+          "subtitle": "From iPhone, iPad or Mac",
+          "summary": "Stream to the TV",
+          "searchTerms": [
+            "airplay",
+            "iphone",
+            "ipad",
+            "mac",
+            "cast"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The lounge TV supports Apple AirPlay for streaming from your Apple devices."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "sonos",
+          "title": "Sonos",
+          "subtitle": "Speakers around the house",
+          "summary": "Music and radio",
+          "searchTerms": [
+            "sonos",
+            "music",
+            "spotify",
+            "speakers",
+            "radio"
+          ],
+          "blocks": [
+            {
+              "type": "steps",
+              "steps": [
+                "Connect to the house Wi-Fi.",
+                "Open the Sonos app — speakers should appear automatically.",
+                "Apple Music, Spotify, BBC Sounds and Global Player are available."
+              ]
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "alexa-lighting-commands",
+          "title": "Alexa Lighting Commands",
+          "subtitle": "While watching TV",
+          "summary": "Quick voice lighting",
+          "searchTerms": [
+            "alexa",
+            "lights",
+            "downstairs"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Try \"Alexa, turn downstairs on/off\", \"Alexa, garage on/off\", and \"Alexa, bedroom lights on/off\"."
+            }
+          ],
+          "actions": [
+            {
+              "type": "alexa",
+              "buttonId": 3,
+              "label": "Downstairs on"
+            }
+          ]
+        },
+        {
+          "id": "bedtime-routine",
+          "title": "Bedtime Routine",
+          "subtitle": "One phrase for lights and heat",
+          "summary": "End of evening",
+          "searchTerms": [
+            "bedtime",
+            "night",
+            "alexa routine"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Say \"Alexa, bedtime.\" This turns off downstairs, garage and bedside lights and sets heating to 9°C overnight."
+            }
+          ],
+          "actions": [
+            {
+              "type": "alexa",
+              "buttonId": 1,
+              "label": "Alexa bedtime"
+            }
+          ]
         }
       ]
     },
     {
       "id": "bathrooms",
       "title": "Bathrooms",
-      "cardSubtitle": "Showers • Taps • Supplies",
+      "cardSubtitle": "Towels • Showers • Supplies",
       "iconId": "shower-head",
       "accent": "#4da8ff",
-      "searchTerms": ["bathroom", "shower", "bath"],
+      "searchTerms": [
+        "bathroom",
+        "shower",
+        "bath",
+        "towels"
+      ],
       "topics": [
         {
-          "id": "bathrooms",
-          "title": "Bathrooms",
-          "subtitle": "Around the house",
-          "summary": "Using the bathrooms",
-          "searchTerms": ["bathroom", "shower", "bath", "toilet"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "id": "towels-supplies",
+          "title": "Towels and Supplies",
+          "subtitle": "Fresh for your stay",
+          "summary": "Where to find extras",
+          "searchTerms": [
+            "towels",
+            "toilet roll",
+            "supplies"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Fresh towels are provided. Spare toilet rolls are in the downstairs toilet basket and in the top drawers of the storage unit."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "en-suite-shower",
+          "title": "En-suite Shower",
+          "subtitle": "Master bedroom",
+          "summary": "Using the en-suite",
+          "searchTerms": [
+            "en-suite",
+            "master shower",
+            " ensuite"
+          ],
+          "blocks": [
+            {
+              "type": "warning",
+              "content": "Angle the shower head towards the shower door, not the back wall — it can leak if directed at the rear of the enclosure."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "family-bathroom",
+          "title": "Family Bathroom",
+          "subtitle": "Upstairs bath",
+          "summary": "Family bathroom upstairs",
+          "searchTerms": [
+            "bath",
+            "family bathroom",
+            "upstairs"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Upstairs family bathroom with a bath. Downstairs toilet also available."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "hairdryer",
+          "title": "Hairdryer",
+          "subtitle": "Master bedroom",
+          "summary": "Guest hairdryer",
+          "searchTerms": [
+            "hairdryer",
+            "dry hair"
+          ],
+          "blocks": [
+            {
+              "type": "location",
+              "heading": "Location",
+              "content": "On top of the wooden storage box in the corner of the master bedroom."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "shower-leak-warning",
+          "title": "Shower Leak Warning",
+          "subtitle": "En-suite only",
+          "summary": "Avoid leaks",
+          "searchTerms": [
+            "leak",
+            "shower leak",
+            "en-suite"
+          ],
+          "blocks": [
+            {
+              "type": "warning",
+              "heading": "Shower direction",
+              "content": "Point the en-suite shower head at the door side to prevent leaks at the back wall."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "extractor-fans",
+          "title": "Extractor Fans",
+          "subtitle": "Linked to lights",
+          "summary": "Ventilation",
+          "searchTerms": [
+            "extractor",
+            "fan",
+            "steam"
+          ],
+          "blocks": [
+            {
+              "type": "note",
+              "content": "The extractor fan runs with the bathroom light and continues briefly after the light is switched off."
+            }
+          ],
           "actions": []
         }
       ]
@@ -214,97 +1264,670 @@
     {
       "id": "garden",
       "title": "Garden",
-      "cardSubtitle": "Outdoor space • BBQ",
+      "cardSubtitle": "Seating • BBQ • Watering",
       "iconId": "trees",
       "accent": "#28d17c",
-      "searchTerms": ["garden", "outside", "bbq", "barbecue"],
+      "searchTerms": [
+        "garden",
+        "outside",
+        "bbq",
+        "patio"
+      ],
       "topics": [
         {
-          "id": "garden",
-          "title": "Garden",
-          "subtitle": "Outdoor areas",
-          "summary": "Using the garden",
-          "searchTerms": ["garden", "outside", "lawn"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "id": "garden-seating",
+          "title": "Garden Seating",
+          "subtitle": "Make yourself at home outside",
+          "summary": "Seating and dining",
+          "searchTerms": [
+            "garden",
+            "seating",
+            "patio",
+            "outside"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Use outdoor seating, cushions, parasols and the dining area. Cushions may be left out in summer."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "watering-plants",
+          "title": "Watering Plants",
+          "subtitle": "Outdoor plants in dry weather",
+          "summary": "When to water",
+          "searchTerms": [
+            "watering",
+            "plants",
+            "garden plants"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Indoor plants are artificial — no watering needed. If the weather has been dry for a few days, please water outdoor plants."
+            },
+            {
+              "type": "note",
+              "content": "No hosepipe ban for Portsmouth Water users in Hampshire (Southern Water area may differ)."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "hose-outside-tap",
+          "title": "Hose and Outside Tap",
+          "subtitle": "Back of the house",
+          "summary": "Retractable hose",
+          "searchTerms": [
+            "hose",
+            "tap",
+            "water garden"
+          ],
+          "blocks": [
+            {
+              "type": "heroImage",
+              "mediaId": "garden-hose-bins",
+              "caption": "Hose on the back wall; tap down the side"
+            },
+            {
+              "type": "text",
+              "content": "Retractable hose mounted on the back of the house. Outside tap is down the side."
+            }
+          ],
           "actions": []
         },
         {
           "id": "bbq",
           "title": "BBQ",
-          "subtitle": "Barbecue",
-          "summary": "Using the BBQ",
-          "searchTerms": ["bbq", "barbecue", "grill"],
+          "subtitle": "Weber charcoal grill",
+          "summary": "Using the barbecue",
+          "searchTerms": [
+            "bbq",
+            "barbecue",
+            "weber",
+            "grill"
+          ],
           "blocks": [
-            { "type": "heroImage", "mediaId": "bbq", "caption": "BBQ" },
-            { "type": "text", "content": "Content coming soon." }
+            {
+              "type": "heroImage",
+              "mediaId": "weber-bbq",
+              "caption": "Weber charcoal BBQ"
+            },
+            {
+              "type": "text",
+              "content": "BBQ tongs are in the kitchen. Clean the grill once cool and replace the cover afterwards."
+            }
           ],
           "actions": []
-        }
-      ]
-    },
-    {
-      "id": "security",
-      "title": "Security",
-      "cardSubtitle": "Alarms • Locks • Access",
-      "iconId": "shield",
-      "accent": "#6f7b8f",
-      "searchTerms": ["security", "alarm", "lock"],
-      "topics": [
+        },
         {
-          "id": "security",
-          "title": "Security",
-          "subtitle": "Keeping the home secure",
-          "summary": "Alarms and access",
-          "searchTerms": ["security", "alarm", "lock", "key"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "id": "fire-pit",
+          "title": "Fire Pit",
+          "subtitle": "STOVE fire pit",
+          "summary": "Evenings outside",
+          "searchTerms": [
+            "fire pit",
+            "fire",
+            "stove"
+          ],
+          "blocks": [
+            {
+              "type": "warning",
+              "content": "Fully extinguish the fire pit before leaving it unattended."
+            },
+            {
+              "type": "note",
+              "content": "Close parasols after use when it is windy."
+            }
+          ],
           "actions": []
-        }
-      ]
-    },
-    {
-      "id": "wifi",
-      "title": "Wi-Fi",
-      "cardSubtitle": "Network • Password • Guests",
-      "iconId": "wifi",
-      "accent": "#28d17c",
-      "searchTerms": ["wifi", "wi-fi", "internet", "password", "network"],
-      "topics": [
+        },
         {
-          "id": "wifi",
-          "title": "Wi-Fi",
-          "subtitle": "Stay connected",
-          "summary": "Join the home network",
-          "searchTerms": ["wifi", "wi-fi", "internet", "password", "network"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "id": "parasols",
+          "title": "Parasols",
+          "subtitle": "Wind care",
+          "summary": "Protect parasols",
+          "searchTerms": [
+            "parasol",
+            "umbrella",
+            "wind"
+          ],
+          "blocks": [
+            {
+              "type": "tip",
+              "content": "Close parasols after use when the weather is windy."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "outdoor-socket",
+          "title": "Outdoor Socket",
+          "subtitle": "Front of house",
+          "summary": "Double outdoor socket",
+          "searchTerms": [
+            "socket",
+            "outside plug",
+            "outdoor power"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Outdoor double socket at the front of the house for outdoor equipment."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "ev-charger-garden",
+          "title": "EV Charger",
+          "subtitle": "Front of the property",
+          "summary": "Same as arrival info",
+          "searchTerms": [
+            "ev",
+            "charger",
+            "electric car"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "EV charger at the front — contact us before use so we can explain operation."
+            }
+          ],
           "actions": [
             {
-              "type": "panel",
-              "label": "Show Wi-Fi details",
-              "heading": "Wi-Fi",
-              "items": [
-                { "label": "Network name", "value": "Add when ready" },
-                { "label": "Password", "value": "Add when ready" }
-              ]
+              "type": "navigate",
+              "topicId": "ev-charger-outside-socket",
+              "label": "EV charger details"
             }
           ]
         }
       ]
     },
     {
-      "id": "local",
-      "title": "Local Area",
-      "cardSubtitle": "Shops • Walks • Food",
-      "iconId": "map-pin",
-      "accent": "#8b7cff",
-      "searchTerms": ["local", "shop", "food", "walk", "area"],
+      "id": "security",
+      "title": "Security",
+      "cardSubtitle": "Locks • Keys • Checklist",
+      "iconId": "shield",
+      "accent": "#6f7b8f",
+      "searchTerms": [
+        "security",
+        "lock",
+        "keys",
+        "doors"
+      ],
       "topics": [
         {
-          "id": "local-area",
-          "title": "Local Recommendations",
-          "subtitle": "Nearby essentials",
-          "summary": "Around the neighbourhood",
-          "searchTerms": ["local", "shop", "food", "walk", "pizza", "takeaway"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "id": "front-door",
+          "title": "Front Door",
+          "subtitle": "Key lock",
+          "summary": "Locking the front door",
+          "searchTerms": [
+            "front door",
+            "key",
+            "lock"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The front door has a key lock (not Yale) — lock with the key when you go out and at night."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "patio-doors",
+          "title": "Patio Doors",
+          "subtitle": "Back of the house",
+          "summary": "Patio door key",
+          "searchTerms": [
+            "patio",
+            "back door",
+            "doors"
+          ],
+          "blocks": [
+            {
+              "type": "note",
+              "content": "The key stays in the patio door lock — there is no spare for that lock."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "locking-up",
+          "title": "Locking Up",
+          "subtitle": "Whenever you leave",
+          "summary": "Secure the house",
+          "searchTerms": [
+            "locking up",
+            "secure",
+            "leave house"
+          ],
+          "blocks": [
+            {
+              "type": "steps",
+              "steps": [
+                "Lock all doors when you leave the house.",
+                "Lock doors before going to bed."
+              ]
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "key-lockbox",
+          "title": "Key Lockbox",
+          "subtitle": "Spare key storage",
+          "summary": "Left side of the house",
+          "searchTerms": [
+            "lockbox",
+            "spare key"
+          ],
+          "blocks": [
+            {
+              "type": "heroImage",
+              "mediaId": "ev-charger-lockbox",
+              "caption": "Lockbox location"
+            },
+            {
+              "type": "protected",
+              "kind": "lockbox",
+              "label": "Lockbox code",
+              "key": "lockbox.code"
+            },
+            {
+              "type": "note",
+              "content": "Return the spare key to the lock box before you leave."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "restricted-room",
+          "title": "Restricted Room",
+          "subtitle": "Study locked",
+          "summary": "Rooms you can use",
+          "searchTerms": [
+            "study",
+            "locked room",
+            "workspace"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "You have access to every room except the study, which is locked. The dining table is a good workspace if you need to work."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "leaving-bedtime-checklist",
+          "title": "Leaving and Bedtime Checklist",
+          "subtitle": "Doors and Scooter",
+          "summary": "Quick security checklist",
+          "searchTerms": [
+            "checklist",
+            "bedtime",
+            "leaving"
+          ],
+          "blocks": [
+            {
+              "type": "steps",
+              "steps": [
+                "Lock doors when leaving and at bedtime.",
+                "Tell Scooter \"It's bedtime for dogs\" when settling her.",
+                "Set heating to 9°C if you ran it manually late evening."
+              ]
+            }
+          ],
+          "actions": [
+            {
+              "type": "alexa",
+              "buttonId": 1,
+              "label": "Alexa bedtime"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wifi",
+      "title": "Wi-Fi",
+      "cardSubtitle": "Connect • Coverage • Help",
+      "iconId": "wifi",
+      "accent": "#28d17c",
+      "searchTerms": [
+        "wifi",
+        "wi-fi",
+        "internet",
+        "network"
+      ],
+      "topics": [
+        {
+          "id": "connecting",
+          "title": "Connecting",
+          "subtitle": "High-speed Wi-Fi",
+          "summary": "Join the network",
+          "searchTerms": [
+            "wifi",
+            "password",
+            "ssid",
+            "connect",
+            "internet"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Wi-Fi details are provided through secure house-sitter access — not stored in this guide."
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Network name (SSID)",
+              "key": "wifi.ssid"
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Password",
+              "key": "wifi.password"
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "coverage",
+          "title": "Coverage",
+          "subtitle": "Whole house and garden",
+          "summary": "Access points",
+          "searchTerms": [
+            "coverage",
+            "signal",
+            "garden wifi"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Access points throughout the house give strong coverage in every room and into the garden."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "troubleshooting",
+          "title": "Troubleshooting",
+          "subtitle": "If connection fails",
+          "summary": "Getting help",
+          "searchTerms": [
+            "wifi problem",
+            "no internet",
+            "troubleshoot"
+          ],
+          "blocks": [
+            {
+              "type": "tip",
+              "content": "If you have trouble connecting, contact us — we're happy to help."
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Mark — email",
+              "key": "contacts.mark.email"
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Donna — phone",
+              "key": "contacts.donna.phone"
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "qr-code-placeholder",
+          "title": "QR Code",
+          "subtitle": "Quick join (coming soon)",
+          "summary": "Scan to connect",
+          "searchTerms": [
+            "qr",
+            "qr code",
+            "wifi qr"
+          ],
+          "blocks": [
+            {
+              "type": "note",
+              "heading": "Coming soon",
+              "content": "A Wi-Fi QR code will appear here once secure house-sitter access is enabled."
+            }
+          ],
+          "actions": []
+        }
+      ]
+    },
+    {
+      "id": "local",
+      "title": "Local Area",
+      "cardSubtitle": "Shops • Pubs • Walks",
+      "iconId": "map-pin",
+      "accent": "#8b7cff",
+      "searchTerms": [
+        "local",
+        "shop",
+        "pub",
+        "walk",
+        "food"
+      ],
+      "topics": [
+        {
+          "id": "local-shops",
+          "title": "Shops",
+          "subtitle": "Supermarkets nearby",
+          "summary": "Morrisons, Lidl, Sainsbury's",
+          "searchTerms": [
+            "shop",
+            "morrisons",
+            "lidl",
+            "sainsbury",
+            "supermarket"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "heading": "Shopping",
+              "content": "Nearby supermarkets:"
+            },
+            {
+              "type": "place",
+              "name": "Morrisons",
+              "address": "Lakesmere Road, Horndean",
+              "description": "Local supermarket — has everything"
+            },
+            {
+              "type": "place",
+              "name": "Lidl",
+              "address": "1 Waterloo Park, Electra Avenue, Waterlooville",
+              "description": "Cheap and convenient"
+            },
+            {
+              "type": "place",
+              "name": "Sainsbury's",
+              "address": "Hambledon Rd, Waterlooville PO7 7UL",
+              "description": "Supermarket on Hambledon Road"
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "local-pubs",
+          "title": "Dog-friendly Pubs",
+          "subtitle": "Food and gardens",
+          "summary": "Local pubs",
+          "searchTerms": [
+            "pub",
+            "restaurant",
+            "food",
+            "dog friendly pub"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Dog-friendly pubs nearby:"
+            },
+            {
+              "type": "place",
+              "name": "Bat and Ball",
+              "address": "Hyde Farm Lane, Hambledon",
+              "description": "Fantastic pub with great outside area and food",
+              "dogFriendly": true
+            },
+            {
+              "type": "place",
+              "name": "Bird in Hand",
+              "address": "269 Lovedean Ln, Waterlooville PO8 9RX",
+              "description": "Great food and garden",
+              "dogFriendly": true,
+              "website": "https://thebirdinhand.net/"
+            },
+            {
+              "type": "place",
+              "name": "Farmer Inn",
+              "address": "300 Catherington Ln, Catherington, Waterlooville PO8 0TD",
+              "description": "Walking distance — great pub",
+              "dogFriendly": true,
+              "website": "https://www.farmerportsmouth.co.uk/"
+            },
+            {
+              "type": "place",
+              "name": "The George Inn",
+              "address": "Finchdean, Waterlooville PO8 0AU",
+              "description": "Lovely setting with walks behind the pub",
+              "dogFriendly": true,
+              "website": "https://www.georgeinnfinchdean.co.uk/"
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "local-walks",
+          "title": "Walks",
+          "subtitle": "Country parks and hills",
+          "summary": "Places to walk Scooter",
+          "searchTerms": [
+            "walk",
+            "country park",
+            "qe park",
+            "butser",
+            "staunton"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Walks we recommend:"
+            },
+            {
+              "type": "place",
+              "name": "Queen Elizabeth Country Park",
+              "address": "Gravel Hill, Horndean PO8 0QE",
+              "description": "About 10 minutes away — woodland trails and views",
+              "dogFriendly": true
+            },
+            {
+              "type": "place",
+              "name": "Staunton Country Park",
+              "address": "Stable Cottage, Staunton Country Park, Petersfield Rd, Havant PO9 5HD",
+              "description": "Parkland, woodland and lakes — easy walks",
+              "dogFriendly": true
+            },
+            {
+              "type": "place",
+              "name": "Butser Hill",
+              "address": "Near Queen Elizabeth Country Park",
+              "description": "High South Downs viewpoint and walking routes",
+              "dogFriendly": true
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "local-attractions",
+          "title": "Attractions",
+          "subtitle": "Days out",
+          "summary": "Portsmouth and coast",
+          "searchTerms": [
+            "attraction",
+            "dockyard",
+            "gunwharf",
+            "southsea",
+            "spinnaker"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Further afield:"
+            },
+            {
+              "type": "place",
+              "name": "Portsmouth Historic Dockyard",
+              "address": "Victory Gate, HM Naval Base, Portsea, Portsmouth PO1 3LJ",
+              "description": "HMS Victory, Mary Rose, Warrior and navy museum — allow a full day",
+              "dogFriendly": false
+            },
+            {
+              "type": "place",
+              "name": "Gunwharf Quays",
+              "address": "Gunwharf, Portsmouth PO1 3TZ",
+              "description": "Outlet shopping, waterfront dining and Spinnaker Tower views",
+              "dogFriendly": true
+            },
+            {
+              "type": "place",
+              "name": "Southsea",
+              "address": "Southsea",
+              "description": "Seafront walk, castle, shops and Southsea Common",
+              "dogFriendly": true
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "local-public-transport",
+          "title": "Public Transport",
+          "subtitle": "Buses and trains",
+          "summary": "Getting around",
+          "searchTerms": [
+            "bus",
+            "train",
+            "transport",
+            "havant",
+            "petersfield"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Nearest bus stops ~15 minutes' walk — routes 7 and 8 to Waterlooville and Portsmouth. Trains from Havant (~15 min drive) and Petersfield (~20 min). Car hire available in Portsmouth (Enterprise, Hertz)."
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "local-taxis",
+          "title": "Taxis",
+          "subtitle": "Uber and local cabs",
+          "summary": "When you need a ride",
+          "searchTerms": [
+            "taxi",
+            "uber",
+            "vezu",
+            "cab"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Uber is widely available. Vezu is a reliable local taxi company."
+            }
+          ],
           "actions": []
         }
       ]
@@ -312,38 +1935,204 @@
     {
       "id": "emergency",
       "title": "Emergency",
-      "cardSubtitle": "Contacts • Utilities • Safety",
+      "cardSubtitle": "Owners • Vet • Utilities",
       "iconId": "siren",
       "accent": "#ff5f6d",
-      "searchTerms": ["emergency", "urgent", "help", "999"],
+      "searchTerms": [
+        "emergency",
+        "urgent",
+        "999",
+        "help"
+      ],
       "topics": [
         {
-          "id": "emergency",
-          "title": "Emergency Contacts",
-          "subtitle": "When something goes wrong",
-          "summary": "Who to call first",
-          "searchTerms": ["emergency", "homeowner", "owners", "urgent", "contact"],
-          "blocks": [{ "type": "text", "content": "Content coming soon." }],
+          "id": "contacting-mark-donna",
+          "title": "Contacting Mark and Donna",
+          "subtitle": "Questions during your stay",
+          "summary": "Reach the owners",
+          "searchTerms": [
+            "owners",
+            "mark",
+            "donna",
+            "contact",
+            "phone",
+            "email"
+          ],
+          "blocks": [
+            {
+              "type": "warning",
+              "heading": "Immediate danger",
+              "content": "Call 999 for fire, medical or security emergencies."
+            },
+            {
+              "type": "text",
+              "content": "For house or Scooter questions, contact us — we'd rather you asked than worried."
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Mark — phone",
+              "key": "contacts.mark.phone"
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Mark — email",
+              "key": "contacts.mark.email"
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Donna — phone",
+              "key": "contacts.donna.phone"
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Donna — email",
+              "key": "contacts.donna.email"
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "vet",
+          "title": "Vet",
+          "subtitle": "Vets 4 Pets Waterlooville",
+          "summary": "Emergency vet contact",
+          "searchTerms": [
+            "vet",
+            "veterinary",
+            "pets at home",
+            "scooter vet"
+          ],
+          "blocks": [
+            {
+              "type": "contact",
+              "heading": "Vets 4 Pets",
+              "items": [
+                {
+                  "label": "Address",
+                  "value": "2 Hambledon Road, Waterlooville (inside Pets at Home)"
+                },
+                {
+                  "label": "Phone",
+                  "value": "023 9225 6510",
+                  "href": "tel:02392256510"
+                },
+                {
+                  "label": "Opening times",
+                  "value": "9am–7pm Mon–Sat; closed Sunday"
+                },
+                {
+                  "label": "Emergency / out of hours",
+                  "value": "023 9225 6510",
+                  "href": "tel:02392256510"
+                }
+              ]
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "water-emergency",
+          "title": "Water Emergency",
+          "subtitle": "Stop the supply",
+          "summary": "Leaks and bursts",
+          "searchTerms": [
+            "water leak",
+            "flood",
+            "burst pipe",
+            "stop tap"
+          ],
+          "blocks": [
+            {
+              "type": "steps",
+              "steps": [
+                "Turn off the main stop tap under the kitchen sink (back of cupboard).",
+                "Contact the owners if you need further help."
+              ]
+            }
+          ],
           "actions": [
             {
-              "type": "panel",
-              "label": "Call owners",
-              "heading": "Owners",
-              "items": [{ "label": "Phone", "value": "Add contact number when ready" }]
+              "type": "navigate",
+              "topicId": "water-stop-tap",
+              "label": "Find stop tap"
             }
           ]
         },
         {
-          "id": "fuse-box",
-          "title": "Fuse Box",
-          "subtitle": "Electrical supply",
-          "summary": "Locating the fuse box",
-          "searchTerms": ["fuse", "electric", "power", "trip"],
-          "blocks": [
-            { "type": "heroImage", "mediaId": "fuse-box", "caption": "Fuse box" },
-            { "type": "text", "content": "Content coming soon." }
+          "id": "electrical-emergency",
+          "title": "Electrical Emergency",
+          "subtitle": "Consumer unit",
+          "summary": "Power issues",
+          "searchTerms": [
+            "electric",
+            "power cut",
+            "fuse",
+            "trip"
           ],
-          "actions": [{ "type": "navigate", "topicId": "emergency", "label": "Emergency contacts" }]
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Consumer unit is on the far wall of the garage — circuits are labelled."
+            }
+          ],
+          "actions": [
+            {
+              "type": "navigate",
+              "topicId": "fuse-box",
+              "label": "Fuse box"
+            }
+          ]
+        },
+        {
+          "id": "lock-key-issues",
+          "title": "Lock and Key Issues",
+          "subtitle": "Spare key lockbox",
+          "summary": "If you're locked out",
+          "searchTerms": [
+            "locked out",
+            "keys",
+            "lockbox"
+          ],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Spare key is in the lockbox on the left-hand side of the house."
+            },
+            {
+              "type": "protected",
+              "kind": "lockbox",
+              "label": "Lockbox code",
+              "key": "lockbox.code"
+            }
+          ],
+          "actions": []
+        },
+        {
+          "id": "general-safety",
+          "title": "General Safety",
+          "subtitle": "First aid and mail",
+          "summary": "Other notes",
+          "searchTerms": [
+            "first aid",
+            "mail",
+            "safety",
+            "999"
+          ],
+          "blocks": [
+            {
+              "type": "note",
+              "content": "There is no first aid kit on site — use pharmacy or NHS 111 for minor issues."
+            },
+            {
+              "type": "text",
+              "content": "Please leave mail on the dining room table."
+            }
+          ],
+          "actions": []
         }
       ]
     }

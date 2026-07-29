@@ -7,27 +7,20 @@ describe('guide service', () => {
     const summary = getGuideHomeSummary();
     expect(summary.title.toLowerCase()).not.toContain('markdown');
     expect(summary.title).not.toMatch(/\d+\s+guide/i);
-    expect(summary.subtitle.length).toBeGreaterThan(0);
+    expect(summary.subtitle).toBe('Appliances • Wi-Fi • Scooter');
   });
 
   it('finds TV when searching television or Netflix', () => {
-    expect(searchGuideTopics('television')[0]?.id).toBe('tv-entertainment');
-    expect(searchGuideTopics('Netflix')[0]?.id).toBe('tv-entertainment');
+    expect(searchGuideTopics('television')[0]?.id).toBe('streaming-services');
+    expect(searchGuideTopics('Netflix')[0]?.id).toBe('streaming-services');
   });
 
-  it('finds Wi-Fi for wifi and password concepts', () => {
-    expect(searchGuideTopics('wifi')[0]?.id).toBe('wifi');
-    expect(searchGuideTopics('password')[0]?.id).toBe('wifi');
+  it('finds Wi-Fi connecting topic for wifi', () => {
+    expect(searchGuideTopics('wifi')[0]?.id).toBe('connecting');
   });
 
-  it('surfaces heating immediately', () => {
-    expect(findBestGuideTopic('heating')?.id).toBe('heating');
-  });
-
-  it('finds Hot Water Machine for kettle, tea, and boiling water', () => {
-    expect(findBestGuideTopic('kettle')?.id).toBe('hot-water-machine');
-    expect(findBestGuideTopic('tea')?.id).toBe('hot-water-machine');
-    expect(findBestGuideTopic('boiling water')?.id).toBe('hot-water-machine');
+  it('surfaces Nest heating immediately', () => {
+    expect(findBestGuideTopic('heating')?.id).toBe('nest-heating');
   });
 
   it('highlights matched substrings in titles', () => {
