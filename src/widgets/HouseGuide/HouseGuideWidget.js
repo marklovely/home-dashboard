@@ -37,12 +37,24 @@ function createHouseGuideRoot() {
   const homeView = document.createElement('div');
   homeView.className = 'house-guide-home';
 
-  const header = document.createElement('div');
-  header.className = 'house-guide-header';
-
   const title = document.createElement('h2');
   title.className = 'house-guide-title';
   title.textContent = 'House Guide';
+
+  const tileGrid = document.createElement('div');
+  tileGrid.className = 'house-guide-tiles';
+  tileGrid.setAttribute('role', 'list');
+
+  const tilesBySlug = new Map();
+  for (const page of catalog.pages) {
+    const tile = createGuideTile(page, openArticle);
+    tile.setAttribute('role', 'listitem');
+    tilesBySlug.set(page.slug, tile);
+    tileGrid.append(tile);
+  }
+
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'house-guide-search';
 
   const searchLabel = document.createElement('label');
   searchLabel.className = 'guide-search-label';
@@ -61,25 +73,13 @@ function createHouseGuideRoot() {
   searchStatus.className = 'guide-search-status subtle';
   searchStatus.setAttribute('aria-live', 'polite');
 
-  header.append(title, searchLabel, searchInput, searchStatus);
-
-  const tileGrid = document.createElement('div');
-  tileGrid.className = 'house-guide-tiles';
-  tileGrid.setAttribute('role', 'list');
-
-  const tilesBySlug = new Map();
-  for (const page of catalog.pages) {
-    const tile = createGuideTile(page, openArticle);
-    tile.setAttribute('role', 'listitem');
-    tilesBySlug.set(page.slug, tile);
-    tileGrid.append(tile);
-  }
-
-  homeView.append(header, tileGrid);
+  searchWrap.append(searchLabel, searchInput, searchStatus);
+  homeView.append(title, tileGrid, searchWrap);
 
   const articleView = document.createElement('article');
   articleView.className = 'house-guide-article';
   articleView.hidden = true;
+  articleView.inert = true;
 
   const backButton = document.createElement('button');
   backButton.type = 'button';
@@ -133,13 +133,17 @@ function createHouseGuideRoot() {
     articleBody.innerHTML = renderHouseGuideMarkdown(markdown);
     homeView.hidden = true;
     articleView.hidden = false;
+    articleView.inert = false;
+    homeView.inert = true;
     backButton.focus();
   }
 
   function closeArticle() {
     activeSlug = null;
     articleView.hidden = true;
+    articleView.inert = true;
     homeView.hidden = false;
+    homeView.inert = false;
     searchInput.focus();
   }
 
@@ -159,6 +163,7 @@ function createHouseGuideRoot() {
 
 export const houseGuideWidget = defineWidget({
   id: 'house-guide',
+  layout: 'panel',
   profiles: ['owner', 'housesitter'],
   mount() {
     return createHouseGuideRoot();

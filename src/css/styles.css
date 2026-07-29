@@ -26,8 +26,33 @@ button { font: inherit; }
   min-height: 100vh;
   padding: clamp(18px, 3vw, 34px);
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: clamp(16px, 2.2vw, 24px);
+}
+
+.dashboard-body {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vw, 24px);
+  min-height: 0;
+}
+.alexa-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: clamp(200px, 34vh, 440px);
+  overflow-y: auto;
+  align-content: start;
+  -webkit-overflow-scrolling: touch;
+}
+.widget-panels {
+  flex: 0 0 auto;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vw, 24px);
+}
+.widget-panels > .widget-panel {
+  width: 100%;
 }
 
 .topbar { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
@@ -60,10 +85,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(12px, 2vw, 20px);
-  align-content: stretch;
-}
-.button-grid > .widget-panel {
-  grid-column: 1 / -1;
+  align-content: start;
 }
 .house-guide {
   background: rgba(25, 30, 40, 0.82);
@@ -73,15 +95,18 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
 }
-.house-guide-header {
+.house-guide-home {
   display: grid;
-  gap: 10px;
-  margin-bottom: clamp(14px, 2vw, 20px);
+  gap: clamp(14px, 2vw, 20px);
 }
 .house-guide-title {
   margin: 0;
   font-size: clamp(1.25rem, 2.4vw, 1.65rem);
   letter-spacing: -0.02em;
+}
+.house-guide-search {
+  display: grid;
+  gap: 10px;
 }
 .guide-search-label {
   font-size: 0.82rem;
@@ -112,7 +137,14 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   gap: clamp(12px, 2vw, 20px);
 }
 .guide-tile {
-  min-height: 132px;
+  min-height: 112px;
+  padding: 16px;
+}
+.house-guide .button-icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
+  font-size: 1.35rem;
 }
 .guide-tile.is-search-match {
   border-color: color-mix(in srgb, var(--accent) 55%, white);
