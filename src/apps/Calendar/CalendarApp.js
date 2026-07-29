@@ -8,7 +8,7 @@ export const calendarApp = defineApp({
   description: 'Household calendar and events',
   capabilities: ['schedule', 'events'],
   accent: '#6f7b8f',
-  profiles: ['owner', 'housesitter'],
+  profiles: ['owner'],
   summary: () => ({ title: 'Coming Soon', subtitle: 'Shared calendar' }),
   mount(viewport) {
     viewport.replaceChildren(createComingSoonView('Calendar'));

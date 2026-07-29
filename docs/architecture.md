@@ -112,6 +112,24 @@ Network access uses `src/api/` — widgets and apps do not call `fetch()` direct
 
 `src/services/profileService.js` — active profile defaults to **owner**. Home launcher and future app visibility are profile-filtered.
 
+## App modes
+
+`src/modes/appMode.js` and `src/modes/modeConfig.js` centralise **owner** vs **house sitter** behaviour. Set `VITE_APP_MODE=house-sitter` at build time (see `.env.example`) for the guest build on a sitter tablet or Cloudflare Pages environment.
+
+| Concern | Owner (default) | House sitter |
+|--------|------------------|--------------|
+| Branding | Lovely Home Hub | Lovely Home + stay tagline |
+| Home | Profile-filtered launcher + status strip | Welcome copy, large cards, help card |
+| Apps | Profile registry (Settings, Plex, …) | Fixed set: Weather, Scooter, House Guide, Home Controls, Bins, Emergency |
+| Navigation | Home button in chrome | Bottom nav: Home, House Guide, Emergency |
+| Controls | Full Virtual Buttons grid + footer | Large friendly buttons only (no Alexa/API copy) |
+
+`getVisibleApps()` in `src/services/appVisibility.js` is the single entry point for which apps appear and which routes are allowed. Profile switching in Settings remains for owner builds; sitter builds hide Settings entirely.
+
+The **Emergency** app (`src/apps/Emergency/`) surfaces call cards and deep-links into House Guide topics (vet, stop tap, fuse box) without duplicating catalog content.
+
+Future work may map modes to device profiles or kiosk login; this PR uses one env flag only.
+
 ## House Guide
 
 The House Guide is an interactive companion for living in the home—not a document viewer. The UI never exposes storage format, page counts, or other implementation details.

@@ -8,7 +8,7 @@ export const plexApp = defineApp({
   description: 'Browse and play media',
   capabilities: ['media', 'streaming'],
   accent: '#d16dff',
-  profiles: ['owner', 'housesitter'],
+  profiles: ['owner'],
   summary: () => ({ title: 'Coming Soon', subtitle: 'Media hub' }),
   mount(viewport) {
     viewport.replaceChildren(createComingSoonView('Plex'));
