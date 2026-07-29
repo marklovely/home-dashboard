@@ -1,16 +1,16 @@
-/** Where bins go on collection eve (informative, not a command). */
-export const BIN_PUT_OUT_LOCATION =
+/** Collection point (informative, not a command). */
+export const BIN_COLLECTION_LOCATION =
   'the end of the road as you turn into the close from Wagtail Road';
 
-/**
- * Informative copy for the Bin Collection app (not reminders or commands).
- * @param {boolean} houseSitter
- */
-export function getCollectionTimingIntro(houseSitter) {
-  if (houseSitter) {
-    return `Collections are normally from 6am. Bins are usually at ${BIN_PUT_OUT_LOCATION} the night before.`;
-  }
-  return `Collection from 6am. Bins at ${BIN_PUT_OUT_LOCATION} the night before.`;
+export const COUNCIL_RECYCLING_URL = 'https://www.easthants.gov.uk/your-bins';
+
+/** Single collection-information block copy (owner and house sitter). */
+export function getCollectionInformationCopy() {
+  return {
+    title: 'Collection information',
+    beginLine: 'Collections normally begin from 6am.',
+    locationLine: `Bins are collected from ${BIN_COLLECTION_LOCATION}.`
+  };
 }
 
 /**
@@ -27,22 +27,6 @@ export function getBankHolidayNote(event, houseSitter, timing) {
 }
 
 /**
- * @param {string} displayName
- * @param {import('../services/binCollectionService.js').DaysUntilResult} timing
- * @param {string} binLabel Emoji + bin wording from `formatBinLabel`
- * @param {boolean} houseSitter
- */
-export function getHouseSitterCollectionSentence(displayName, timing, binLabel, houseSitter) {
-  if (!houseSitter) return null;
-  const nameLower = displayName.replace('& glass', 'and glass');
-  let when;
-  if (timing.days === 0) when = 'today';
-  else if (timing.days === 1) when = 'tomorrow';
-  else when = `on ${timing.dateLabel}`;
-  return `${nameLower} is collected ${when}. Use ${binLabel} for this collection.`;
-}
-
-/**
  * @param {boolean} houseSitter
  */
 export function getMissedBinNote(houseSitter) {
@@ -50,4 +34,16 @@ export function getMissedBinNote(houseSitter) {
     return 'Missed bins can be reported at easthants.gov.uk by 4pm on the next working day after a collection.';
   }
   return 'Report missed bins at easthants.gov.uk by 4pm on the next working day.';
+}
+
+/** @deprecated Use getCollectionInformationCopy */
+export const BIN_PUT_OUT_LOCATION = BIN_COLLECTION_LOCATION;
+
+/** @deprecated Use getCollectionInformationCopy */
+export function getCollectionTimingIntro(houseSitter) {
+  const copy = getCollectionInformationCopy();
+  if (houseSitter) {
+    return `${copy.beginLine} ${copy.locationLine}`;
+  }
+  return `${copy.beginLine.replace('normally begin', 'from 6am')} ${copy.locationLine.replace('are collected from', 'at')}`;
 }
