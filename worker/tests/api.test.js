@@ -125,6 +125,7 @@ describe('cors', () => {
     );
     expect(response.status).toBe(204);
     expect(response.headers.get('Access-Control-Allow-Headers')).toMatch(/Cf-Access-Jwt-Assertion/i);
+    expect(response.headers.get('Access-Control-Allow-Credentials')).toBe('true');
   });
 });
 
