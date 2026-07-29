@@ -9,6 +9,7 @@ import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
 import { isHouseSitterExperience } from '../../auth/userMode.js';
 import { renderWeatherIcon } from '../../weather/renderWeatherIcon.js';
+import { renderSevenDayForecast } from '../../weather/renderSevenDayForecast.js';
 
 /**
  * @param {HTMLElement} parent
@@ -96,62 +97,6 @@ function renderWeatherPage(data, page) {
   }
   hourlySection.append(hourlyTrack);
 
-  const dailySection = document.createElement('section');
-  dailySection.className = 'weather-section';
-  dailySection.innerHTML = '<h2 class="weather-section-title">7 day forecast</h2>';
-  const dailyTable = document.createElement('div');
-  dailyTable.className = 'weather-daily-table';
-
-  const dailyHeader = document.createElement('div');
-  dailyHeader.className = 'weather-daily-header';
-  dailyHeader.setAttribute('aria-hidden', 'true');
-  for (const label of ['Day', '', 'Rain', 'High', 'Low']) {
-    const cell = document.createElement('span');
-    cell.textContent = label;
-    dailyHeader.append(cell);
-  }
-  dailyTable.append(dailyHeader);
-
-  const dailyList = document.createElement('div');
-  dailyList.className = 'weather-daily-list';
-  for (const day of data.daily) {
-    const row = document.createElement('div');
-    row.className = 'weather-daily-row';
-    row.setAttribute('role', 'row');
-
-    const dayCell = document.createElement('div');
-    dayCell.className = 'weather-daily-day';
-    const dayName = document.createElement('span');
-    dayName.className = 'weather-daily-label';
-    dayName.textContent = day.label;
-    const dayCondition = document.createElement('span');
-    dayCondition.className = 'weather-daily-condition subtle';
-    dayCondition.textContent = day.condition;
-    dayCell.append(dayName, dayCondition);
-
-    const iconCell = document.createElement('div');
-    iconCell.className = 'weather-daily-icon';
-    iconCell.append(renderWeatherIcon(day.icon, { size: 26 }));
-
-    const rainCell = document.createElement('span');
-    rainCell.className = 'weather-daily-rain';
-    rainCell.textContent = `${day.rainChance}%`;
-    rainCell.setAttribute('title', 'Chance of rain');
-
-    const highCell = document.createElement('strong');
-    highCell.className = 'weather-daily-high';
-    highCell.textContent = `${day.high}°`;
-
-    const lowCell = document.createElement('span');
-    lowCell.className = 'weather-daily-low';
-    lowCell.textContent = `${day.low}°`;
-
-    row.append(dayCell, iconCell, rainCell, highCell, lowCell);
-    dailyList.append(row);
-  }
-  dailyTable.append(dailyList);
-  dailySection.append(dailyTable);
-
   const adviceSection = document.createElement('section');
   adviceSection.className = 'weather-section weather-advice-section';
   adviceSection.innerHTML = `<h2 class="weather-section-title">${isHouseSitterExperience() ? 'Advice for Scooter' : 'Weather advice'}</h2>`;
@@ -170,6 +115,8 @@ function renderWeatherPage(data, page) {
     adviceList.append(card);
   }
   adviceSection.append(adviceList);
+
+  const dailySection = renderSevenDayForecast(data.daily, data.current.temperature);
 
   page.append(meta, adviceSection, currentSection, todaySection, hourlySection, dailySection);
 }
