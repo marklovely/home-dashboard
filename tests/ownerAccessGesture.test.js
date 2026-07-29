@@ -23,7 +23,7 @@ describe('owner access gesture', () => {
     resetUserModeForTests();
     const logo = document.createElement('p');
     const host = document.createElement('div');
-    attachOwnerAccessGesture({ logoElement: logo, dialogHost: host });
+    attachOwnerAccessGesture({ logoElements: logo, dialogHost: host });
 
     logo.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     vi.advanceTimersByTime(6000);
@@ -40,7 +40,7 @@ describe('owner access gesture', () => {
 
     const logo = document.createElement('p');
     const host = document.createElement('div');
-    attachOwnerAccessGesture({ logoElement: logo, dialogHost: host });
+    attachOwnerAccessGesture({ logoElements: logo, dialogHost: host });
 
     logo.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     vi.advanceTimersByTime(5000);
