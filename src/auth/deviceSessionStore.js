@@ -97,9 +97,17 @@ export async function bootstrapDeviceSession(fetchImpl = fetch) {
  * @param {() => void} [onUnlocked]
  */
 export async function unlockOwner(pin, fetchImpl = fetch, onUnlocked) {
-  const authResult = await ownerAuthProvider.authenticate(pin, fetchImpl);
-  if (authResult !== 'success') {
-    return authResult;
+  const auth = await ownerAuthProvider.authenticate(pin, fetchImpl);
+  if (auth.status !== 'success') {
+    return auth.status;
+  }
+  if (auth.session?.mode === 'owner') {
+    applyServerSession({
+      mode: 'owner',
+      ownerSessionExpiresAt: auth.session.ownerSessionExpiresAt ?? null
+    });
+    completeOwnerUnlock(onUnlocked);
+    return 'success';
   }
   await refreshSession(fetchImpl);
   if (mode !== 'owner') {

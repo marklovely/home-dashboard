@@ -77,7 +77,9 @@ describe('owner authentication', () => {
       ok: true,
       json: async () => ({ ok: true, authenticated: true })
     });
-    await expect(ownerAuthProvider.authenticate('1234', fetchImpl)).resolves.toBe('success');
+    await expect(ownerAuthProvider.authenticate('1234', fetchImpl)).resolves.toMatchObject({
+      status: 'success'
+    });
     expect(fetchImpl).toHaveBeenCalledOnce();
     expect(String(fetchImpl.mock.calls[0][1].body)).not.toContain('VITE_OWNER_PIN');
   });

@@ -1,4 +1,5 @@
 import { verifyAccessJwt, isAccessConfigured } from './accessJwt.js';
+import { readAccessJwtFromRequest } from './accessJwtFromRequest.js';
 import { resolveRoleFromEmail } from './accessRoles.js';
 
 /** @typedef {'owner' | 'house-sitter'} LovelyHomeRole */
@@ -28,7 +29,7 @@ export async function authenticateRequest(request, env, fetchImpl = fetch) {
     return { ok: false, status: 503, code: 'AUTH_NOT_CONFIGURED' };
   }
 
-  const token = request.headers.get('Cf-Access-Jwt-Assertion')?.trim();
+  const token = readAccessJwtFromRequest(request);
   if (!token) {
     return { ok: false, status: 401, code: 'UNAUTHENTICATED' };
   }
