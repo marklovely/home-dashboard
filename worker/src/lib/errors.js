@@ -22,3 +22,7 @@ export function notFound(correlationId) {
 export function methodNotAllowed(correlationId) {
   return jsonError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed.', { correlationId });
 }
+
+export function notImplemented(correlationId, message = 'Not implemented.') {
+  return jsonError(501, 'NOT_IMPLEMENTED', message, { correlationId });
+}

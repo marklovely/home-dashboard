@@ -112,23 +112,49 @@ Network access uses `src/api/` — widgets and apps do not call `fetch()` direct
 
 `src/services/profileService.js` — active profile defaults to **owner**. Home launcher and future app visibility are profile-filtered.
 
-## App modes
+## Deployment mode and user mode
 
-`src/modes/appMode.js` and `src/modes/modeConfig.js` centralise **owner** vs **house sitter** behaviour. Set `VITE_APP_MODE=house-sitter` at build time (see `.env.example`) for the guest build on a sitter tablet or Cloudflare Pages environment.
+Two independent concepts live under `src/auth/`:
 
-| Concern | Owner (default) | House sitter |
-|--------|------------------|--------------|
-| Branding | Lovely Home Hub | Lovely Home + stay tagline |
-| Home | Profile-filtered launcher + status strip | Welcome copy, large cards, help card |
-| Apps | Profile registry (Settings, Plex, …) | Fixed set: Weather, Scooter, House Guide, Home Controls, Bins, Emergency |
-| Navigation | Home button in chrome | Bottom nav: Home, House Guide, Emergency |
-| Controls | Full Virtual Buttons grid + footer | Large friendly buttons only (no Alexa/API copy) |
+| Concept | When set | Purpose |
+|---------|----------|---------|
+| **Deployment mode** | Build time (`VITE_DEPLOYMENT_MODE`) | What the build *allows* |
+| **User mode** | Runtime (in-memory) | What the UI *shows* now |
 
-`getVisibleApps()` in `src/services/appVisibility.js` is the single entry point for which apps appear and which routes are allowed. Profile switching in Settings remains for owner builds; sitter builds hide Settings entirely.
+### Deployment mode
 
-The **Emergency** app (`src/apps/Emergency/`) surfaces call cards and deep-links into House Guide topics (vet, stop tap, fuse box) without duplicating catalog content.
+`src/auth/deploymentMode.js` — `home` (default) or `house-sitter`.
 
-Future work may map modes to device profiles or kiosk login; this PR uses one env flag only.
+- **`home`** — Full hub tablet. Defaults to **owner** user mode. Owner and house sitter user modes can be switched without rebuilding (Settings profile and hidden owner gesture).
+- **`house-sitter`** — Dedicated guest deployment. Always **house sitter** user mode. Owner mode cannot be entered; hidden gesture does nothing.
+
+### User mode
+
+`src/auth/userMode.js` — `owner` or `house-sitter`. Drives `src/modes/modeConfig.js` (branding, launcher apps, bottom nav, simplified controls).
+
+`getVisibleApps()` in `src/services/appVisibility.js` remains the single entry point for Home cards and allowed routes.
+
+### Owner authentication (home deployment)
+
+Hidden access only — **long-press the “Lovely Home” eyebrow for five seconds** while in house sitter user mode. No visible Owner button.
+
+Flow:
+
+```
+Long press logo → PIN dialog (`src/components/OwnerAccess/ownerPinDialog.js`)
+        → OwnerAuthProvider (`src/auth/OwnerAuthProvider.js`)
+        → local PIN (`VITE_OWNER_PIN`) or POST `/api/auth/owner` on the Worker
+        → in-memory session (`src/auth/ownerSession.js`)
+        → owner user mode
+```
+
+- **PIN** is validated only inside `OwnerAuthProvider` (never logged or stored).
+- **Session** is memory-only: cleared on refresh, restart, or **Return to House Sitter Mode** in Settings (shown after PIN unlock).
+- **Worker placeholder:** `POST /api/auth/owner` returns **501 Not Implemented** today so the UI can switch to server-side validation later without redesign.
+
+House sitter **experience** (guest UI) is unchanged from the House Sitter Mode PR; owner **experience** is unchanged when user mode is owner.
+
+The **Emergency** app (`src/apps/Emergency/`) surfaces call cards and deep-links into House Guide topics without duplicating catalog content.
 
 ## House Guide
 
