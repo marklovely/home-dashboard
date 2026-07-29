@@ -27,6 +27,7 @@ export function corsHeaders(allowedOrigin) {
   if (!allowedOrigin) return {};
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers':
       'Content-Type, Authorization, X-Correlation-Id, Cf-Access-Jwt-Assertion',

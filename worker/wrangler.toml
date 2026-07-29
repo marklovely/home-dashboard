@@ -3,7 +3,7 @@ main = "src/index.js"
 compatibility_date = "2024-12-01"
 
 [vars]
-ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://dashboard.lovely-home.co.uk,https://*.pages.dev"
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://dashboard.lovely-home.co.uk,https://home-dashboard-a11.pages.dev,https://*.pages.dev"
 HOME_LATITUDE = "50.88"
 HOME_LONGITUDE = "-1.03"
 
