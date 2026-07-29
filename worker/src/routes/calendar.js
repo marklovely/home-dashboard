@@ -23,16 +23,22 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store' }
     });
   } catch (error) {
+    const feedConfigured = Boolean(env.APPLE_CALENDAR_ICS_URL?.trim());
+    /** @type {Record<string, unknown>} */
+    let body;
     if (error?.code === 'CALENDAR_NOT_CONFIGURED') {
-      return Response.json({ error: 'Calendar unavailable', code: 'CALENDAR_NOT_CONFIGURED' }, { status: 503 });
+      body = { error: 'Calendar unavailable', code: 'CALENDAR_NOT_CONFIGURED', feedConfigured: false };
+    } else {
+      body = {
+        error: 'Calendar temporarily unavailable',
+        code: typeof error?.code === 'string' ? error.code : 'UNKNOWN',
+        feedConfigured
+      };
+      if (typeof error?.upstreamStatus === 'number') {
+        body.upstreamStatus = error.upstreamStatus;
+      }
     }
-    const body = {
-      error: 'Calendar temporarily unavailable',
-      code: typeof error?.code === 'string' ? error.code : 'UNKNOWN'
-    };
-    if (typeof error?.upstreamStatus === 'number') {
-      body.upstreamStatus = error.upstreamStatus;
-    }
+    console.error(JSON.stringify({ event: 'calendar_failed', code: body.code, feedConfigured: body.feedConfigured, upstreamStatus: body.upstreamStatus }));
     return Response.json(body, { status: 503 });
   }
 }

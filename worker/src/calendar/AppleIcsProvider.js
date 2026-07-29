@@ -33,14 +33,23 @@ export class AppleIcsProvider {
       throw error;
     }
 
-    const response = await this.fetchImpl(url, {
-      headers: {
-        Accept: 'text/calendar,text/plain,*/*',
-        'User-Agent': 'LovelyHomeHub-Calendar/1.0'
-      },
-      cf: { cacheTtl: 0 },
-      redirect: 'follow'
-    });
+    let response;
+    try {
+      response = await this.fetchImpl(url, {
+        headers: {
+          Accept: 'text/calendar,text/plain,*/*',
+          'User-Agent': 'LovelyHomeHub-Calendar/1.0'
+        },
+        cf: { cacheTtl: 0 },
+        redirect: 'follow'
+      });
+    } catch {
+      console.error(JSON.stringify({ event: 'calendar_upstream_network' }));
+      const error = new Error('CALENDAR_UPSTREAM');
+      error.code = 'CALENDAR_UPSTREAM';
+      error.upstreamStatus = 0;
+      throw error;
+    }
 
     if (!response.ok) {
       console.error(JSON.stringify({ event: 'calendar_upstream_http', status: response.status }));

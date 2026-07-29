@@ -33,6 +33,7 @@ export async function fetchMyDayCalendar({ fetchImpl = fetch } = {}) {
       try {
         const errBody = await response.json();
         if (typeof errBody?.code === 'string') code = errBody.code;
+        if (errBody?.feedConfigured === false) code = 'CALENDAR_NOT_CONFIGURED';
         if (typeof errBody?.upstreamStatus === 'number') {
           code = `${code}:${errBody.upstreamStatus}`;
         }

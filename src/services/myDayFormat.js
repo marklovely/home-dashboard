@@ -190,6 +190,9 @@ export function myDayUnavailableMessage(message) {
   }
   if (message?.startsWith('CALENDAR_UPSTREAM')) {
     const status = message.split(':')[1];
+    if (status === '0') {
+      return 'Could not reach Apple’s calendar servers from the Worker. Try again shortly, or check the published URL is HTTPS/webcal.';
+    }
     if (status === '403' || status === '401') {
       return 'Apple rejected the published calendar link (HTTP ' + status + '). Create a new private published URL in Apple Calendar and update the Worker secret.';
     }
