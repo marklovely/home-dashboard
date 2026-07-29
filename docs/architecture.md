@@ -25,7 +25,7 @@ At runtime, `app.js` loads widgets for the active profile via `getWidgetsForProf
 
 See `src/types/widget.js` and `defineWidget()` in `src/components/Widget/defineWidget.js`. A widget returns a `DocumentFragment` or `HTMLElement` from `mount(context)`.
 
-Full-width widgets (e.g. House Guide) use the `.widget-panel` class so they span all columns in the dashboard grid.
+Full-width widgets (e.g. House Guide) use `layout: 'panel'` and mount into `#widget-panels`, directly beneath the Alexa control grid (`#alexa-grid`). The dashboard body uses a flex column so panel widgets stay visible on first load while Alexa controls scroll when needed.
 
 ## API layer
 

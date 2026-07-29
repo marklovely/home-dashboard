@@ -1,6 +1,6 @@
 import { CONFIG } from '../config.js';
 import { initialiseHeader } from '../components/Header/Header.js';
-import { mountWidgetGrid } from '../components/WidgetGrid/WidgetGrid.js';
+import { mountDashboardWidgets } from '../components/WidgetGrid/WidgetGrid.js';
 import { initialiseBattery } from './modules/battery.js';
 import { watchNetwork } from './modules/network.js';
 import { initialiseWeather } from './modules/weather.js';
@@ -13,7 +13,8 @@ const elements = {
   date: document.querySelector('#date'),
   clock: document.querySelector('#clock'),
   seconds: document.querySelector('#seconds'),
-  grid: document.querySelector('#button-grid'),
+  grid: document.querySelector('#alexa-grid'),
+  widgetPanels: document.querySelector('#widget-panels'),
   toast: document.querySelector('#toast'),
   lastCommand: document.querySelector('#last-command'),
   network: {
@@ -47,7 +48,12 @@ const widgetContext = {
 
 initialiseHeader(elements);
 watchNetwork(elements.network);
-mountWidgetGrid(elements.grid, getWidgetsForProfile(getActiveProfileId()), widgetContext);
+mountDashboardWidgets(
+  elements.grid,
+  elements.widgetPanels,
+  getWidgetsForProfile(getActiveProfileId()),
+  widgetContext
+);
 initialiseBattery(elements.battery);
 initialiseWeather(elements.weather, CONFIG.weather);
 registerServiceWorker();
