@@ -9,7 +9,8 @@ const FORWARD_REQUEST_HEADERS = [
   'accept',
   'cf-access-jwt-assertion',
   'authorization',
-  'x-correlation-id'
+  'x-correlation-id',
+  'cookie'
 ];
 
 /**

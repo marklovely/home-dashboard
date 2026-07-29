@@ -1,6 +1,5 @@
 import { ensureApiBaseUrl, buildApiUrl } from '../api/apiBase.js';
 import { withApiCredentials } from '../api/accessFetch.js';
-import { setOwnerAccessToken } from './ownerAccessToken.js';
 
 /** @typedef {'success' | 'invalid' | 'rate_limited' | 'unavailable'} OwnerAuthResult */
 
@@ -34,14 +33,6 @@ export async function authenticateOwnerPin(pin, fetchImpl = fetch) {
       })
     );
     if (response.status === 200) {
-      try {
-        const body = await response.json();
-        if (body?.token && body?.expiresAt) {
-          setOwnerAccessToken(body.token, body.expiresAt);
-        }
-      } catch {
-        /* token optional for backwards compatibility */
-      }
       return 'success';
     }
     return resultFromResponse(response);
