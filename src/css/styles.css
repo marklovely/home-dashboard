@@ -90,6 +90,7 @@ button { font: inherit; }
 
 /* Weather: scroll the page (mouse wheel on Mac) instead of a nested panel */
 body.is-weather-route {
+  overflow-x: hidden;
   overflow-y: auto;
   height: auto;
   min-height: 100dvh;
@@ -1028,6 +1029,17 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   display: grid;
   gap: 22px;
   padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+.weather-app--premium > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.weather-section {
+  min-width: 0;
+  max-width: 100%;
 }
 .weather-meta { margin: 0; }
 .weather-section-title { margin: 0 0 12px; font-size: 1.1rem; font-weight: 800; }
@@ -1071,14 +1083,26 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 }
 .weather-stat-label { color: var(--muted); font-size: 0.82rem; font-weight: 600; }
 .weather-stat-value { font-size: 1rem; font-weight: 800; }
+.weather-hourly-scroller {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  padding-bottom: 4px;
+}
 .weather-hourly-track {
   display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  max-width: none;
   gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 6px;
+  padding: 2px 2px 6px;
   scroll-snap-type: x mandatory;
 }
 .weather-hourly-card {
+  flex: 0 0 auto;
   min-width: 96px;
   scroll-snap-align: start;
   padding: 12px 10px;

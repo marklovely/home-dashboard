@@ -83,8 +83,12 @@ function renderWeatherPage(data, page) {
   todaySection.append(todayGrid);
 
   const hourlySection = document.createElement('section');
-  hourlySection.className = 'weather-section';
+  hourlySection.className = 'weather-section weather-hourly-section';
   hourlySection.innerHTML = '<h2 class="weather-section-title">Hourly forecast</h2>';
+  const hourlyScroller = document.createElement('div');
+  hourlyScroller.className = 'weather-hourly-scroller';
+  hourlyScroller.setAttribute('tabindex', '0');
+  hourlyScroller.setAttribute('aria-label', 'Hourly forecast');
   const hourlyTrack = document.createElement('div');
   hourlyTrack.className = 'weather-hourly-track';
   for (const hour of data.hourly) {
@@ -100,7 +104,8 @@ function renderWeatherPage(data, page) {
     );
     hourlyTrack.append(card);
   }
-  hourlySection.append(hourlyTrack);
+  hourlyScroller.append(hourlyTrack);
+  hourlySection.append(hourlyScroller);
 
   const adviceSection = document.createElement('section');
   adviceSection.className = 'weather-section weather-advice-section';
