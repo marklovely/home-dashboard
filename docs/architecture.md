@@ -139,7 +139,10 @@ Two independent concepts live under `src/auth/`:
 
 ### Owner authentication (home deployment)
 
-Hidden access only — **long-press the “Lovely Home” title block for five seconds** while in house sitter user mode.
+Hidden access for **house sitter → owner** (or to unlock private APIs such as My Day while already in owner UI):
+
+- **My Day:** tap **Enter owner PIN** in the app, or
+- **Long-press** the “Lovely Home” title block for **five seconds** (works in house sitter mode, or in owner mode until a PIN session token exists).
 
 ```
 Long press → PIN pad (`src/components/OwnerAccess/ownerPinDialog.js`)
