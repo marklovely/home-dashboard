@@ -1,4 +1,4 @@
-import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
+import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
 
 /**
@@ -6,14 +6,13 @@ import { withApiCredentials } from './accessFetch.js';
  */
 export async function fetchMyDayCalendar({ fetchImpl = fetch } = {}) {
   await ensureApiBaseUrl();
-  const base = getApiBaseUrl();
-  if (!base) {
+  if (!isApiConfigured()) {
     return { ok: false, status: 503, message: 'API not configured', data: null };
   }
 
   try {
     const response = await fetchImpl(
-      `${base}/api/calendar`,
+      buildApiUrl('/api/calendar'),
       withApiCredentials({
         headers: { Accept: 'application/json' },
         cache: 'no-store'

@@ -29,7 +29,26 @@ export function getApiBaseUrl() {
   return runtimeResolvedBase ?? '';
 }
 
+/**
+ * Production Pages uses same-origin /api (Pages Function → Worker).
+ * Local dev uses VITE_API_BASE_URL (wrangler on :8787).
+ * @param {string} path Must start with `/api/`.
+ * @returns {string}
+ */
+export function buildApiUrl(path) {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  if (!import.meta.env.DEV) {
+    return normalized;
+  }
+  const base = getApiBaseUrl();
+  if (!base) {
+    throw new Error('API not configured');
+  }
+  return `${base}${normalized}`;
+}
+
 export function isApiConfigured() {
+  if (!import.meta.env.DEV) return true;
   return Boolean(getApiBaseUrl());
 }
 
@@ -38,6 +57,7 @@ export function isApiConfigured() {
  * @returns {Promise<string>}
  */
 export async function ensureApiBaseUrl() {
+  if (!import.meta.env.DEV) return '';
   const fromEnv = readBuildTimeBaseUrl();
   if (fromEnv) return fromEnv;
   if (runtimeResolvedBase) return runtimeResolvedBase;

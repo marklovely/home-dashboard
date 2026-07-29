@@ -15,13 +15,14 @@ export function createApiClient(fetchImpl = fetch) {
      * @param {RequestInit} [init]
      */
     async post(url, init = {}) {
+      const headers = new Headers(init.headers);
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+      }
       return fetchImpl(url, {
         ...init,
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(init.headers ?? {})
-        }
+        headers
       });
     }
   };
