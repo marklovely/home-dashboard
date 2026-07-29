@@ -84,6 +84,18 @@ describe('private-config', () => {
     expect(payload.wifi).toEqual({});
     expect(payload.contacts.mark.name).toBe('Mark Lovely');
   });
+  it('reads JWT from CF_Authorization cookie when header is absent', async () => {
+    const jwt = await signTestAccessJwt('owner@example.com', env);
+    const response = await handleRequest(
+      new Request('https://worker.test/api/session', {
+        headers: { Cookie: `CF_Authorization=${encodeURIComponent(jwt)}` }
+      }),
+      env
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.authenticated).toBe(true);
+  });
 });
 
 describe('cors', () => {

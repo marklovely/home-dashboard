@@ -4,6 +4,14 @@ import { withApiCredentials } from '../api/accessFetch.js';
 /** @typedef {'success' | 'invalid' | 'rate_limited' | 'unavailable'} OwnerAuthResult */
 
 /**
+ * @typedef {{ authenticated?: boolean, mode?: string, ownerSessionExpiresAt?: string | null }} OwnerAuthSessionBody
+ */
+
+/**
+ * @typedef {{ status: OwnerAuthResult, session?: OwnerAuthSessionBody | null }} OwnerAuthOutcome
+ */
+
+/**
  * @param {Response} response
  * @returns {Promise<OwnerAuthResult>}
  */
@@ -18,7 +26,7 @@ async function resultFromResponse(response) {
 /**
  * @param {string} pin
  * @param {typeof fetch} [fetchImpl]
- * @returns {Promise<OwnerAuthResult>}
+ * @returns {Promise<OwnerAuthOutcome>}
  */
 export async function authenticateOwnerPin(pin, fetchImpl = fetch) {
   await ensureApiBaseUrl();
@@ -28,16 +36,22 @@ export async function authenticateOwnerPin(pin, fetchImpl = fetch) {
       buildApiUrl('/api/auth/owner'),
       withApiCredentials({
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin }),
         cache: 'no-store'
       })
     );
     if (response.status === 200) {
-      return 'success';
+      try {
+        const session = /** @type {OwnerAuthSessionBody} */ (await response.json());
+        return { status: 'success', session };
+      } catch {
+        return { status: 'success', session: null };
+      }
     }
-    return resultFromResponse(response);
+    return { status: await resultFromResponse(response) };
   } catch {
-    return 'unavailable';
+    return { status: 'unavailable' };
   }
 }
 

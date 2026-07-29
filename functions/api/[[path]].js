@@ -31,6 +31,28 @@ function normalizePath(pathParam) {
 }
 
 /**
+ * @param {Headers} headers
+ * @param {Request} request
+ */
+function ensureAccessJwtForwarded(headers, request) {
+  if (headers.has('Cf-Access-Jwt-Assertion') || headers.has('cf-access-jwt-assertion')) {
+    return;
+  }
+  const raw = request.headers.get('Cookie') ?? '';
+  for (const part of raw.split(';')) {
+    const trimmed = part.trim();
+    if (!trimmed.startsWith('CF_Authorization=')) continue;
+    const value = trimmed.slice('CF_Authorization='.length);
+    try {
+      headers.set('Cf-Access-Jwt-Assertion', decodeURIComponent(value));
+    } catch {
+      headers.set('Cf-Access-Jwt-Assertion', value);
+    }
+    return;
+  }
+}
+
+/**
  * @param {Request} request
  */
 function buildForwardInit(request) {
@@ -40,6 +62,7 @@ function buildForwardInit(request) {
       headers.set(key, value);
     }
   }
+  ensureAccessJwtForwarded(headers, request);
 
   /** @type {RequestInit} */
   const init = {
