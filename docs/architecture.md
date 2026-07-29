@@ -2,72 +2,96 @@
 
 ## Overview
 
-Home Dashboard is a static PWA built with Vite. The UI is composed of **widgets** that mount into a shared grid, backed by a small **API layer** for network calls and a **profile** system that controls which widgets appear for `owner` and `housesitter` users.
+Home Hub is a tablet-first PWA built with Vite. The UI is organised in three layers:
 
-## Widget self-registration
+1. **App Shell** — layout, system status, routing, and navigation
+2. **Applications** — user-facing destinations (Controls, House Guide, …)
+3. **Widgets** — reusable UI blocks used *inside* applications
 
-Widgets live under `src/widgets/<Name>/`. Each widget folder contains:
-
-- `<Name>Widget.js` — widget definition (`id`, `profiles`, `mount()`)
-- `index.js` — calls `registerWidget()` as a side effect
-
-The application imports a single barrel entry:
-
-```js
-import '../widgets/index.js';
+```
+App Shell
+│
+├── Home (launcher)
+├── Controls App
+│     └── Alexa Widget
+├── House Guide App
+│     └── House Guide Widget
+├── Scooter App (placeholder)
+├── Weather App (placeholder)
+├── Bins App (placeholder)
+├── Plex App (placeholder)
+├── Calendar App (placeholder)
+└── Settings App (placeholder)
 ```
 
-`src/widgets/index.js` uses Vite’s `import.meta.glob('./*/index.js', { eager: true })` so every widget folder self-registers. **Adding or removing a widget never requires editing `app.js`** — create or delete a folder under `src/widgets/` with an `index.js` that registers the widget.
+An **App** represents a user task (“Control the house”, “Read the guide”). A **Widget** is a reusable component with no knowledge of other apps. This keeps the home screen from becoming a dumping ground for every feature.
 
-At runtime, `app.js` loads widgets for the active profile via `getWidgetsForProfile(getActiveProfileId())` and mounts them with `WidgetGrid`.
+## App Shell
 
-### Widget contract
+Location: `src/shell/`
 
-See `src/types/widget.js` and `defineWidget()` in `src/components/Widget/defineWidget.js`. A widget returns a `DocumentFragment` or `HTMLElement` from `mount(context)`.
+The shell owns:
 
-Full-width widgets (e.g. House Guide) use `layout: 'panel'` and mount into `#widget-panels`, directly beneath the Alexa control grid (`#alexa-grid`). The dashboard body uses a flex column so panel widgets stay visible on first load while Alexa controls scroll when needed.
+- Header (greeting, clock, status strip on Home)
+- Navigation (Home button + app title when inside an app)
+- Viewport (`#app-viewport`) where the active app mounts
+- Client-side routing (`src/shell/router.js`, hash routes `#/controls`, …)
 
-## API layer
+`src/js/app.js` bootstraps the shell, status services (weather, battery, network), and loads app/widget registrations. **Apps do not import each other.**
 
-Components and widgets do not call `fetch()` directly. HTTP access goes through `src/api/client.js` and domain modules (`virtualButtons.js`, `weather.js`).
+## Applications
+
+Location: `src/apps/<Name>/`
+
+Each app folder contains:
+
+- `<Name>App.js` — `mount(viewport, shellContext)` and app metadata
+- `index.js` — `registerApp()` side effect
+
+`src/apps/index.js` loads every app via `import.meta.glob('./*/index.js', { eager: true })`.
+
+| App | Role |
+|-----|------|
+| Home | Default launcher (`renderHomeScreen`); not registered in the app registry |
+| Controls | Mounts the **Alexa** widget (Virtual Buttons) |
+| House Guide | Mounts the **House Guide** widget (Markdown + search) |
+| Others | “Coming Soon” placeholders |
+
+Apps declare `profiles: ['owner', 'housesitter']` (or subsets). `getAppsForProfile()` drives the Home launcher cards.
+
+## Widgets
+
+Location: `src/widgets/<Name>/`
+
+Widgets register through `src/widgets/index.js` (same glob pattern as apps). The **Controls** and **House Guide** apps call `getWidgetById()` and mount the widget into their viewport.
+
+Widget contract: `src/types/widget.js`, `defineWidget()`.
+
+Network access uses `src/api/` — widgets and apps do not call `fetch()` directly.
 
 ## Profiles
 
-`src/services/profileService.js` tracks the active profile (default: **owner**). Widgets declare which profiles may see them. Profile switching UI is not implemented yet.
+`src/services/profileService.js` — active profile defaults to **owner**. Home launcher and future app visibility are profile-filtered.
 
-## Markdown content system (House Guide)
+## House Guide content
 
-House Guide content is **not** embedded in React/Vanilla components. Editable copy lives in:
+Markdown lives in `src/content/houseguide/*.md` with metadata in `pages.js`. See previous House Guide docs for adding pages.
 
-```text
-src/content/houseguide/
-  pages.js          # page metadata (slug, titles, icons, accents)
-  *.md              # one Markdown file per guide page
-  index.js          # loads Markdown via import.meta.glob
-```
+## Adding a new application
 
-The widget loads the catalog with `loadHouseGuideCatalog()`, renders articles with `marked`, and keeps presentation in CSS (`.guide-markdown`).
+1. Create `src/apps/MyApp/MyAppApp.js` and `index.js` with `registerApp()`.
+2. Add the app id to `APP_DISPLAY_ORDER` in `src/services/appRegistry.js`.
+3. Optionally add a widget under `src/widgets/` if the app composes reusable UI.
 
-### Adding a guide page
+No changes to `app.js` are required when using the glob barrel.
 
-1. Add a Markdown file, e.g. `src/content/houseguide/garden.md`.
-2. Add an entry to `HOUSE_GUIDE_PAGES` in `src/content/houseguide/pages.js` (slug must match the filename without `.md`).
-3. Reload the app — no widget code changes required unless you need new behaviour.
+## Adding a new widget
 
-Use real information from your TrustedHousesitters (or owner) guide. If content is not ready, use a short placeholder: **“Content coming soon.”** Do not invent appliance or safety instructions.
+1. Create `src/widgets/MyWidget/` with `index.js` that calls `registerWidget()`.
+2. Mount it from the app that owns the user task.
 
-## House Guide architecture
+## Routing
 
-- **Tiles view** — category grid with search; large touch targets reuse dashboard button styling.
-- **Article view** — back control, page title, rendered Markdown.
-- **Search** — client-side filter over page titles and Markdown bodies (`src/widgets/HouseGuide/search.js`); matching tiles are highlighted instantly with no server.
-
-## Future: searchable documentation
-
-The current search is in-widget instant filtering. The same catalog (`pages.js` + Markdown glob) can later power:
-
-- Deep links (`#house-guide/kitchen`)
-- Full-text indexing (build-time or service worker cache)
-- Profile-specific page lists (hide owner-only sections from housesitter)
-
-The content layer is intentionally separate so guides can grow without restructuring the widget shell.
+- Default route: **Home** (no hash)
+- Apps: `#/<app-id>` (e.g. `#/house-guide`)
+- `navigate()` updates history without a full page reload; the shell swaps the viewport content with a short CSS transition.

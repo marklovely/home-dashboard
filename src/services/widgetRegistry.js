@@ -21,3 +21,8 @@ export function getWidgetsForProfile(profileId) {
       return (leftOrder === -1 ? 999 : leftOrder) - (rightOrder === -1 ? 999 : rightOrder);
     });
 }
+
+/** @param {string} widgetId */
+export function getWidgetById(widgetId) {
+  return widgets.get(widgetId);
+}
