@@ -69,11 +69,13 @@ describe('user mode defaults', () => {
 describe('owner authentication', () => {
   afterEach(resetAuthState);
 
-  it('validates PIN locally via OwnerAuthProvider', async () => {
+  it('validates PIN locally via OwnerAuthProvider without calling worker when configured', async () => {
     vi.stubEnv('VITE_OWNER_PIN', '1234');
-    vi.stubEnv('VITE_API_BASE_URL', '');
-    await expect(OwnerAuthProvider.validatePin('1234')).resolves.toBe(true);
-    await expect(OwnerAuthProvider.validatePin('0000')).resolves.toBe(false);
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+    const fetchImpl = vi.fn().mockResolvedValue({ status: 404, ok: false });
+    await expect(OwnerAuthProvider.validatePin('1234', fetchImpl)).resolves.toBe(true);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    await expect(OwnerAuthProvider.validatePin('0000', fetchImpl)).resolves.toBe(false);
   });
 
   it('unlocking owner mode restores owner applications', () => {

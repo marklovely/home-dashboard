@@ -1,6 +1,7 @@
 import { OwnerAuthProvider } from '../../auth/OwnerAuthProvider.js';
 import { markOwnerUnlockedByPin } from '../../auth/ownerSession.js';
 import { setUserMode, UserMode } from '../../auth/userMode.js';
+import { isHomeDeployment } from '../../auth/deploymentMode.js';
 
 /**
  * @param {Object} options
@@ -37,6 +38,12 @@ export function openOwnerPinDialog({ host, onClose, onSuccess }) {
   error.className = 'owner-pin-error';
   error.hidden = true;
 
+  if (isHomeDeployment() && !OwnerAuthProvider.isPinConfigured()) {
+    error.textContent =
+      'Owner PIN is not configured for this build. Add VITE_OWNER_PIN in Cloudflare Pages and redeploy.';
+    error.hidden = false;
+  }
+
   /** @type {string[]} */
   let digits = [];
 
@@ -46,6 +53,7 @@ export function openOwnerPinDialog({ host, onClose, onSuccess }) {
 
   async function submitPin() {
     if (digits.length === 0) return;
+    if (!OwnerAuthProvider.isPinConfigured()) return;
     const pin = digits.join('');
     digits = [];
     renderDigits();
