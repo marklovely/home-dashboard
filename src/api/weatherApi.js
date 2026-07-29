@@ -1,4 +1,5 @@
 import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
+import { withApiCredentials } from './accessFetch.js';
 
 /** @typedef {import('../services/weatherTypes.js').DashboardWeather} DashboardWeather */
 
@@ -21,7 +22,7 @@ export async function fetchDashboardWeather({ audience = 'owner', fetchImpl = fe
   const query = audience === 'house-sitter' ? '?audience=house-sitter' : '';
 
   try {
-    const response = await fetchImpl(`${base}/api/weather${query}`, { cache: 'no-store' });
+    const response = await fetchImpl(`${base}/api/weather${query}`, withApiCredentials({ cache: 'no-store' }));
     const body = await response.json();
     if (!response.ok) {
       return {

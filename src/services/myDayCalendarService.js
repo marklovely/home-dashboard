@@ -1,5 +1,4 @@
 import { fetchMyDayCalendar } from '../api/calendarApi.js';
-import { getOwnerAccessToken } from '../auth/ownerAccessToken.js';
 import { isHouseSitterExperience, subscribeToUserMode } from '../auth/userMode.js';
 import { buildHomeCardSummary } from './myDayFormat.js';
 
@@ -39,7 +38,7 @@ export function clearMyDayCalendarState() {
 }
 
 export function canFetchMyDayCalendar() {
-  return !isHouseSitterExperience() && Boolean(getOwnerAccessToken());
+  return !isHouseSitterExperience();
 }
 
 export function getMyDayState() {
@@ -62,12 +61,6 @@ export function subscribeToMyDayCalendar(listener) {
 export async function refreshMyDayCalendar(fetchImpl = fetch, options = {}) {
   if (isHouseSitterExperience()) {
     clearMyDayCalendarState();
-    return state;
-  }
-
-  if (!getOwnerAccessToken()) {
-    state = { status: 'unauthorized', data: null, message: 'Owner PIN required' };
-    notify();
     return state;
   }
 
@@ -94,8 +87,8 @@ export async function refreshMyDayCalendar(fetchImpl = fetch, options = {}) {
         message: result.data.stale ? 'stale' : ''
       };
       lastFetchedAt = Date.now();
-    } else if (result.status === 401) {
-      state = { status: 'unauthorized', data: null, message: 'Owner PIN required' };
+    } else if (result.status === 401 || result.status === 403) {
+      state = { status: 'unauthorized', data: null, message: 'Sign in required' };
     } else if (state.data) {
       state = { status: 'ready', data: state.data, message: 'stale' };
     } else {
@@ -117,7 +110,7 @@ export function getMyDayHomeSummary(asOf = new Date()) {
     return { title: 'My Day', subtitle: '' };
   }
   if (state.status === 'unauthorized') {
-    return { title: 'My Day', subtitle: 'Owner PIN required' };
+    return { title: 'My Day', subtitle: 'Sign in required' };
   }
   if (state.status === 'loading' && !state.data) {
     return { title: 'My Day', subtitle: 'Loading…' };

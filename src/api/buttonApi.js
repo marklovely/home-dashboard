@@ -1,5 +1,6 @@
 import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
 import { resolveApiClient } from './client.js';
+import { withApiCredentials } from './accessFetch.js';
 
 /**
  * @param {number} buttonId Virtual Buttons numeric ID from dashboard config.
@@ -27,7 +28,7 @@ export async function pressButton(buttonCode, fetchImpl) {
   const normalized = buttonCode.trim().toUpperCase();
   const client = resolveApiClient(fetchImpl);
   const url = `${base}/api/button/${encodeURIComponent(normalized)}`;
-  const response = await client.post(url, { cache: 'no-store' });
+  const response = await client.post(url, withApiCredentials({ cache: 'no-store', body: '{}' }));
   if (!response.ok) {
     let message = 'Could not trigger this control.';
     try {

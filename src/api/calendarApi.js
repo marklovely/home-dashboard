@@ -1,15 +1,10 @@
 import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
-import { getOwnerAccessToken } from '../auth/ownerAccessToken.js';
+import { withApiCredentials } from './accessFetch.js';
 
 /**
  * @param {{ fetchImpl?: typeof fetch }} [options]
  */
 export async function fetchMyDayCalendar({ fetchImpl = fetch } = {}) {
-  const token = getOwnerAccessToken();
-  if (!token) {
-    return { ok: false, status: 401, message: 'Owner authorization required', data: null };
-  }
-
   await ensureApiBaseUrl();
   const base = getApiBaseUrl();
   if (!base) {
@@ -17,16 +12,19 @@ export async function fetchMyDayCalendar({ fetchImpl = fetch } = {}) {
   }
 
   try {
-    const response = await fetchImpl(`${base}/api/calendar`, {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      cache: 'no-store'
-    });
+    const response = await fetchImpl(
+      `${base}/api/calendar`,
+      withApiCredentials({
+        headers: { Accept: 'application/json' },
+        cache: 'no-store'
+      })
+    );
 
     if (response.status === 401) {
-      return { ok: false, status: 401, message: 'Owner authorization required', data: null };
+      return { ok: false, status: 401, message: 'Authentication required', data: null };
+    }
+    if (response.status === 403) {
+      return { ok: false, status: 403, message: 'Owner access required', data: null };
     }
     if (!response.ok) {
       let code = 'Calendar unavailable';

@@ -1,12 +1,15 @@
 import { corsHeaders, resolveCorsOrigin } from './lib/cors.js';
+import { securityHeaders } from './lib/securityHeaders.js';
 import { handleHealth } from './routes/health.js';
-import { handlePrivateConfig } from './routes/privateConfig.js';
+import { handlePrivateConfigRequest } from './routes/privateConfigRoute.js';
 import { handleButtonPress } from './routes/buttons.js';
 import { handleOwnerAuth } from './routes/ownerAuth.js';
 import { handleWeather } from './routes/weather.js';
 import { handleCalendar } from './routes/calendar.js';
+import { handleSession } from './routes/session.js';
 import { methodNotAllowed, notFound } from './lib/errors.js';
 import { bindFetch } from './lib/boundFetch.js';
+import { isAccessConfigured } from './lib/accessJwt.js';
 
 /**
  * @param {string} [headerValue]
@@ -33,9 +36,12 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
     return new Response(null, { status: 204, headers: corsHeaders(allowedOrigin) });
   }
 
-  const attachCors = (response) => {
+  const attachHeaders = (response) => {
     const headers = new Headers(response.headers);
     for (const [key, value] of Object.entries(corsHeaders(allowedOrigin))) {
+      headers.set(key, value);
+    }
+    for (const [key, value] of Object.entries(securityHeaders())) {
       headers.set(key, value);
     }
     headers.set('X-Correlation-Id', correlationId);
@@ -43,7 +49,7 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
   };
 
   if (request.headers.get('Origin') && !allowedOrigin) {
-    return attachCors(new Response(JSON.stringify({ error: { code: 'CORS_REJECTED', message: 'Origin not allowed.' } }), {
+    return attachHeaders(new Response(JSON.stringify({ error: { code: 'CORS_REJECTED', message: 'Origin not allowed.' } }), {
       status: 403,
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -54,12 +60,19 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
 
   if (url.pathname === '/api/health' && request.method === 'GET') {
     response = handleHealth();
+  } else if (!isAccessConfigured(env) && url.pathname.startsWith('/api/') && url.pathname !== '/api/health') {
+    response = Response.json(
+      { error: 'AUTH_NOT_CONFIGURED', message: 'Access authentication is not configured.' },
+      { status: 503 }
+    );
+  } else if (url.pathname === '/api/session' && request.method === 'GET') {
+    response = await handleSession(request, env, fetchBound);
   } else if (url.pathname === '/api/private-config' && request.method === 'GET') {
-    response = handlePrivateConfig(env);
+    response = await handlePrivateConfigRequest(request, env, fetchBound);
   } else if (url.pathname === '/api/weather' && request.method === 'GET') {
     response = await handleWeather(request, env, fetchBound);
   } else if (url.pathname === '/api/auth/owner') {
-    response = await handleOwnerAuth(request, correlationId, env);
+    response = await handleOwnerAuth(request, correlationId, env, fetchBound);
   } else if (url.pathname === '/api/calendar' && request.method === 'GET') {
     response = await handleCalendar(request, env, fetchBound);
   } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {
@@ -73,7 +86,7 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
 
   safeLog(request.method, url.pathname, response.status, correlationId, url.pathname.includes('/api/button/') ? url.pathname.split('/').pop() : undefined);
 
-  return attachCors(response);
+  return attachHeaders(response);
 }
 
 /**
@@ -95,6 +108,7 @@ function safeLog(method, path, status, correlationId, buttonCode) {
 }
 
 export { OwnerAuthLimiter } from './durable/OwnerAuthLimiter.js';
+export { ControlActionLimiter } from './durable/ControlActionLimiter.js';
 
 export default {
   async fetch(request, env, _ctx) {
