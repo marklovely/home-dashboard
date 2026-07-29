@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import {
   buildHomeCardSummary,
   formatEventTimeRange,
@@ -12,6 +12,7 @@ import {
   getMyDayHomeSummary,
   refreshMyDayCalendar
 } from '../src/services/myDayCalendarService.js';
+import { resetApiBaseForTests } from '../src/api/apiBase.js';
 import { setOwnerAccessToken, clearOwnerAccessToken, resetOwnerAccessTokenForTests } from '../src/auth/ownerAccessToken.js';
 import { setUserMode, UserMode, resetUserModeForTests } from '../src/auth/userMode.js';
 import { getAppsForProfile } from '../src/services/appRegistry.js';
@@ -56,10 +57,17 @@ describe('My Day visibility', () => {
 
 describe('My Day calendar service', () => {
   beforeEach(() => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://worker.test');
+    resetApiBaseForTests();
     resetUserModeForTests();
     resetOwnerAccessTokenForTests();
     clearMyDayCalendarState();
     setUserMode(UserMode.Owner);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    resetApiBaseForTests();
   });
 
   it('does not fetch in house sitter mode', async () => {
