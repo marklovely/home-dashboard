@@ -33,7 +33,7 @@ export function openOwnerPinDialog({ host, onClose, onSuccess }) {
   const display = document.createElement('div');
   display.className = 'owner-pin-display';
   display.setAttribute('aria-live', 'polite');
-  display.textContent = '••••';
+  display.textContent = 'Enter PIN';
 
   const error = document.createElement('p');
   error.className = 'owner-pin-error';
