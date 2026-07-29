@@ -1,25 +1,30 @@
 import { describe, expect, it } from 'vitest';
-import { searchHouseGuidePages, highlightSearchText } from '../src/widgets/HouseGuide/search.js';
-import { HOUSE_GUIDE_PAGES } from '../src/content/houseguide/pages.js';
+import { findBestGuideTopic, getGuideHomeSummary, searchGuideTopics } from '../src/services/guideService.js';
+import { highlightGuideText } from '../src/widgets/HouseGuide/highlight.js';
 
-describe('house guide search', () => {
-  const markdownBySlug = new Map([
-    ['kitchen', '# Kitchen\n\nContent coming soon.'],
-    ['wifi', '# Wi-Fi\n\nNetwork name and password will go here.']
-  ]);
-
-  it('returns all pages when query is empty', () => {
-    const matches = searchHouseGuidePages('', HOUSE_GUIDE_PAGES, markdownBySlug);
-    expect(matches.size).toBe(HOUSE_GUIDE_PAGES.length);
+describe('guide service', () => {
+  it('returns a meaningful home summary without document counts', () => {
+    const summary = getGuideHomeSummary();
+    expect(summary.title.toLowerCase()).not.toContain('markdown');
+    expect(summary.title).not.toMatch(/\d+\s+guide/i);
+    expect(summary.subtitle.length).toBeGreaterThan(0);
   });
 
-  it('matches page titles and markdown text', () => {
-    expect(searchHouseGuidePages('kitchen', HOUSE_GUIDE_PAGES, markdownBySlug).has('kitchen')).toBe(true);
-    expect(searchHouseGuidePages('password', HOUSE_GUIDE_PAGES, markdownBySlug).has('wifi')).toBe(true);
-    expect(searchHouseGuidePages('garage', HOUSE_GUIDE_PAGES, markdownBySlug).size).toBe(0);
+  it('finds TV when searching television', () => {
+    const results = searchGuideTopics('television');
+    expect(results[0]?.id).toBe('tv');
+  });
+
+  it('finds Wi-Fi for wifi and password concepts', () => {
+    expect(searchGuideTopics('wifi')[0]?.id).toBe('wifi');
+    expect(searchGuideTopics('password')[0]?.id).toBe('wifi');
+  });
+
+  it('surfaces heating immediately', () => {
+    expect(findBestGuideTopic('heating')?.id).toBe('heating');
   });
 
   it('highlights matched substrings in titles', () => {
-    expect(highlightSearchText('Kitchen', 'kit')).toContain('<mark class="guide-search-mark">Kit</mark>');
+    expect(highlightGuideText('Heating', 'heat')).toContain('<mark class="guide-search-mark">');
   });
 });
