@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from '../api/apiBase.js';
+import { ensureApiBaseUrl, getApiBaseUrl } from '../api/apiBase.js';
 
 /** @typedef {'success' | 'invalid' | 'rate_limited' | 'unavailable'} OwnerAuthResult */
 
@@ -20,6 +20,7 @@ async function resultFromResponse(response) {
  * @returns {Promise<OwnerAuthResult>}
  */
 export async function authenticateOwnerPin(pin, fetchImpl = fetch) {
+  await ensureApiBaseUrl();
   const base = getApiBaseUrl();
   if (!base) return 'unavailable';
 
