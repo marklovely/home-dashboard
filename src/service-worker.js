@@ -1,4 +1,4 @@
-const CACHE_NAME = 'home-dashboard-v1.0.3';
+const CACHE_NAME = 'home-dashboard-v1.0.4';
 
 /** @type {string[]} */
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
