@@ -17,8 +17,8 @@ import {
 } from '../../services/binCollectionService.js';
 import { openHouseGuideTopic } from '../../services/guideNavigation.js';
 import {
+  BIN_PUT_OUT_LOCATION,
   getBankHolidayNote,
-  getCollectionTimingIntro,
   getHouseSitterCollectionSentence,
   getMissedBinNote
 } from './binCollectionCopy.js';
@@ -47,11 +47,11 @@ function renderEventRow(host, event, houseSitter, options = {}) {
 
   const title = document.createElement('p');
   title.className = 'bins-timeline-type';
-  title.textContent = event.displayName;
+  title.textContent = `${event.emoji} ${event.displayName}`;
 
   const bins = document.createElement('p');
   bins.className = 'bins-timeline-bins subtle';
-  bins.textContent = event.binDescription;
+  bins.textContent = event.binLabel;
 
   body.append(when, title, bins);
 
@@ -117,7 +117,7 @@ function mountBinsApp(viewport, context) {
 
   const heroTitle = document.createElement('h2');
   heroTitle.className = 'bins-hero-title';
-  heroTitle.textContent = heroEvent.displayName;
+  heroTitle.textContent = `${heroEvent.emoji} ${heroEvent.displayName}`;
 
   const heroDate = document.createElement('p');
   heroDate.className = 'bins-hero-date';
@@ -133,7 +133,7 @@ function mountBinsApp(viewport, context) {
 
   const heroBins = document.createElement('p');
   heroBins.className = 'bins-hero-bins subtle';
-  heroBins.textContent = heroEvent.binDescription;
+  heroBins.textContent = heroEvent.binLabel;
 
   if (heroEvent.bankHolidayChange) {
     const badge = document.createElement('span');
@@ -147,7 +147,7 @@ function mountBinsApp(viewport, context) {
   const sitterLine = getHouseSitterCollectionSentence(
     heroEvent.displayName,
     heroEvent.timing,
-    heroEvent.binDescription,
+    heroEvent.binLabel,
     houseSitter
   );
   if (sitterLine) {
@@ -195,7 +195,24 @@ function mountBinsApp(viewport, context) {
 
   const practical = document.createElement('div');
   practical.className = 'bins-practical';
-  practical.innerHTML = `<p>${getCollectionTimingIntro(houseSitter)}</p><p class="subtle">${getMissedBinNote(houseSitter)}</p>`;
+  const timingIntro = document.createElement('p');
+  timingIntro.className = 'bins-timing-intro';
+  const location = document.createElement('strong');
+  location.className = 'bins-put-out-location';
+  location.textContent = BIN_PUT_OUT_LOCATION;
+  if (houseSitter) {
+    timingIntro.append(
+      'Collections are normally from 6am. Bins are usually at ',
+      location,
+      ' the night before.'
+    );
+  } else {
+    timingIntro.append('Collection from 6am. Bins at ', location, ' the night before.');
+  }
+  const missed = document.createElement('p');
+  missed.className = 'subtle';
+  missed.textContent = getMissedBinNote(houseSitter);
+  practical.append(timingIntro, missed);
 
   const bankNote = getBankHolidayNote(next, houseSitter, heroEvent.timing);
   if (bankNote && next.bankHolidayChange) {

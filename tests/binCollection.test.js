@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   GARDEN_WASTE_ACCEPTED,
   GARDEN_WASTE_NOT_ACCEPTED,
-  COLLECTION_TYPES
+  COLLECTION_TYPES,
+  formatBinLabel
 } from '../src/data/binCollections/collectionTypes.js';
 import {
   __allCollectionEventsForTests,
@@ -21,6 +22,7 @@ import {
   householdCollections
 } from '../src/services/binCollectionService.js';
 import {
+  BIN_PUT_OUT_LOCATION,
   getCollectionTimingIntro,
   getHouseSitterCollectionSentence,
   getMissedBinNote
@@ -87,7 +89,8 @@ describe('binCollectionService scheduling', () => {
     expect(next?.date).toBe('2026-07-31');
     const described = describeCollectionEvent(next, asOf);
     expect(described.displayName).toBe(COLLECTION_TYPES.recycling.displayName);
-    expect(described.binDescription).toBe('Black bin and glass box');
+    expect(described.binDescription).toBe('Black wheelie bin — recycling, plus glass box');
+    expect(described.binLabel).toContain('⚫');
   });
 
   it('returns collection today when due', () => {
@@ -162,9 +165,10 @@ describe('home card and wording', () => {
     const summary = getBinCollectionHomeSummary(parseLocalDate('2026-07-29'), {
       houseSitter: false
     });
-    expect(summary.title).toBe('Recycling & glass');
+    expect(summary.title).toContain('Recycling & glass');
+    expect(summary.title).toContain('⚫');
     expect(summary.subtitle).toContain('In 2 days');
-    expect(summary.subtitle).toContain('Black bin and glass box');
+    expect(summary.subtitle).toContain('Black wheelie bin');
   });
 
   it('includes garden waste hint when due within a week', () => {
@@ -181,10 +185,11 @@ describe('home card and wording', () => {
     const sentence = getHouseSitterCollectionSentence(
       'Recycling & glass',
       getDaysUntil('2026-07-31', parseLocalDate('2026-07-30')),
-      'Black bin and glass box',
+      formatBinLabel(COLLECTION_TYPES.recycling),
       true
     );
     expect(sentence).toMatch(/collected tomorrow/i);
+    expect(sentence).toMatch(/Black wheelie bin/);
     expect(sentence).not.toMatch(/Put the bins out/i);
     expect(getMissedBinNote(true)).toMatch(/easthants\.gov\.uk/);
   });
@@ -193,12 +198,21 @@ describe('home card and wording', () => {
     const summary = getBinCollectionHomeSummary(parseLocalDate('2026-01-11'), {
       houseSitter: true
     });
-    expect(summary.title).toBe('Rubbish');
+    expect(summary.title).toContain('Rubbish');
+    expect(summary.title).toContain('🟢');
     expect(summary.subtitle).toMatch(/Monday · changed collection day/);
   });
 
-  it('uses owner operational detail strings', () => {
+  it('maps rubbish and recycling to the correct wheelie colours', () => {
+    expect(formatBinLabel(COLLECTION_TYPES.rubbish)).toMatch(/🟢 Green wheelie bin/);
+    expect(formatBinLabel(COLLECTION_TYPES.recycling)).toMatch(/⚫ Black wheelie bin/);
+    expect(formatBinLabel(COLLECTION_TYPES.gardenWaste)).toMatch(/🟫 Brown wheelie bin/);
+  });
+
+  it('uses owner operational detail strings and Wagtail Road location', () => {
     expect(getCollectionTimingIntro(false)).toMatch(/Collection from 6am/);
+    expect(getCollectionTimingIntro(true)).toContain(BIN_PUT_OUT_LOCATION);
+    expect(BIN_PUT_OUT_LOCATION).toMatch(/Wagtail Road/);
   });
 });
 

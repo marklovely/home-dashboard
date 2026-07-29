@@ -6,7 +6,11 @@ import {
   householdCollections,
   householdScheduleMeta
 } from '../data/binCollections/householdCollections.js';
-import { COLLECTION_TYPES, getCollectionType } from '../data/binCollections/collectionTypes.js';
+import {
+  COLLECTION_TYPES,
+  formatBinLabel,
+  getCollectionType
+} from '../data/binCollections/collectionTypes.js';
 
 /** @typedef {import('../data/binCollections/collectionTypes.js').CollectionTypeId} CollectionTypeId */
 
@@ -227,7 +231,9 @@ export function describeCollectionEvent(event, asOfDate = new Date()) {
   return {
     ...event,
     displayName: typeDef.displayName,
+    emoji: typeDef.emoji,
     binDescription: typeDef.binDescription,
+    binLabel: formatBinLabel(typeDef),
     iconId: typeDef.iconId,
     cssModifier: typeDef.cssModifier,
     timing
@@ -266,7 +272,8 @@ export function getBinCollectionHomeSummary(asOfDate = new Date(), options = {})
       : `${described.timing.weekdayLabel} · changed from normal schedule`;
   }
 
-  const lines = [typeDef.displayName, subtitle, typeDef.binDescription];
+  const binLine = formatBinLabel(typeDef);
+  const lines = [`${typeDef.emoji} ${typeDef.displayName}`, subtitle, binLine];
 
   const gardenSoon = getNextGardenWasteCollection(asOfDate);
   if (
@@ -285,7 +292,7 @@ export function getBinCollectionHomeSummary(asOfDate = new Date(), options = {})
   }
 
   return {
-    title: typeDef.displayName,
+    title: `${typeDef.emoji} ${typeDef.displayName}`,
     subtitle: lines.slice(1).join(' · ')
   };
 }
