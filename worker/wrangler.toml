@@ -9,6 +9,7 @@ ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,https://marklovel
 name = "OWNER_AUTH_LIMITER"
 class_name = "OwnerAuthLimiter"
 
+# Free Workers plan requires SQLite-backed Durable Objects (new_sqlite_classes).
 [[migrations]]
 tag = "v1"
-new_classes = ["OwnerAuthLimiter"]
+new_sqlite_classes = ["OwnerAuthLimiter"]

@@ -155,7 +155,7 @@ Long press → PIN pad (`src/components/OwnerAccess/ownerPinDialog.js`)
 | HTTP 429 | Rate limited (Durable Object tracks failures per client IP) |
 | HTTP 503 | Worker secret not configured |
 
-**Rate limiting:** `OwnerAuthLimiter` Durable Object (`OWNER_AUTH_LIMITER` binding) stores failed attempts per client key. More than five failures within ten minutes returns HTTP 429 until the window expires or a successful login clears the counter.
+**Rate limiting:** `OwnerAuthLimiter` SQLite-backed Durable Object (`OWNER_AUTH_LIMITER` binding) stores failed attempts per client key. More than five failures within ten minutes returns HTTP 429 until the window expires or a successful login clears the counter. The Worker migration uses `new_sqlite_classes` (required on the Workers free plan).
 
 **Session:** Memory-only. Refresh or restart clears owner access. **`OWNER_INACTIVITY_TIMEOUT_MS`** (five minutes) in `src/auth/ownerInactivity.js` auto-locks via `lockToHouseSitterMode()` — same path as **Return to House Sitter Mode** in Settings.
 
