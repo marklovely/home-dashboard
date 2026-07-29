@@ -89,18 +89,21 @@ button { font: inherit; }
 }
 
 /* Weather: scroll the page (mouse wheel on Mac) instead of a nested panel */
-body.is-weather-route {
+body.is-weather-route,
+body.is-bins-route {
   overflow-x: hidden;
   overflow-y: auto;
   height: auto;
   min-height: 100dvh;
 }
-body.is-weather-route .hub-shell {
+body.is-weather-route .hub-shell,
+body.is-bins-route .hub-shell {
   min-height: 100dvh;
   height: auto;
   grid-template-rows: auto auto auto;
 }
-body.is-weather-route .app-viewport {
+body.is-weather-route .app-viewport,
+body.is-bins-route .app-viewport {
   overflow: visible;
   display: block;
   min-height: auto;
@@ -109,6 +112,12 @@ body.is-weather-route .app-viewport > .weather-app--premium {
   overflow: visible;
   max-height: none;
   min-height: auto;
+}
+body.is-bins-route .app-viewport > .bins-app {
+  overflow: visible;
+  max-height: none;
+  min-height: auto;
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
 }
 .app-viewport.is-active {
   animation: app-view-enter 240ms ease;
@@ -1319,10 +1328,14 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .bins-timeline-type { margin: 2px 0 0; font-weight: 700; }
 .bins-timeline-bins { margin: 2px 0 0; font-size: 0.92rem; }
 .bins-put-out-notice {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   padding: 16px 18px;
   border-radius: 16px;
   border: 1px solid rgba(40, 209, 124, 0.35);
   background: rgba(40, 209, 124, 0.08);
+  backdrop-filter: blur(8px);
 }
 .bins-put-out-notice .bins-timing-intro {
   margin: 0;

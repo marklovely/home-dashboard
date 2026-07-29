@@ -223,24 +223,10 @@ function mountBinsApp(viewport, context) {
 
   const practical = document.createElement('div');
   practical.className = 'bins-practical';
-  const timingIntro = document.createElement('p');
-  timingIntro.className = 'bins-timing-intro';
-  const location = document.createElement('strong');
-  location.className = 'bins-put-out-location';
-  location.textContent = BIN_PUT_OUT_LOCATION;
-  if (houseSitter) {
-    timingIntro.append(
-      'Collections are normally from 6am. Bins are usually at ',
-      location,
-      ' the night before.'
-    );
-  } else {
-    timingIntro.append('Collection from 6am. Bins at ', location, ' the night before.');
-  }
   const missed = document.createElement('p');
   missed.className = 'subtle';
   missed.textContent = getMissedBinNote(houseSitter);
-  practical.append(timingIntro, missed);
+  practical.append(missed);
 
   const bankNote = getBankHolidayNote(next, houseSitter, heroEvent.timing);
   if (bankNote && next.bankHolidayChange) {
@@ -286,6 +272,7 @@ function mountBinsApp(viewport, context) {
   footer.textContent = `Schedule: ${meta.household.source}, Calendar ${meta.household.calendar} & Round ${meta.gardenWaste.round} (${meta.household.validFrom}–${meta.validUntil}). Works offline.`;
 
   page.append(
+    putOutNotice,
     hero,
     summaryGrid,
     upcomingHeading,
