@@ -99,21 +99,58 @@ function renderWeatherPage(data, page) {
   const dailySection = document.createElement('section');
   dailySection.className = 'weather-section';
   dailySection.innerHTML = '<h2 class="weather-section-title">7 day forecast</h2>';
+  const dailyTable = document.createElement('div');
+  dailyTable.className = 'weather-daily-table';
+
+  const dailyHeader = document.createElement('div');
+  dailyHeader.className = 'weather-daily-header';
+  dailyHeader.setAttribute('aria-hidden', 'true');
+  for (const label of ['Day', '', 'Rain', 'High', 'Low']) {
+    const cell = document.createElement('span');
+    cell.textContent = label;
+    dailyHeader.append(cell);
+  }
+  dailyTable.append(dailyHeader);
+
   const dailyList = document.createElement('div');
   dailyList.className = 'weather-daily-list';
   for (const day of data.daily) {
     const row = document.createElement('div');
     row.className = 'weather-daily-row';
-    row.append(
-      Object.assign(document.createElement('span'), { className: 'weather-daily-label', textContent: day.label }),
-      renderWeatherIcon(day.icon, { size: 24 }),
-      Object.assign(document.createElement('span'), { className: 'weather-daily-rain subtle', textContent: `${day.rainChance}%` }),
-      Object.assign(document.createElement('strong'), { className: 'weather-daily-high', textContent: `${day.high}°` }),
-      Object.assign(document.createElement('span'), { className: 'weather-daily-low subtle', textContent: `${day.low}°` })
-    );
+    row.setAttribute('role', 'row');
+
+    const dayCell = document.createElement('div');
+    dayCell.className = 'weather-daily-day';
+    const dayName = document.createElement('span');
+    dayName.className = 'weather-daily-label';
+    dayName.textContent = day.label;
+    const dayCondition = document.createElement('span');
+    dayCondition.className = 'weather-daily-condition subtle';
+    dayCondition.textContent = day.condition;
+    dayCell.append(dayName, dayCondition);
+
+    const iconCell = document.createElement('div');
+    iconCell.className = 'weather-daily-icon';
+    iconCell.append(renderWeatherIcon(day.icon, { size: 26 }));
+
+    const rainCell = document.createElement('span');
+    rainCell.className = 'weather-daily-rain';
+    rainCell.textContent = `${day.rainChance}%`;
+    rainCell.setAttribute('title', 'Chance of rain');
+
+    const highCell = document.createElement('strong');
+    highCell.className = 'weather-daily-high';
+    highCell.textContent = `${day.high}°`;
+
+    const lowCell = document.createElement('span');
+    lowCell.className = 'weather-daily-low';
+    lowCell.textContent = `${day.low}°`;
+
+    row.append(dayCell, iconCell, rainCell, highCell, lowCell);
     dailyList.append(row);
   }
-  dailySection.append(dailyList);
+  dailyTable.append(dailyList);
+  dailySection.append(dailyTable);
 
   const adviceSection = document.createElement('section');
   adviceSection.className = 'weather-section weather-advice-section';
