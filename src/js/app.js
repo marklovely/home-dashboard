@@ -10,13 +10,14 @@ import { initTheme } from '../services/themeService.js';
 import '../apps/index.js';
 import '../widgets/index.js';
 import { preloadPrivateConfig } from '../services/privateConfigService.js';
-import { isHouseSitterMode } from '../modes/modeConfig.js';
+import { isHouseSitterExperience } from '../auth/userMode.js';
+import { attachOwnerAccessGesture } from '../auth/ownerAccessGesture.js';
 
 initTheme();
 void preloadPrivateConfig();
 
 const networkHint = document.querySelector('#shell-status .status-card:last-child span:last-child');
-if (networkHint && isHouseSitterMode()) {
+if (networkHint && isHouseSitterExperience()) {
   networkHint.textContent = 'Connected';
 }
 
@@ -78,6 +79,12 @@ createAppShell({
   shellFooter: document.querySelector('#shell-footer'),
   bottomNav: document.querySelector('#shell-bottom-nav'),
   shellContext
+});
+
+attachOwnerAccessGesture({
+  logoElement: document.querySelector('#shell-eyebrow'),
+  dialogHost: document.querySelector('#owner-access-host'),
+  onOwnerUnlocked: () => shellContext.refreshShell?.()
 });
 
 subscribeWeatherSnapshot(() => {

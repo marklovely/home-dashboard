@@ -984,6 +984,69 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   width: 100%;
 }
 
+.owner-access-host { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
+.owner-access-host:not(:empty) { pointer-events: auto; }
+.owner-pin-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 6, 10, 0.82);
+}
+.owner-pin-panel {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface, #10131a);
+}
+.owner-pin-title { margin: 0; font-size: 1.4rem; }
+.owner-pin-prompt { margin: 0; color: var(--muted); }
+.owner-pin-display {
+  min-height: 2.5rem;
+  font-size: 1.6rem;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+}
+.owner-pin-error { margin: 0; color: #ff8a96; }
+.owner-pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.owner-pin-key {
+  min-height: 56px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.owner-pin-key--enter { grid-column: span 1; }
+.owner-pin-cancel {
+  min-height: 52px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+}
+.settings-action-button {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+}
+#shell-eyebrow { cursor: default; user-select: none; }
+
 @media (max-width: 900px) {
   .button-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .guide-category-grid { grid-template-columns: 1fr; }

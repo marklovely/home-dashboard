@@ -6,6 +6,7 @@ import { applyShellBranding } from './shellBranding.js';
 import { mountShellBottomNav, syncShellBottomNav } from './bottomNav.js';
 import { getCurrentRoute, HOME_ROUTE, initRouter, navigate, subscribeToRoute } from './router.js';
 import { subscribeToProfileChange } from '../services/profileService.js';
+import { subscribeToUserMode } from '../auth/userMode.js';
 
 /**
  * @param {Object} options
@@ -89,6 +90,10 @@ export function createAppShell({
 
   subscribeToRoute(renderRoute);
   subscribeToProfileChange(() => {
+    renderRoute(getCurrentRoute());
+  });
+  subscribeToUserMode(() => {
+    applyShellBranding({ shellEyebrow, shellTagline });
     renderRoute(getCurrentRoute());
   });
   initRouter(getAppById);
