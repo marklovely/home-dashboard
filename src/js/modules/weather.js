@@ -1,4 +1,5 @@
 import { fetchWeatherForecast } from '../../api/weather.js';
+import { setWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 
 const WEATHER_CODES = {
   0: ['Clear', '☀'], 1: ['Mainly clear', '◒'], 2: ['Partly cloudy', '◒'], 3: ['Overcast', '☁'],
@@ -36,12 +37,15 @@ export async function initialiseWeather(elements, config, dependencies = {}) {
     const coordinates = await resolveCoordinates(config, dependencies.geolocation);
     const data = await fetchWeatherForecast({ ...coordinates, fetchImpl: dependencies.fetchImpl });
     const description = describeWeather(data.current.weather_code);
-    elements.temp.textContent = `${Math.round(data.current.temperature_2m)}°C`;
+    const tempText = `${Math.round(data.current.temperature_2m)}°C`;
+    elements.temp.textContent = tempText;
     elements.text.textContent = description.text;
     elements.icon.textContent = description.icon;
+    setWeatherSnapshot({ title: tempText, subtitle: description.text });
   } catch {
     elements.temp.textContent = 'Weather';
     elements.text.textContent = 'Location unavailable';
     elements.icon.textContent = '◌';
+    setWeatherSnapshot({ title: '—', subtitle: 'Location unavailable' });
   }
 }

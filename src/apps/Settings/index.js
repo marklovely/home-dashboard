@@ -1,12 +1,6 @@
-import { definePlaceholderApp } from '../placeholder.js';
 import { registerApp } from '../../services/appRegistry.js';
+import { settingsApp } from './SettingsApp.js';
 
-registerApp(
-  definePlaceholderApp({
-    id: 'settings',
-    title: 'Settings',
-    icon: '⚙',
-    accent: '#aeb7c6',
-    profiles: ['owner', 'housesitter']
-  })
-);
+registerApp(settingsApp);
+
+export { settingsApp };
