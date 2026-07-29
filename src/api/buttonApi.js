@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from './apiBase.js';
+import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
 import { resolveApiClient } from './client.js';
 
 /**
@@ -17,9 +17,12 @@ export function formatButtonCode(buttonId) {
  * @param {typeof fetch} [fetchImpl]
  */
 export async function pressButton(buttonCode, fetchImpl) {
+  await ensureApiBaseUrl();
   const base = getApiBaseUrl();
   if (!base) {
-    throw new Error('API base URL is not configured.');
+    throw new Error(
+      'API base URL is not configured. Set VITE_API_BASE_URL in the project root .env.local (local dev) or Cloudflare Pages environment variables, then restart dev or redeploy.'
+    );
   }
   const normalized = buttonCode.trim().toUpperCase();
   const client = resolveApiClient(fetchImpl);

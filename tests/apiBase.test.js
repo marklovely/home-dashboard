@@ -1,0 +1,37 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  ensureApiBaseUrl,
+  getApiBaseUrl,
+  isApiConfigured,
+  resetApiBaseForTests
+} from '../src/api/apiBase.js';
+
+describe('apiBase', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    resetApiBaseForTests();
+    vi.unstubAllGlobals();
+  });
+
+  it('trims build-time env URL', () => {
+    vi.stubEnv('VITE_API_BASE_URL', '  https://api.example.test/  ');
+    expect(getApiBaseUrl()).toBe('https://api.example.test');
+    expect(isApiConfigured()).toBe(true);
+  });
+
+  it('loads apiBaseUrl from runtime-config.json when env is empty', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ apiBaseUrl: 'https://from-json.test/' })
+      })
+    );
+
+    await ensureApiBaseUrl();
+
+    expect(getApiBaseUrl()).toBe('https://from-json.test');
+    expect(fetch).toHaveBeenCalledWith('./runtime-config.json', { cache: 'no-store' });
+  });
+});

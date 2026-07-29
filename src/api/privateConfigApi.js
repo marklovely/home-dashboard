@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from './apiBase.js';
+import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
 import { resolveApiClient } from './client.js';
 
 /**
@@ -13,6 +13,7 @@ import { resolveApiClient } from './client.js';
  * @returns {Promise<WorkerPrivateConfig | null>}
  */
 export async function fetchPrivateConfigFromApi(fetchImpl) {
+  await ensureApiBaseUrl();
   const base = getApiBaseUrl();
   if (!base) return null;
   const client = resolveApiClient(fetchImpl);
