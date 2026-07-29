@@ -17,8 +17,8 @@ App Shell
 ├── House Guide App
 │     └── House Guide Widget
 ├── Scooter App (placeholder)
-├── Weather App (placeholder)
-├── Bins App (placeholder)
+├── Weather App (forecast via Worker)
+├── Bins App (static council calendars)
 ├── Plex App (placeholder)
 ├── Calendar App (placeholder)
 └── Settings App (configuration)
@@ -94,6 +94,8 @@ Each app folder contains:
 | Controls | Mounts the **Alexa** widget (Virtual Buttons) |
 | House Guide | Mounts the **House Guide** widget (interactive home topics, search, quick actions) |
 | Settings | Profile, theme (dark), about |
+| Weather | Forecast and insights via Worker (`GET /api/weather`) |
+| Bin Collection | Static Calendar 17 + Round G2 schedules, offline |
 | Others | Focused placeholders with summaries where useful |
 
 Apps declare `profiles: ['owner', 'housesitter']` (or subsets). `getAppsForProfile()` drives the Home launcher cards.
@@ -263,6 +265,38 @@ Open-Meteo forecast + air-quality APIs
 **Frontend:** `src/services/weatherService.js` refreshes every **15 minutes** and on startup; `src/apps/Weather/WeatherApp.js` renders current conditions, hourly/daily forecasts, and insights; Lucide icons via `src/weather/renderWeatherIcon.js`.
 
 **Offline / upstream failure:** If Open-Meteo is unreachable, the Worker serves the last cached payload when available; the UI shows age labels (`Updated N minutes ago`) and a graceful unavailable state when no data exists.
+
+## Bin collection
+
+Household and garden waste dates come from **static data**, not runtime council fetches. PDFs are transcribed once into `src/data/binCollections/`.
+
+### Data files
+
+| File | Role |
+|------|------|
+| `householdCollections.js` | Calendar **17** — `{ date, type: 'rubbish' \| 'recycling', bankHolidayChange }` |
+| `gardenWasteCollections.js` | Round **G2** — `{ date }` only |
+| `collectionTypes.js` | Display names, bin descriptions, icons, garden-waste allowed/not lists |
+
+Metadata on each schedule includes `validFrom`, `validUntil`, `source`, and calendar/round id. After `validUntil`, the UI shows that a newer calendar is needed and does not extrapolate dates.
+
+### Service
+
+`src/services/binCollectionService.js` merges household and garden events, compares **local calendar dates** only (`parseLocalDate`, `startOfLocalDay`), and exposes:
+
+- `getNextCollection`, `getUpcomingCollections`, `getNextHouseholdCollection`, `getNextGardenWasteCollection`
+- `getDaysUntil` — Today / Tomorrow / In N days
+- `getBinCollectionHomeSummary` — Home card copy (owner vs house sitter via options)
+
+Future schedules could swap the data import for a Worker or council API; apps should consume the service API only.
+
+### Bank-holiday exceptions
+
+Calendar 17 lists non-Friday collections with `bankHolidayChange: true` (e.g. Tue 30 Dec 2025, Tue 6 Jan 2026, Mon 12 Jan 2026, Sat 17 Jan 2026). These are stored as printed — not normalised back to Friday.
+
+### Maintenance
+
+See [bin-collection-maintenance.md](./bin-collection-maintenance.md) for the exact files to edit when a new PDF arrives.
 
 ## Cloudflare Worker API
 

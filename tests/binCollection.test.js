@@ -1,16 +1,219 @@
 import { describe, expect, it } from 'vitest';
-import { getBinCollectionSummary, getUpcomingBinCollection } from '../src/services/binCollectionService.js';
+import {
+  GARDEN_WASTE_ACCEPTED,
+  GARDEN_WASTE_NOT_ACCEPTED,
+  COLLECTION_TYPES
+} from '../src/data/binCollections/collectionTypes.js';
+import {
+  __allCollectionEventsForTests,
+  describeCollectionEvent,
+  formatIsoFromDate,
+  getBinCollectionHomeSummary,
+  getDaysUntil,
+  getNextCollection,
+  getNextGardenWasteCollection,
+  getNextHouseholdCollection,
+  getUpcomingCollections,
+  isScheduleExpired,
+  parseLocalDate,
+  getUpcomingBinCollection,
+  gardenWasteCollections,
+  householdCollections
+} from '../src/services/binCollectionService.js';
+import {
+  getCollectionTimingIntro,
+  getHouseSitterCollectionSentence,
+  getMissedBinNote
+} from '../src/apps/Bins/binCollectionCopy.js';
 
-describe('binCollectionService', () => {
-  it('returns a friendly summary', () => {
-    const summary = getBinCollectionSummary(new Date('2026-07-29T12:00:00'));
-    expect(summary.title).toMatch(/♻|⚫/);
-    expect(summary.subtitle).toBeTruthy();
+const BANK_HOLIDAY_CASES = [
+  { date: '2025-12-30', type: 'rubbish', weekday: 'Tuesday' },
+  { date: '2026-01-06', type: 'recycling', weekday: 'Tuesday' },
+  { date: '2026-01-12', type: 'rubbish', weekday: 'Monday' },
+  { date: '2026-01-17', type: 'recycling', weekday: 'Saturday' }
+];
+
+describe('bin calendar data integrity', () => {
+  it('encodes the expected household and garden counts', () => {
+    expect(householdCollections).toHaveLength(57);
+    expect(gardenWasteCollections).toHaveLength(28);
+    expect(__allCollectionEventsForTests).toHaveLength(85);
   });
 
-  it('picks the soonest collection stream', () => {
-    const next = getUpcomingBinCollection(new Date('2026-07-29T12:00:00'));
-    expect(next.label).toMatch(/Recycling|General Waste/);
-    expect(next.relative).toBeTruthy();
+  it('preserves bank-holiday altered household dates', () => {
+    for (const { date, type } of BANK_HOLIDAY_CASES) {
+      const entry = householdCollections.find((row) => row.date === date);
+      expect(entry, date).toBeTruthy();
+      expect(entry?.type).toBe(type);
+      expect(entry?.bankHolidayChange).toBe(true);
+    }
+  });
+
+  it('includes known sample dates from Calendar 17 and Round G2', () => {
+    expect(householdCollections.some((r) => r.date === '2026-07-31' && r.type === 'recycling')).toBe(
+      true
+    );
+    expect(gardenWasteCollections.some((r) => r.date === '2026-08-11')).toBe(true);
+  });
+});
+
+describe('binCollectionService date handling', () => {
+  it('parses ISO dates at local midnight without UTC shift', () => {
+    const local = parseLocalDate('2026-07-31');
+    expect(local.getFullYear()).toBe(2026);
+    expect(local.getMonth()).toBe(6);
+    expect(local.getDate()).toBe(31);
+    expect(formatIsoFromDate(local)).toBe('2026-07-31');
+  });
+
+  it('returns Today and Tomorrow correctly', () => {
+    expect(getDaysUntil('2026-07-31', parseLocalDate('2026-07-31')).relative).toBe('Today');
+    expect(getDaysUntil('2026-07-31', parseLocalDate('2026-07-30')).relative).toBe('Tomorrow');
+  });
+
+  it('treats late-evening UTC instants as the same local calendar day', () => {
+    const asOf = new Date('2026-07-29T23:30:00');
+    const next = getNextCollection(asOf);
+    expect(next?.date).toBe('2026-07-31');
+    expect(getDaysUntil('2026-07-31', asOf).relative).toBe('In 2 days');
+  });
+});
+
+describe('binCollectionService scheduling', () => {
+  it('returns next collection on an ordinary Friday recycling week', () => {
+    const asOf = parseLocalDate('2026-07-29');
+    const next = getNextCollection(asOf);
+    expect(next?.type).toBe('recycling');
+    expect(next?.date).toBe('2026-07-31');
+    const described = describeCollectionEvent(next, asOf);
+    expect(described.displayName).toBe(COLLECTION_TYPES.recycling.displayName);
+    expect(described.binDescription).toBe('Black bin and glass box');
+  });
+
+  it('returns collection today when due', () => {
+    const asOf = parseLocalDate('2026-07-31');
+    const next = getNextCollection(asOf);
+    expect(next?.date).toBe('2026-07-31');
+    expect(getDaysUntil(next.date, asOf).relative).toBe('Today');
+  });
+
+  it('returns collection tomorrow when due', () => {
+    const asOf = parseLocalDate('2026-07-30');
+    const next = getNextCollection(asOf);
+    expect(next?.date).toBe('2026-07-31');
+    expect(getDaysUntil(next.date, asOf).relative).toBe('Tomorrow');
+  });
+
+  it('merges household and garden events chronologically', () => {
+    const upcoming = getUpcomingCollections(parseLocalDate('2026-07-29'), 6);
+    expect(upcoming.map((e) => e.date)).toEqual([
+      '2026-07-31',
+      '2026-08-07',
+      '2026-08-11',
+      '2026-08-14',
+      '2026-08-21',
+      '2026-08-25'
+    ]);
+    expect(upcoming[5].type).toBe('gardenWaste');
+  });
+
+  it('surfaces bank-holiday Tuesday 30 December 2025 as next rubbish', () => {
+    const asOf = parseLocalDate('2025-12-28');
+    const next = getNextHouseholdCollection(asOf);
+    expect(next?.date).toBe('2025-12-30');
+    expect(next?.type).toBe('rubbish');
+    expect(next?.bankHolidayChange).toBe(true);
+  });
+
+  for (const { date, type, weekday } of BANK_HOLIDAY_CASES) {
+    it(`keeps ${weekday} ${date} as ${type} with bankHolidayChange`, () => {
+      const asOf = parseLocalDate(date);
+      const next = getNextHouseholdCollection(asOf);
+      expect(next?.date).toBe(date);
+      expect(next?.type).toBe(type);
+      expect(next?.bankHolidayChange).toBe(true);
+    });
+  }
+
+  it('does not return past collections as next', () => {
+    const asOf = parseLocalDate('2026-08-01');
+    const next = getNextCollection(asOf);
+    expect(next?.date).toBe('2026-08-07');
+  });
+
+  it('selects next garden waste independently', () => {
+    const asOf = parseLocalDate('2026-07-29');
+    const garden = getNextGardenWasteCollection(asOf);
+    expect(garden?.date).toBe('2026-08-11');
+  });
+});
+
+describe('schedule expiry', () => {
+  it('marks schedule expired after October 2026', () => {
+    expect(isScheduleExpired(parseLocalDate('2026-10-30'))).toBe(false);
+    expect(isScheduleExpired(parseLocalDate('2026-11-01'))).toBe(true);
+    expect(getNextCollection(parseLocalDate('2026-11-05'))).toBeNull();
+    expect(getUpcomingCollections(parseLocalDate('2026-11-05'), 3)).toEqual([]);
+  });
+});
+
+describe('home card and wording', () => {
+  it('formats owner home summary for next recycling', () => {
+    const summary = getBinCollectionHomeSummary(parseLocalDate('2026-07-29'), {
+      houseSitter: false
+    });
+    expect(summary.title).toBe('Recycling & glass');
+    expect(summary.subtitle).toContain('In 2 days');
+    expect(summary.subtitle).toContain('Black bin and glass box');
+  });
+
+  it('includes garden waste hint when due within a week', () => {
+    const summary = getBinCollectionHomeSummary(parseLocalDate('2026-08-06'), {
+      houseSitter: false
+    });
+    expect(summary.subtitle).toMatch(/Garden waste/i);
+  });
+
+  it('uses informative house sitter copy without commands', () => {
+    const intro = getCollectionTimingIntro(true);
+    expect(intro).not.toMatch(/must|Put the|Don't forget/i);
+    expect(intro).toMatch(/6am/i);
+    const sentence = getHouseSitterCollectionSentence(
+      'Recycling & glass',
+      getDaysUntil('2026-07-31', parseLocalDate('2026-07-30')),
+      'Black bin and glass box',
+      true
+    );
+    expect(sentence).toMatch(/collected tomorrow/i);
+    expect(sentence).not.toMatch(/Put the bins out/i);
+    expect(getMissedBinNote(true)).toMatch(/easthants\.gov\.uk/);
+  });
+
+  it('shows bank-holiday wording on home card for house sitter', () => {
+    const summary = getBinCollectionHomeSummary(parseLocalDate('2026-01-11'), {
+      houseSitter: true
+    });
+    expect(summary.title).toBe('Rubbish');
+    expect(summary.subtitle).toMatch(/Monday · changed collection day/);
+  });
+
+  it('uses owner operational detail strings', () => {
+    expect(getCollectionTimingIntro(false)).toMatch(/Collection from 6am/);
+  });
+});
+
+describe('garden waste reference content', () => {
+  it('lists accepted and rejected items from the council calendar', () => {
+    expect(GARDEN_WASTE_ACCEPTED).toContain('Grass cuttings');
+    expect(GARDEN_WASTE_NOT_ACCEPTED).toContain('Soil');
+    expect(GARDEN_WASTE_NOT_ACCEPTED).toContain('Food scraps');
+  });
+});
+
+describe('offline operation', () => {
+  it('does not require network for schedule lookups', () => {
+    const next = getUpcomingBinCollection(parseLocalDate('2026-07-29'));
+    expect(next.label).toBe('Recycling & glass');
+    expect(next.relative).toBe('In 2 days');
   });
 });
