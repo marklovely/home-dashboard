@@ -1,19 +1,17 @@
 import { CONFIG } from '../config.js';
 import { initialiseHeader } from '../components/Header/Header.js';
-import { mountWidgetGrid } from '../components/WidgetGrid/WidgetGrid.js';
+import { createAppShell, HOME_ROUTE, navigate } from '../shell/AppShell.js';
 import { initialiseBattery } from './modules/battery.js';
 import { watchNetwork } from './modules/network.js';
 import { initialiseWeather } from './modules/weather.js';
-import { getActiveProfileId } from '../services/profileService.js';
-import { getWidgetsForProfile } from '../services/widgetRegistry.js';
-import '../widgets/Alexa/index.js';
+import '../apps/index.js';
+import '../widgets/index.js';
 
 const elements = {
   greeting: document.querySelector('#greeting'),
   date: document.querySelector('#date'),
   clock: document.querySelector('#clock'),
   seconds: document.querySelector('#seconds'),
-  grid: document.querySelector('#button-grid'),
   toast: document.querySelector('#toast'),
   lastCommand: document.querySelector('#last-command'),
   network: {
@@ -32,22 +30,34 @@ const elements = {
 };
 
 function registerServiceWorker() {
-  // A service worker should not control Vite's development server because it can
-  // cache stale HTML, CSS and transformed JavaScript modules.
   if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js').catch(console.error);
   }
 }
 
-const widgetContext = {
+const shellContext = {
   config: CONFIG,
   toast: elements.toast,
-  lastCommand: elements.lastCommand
+  lastCommand: elements.lastCommand,
+  navigate(appId) {
+    navigate(appId === HOME_ROUTE ? HOME_ROUTE : appId);
+  }
 };
 
 initialiseHeader(elements);
 watchNetwork(elements.network);
-mountWidgetGrid(elements.grid, getWidgetsForProfile(getActiveProfileId()), widgetContext);
 initialiseBattery(elements.battery);
 initialiseWeather(elements.weather, CONFIG.weather);
+
+createAppShell({
+  viewport: document.querySelector('#app-viewport'),
+  homeHeader: document.querySelector('#shell-home-header'),
+  appNav: document.querySelector('#shell-nav'),
+  homeButton: document.querySelector('#shell-home-button'),
+  appTitle: document.querySelector('#shell-app-title'),
+  statusStrip: document.querySelector('#shell-status'),
+  shellFooter: document.querySelector('#shell-footer'),
+  shellContext
+});
+
 registerServiceWorker();
