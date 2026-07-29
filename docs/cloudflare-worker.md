@@ -11,6 +11,7 @@ Cloudflare Pages (Home Hub PWA)
 Cloudflare Worker (lovely-home-hub-api)
         ├── POST /api/button/VBxx  → Virtual Buttons (access code in Worker secret)
         ├── POST /api/auth/owner   → Owner PIN (OWNER_PIN Worker secret only)
+        ├── GET  /api/weather      → Home forecast, advice (Open-Meteo via Worker)
         └── GET  /api/private-config → Wi-Fi, contacts, address
 ```
 
@@ -60,6 +61,8 @@ npm run deploy
 `OWNER_PIN` is a **Worker secret**, not a Pages variable. Rate limiting for owner auth uses the `OWNER_AUTH_LIMITER` Durable Object binding defined in `worker/wrangler.toml` (applied on deploy via migrations).
 
 For local dev, add `OWNER_PIN` to `worker/.dev.vars` (gitignored) — never commit the real PIN.
+
+**Home weather location:** `HOME_LATITUDE` and `HOME_LONGITUDE` in `worker/wrangler.toml` `[vars]`. Update these on the Worker if you move house — the dashboard only calls `GET /api/weather`.
 
 Verify:
 

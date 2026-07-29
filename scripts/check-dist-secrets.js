@@ -5,6 +5,8 @@ const distDir = join(process.cwd(), 'dist');
 const forbidden = [
   'VITE_VIRTUAL_BUTTONS_ACCESS_CODE',
   'VITE_OWNER_PIN',
+  'api.open-meteo.com',
+  'open-meteo.com',
   'PASTE_YOUR_VIRTUAL_BUTTONS',
   'api.virtualbuttons.com/v1'
 ];
