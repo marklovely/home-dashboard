@@ -218,7 +218,7 @@ Public guide copy lives in `guide-catalog.json`. Values that must not ship in pu
 
 When keys are missing, the UI shows safe placeholders (for example Wi-Fi details once secure house-sitter access is enabled) — never `undefined`, empty buttons, or broken QR codes.
 
-Future: serve protected values from Cloudflare Access–protected Workers or environment-backed config at deploy time, not from the static Pages bundle.
+Production: Cloudflare Access and the Worker `GET /api/private-config` path (see [cloudflare-access.md](./cloudflare-access.md)) serve protected values at runtime, not from the static Pages bundle.
 
 ### Content pipeline (PDF not served in-app)
 

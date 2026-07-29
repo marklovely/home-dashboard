@@ -1,5 +1,4 @@
-import { verifyOwnerBearer } from '../lib/ownerToken.js';
-import { getHomeCalendar } from '../calendar/calendarService.js';
+import { authenticateRequest, hasRequiredRole } from '../lib/requestAuth.js';
 
 /**
  * @param {Request} request
@@ -11,10 +10,16 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
-  const authorized = await verifyOwnerBearer(request.headers.get('Authorization'), env);
-  if (!authorized) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await authenticateRequest(request, env, fetchImpl);
+  if (!auth.ok) {
+    return Response.json({ error: 'Unauthorized', code: auth.code }, { status: auth.status });
   }
+
+  if (!hasRequiredRole(auth, 'owner')) {
+    return Response.json({ error: 'Forbidden', code: 'FORBIDDEN' }, { status: 403 });
+  }
+
+  const { getHomeCalendar } = await import('../calendar/calendarService.js');
 
   try {
     const payload = await getHomeCalendar(env, fetchImpl);

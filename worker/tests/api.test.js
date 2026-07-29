@@ -1,24 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 import { handleRequest } from '../src/index.js';
-import { buildPrivateConfig } from '../src/routes/privateConfig.js';
+import { buildPrivateConfig } from '../src/routes/privateConfigRoute.js';
 import { isAllowedButtonCode, normalizeButtonCode } from '../src/lib/buttonAllowlist.js';
 import { resolveCorsOrigin } from '../src/lib/cors.js';
+import { createAccessTestEnv, signTestAccessJwt, withAccessJwt } from './accessTestHelpers.js';
+import { withTestLimiters } from './testEnv.js';
 
-import { createTestOwnerAuthLimiter } from './testOwnerAuthLimiter.js';
+const env = withTestLimiters(createAccessTestEnv());
 
-const env = {
-  VIRTUAL_BUTTONS_ACCESS_CODE: 'test-access-code',
-  ALLOWED_ORIGINS: 'https://app.example,http://localhost:5173',
-  OWNER_PIN: '1234',
-  OWNER_AUTH_LIMITER: createTestOwnerAuthLimiter(),
-  PRIVATE_WIFI_SSID: 'Net',
-  PRIVATE_WIFI_PASSWORD: 'Pass',
-  PRIVATE_MARK_PHONE: '111',
-  PRIVATE_MARK_EMAIL: 'mark@example.com',
-  PRIVATE_DONNA_PHONE: '222',
-  PRIVATE_DONNA_EMAIL: 'donna@example.com',
-  PRIVATE_HOME_ADDRESS: '1 Road'
-};
+async function authedRequest(url, init = {}, email = 'owner@example.com') {
+  const token = await signTestAccessJwt(email, env);
+  return new Request(url, withAccessJwt(token, init));
+}
 
 describe('health', () => {
   it('returns ok status', async () => {
@@ -38,10 +31,10 @@ describe('buttons', () => {
 
   it('rejects unknown buttons', async () => {
     const response = await handleRequest(
-      new Request('https://worker.test/api/button/VB99', { method: 'POST' }),
+      await authedRequest('https://worker.test/api/button/VB99', { method: 'POST', body: '{}' }),
       env
     );
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(404);
     const body = await response.json();
     expect(body.error.code).toBe('UNKNOWN_BUTTON');
     expect(JSON.stringify(body)).not.toContain('test-access-code');
@@ -50,7 +43,7 @@ describe('buttons', () => {
   it('calls upstream with server-side access code', async () => {
     const fetchImpl = vi.fn().mockResolvedValue({ ok: true });
     const response = await handleRequest(
-      new Request('https://worker.test/api/button/VB01', { method: 'POST' }),
+      await authedRequest('https://worker.test/api/button/VB01', { method: 'POST', body: '{}' }),
       env,
       fetchImpl
     );
@@ -69,6 +62,21 @@ describe('private-config', () => {
     expect(payload.contacts.mark.phone).toBe('111');
     expect(payload.home.address).toBe('1 Road');
     expect(payload).not.toHaveProperty('lockbox');
+  });
+
+  it('requires Access authentication', async () => {
+    const response = await handleRequest(new Request('https://worker.test/api/private-config'), env);
+    expect(response.status).toBe(401);
+  });
+
+  it('returns config for authenticated user', async () => {
+    const response = await handleRequest(
+      await authedRequest('https://worker.test/api/private-config'),
+      env
+    );
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.contacts.mark.name).toBe('Mark Lovely');
   });
 
   it('omits missing optional fields safely', () => {
@@ -95,7 +103,7 @@ describe('cors', () => {
 
   it('blocks disallowed browser origin on private-config', async () => {
     const response = await handleRequest(
-      new Request('https://worker.test/api/private-config', {
+      await authedRequest('https://worker.test/api/private-config', {
         headers: { Origin: 'https://evil.example' }
       }),
       env
@@ -103,27 +111,27 @@ describe('cors', () => {
     expect(response.status).toBe(403);
   });
 
-  it('allows Authorization on calendar preflight', async () => {
+  it('allows Cf-Access-Jwt-Assertion on preflight', async () => {
     const response = await handleRequest(
-      new Request('https://worker.test/api/calendar', {
+      new Request('https://worker.test/api/session', {
         method: 'OPTIONS',
         headers: {
           Origin: 'http://localhost:5173',
           'Access-Control-Request-Method': 'GET',
-          'Access-Control-Request-Headers': 'authorization'
+          'Access-Control-Request-Headers': 'cf-access-jwt-assertion'
         }
       }),
       env
     );
     expect(response.status).toBe(204);
-    expect(response.headers.get('Access-Control-Allow-Headers')).toMatch(/Authorization/);
+    expect(response.headers.get('Access-Control-Allow-Headers')).toMatch(/Cf-Access-Jwt-Assertion/i);
   });
 });
 
 describe('owner auth', () => {
-  it('returns 200 for correct PIN', async () => {
+  it('returns 200 for correct PIN when Access identity is owner', async () => {
     const response = await handleRequest(
-      new Request('https://worker.test/api/auth/owner', {
+      await authedRequest('https://worker.test/api/auth/owner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.1' },
         body: JSON.stringify({ pin: '1234' })
@@ -141,7 +149,7 @@ describe('owner auth', () => {
 
   it('returns 401 for incorrect PIN', async () => {
     const response = await handleRequest(
-      new Request('https://worker.test/api/auth/owner', {
+      await authedRequest('https://worker.test/api/auth/owner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.2' },
         body: JSON.stringify({ pin: '0000' })
@@ -156,7 +164,7 @@ describe('owner auth', () => {
 
   it('returns 400 for malformed PIN', async () => {
     const response = await handleRequest(
-      new Request('https://worker.test/api/auth/owner', {
+      await authedRequest('https://worker.test/api/auth/owner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: '12' })
@@ -168,7 +176,7 @@ describe('owner auth', () => {
 
   it('returns 503 when OWNER_PIN secret is missing', async () => {
     const response = await handleRequest(
-      new Request('https://worker.test/api/auth/owner', {
+      await authedRequest('https://worker.test/api/auth/owner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: '1234' })
@@ -181,10 +189,7 @@ describe('owner auth', () => {
   });
 
   it('rate limits after repeated failures', async () => {
-    const limiterEnv = {
-      ...env,
-      OWNER_AUTH_LIMITER: createTestOwnerAuthLimiter()
-    };
+    const limiterEnv = withTestLimiters(createAccessTestEnv());
     const requestInit = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.99' },
@@ -192,13 +197,13 @@ describe('owner auth', () => {
     };
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const response = await handleRequest(
-        new Request('https://worker.test/api/auth/owner', requestInit),
+        await authedRequest('https://worker.test/api/auth/owner', requestInit),
         limiterEnv
       );
       expect(response.status).toBe(401);
     }
     const blocked = await handleRequest(
-      new Request('https://worker.test/api/auth/owner', requestInit),
+      await authedRequest('https://worker.test/api/auth/owner', requestInit),
       limiterEnv
     );
     expect(blocked.status).toBe(429);
