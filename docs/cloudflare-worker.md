@@ -11,6 +11,7 @@ Cloudflare Pages (Home Hub PWA)
 Cloudflare Worker (lovely-home-hub-api)
         ├── POST /api/button/VBxx  → Virtual Buttons (access code in Worker secret)
         ├── POST /api/auth/owner   → Owner PIN (OWNER_PIN Worker secret only)
+        ├── GET  /api/weather      → Home forecast, advice (Open-Meteo via Worker)
         └── GET  /api/private-config → Wi-Fi, contacts, address
 ```
 
@@ -38,6 +39,8 @@ For production, set in **Cloudflare Pages** (frontend project only):
 - `VITE_API_BASE_URL` — your `*.workers.dev` URL (or custom API hostname)
 - `VITE_DEPLOYMENT_MODE=home` — for the full hub tablet (or `house-sitter` for guest-only builds)
 
+Set the **same** `VITE_API_BASE_URL` (and deployment mode) for **Preview** environment variables, not only Production. PR preview builds use the Preview scope; without it, weather and other Worker features show as unavailable.
+
 Do **not** set `VITE_OWNER_PIN` on Pages. Owner PIN validation runs only on the Worker via the `OWNER_PIN` secret (see below).
 
 ## Deploy Worker
@@ -60,6 +63,8 @@ npm run deploy
 `OWNER_PIN` is a **Worker secret**, not a Pages variable. Rate limiting for owner auth uses the `OWNER_AUTH_LIMITER` Durable Object binding defined in `worker/wrangler.toml` (applied on deploy via migrations).
 
 For local dev, add `OWNER_PIN` to `worker/.dev.vars` (gitignored) — never commit the real PIN.
+
+**Home weather location:** `HOME_LATITUDE` and `HOME_LONGITUDE` in `worker/wrangler.toml` `[vars]`. Update these on the Worker if you move house — the dashboard only calls `GET /api/weather`.
 
 Verify:
 

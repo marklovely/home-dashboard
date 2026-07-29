@@ -64,6 +64,7 @@ export function createAppShell({
 
     if (isHome) {
       document.title = branding.documentTitleBase;
+      document.body.classList.remove('is-weather-route');
       void renderModeHomeScreen(viewport, getVisibleApps(), shellContext);
       return;
     }
@@ -80,6 +81,7 @@ export function createAppShell({
     }
 
     document.title = `${getAppDisplayTitle(app)} · ${branding.documentTitleBase}`;
+    document.body.classList.toggle('is-weather-route', route === 'weather');
     app.mount(viewport, shellContext);
   };
 
