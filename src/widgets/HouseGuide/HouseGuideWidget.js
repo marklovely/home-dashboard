@@ -6,6 +6,7 @@ import {
   listGuideTopics,
   searchGuideTopics
 } from '../../services/guideService.js';
+import { consumePendingGuideTopic } from '../../services/guideNavigation.js';
 import {
   renderGuideCategoryCard,
   renderGuideTopicList,
@@ -235,6 +236,10 @@ function createInteractiveHouseGuide(context) {
   });
 
   showExplore();
+  const pendingTopic = consumePendingGuideTopic();
+  if (pendingTopic) {
+    openTopic(pendingTopic);
+  }
   return root;
 }
 

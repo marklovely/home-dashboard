@@ -4,6 +4,7 @@ const APP_DISPLAY_ORDER = [
   'scooter',
   'weather',
   'bins',
+  'emergency',
   'plex',
   'calendar',
   'settings'
