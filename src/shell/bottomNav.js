@@ -1,5 +1,5 @@
-import { renderIcon } from '../../components/icons/renderIcon.js';
-import { getModeConfig } from '../../modes/modeConfig.js';
+import { renderIcon } from '../components/icons/renderIcon.js';
+import { getModeConfig } from '../modes/modeConfig.js';
 import { HOME_ROUTE, getCurrentRoute } from './router.js';
 
 /**

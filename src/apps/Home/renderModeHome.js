@@ -1,4 +1,4 @@
-import { isHouseSitterMode } from '../modes/modeConfig.js';
+import { isHouseSitterMode } from '../../modes/modeConfig.js';
 import { renderHomeScreen } from './renderHome.js';
 import { renderHouseSitterHome } from './renderHouseSitterHome.js';
 
