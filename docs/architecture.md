@@ -239,6 +239,31 @@ Concept search across categories and topics with aliases (e.g. `kettle` / `tea` 
 
 Legacy Markdown under `src/content/houseguide/*.md` remains optional source material until extraction fills the catalog.
 
+## Intelligent weather
+
+Weather is **Worker-only**. The dashboard never calls Open-Meteo (or any other provider) from the browser.
+
+```
+Weather app + status strip + home card
+        │
+        ▼
+GET /api/weather (Cloudflare Worker)
+        │
+        ├── 15-minute in-memory cache (`worker/src/weather/weatherCache.js`)
+        ├── Provider abstraction (`WeatherProvider` / `OpenMeteoProvider`)
+        ├── Mapping to stable JSON (`mapOpenMeteo.js`)
+        └── Rule-based advice (`adviceEngine.js`)
+        │
+        ▼
+Open-Meteo forecast + air-quality APIs
+```
+
+**Home location** is configured on the Worker (`HOME_LATITUDE`, `HOME_LONGITUDE` in `worker/wrangler.toml` `[vars]`). The frontend sends no coordinates.
+
+**Frontend:** `src/services/weatherService.js` refreshes every **15 minutes** and on startup; `src/apps/Weather/WeatherApp.js` renders current conditions, hourly/daily forecasts, and advice; Lucide icons via `src/weather/renderWeatherIcon.js`.
+
+**Offline / upstream failure:** If Open-Meteo is unreachable, the Worker serves the last cached payload when available; the UI shows age labels (`Updated N minutes ago`) and a graceful unavailable state when no data exists.
+
 ## Cloudflare Worker API
 
 Virtual Buttons and private house values are served through a Cloudflare Worker — see [cloudflare-worker.md](./cloudflare-worker.md). The PWA uses `VITE_API_BASE_URL`; the Virtual Buttons access code never ships to the browser.

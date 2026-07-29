@@ -3,6 +3,7 @@ import { handleHealth } from './routes/health.js';
 import { handlePrivateConfig } from './routes/privateConfig.js';
 import { handleButtonPress } from './routes/buttons.js';
 import { handleOwnerAuth } from './routes/ownerAuth.js';
+import { handleWeather } from './routes/weather.js';
 import { methodNotAllowed, notFound } from './lib/errors.js';
 
 /**
@@ -52,6 +53,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
     response = handleHealth();
   } else if (url.pathname === '/api/private-config' && request.method === 'GET') {
     response = handlePrivateConfig(env);
+  } else if (url.pathname === '/api/weather' && request.method === 'GET') {
+    response = await handleWeather(env, fetchImpl);
   } else if (url.pathname === '/api/auth/owner') {
     response = await handleOwnerAuth(request, correlationId, env);
   } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {
