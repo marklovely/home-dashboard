@@ -1,3 +1,5 @@
+import { fetchWeatherForecast } from '../../api/weather.js';
+
 const WEATHER_CODES = {
   0: ['Clear', '☀'], 1: ['Mainly clear', '◒'], 2: ['Partly cloudy', '◒'], 3: ['Overcast', '☁'],
   45: ['Fog', '≋'], 48: ['Fog', '≋'], 51: ['Drizzle', '☂'], 53: ['Drizzle', '☂'], 55: ['Drizzle', '☂'],
@@ -25,21 +27,14 @@ export async function resolveCoordinates(config, geolocation = navigator.geoloca
   });
 }
 
-export async function fetchWeather({ latitude, longitude, fetchImpl = fetch }) {
-  const url = new URL('https://api.open-meteo.com/v1/forecast');
-  url.searchParams.set('latitude', latitude);
-  url.searchParams.set('longitude', longitude);
-  url.searchParams.set('current', 'temperature_2m,weather_code');
-  url.searchParams.set('timezone', 'auto');
-  const response = await fetchImpl(url);
-  if (!response.ok) throw new Error('Weather request failed');
-  return response.json();
+export async function fetchWeather({ latitude, longitude, fetchImpl }) {
+  return fetchWeatherForecast({ latitude, longitude, fetchImpl });
 }
 
 export async function initialiseWeather(elements, config, dependencies = {}) {
   try {
     const coordinates = await resolveCoordinates(config, dependencies.geolocation);
-    const data = await fetchWeather({ ...coordinates, fetchImpl: dependencies.fetchImpl });
+    const data = await fetchWeatherForecast({ ...coordinates, fetchImpl: dependencies.fetchImpl });
     const description = describeWeather(data.current.weather_code);
     elements.temp.textContent = `${Math.round(data.current.temperature_2m)}°C`;
     elements.text.textContent = description.text;
