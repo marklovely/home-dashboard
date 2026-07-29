@@ -5,6 +5,7 @@ import {
   setWeatherCache,
   WEATHER_CACHE_TTL_MS
 } from './weatherCache.js';
+import { applyWeatherAudience } from './adviceEngine.js';
 
 /**
  * @param {Record<string, string | undefined>} env
@@ -19,10 +20,19 @@ function readHomeCoordinates(env) {
 }
 
 /**
+ * @param {import('./weatherTypes.js').DashboardWeatherPayload} body
+ * @param {import('./adviceEngine.js').WeatherAdviceAudience} audience
+ */
+function withAudience(body, audience) {
+  return applyWeatherAudience(body, audience);
+}
+
+/**
  * @param {Record<string, string | undefined>} env
  * @param {typeof fetch} fetchImpl
+ * @param {import('./adviceEngine.js').WeatherAdviceAudience} [audience]
  */
-export async function getHomeWeather(env, fetchImpl = fetch) {
+export async function getHomeWeather(env, fetchImpl = fetch, audience = 'owner') {
   const coords = readHomeCoordinates(env);
   if (!coords) {
     return {
@@ -38,10 +48,13 @@ export async function getHomeWeather(env, fetchImpl = fetch) {
   if (cachedFresh) {
     return {
       status: 200,
-      body: {
-        ...cachedFresh,
-        meta: { ...cachedFresh.meta, fromCache: true, stale: false }
-      }
+      body: withAudience(
+        {
+          ...cachedFresh,
+          meta: { ...cachedFresh.meta, fromCache: true, stale: false }
+        },
+        audience
+      )
     };
   }
 
@@ -55,20 +68,23 @@ export async function getHomeWeather(env, fetchImpl = fetch) {
       stale: false
     });
     setWeatherCache(payload, WEATHER_CACHE_TTL_MS);
-    return { status: 200, body: payload };
+    return { status: 200, body: withAudience(payload, audience) };
   } catch {
     const stale = getStaleWeatherCache();
     if (stale) {
       return {
         status: 200,
-        body: {
-          ...stale,
-          meta: {
-            ...stale.meta,
-            fromCache: true,
-            stale: true
-          }
-        }
+        body: withAudience(
+          {
+            ...stale,
+            meta: {
+              ...stale.meta,
+              fromCache: true,
+              stale: true
+            }
+          },
+          audience
+        )
       };
     }
     return {

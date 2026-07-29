@@ -6,15 +6,22 @@ import { ensureApiBaseUrl, getApiBaseUrl } from './apiBase.js';
  * @param {typeof fetch} [fetchImpl]
  * @returns {Promise<{ ok: true, data: DashboardWeather } | { ok: false, status: number, message: string }>}
  */
-export async function fetchDashboardWeather(fetchImpl = fetch) {
+/**
+ * @param {Object} [options]
+ * @param {'owner' | 'house-sitter'} [options.audience]
+ * @param {typeof fetch} [options.fetchImpl]
+ */
+export async function fetchDashboardWeather({ audience = 'owner', fetchImpl = fetch } = {}) {
   await ensureApiBaseUrl();
   const base = getApiBaseUrl();
   if (!base) {
     return { ok: false, status: 0, message: 'API not configured' };
   }
 
+  const query = audience === 'house-sitter' ? '?audience=house-sitter' : '';
+
   try {
-    const response = await fetchImpl(`${base}/api/weather`, { cache: 'no-store' });
+    const response = await fetchImpl(`${base}/api/weather${query}`, { cache: 'no-store' });
     const body = await response.json();
     if (!response.ok) {
       return {

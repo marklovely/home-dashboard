@@ -38,18 +38,34 @@ describe('weather mapping', () => {
   });
 });
 
-describe('weather advice', () => {
-  it('generates contextual advice for rain and heat', () => {
+describe('weather advice audiences', () => {
+  it('uses Scooter-focused copy for house sitters', () => {
     const payload = mapOpenMeteoToDashboard(SAMPLE_OPEN_METEO_FORECAST, null, {
       fetchedAt: new Date().toISOString(),
       fromCache: false,
       stale: false
     });
-    payload.today.high = 29;
-    const advice = generateWeatherAdvice(payload);
-    expect(advice.some((item) => /rain/i.test(item.title) || /warm/i.test(item.title))).toBe(true);
+    payload.today.rainChance = 5;
+    payload.hourly = payload.hourly.map((hour) => ({ ...hour, rainChance: 5 }));
+    const advice = generateWeatherAdvice(payload, 'house-sitter');
+    expect(advice.some((item) => /Scooter/i.test(item.detail))).toBe(true);
+    expect(advice.some((item) => /gardening/i.test(item.detail))).toBe(false);
   });
 
+  it('keeps owner gardening tips for dry days', () => {
+    const payload = mapOpenMeteoToDashboard(SAMPLE_OPEN_METEO_FORECAST, null, {
+      fetchedAt: new Date().toISOString(),
+      fromCache: false,
+      stale: false
+    });
+    payload.today.rainChance = 5;
+    payload.hourly = payload.hourly.map((hour) => ({ ...hour, rainChance: 5 }));
+    const advice = generateWeatherAdvice(payload, 'owner');
+    expect(advice.some((item) => /gardening/i.test(item.detail))).toBe(true);
+  });
+});
+
+describe('dashboard alerts', () => {
   it('builds dashboard rain alert from hourly forecast', () => {
     const payload = mapOpenMeteoToDashboard(SAMPLE_OPEN_METEO_FORECAST, null, {
       fetchedAt: new Date().toISOString(),

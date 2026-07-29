@@ -1,5 +1,6 @@
 import { fetchDashboardWeather } from '../api/weatherApi.js';
 import { setWeatherSnapshot } from './homeWeatherSnapshot.js';
+import { isHouseSitterExperience, subscribeToUserMode } from '../auth/userMode.js';
 
 export const WEATHER_REFRESH_MS = 15 * 60 * 1000;
 
@@ -70,7 +71,10 @@ export async function refreshWeather(fetchImpl = fetch) {
   state = { ...state, status: 'loading' };
   notify();
 
-  const result = await fetchDashboardWeather(fetchImpl);
+  const result = await fetchDashboardWeather({
+    audience: isHouseSitterExperience() ? 'house-sitter' : 'owner',
+    fetchImpl
+  });
     if (result.ok) {
       state = { status: 'ready', data: result.data, message: '' };
       applySnapshotFromData(result.data);
@@ -117,6 +121,9 @@ export function startWeatherAutoRefresh(fetchImpl = fetch) {
   refreshTimer = setInterval(() => {
     void refreshWeather(fetchImpl);
   }, WEATHER_REFRESH_MS);
+  subscribeToUserMode(() => {
+    void refreshWeather(fetchImpl);
+  });
 }
 
 export function stopWeatherAutoRefresh() {

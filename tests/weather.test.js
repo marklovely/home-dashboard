@@ -23,7 +23,7 @@ describe('weather API client', () => {
       ok: true,
       json: async () => ({ current: { temperature: 20 } })
     });
-    const result = await fetchDashboardWeather(fetchImpl);
+    const result = await fetchDashboardWeather({ fetchImpl });
     expect(result.ok).toBe(true);
     expect(fetchImpl.mock.calls[0][0]).toBe('https://api.example.test/api/weather');
   });

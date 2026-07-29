@@ -5,11 +5,15 @@
  * @property {string} detail
  */
 
+/** @typedef {'owner' | 'house-sitter'} WeatherAdviceAudience */
+
 /**
  * @param {import('./weatherTypes.js').DashboardWeatherPayload} weather
+ * @param {WeatherAdviceAudience} [audience]
  * @returns {WeatherAdviceItem[]}
  */
-export function generateWeatherAdvice(weather) {
+export function generateWeatherAdvice(weather, audience = 'owner') {
+  const houseSitter = audience === 'house-sitter';
   /** @type {WeatherAdviceItem[]} */
   const advice = [];
   const { current, today, hourly, daily } = weather;
@@ -38,55 +42,93 @@ export function generateWeatherAdvice(weather) {
   if (heavyRainSoon || afternoonRain || rainChance >= 60) {
     advice.push({
       icon: 'rain',
-      title: 'Rain expected this afternoon.',
-      detail: 'Consider walking Scooter earlier.'
+      title: houseSitter ? 'Rain expected later today.' : 'Rain expected this afternoon.',
+      detail: houseSitter
+        ? 'Walk Scooter before it starts — towel him off if he gets wet.'
+        : 'Consider walking Scooter earlier.'
     });
   } else if (rainChance <= 15 && !upcomingHours.some((h) => (h.rainChance ?? 0) > 30)) {
-    advice.push({
-      icon: 'garden',
-      title: 'Dry weather today.',
-      detail: 'Good opportunity for gardening.'
-    });
+    advice.push(
+      houseSitter
+        ? {
+            icon: 'dog',
+            title: 'Dry weather today.',
+            detail: 'A good day for Scooter’s usual walks — bring water if you stay out long.'
+          }
+        : {
+            icon: 'garden',
+            title: 'Dry weather today.',
+            detail: 'Good opportunity for gardening.'
+          }
+    );
   }
 
   if (Number.isFinite(high) && high >= 28) {
     advice.push({
       icon: 'dog',
-      title: 'Very warm today.',
-      detail: 'Early morning or evening walks are recommended.'
+      title: houseSitter ? 'Very warm for Scooter.' : 'Very warm today.',
+      detail: houseSitter
+        ? 'Walk early or late, stick to shade, and offer plenty of water.'
+        : 'Early morning or evening walks are recommended.'
     });
   }
 
   if (Number.isFinite(low) && low <= 2) {
-    advice.push({
-      icon: 'cold',
-      title: 'Cold overnight.',
-      detail: 'Check outdoor taps.'
-    });
+    advice.push(
+      houseSitter
+        ? {
+            icon: 'cold',
+            title: 'Cold overnight.',
+            detail: 'Keep Scooter’s evening walk brief and dry him off when you come in.'
+          }
+        : {
+            icon: 'cold',
+            title: 'Cold overnight.',
+            detail: 'Check outdoor taps.'
+          }
+    );
   }
 
   if (wind >= 25) {
-    advice.push({
-      icon: 'wind',
-      title: 'Strong winds expected.',
-      detail: 'Secure lightweight garden furniture.'
-    });
+    advice.push(
+      houseSitter
+        ? {
+            icon: 'wind',
+            title: 'Windy today.',
+            detail: 'Keep Scooter on a lead in open areas — gusts can unsettle smaller dogs.'
+          }
+        : {
+            icon: 'wind',
+            title: 'Strong winds expected.',
+            detail: 'Secure lightweight garden furniture.'
+          }
+    );
   }
 
   if (uv >= 6) {
     advice.push({
       icon: 'sun',
       title: 'High UV today.',
-      detail: 'Consider sunscreen if spending time outdoors.'
+      detail: houseSitter
+        ? 'Use sunscreen on walks with Scooter and favour shady routes.'
+        : 'Consider sunscreen if spending time outdoors.'
     });
   }
 
   if (advice.length === 0) {
-    advice.push({
-      icon: 'home',
-      title: 'Enjoy the day.',
-      detail: 'Conditions look comfortable at home.'
-    });
+    advice.push(
+      houseSitter
+        ? {
+            icon: 'dog',
+            title: 'Comfortable for Scooter.',
+            detail: 'Routine walks and garden time should be fine today.'
+          }
+        : {
+            icon: 'home',
+            title: 'Enjoy the day.',
+            detail: 'Conditions look comfortable at home.'
+          }
+    );
   }
 
   return advice.slice(0, 4);
@@ -94,12 +136,16 @@ export function generateWeatherAdvice(weather) {
 
 /**
  * @param {import('./weatherTypes.js').DashboardWeatherPayload} weather
+ * @param {WeatherAdviceAudience} [audience]
  * @returns {{ label: string, icon: string } | null}
  */
-export function buildDashboardAlert(weather) {
+export function buildDashboardAlert(weather, audience = 'owner') {
   const high = weather.today?.high ?? weather.daily[0]?.high;
   if (Number.isFinite(high) && high >= 28) {
-    return { label: 'High Heat Today', icon: 'sun' };
+    return {
+      label: audience === 'house-sitter' ? 'Hot day — care for Scooter' : 'High Heat Today',
+      icon: 'sun'
+    };
   }
 
   const now = Date.now();
@@ -110,8 +156,32 @@ export function buildDashboardAlert(weather) {
     if (hoursAway > 6) break;
     if ((hour.rainChance ?? 0) >= 50) {
       const rounded = Math.max(1, Math.round(hoursAway));
-      return { label: `Rain in ${rounded} hour${rounded === 1 ? '' : 's'}`, icon: 'rain' };
+      const rainLabel = `Rain in ${rounded} hour${rounded === 1 ? '' : 's'}`;
+      return {
+        label: audience === 'house-sitter' ? `${rainLabel} — plan Scooter’s walk` : rainLabel,
+        icon: 'rain'
+      };
     }
   }
   return null;
+}
+
+/**
+ * @param {import('./weatherTypes.js').DashboardWeatherPayload} payload
+ * @param {WeatherAdviceAudience} audience
+ */
+export function applyWeatherAudience(payload, audience) {
+  return {
+    ...payload,
+    advice: generateWeatherAdvice(payload, audience),
+    dashboardAlert: buildDashboardAlert(payload, audience)
+  };
+}
+
+/**
+ * @param {string | null | undefined} value
+ * @returns {WeatherAdviceAudience}
+ */
+export function parseWeatherAudience(value) {
+  return value === 'house-sitter' ? 'house-sitter' : 'owner';
 }

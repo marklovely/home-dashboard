@@ -7,6 +7,7 @@ import {
 } from '../../services/weatherService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
+import { isHouseSitterExperience } from '../../auth/userMode.js';
 import { renderWeatherIcon } from '../../weather/renderWeatherIcon.js';
 
 /**
@@ -116,7 +117,7 @@ function renderWeatherPage(data, page) {
 
   const adviceSection = document.createElement('section');
   adviceSection.className = 'weather-section weather-advice-section';
-  adviceSection.innerHTML = '<h2 class="weather-section-title">Weather advice</h2>';
+  adviceSection.innerHTML = `<h2 class="weather-section-title">${isHouseSitterExperience() ? 'Advice for Scooter' : 'Weather advice'}</h2>`;
   const adviceList = document.createElement('div');
   adviceList.className = 'weather-advice-list';
   for (const item of data.advice) {
