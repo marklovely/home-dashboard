@@ -74,13 +74,23 @@ export async function verifyAccessJwt(token, env, fetchImpl = fetch) {
 
   try {
     const jwks = getJwks(env, fetchImpl);
-    const { payload } = await jwtVerify(token, jwks, {
-      issuer,
-      audience: audienceOption
-    });
-    const email = normalizeEmail(typeof payload.email === 'string' ? payload.email : '');
-    if (!email) return { ok: false };
-    return { ok: true, email };
+    const audiences = accessAudiences(env);
+    const tryAudiences = audiences.length ? audiences : [audienceOption].flat();
+
+    for (const aud of tryAudiences) {
+      try {
+        const { payload } = await jwtVerify(token, jwks, {
+          issuer,
+          audience: aud
+        });
+        const email = normalizeEmail(typeof payload.email === 'string' ? payload.email : '');
+        if (!email) continue;
+        return { ok: true, email };
+      } catch {
+        continue;
+      }
+    }
+    return { ok: false };
   } catch {
     return { ok: false };
   }

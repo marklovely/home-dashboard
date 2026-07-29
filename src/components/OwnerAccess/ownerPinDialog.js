@@ -114,6 +114,13 @@ export function openOwnerPinDialog({ host, onClose, onSuccess }) {
       showError('Too many attempts', 'Please try again later');
       return;
     }
+    if (result === 'access_required') {
+      showError(
+        'Cloudflare Access session missing',
+        'Refresh the page and complete email login on this tablet, then try your PIN again.'
+      );
+      return;
+    }
     if (result === 'unavailable') {
       showError('Owner access is temporarily unavailable', '');
       return;

@@ -1,7 +1,7 @@
 import { ensureApiBaseUrl, buildApiUrl } from '../api/apiBase.js';
 import { withApiCredentials } from '../api/accessFetch.js';
 
-/** @typedef {'success' | 'invalid' | 'rate_limited' | 'unavailable'} OwnerAuthResult */
+/** @typedef {'success' | 'invalid' | 'rate_limited' | 'unavailable' | 'access_required'} OwnerAuthResult */
 
 /**
  * @typedef {{ authenticated?: boolean, mode?: string, ownerSessionExpiresAt?: string | null }} OwnerAuthSessionBody
@@ -17,7 +17,20 @@ import { withApiCredentials } from '../api/accessFetch.js';
  */
 async function resultFromResponse(response) {
   if (response.status === 200) return 'success';
-  if (response.status === 401) return 'invalid';
+  if (response.status === 401) {
+    try {
+      const body = await response.clone().json();
+      if (body?.code === 'UNAUTHENTICATED' || body?.code === 'INVALID_TOKEN') {
+        return 'access_required';
+      }
+      if (body?.code === 'INVALID_PIN') {
+        return 'invalid';
+      }
+    } catch {
+      /* ignore */
+    }
+    return 'invalid';
+  }
   if (response.status === 429) return 'rate_limited';
   if (response.status === 503) return 'unavailable';
   return 'unavailable';
