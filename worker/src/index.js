@@ -2,6 +2,7 @@ import { corsHeaders, resolveCorsOrigin } from './lib/cors.js';
 import { handleHealth } from './routes/health.js';
 import { handlePrivateConfig } from './routes/privateConfig.js';
 import { handleButtonPress } from './routes/buttons.js';
+import { handleOwnerAuth } from './routes/ownerAuth.js';
 import { methodNotAllowed, notFound } from './lib/errors.js';
 
 /**
@@ -51,6 +52,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
     response = handleHealth();
   } else if (url.pathname === '/api/private-config' && request.method === 'GET') {
     response = handlePrivateConfig(env);
+  } else if (url.pathname === '/api/auth/owner') {
+    response = await handleOwnerAuth(request, correlationId);
   } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {
     const buttonParam = decodeURIComponent(url.pathname.slice('/api/button/'.length));
     response = await handleButtonPress(request, buttonParam, env, correlationId, fetchImpl);

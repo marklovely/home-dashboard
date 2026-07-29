@@ -93,3 +93,20 @@ describe('cors', () => {
     expect(response.status).toBe(403);
   });
 });
+
+describe('owner auth', () => {
+  it('returns 501 until server-side auth is implemented', async () => {
+    const response = await handleRequest(
+      new Request('https://worker.test/api/auth/owner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: '1234' })
+      }),
+      env
+    );
+    expect(response.status).toBe(501);
+    const body = await response.json();
+    expect(body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(JSON.stringify(body)).not.toContain('1234');
+  });
+});

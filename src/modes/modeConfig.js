@@ -1,4 +1,4 @@
-import { AppMode, getAppMode, isHouseSitterMode } from './appMode.js';
+import { isHouseSitterExperience } from '../auth/userMode.js';
 
 /** @typedef {{ id: string, route: string, label: string, iconId: string }} ShellNavItem */
 
@@ -72,17 +72,11 @@ const houseSitterConfig = {
   }
 };
 
-/** @type {Record<AppModeId, ModeConfig>} */
-export const modeConfig = {
-  [AppMode.Owner]: ownerConfig,
-  [AppMode.HouseSitter]: houseSitterConfig
-};
-
 export function getModeConfig() {
-  return modeConfig[getAppMode()];
+  return isHouseSitterExperience() ? houseSitterConfig : ownerConfig;
 }
 
-export { isHouseSitterMode };
+export { isHouseSitterExperience as isHouseSitterMode };
 
 /**
  * @param {import('../types/app.js').App} app
