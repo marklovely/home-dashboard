@@ -16,6 +16,7 @@ import { subscribeToUserMode } from '../auth/userMode.js';
  * @param {HTMLElement} options.shellChromeTitle
  * @param {HTMLElement} options.homeButton
  * @param {HTMLElement} options.statusStrip
+ * @param {HTMLElement | null} [options.shellHeaderWeather]
  * @param {HTMLElement} options.shellFooter
  * @param {HTMLElement} options.shellTagline
  * @param {import('../types/app.js').ShellContext} options.shellContext
@@ -27,6 +28,7 @@ export function createAppShell({
   shellChromeTitle,
   homeButton,
   statusStrip,
+  shellHeaderWeather,
   shellFooter,
   shellTagline,
   bottomNav,
@@ -44,8 +46,12 @@ export function createAppShell({
     const isHome = route === HOME_ROUTE;
     homeWelcome.hidden = !isHome || !mode.showHomeWelcomeGreeting;
     statusStrip.hidden = !isHome || !mode.showOwnerStatusStrip;
+    if (shellHeaderWeather) {
+      shellHeaderWeather.hidden = !isHome || !mode.showSitterHeaderWeather;
+    }
     shellFooter.hidden = route !== 'controls' || !mode.showControlsFooter;
     document.body.classList.toggle('mode-house-sitter', Boolean(mode.bottomNav?.length));
+    document.body.classList.toggle('shell-route-home', isHome);
 
     const branding = mode.branding;
     shellChromeTitle.textContent = isHome
