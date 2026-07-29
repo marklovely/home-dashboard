@@ -4,6 +4,7 @@ import { join } from 'node:path';
 const distDir = join(process.cwd(), 'dist');
 const forbidden = [
   'VITE_VIRTUAL_BUTTONS_ACCESS_CODE',
+  'VITE_OWNER_PIN',
   'PASTE_YOUR_VIRTUAL_BUTTONS',
   'api.virtualbuttons.com/v1'
 ];

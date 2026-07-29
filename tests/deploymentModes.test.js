@@ -6,7 +6,7 @@ import {
   isHomeDeployment,
   isHouseSitterDeployment
 } from '../src/auth/deploymentMode.js';
-import { OwnerAuthProvider } from '../src/auth/OwnerAuthProvider.js';
+import { ownerAuthProvider } from '../src/auth/OwnerAuthProvider.js';
 import {
   canReturnToHouseSitterMode,
   isOwnerPinSessionActive,
@@ -69,13 +69,17 @@ describe('user mode defaults', () => {
 describe('owner authentication', () => {
   afterEach(resetAuthState);
 
-  it('validates PIN locally via OwnerAuthProvider without calling worker when configured', async () => {
-    vi.stubEnv('VITE_OWNER_PIN', '1234');
+  it('authenticates only through the Worker API', async () => {
     vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
-    const fetchImpl = vi.fn().mockResolvedValue({ status: 404, ok: false });
-    await expect(OwnerAuthProvider.validatePin('1234', fetchImpl)).resolves.toBe(true);
-    expect(fetchImpl).not.toHaveBeenCalled();
-    await expect(OwnerAuthProvider.validatePin('0000', fetchImpl)).resolves.toBe(false);
+    vi.stubEnv('VITE_OWNER_PIN', '');
+    const fetchImpl = vi.fn().mockResolvedValue({
+      status: 200,
+      ok: true,
+      json: async () => ({ ok: true, authenticated: true })
+    });
+    await expect(ownerAuthProvider.authenticate('1234', fetchImpl)).resolves.toBe('success');
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(String(fetchImpl.mock.calls[0][1].body)).not.toContain('VITE_OWNER_PIN');
   });
 
   it('unlocking owner mode restores owner applications', () => {

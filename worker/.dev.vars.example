@@ -8,3 +8,4 @@ PRIVATE_DONNA_PHONE=00000000000
 PRIVATE_DONNA_EMAIL=donna.example@example.com
 PRIVATE_HOME_ADDRESS=Example Street, Example Town
 ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
+# Add OWNER_PIN to worker/.dev.vars for local owner-auth testing (never commit the real value).

@@ -10,6 +10,7 @@ Cloudflare Pages (Home Hub PWA)
         ▼
 Cloudflare Worker (lovely-home-hub-api)
         ├── POST /api/button/VBxx  → Virtual Buttons (access code in Worker secret)
+        ├── POST /api/auth/owner   → Owner PIN (OWNER_PIN Worker secret only)
         └── GET  /api/private-config → Wi-Fi, contacts, address
 ```
 
@@ -32,7 +33,12 @@ Copy `.env.example` to `.env.local`:
 VITE_API_BASE_URL=http://127.0.0.1:8787
 ```
 
-For production, set `VITE_API_BASE_URL` in **Cloudflare Pages** environment variables to your `*.workers.dev` URL (or custom API hostname later).
+For production, set in **Cloudflare Pages** (frontend project only):
+
+- `VITE_API_BASE_URL` — your `*.workers.dev` URL (or custom API hostname)
+- `VITE_DEPLOYMENT_MODE=home` — for the full hub tablet (or `house-sitter` for guest-only builds)
+
+Do **not** set `VITE_OWNER_PIN` on Pages. Owner PIN validation runs only on the Worker via the `OWNER_PIN` secret (see below).
 
 ## Deploy Worker
 
@@ -47,8 +53,13 @@ npx wrangler secret put PRIVATE_MARK_EMAIL
 npx wrangler secret put PRIVATE_DONNA_PHONE
 npx wrangler secret put PRIVATE_DONNA_EMAIL
 npx wrangler secret put PRIVATE_HOME_ADDRESS
+npx wrangler secret put OWNER_PIN
 npm run deploy
 ```
+
+`OWNER_PIN` is a **Worker secret**, not a Pages variable. Rate limiting for owner auth uses the `OWNER_AUTH_LIMITER` Durable Object binding defined in `worker/wrangler.toml` (applied on deploy via migrations).
+
+For local dev, add `OWNER_PIN` to `worker/.dev.vars` (gitignored) — never commit the real PIN.
 
 Verify:
 
@@ -58,10 +69,11 @@ curl -s "https://<your-worker>.workers.dev/api/health"
 
 ## CORS
 
-`ALLOWED_ORIGINS` in `wrangler.toml` (or Worker vars) lists permitted browser origins:
+`ALLOWED_ORIGINS` in `wrangler.toml` lists permitted browser origins:
 
-- Local Vite (`http://localhost:5173`, `http://127.0.0.1:5173`)
-- GitHub Pages / Cloudflare Pages production URL
+- Local Vite (`http://localhost:5173`, `http://127.0.0.1:5173`, preview on `:4173`)
+- GitHub Pages (`https://marklovely.github.io`)
+- Cloudflare Pages (`https://*.pages.dev` — production and preview hostnames)
 - Add `https://dashboard.lovely-home.co.uk` when the custom domain is live
 
 Preview deployments: add a pattern such as `https://*.pages.dev` when supported, or list known preview hostnames.
@@ -100,4 +112,4 @@ npm run check          # frontend + dist secret scan + worker tests
 cd worker && npm test  # Worker only
 ```
 
-The build step runs `scripts/check-dist-secrets.js` to ensure Virtual Buttons credentials are not present in `dist/`.
+The build step runs `scripts/check-dist-secrets.js` to ensure Virtual Buttons credentials and `VITE_OWNER_PIN` are not present in `dist/`.
