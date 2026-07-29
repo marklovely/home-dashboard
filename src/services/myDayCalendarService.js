@@ -126,7 +126,9 @@ export function getMyDayHomeSummary(asOf = new Date()) {
     const subtitle =
       state.message === 'API not configured'
         ? 'API URL not configured'
-        : 'Temporarily unavailable';
+        : state.message?.startsWith('CALENDAR_')
+          ? state.message.split(':')[0]
+          : 'Temporarily unavailable';
     return { title: 'My Day', subtitle };
   }
   const summary = buildHomeCardSummary(state.data, asOf);

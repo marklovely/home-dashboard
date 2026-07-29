@@ -176,3 +176,33 @@ export function buildHomeCardSummary(payload, asOf = new Date()) {
     subtitle: `${upcomingToday.length} events today\nNext: ${next.title} at ${nextWhen}`
   };
 }
+
+/**
+ * User-facing copy for calendar fetch failures (message holds Worker `code`, optional `:status`).
+ * @param {string} [message]
+ */
+export function myDayUnavailableMessage(message) {
+  if (message === 'API not configured') {
+    return 'The dashboard API is not configured for this site. Set VITE_API_BASE_URL on Cloudflare Pages (Preview and Production), then redeploy.';
+  }
+  if (message === 'CALENDAR_NOT_CONFIGURED') {
+    return 'The calendar feed is not configured on the Worker. Set APPLE_CALENDAR_ICS_URL with wrangler, then try your PIN again.';
+  }
+  if (message?.startsWith('CALENDAR_UPSTREAM')) {
+    const status = message.split(':')[1];
+    if (status === '403' || status === '401') {
+      return 'Apple rejected the published calendar link (HTTP ' + status + '). Create a new private published URL in Apple Calendar and update the Worker secret.';
+    }
+    if (status === '404') {
+      return 'Apple could not find that calendar feed (HTTP 404). Check APPLE_CALENDAR_ICS_URL — use the full private published URL.';
+    }
+    if (status) {
+      return 'Could not download your calendar from Apple (HTTP ' + status + '). Check the published link or try again shortly.';
+    }
+    return 'Could not download your calendar from Apple. Check the published link and Worker secret.';
+  }
+  if (message === 'CALENDAR_PARSE') {
+    return 'Your calendar feed was retrieved but could not be read. Check Worker logs or try republishing the Apple calendar link.';
+  }
+  return 'My Day is temporarily unavailable. Unlock with your owner PIN again after confirming the Worker is deployed with APPLE_CALENDAR_ICS_URL.';
+}
