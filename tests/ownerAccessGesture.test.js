@@ -46,4 +46,19 @@ describe('owner access gesture', () => {
     vi.advanceTimersByTime(5000);
     expect(host.querySelector('.owner-pin-overlay')).toBeTruthy();
   });
+
+  it('opens dialog in owner mode when private session token is missing', () => {
+    vi.useFakeTimers();
+    vi.stubEnv('VITE_DEPLOYMENT_MODE', 'home');
+    resetUserModeForTests();
+    setUserMode(UserMode.Owner);
+
+    const logo = document.createElement('p');
+    const host = document.createElement('div');
+    attachOwnerAccessGesture({ logoElements: logo, dialogHost: host });
+
+    logo.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    vi.advanceTimersByTime(5000);
+    expect(host.querySelector('.owner-pin-overlay')).toBeTruthy();
+  });
 });

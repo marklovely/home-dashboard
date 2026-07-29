@@ -1,8 +1,32 @@
 import { isOwnerAccessAllowed } from './deploymentMode.js';
+import { getOwnerAccessToken } from './ownerAccessToken.js';
 import { isHouseSitterExperience } from './userMode.js';
 import { openOwnerPinDialog } from '../components/OwnerAccess/ownerPinDialog.js';
 
 const HOLD_MS = 5000;
+
+/** House sitter unlock, or owner UI without a private API session (e.g. My Day). */
+export function canPromptOwnerPinUnlock() {
+  if (!isOwnerAccessAllowed()) return false;
+  if (isHouseSitterExperience()) return true;
+  return !getOwnerAccessToken();
+}
+
+/**
+ * Opens the owner PIN dialog when permitted.
+ * @param {{ onSuccess?: () => void, host?: HTMLElement | null }} [options]
+ * @returns {boolean}
+ */
+export function promptOwnerPinUnlock(options = {}) {
+  if (!canPromptOwnerPinUnlock()) return false;
+  const host = options.host ?? document.querySelector('#owner-access-host');
+  if (!host) return false;
+  openOwnerPinDialog({
+    host,
+    onSuccess: options.onSuccess
+  });
+  return true;
+}
 
 /**
  * @param {HTMLElement} element
@@ -38,7 +62,7 @@ function attachHoldTarget(element, onHoldComplete, onHoldStateChange) {
   element.addEventListener('pointerup', clearHold);
   element.addEventListener('pointercancel', clearHold);
   element.addEventListener('contextmenu', (event) => {
-    if (isOwnerAccessAllowed() && isHouseSitterExperience()) event.preventDefault();
+    if (canPromptOwnerPinUnlock() && isHouseSitterExperience()) event.preventDefault();
   });
 }
 
@@ -53,19 +77,13 @@ export function attachOwnerAccessGesture({ logoElements, holdFeedbackElement, di
   const targets = (Array.isArray(logoElements) ? logoElements : [logoElements]).filter(Boolean);
   if (!targets.length || !dialogHost) return;
 
-  const canUseGesture = () => isOwnerAccessAllowed() && isHouseSitterExperience();
-
   const openDialog = () => {
-    if (!canUseGesture()) return;
-    openOwnerPinDialog({
-      host: dialogHost,
-      onSuccess: () => onOwnerUnlocked?.()
-    });
+    promptOwnerPinUnlock({ host: dialogHost, onSuccess: () => onOwnerUnlocked?.() });
   };
 
   const onHoldStateChange = (active) => {
     if (holdFeedbackElement) {
-      holdFeedbackElement.classList.toggle('is-owner-hold-active', active && canUseGesture());
+      holdFeedbackElement.classList.toggle('is-owner-hold-active', active && canPromptOwnerPinUnlock());
     }
   };
 
