@@ -133,7 +133,7 @@ function renderWeatherPage(data, page) {
   }
   adviceSection.append(adviceList);
 
-  page.append(meta, currentSection, todaySection, hourlySection, dailySection, adviceSection);
+  page.append(meta, adviceSection, currentSection, todaySection, hourlySection, dailySection);
 }
 
 /**
