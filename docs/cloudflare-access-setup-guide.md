@@ -19,6 +19,21 @@ Merge and deploy **PR #20 (security lockdown)** before turning this on in produc
 
 ---
 
+## Which “Add application” screen to use (important)
+
+Cloudflare shows **Add an application** with tabs. Lovely Home is **not** a private internal app.
+
+| What you are protecting | Top tab | Sub-tab (pill buttons) | Do **not** use |
+|-------------------------|---------|-------------------------|----------------|
+| **Pages dashboard** (`*.pages.dev`) | **Self-hosted and private** | **Public DNS** | Private destinations |
+| **Worker API** (`lovely-home-hub-api.*.workers.dev`) | **Self-hosted and private** | **Workers** (pick your Worker) **or** **Public DNS** (enter the `workers.dev` hostname) | Private destinations |
+
+**Private destinations** is for things like `10.0.0.5` or `myapp.internal` behind a tunnel — that is why the diagram shows IP addresses. Your dashboard is on the public internet (`pages.dev`), so that sub-tab is the wrong one.
+
+You will create **two** Access applications (Pages first, then Worker). Repeat **Add an application** twice.
+
+---
+
 ## Step 1 — Write down your hostnames
 
 1. Open [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages**.
@@ -54,16 +69,18 @@ Keep these three hostnames on a sticky note:
 
 1. Zero Trust → **Access** → **Applications**.
 2. Click **Add an application**.
-3. Choose **Self-hosted**.
-4. Fill in:
+3. Top tab: **Self-hosted and private** (already selected).
+4. Sub-tab: click **Public DNS** (not **Private destinations**).
+5. Click **Continue** (or **Continue with Self-hosted and private**).
+6. On the next screens, fill in:
    - **Application name:** `Lovely Home — Pages production`
    - **Session Duration:** e.g. 24 hours (tablet-friendly) or shorter if you prefer
-   - **Application domain:**
-     - **Subdomain:** leave as shown or enter the Pages host without path
-     - **Domain:** `home-dashboard-a11.pages.dev`  
-       (If the UI asks for a single field, enter the full hostname: `home-dashboard-a11.pages.dev`.)
+   - **Public hostname / domain:** your full Pages host, e.g. `home-dashboard-a11.pages.dev`  
+     (Some UIs split “subdomain” + “domain”; for `home-dashboard-a11.pages.dev` you may enter subdomain `home-dashboard-a11` and domain `pages.dev`, or one field with the full hostname.)
    - **Path:** leave empty (protect entire site)
-5. Click **Next** to **Policies**.
+7. Continue to **Policies** (Step 3a below).
+
+If you do not see **Public DNS**, try **Continue** from the first screen and look for a **Public hostname** or **Domain** field on the next page — enter `home-dashboard-a11.pages.dev`.
 
 ### Step 3a — Owner policy
 
@@ -95,15 +112,16 @@ Test: open `https://home-dashboard-a11.pages.dev` in a private window → you sh
 
 The browser calls the Worker directly for weather, controls, Wi‑Fi, calendar, etc. Without this app, the dashboard will load but API calls fail with **401**.
 
-1. **Access** → **Applications** → **Add an application** → **Self-hosted**.
-2. Fill in:
-   - **Application name:** `Lovely Home — Worker API`
-   - **Application domain:** your **Worker hostname** from Step 1  
-     e.g. `lovely-home-hub-api.mark-lovely67.workers.dev`
-   - **Path:** empty
-3. **Policies:** add the **same two Allow policies** as Step 3 (Owners + House sitters with the same email lists).  
-   Tip: duplicate policies from the Pages app if the UI offers **Duplicate application**.
-4. **Save application**.
+1. **Access** → **Applications** → **Add an application** again.
+2. Top tab: **Self-hosted and private**.
+3. Sub-tab: choose **Workers**.
+4. **Continue** → select **`lovely-home-hub-api`** from the list (your API Worker).
+5. **Application name:** `Lovely Home — Worker API`
+6. **Policies:** add the **same two Allow policies** as Step 3 (Owners + House sitters with the same email lists).
+
+**Alternative if Workers tab does not list your script:** use sub-tab **Public DNS** and enter hostname `lovely-home-hub-api.<your-subdomain>.workers.dev` (from Step 1).
+
+7. **Save application**.
 
 ### Step 4a — Copy the Application Audience (AUD)
 
