@@ -23,8 +23,9 @@ describe('buttonApi', () => {
     vi.unstubAllEnvs();
   });
 
-  it('posts same-origin when API base URL is empty (Pages proxy)', async () => {
+  it('posts same-origin when Pages API proxy flag is enabled', async () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
+    vi.stubEnv('VITE_USE_PAGES_API_PROXY', 'true');
     const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
     const { resetApiBaseForTests } = await import('../src/api/apiBase.js');
     resetApiBaseForTests();

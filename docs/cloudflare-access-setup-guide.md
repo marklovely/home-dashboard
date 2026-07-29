@@ -245,8 +245,8 @@ Cloudflare only gives **two** scopes for Pages vars: **Production** and **Previe
 
 | Variable | What to do | Value |
 |----------|------------|--------|
-| `VITE_API_BASE_URL` | **Remove** the variable if it is set to your `*.workers.dev` URL, **or** edit it and clear the value so the built app uses same-origin `/api/...`. | *(no value — delete the row or leave unset)* |
-| `WORKER_API_ORIGIN` | **Add** (or edit) this on the **Pages** project only. | `https://lovely-home-hub-api.mark-lovely67.workers.dev` (no trailing `/`) |
+| `VITE_API_BASE_URL` | **Keep** set to `https://lovely-home-hub-api.mark-lovely67.workers.dev` (Preview **and** Production) unless you enable the proxy flag below. | Worker URL |
+| `VITE_USE_PAGES_API_PROXY` | Only when testing PR #21 proxy: set to **`true`**, then **unset** `VITE_API_BASE_URL`, add `WORKER_API_ORIGIN`, confirm **HUB_API** binding, update Worker `CF_ACCESS_AUD` (Pages + Worker AUDs). | `true` or unset |
 | `VITE_DEPLOYMENT_MODE` | Keep as you already have it. | `home` or `house-sitter` |
 
 Why:

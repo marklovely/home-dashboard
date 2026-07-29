@@ -36,14 +36,15 @@ describe('apiBase', () => {
     expect(fetch).toHaveBeenCalledWith('./runtime-config.json', { cache: 'no-store' });
   });
 
-  it('buildApiUrl uses same-origin path when base is empty', () => {
-    vi.stubEnv('VITE_API_BASE_URL', '');
+  it('buildApiUrl uses same-origin when VITE_USE_PAGES_API_PROXY is true', () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://worker.example.test');
+    vi.stubEnv('VITE_USE_PAGES_API_PROXY', 'true');
     expect(buildApiUrl('/api/button/VB01')).toBe('/api/button/VB01');
   });
 
-  it('buildApiUrl uses same-origin on Pages host even when VITE points at Worker', () => {
+  it('buildApiUrl uses Worker base when proxy flag is off', () => {
     vi.stubEnv('VITE_API_BASE_URL', 'https://worker.example.test');
-    vi.stubGlobal('location', { hostname: 'feature-branch.home-dashboard-a11.pages.dev' });
-    expect(buildApiUrl('/api/weather')).toBe('/api/weather');
+    vi.stubEnv('VITE_USE_PAGES_API_PROXY', '');
+    expect(buildApiUrl('/api/weather')).toBe('https://worker.example.test/api/weather');
   });
 });

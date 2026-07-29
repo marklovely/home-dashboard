@@ -1,4 +1,4 @@
-const CACHE_NAME = 'home-dashboard-v1.0.6';
+const CACHE_NAME = 'home-dashboard-v1.0.7';
 
 /** @type {string[]} */
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
@@ -38,6 +38,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
   if (url.hostname.includes('virtualbuttons.com')) return;
 
   if (event.request.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')) {
