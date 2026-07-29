@@ -96,6 +96,7 @@ Each app folder contains:
 | Settings | Profile, theme (dark), about |
 | Weather | Forecast and insights via Worker (`GET /api/weather`) |
 | Bin Collection | Static Calendar 17 + Round G2 schedules, offline |
+| My Day | Owner-only personal agenda via Worker ICS feed |
 | Others | Focused placeholders with summaries where useful |
 
 Apps declare `profiles: ['owner', 'housesitter']` (or subsets). `getAppsForProfile()` drives the Home launcher cards.
@@ -299,6 +300,33 @@ Calendar 17 lists non-Friday collections with `bankHolidayChange: true` (e.g. Tu
 See [bin-collection-maintenance.md](./bin-collection-maintenance.md) for the exact files to edit when a new PDF arrives.
 
 UI layout and screenshot maintenance: [bin-collection-ui.md](./bin-collection-ui.md).
+
+## My Day (owner-only calendar)
+
+**My Day** is a read-only personal agenda for the wall dashboard — not a full calendar replacement. It shows today, tomorrow, and the next six days from Mark’s **private Apple published ICS feed**.
+
+```
+My Day app + Home card (owner only)
+        │
+        ▼
+GET /api/calendar  (Authorization: Bearer owner token)
+        │
+        ├── Owner session token (issued on successful PIN auth, memory-only in browser)
+        ├── 5-minute normalized cache (`worker/src/calendar/calendarCache.js`)
+        ├── Provider abstraction (`CalendarProvider` / `AppleIcsProvider`)
+        ├── ICS parse + recurrence expansion (`ical-expander` + `ical.js`)
+        └── Europe/London date grouping and data minimisation
+        │
+        ▼
+Apple private ICS URL (Worker secret `APPLE_CALENDAR_ICS_URL` only)
+```
+
+- **House Sitter Mode:** My Day is not registered, not routed, and **no calendar HTTP requests** are made.
+- **Authorization:** `/api/calendar` requires a short-lived bearer token from `POST /api/auth/owner` (signed with `OWNER_SESSION_SECRET` or `OWNER_PIN`).
+- **Stale fallback:** If Apple is unreachable, the Worker serves the last cached normalized payload with `stale: true`.
+- **Read-only:** No create/edit/delete; no month grid.
+
+Deployment: [my-day-deployment.md](./my-day-deployment.md).
 
 ## Cloudflare Worker API
 

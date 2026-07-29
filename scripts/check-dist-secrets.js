@@ -5,11 +5,15 @@ const distDir = join(process.cwd(), 'dist');
 const forbidden = [
   'VITE_VIRTUAL_BUTTONS_ACCESS_CODE',
   'VITE_OWNER_PIN',
+  'VITE_APPLE_CALENDAR',
+  'APPLE_CALENDAR_ICS_URL=https',
   'api.open-meteo.com',
   'open-meteo.com',
   'PASTE_YOUR_VIRTUAL_BUTTONS',
   'api.virtualbuttons.com/v1'
 ];
+
+const forbiddenPatterns = [/webcal:\/\//i, /p\d{2}-calendarws\.icloud\.com/i, /icloud\.com\/published\//i];
 
 function collectFiles(dir) {
   /** @type {string[]} */
@@ -29,6 +33,12 @@ for (const file of collectFiles(distDir)) {
   for (const needle of forbidden) {
     if (text.includes(needle)) {
       console.error(`Forbidden pattern "${needle}" found in ${file}`);
+      failed = true;
+    }
+  }
+  for (const pattern of forbiddenPatterns) {
+    if (pattern.test(text)) {
+      console.error(`Forbidden pattern "${pattern}" found in ${file}`);
       failed = true;
     }
   }

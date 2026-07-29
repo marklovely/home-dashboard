@@ -116,7 +116,10 @@ describe('owner auth', () => {
     );
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body).toEqual({ ok: true, authenticated: true });
+    expect(body.ok).toBe(true);
+    expect(body.authenticated).toBe(true);
+    expect(typeof body.token).toBe('string');
+    expect(typeof body.expiresAt).toBe('string');
     expect(JSON.stringify(body)).not.toContain('1234');
   });
 

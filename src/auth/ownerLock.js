@@ -5,7 +5,9 @@ import {
   markOwnerUnlockedByPin,
   stopOwnerInactivityWatch
 } from './ownerSession.js';
+import { clearOwnerAccessToken } from './ownerAccessToken.js';
 import { startOwnerInactivityWatch } from './ownerInactivity.js';
+import { refreshMyDayCalendar } from '../services/myDayCalendarService.js';
 
 /** @type {(() => void) | null} */
 let navigateHomeHandler = null;
@@ -24,6 +26,7 @@ export function registerOwnerLockNavigation(navigateHome) {
 export function lockToHouseSitterMode(navigateHome = navigateHomeHandler ?? undefined) {
   stopOwnerInactivityWatch();
   clearOwnerPinSession();
+  clearOwnerAccessToken();
   setUserMode(UserMode.HouseSitter);
   setActiveProfileId('housesitter');
   navigateHome?.();
@@ -40,5 +43,6 @@ export function completeOwnerUnlock(refreshShell) {
     lockToHouseSitterMode();
     refreshShell?.();
   });
+  void refreshMyDayCalendar();
   refreshShell?.();
 }

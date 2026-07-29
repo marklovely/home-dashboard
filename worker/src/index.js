@@ -4,6 +4,7 @@ import { handlePrivateConfig } from './routes/privateConfig.js';
 import { handleButtonPress } from './routes/buttons.js';
 import { handleOwnerAuth } from './routes/ownerAuth.js';
 import { handleWeather } from './routes/weather.js';
+import { handleCalendar } from './routes/calendar.js';
 import { methodNotAllowed, notFound } from './lib/errors.js';
 
 /**
@@ -57,6 +58,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
     response = await handleWeather(request, env, fetchImpl);
   } else if (url.pathname === '/api/auth/owner') {
     response = await handleOwnerAuth(request, correlationId, env);
+  } else if (url.pathname === '/api/calendar' && request.method === 'GET') {
+    response = await handleCalendar(request, env, fetchImpl);
   } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {
     const buttonParam = decodeURIComponent(url.pathname.slice('/api/button/'.length));
     response = await handleButtonPress(request, buttonParam, env, correlationId, fetchImpl);
