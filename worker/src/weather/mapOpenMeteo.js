@@ -116,7 +116,7 @@ export function mapOpenMeteoToDashboard(forecast, airQuality, meta) {
     });
   }
 
-  payload.advice = generateWeatherAdvice(payload);
-  payload.dashboardAlert = buildDashboardAlert(payload);
+  payload.advice = generateWeatherAdvice(payload, 'owner');
+  payload.dashboardAlert = buildDashboardAlert(payload, 'owner');
   return payload;
 }
