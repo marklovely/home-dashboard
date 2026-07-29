@@ -9,12 +9,10 @@ import {
 import {
   canFetchMyDayCalendar,
   clearMyDayCalendarState,
-  getMyDayHomeSummary,
   refreshMyDayCalendar
 } from '../src/services/myDayCalendarService.js';
 import { resetApiBaseForTests } from '../src/api/apiBase.js';
-import { setOwnerAccessToken, clearOwnerAccessToken, resetOwnerAccessTokenForTests } from '../src/auth/ownerAccessToken.js';
-import { setUserMode, UserMode, resetUserModeForTests } from '../src/auth/userMode.js';
+import { resetUserModeForTests, setUserMode, UserMode } from '../src/auth/userMode.js';
 import { getAppsForProfile } from '../src/services/appRegistry.js';
 import '../src/apps/index.js';
 
@@ -60,7 +58,6 @@ describe('My Day calendar service', () => {
     vi.stubEnv('VITE_API_BASE_URL', 'https://worker.test');
     resetApiBaseForTests();
     resetUserModeForTests();
-    resetOwnerAccessTokenForTests();
     clearMyDayCalendarState();
     setUserMode(UserMode.Owner);
   });
@@ -78,15 +75,7 @@ describe('My Day calendar service', () => {
     expect(canFetchMyDayCalendar()).toBe(false);
   });
 
-  it('does not fetch without owner token', async () => {
-    const fetchImpl = vi.fn();
-    await refreshMyDayCalendar(fetchImpl);
-    expect(fetchImpl).not.toHaveBeenCalled();
-    expect(getMyDayHomeSummary().subtitle).toMatch(/Owner PIN required/i);
-  });
-
-  it('fetches when owner token is present', async () => {
-    setOwnerAccessToken('token', new Date(Date.now() + 600000).toISOString());
+  it('fetches in owner user mode without a legacy bearer token', async () => {
     const fetchImpl = vi.fn(async () => ({
       ok: true,
       status: 200,
@@ -97,7 +86,6 @@ describe('My Day calendar service', () => {
   });
 
   it('clears state when switching to house sitter', async () => {
-    setOwnerAccessToken('token', new Date(Date.now() + 600000).toISOString());
     const fetchImpl = vi.fn(async () => ({
       ok: true,
       status: 200,
@@ -106,7 +94,6 @@ describe('My Day calendar service', () => {
     await refreshMyDayCalendar(fetchImpl);
     clearMyDayCalendarState();
     setUserMode(UserMode.HouseSitter);
-    clearOwnerAccessToken();
     expect(canFetchMyDayCalendar()).toBe(false);
   });
 });

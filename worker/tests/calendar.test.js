@@ -1,7 +1,7 @@
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { parseAndExpandIcs } from '../src/calendar/recurrence.js';
 import {
   getHomeCalendar,
@@ -10,6 +10,7 @@ import {
 import { expireCalendarCacheForTests } from '../src/calendar/calendarCache.js';
 import { issueOwnerToken, verifyOwnerBearer } from '../src/lib/ownerToken.js';
 import { handleCalendar } from '../src/routes/calendar.js';
+import { createAccessTestEnv, signTestAccessJwt, withAccessJwt } from './accessTestHelpers.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const sampleIcs = readFileSync(join(__dirname, 'fixtures/sample-calendar.ics'), 'utf8');
@@ -83,9 +84,12 @@ describe('calendar cache and provider', () => {
 });
 
 describe('owner calendar authorization', () => {
+  const accessEnv = createAccessTestEnv({ OWNER_SESSION_SECRET: 'test-signing-secret-value' });
+
   beforeEach(() => {
     resetCalendarCacheForTests();
   });
+
   it('issues and verifies owner bearer token', async () => {
     const env = { OWNER_SESSION_SECRET: 'test-signing-secret-value' };
     const session = await issueOwnerToken(env);
@@ -94,22 +98,20 @@ describe('owner calendar authorization', () => {
     expect(ok).toBe(true);
   });
 
-  it('returns 401 without authorization header', async () => {
-    const response = await handleCalendar(new Request('https://worker.test/api/calendar'), {}, fetch);
+  it('returns 401 without Access JWT', async () => {
+    const response = await handleCalendar(new Request('https://worker.test/api/calendar'), accessEnv, fetch);
     expect(response.status).toBe(401);
   });
 
-  it('returns calendar JSON for authorized request', async () => {
+  it('returns calendar JSON for authorized owner Access identity', async () => {
     const env = {
-      OWNER_SESSION_SECRET: 'test-signing-secret-value',
+      ...accessEnv,
       APPLE_CALENDAR_ICS_URL: 'https://calendar.example/private.ics'
     };
-    const session = await issueOwnerToken(env);
+    const token = await signTestAccessJwt('owner@example.com', env);
     const fetchImpl = vi.fn(async () => new Response(sampleIcs, { status: 200 }));
     const response = await handleCalendar(
-      new Request('https://worker.test/api/calendar', {
-        headers: { Authorization: `Bearer ${session?.token}` }
-      }),
+      new Request('https://worker.test/api/calendar', withAccessJwt(token)),
       env,
       fetchImpl
     );
@@ -121,13 +123,10 @@ describe('owner calendar authorization', () => {
   });
 
   it('returns 503 when APPLE_CALENDAR_ICS_URL is missing', async () => {
-    const env = { OWNER_SESSION_SECRET: 'test-signing-secret-value' };
-    const session = await issueOwnerToken(env);
+    const token = await signTestAccessJwt('owner@example.com', accessEnv);
     const response = await handleCalendar(
-      new Request('https://worker.test/api/calendar', {
-        headers: { Authorization: `Bearer ${session?.token}` }
-      }),
-      env,
+      new Request('https://worker.test/api/calendar', withAccessJwt(token)),
+      accessEnv,
       fetch
     );
     expect(response.status).toBe(503);

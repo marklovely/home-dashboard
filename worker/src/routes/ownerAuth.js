@@ -4,6 +4,7 @@ import {
   recordOwnerAuthFailure,
   recordOwnerAuthSuccess
 } from '../lib/ownerAuthRateLimitClient.js';
+import { authenticateRequest, hasRequiredRole } from '../lib/requestAuth.js';
 
 /**
  * @param {boolean} authenticated
@@ -33,10 +34,20 @@ function normalizePin(pin) {
  * @param {Request} request
  * @param {string} correlationId
  * @param {Record<string, string | undefined>} env
+ * @param {typeof fetch} fetchImpl
  */
-export async function handleOwnerAuth(request, correlationId, env) {
+export async function handleOwnerAuth(request, correlationId, env, fetchImpl = fetch) {
   if (request.method !== 'POST') {
     return authJson(false, 405, 'Method not allowed');
+  }
+
+  const accessAuth = await authenticateRequest(request, env, fetchImpl);
+  if (!accessAuth.ok) {
+    return authJson(false, accessAuth.status, 'Authentication required');
+  }
+
+  if (!hasRequiredRole(accessAuth, 'owner')) {
+    return authJson(false, 403, 'Owner access not permitted for this identity');
   }
 
   const configuredPin = env.OWNER_PIN?.trim();
@@ -53,6 +64,10 @@ export async function handleOwnerAuth(request, correlationId, env) {
     body = await request.json();
   } catch {
     return authJson(false, 400, 'Invalid request');
+  }
+
+  if (typeof body?.role === 'string') {
+    /* ignore client-supplied role */
   }
 
   const pin = normalizePin(body?.pin);
