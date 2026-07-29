@@ -37,6 +37,9 @@ export async function fetchMyDayCalendar({ fetchImpl = fetch } = {}) {
         if (typeof errBody?.upstreamStatus === 'number') {
           code = `${code}:${errBody.upstreamStatus}`;
         }
+        if (typeof errBody?.networkReason === 'string') {
+          code = `${code}:${errBody.networkReason}`;
+        }
       } catch {
         /* ignore */
       }

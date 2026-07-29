@@ -188,10 +188,21 @@ export function myDayUnavailableMessage(message) {
   if (message === 'CALENDAR_NOT_CONFIGURED') {
     return 'The calendar feed is not configured on the Worker. Set APPLE_CALENDAR_ICS_URL with wrangler, then try your PIN again.';
   }
+  if (message === 'CALENDAR_INVALID_URL') {
+    return 'The calendar URL in APPLE_CALENDAR_ICS_URL is not valid HTTPS. Copy the full private published link from Apple (webcal or https) and set the secret again.';
+  }
   if (message?.startsWith('CALENDAR_UPSTREAM')) {
-    const status = message.split(':')[1];
+    const parts = message.split(':');
+    const status = parts[1];
+    const networkReason = parts[2];
+    if (status === '0' && networkReason === 'dns') {
+      return 'The Worker could not resolve Apple’s calendar host (DNS). Check the published URL hostname for typos and set the secret again.';
+    }
+    if (status === '0' && networkReason === 'tls') {
+      return 'The Worker could not establish a secure connection to Apple’s calendar servers (TLS). Try republishing the calendar link and updating the secret.';
+    }
     if (status === '0') {
-      return 'Could not reach Apple’s calendar servers from the Worker. Try again shortly, or check the published URL is HTTPS/webcal.';
+      return 'The Worker could not connect to Apple’s calendar feed (network error). On your Mac, run curl -I on the same HTTPS URL; if that fails, republish the link in Apple Calendar.';
     }
     if (status === '403' || status === '401') {
       return 'Apple rejected the published calendar link (HTTP ' + status + '). Create a new private published URL in Apple Calendar and update the Worker secret.';

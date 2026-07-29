@@ -28,6 +28,8 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
     let body;
     if (error?.code === 'CALENDAR_NOT_CONFIGURED') {
       body = { error: 'Calendar unavailable', code: 'CALENDAR_NOT_CONFIGURED', feedConfigured: false };
+    } else if (error?.code === 'CALENDAR_INVALID_URL') {
+      body = { error: 'Calendar unavailable', code: 'CALENDAR_INVALID_URL', feedConfigured: true };
     } else {
       body = {
         error: 'Calendar temporarily unavailable',
@@ -37,8 +39,19 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
       if (typeof error?.upstreamStatus === 'number') {
         body.upstreamStatus = error.upstreamStatus;
       }
+      if (typeof error?.networkReason === 'string') {
+        body.networkReason = error.networkReason;
+      }
     }
-    console.error(JSON.stringify({ event: 'calendar_failed', code: body.code, feedConfigured: body.feedConfigured, upstreamStatus: body.upstreamStatus }));
+    console.error(
+      JSON.stringify({
+        event: 'calendar_failed',
+        code: body.code,
+        feedConfigured: body.feedConfigured,
+        upstreamStatus: body.upstreamStatus,
+        networkReason: body.networkReason
+      })
+    );
     return Response.json(body, { status: 503 });
   }
 }

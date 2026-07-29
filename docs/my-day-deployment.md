@@ -50,6 +50,16 @@ The auth response **must** include `"token"` and `"expiresAt"`. If PIN succeeds 
 
 Live logs: `cd worker && npx wrangler tail`
 
+**Invalid URL in secret:** response code `CALENDAR_INVALID_URL` — re-copy the full Apple link (no extra quotes or spaces).
+
+**Network from Worker (`upstreamStatus: 0`):** the Worker never got an HTTP response from Apple. On your Mac (same URL as in the secret, as HTTPS):
+
+```bash
+curl -I "https://…your-icloud-published-url…"
+```
+
+You should see `HTTP/2 200`. If curl fails, republish the calendar in Apple Calendar and update the secret. If curl succeeds but the Worker still fails, check `wrangler tail` for `networkReason` and `detail` on `calendar_upstream_network`.
+
 ## Revoking a exposed feed
 
 If the ICS URL is ever leaked:
