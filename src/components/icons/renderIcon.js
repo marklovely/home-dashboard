@@ -2,11 +2,18 @@ import {
   BookOpen,
   Calendar,
   Clapperboard,
+  ChefHat,
   CloudSun,
   Dog,
+  Droplets,
+  Flame,
   Lightbulb,
+  MapPin,
+  Monitor,
   Settings,
+  Siren,
   Trash2,
+  Wifi,
   createElement
 } from 'lucide';
 
@@ -19,7 +26,14 @@ const ICON_NODES = {
   'trash-2': Trash2,
   clapperboard: Clapperboard,
   calendar: Calendar,
-  settings: Settings
+  settings: Settings,
+  'chef-hat': ChefHat,
+  monitor: Monitor,
+  flame: Flame,
+  droplets: Droplets,
+  wifi: Wifi,
+  siren: Siren,
+  'map-pin': MapPin
 };
 
 /**

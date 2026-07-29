@@ -61,7 +61,7 @@ Each app exports metadata rather than hardcoding Home cards:
 | `summary(context)` | Optional live card data on Home |
 | `mount(viewport, context)` | Full-screen app UI |
 
-Example capabilities: Controls → `lighting`, `heating`, `scenes`; House Guide → `search`, `offline`, `markdown`.
+Example capabilities: Controls → `lighting`, `heating`, `scenes`; House Guide → `search`, `offline`, `quick-actions`, `home-info`.
 
 ## Application summaries
 
@@ -92,7 +92,7 @@ Each app folder contains:
 |-----|------|
 | Home | Default launcher (`renderHomeScreen`); not registered in the app registry |
 | Controls | Mounts the **Alexa** widget (Virtual Buttons) |
-| House Guide | Mounts the **House Guide** widget (Markdown + search) |
+| House Guide | Mounts the **House Guide** widget (interactive home topics, search, quick actions) |
 | Settings | Profile, theme (dark), about |
 | Others | Focused placeholders with summaries where useful |
 
@@ -112,9 +112,45 @@ Network access uses `src/api/` — widgets and apps do not call `fetch()` direct
 
 `src/services/profileService.js` — active profile defaults to **owner**. Home launcher and future app visibility are profile-filtered.
 
-## House Guide content
+## House Guide
 
-Markdown lives in `src/content/houseguide/*.md` with metadata in `pages.js`. See previous House Guide docs for adding pages.
+The House Guide is an interactive companion for living in the home—not a document viewer. The UI never exposes storage format, page counts, or other implementation details.
+
+### Layering
+
+```
+House Guide Widget (presentation)
+        ↓
+Guide Service (`src/services/guideService.js`)
+        ↓
+Content Provider (adapter)
+        ↓
+Structured JSON today · Markdown/PDF/API later
+```
+
+- **Guide Service** — single facade for the widget and Home summary: `listGuideTopics`, `getGuidePage`, `searchGuideTopics`, `findBestGuideTopic`, `getGuideHomeSummary`.
+- **Content Provider** — pluggable source of truth. The app uses `jsonGuideProvider.js`, which reads `src/content/houseguide/guide-data.json`. A **markdownGuideProvider** exists for legacy `.md` files and migration tooling only; the running app does not render Markdown to users.
+- **Content model** — topics (landing cards) and pages (title, subtitle, summary, typed sections, optional actions). Types live in `src/types/guideContent.js`. Sections support plain text, tips, warnings, key/value rows, and collapsible blocks; the schema is intended to grow (images, video, QR) without rewriting the widget.
+
+### Recommended content pipeline (PDF not served in-app)
+
+Trusted source (e.g. housesitter PDF) → extract once → normalise → **structured JSON** → application. The PDF is never loaded directly in the PWA.
+
+### Quick actions
+
+Guide pages may declare `actions` in JSON. `src/widgets/HouseGuide/guideActions.js` executes them from a small registry (e.g. Alexa virtual buttons via `triggerVirtualButton`, in-app panels, navigate to another topic). Layout code does not hardcode specific buttons; new actions are data-driven.
+
+### Search
+
+Search matches **concepts** (titles, subtitles, keywords, synonyms)—not filenames or document types. Example: `television` → TV & Entertainment; `wifi` → Wi-Fi.
+
+### Presentation
+
+- **Landing** — large category cards (rooms/topics) with short subtitles.
+- **Topic pages** — rich sections plus optional Quick Actions.
+- **Home card** — meaningful summary from `getGuideHomeSummary()` (e.g. topic subtitles joined), not a guide count.
+
+Legacy Markdown under `src/content/houseguide/*.md` and `pages.js` may remain as source material until content is normalised into `guide-data.json`.
 
 ## Adding a new application
 
