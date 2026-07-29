@@ -102,13 +102,14 @@ The browser sends only the code (for example `POST /api/button/VB01`).
 3. Redeploy is not required for secret-only updates.
 4. Confirm the old code is removed from any legacy Pages env vars (`VITE_VIRTUAL_BUTTONS_ACCESS_CODE` must stay unset).
 
-## Cloudflare Access (later)
+## Cloudflare Access
 
-When `dashboard.lovely-home.co.uk` is protected with Cloudflare Access:
+Production API routes require a valid **Cloudflare Access** JWT and server-side roles. See:
 
-- Keep the Worker on `*.workers.dev` or a dedicated API hostname.
-- Optionally require Access JWT on `/api/private-config` before returning secrets.
-- Document service tokens for CI smoke tests.
+- [cloudflare-access.md](./cloudflare-access.md) — model and API matrix  
+- [cloudflare-access-runbook.md](./cloudflare-access-runbook.md) — **deployment checklist** (start with Pages + Worker hostnames while `dashboard.lovely-home.co.uk` DNS is pending)
+
+After deploy, set `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, and `OWNER_EMAILS` on the Worker before the dashboard can use weather, controls, or private config.
 
 ## Tests
 

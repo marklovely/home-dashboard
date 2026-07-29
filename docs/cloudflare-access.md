@@ -16,6 +16,12 @@ Lovely Home role
 
 **Owner PIN** (in-app unlock) only switches what the **already authenticated** tablet shows. It does **not** replace Access. Owner-only APIs (calendar, owner PIN endpoint) require an **owner** Access identity regardless of PIN.
 
+## Deployment runbook
+
+Step-by-step checklist (Phase 1 before DNS, Phase 2 for `dashboard.lovely-home.co.uk`), AUD/secret commands, and smoke-test curls:
+
+**[cloudflare-access-runbook.md](./cloudflare-access-runbook.md)**
+
 ## Manual Cloudflare configuration
 
 Perform these steps in the Cloudflare Zero Trust dashboard. This repository does **not** change your Cloudflare account automatically.
@@ -26,7 +32,7 @@ Create **separate** self-hosted (or SaaS) Access applications for each public en
 
 | Hostname | Purpose |
 |----------|---------|
-| `dashboard.lovely-home.co.uk` | Production Pages (custom domain) |
+| `dashboard.lovely-home.co.uk` | Production Pages (custom domain — **Phase 2** when DNS is live) |
 | `home-dashboard-a11.pages.dev` | Production Pages default hostname |
 | Pages preview deployments | Add each preview hostname or a documented wildcard policy |
 | Worker production hostname | Worker API |
