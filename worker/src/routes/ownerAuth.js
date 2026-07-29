@@ -11,14 +11,16 @@ import { issueOwnerSessionResponse } from '../lib/deviceSessionAuth.js';
  * @param {boolean} authenticated
  * @param {number} status
  * @param {string} [error]
+ * @param {string} [code]
  */
-function authJson(authenticated, status, error) {
+function authJson(authenticated, status, error, code) {
   const body = {
     ok: authenticated,
     authenticated
   };
   if (error) body.error = error;
-  return Response.json(body, { status });
+  if (code) body.code = code;
+  return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
 /**
@@ -44,7 +46,7 @@ export async function handleOwnerAuth(request, correlationId, env, fetchImpl = f
 
   const accessAuth = await authenticateRequest(request, env, fetchImpl);
   if (!accessAuth.ok) {
-    return authJson(false, accessAuth.status, 'Authentication required');
+    return authJson(false, accessAuth.status, 'Authentication required', accessAuth.code);
   }
 
   if (!hasRequiredRole(accessAuth, 'owner')) {
@@ -83,5 +85,5 @@ export async function handleOwnerAuth(request, correlationId, env, fetchImpl = f
   }
 
   await recordOwnerAuthFailure(request, env);
-  return authJson(false, 401, 'Invalid credentials');
+  return authJson(false, 401, 'Invalid credentials', 'INVALID_PIN');
 }

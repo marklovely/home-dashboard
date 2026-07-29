@@ -1,13 +1,14 @@
 /**
  * Same-origin API proxy (Cloudflare Pages Functions).
- * Forwards Cf-Access-Jwt-Assertion from the Pages Access session to the Worker.
+ * Forwards Cloudflare Access JWT to the Worker (header or CF_Authorization cookie).
  */
+
+import { accessJwtProbe, extractAccessJwtFromRequest } from './accessJwtExtract.js';
 
 /** @type {string[]} */
 const FORWARD_REQUEST_HEADERS = [
   'content-type',
   'accept',
-  'cf-access-jwt-assertion',
   'authorization',
   'x-correlation-id',
   'cookie'
@@ -31,38 +32,21 @@ function normalizePath(pathParam) {
 }
 
 /**
- * @param {Headers} headers
- * @param {Request} request
- */
-function ensureAccessJwtForwarded(headers, request) {
-  if (headers.has('Cf-Access-Jwt-Assertion') || headers.has('cf-access-jwt-assertion')) {
-    return;
-  }
-  const raw = request.headers.get('Cookie') ?? '';
-  for (const part of raw.split(';')) {
-    const trimmed = part.trim();
-    if (!trimmed.startsWith('CF_Authorization=')) continue;
-    const value = trimmed.slice('CF_Authorization='.length);
-    try {
-      headers.set('Cf-Access-Jwt-Assertion', decodeURIComponent(value));
-    } catch {
-      headers.set('Cf-Access-Jwt-Assertion', value);
-    }
-    return;
-  }
-}
-
-/**
  * @param {Request} request
  */
 function buildForwardInit(request) {
   const headers = new Headers();
   for (const [key, value] of request.headers.entries()) {
-    if (FORWARD_REQUEST_HEADERS.includes(key.toLowerCase())) {
+    const lower = key.toLowerCase();
+    if (FORWARD_REQUEST_HEADERS.includes(lower) || lower.startsWith('cf-')) {
       headers.set(key, value);
     }
   }
-  ensureAccessJwtForwarded(headers, request);
+
+  const jwt = extractAccessJwtFromRequest(request);
+  if (jwt) {
+    headers.set('Cf-Access-Jwt-Assertion', jwt);
+  }
 
   /** @type {RequestInit} */
   const init = {
@@ -94,6 +78,21 @@ export async function onRequest(context) {
   }
 
   const suffix = normalizePath(params.path);
+
+  if (suffix === 'access-probe' && request.method === 'GET') {
+    const probe = accessJwtProbe(request);
+    return Response.json(
+      {
+        ...probe,
+        usesHubApiBinding: Boolean(
+          env.HUB_API && typeof env.HUB_API === 'object' && 'fetch' in env.HUB_API
+        ),
+        usesWorkerOriginFallback: Boolean(workerApiOrigin(/** @type {Record<string, string | undefined>} */ (env)))
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
+  }
+
   const incoming = new URL(request.url);
   const pathAndQuery = `/api/${suffix}${incoming.search}`;
   const init = buildForwardInit(request);

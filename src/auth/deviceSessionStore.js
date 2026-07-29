@@ -98,6 +98,9 @@ export async function bootstrapDeviceSession(fetchImpl = fetch) {
  */
 export async function unlockOwner(pin, fetchImpl = fetch, onUnlocked) {
   const auth = await ownerAuthProvider.authenticate(pin, fetchImpl);
+  if (auth.status === 'access_required') {
+    return 'access_required';
+  }
   if (auth.status !== 'success') {
     return auth.status;
   }

@@ -1,10 +1,10 @@
 /**
- * Cloudflare Access JWT from the incoming request (header or CF_Authorization cookie).
+ * Extract Cloudflare Access JWT for Pages → Worker proxy (mirrors worker accessJwtFromRequest.js).
  *
  * @param {Request} request
  * @returns {string | null}
  */
-export function readAccessJwtFromRequest(request) {
+export function extractAccessJwtFromRequest(request) {
   for (const [key, value] of request.headers.entries()) {
     if (key.toLowerCase() === 'cf-access-jwt-assertion' && value?.trim()) {
       return value.trim();
@@ -33,4 +33,23 @@ export function readAccessJwtFromRequest(request) {
   }
 
   return null;
+}
+
+/**
+ * @param {Request} request
+ */
+export function accessJwtProbe(request) {
+  let hasHeaderJwt = false;
+  for (const [key] of request.headers.entries()) {
+    if (key.toLowerCase() === 'cf-access-jwt-assertion') {
+      hasHeaderJwt = true;
+      break;
+    }
+  }
+  const cookieJwt = extractAccessJwtFromRequest(request);
+  return {
+    hasHeaderJwt,
+    hasCookieJwt: Boolean(cookieJwt),
+    canForwardJwt: Boolean(cookieJwt || hasHeaderJwt)
+  };
 }
