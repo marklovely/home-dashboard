@@ -1,5 +1,8 @@
 /**
  * Signed HTTP-only device session cookie (lovely_home_device_session).
+ *
+ * Only a deliberate **sitter** cookie restricts the tablet. Without a valid sitter cookie,
+ * the device is in **owner** mode (Cloudflare Access still required for the site).
  */
 
 export const DEVICE_SESSION_COOKIE = 'lovely_home_device_session';
@@ -8,10 +11,10 @@ export const DEVICE_SESSION_VERSION = 1;
 /** 30 days */
 export const SITTER_SESSION_TTL_SEC = 30 * 24 * 60 * 60;
 
-/** 30 minutes inactivity */
+/** 30 minutes inactivity (legacy owner PIN cookie only) */
 export const OWNER_INACTIVITY_TTL_SEC = 30 * 60;
 
-/** 4 hours absolute owner cap */
+/** 4 hours absolute owner cap (legacy owner PIN cookie only) */
 export const OWNER_ABSOLUTE_TTL_SEC = 4 * 60 * 60;
 
 /**
@@ -125,14 +128,22 @@ export async function verifyDeviceSessionToken(token, env) {
 }
 
 /**
+ * Active sitter lock from a valid sitter cookie.
+ *
+ * @param {DeviceSessionClaims} claims
+ * @param {number} nowSec
+ */
+export function isActiveSitterSession(claims, nowSec) {
+  return claims.mode === 'sitter' && nowSec < claims.expiresAt;
+}
+
+/**
  * @param {DeviceSessionClaims} claims
  * @param {number} nowSec
  * @returns {DeviceMode}
  */
 export function effectiveModeFromClaims(claims, nowSec) {
-  if (claims.mode !== 'owner') return 'sitter';
-  if (nowSec >= claims.expiresAt) return 'sitter';
-  if (typeof claims.absoluteExpiresAt === 'number' && nowSec >= claims.absoluteExpiresAt) return 'sitter';
+  if (isActiveSitterSession(claims, nowSec)) return 'sitter';
   return 'owner';
 }
 
@@ -144,7 +155,9 @@ export function readDeviceSessionCookie(request) {
   for (const part of raw.split(';')) {
     const trimmed = part.trim();
     if (trimmed.startsWith(`${DEVICE_SESSION_COOKIE}=`)) {
-      return decodeURIComponent(trimmed.slice(DEVICE_SESSION_COOKIE.length + 1));
+      const value = trimmed.slice(DEVICE_SESSION_COOKIE.length + 1);
+      if (!value) return null;
+      return decodeURIComponent(value);
     }
   }
   return null;
@@ -182,13 +195,26 @@ export function createOwnerClaims(nowSec) {
 export function renewOwnerInactivity(claims, nowSec) {
   if (claims.mode !== 'owner') return claims;
   if (typeof claims.absoluteExpiresAt === 'number' && nowSec >= claims.absoluteExpiresAt) {
-    return createSitterClaims(nowSec);
+    return claims;
   }
   const inactivityExpires = nowSec + OWNER_INACTIVITY_TTL_SEC;
   const absoluteCap = claims.absoluteExpiresAt ?? nowSec + OWNER_ABSOLUTE_TTL_SEC;
   return {
     ...claims,
     expiresAt: Math.min(inactivityExpires, absoluteCap)
+  };
+}
+
+/**
+ * @returns {{ mode: DeviceMode, ownerSessionExpiresAtMs: null, claims: null, cookieValue: null, clearCookie: boolean }}
+ */
+export function defaultOwnerDeviceSession() {
+  return {
+    mode: /** @type {DeviceMode} */ ('owner'),
+    ownerSessionExpiresAtMs: null,
+    claims: null,
+    cookieValue: null,
+    clearCookie: false
   };
 }
 
@@ -200,42 +226,35 @@ export function renewOwnerInactivity(claims, nowSec) {
 export async function resolveDeviceSession(request, env, nowMs = Date.now()) {
   const nowSec = Math.floor(nowMs / 1000);
   const token = readDeviceSessionCookie(request);
-  let claims = token ? await verifyDeviceSessionToken(token, env) : null;
-
-  if (claims && nowSec >= claims.expiresAt && claims.mode === 'sitter') {
-    claims = null;
-  }
+  const hadCookie = Boolean(token);
+  const claims = token ? await verifyDeviceSessionToken(token, env) : null;
 
   if (!claims) {
-    claims = createSitterClaims(nowSec);
-    const signed = await signDeviceSession(claims, env);
     return {
-      mode: /** @type {DeviceMode} */ ('sitter'),
-      ownerSessionExpiresAtMs: null,
-      claims,
-      cookieValue: signed
+      ...defaultOwnerDeviceSession(),
+      clearCookie: hadCookie
     };
   }
 
-  const mode = effectiveModeFromClaims(claims, nowSec);
-  let nextClaims = claims;
-  let cookieValue = null;
-
-  if (mode === 'sitter' && claims.mode === 'owner') {
-    nextClaims = createSitterClaims(nowSec);
-    cookieValue = await signDeviceSession(nextClaims, env);
-  } else if (mode === 'sitter' && nowSec + SITTER_SESSION_TTL_SEC / 2 > claims.expiresAt) {
-    nextClaims = createSitterClaims(nowSec);
-    cookieValue = await signDeviceSession(nextClaims, env);
+  if (isActiveSitterSession(claims, nowSec)) {
+    let cookieValue = null;
+    let nextClaims = claims;
+    if (nowSec + SITTER_SESSION_TTL_SEC / 2 > claims.expiresAt) {
+      nextClaims = createSitterClaims(nowSec);
+      cookieValue = await signDeviceSession(nextClaims, env);
+    }
+    return {
+      mode: /** @type {DeviceMode} */ ('sitter'),
+      ownerSessionExpiresAtMs: null,
+      claims: nextClaims,
+      cookieValue,
+      clearCookie: false
+    };
   }
 
-  const ownerSessionExpiresAtMs = mode === 'owner' ? claims.expiresAt * 1000 : null;
-
   return {
-    mode,
-    ownerSessionExpiresAtMs,
-    claims: nextClaims,
-    cookieValue
+    ...defaultOwnerDeviceSession(),
+    clearCookie: hadCookie
   };
 }
 
@@ -245,6 +264,10 @@ export async function resolveDeviceSession(request, env, nowMs = Date.now()) {
  */
 export function buildDeviceSessionSetCookie(value, maxAgeSec) {
   return `${DEVICE_SESSION_COOKIE}=${encodeURIComponent(value)}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${maxAgeSec}`;
+}
+
+export function buildDeviceSessionClearCookie() {
+  return `${DEVICE_SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
 }
 
 /**
@@ -272,7 +295,7 @@ export function deviceSessionJsonBody(session) {
 /**
  * @param {Response} response
  * @param {string | null} cookieValue
- * @param {import('./deviceSession.js').DeviceSessionClaims} claims
+ * @param {DeviceSessionClaims} claims
  */
 export function attachDeviceSessionCookie(response, cookieValue, claims) {
   if (!cookieValue) return response;
@@ -284,4 +307,33 @@ export function attachDeviceSessionCookie(response, cookieValue, claims) {
     statusText: response.statusText,
     headers
   });
+}
+
+/**
+ * @param {Response} response
+ */
+export function attachClearDeviceSessionCookie(response) {
+  const headers = new Headers(response.headers);
+  headers.append('Set-Cookie', buildDeviceSessionClearCookie());
+  headers.set('Cache-Control', 'no-store');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+/**
+ * @param {Response} response
+ * @param {{ cookieValue?: string | null, claims?: DeviceSessionClaims | null, clearCookie?: boolean }} session
+ */
+export function applyDeviceSessionHeaders(response, session) {
+  let next = response;
+  if (session.clearCookie) {
+    next = attachClearDeviceSessionCookie(next);
+  }
+  if (session.cookieValue && session.claims) {
+    next = attachDeviceSessionCookie(next, session.cookieValue, session.claims);
+  }
+  return next;
 }

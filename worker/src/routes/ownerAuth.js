@@ -5,7 +5,7 @@ import {
   recordOwnerAuthSuccess
 } from '../lib/ownerAuthRateLimitClient.js';
 import { authenticateRequest, hasRequiredRole } from '../lib/requestAuth.js';
-import { issueOwnerSessionResponse } from '../lib/deviceSessionAuth.js';
+import { issueOwnerUnlockResponse } from '../lib/deviceSessionAuth.js';
 
 /**
  * @param {boolean} authenticated
@@ -81,7 +81,7 @@ export async function handleOwnerAuth(request, correlationId, env, fetchImpl = f
   const valid = timingSafeEqualString(pin, configuredPin);
   if (valid) {
     await recordOwnerAuthSuccess(request, env);
-    return issueOwnerSessionResponse(env);
+    return issueOwnerUnlockResponse();
   }
 
   await recordOwnerAuthFailure(request, env);

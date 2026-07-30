@@ -10,7 +10,7 @@ import {
 import { expireCalendarCacheForTests } from '../src/calendar/calendarCache.js';
 import { issueOwnerToken, verifyOwnerBearer } from '../src/lib/ownerToken.js';
 import { handleCalendar } from '../src/routes/calendar.js';
-import { createAccessTestEnv, signTestAccessJwt, withAccessJwt, authedOwnerDeviceRequest } from './accessTestHelpers.js';
+import { createAccessTestEnv, signTestAccessJwt, authedOwnerAccessRequest } from './accessTestHelpers.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const sampleIcs = readFileSync(join(__dirname, 'fixtures/sample-calendar.ics'), 'utf8');
@@ -103,24 +103,28 @@ describe('owner calendar authorization', () => {
     expect(response.status).toBe(401);
   });
 
-  it('returns 403 without owner device session', async () => {
+  it('returns 403 with active sitter device cookie', async () => {
     const token = await signTestAccessJwt('owner@example.com', accessEnv);
+    const { withDeviceSessionCookie } = await import('./accessTestHelpers.js');
     const response = await handleCalendar(
-      new Request('https://worker.test/api/calendar', withAccessJwt(token)),
+      new Request(
+        'https://worker.test/api/calendar',
+        await withDeviceSessionCookie(token, accessEnv, 'sitter')
+      ),
       accessEnv,
       fetch
     );
     expect(response.status).toBe(403);
   });
 
-  it('returns calendar JSON for authorized owner Access identity and device session', async () => {
+  it('returns calendar JSON for Access owner without device cookie', async () => {
     const env = {
       ...accessEnv,
       APPLE_CALENDAR_ICS_URL: 'https://calendar.example/private.ics'
     };
     const fetchImpl = vi.fn(async () => new Response(sampleIcs, { status: 200 }));
     const response = await handleCalendar(
-      await authedOwnerDeviceRequest('https://worker.test/api/calendar', env),
+      await authedOwnerAccessRequest('https://worker.test/api/calendar', env),
       env,
       fetchImpl
     );
@@ -133,7 +137,7 @@ describe('owner calendar authorization', () => {
 
   it('returns 503 when APPLE_CALENDAR_ICS_URL is missing', async () => {
     const response = await handleCalendar(
-      await authedOwnerDeviceRequest('https://worker.test/api/calendar', accessEnv),
+      await authedOwnerAccessRequest('https://worker.test/api/calendar', accessEnv),
       accessEnv,
       fetch
     );

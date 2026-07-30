@@ -3,7 +3,7 @@ import { handleRequest } from '../src/index.js';
 import { buildPrivateConfig } from '../src/routes/privateConfigRoute.js';
 import { isAllowedButtonCode, normalizeButtonCode } from '../src/lib/buttonAllowlist.js';
 import { resolveCorsOrigin } from '../src/lib/cors.js';
-import { createAccessTestEnv, signTestAccessJwt, withAccessJwt, authedOwnerDeviceRequest } from './accessTestHelpers.js';
+import { createAccessTestEnv, signTestAccessJwt, withAccessJwt, authedOwnerAccessRequest } from './accessTestHelpers.js';
 import { withTestLimiters } from './testEnv.js';
 
 const env = withTestLimiters(createAccessTestEnv());
@@ -69,9 +69,9 @@ describe('private-config', () => {
     expect(response.status).toBe(401);
   });
 
-  it('returns config for authenticated owner device session', async () => {
+  it('returns config for authenticated Access owner without device cookie', async () => {
     const response = await handleRequest(
-      await authedOwnerDeviceRequest('https://worker.test/api/private-config', env),
+      await authedOwnerAccessRequest('https://worker.test/api/private-config', env),
       env
     );
     expect(response.status).toBe(200);
@@ -155,7 +155,7 @@ describe('owner auth', () => {
     const body = await response.json();
     expect(body.authenticated).toBe(true);
     expect(body.mode).toBe('owner');
-    expect(body.ownerSessionExpiresAt).toBeTruthy();
+    expect(body.ownerSessionExpiresAt).toBeNull();
     expect(JSON.stringify(body)).not.toContain('1234');
     expect(body.token).toBeUndefined();
   });

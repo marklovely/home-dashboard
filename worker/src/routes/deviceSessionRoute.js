@@ -1,6 +1,6 @@
 import { authenticateRequest } from '../lib/requestAuth.js';
 import {
-  attachDeviceSessionCookie,
+  applyDeviceSessionHeaders,
   deviceSessionJsonBody,
   resolveDeviceSession
 } from '../lib/deviceSession.js';
@@ -25,14 +25,11 @@ export async function handleDeviceSession(request, env, fetchImpl = fetch) {
 
   const session = await resolveDeviceSession(request, env);
   const body = deviceSessionJsonBody(session);
-  let response = Response.json(body, {
-    status: 200,
-    headers: { 'Cache-Control': 'no-store' }
-  });
-
-  if (session.cookieValue) {
-    response = attachDeviceSessionCookie(response, session.cookieValue, session.claims);
-  }
-
-  return response;
+  return applyDeviceSessionHeaders(
+    Response.json(body, {
+      status: 200,
+      headers: { 'Cache-Control': 'no-store' }
+    }),
+    session
+  );
 }

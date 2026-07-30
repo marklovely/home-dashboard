@@ -18,7 +18,7 @@ import { clearOwnerAccessToken } from './ownerAccessToken.js';
 let status = 'loading';
 
 /** @type {DeviceMode} */
-let mode = 'sitter';
+let mode = 'owner';
 
 /** @type {string | null} */
 let ownerSessionExpiresAt = null;
@@ -73,7 +73,12 @@ export function clearOwnerOnlyClientData() {
 export async function refreshSession(fetchImpl = fetch) {
   const result = await fetchDeviceSession(fetchImpl);
   if (!result.ok) {
-    applyServerSession({ mode: 'sitter', ownerSessionExpiresAt: null });
+    if (result.status === 401 || result.status === 403) {
+      status = 'error';
+      notify();
+      return false;
+    }
+    applyServerSession({ mode: 'owner', ownerSessionExpiresAt: null });
     status = result.status >= 500 ? 'error' : 'ready';
     notify();
     return false;
@@ -153,7 +158,7 @@ export async function lockOwner(afterSitter, fetchImpl = fetch) {
 /** @internal */
 export function resetDeviceSessionStoreForTests() {
   status = 'loading';
-  mode = 'sitter';
+  mode = 'owner';
   ownerSessionExpiresAt = null;
   listeners.clear();
 }
