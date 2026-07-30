@@ -8,6 +8,7 @@ import { watchNetwork } from './modules/network.js';
 import { initialiseWeather } from './modules/weather.js';
 import { initTheme } from '../services/themeService.js';
 import { initDisplayPreferences } from '../services/displayPreferencesService.js';
+import { initNightModeService } from '../services/nightModeService.js';
 import { initWeatherLocationPreference } from '../services/weatherLocationService.js';
 import '../apps/index.js';
 import '../widgets/index.js';
@@ -17,9 +18,11 @@ import { attachOwnerAccessGesture } from '../auth/ownerAccessGesture.js';
 import { registerOwnerLockNavigation } from '../auth/ownerLock.js';
 import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
 import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
+import { initNightModeOverlay } from '../shell/nightModeOverlay.js';
 
 initTheme();
 initDisplayPreferences();
+initNightModeService();
 initWeatherLocationPreference();
 
 const loadingOverlay = document.querySelector('#device-session-loading');
@@ -135,6 +138,7 @@ async function initialiseDashboard() {
   });
 
   registerServiceWorker();
+  initNightModeOverlay();
 }
 
 setStartupLoading(true);
