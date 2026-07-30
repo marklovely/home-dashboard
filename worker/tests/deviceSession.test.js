@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   DEVICE_SESSION_COOKIE,
+  DEVICE_SESSION_SET_COOKIE_HEADER,
   SITTER_SESSION_TTL_SEC,
   createOwnerClaims,
   createSitterClaims,
@@ -132,6 +133,8 @@ describe('device session HTTP routes', () => {
     );
     expect(response.status).toBe(200);
     expect((await response.json()).mode).toBe('sitter');
+    expect(response.headers.get('Set-Cookie')).toMatch(new RegExp(`${DEVICE_SESSION_COOKIE}=`));
+    expect(response.headers.get(DEVICE_SESSION_SET_COOKIE_HEADER)).toMatch(/SameSite=Lax/);
   });
 
   it('sitter cookie blocks calendar', async () => {
