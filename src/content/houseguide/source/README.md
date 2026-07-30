@@ -1,13 +1,10 @@
-# House guide source
+# House guide source (optional)
 
-Place the TrustedHousesitters / owner **house guide PDF** here as:
+Everyday guide edits go in [`../guide-catalog.json`](../guide-catalog.json) — see [`../README.md`](../README.md).
 
-`house-guide.pdf`
+This folder is only for optional PDF import:
 
-The PDF is the source of truth. It is **not** served by the app. Run extraction to refresh structured content:
+- Place `house-guide.pdf` here (gitignored)
+- Run `npm run guide:extract` to dump raw page text as a reference while updating the JSON by hand
 
-```bash
-npm run guide:extract
-```
-
-That writes normalized copy into `guide-catalog.json` and images into `../media/`. Until the PDF is present, the catalog uses placeholder text from the legacy Markdown stubs.
+The app never serves the PDF.
