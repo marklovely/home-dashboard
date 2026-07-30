@@ -41,7 +41,7 @@ export const houseGuideApp = defineApp({
   description: 'Explore rooms, appliances, and help for living in the home',
   capabilities: ['search', 'offline', 'quick-actions', 'home-info'],
   accent: '#f4b64f',
-  profiles: ['owner', 'housesitter'],
+  profiles: ['housesitter'],
   summary: houseGuideSummary,
   mount: mountHouseGuideApp
 });
