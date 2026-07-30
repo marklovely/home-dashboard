@@ -337,6 +337,30 @@
           "actions": []
         },
         {
+          "id": "morning-routine",
+          "title": "Morning",
+          "subtitle": "First thing",
+          "summary": "Starting the day with Scooter",
+          "searchTerms": [
+            "morning",
+            "crate",
+            "garden",
+            "toilet",
+            "wake up"
+          ],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Each morning",
+              "steps": [
+                "Let Scooter out of the crate.",
+                "Let her into the back garden to do her business."
+              ]
+            }
+          ],
+          "actions": []
+        },
+        {
           "id": "bedtime",
           "title": "Bedtime",
           "subtitle": "Crate routine",
@@ -352,6 +376,7 @@
               "type": "steps",
               "heading": "Bedtime phrase",
               "steps": [
+                "Remove her collar before she goes into the crate (or take it off earlier in the evening).",
                 "Tell Scooter: \"It's bedtime for dogs.\"",
                 "She usually heads to the back door for a last toilet break.",
                 "Then into her crate.",
