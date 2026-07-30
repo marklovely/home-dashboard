@@ -3,6 +3,7 @@ import { triggerVirtualButton } from '../../api/virtualButtons.js';
 import { showToast } from '../../js/modules/toast.js';
 import { formatTime } from '../../js/utils/format.js';
 import { renderButtonGroups } from './buttonGroups.js';
+import { runRoutineButtonAction } from './routineButtonFeedback.js';
 
 /**
  * @param {import('../../types/widget.js').WidgetContext} context
@@ -13,18 +14,20 @@ function createTriggerHandler(context) {
       showToast(context.toast, 'You are offline');
       return;
     }
-    element.classList.add('is-pressing');
-    navigator.vibrate?.(35);
-    try {
-      await triggerVirtualButton({ buttonId: button.id });
-      showToast(context.toast, `✓ ${button.title} activated`);
-      context.lastCommand.textContent = `${button.title} · ${formatTime(new Date())}`;
-    } catch (error) {
-      console.error(error);
-      showToast(context.toast, error.message);
-    } finally {
-      window.setTimeout(() => element.classList.remove('is-pressing'), 180);
-    }
+    await runRoutineButtonAction(
+      element,
+      () => triggerVirtualButton({ buttonId: button.id }),
+      {
+        onSuccess: () => {
+          showToast(context.toast, `✓ ${button.title} activated`);
+          context.lastCommand.textContent = `${button.title} · ${formatTime(new Date())}`;
+        },
+        onError: (error) => {
+          console.error(error);
+          showToast(context.toast, error instanceof Error ? error.message : 'Request failed');
+        }
+      }
+    );
   };
 }
 
