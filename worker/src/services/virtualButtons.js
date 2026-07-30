@@ -13,6 +13,33 @@ export function buildVirtualButtonUrl(accessCode, virtualButtonId, endpoint = DE
 }
 
 /**
+ * @param {Response} response
+ */
+async function assertUpstreamAccepted(response) {
+  if (!response.ok) {
+    throw new Error('UPSTREAM_FAILED');
+  }
+
+  const contentType = response.headers.get('Content-Type')?.toLowerCase() ?? '';
+  if (!contentType.includes('application/json')) {
+    return true;
+  }
+
+  try {
+    const payload = await response.json();
+    if (payload && typeof payload === 'object' && 'message' in payload && !('pressed' in payload)) {
+      throw new Error('UPSTREAM_FAILED');
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === 'UPSTREAM_FAILED') {
+      throw error;
+    }
+  }
+
+  return true;
+}
+
+/**
  * @param {object} params
  * @param {string} params.accessCode
  * @param {number} params.virtualButtonId
@@ -22,10 +49,24 @@ export async function triggerVirtualButtonUpstream({ accessCode, virtualButtonId
   if (!accessCode?.trim()) {
     throw new Error('MISSING_ACCESS_CODE');
   }
-  const url = buildVirtualButtonUrl(accessCode, virtualButtonId);
-  const response = await fetchImpl(url, { method: 'GET', cache: 'no-store' });
+
+  const trimmedCode = accessCode.trim();
+  const body = JSON.stringify({
+    virtualButton: virtualButtonId,
+    accessCode: trimmedCode
+  });
+
+  let response = await fetchImpl(DEFAULT_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+    cache: 'no-store'
+  });
+
   if (!response.ok) {
-    throw new Error('UPSTREAM_FAILED');
+    const legacyUrl = buildVirtualButtonUrl(trimmedCode, virtualButtonId);
+    response = await fetchImpl(legacyUrl, { method: 'GET', cache: 'no-store' });
   }
-  return true;
+
+  return assertUpstreamAccepted(response);
 }

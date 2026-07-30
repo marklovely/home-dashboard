@@ -91,6 +91,11 @@ The Worker only accepts `VB01`–`VB10` mapped to the same numeric Virtual Butto
 |------|---------|
 | VB01 | Downstairs On |
 | VB02 | Bedtime |
+| VB03 | Garage Light On |
+| VB04 | Garage Light Off |
+| VB05 | Downstairs Off |
+| VB06 | Watch Movie |
+| VB07 | Heat to 20°C (owner only) |
 | VB08 | Master Bedroom Lights On |
 | VB09 | Restore Lights After Movie |
 | VB10 | Master Bedroom Lights Off |

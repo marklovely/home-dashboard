@@ -387,7 +387,7 @@
           "actions": [
             {
               "type": "alexa",
-              "buttonId": 1,
+              "buttonId": 2,
               "label": "Alexa bedtime routine"
             }
           ]
@@ -945,12 +945,12 @@
           "actions": [
             {
               "type": "alexa",
-              "buttonId": 3,
+              "buttonId": 1,
               "label": "Downstairs on"
             },
             {
               "type": "alexa",
-              "buttonId": 1,
+              "buttonId": 2,
               "label": "Alexa bedtime"
             }
           ]
@@ -1026,7 +1026,7 @@
           "actions": [
             {
               "type": "alexa",
-              "buttonId": 2,
+              "buttonId": 6,
               "label": "Watch movie"
             }
           ]
@@ -1052,7 +1052,7 @@
           "actions": [
             {
               "type": "alexa",
-              "buttonId": 2,
+              "buttonId": 6,
               "label": "Watch movie"
             }
           ]
@@ -1120,7 +1120,7 @@
           "actions": [
             {
               "type": "alexa",
-              "buttonId": 3,
+              "buttonId": 1,
               "label": "Downstairs on"
             }
           ]
@@ -1144,7 +1144,7 @@
           "actions": [
             {
               "type": "alexa",
-              "buttonId": 1,
+              "buttonId": 2,
               "label": "Alexa bedtime"
             }
           ]
@@ -1599,7 +1599,7 @@
           "actions": [
             {
               "type": "alexa",
-              "buttonId": 1,
+              "buttonId": 2,
               "label": "Alexa bedtime"
             }
           ]
