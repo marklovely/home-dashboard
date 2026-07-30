@@ -6,6 +6,8 @@ import { handleButtonPress } from './routes/buttons.js';
 import { handleOwnerAuth } from './routes/ownerAuth.js';
 import { handleWeather } from './routes/weather.js';
 import { handleCalendar } from './routes/calendar.js';
+import { handleDeviceSession } from './routes/deviceSessionRoute.js';
+import { handleDeviceMode, handleAuthLock } from './routes/deviceModeRoute.js';
 import { handleSession } from './routes/session.js';
 import { methodNotAllowed, notFound } from './lib/errors.js';
 import { bindFetch } from './lib/boundFetch.js';
@@ -65,6 +67,12 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       { error: 'AUTH_NOT_CONFIGURED', message: 'Access authentication is not configured.' },
       { status: 503 }
     );
+  } else if (url.pathname === '/api/device-session' && request.method === 'GET') {
+    response = await handleDeviceSession(request, env, fetchBound);
+  } else if (url.pathname === '/api/device-mode' && request.method === 'POST') {
+    response = await handleDeviceMode(request, env, fetchBound);
+  } else if (url.pathname === '/api/auth/lock' && request.method === 'POST') {
+    response = await handleAuthLock(request, env, fetchBound);
   } else if (url.pathname === '/api/session' && request.method === 'GET') {
     response = await handleSession(request, env, fetchBound);
   } else if (url.pathname === '/api/private-config' && request.method === 'GET') {

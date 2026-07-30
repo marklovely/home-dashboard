@@ -5,19 +5,22 @@ import {
   recordOwnerAuthSuccess
 } from '../lib/ownerAuthRateLimitClient.js';
 import { authenticateRequest, hasRequiredRole } from '../lib/requestAuth.js';
+import { issueOwnerUnlockResponse } from '../lib/deviceSessionAuth.js';
 
 /**
  * @param {boolean} authenticated
  * @param {number} status
  * @param {string} [error]
+ * @param {string} [code]
  */
-function authJson(authenticated, status, error) {
+function authJson(authenticated, status, error, code) {
   const body = {
     ok: authenticated,
     authenticated
   };
   if (error) body.error = error;
-  return Response.json(body, { status });
+  if (code) body.code = code;
+  return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
 /**
@@ -43,7 +46,7 @@ export async function handleOwnerAuth(request, correlationId, env, fetchImpl = f
 
   const accessAuth = await authenticateRequest(request, env, fetchImpl);
   if (!accessAuth.ok) {
-    return authJson(false, accessAuth.status, 'Authentication required');
+    return authJson(false, accessAuth.status, 'Authentication required', accessAuth.code);
   }
 
   if (!hasRequiredRole(accessAuth, 'owner')) {
@@ -56,7 +59,7 @@ export async function handleOwnerAuth(request, correlationId, env, fetchImpl = f
   }
 
   if (!(await ensureOwnerAuthAllowed(request, env))) {
-    return authJson(false, 429, 'Too many attempts. Try again later.');
+    return authJson(false, 429, 'Too many attempts. Please wait before trying again.');
   }
 
   let body;
@@ -78,17 +81,9 @@ export async function handleOwnerAuth(request, correlationId, env, fetchImpl = f
   const valid = timingSafeEqualString(pin, configuredPin);
   if (valid) {
     await recordOwnerAuthSuccess(request, env);
-    const { issueOwnerToken } = await import('../lib/ownerToken.js');
-    const session = await issueOwnerToken(env);
-    if (session) {
-      return Response.json(
-        { ok: true, authenticated: true, token: session.token, expiresAt: session.expiresAt },
-        { status: 200 }
-      );
-    }
-    return authJson(false, 503, 'Owner session unavailable');
+    return issueOwnerUnlockResponse();
   }
 
   await recordOwnerAuthFailure(request, env);
-  return authJson(false, 401, 'Invalid credentials');
+  return authJson(false, 401, 'Invalid credentials', 'INVALID_PIN');
 }

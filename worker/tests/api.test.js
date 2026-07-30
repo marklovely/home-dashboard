@@ -3,7 +3,7 @@ import { handleRequest } from '../src/index.js';
 import { buildPrivateConfig } from '../src/routes/privateConfigRoute.js';
 import { isAllowedButtonCode, normalizeButtonCode } from '../src/lib/buttonAllowlist.js';
 import { resolveCorsOrigin } from '../src/lib/cors.js';
-import { createAccessTestEnv, signTestAccessJwt, withAccessJwt } from './accessTestHelpers.js';
+import { createAccessTestEnv, signTestAccessJwt, withAccessJwt, authedOwnerAccessRequest } from './accessTestHelpers.js';
 import { withTestLimiters } from './testEnv.js';
 
 const env = withTestLimiters(createAccessTestEnv());
@@ -18,7 +18,7 @@ describe('health', () => {
     const response = await handleRequest(new Request('https://worker.test/api/health'), env);
     const body = await response.json();
     expect(response.status).toBe(200);
-    expect(body).toEqual({ status: 'ok', service: 'lovely-home-hub-api' });
+    expect(body).toEqual({ status: 'ok', service: 'lovely-home-hub-api', apiVersion: 2 });
     expect(JSON.stringify(body)).not.toContain('test-access-code');
   });
 });
@@ -69,9 +69,9 @@ describe('private-config', () => {
     expect(response.status).toBe(401);
   });
 
-  it('returns config for authenticated user', async () => {
+  it('returns config for authenticated Access owner without device cookie', async () => {
     const response = await handleRequest(
-      await authedRequest('https://worker.test/api/private-config'),
+      await authedOwnerAccessRequest('https://worker.test/api/private-config', env),
       env
     );
     expect(response.status).toBe(200);
@@ -83,6 +83,18 @@ describe('private-config', () => {
     const payload = buildPrivateConfig({});
     expect(payload.wifi).toEqual({});
     expect(payload.contacts.mark.name).toBe('Mark Lovely');
+  });
+  it('reads JWT from CF_Authorization cookie when header is absent', async () => {
+    const jwt = await signTestAccessJwt('owner@example.com', env);
+    const response = await handleRequest(
+      new Request('https://worker.test/api/session', {
+        headers: { Cookie: `CF_Authorization=${encodeURIComponent(jwt)}` }
+      }),
+      env
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.authenticated).toBe(true);
   });
 });
 
@@ -141,11 +153,11 @@ describe('owner auth', () => {
     );
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.ok).toBe(true);
     expect(body.authenticated).toBe(true);
-    expect(typeof body.token).toBe('string');
-    expect(typeof body.expiresAt).toBe('string');
+    expect(body.mode).toBe('owner');
+    expect(body.ownerSessionExpiresAt).toBeNull();
     expect(JSON.stringify(body)).not.toContain('1234');
+    expect(body.token).toBeUndefined();
   });
 
   it('returns 401 for incorrect PIN', async () => {

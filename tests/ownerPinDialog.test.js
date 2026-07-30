@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { openOwnerPinDialog } from '../src/components/OwnerAccess/ownerPinDialog.js';
-import { ownerAuthProvider } from '../src/auth/OwnerAuthProvider.js';
+import * as deviceSessionStore from '../src/auth/deviceSessionStore.js';
 import { resetUserModeForTests } from '../src/auth/userMode.js';
 
 describe('owner PIN dialog', () => {
@@ -22,7 +22,7 @@ describe('owner PIN dialog', () => {
   it('submits automatically on the fourth digit', async () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'home');
     vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
-    vi.spyOn(ownerAuthProvider, 'authenticate').mockResolvedValue('invalid');
+    vi.spyOn(deviceSessionStore, 'unlockOwner').mockResolvedValue('invalid');
 
     const host = document.createElement('div');
     openOwnerPinDialog({ host });
@@ -33,7 +33,7 @@ describe('owner PIN dialog', () => {
     }
 
     await vi.waitFor(() => {
-      expect(ownerAuthProvider.authenticate).toHaveBeenCalledWith('1234');
+      expect(deviceSessionStore.unlockOwner).toHaveBeenCalledWith('1234', fetch, undefined);
     });
     const dots = host.querySelectorAll('.owner-pin-dot');
     expect([...dots].every((dot) => dot.textContent === '○')).toBe(true);

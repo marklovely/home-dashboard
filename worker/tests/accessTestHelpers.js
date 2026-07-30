@@ -1,4 +1,10 @@
 import { SignJWT } from 'jose';
+import {
+  createOwnerClaims,
+  createSitterClaims,
+  DEVICE_SESSION_COOKIE,
+  signDeviceSession
+} from '../src/lib/deviceSession.js';
 
 /**
  * @param {string} email
@@ -33,6 +39,7 @@ export function createAccessTestEnv(overrides = {}) {
     VIRTUAL_BUTTONS_ACCESS_CODE: 'test-access-code',
     ALLOWED_ORIGINS: 'https://app.example,http://localhost:5173',
     OWNER_PIN: '1234',
+    OWNER_SESSION_SECRET: 'test-signing-secret-value',
     OWNER_EMAILS: 'owner@example.com',
     CF_ACCESS_TEAM_DOMAIN: 'test-team',
     CF_ACCESS_AUD: 'test-audience',
@@ -59,4 +66,34 @@ export function withAccessJwt(jwt, init = {}) {
     headers.set('Content-Type', 'application/json');
   }
   return { ...init, headers };
+}
+
+/**
+ * @param {string} jwt
+ * @param {Record<string, string | undefined>} env
+ * @param {'owner' | 'sitter'} [mode]
+ * @param {number} [nowSec]
+ * @param {RequestInit} [init]
+ */
+export async function withDeviceSessionCookie(jwt, env, mode = 'sitter', nowSec = Math.floor(Date.now() / 1000), init = {}) {
+  const claims = mode === 'owner' ? createOwnerClaims(nowSec) : createSitterClaims(nowSec);
+  const signed = await signDeviceSession(claims, env);
+  const headers = new Headers(init.headers);
+  headers.set('Cf-Access-Jwt-Assertion', jwt);
+  headers.set('Cookie', `${DEVICE_SESSION_COOKIE}=${encodeURIComponent(signed ?? '')}`);
+  if (init.method === 'POST' && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  return { ...init, headers };
+}
+
+/**
+ * @param {string} url
+ * @param {Record<string, string | undefined>} env
+ * @param {RequestInit} [init]
+ * @param {string} [email]
+ */
+export async function authedOwnerAccessRequest(url, env, init = {}, email = 'owner@example.com') {
+  const jwt = await signTestAccessJwt(email, env);
+  return new Request(url, withAccessJwt(jwt, init));
 }

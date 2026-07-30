@@ -18,6 +18,9 @@ There is **no** `wrangler.toml` at the repo root (that file would lock env vars 
 |------|--------|
 | `WORKER_API_ORIGIN` | `https://lovely-home-hub-api.mark-lovely67.workers.dev` |
 | `VITE_DEPLOYMENT_MODE` | `home` |
+| `CF_ACCESS_TEAM_DOMAIN` | Zero Trust **team name** only, e.g. `mark-lovely67` (same as Worker secret; not the full URL) |
+| `CF_ACCESS_AUD_PAGES` | **Pages** Access application AUD tag only (hex from Zero Trust → Access → your **Pages** app) |
+| `HUB_PROXY_SECRET` | Long random string — **same value** as Worker secret `HUB_PROXY_SECRET` (see §4) |
 
 `VITE_API_BASE_URL` is **optional** on Pages — production builds ignore it for API calls and use `/api` instead. You may leave it set to the Worker URL for clarity; it does not change production behaviour.
 
@@ -44,6 +47,29 @@ Paste: **`WORKER_APP_AUD,PAGES_APP_AUD`** (comma between the two hex strings fro
 
 No Worker redeploy needed after a secret update.
 
+### 3. Pages Access middleware (`functions/_middleware.js`)
+
+The repo includes the official **Cloudflare Access Pages plugin**. It validates Access on **`/api/*`** (not only static HTML). It requires **`CF_ACCESS_TEAM_DOMAIN`** and **`CF_ACCESS_AUD_PAGES`** on the Pages project (step 1).
+
+**Zero Trust → Access → Applications:** ensure there is **no Bypass policy** for `/api` or `/api/*` on your Pages hostname. If `/api` is bypassed, probes show `hasCookieHeader: false` and the Worker returns **401** for everything.
+
+### 4. Worker + Pages secret `HUB_PROXY_SECRET`
+
+When `/api/*` requests do not carry `CF_Authorization` (common on Pages), the proxy resolves your identity via Cloudflare **`get-identity`** and forwards a **signed** email to the Worker.
+
+Set the **same** secret on both:
+
+```bash
+cd worker
+npx wrangler secret put HUB_PROXY_SECRET
+```
+
+Pages → **Settings → Environment variables** → add plaintext **`HUB_PROXY_SECRET`** (Production + Preview) with the identical value, then **redeploy Pages**.
+
+Also set **`CF_ACCESS_TEAM_DOMAIN`** on Pages (plaintext), matching the Worker secret (team slug only, e.g. `mark-lovely67`).
+
+Redeploy **Worker** after adding `HUB_PROXY_SECRET` there.
+
 ### 3. Browser after deploy
 
 Hard refresh or **Application → Service workers → Unregister** once (older SW versions cached `/api` responses).
@@ -68,6 +94,8 @@ Logged into `https://home-dashboard-a11.pages.dev`, DevTools → Network:
 
 - Requests go to **`/api/weather`**, **`/api/session`**, etc. on **pages.dev**
 - Not to `lovely-home-hub-api...workers.dev`
+
+While logged in, open **`/api/access-probe`**. You want `canForwardJwt: true` and `usesHubApiBinding: true`. If `canForwardJwt` is false, Access is not reaching `/api/*`. If `usesHubApiBinding` is false, add the **HUB_API** binding and redeploy Pages. If weather works but PIN shows **Cloudflare Access session missing**, update Worker secret **`CF_ACCESS_AUD`** to include both Pages and Worker application AUD values (comma-separated).
 
 `curl` without your Access session is not a valid test of the dashboard.
 

@@ -55,7 +55,7 @@ describe('owner inactivity lock', () => {
     stopOwnerInactivityWatch();
   });
 
-  it('uses a five minute default timeout constant', () => {
-    expect(OWNER_INACTIVITY_TIMEOUT_MS).toBe(5 * 60 * 1000);
+  it('uses a thirty minute default timeout constant', () => {
+    expect(OWNER_INACTIVITY_TIMEOUT_MS).toBe(30 * 60 * 1000);
   });
 });
