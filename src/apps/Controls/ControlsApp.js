@@ -35,7 +35,7 @@ export function mountControlsApp(viewport, context) {
   }
 
   const grid = document.createElement('section');
-  grid.className = 'button-grid controls-grid';
+  grid.className = 'controls-grid controls-grid--grouped';
   grid.setAttribute('aria-label', 'Alexa routines');
   grid.replaceChildren(...collectMountedNodes(widget.mount(context)));
 
