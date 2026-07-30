@@ -7,7 +7,6 @@ import { accessJwtProbe, extractAccessJwtFromRequest } from './accessJwtExtract.
 import { fetchAccessIdentityEmail, listCookieNames, resolvePagesAccessIdentity } from './accessIdentity.js';
 import { attachHubProxyAuthHeaders } from './hubProxySign.js';
 import { middlewareAccessEmail, middlewareAccessValidated } from './middlewareAccess.js';
-import { proxyWorkerResponse } from './proxyWorkerResponse.js';
 
 /** @type {string[]} */
 const FORWARD_REQUEST_HEADERS = [
@@ -157,8 +156,7 @@ export async function onRequest(context) {
   const hubApi = env.HUB_API;
   if (hubApi && typeof hubApi === 'object' && 'fetch' in hubApi && typeof hubApi.fetch === 'function') {
     const upstream = new Request(`https://hub.internal${pathAndQuery}`, init);
-    const response = await hubApi.fetch(upstream);
-    return proxyWorkerResponse(response);
+    return hubApi.fetch(upstream);
   }
 
   const origin = workerApiOrigin(pagesEnv);
@@ -175,6 +173,5 @@ export async function onRequest(context) {
     );
   }
 
-  const response = await fetch(`${origin}${pathAndQuery}`, init);
-  return proxyWorkerResponse(response);
+  return fetch(`${origin}${pathAndQuery}`, init);
 }

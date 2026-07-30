@@ -137,7 +137,7 @@ setStartupLoading(true);
 void bootstrapDeviceSession().finally(() => {
   setStartupLoading(false);
   if (getDeviceSessionStatus() === 'error') {
-    console.warn('Device session could not be verified; staying on owner mode until Access succeeds.');
+    console.warn('Device session could not be verified; using house sitter mode.');
   }
   void initialiseDashboard();
 });

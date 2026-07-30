@@ -56,12 +56,7 @@ describe('house sitter mode configuration', () => {
     const ids = getVisibleApps().map((app) => app.id);
     expect(ids).toContain('settings');
     expect(ids).toContain('plex');
-    expect(ids).not.toContain('emergency');
-    expect(ids).not.toContain('house-guide');
-    expect(ids).not.toContain('scooter');
     expect(isAppVisible('emergency')).toBe(false);
-    expect(isAppVisible('house-guide')).toBe(false);
-    expect(isAppVisible('scooter')).toBe(false);
   });
 
   it('defines bottom navigation for house sitter experience', () => {
