@@ -2,6 +2,7 @@ import { getModeConfig } from '../../modes/modeConfig.js';
 import { triggerVirtualButton } from '../../api/virtualButtons.js';
 import { showToast } from '../../js/modules/toast.js';
 import { renderButtonGroups } from '../Alexa/buttonGroups.js';
+import { runRoutineButtonAction } from '../Alexa/routineButtonFeedback.js';
 
 /**
  * @param {string} subtitle
@@ -42,18 +43,18 @@ export function mountSitterControlsGrid(context) {
         showToast(context.toast, 'You are offline — try again when connected.');
         return;
       }
-      el.classList.add('is-pressing');
-      navigator.vibrate?.(35);
       const display = displayButtons.find((b) => b.id === pressed.id) ?? pressed;
-      try {
-        await triggerVirtualButton({ buttonId: pressed.id });
-        showToast(context.toast, `✓ ${display.title}`);
-      } catch (error) {
-        console.error(error);
-        showToast(context.toast, 'That control is unavailable right now. Please try again.');
-      } finally {
-        window.setTimeout(() => el.classList.remove('is-pressing'), 180);
-      }
+      await runRoutineButtonAction(
+        el,
+        () => triggerVirtualButton({ buttonId: pressed.id }),
+        {
+          onSuccess: () => showToast(context.toast, `✓ ${display.title}`),
+          onError: (error) => {
+            console.error(error);
+            showToast(context.toast, 'That control is unavailable right now. Please try again.');
+          }
+        }
+      );
     },
     (element) => {
       element.classList.add('routine-button--sitter');
