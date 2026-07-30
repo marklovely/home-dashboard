@@ -2220,3 +2220,59 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   .routine-button { min-height: 112px; padding: 14px; }
   .button-icon { width: 42px; height: 42px; margin-bottom: 12px; }
 }
+
+.night-mode-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  background: #000;
+  color: color-mix(in srgb, var(--text) 36%, #000);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.night-mode-overlay[hidden] {
+  display: none;
+}
+.night-mode-panel {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+  pointer-events: none;
+}
+.night-mode-clock {
+  font-size: clamp(4rem, 18vw, 8rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.night-mode-date {
+  margin: 0;
+  font-size: clamp(1rem, 2.8vw, 1.35rem);
+  color: color-mix(in srgb, var(--text) 28%, #000);
+}
+.night-mode-hint {
+  margin: 18px 0 0;
+  font-size: 0.92rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 22%, #000);
+}
+body.night-mode-active {
+  overflow: hidden;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .night-mode-overlay:not([hidden]) {
+    animation: night-mode-fade-in 420ms ease;
+  }
+}
+@keyframes night-mode-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
