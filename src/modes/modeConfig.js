@@ -22,6 +22,7 @@ import { isHouseSitterExperience } from '../auth/userMode.js';
  * @property {boolean} showSitterHeaderWeather
  * @property {string[]} sitterEssentialAppIds
  * @property {string[]} sitterSecondaryAppIds
+ * @property {string[]} routableAppIds
  * @property {{ labels: Record<number, { title: string, subtitle: string }> } | null} controls
  * @property {Record<string, string>} appTitleOverrides
  */
@@ -43,6 +44,7 @@ const ownerConfig = {
   showSitterHeaderWeather: false,
   sitterEssentialAppIds: [],
   sitterSecondaryAppIds: [],
+  routableAppIds: [],
   controls: null,
   appTitleOverrides: {}
 };
@@ -58,10 +60,20 @@ const houseSitterConfig = {
   homeAppIds: ['weather', 'scooter', 'house-guide', 'controls', 'bins', 'emergency'],
   sitterEssentialAppIds: ['scooter', 'house-guide', 'controls', 'emergency'],
   sitterSecondaryAppIds: ['weather', 'bins'],
+  routableAppIds: [
+    'weather',
+    'scooter',
+    'house-guide',
+    'controls',
+    'bins',
+    'emergency',
+    'settings'
+  ],
   bottomNav: [
     { id: 'nav-home', route: 'home', label: 'Home', iconId: 'home' },
     { id: 'nav-guide', route: 'house-guide', label: 'House Guide', iconId: 'book-open' },
-    { id: 'nav-emergency', route: 'emergency', label: 'Emergency', iconId: 'siren' }
+    { id: 'nav-emergency', route: 'emergency', label: 'Emergency', iconId: 'siren' },
+    { id: 'nav-settings', route: 'settings', label: 'Settings', iconId: 'settings' }
   ],
   showOwnerStatusStrip: false,
   showControlsFooter: false,

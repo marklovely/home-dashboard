@@ -68,7 +68,7 @@ describe('house sitter mode configuration', () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
     resetUserModeForTests();
     const nav = getModeConfig().bottomNav ?? [];
-    expect(nav.map((item) => item.route)).toEqual(['home', 'house-guide', 'emergency']);
+    expect(nav.map((item) => item.route)).toEqual(['home', 'house-guide', 'emergency', 'settings']);
   });
 
   it('registers emergency app routing target', () => {
