@@ -287,6 +287,7 @@ body.is-bins-route .app-viewport > .bins-app {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  zoom: var(--home-ui-scale, 1);
 }
 .home-launcher {
   flex: 1;
@@ -1140,7 +1141,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   right: 0;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 6px;
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
   background: rgba(8, 10, 14, 0.96);
