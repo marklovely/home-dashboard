@@ -1,59 +1,71 @@
 # House Guide content
 
-## Source PDF
+## Edit the guide (normal workflow)
 
-Place the TrustedHousesitters guide at `source/house-guide.pdf` (gitignored). The app never loads the PDF.
+**File:** `src/content/houseguide/guide-catalog.json`
 
-## Build catalog
+This is the only file you need for copy changes. The app reads it directly — no Python, no rebuild.
 
-After updating the PDF or extraction text:
+1. Search the JSON for the topic title (e.g. `"Scooter"`, `"Heating"`).
+2. Edit text inside `"blocks"` — look for `"content"`, `"steps"`, or `"items"`.
+3. Run `npm run dev` and check House Guide in the browser.
+4. Commit and push; Cloudflare Pages redeploys.
+
+A short cheat sheet lives next to the file: [`src/content/houseguide/README.md`](../src/content/houseguide/README.md).
+
+### Validate before push
 
 ```bash
-python3 -m venv .venv-guide
-.venv-guide/bin/pip install pypdf pymupdf
-npm run guide:build-catalog
+npm test -- tests/guideCatalog.test.js tests/guideMedia.test.js
 ```
 
-This writes `guide-catalog.json` from `source/extracted-text.txt` (also gitignored when generated from PDF).
+Or the full suite: `npm run check`.
 
-## Private values
+## Block types
 
-Copy `private-content.example.json` to `private-content.local.json` (gitignored) on trusted devices. Protected blocks in the catalog resolve keys such as `wifi.password` and `contacts.mark.phone`.
+| type | use for |
+|------|---------|
+| `text` | Paragraph (`content`, optional `heading`) |
+| `steps` | Numbered list (`steps` array) |
+| `tip` / `warning` / `note` | Callout boxes |
+| `keyValues` | Label/value pairs |
+| `heroImage` / `gallery` | Photos via `mediaId` |
+| `place` | Local pub/walk entries |
+| `protected` | Wi‑Fi, contacts, lockbox — resolved at runtime |
 
-For production, plan to inject these via Cloudflare Access–protected configuration rather than committing real values.
+Full typedefs: `src/types/guideContent.js`.
 
-## Images and media IDs
+## Images
 
-Photos live in `src/content/houseguide/media/` (JPEG/PNG/WebP). The catalog **`media`** map uses stable IDs (for example `hot-water-machine-controls`) with:
+Photos go in `src/content/houseguide/media/`. Register each image in the `"media"` map at the top of `guide-catalog.json`:
 
-- `file` — filename in `media/` (for example `hot-water-machine-controls.jpg`)
-- `alt` — accessible description
+```json
+"hot-water-machine-controls": {
+  "file": "hot-water-machine-controls.jpg",
+  "alt": "Button layout on the hot water machine"
+}
+```
 
-Topic blocks reference **`mediaId`**, never raw paths:
+Reference from a topic:
 
 ```json
 { "type": "heroImage", "mediaId": "hot-water-machine-controls", "caption": "Button layout" }
 ```
 
-### Vite resolution
+`guideMediaValidate.js` (run via Vitest) checks that every `mediaId` has a file and alt text.
 
-`src/content/houseguide/guideMedia.js` is the only media resolver. It uses:
+## Private values (not in git)
 
-```javascript
-import.meta.glob('./media/*.{jpg,jpeg,png,webp}', { eager: true, query: '?url', import: 'default' });
-```
+Copy `private-content.example.json` → `private-content.local.json` on trusted devices. Protected blocks in the catalog use dot-path keys such as `wifi.password` and `contacts.mark.phone`.
 
-The glob path is **relative to `guideMedia.js`** (`./media/`, not `../media/`). Vite emits hashed URLs under `/assets/` in production.
+For production tablets, plan to inject these via Cloudflare Access–protected configuration rather than committing real values.
 
-Call `resolveGuideMedia(mediaId)` to get `{ ok, url, alt }` or a safe failure object.
+## Legacy PDF / Python tooling (optional)
 
-### Adding a new image
+You can ignore this unless you are doing a bulk re-import from a TrustedHousesitters PDF.
 
-1. Add the file under `media/` with a descriptive filename stem.
-2. Add a `media` entry in `guide-catalog.json` with a matching ID and alt text.
-3. Reference the ID from a `heroImage` or `gallery` block.
-4. Run tests — `validateGuideMediaCatalog()` checks IDs, files, alt text, and references.
+- PDF (gitignored): `src/content/houseguide/source/house-guide.pdf`
+- `npm run guide:extract` — dumps raw PDF text for reference
+- `npm run guide:build-catalog` — regenerates JSON from `scripts/build_house_guide_catalog.py`
 
-### Validation
-
-`src/content/houseguide/guideMediaValidate.js` runs in Vitest (`tests/guideMedia.test.js`) as part of `npm run check`. It reports unknown IDs, missing bundled files, missing alt text, orphan files, and broken references.
+**Do not run `guide:build-catalog` after hand-editing JSON** — it will overwrite your changes. The Python script is maintained for historical bulk builds; day-to-day edits belong in `guide-catalog.json`.
