@@ -1,18 +1,27 @@
-import { requireOwnerDeviceMode, requireOwnerIdentity, issueSitterSessionResponse } from '../lib/deviceSessionAuth.js';
+import {
+  requireOwnerIdentity,
+  issueSitterSessionResponse
+} from '../lib/deviceSessionAuth.js';
+import { resolveDeviceSession } from '../lib/deviceSession.js';
 
 /**
  * @param {Request} request
  * @param {Record<string, string | undefined>} env
  * @param {typeof fetch} fetchImpl
  */
-export async function handleDeviceMode(request, env, _fetchImpl = fetch) {
+export async function handleDeviceMode(request, env, fetchImpl = fetch) {
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
-  const ownerCheck = await requireOwnerDeviceMode(request, env);
+  const ownerCheck = await requireOwnerIdentity(request, env, fetchImpl);
   if (!ownerCheck.ok) {
     return Response.json({ error: ownerCheck.code }, { status: ownerCheck.status });
+  }
+
+  const session = await resolveDeviceSession(request, env);
+  if (session.mode === 'sitter') {
+    return Response.json({ error: 'ALREADY_IN_SITTER_MODE' }, { status: 400 });
   }
 
   let body;
@@ -26,7 +35,7 @@ export async function handleDeviceMode(request, env, _fetchImpl = fetch) {
     return Response.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  return issueSitterSessionResponse(ownerCheck.session, env);
+  return issueSitterSessionResponse(env);
 }
 
 /**
@@ -44,5 +53,5 @@ export async function handleAuthLock(request, env, fetchImpl = fetch) {
     return Response.json({ error: identity.code }, { status: identity.status });
   }
 
-  return issueSitterSessionResponse(null, env);
+  return issueSitterSessionResponse(env);
 }

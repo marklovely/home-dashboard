@@ -4,7 +4,7 @@ import {
   createAccessTestEnv,
   signTestAccessJwt,
   withAccessJwt,
-  authedOwnerDeviceRequest
+  authedOwnerAccessRequest
 } from './accessTestHelpers.js';
 import { withTestLimiters } from './testEnv.js';
 import { issueOwnerToken } from '../src/lib/ownerToken.js';
@@ -178,9 +178,9 @@ describe('calendar authorization', () => {
     expect(response.status).toBe(401);
   });
 
-  it('allows owner Access identity with owner device session to reach calendar route', async () => {
+  it('allows Access owner without device cookie to reach calendar route', async () => {
     const response = await handleRequest(
-      await authedOwnerDeviceRequest('https://worker.test/api/calendar', {
+      await authedOwnerAccessRequest('https://worker.test/api/calendar', {
         ...baseEnv,
         APPLE_CALENDAR_ICS_URL: 'https://calendar.example/private.ics'
       }),

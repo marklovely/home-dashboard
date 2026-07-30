@@ -1,5 +1,4 @@
-import { requireOwnerDeviceMode, renewOwnerSessionIfActive } from '../lib/deviceSessionAuth.js';
-import { attachDeviceSessionCookie } from '../lib/deviceSession.js';
+import { requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
 
 /**
  * @param {Request} request
@@ -20,15 +19,10 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
 
   try {
     const payload = await getHomeCalendar(env, fetchImpl);
-    let response = Response.json(payload, {
+    return Response.json(payload, {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
     });
-    const renewed = await renewOwnerSessionIfActive(gate.session.claims, env);
-    if (renewed) {
-      response = attachDeviceSessionCookie(response, renewed.cookieValue, renewed.claims);
-    }
-    return response;
   } catch (error) {
     const feedConfigured = Boolean(env.APPLE_CALENDAR_ICS_URL?.trim());
     /** @type {Record<string, unknown>} */

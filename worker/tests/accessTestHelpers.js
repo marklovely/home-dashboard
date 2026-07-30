@@ -93,7 +93,7 @@ export async function withDeviceSessionCookie(jwt, env, mode = 'sitter', nowSec 
  * @param {RequestInit} [init]
  * @param {string} [email]
  */
-export async function authedOwnerDeviceRequest(url, env, init = {}, email = 'owner@example.com') {
+export async function authedOwnerAccessRequest(url, env, init = {}, email = 'owner@example.com') {
   const jwt = await signTestAccessJwt(email, env);
-  return new Request(url, await withDeviceSessionCookie(jwt, env, 'owner', Math.floor(Date.now() / 1000), init));
+  return new Request(url, withAccessJwt(jwt, init));
 }
