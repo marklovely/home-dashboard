@@ -8,6 +8,8 @@
 export const DEVICE_SESSION_COOKIE = 'lovely_home_device_session';
 /** Internal header for Pages proxy when Set-Cookie is dropped by service binding. */
 export const DEVICE_SESSION_SET_COOKIE_HEADER = 'X-Device-Session-Set-Cookie';
+/** JSON field stripped by Pages before the response reaches the browser. */
+export const DEVICE_SESSION_PROXY_COOKIE_FIELD = '_setCookie';
 export const DEVICE_SESSION_VERSION = 1;
 
 /** 30 days */
@@ -295,9 +297,58 @@ export function deviceSessionJsonBody(session) {
 }
 
 /**
+ * @param {{ cookieValue?: string | null, claims?: DeviceSessionClaims | null, clearCookie?: boolean }} session
+ * @returns {string | null}
+ */
+export function buildDeviceSessionCookieHeader(session) {
+  if (session.clearCookie) {
+    return buildDeviceSessionClearCookie();
+  }
+  if (session.cookieValue && session.claims) {
+    return buildDeviceSessionSetCookie(
+      session.cookieValue,
+      cookieMaxAgeForClaims(session.claims)
+    );
+  }
+  return null;
+}
+
+/**
+ * @param {Record<string, unknown>} body
+ * @param {string | null} cookieHeader
+ */
+export function withProxySetCookieField(body, cookieHeader) {
+  if (!cookieHeader) return body;
+  return { ...body, [DEVICE_SESSION_PROXY_COOKIE_FIELD]: cookieHeader };
+}
+
+/**
+ * @param {{
+ *   mode: DeviceMode,
+ *   ownerSessionExpiresAtMs: number | null,
+ *   cookieValue?: string | null,
+ *   claims?: DeviceSessionClaims | null,
+ *   clearCookie?: boolean
+ * }} session
+ * @param {number} [status]
+ */
+export function finalizeDeviceSessionJsonResponse(session, status = 200) {
+  const cookieHeader = buildDeviceSessionCookieHeader(session);
+  const body = deviceSessionJsonBody(session);
+  const payload = withProxySetCookieField(body, cookieHeader);
+  const headers = new Headers({ 'Cache-Control': 'no-store' });
+  if (cookieHeader) {
+    headers.append('Set-Cookie', cookieHeader);
+    headers.set(DEVICE_SESSION_SET_COOKIE_HEADER, cookieHeader);
+  }
+  return Response.json(payload, { status, headers });
+}
+
+/**
  * @param {Response} response
  * @param {string | null} cookieValue
  * @param {DeviceSessionClaims} claims
+ * @deprecated Prefer finalizeDeviceSessionJsonResponse
  */
 export function attachDeviceSessionCookie(response, cookieValue, claims) {
   if (!cookieValue) return response;
@@ -315,6 +366,7 @@ export function attachDeviceSessionCookie(response, cookieValue, claims) {
 
 /**
  * @param {Response} response
+ * @deprecated Prefer finalizeDeviceSessionJsonResponse
  */
 export function attachClearDeviceSessionCookie(response) {
   const cookieHeader = buildDeviceSessionClearCookie();
@@ -332,6 +384,7 @@ export function attachClearDeviceSessionCookie(response) {
 /**
  * @param {Response} response
  * @param {{ cookieValue?: string | null, claims?: DeviceSessionClaims | null, clearCookie?: boolean }} session
+ * @deprecated Prefer finalizeDeviceSessionJsonResponse
  */
 export function applyDeviceSessionHeaders(response, session) {
   let next = response;

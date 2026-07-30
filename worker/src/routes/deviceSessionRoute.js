@@ -1,9 +1,5 @@
 import { authenticateRequest } from '../lib/requestAuth.js';
-import {
-  applyDeviceSessionHeaders,
-  deviceSessionJsonBody,
-  resolveDeviceSession
-} from '../lib/deviceSession.js';
+import { finalizeDeviceSessionJsonResponse, resolveDeviceSession } from '../lib/deviceSession.js';
 
 /**
  * @param {Request} request
@@ -24,12 +20,5 @@ export async function handleDeviceSession(request, env, fetchImpl = fetch) {
   }
 
   const session = await resolveDeviceSession(request, env);
-  const body = deviceSessionJsonBody(session);
-  return applyDeviceSessionHeaders(
-    Response.json(body, {
-      status: 200,
-      headers: { 'Cache-Control': 'no-store' }
-    }),
-    session
-  );
+  return finalizeDeviceSessionJsonResponse(session);
 }
