@@ -2,7 +2,7 @@ import { defineApp } from '../../components/App/defineApp.js';
 import { isHomeDeployment } from '../../auth/deploymentMode.js';
 import { canReturnToHouseSitterMode } from '../../auth/ownerSession.js';
 import { isOwnerUserMode } from '../../auth/userMode.js';
-import { enterSitterMode, lockOwner } from '../../auth/deviceSessionStore.js';
+import { enterSitterMode, getDeviceMode, lockOwner } from '../../auth/deviceSessionStore.js';
 import { setUserMode, UserMode } from '../../auth/userMode.js';
 import { profiles } from '../../profiles/index.js';
 import { getActiveProfileId, setActiveProfileId } from '../../services/profileService.js';
@@ -115,6 +115,9 @@ function createProfileField(onProfileChange) {
     input.name = 'profile';
     input.value = profile.id;
     input.checked = profile.id === active;
+    if (isHomeDeployment() && profile.id === 'housesitter' && getDeviceMode() !== 'sitter') {
+      input.disabled = true;
+    }
     input.addEventListener('change', () => {
       if (!input.checked) return;
       setActiveProfileId(/** @type {import('../../types/app.js').ProfileId} */ (profile.id));
