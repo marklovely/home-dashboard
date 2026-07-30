@@ -4,6 +4,7 @@ import {
   postLockOwner
 } from '../api/deviceSessionApi.js';
 import { applyDeviceSessionMode } from './userMode.js';
+import { setActiveProfileId } from '../services/profileService.js';
 import { ownerAuthProvider } from './OwnerAuthProvider.js';
 import { completeOwnerUnlock, lockToHouseSitterMode } from './ownerLock.js';
 import { clearMyDayCalendarState } from '../services/myDayCalendarService.js';
@@ -57,8 +58,17 @@ function applyServerSession(payload) {
   mode = payload.mode === 'owner' ? 'owner' : 'sitter';
   ownerSessionExpiresAt = payload.ownerSessionExpiresAt ?? null;
   applyDeviceSessionMode(mode);
+  setActiveProfileId(mode === 'sitter' ? 'housesitter' : 'owner');
   status = 'ready';
   notify();
+}
+
+/**
+ * @param {typeof fetch} fetchImpl
+ */
+async function verifyPersistedSitterSession(fetchImpl) {
+  const verified = await refreshSession(fetchImpl);
+  return verified && mode === 'sitter';
 }
 
 export function clearOwnerOnlyClientData() {
@@ -134,8 +144,12 @@ export async function enterSitterMode(afterSitter, fetchImpl = fetch) {
   if (!result.ok) {
     return false;
   }
+  if (!(await verifyPersistedSitterSession(fetchImpl))) {
+    status = 'error';
+    notify();
+    return false;
+  }
   clearOwnerOnlyClientData();
-  applyServerSession(result.data);
   lockToHouseSitterMode(afterSitter);
   return true;
 }
@@ -149,8 +163,12 @@ export async function lockOwner(afterSitter, fetchImpl = fetch) {
   if (!result.ok) {
     return false;
   }
+  if (!(await verifyPersistedSitterSession(fetchImpl))) {
+    status = 'error';
+    notify();
+    return false;
+  }
   clearOwnerOnlyClientData();
-  applyServerSession(result.data);
   lockToHouseSitterMode(afterSitter);
   return true;
 }
