@@ -7,6 +7,8 @@ import { initialiseBattery } from './modules/battery.js';
 import { watchNetwork } from './modules/network.js';
 import { initialiseWeather } from './modules/weather.js';
 import { initTheme } from '../services/themeService.js';
+import { initDisplayPreferences } from '../services/displayPreferencesService.js';
+import { initWeatherLocationPreference } from '../services/weatherLocationService.js';
 import '../apps/index.js';
 import '../widgets/index.js';
 import { preloadPrivateConfig } from '../services/privateConfigService.js';
@@ -17,6 +19,8 @@ import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
 import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
 
 initTheme();
+initDisplayPreferences();
+initWeatherLocationPreference();
 
 const loadingOverlay = document.querySelector('#device-session-loading');
 const hubShell = document.querySelector('.hub-shell');

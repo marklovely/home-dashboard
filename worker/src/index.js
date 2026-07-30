@@ -5,6 +5,7 @@ import { handlePrivateConfigRequest } from './routes/privateConfigRoute.js';
 import { handleButtonPress } from './routes/buttons.js';
 import { handleOwnerAuth } from './routes/ownerAuth.js';
 import { handleWeather } from './routes/weather.js';
+import { handleWeatherGeocode } from './routes/weatherGeocode.js';
 import { handleCalendar } from './routes/calendar.js';
 import { handleDeviceSession } from './routes/deviceSessionRoute.js';
 import { handleDeviceMode, handleAuthLock } from './routes/deviceModeRoute.js';
@@ -77,6 +78,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
     response = await handleSession(request, env, fetchBound);
   } else if (url.pathname === '/api/private-config' && request.method === 'GET') {
     response = await handlePrivateConfigRequest(request, env, fetchBound);
+  } else if (url.pathname === '/api/weather/geocode' && request.method === 'GET') {
+    response = await handleWeatherGeocode(request, env, fetchBound);
   } else if (url.pathname === '/api/weather' && request.method === 'GET') {
     response = await handleWeather(request, env, fetchBound);
   } else if (url.pathname === '/api/auth/owner') {

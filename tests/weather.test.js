@@ -27,4 +27,27 @@ describe('weather API client', () => {
     expect(result.ok).toBe(true);
     expect(fetchImpl.mock.calls[0][0]).toBe('https://api.example.test/api/weather');
   });
+
+  it('passes saved location override coordinates to the Worker', async () => {
+    const { fetchDashboardWeather } = await import('../src/api/weatherApi.js');
+    const { setWeatherLocationOverride, resetWeatherLocationForTests } = await import(
+      '../src/services/weatherLocationService.js'
+    );
+    resetWeatherLocationForTests();
+    setWeatherLocationOverride({
+      latitude: 51.5,
+      longitude: -0.12,
+      label: 'London',
+      detail: 'Greater London'
+    });
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ current: { temperature: 18 } })
+    });
+    await fetchDashboardWeather({ fetchImpl });
+    expect(fetchImpl.mock.calls[0][0]).toContain('lat=51.5');
+    expect(fetchImpl.mock.calls[0][0]).toContain('lon=-0.12');
+    resetWeatherLocationForTests();
+  });
 });
