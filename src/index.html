@@ -77,6 +77,14 @@
       </footer>
     </main>
 
+    <div id="night-mode-overlay" class="night-mode-overlay" hidden aria-hidden="true">
+      <div class="night-mode-panel" role="status" aria-live="polite">
+        <div id="night-mode-clock" class="night-mode-clock">--:--</div>
+        <p id="night-mode-date" class="night-mode-date subtle"></p>
+        <p id="night-mode-hint" class="night-mode-hint">Tap to wake</p>
+      </div>
+    </div>
+
     <div id="owner-access-host" class="owner-access-host"></div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script type="module" src="./js/app.js"></script>
