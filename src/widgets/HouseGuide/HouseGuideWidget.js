@@ -246,7 +246,7 @@ function createInteractiveHouseGuide(context) {
 export const houseGuideWidget = defineWidget({
   id: 'house-guide',
   layout: 'panel',
-  profiles: ['owner', 'housesitter'],
+  profiles: ['housesitter'],
   mount(context) {
     return createInteractiveHouseGuide(context);
   }
