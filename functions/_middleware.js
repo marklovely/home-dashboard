@@ -1,4 +1,5 @@
 import cloudflareAccessPlugin from '@cloudflare/pages-plugin-cloudflare-access';
+import { accessTeamOrigin } from './lib/accessTeamDomain.js';
 
 /**
  * Validates Cloudflare Access on Pages Functions (including /api/*).
@@ -7,13 +8,12 @@ import cloudflareAccessPlugin from '@cloudflare/pages-plugin-cloudflare-access';
  * @type {import('@cloudflare/workers-types').PagesFunction}
  */
 async function accessMiddleware(context) {
-  const team = context.env.CF_ACCESS_TEAM_DOMAIN?.trim();
+  const domain = accessTeamOrigin(context.env.CF_ACCESS_TEAM_DOMAIN);
   const aud = context.env.CF_ACCESS_AUD_PAGES?.trim();
-  if (!team || !aud) {
+  if (!domain || !aud) {
     return context.next();
   }
 
-  const domain = team.startsWith('https://') ? team : `https://${team}`;
   const handler = cloudflareAccessPlugin({
     domain,
     aud
