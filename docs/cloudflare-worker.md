@@ -64,7 +64,7 @@ npm run deploy
 
 For local dev, add `OWNER_PIN` to `worker/.dev.vars` (gitignored) — never commit the real PIN.
 
-**Home weather location:** `HOME_LATITUDE` and `HOME_LONGITUDE` in `worker/wrangler.toml` `[vars]`. Update these on the Worker if you move house — the dashboard only calls `GET /api/weather`.
+**Home weather location:** `HOME_LATITUDE` and `HOME_LONGITUDE` in `worker/wrangler.toml` `[vars]`. Update these on the Worker if you move house — the dashboard calls `GET /api/weather` (optional `?lat=&lon=` when the tablet has a Settings override). Postcode/place lookup: `GET /api/weather/geocode?q=`.
 
 Verify:
 
