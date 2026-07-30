@@ -11,7 +11,13 @@ import {
   setClockFormat,
   setHomeScreenScale
 } from '../../services/displayPreferencesService.js';
+import {
+  getNightModeSetting,
+  nightModeSettingLabel,
+  setNightModeSetting
+} from '../../services/nightModeService.js';
 import { getActiveTheme, getEffectiveTheme, setActiveTheme } from '../../services/themeService.js';
+import { isHouseSitterExperience } from '../../auth/userMode.js';
 import {
   clearWeatherLocationOverride,
   getWeatherLocationOverride,
@@ -138,6 +144,42 @@ function createAppearanceFields(onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
   wrap.append(createThemeField(onRefresh), createClockFormatField(onRefresh), createHomeScaleField(onRefresh));
+  if (isHouseSitterExperience()) {
+    wrap.append(createNightModeField(onRefresh));
+  }
+  return wrap;
+}
+
+/** @param {() => void} onRefresh */
+function createNightModeField(onRefresh) {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-subsection';
+  const title = document.createElement('p');
+  title.className = 'settings-subsection-title';
+  title.textContent = 'Night clock';
+  wrap.append(title);
+
+  const hint = document.createElement('p');
+  hint.className = 'settings-help subtle';
+  hint.textContent =
+    'Between midnight and 6am, show a dim clock on a black screen. Tap anywhere to wake the dashboard for five minutes.';
+
+  const options = document.createElement('div');
+  options.className = 'settings-options';
+  const active = getNightModeSetting();
+  for (const option of [
+    { id: 'auto', label: 'Auto (midnight – 6am)' },
+    { id: 'off', label: 'Off' }
+  ]) {
+    options.append(
+      createRadioOption('night-mode', option.id, option.label, option.id === active, undefined, () => {
+        setNightModeSetting(/** @type {'off' | 'auto'} */ (option.id));
+        onRefresh();
+      })
+    );
+  }
+
+  wrap.append(hint, options);
   return wrap;
 }
 
@@ -411,6 +453,9 @@ function createAboutField() {
   appendAboutRow(list, 'Theme', themeLabel(), 'theme');
   appendAboutRow(list, 'Clock', clockFormatLabel(), 'clock');
   appendAboutRow(list, 'Home screen', homeScreenScaleLabel(), 'home-scale');
+  if (isHouseSitterExperience()) {
+    appendAboutRow(list, 'Night clock', nightModeSettingLabel(), 'night-mode');
+  }
   if (isOwnerUserMode()) {
     appendAboutRow(list, 'Weather', weatherLocationSummary(), 'weather-location');
   }
@@ -431,7 +476,7 @@ function createAboutField() {
 /** @param {HTMLDListElement} list
  * @param {string} term
  * @param {string} value
- * @param {'mode' | 'theme' | 'clock' | 'home-scale' | 'weather-location'} [valueKey]
+ * @param {'mode' | 'theme' | 'clock' | 'home-scale' | 'weather-location' | 'night-mode'} [valueKey]
  */
 function appendAboutRow(list, term, value, valueKey) {
   const dt = document.createElement('dt');
@@ -461,6 +506,8 @@ function refreshAboutValues(viewport) {
   if (clockValue) clockValue.textContent = clockFormatLabel();
   const homeScaleValue = viewport.querySelector('dd[data-settings-value="home-scale"]');
   if (homeScaleValue) homeScaleValue.textContent = homeScreenScaleLabel();
+  const nightModeValue = viewport.querySelector('dd[data-settings-value="night-mode"]');
+  if (nightModeValue) nightModeValue.textContent = nightModeSettingLabel();
   const weatherAbout = viewport.querySelector('dd[data-settings-value="weather-location"]');
   if (weatherAbout) weatherAbout.textContent = weatherLocationSummary();
   const weatherCurrent = viewport.querySelector('p[data-settings-value="weather-location"]');
