@@ -1,4 +1,5 @@
 import { extractAccessJwtFromRequest } from './accessJwtExtract.js';
+import { accessTeamSlug } from '../lib/accessTeamDomain.js';
 
 /**
  * @param {Request} request
@@ -21,7 +22,7 @@ export function listCookieNames(request) {
  * @param {Record<string, string | undefined>} env
  */
 export async function fetchAccessIdentityEmail(request, env) {
-  const team = env.CF_ACCESS_TEAM_DOMAIN?.trim();
+  const team = accessTeamSlug(env.CF_ACCESS_TEAM_DOMAIN);
   if (!team) return null;
   const cookie = request.headers.get('Cookie');
   if (!cookie?.trim()) return null;

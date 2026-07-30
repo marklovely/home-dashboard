@@ -18,7 +18,7 @@ There is **no** `wrangler.toml` at the repo root (that file would lock env vars 
 |------|--------|
 | `WORKER_API_ORIGIN` | `https://lovely-home-hub-api.mark-lovely67.workers.dev` |
 | `VITE_DEPLOYMENT_MODE` | `home` |
-| `CF_ACCESS_TEAM_DOMAIN` | Your Zero Trust team host, e.g. `mark-lovely67.cloudflareaccess.com` (no `https://`) |
+| `CF_ACCESS_TEAM_DOMAIN` | Zero Trust **team name** only, e.g. `mark-lovely67` (same as Worker secret; not the full URL) |
 | `CF_ACCESS_AUD_PAGES` | **Pages** Access application AUD tag only (hex from Zero Trust → Access → your **Pages** app) |
 | `HUB_PROXY_SECRET` | Long random string — **same value** as Worker secret `HUB_PROXY_SECRET` (see §4) |
 
@@ -66,7 +66,7 @@ npx wrangler secret put HUB_PROXY_SECRET
 
 Pages → **Settings → Environment variables** → add plaintext **`HUB_PROXY_SECRET`** (Production + Preview) with the identical value, then **redeploy Pages**.
 
-Also set **`CF_ACCESS_TEAM_DOMAIN`** on Pages (plaintext), matching the Worker team host (e.g. `your-team.cloudflareaccess.com`).
+Also set **`CF_ACCESS_TEAM_DOMAIN`** on Pages (plaintext), matching the Worker secret (team slug only, e.g. `mark-lovely67`).
 
 Redeploy **Worker** after adding `HUB_PROXY_SECRET` there.
 
