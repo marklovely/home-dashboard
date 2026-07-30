@@ -51,6 +51,19 @@ export function isHouseSitterMode() {
 }
 
 /**
+ * @param {'owner' | 'sitter'} serverMode
+ */
+export function applyDeviceSessionMode(serverMode) {
+  const mapped = serverMode === 'owner' ? UserMode.Owner : UserMode.HouseSitter;
+  if (currentUserMode === mapped) return;
+  currentUserMode = mapped;
+  if (mapped === UserMode.HouseSitter) {
+    clearOwnerPinSession();
+  }
+  notifyUserModeChange();
+}
+
+/**
  * @param {UserModeId} mode
  * @returns {boolean}
  */

@@ -3,7 +3,8 @@ import { handleRequest } from '../src/index.js';
 import {
   createAccessTestEnv,
   signTestAccessJwt,
-  withAccessJwt
+  withAccessJwt,
+  authedOwnerAccessRequest
 } from './accessTestHelpers.js';
 import { withTestLimiters } from './testEnv.js';
 import { issueOwnerToken } from '../src/lib/ownerToken.js';
@@ -177,14 +178,16 @@ describe('calendar authorization', () => {
     expect(response.status).toBe(401);
   });
 
-  it('allows owner Access identity to reach calendar route', async () => {
-    const token = await ownerJwt();
+  it('allows Access owner without device cookie to reach calendar route', async () => {
     const response = await handleRequest(
-      new Request('https://worker.test/api/calendar', withAccessJwt(token)),
+      await authedOwnerAccessRequest('https://worker.test/api/calendar', {
+        ...baseEnv,
+        APPLE_CALENDAR_ICS_URL: 'https://calendar.example/private.ics'
+      }),
       { ...baseEnv, APPLE_CALENDAR_ICS_URL: 'https://calendar.example/private.ics' },
       vi.fn(async () => new Response('BEGIN:VCALENDAR\nEND:VCALENDAR', { status: 200 }))
     );
-    expect(response.status).not.toBe(403);
+    expect(response.status).toBe(200);
   });
 });
 

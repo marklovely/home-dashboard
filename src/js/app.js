@@ -14,105 +14,130 @@ import { isHouseSitterExperience } from '../auth/userMode.js';
 import { attachOwnerAccessGesture } from '../auth/ownerAccessGesture.js';
 import { registerOwnerLockNavigation } from '../auth/ownerLock.js';
 import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
+import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
 
 initTheme();
-void preloadPrivateConfig();
 
-const networkHint = document.querySelector('#shell-status .status-card:last-child span:last-child');
-if (networkHint && isHouseSitterExperience()) {
-  networkHint.textContent = 'Connected';
-}
+const loadingOverlay = document.querySelector('#device-session-loading');
+const hubShell = document.querySelector('.hub-shell');
 
-const elements = {
-  greeting: document.querySelector('#greeting'),
-  date: document.querySelector('#date'),
-  clock: document.querySelector('#clock'),
-  seconds: document.querySelector('#seconds'),
-  toast: document.querySelector('#toast'),
-  lastCommand: document.querySelector('#last-command'),
-  network: {
-    dot: document.querySelector('#network-dot'),
-    label: document.querySelector('#network-label')
-  },
-  battery: {
-    level: document.querySelector('#battery-level'),
-    state: document.querySelector('#battery-state')
-  },
-  weather: {
-    icon: document.querySelector('#weather-icon'),
-    temp: document.querySelector('#weather-temp'),
-    text: document.querySelector('#weather-text')
+function setStartupLoading(active) {
+  if (loadingOverlay) {
+    loadingOverlay.hidden = !active;
   }
-};
-
-function registerServiceWorker() {
-  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js').catch(console.error);
+  if (hubShell) {
+    hubShell.classList.toggle('hub-shell--session-loading', active);
   }
 }
 
-const shellContext = {
-  config: CONFIG,
-  toast: elements.toast,
-  lastCommand: elements.lastCommand,
-  navigate(appId) {
-    navigate(appId === HOME_ROUTE ? HOME_ROUTE : appId);
+async function initialiseDashboard() {
+  if (!isHouseSitterExperience()) {
+    void preloadPrivateConfig();
+    startMyDayCalendarService();
   }
-};
 
-initialiseHeader(elements);
-watchNetwork(elements.network);
-initialiseBattery(elements.battery);
-initialiseWeather(elements.weather, CONFIG.weather, {
-  headerElements: {
-    icon: document.querySelector('#shell-weather-icon'),
-    temp: document.querySelector('#shell-weather-temp'),
-    text: document.querySelector('#shell-weather-text')
+  const networkHint = document.querySelector('#shell-status .status-card:last-child span:last-child');
+  if (networkHint && isHouseSitterExperience()) {
+    networkHint.textContent = 'Connected';
   }
-});
-if (!isHouseSitterExperience()) {
-  startMyDayCalendarService();
-}
 
-const versionLabel = document.querySelector('#shell-version-label');
-if (versionLabel && typeof __APP_VERSION__ !== 'undefined') {
-  versionLabel.textContent = `Home Hub v${__APP_VERSION__}`;
-}
+  const elements = {
+    greeting: document.querySelector('#greeting'),
+    date: document.querySelector('#date'),
+    clock: document.querySelector('#clock'),
+    seconds: document.querySelector('#seconds'),
+    toast: document.querySelector('#toast'),
+    lastCommand: document.querySelector('#last-command'),
+    network: {
+      dot: document.querySelector('#network-dot'),
+      label: document.querySelector('#network-label')
+    },
+    battery: {
+      level: document.querySelector('#battery-level'),
+      state: document.querySelector('#battery-state')
+    },
+    weather: {
+      icon: document.querySelector('#weather-icon'),
+      temp: document.querySelector('#weather-temp'),
+      text: document.querySelector('#weather-text')
+    }
+  };
 
-createAppShell({
-  viewport: document.querySelector('#app-viewport'),
-  homeWelcome: document.querySelector('#shell-home-welcome'),
-  shellEyebrow: document.querySelector('#shell-eyebrow'),
-  shellChromeTitle: document.querySelector('#shell-chrome-title'),
-  shellTagline: document.querySelector('#shell-tagline'),
-  homeButton: document.querySelector('#shell-home-button'),
-  statusStrip: document.querySelector('#shell-status'),
-  shellHeaderWeather: document.querySelector('#shell-header-weather'),
-  shellFooter: document.querySelector('#shell-footer'),
-  bottomNav: document.querySelector('#shell-bottom-nav'),
-  shellContext
-});
+  function registerServiceWorker() {
+    if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js').catch(console.error);
+    }
+  }
 
-registerOwnerLockNavigation(() => {
-  navigate(HOME_ROUTE);
-  shellContext.refreshShell?.();
-});
+  const shellContext = {
+    config: CONFIG,
+    toast: elements.toast,
+    lastCommand: elements.lastCommand,
+    navigate(appId) {
+      navigate(appId === HOME_ROUTE ? HOME_ROUTE : appId);
+    }
+  };
 
-attachOwnerAccessGesture({
-  logoElements: [
-    document.querySelector('#shell-eyebrow'),
-    document.querySelector('#shell-chrome-title'),
-    document.querySelector('.shell-chrome-title-block')
-  ],
-  holdFeedbackElement: document.querySelector('.shell-chrome-title-block'),
-  dialogHost: document.querySelector('#owner-access-host'),
-  onOwnerUnlocked: () => shellContext.refreshShell?.()
-});
+  initialiseHeader(elements);
+  watchNetwork(elements.network);
+  initialiseBattery(elements.battery);
+  initialiseWeather(elements.weather, CONFIG.weather, {
+    headerElements: {
+      icon: document.querySelector('#shell-weather-icon'),
+      temp: document.querySelector('#shell-weather-temp'),
+      text: document.querySelector('#shell-weather-text')
+    }
+  });
 
-subscribeWeatherSnapshot(() => {
-  if (getCurrentRoute() === HOME_ROUTE) {
+  const versionLabel = document.querySelector('#shell-version-label');
+  if (versionLabel && typeof __APP_VERSION__ !== 'undefined') {
+    versionLabel.textContent = `Home Hub v${__APP_VERSION__}`;
+  }
+
+  createAppShell({
+    viewport: document.querySelector('#app-viewport'),
+    homeWelcome: document.querySelector('#shell-home-welcome'),
+    shellEyebrow: document.querySelector('#shell-eyebrow'),
+    shellChromeTitle: document.querySelector('#shell-chrome-title'),
+    shellTagline: document.querySelector('#shell-tagline'),
+    homeButton: document.querySelector('#shell-home-button'),
+    statusStrip: document.querySelector('#shell-status'),
+    shellHeaderWeather: document.querySelector('#shell-header-weather'),
+    shellFooter: document.querySelector('#shell-footer'),
+    bottomNav: document.querySelector('#shell-bottom-nav'),
+    shellContext
+  });
+
+  registerOwnerLockNavigation(() => {
+    navigate(HOME_ROUTE);
     shellContext.refreshShell?.();
-  }
-});
+  });
 
-registerServiceWorker();
+  attachOwnerAccessGesture({
+    logoElements: [
+      document.querySelector('#shell-eyebrow'),
+      document.querySelector('#shell-chrome-title'),
+      document.querySelector('.shell-chrome-title-block')
+    ],
+    holdFeedbackElement: document.querySelector('.shell-chrome-title-block'),
+    dialogHost: document.querySelector('#owner-access-host'),
+    onOwnerUnlocked: () => shellContext.refreshShell?.()
+  });
+
+  subscribeWeatherSnapshot(() => {
+    if (getCurrentRoute() === HOME_ROUTE) {
+      shellContext.refreshShell?.();
+    }
+  });
+
+  registerServiceWorker();
+}
+
+setStartupLoading(true);
+void bootstrapDeviceSession().finally(() => {
+  setStartupLoading(false);
+  if (getDeviceSessionStatus() === 'error') {
+    console.warn('Device session could not be verified; using house sitter mode.');
+  }
+  void initialiseDashboard();
+});

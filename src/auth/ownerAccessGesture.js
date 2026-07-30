@@ -1,15 +1,12 @@
 import { isOwnerAccessAllowed } from './deploymentMode.js';
-import { getOwnerAccessToken } from './ownerAccessToken.js';
 import { isHouseSitterExperience } from './userMode.js';
 import { openOwnerPinDialog } from '../components/OwnerAccess/ownerPinDialog.js';
 
 const HOLD_MS = 5000;
 
-/** House sitter unlock, or owner UI without a private API session (e.g. My Day). */
 export function canPromptOwnerPinUnlock() {
   if (!isOwnerAccessAllowed()) return false;
-  if (isHouseSitterExperience()) return true;
-  return !getOwnerAccessToken();
+  return isHouseSitterExperience();
 }
 
 /**

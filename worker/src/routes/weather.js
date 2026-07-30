@@ -1,6 +1,6 @@
 import { getHomeWeather } from '../weather/weatherService.js';
 import { parseWeatherAudience } from '../weather/adviceEngine.js';
-import { authenticateRequest } from '../lib/requestAuth.js';
+import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
 
 /**
  * @param {Request} request
@@ -8,9 +8,9 @@ import { authenticateRequest } from '../lib/requestAuth.js';
  * @param {typeof fetch} fetchImpl
  */
 export async function handleWeather(request, env, fetchImpl = fetch) {
-  const auth = await authenticateRequest(request, env, fetchImpl);
-  if (!auth.ok) {
-    return Response.json({ error: auth.code }, { status: auth.status });
+  const gate = await requireAnyDeviceSession(request, env);
+  if (!gate.ok) {
+    return Response.json({ error: gate.code }, { status: gate.status });
   }
 
   const audience = parseWeatherAudience(new URL(request.url).searchParams.get('audience'));

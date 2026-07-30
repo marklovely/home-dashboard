@@ -24,6 +24,33 @@ body {
 }
 button { font: inherit; }
 
+.hub-shell--session-loading {
+  visibility: hidden;
+}
+
+.device-session-loading {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 1.05rem;
+  z-index: 9999;
+}
+
+.settings-options--stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.settings-help {
+  margin: 0;
+  line-height: 1.45;
+}
+
 .hub-shell {
   min-height: 100vh;
   padding: clamp(18px, 3vw, 34px);

@@ -1,6 +1,5 @@
 import { isOwnerAccessAllowed } from '../../auth/deploymentMode.js';
-import { ownerAuthProvider } from '../../auth/OwnerAuthProvider.js';
-import { completeOwnerUnlock } from '../../auth/ownerLock.js';
+import { unlockOwner } from '../../auth/deviceSessionStore.js';
 
 const PIN_LENGTH = 4;
 
@@ -102,18 +101,24 @@ export function openOwnerPinDialog({ host, onClose, onSuccess }) {
     digits = [];
     renderPinIndicators(indicators, 0);
 
-    const result = await ownerAuthProvider.authenticate(pin);
+    const result = await unlockOwner(pin, fetch, onSuccess);
     pending = false;
     setKeypadEnabled(true);
 
     if (result === 'success') {
-      completeOwnerUnlock(onSuccess);
       host.replaceChildren();
       return;
     }
 
     if (result === 'rate_limited') {
       showError('Too many attempts', 'Please try again later');
+      return;
+    }
+    if (result === 'access_required') {
+      showError(
+        'Cloudflare Access session missing',
+        'Refresh the page and complete email login on this tablet, then try your PIN again.'
+      );
       return;
     }
     if (result === 'unavailable') {

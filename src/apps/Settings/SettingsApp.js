@@ -1,11 +1,13 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { isHomeDeployment } from '../../auth/deploymentMode.js';
-import { lockToHouseSitterMode } from '../../auth/ownerLock.js';
 import { canReturnToHouseSitterMode } from '../../auth/ownerSession.js';
+import { isOwnerUserMode } from '../../auth/userMode.js';
+import { enterSitterMode, lockOwner } from '../../auth/deviceSessionStore.js';
 import { setUserMode, UserMode } from '../../auth/userMode.js';
 import { profiles } from '../../profiles/index.js';
 import { getActiveProfileId, setActiveProfileId } from '../../services/profileService.js';
 import { getActiveTheme, setActiveTheme } from '../../services/themeService.js';
+import { showToast } from '../../js/modules/toast.js';
 
 /**
  * @param {import('../../types/app.js').ShellContext} context
@@ -22,9 +24,9 @@ function mountSettingsApp(viewport, context, onProfileChange) {
     createSettingsGroup('About', createAboutField())
   ];
 
-  if (canReturnToHouseSitterMode()) {
+  if (isOwnerUserMode()) {
     groups.unshift(
-      createSettingsGroup('Guest mode', createReturnToHouseSitterField(context, onProfileChange))
+      createSettingsGroup('Guest mode', createHouseSitterModeFields(context, onProfileChange))
     );
   }
 
@@ -48,21 +50,54 @@ function createSettingsGroup(legend, body) {
 }
 
 /** @param {import('../../types/app.js').ShellContext} context @param {() => void} onProfileChange */
-function createReturnToHouseSitterField(context, onProfileChange) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'settings-action-button';
-  button.textContent = 'Return to House Sitter Mode';
-  button.addEventListener('click', () => {
-    lockToHouseSitterMode(() => {
+function createHouseSitterModeFields(context, onProfileChange) {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options settings-options--stacked';
+
+  const enableCopy = document.createElement('p');
+  enableCopy.className = 'settings-help subtle';
+  enableCopy.textContent =
+    'The dashboard will remain in House Sitter Mode until an owner unlocks it again.';
+
+  const enableButton = document.createElement('button');
+  enableButton.type = 'button';
+  enableButton.className = 'settings-action-button';
+  enableButton.textContent = 'Enable House Sitter Mode';
+  enableButton.addEventListener('click', () => {
+    if (!window.confirm(
+      'Enable House Sitter Mode?\n\nOwner-only apps and personal information will be hidden. The dashboard will remain in House Sitter Mode after refreshes and tablet restarts.'
+    )) {
+      return;
+    }
+    void enterSitterMode(() => {
       context.navigate('home');
       onProfileChange();
       context.refreshShell?.();
+      showToast(context.toast, 'House Sitter Mode enabled');
+    }).then((ok) => {
+      if (!ok) showToast(context.toast, 'Could not enable House Sitter Mode');
     });
   });
-  const wrap = document.createElement('div');
-  wrap.className = 'settings-options';
-  wrap.append(button);
+
+  wrap.append(enableCopy, enableButton);
+
+  if (canReturnToHouseSitterMode()) {
+    const lockButton = document.createElement('button');
+    lockButton.type = 'button';
+    lockButton.className = 'settings-action-button settings-action-button--secondary';
+    lockButton.textContent = 'Return to House Sitter Mode';
+    lockButton.addEventListener('click', () => {
+      void lockOwner(() => {
+        context.navigate('home');
+        onProfileChange();
+        context.refreshShell?.();
+      }).then((ok) => {
+        if (!ok) showToast(context.toast, 'Could not return to House Sitter Mode');
+      });
+    });
+    wrap.append(lockButton);
+  }
+
   return wrap;
 }
 
