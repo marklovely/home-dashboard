@@ -7,7 +7,7 @@ Proxies Alexa Virtual Buttons and serves private house configuration to the Home
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/health` | Liveness check |
-| POST | `/api/button/:code` | Trigger allowlisted control (`VB01` … `VB09`) |
+| POST | `/api/button/:code` | Trigger allowlisted control (`VB01` … `VB10`) |
 | GET | `/api/weather` | Home weather, forecasts, and advice (cached 15 minutes) |
 | POST | `/api/auth/owner` | Validate owner PIN (JSON body `{ "pin": "...." }`; secret `OWNER_PIN`) |
 | GET | `/api/private-config` | Wi-Fi, contacts, home address (no lockbox in v1) |
@@ -56,4 +56,4 @@ Note the `*.workers.dev` URL and set `VITE_API_BASE_URL` in Cloudflare Pages pro
 
 ## Button allowlist
 
-`VB01` = Downstairs On, `VB02` = Bedtime, `VB09` = Restore Lights After Movie — suffix matches Virtual Buttons numeric IDs in `src/config.js`.
+`VB01` = Downstairs On, `VB02` = Bedtime, `VB08` = Master Bedroom Lights On, `VB09` = Restore Lights After Movie, `VB10` = Master Bedroom Lights Off — suffix matches Virtual Buttons numeric IDs in `src/config.js`.

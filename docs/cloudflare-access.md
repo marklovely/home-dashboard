@@ -89,4 +89,4 @@ See `worker/.dev.vars.example` for local development (`CF_ACCESS_JWT_TEST_SECRET
 | `GET /api/calendar` | Yes | Owner |
 | `POST /api/button/:code` | Yes | See `CONTROL_PERMISSIONS` in Worker |
 
-Sitters may trigger **VB01**, **VB02**, and **VB09** only.
+Sitters may trigger **VB01**, **VB02**, **VB08**, **VB09**, and **VB10** only.
