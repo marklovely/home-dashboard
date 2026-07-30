@@ -1,4 +1,5 @@
 import { formatDate, formatTime, getGreeting } from '../utils/format.js';
+import { subscribeToDisplayPreferences } from '../../services/displayPreferencesService.js';
 
 export function updateClock(elements, now = new Date()) {
   elements.clock.textContent = formatTime(now);
@@ -9,5 +10,6 @@ export function updateClock(elements, now = new Date()) {
 
 export function startClock(elements, intervalMs = 1000) {
   updateClock(elements);
+  subscribeToDisplayPreferences(() => updateClock(elements));
   return setInterval(() => updateClock(elements), intervalMs);
 }

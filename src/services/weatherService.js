@@ -1,6 +1,7 @@
 import { fetchDashboardWeather } from '../api/weatherApi.js';
 import { setWeatherSnapshot } from './homeWeatherSnapshot.js';
 import { isHouseSitterExperience, subscribeToUserMode } from '../auth/userMode.js';
+import { subscribeToWeatherLocation } from './weatherLocationService.js';
 
 export const WEATHER_REFRESH_MS = 15 * 60 * 1000;
 
@@ -122,6 +123,9 @@ export function startWeatherAutoRefresh(fetchImpl = fetch) {
     void refreshWeather(fetchImpl);
   }, WEATHER_REFRESH_MS);
   subscribeToUserMode(() => {
+    void refreshWeather(fetchImpl);
+  });
+  subscribeToWeatherLocation(() => {
     void refreshWeather(fetchImpl);
   });
 }

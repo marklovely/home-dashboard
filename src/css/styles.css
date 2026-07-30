@@ -112,6 +112,72 @@ button { font: inherit; }
   line-height: 1.45;
 }
 
+.settings-subsection {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-subsection-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.settings-current-value {
+  margin: 0;
+  font-weight: 600;
+}
+
+.settings-inline-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.settings-text-input {
+  min-height: 48px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.settings-text-input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.settings-lookup-results {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-lookup-result {
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-about-note {
+  margin-top: 14px;
+}
+
+.settings-action-button--compact {
+  min-width: 112px;
+  width: auto;
+  padding-inline: 18px;
+}
+
 .hub-shell {
   min-height: 100vh;
   padding: clamp(18px, 3vw, 34px);
