@@ -71,11 +71,27 @@ Weather summaries read `src/services/homeWeatherSnapshot.js`, updated when the s
 
 ## Settings application
 
-`src/apps/Settings/SettingsApp.js` is the first real configuration app:
+`src/apps/Settings/SettingsApp.js` — configuration for appearance, guest mode (owners), and weather location (owners).
 
-- **Profile** — owner / house sitter; updates `profileService` and refreshes Home without reload
-- **Theme** — dark (active), light/auto disabled for now (`themeService`)
-- **About** — version (`__APP_VERSION__`), build time (`__BUILD_TIME__` from Vite), current profile
+**Owners** see:
+
+- **House sitter mode** — enable or return to guest lock (server cookie)
+- **Appearance** — theme (dark / light / auto), clock (12h / 24h), home screen size (zoom)
+- **Weather location** — UK postcode or place lookup (`GET /api/weather/geocode`); optional override stored in `localStorage` and passed as `?lat=&lon=` on weather requests
+- **About** — version, build, device mode, theme, clock, home scale, weather label; note that screen wake is managed by Fully Kiosk
+
+**House sitters** see Settings in the **bottom nav** (fourth tab). They get **Appearance** and **About** only — no guest-mode or weather-location controls.
+
+Display preferences persist in the browser (`themeService`, `displayPreferencesService`, `weatherLocationService`):
+
+| Preference | Storage key | Applies to |
+|------------|---------------|------------|
+| Theme | `home-hub-theme` | Whole app (`data-theme` on `<html>`) |
+| Clock format | `home-hub-clock-format` | Header clock via `formatTime()` |
+| Home screen zoom | `home-hub-home-scale` | `.home-screen` via CSS `zoom` (0.9–1.2) |
+| Weather location | `home-hub-weather-location` | Weather API query override |
+
+Device sitter mode (owner vs guest) remains **server-authoritative** via the sitter cookie — not a Settings profile toggle.
 
 ## Applications
 
@@ -93,7 +109,7 @@ Each app folder contains:
 | Home | Default launcher (`renderHomeScreen`); not registered in the app registry |
 | Controls | Mounts the **Alexa** widget (Virtual Buttons) |
 | House Guide | Mounts the **House Guide** widget (interactive home topics, search, quick actions) |
-| Settings | Profile, theme (dark), about |
+| Settings | Appearance, guest mode (owner), weather location (owner), about |
 | Weather | Forecast and insights via Worker (`GET /api/weather`) |
 | Bin Collection | Static Calendar 17 + Round G2 schedules, offline |
 | My Day | Owner-only personal agenda via Worker ICS feed |
@@ -128,7 +144,7 @@ Two independent concepts live under `src/auth/`:
 
 `src/auth/deploymentMode.js` — `home` (default) or `house-sitter`.
 
-- **`home`** — Full hub tablet. Defaults to **owner** user mode. Owner and house sitter user modes can be switched without rebuilding (Settings profile and hidden owner gesture).
+- **`home`** — Full hub tablet. Defaults to **owner** user mode. Owner and house sitter user modes are switched via device session (Settings guest lock and owner PIN gesture), not a profile picker.
 - **`house-sitter`** — Dedicated guest deployment. Always **house sitter** user mode. Owner mode cannot be entered; hidden gesture does nothing.
 
 ### User mode
@@ -263,7 +279,7 @@ GET /api/weather (Cloudflare Worker)
 Open-Meteo forecast + air-quality APIs
 ```
 
-**Home location** is configured on the Worker (`HOME_LATITUDE`, `HOME_LONGITUDE` in `worker/wrangler.toml` `[vars]`). The frontend sends no coordinates.
+**Home location** defaults to the Worker (`HOME_LATITUDE`, `HOME_LONGITUDE` in `worker/wrangler.toml` `[vars]`). Owners may override per tablet in Settings (postcode or place name); the override is stored in `localStorage` and sent as optional `?lat=&lon=` on `GET /api/weather`. Lookup uses `GET /api/weather/geocode?q=` (UK postcodes via postcodes.io, place names via Open-Meteo geocoding).
 
 **Frontend:** `src/services/weatherService.js` refreshes every **15 minutes** and on startup; `src/apps/Weather/WeatherApp.js` renders current conditions, hourly/daily forecasts, and insights; Lucide icons via `src/weather/renderWeatherIcon.js`.
 

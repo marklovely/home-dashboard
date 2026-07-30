@@ -8,7 +8,8 @@ Proxies Alexa Virtual Buttons and serves private house configuration to the Home
 |--------|------|---------|
 | GET | `/api/health` | Liveness check |
 | POST | `/api/button/:code` | Trigger allowlisted control (`VB01` … `VB10`) |
-| GET | `/api/weather` | Home weather, forecasts, and advice (cached 15 minutes) |
+| GET | `/api/weather` | Home weather, forecasts, and advice (cached 15 minutes; optional `?lat=&lon=` override) |
+| GET | `/api/weather/geocode` | Postcode or place lookup for weather location (`?q=`) |
 | POST | `/api/auth/owner` | Validate owner PIN (JSON body `{ "pin": "...." }`; secret `OWNER_PIN`) |
 | GET | `/api/private-config` | Wi-Fi, contacts, home address (no lockbox in v1) |
 

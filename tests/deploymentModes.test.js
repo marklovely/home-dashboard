@@ -114,7 +114,7 @@ describe('owner authentication', () => {
     expect(canReturnToHouseSitterMode()).toBe(false);
     const ids = getVisibleApps().map((app) => app.id);
     expect(ids).toContain('emergency');
-    expect(isAppVisible('settings')).toBe(false);
+    expect(isAppVisible('settings')).toBe(true);
   });
 
   it('cannot enter owner mode on house sitter deployment', () => {

@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Settings and display
+
+- **Themes** — dark, light, and auto (system); persisted in `localStorage`
+- **Clock** — 12-hour or 24-hour format
+- **Home screen zoom** — smaller / default / larger / extra large; persisted across refresh (CSS `zoom` on home screen)
+- **Weather location** (owners) — UK postcode or place lookup; optional per-tablet override vs Worker default coordinates
+- **Settings cleanup** — removed redundant Owner/Housesitter profile picker; device sitter mode is the single guest control
+- **House sitter Settings** — fourth bottom-nav tab with appearance controls (theme, clock, home zoom) and about
+
+### Documentation
+
+- Architecture and Worker README updated for settings, display preferences, and weather geocode endpoint
+
 ## 1.1.0
 
 ### Device mode and Cloudflare Access (production)
