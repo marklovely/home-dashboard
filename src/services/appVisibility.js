@@ -18,5 +18,12 @@ export function getVisibleApps() {
  * @param {string} appId
  */
 export function isAppVisible(appId) {
+  const { homeAppIds, routableAppIds } = getModeConfig();
+  if (routableAppIds?.length) {
+    return routableAppIds.includes(appId);
+  }
+  if (homeAppIds) {
+    return homeAppIds.includes(appId);
+  }
   return getVisibleApps().some((app) => app.id === appId);
 }

@@ -5,7 +5,11 @@ import { enterSitterMode, getDeviceMode, lockOwner } from '../../auth/deviceSess
 import {
   clockFormatLabel,
   getClockFormat,
-  setClockFormat
+  getHomeScreenScale,
+  HOME_SCREEN_SCALE_OPTIONS,
+  homeScreenScaleLabel,
+  setClockFormat,
+  setHomeScreenScale
 } from '../../services/displayPreferencesService.js';
 import { getActiveTheme, getEffectiveTheme, setActiveTheme } from '../../services/themeService.js';
 import {
@@ -133,7 +137,7 @@ function createHouseSitterModeFields(context, onRefresh) {
 function createAppearanceFields(onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
-  wrap.append(createThemeField(onRefresh), createClockFormatField(onRefresh));
+  wrap.append(createThemeField(onRefresh), createClockFormatField(onRefresh), createHomeScaleField(onRefresh));
   return wrap;
 }
 
@@ -164,6 +168,36 @@ function createThemeField(onRefresh) {
   }
 
   wrap.append(options);
+  return wrap;
+}
+
+/** @param {() => void} onRefresh */
+function createHomeScaleField(onRefresh) {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-subsection';
+  const title = document.createElement('p');
+  title.className = 'settings-subsection-title';
+  title.textContent = 'Home screen size';
+  wrap.append(title);
+
+  const hint = document.createElement('p');
+  hint.className = 'settings-help subtle';
+  hint.textContent = 'Make the home screen easier to read on the wall tablet. Your choice is remembered after refresh.';
+
+  const options = document.createElement('div');
+  options.className = 'settings-options';
+  const active = getHomeScreenScale();
+
+  for (const option of HOME_SCREEN_SCALE_OPTIONS) {
+    options.append(
+      createRadioOption('home-scale', option.id, option.label, option.id === active, undefined, () => {
+        setHomeScreenScale(option.id);
+        onRefresh();
+      })
+    );
+  }
+
+  wrap.append(hint, options);
   return wrap;
 }
 
@@ -376,23 +410,28 @@ function createAboutField() {
   appendAboutRow(list, 'Device mode', deviceModeLabel(), 'mode');
   appendAboutRow(list, 'Theme', themeLabel(), 'theme');
   appendAboutRow(list, 'Clock', clockFormatLabel(), 'clock');
+  appendAboutRow(list, 'Home screen', homeScreenScaleLabel(), 'home-scale');
   if (isOwnerUserMode()) {
     appendAboutRow(list, 'Weather', weatherLocationSummary(), 'weather-location');
   }
 
-  const kioskNote = document.createElement('p');
-  kioskNote.className = 'settings-help subtle settings-about-note';
-  kioskNote.textContent = 'Screen wake and kiosk behaviour are managed by Fully Kiosk on this tablet.';
-
   const wrap = document.createElement('div');
-  wrap.append(list, kioskNote);
+  wrap.append(list);
+
+  if (isOwnerUserMode()) {
+    const kioskNote = document.createElement('p');
+    kioskNote.className = 'settings-help subtle settings-about-note';
+    kioskNote.textContent = 'Screen wake and kiosk behaviour are managed by Fully Kiosk on this tablet.';
+    wrap.append(kioskNote);
+  }
+
   return wrap;
 }
 
 /** @param {HTMLDListElement} list
  * @param {string} term
  * @param {string} value
- * @param {'mode' | 'theme' | 'clock' | 'weather-location'} [valueKey]
+ * @param {'mode' | 'theme' | 'clock' | 'home-scale' | 'weather-location'} [valueKey]
  */
 function appendAboutRow(list, term, value, valueKey) {
   const dt = document.createElement('dt');
@@ -420,6 +459,8 @@ function refreshAboutValues(viewport) {
   if (themeValue) themeValue.textContent = themeLabel();
   const clockValue = viewport.querySelector('dd[data-settings-value="clock"]');
   if (clockValue) clockValue.textContent = clockFormatLabel();
+  const homeScaleValue = viewport.querySelector('dd[data-settings-value="home-scale"]');
+  if (homeScaleValue) homeScaleValue.textContent = homeScreenScaleLabel();
   const weatherAbout = viewport.querySelector('dd[data-settings-value="weather-location"]');
   if (weatherAbout) weatherAbout.textContent = weatherLocationSummary();
   const weatherCurrent = viewport.querySelector('p[data-settings-value="weather-location"]');

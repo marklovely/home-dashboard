@@ -7,6 +7,7 @@ import { mountShellBottomNav, syncShellBottomNav } from './bottomNav.js';
 import { getCurrentRoute, HOME_ROUTE, initRouter, navigate, subscribeToRoute } from './router.js';
 import { subscribeToProfileChange } from '../services/profileService.js';
 import { subscribeToUserMode } from '../auth/userMode.js';
+import { subscribeToDisplayPreferences } from '../services/displayPreferencesService.js';
 
 /**
  * @param {Object} options
@@ -106,6 +107,11 @@ export function createAppShell({
   subscribeToUserMode(() => {
     applyShellBranding({ shellEyebrow, shellTagline });
     renderRoute(getCurrentRoute());
+  });
+  subscribeToDisplayPreferences(() => {
+    if (getCurrentRoute() === HOME_ROUTE) {
+      renderRoute(HOME_ROUTE);
+    }
   });
   initRouter(getAppById);
 }
