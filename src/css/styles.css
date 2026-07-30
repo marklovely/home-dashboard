@@ -261,6 +261,41 @@ body.is-bins-route .app-viewport > .bins-app {
 .settings-about dd { margin: 0; font-weight: 600; }
 .controls-app { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .controls-grid { padding-bottom: 8px; }
+.controls-grid--grouped {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2vw, 20px);
+}
+.control-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.5vw, 14px);
+  padding: clamp(14px, 2vw, 18px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.control-button-group__title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.control-button-group__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 900px) {
+  .control-button-group__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1200px) {
+  .controls-grid--grouped:not(.controls-grid--sitter) .control-button-group__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
 .house-guide-app {
   display: flex;
   flex-direction: column;

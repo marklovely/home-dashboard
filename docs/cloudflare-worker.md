@@ -91,8 +91,9 @@ The Worker only accepts `VB01`–`VB10` mapped to the same numeric Virtual Butto
 |------|---------|
 | VB01 | Downstairs On |
 | VB02 | Bedtime |
+| VB08 | Master Bedroom Lights On |
 | VB09 | Restore Lights After Movie |
-| VB10 | Bedroom Lights Toggle |
+| VB10 | Master Bedroom Lights Off |
 
 The browser sends only the code (for example `POST /api/button/VB01`).
 

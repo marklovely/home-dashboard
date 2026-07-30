@@ -2,7 +2,7 @@ import { defineWidget } from '../../components/Widget/defineWidget.js';
 import { triggerVirtualButton } from '../../api/virtualButtons.js';
 import { showToast } from '../../js/modules/toast.js';
 import { formatTime } from '../../js/utils/format.js';
-import { renderButtons } from './buttons.js';
+import { renderButtonGroups } from './buttonGroups.js';
 
 /**
  * @param {import('../../types/widget.js').WidgetContext} context
@@ -33,7 +33,7 @@ export const alexaWidget = defineWidget({
   profiles: ['owner', 'housesitter'],
   mount(context) {
     const fragment = document.createDocumentFragment();
-    renderButtons(fragment, context.config.buttons, createTriggerHandler(context));
+    renderButtonGroups(fragment, context.config, undefined, createTriggerHandler(context));
     return fragment;
   }
 });

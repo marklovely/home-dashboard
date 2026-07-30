@@ -56,4 +56,4 @@ Note the `*.workers.dev` URL and set `VITE_API_BASE_URL` in Cloudflare Pages pro
 
 ## Button allowlist
 
-`VB01` = Downstairs On, `VB02` = Bedtime, `VB09` = Restore Lights After Movie, `VB10` = Bedroom Lights Toggle — suffix matches Virtual Buttons numeric IDs in `src/config.js`.
+`VB01` = Downstairs On, `VB02` = Bedtime, `VB08` = Master Bedroom Lights On, `VB09` = Restore Lights After Movie, `VB10` = Master Bedroom Lights Off — suffix matches Virtual Buttons numeric IDs in `src/config.js`.

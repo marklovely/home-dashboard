@@ -1,6 +1,6 @@
 /**
  * Server-side allowlist — VB suffix matches Virtual Buttons numeric ID in the dashboard config.
- * VB01 = Downstairs On, VB02 = Bedtime, VB09 = Restore Lights After Movie, VB10 = Bedroom Lights Toggle (never renumber).
+ * VB08 = Master Bedroom Lights On, VB09 = Restore Lights After Movie, VB10 = Master Bedroom Lights Off (never renumber).
  */
 export const ALLOWED_BUTTON_CODES = Object.freeze([
   'VB01',
