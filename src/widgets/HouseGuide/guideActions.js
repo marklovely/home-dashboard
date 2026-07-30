@@ -1,24 +1,40 @@
 import { triggerVirtualButton } from '../../api/virtualButtons.js';
 import { showToast } from '../../js/modules/toast.js';
+import { runRoutineButtonAction } from '../Alexa/routineButtonFeedback.js';
 
 /**
  * @param {import('../../types/guideContent.js').GuideAction} action
  * @param {import('../../types/app.js').ShellContext} context
  * @param {(topicId: string) => void} openTopic
+ * @param {HTMLElement} [element]
  * @returns {boolean}
  */
-export function runGuideAction(action, context, openTopic) {
+export function runGuideAction(action, context, openTopic, element) {
   if (action.type === 'alexa') {
     if (!navigator.onLine) {
       showToast(context.toast, 'You are offline');
       return false;
     }
-    void triggerVirtualButton({ buttonId: action.buttonId })
-      .then(() => showToast(context.toast, `✓ ${action.label}`))
-      .catch((error) => {
-        console.error(error);
-        showToast(context.toast, error.message);
-      });
+    if (!element) {
+      void triggerVirtualButton({ buttonId: action.buttonId })
+        .then(() => showToast(context.toast, `✓ ${action.label}`))
+        .catch((error) => {
+          console.error(error);
+          showToast(context.toast, error.message);
+        });
+      return true;
+    }
+    void runRoutineButtonAction(
+      element,
+      () => triggerVirtualButton({ buttonId: action.buttonId }),
+      {
+        onSuccess: () => showToast(context.toast, `✓ ${action.label}`),
+        onError: (error) => {
+          console.error(error);
+          showToast(context.toast, error instanceof Error ? error.message : 'Request failed');
+        }
+      }
+    );
     return true;
   }
 

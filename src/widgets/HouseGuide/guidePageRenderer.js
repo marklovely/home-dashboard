@@ -2,6 +2,7 @@ import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
 import { getProtectedDisplayValue } from '../../content/houseguide/privateContent.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createGuidePanelOverlay, runGuideAction } from './guideActions.js';
+import { ensureRoutineButtonStatus } from '../Alexa/routineButtonFeedback.js';
 import { renderGuideMediaFallback, wireGuideImageLightbox } from './guideImageUi.js';
 import { highlightGuideText } from './highlight.js';
 
@@ -245,13 +246,14 @@ function renderActionButton(action, context, openTopic, root) {
   button.className = 'guide-action-button routine-button';
   button.style.setProperty('--accent', '#8b7cff');
   button.textContent = action.label;
+  ensureRoutineButtonStatus(button);
 
   button.addEventListener('click', () => {
     if (action.type === 'panel') {
       root.append(createGuidePanelOverlay(action));
       return;
     }
-    runGuideAction(action, context, openTopic);
+    runGuideAction(action, context, openTopic, button);
   });
   return button;
 }
