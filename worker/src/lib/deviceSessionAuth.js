@@ -1,9 +1,7 @@
 import { authenticateRequest, hasRequiredRole } from './requestAuth.js';
 import {
-  applyDeviceSessionHeaders,
-  attachClearDeviceSessionCookie,
   createSitterClaims,
-  deviceSessionJsonBody,
+  finalizeDeviceSessionJsonResponse,
   resolveDeviceSession,
   signDeviceSession
 } from './deviceSession.js';
@@ -69,21 +67,24 @@ export async function issueSitterSessionResponse(env, nowSec = Math.floor(Date.n
   if (!cookieValue) {
     return Response.json({ error: 'SESSION_UNAVAILABLE' }, { status: 503 });
   }
-  const body = deviceSessionJsonBody({ mode: 'sitter', ownerSessionExpiresAtMs: null });
-  return applyDeviceSessionHeaders(
-    Response.json(body, { status: 200, headers: { 'Cache-Control': 'no-store' } }),
-    { cookieValue, claims, clearCookie: false }
-  );
+  return finalizeDeviceSessionJsonResponse({
+    mode: 'sitter',
+    ownerSessionExpiresAtMs: null,
+    cookieValue,
+    claims,
+    clearCookie: false
+  });
 }
 
 /**
  * Clears any sitter lock cookie and returns owner mode (Access remains required).
  */
 export async function issueOwnerUnlockResponse() {
-  const body = deviceSessionJsonBody({ mode: 'owner', ownerSessionExpiresAtMs: null });
-  return attachClearDeviceSessionCookie(
-    Response.json(body, { status: 200, headers: { 'Cache-Control': 'no-store' } })
-  );
+  return finalizeDeviceSessionJsonResponse({
+    mode: 'owner',
+    ownerSessionExpiresAtMs: null,
+    clearCookie: true
+  });
 }
 
 /** @deprecated Use issueOwnerUnlockResponse */
