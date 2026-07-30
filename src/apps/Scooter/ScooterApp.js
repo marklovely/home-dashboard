@@ -146,7 +146,7 @@ export const scooterApp = defineApp({
   description: 'Dog care schedule and notes',
   capabilities: ['pets', 'schedule'],
   accent: '#ff9f43',
-  profiles: ['owner', 'housesitter'],
+  profiles: ['housesitter'],
   summary: () => ({ title: 'Care guide', subtitle: 'Walks · meals · bedtime' }),
   mount: mountScooterApp
 });
