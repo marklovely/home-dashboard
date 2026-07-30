@@ -41,7 +41,11 @@ describe('buttons', () => {
   });
 
   it('calls upstream with server-side access code', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: true });
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ pressed: 1, timeStamp: 'now' })
+    });
     const response = await handleRequest(
       await authedRequest('https://worker.test/api/button/VB01', { method: 'POST', body: '{}' }),
       env,
@@ -49,9 +53,13 @@ describe('buttons', () => {
     );
     expect(response.status).toBe(200);
     expect(fetchImpl).toHaveBeenCalledOnce();
-    const url = String(fetchImpl.mock.calls[0][0]);
-    expect(url).toContain('accessCode=test-access-code');
-    expect(url).toContain('virtualButton=1');
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe('https://api.virtualbuttons.com/v1');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      virtualButton: 1,
+      accessCode: 'test-access-code'
+    });
   });
 });
 
