@@ -7,6 +7,7 @@ import {
   WEATHER_CACHE_TTL_MS
 } from '../src/weather/weatherService.js';
 import { setWeatherCache } from '../src/weather/weatherCache.js';
+import { weatherCacheKey } from '../src/weather/geocode.js';
 import { SAMPLE_AIR_QUALITY, SAMPLE_OPEN_METEO_FORECAST } from './fixtures/openMeteoSample.js';
 import { handleRequest } from '../src/index.js';
 import { createAccessTestEnv, signTestAccessJwt, withAccessJwt } from './accessTestHelpers.js';
@@ -109,7 +110,7 @@ describe('weather cache and service', () => {
       fromCache: true,
       stale: false
     });
-    setWeatherCache(cached, WEATHER_CACHE_TTL_MS);
+    setWeatherCache(cached, WEATHER_CACHE_TTL_MS, weatherCacheKey(50.88, -1.03));
     const fetchImpl = vi.fn();
     const result = await getHomeWeather(env, fetchImpl);
     expect(fetchImpl).not.toHaveBeenCalled();
@@ -124,7 +125,7 @@ describe('weather cache and service', () => {
       fromCache: true,
       stale: false
     });
-    setWeatherCache(cached, 1);
+    setWeatherCache(cached, 1, weatherCacheKey(50.88, -1.03));
     await new Promise((resolve) => setTimeout(resolve, 5));
     const fetchImpl = vi.fn().mockRejectedValue(new Error('network'));
     const result = await getHomeWeather(env, fetchImpl);

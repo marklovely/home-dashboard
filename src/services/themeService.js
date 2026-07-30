@@ -5,14 +5,35 @@ const STORAGE_KEY = 'home-hub-theme';
 /** @type {ThemeId} */
 let activeTheme = 'dark';
 
+/** @type {MediaQueryList | null} */
+let colorSchemeQuery = null;
+
+/** @param {() => void} listener */
+export function subscribeToTheme(listener) {
+  document.addEventListener('home-hub-theme-change', listener);
+  return () => document.removeEventListener('home-hub-theme-change', listener);
+}
+
+function notifyThemeChange() {
+  document.dispatchEvent(new Event('home-hub-theme-change'));
+}
+
 /** @returns {ThemeId} */
 export function getActiveTheme() {
   return activeTheme;
 }
 
+/** @returns {'dark' | 'light'} */
+export function getEffectiveTheme() {
+  if (activeTheme === 'auto') {
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  return activeTheme;
+}
+
 /** @param {ThemeId} themeId */
 export function setActiveTheme(themeId) {
-  if (themeId !== 'dark') return;
+  if (themeId !== 'dark' && themeId !== 'light' && themeId !== 'auto') return;
   activeTheme = themeId;
   applyTheme();
   try {
@@ -20,19 +41,39 @@ export function setActiveTheme(themeId) {
   } catch {
     /* ignore */
   }
+  notifyThemeChange();
 }
 
 export function initTheme() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'dark') activeTheme = 'dark';
+    if (stored === 'dark' || stored === 'light' || stored === 'auto') {
+      activeTheme = stored;
+    }
   } catch {
     /* ignore */
   }
+
+  colorSchemeQuery = window.matchMedia('(prefers-color-scheme: light)');
+  colorSchemeQuery.addEventListener('change', onSystemColorSchemeChange);
   applyTheme();
 }
 
+function onSystemColorSchemeChange() {
+  if (activeTheme !== 'auto') return;
+  applyTheme();
+  notifyThemeChange();
+}
+
 function applyTheme() {
+  document.documentElement.dataset.theme = activeTheme;
+  document.documentElement.style.colorScheme =
+    activeTheme === 'auto' ? 'light dark' : getEffectiveTheme();
+}
+
+/** @internal */
+export function resetThemeForTests() {
+  activeTheme = 'dark';
   document.documentElement.dataset.theme = 'dark';
   document.documentElement.style.colorScheme = 'dark';
 }
