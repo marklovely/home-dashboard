@@ -84,6 +84,10 @@ const houseSitterConfig = {
     labels: {
       1: { title: 'Downstairs Lights', subtitle: 'Turn on the main lights' },
       2: { title: 'Bedtime', subtitle: 'Settle the house for the night' },
+      3: { title: 'Garage Light On', subtitle: 'Turn the garage light on' },
+      4: { title: 'Garage Light Off', subtitle: 'Turn the garage light off' },
+      5: { title: 'Downstairs Off', subtitle: 'Turn the main lights off' },
+      6: { title: 'Watch Movie', subtitle: 'Set up the lounge for a film' },
       8: { title: 'Master Bedroom On', subtitle: 'Turn master bedroom lights on' },
       9: { title: 'Restore Lights', subtitle: 'Return the lounge to normal' },
       10: { title: 'Master Bedroom Off', subtitle: 'Turn master bedroom lights off' }
