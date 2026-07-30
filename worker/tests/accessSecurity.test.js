@@ -85,7 +85,11 @@ describe('Cloudflare Access authentication', () => {
 
 describe('control authorization', () => {
   it('allows sitter to trigger permitted control', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: true });
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ pressed: 1, timeStamp: 'now' })
+    });
     const token = await sitterJwt();
     const response = await handleRequest(
       new Request(
@@ -102,7 +106,7 @@ describe('control authorization', () => {
     const token = await sitterJwt();
     const response = await handleRequest(
       new Request(
-        'https://worker.test/api/button/VB06',
+        'https://worker.test/api/button/VB07',
         withAccessJwt(token, { method: 'POST', body: '{}' })
       ),
       baseEnv
@@ -147,7 +151,11 @@ describe('control authorization', () => {
   });
 
   it('throttles duplicate control within cooldown', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: true });
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ pressed: 1, timeStamp: 'now' })
+    });
     const token = await ownerJwt();
     const init = withAccessJwt(token, { method: 'POST', body: '{}' });
     const first = await handleRequest(new Request('https://worker.test/api/button/VB01', init), baseEnv, fetchImpl);
