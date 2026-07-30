@@ -11,8 +11,8 @@ export const SCOOTER_SECTIONS = [
     id: 'morning',
     title: 'Morning',
     emoji: '🌅',
-    topicId: 'walks-exercise',
-    hint: 'Lead on before opening the front door.'
+    topicId: 'morning-routine',
+    hint: 'Out of the crate, then into the back garden.'
   },
   {
     id: 'walks',
@@ -33,7 +33,7 @@ export const SCOOTER_SECTIONS = [
     title: 'Bedtime',
     emoji: '🌙',
     topicId: 'bedtime',
-    hint: 'Say “It’s bedtime for dogs.”'
+    hint: 'Collar off before the crate — say “It’s bedtime for dogs.”'
   },
   {
     id: 'health',
