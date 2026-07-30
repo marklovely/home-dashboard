@@ -3,6 +3,7 @@ import { triggerVirtualButton } from '../../api/virtualButtons.js';
 import { showToast } from '../../js/modules/toast.js';
 import { renderButtonGroups } from '../Alexa/buttonGroups.js';
 import { runRoutineButtonAction } from '../Alexa/routineButtonFeedback.js';
+import { isButtonAllowedForSitter } from '../../config/controlPermissions.js';
 
 /**
  * @param {string} subtitle
@@ -20,14 +21,16 @@ export function mountSitterControlsGrid(context) {
   const rules = getModeConfig().controls;
   const buttons = context.config.buttons ?? [];
 
-  const displayButtons = buttons.map((button) => {
-    const labels = rules?.labels?.[button.id];
-    return {
-      ...button,
-      title: labels?.title ?? button.title,
-      subtitle: sitterFriendlySubtitle(labels?.subtitle ?? button.subtitle ?? '')
-    };
-  });
+  const displayButtons = buttons
+    .filter((button) => isButtonAllowedForSitter(button.id))
+    .map((button) => {
+      const labels = rules?.labels?.[button.id];
+      return {
+        ...button,
+        title: labels?.title ?? button.title,
+        subtitle: sitterFriendlySubtitle(labels?.subtitle ?? button.subtitle ?? '')
+      };
+    });
 
   const fragment = document.createDocumentFragment();
   const wrapper = document.createElement('section');
@@ -51,7 +54,11 @@ export function mountSitterControlsGrid(context) {
           onSuccess: () => showToast(context.toast, `✓ ${display.title}`),
           onError: (error) => {
             console.error(error);
-            showToast(context.toast, 'That control is unavailable right now. Please try again.');
+            const message =
+              error instanceof Error && error.message
+                ? error.message
+                : 'That control is unavailable right now. Please try again.';
+            showToast(context.toast, message);
           }
         }
       );
