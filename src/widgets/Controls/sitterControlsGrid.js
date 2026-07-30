@@ -1,7 +1,7 @@
 import { getModeConfig } from '../../modes/modeConfig.js';
 import { triggerVirtualButton } from '../../api/virtualButtons.js';
 import { showToast } from '../../js/modules/toast.js';
-import { createRoutineButton } from '../Alexa/buttons.js';
+import { renderButtonGroups } from '../Alexa/buttonGroups.js';
 
 /**
  * @param {string} subtitle
@@ -19,25 +19,32 @@ export function mountSitterControlsGrid(context) {
   const rules = getModeConfig().controls;
   const buttons = context.config.buttons ?? [];
 
-  const fragment = document.createDocumentFragment();
-  const grid = document.createElement('section');
-  grid.className = 'button-grid controls-grid controls-grid--sitter';
-  grid.setAttribute('aria-label', 'Home controls');
-
-  for (const button of buttons) {
+  const displayButtons = buttons.map((button) => {
     const labels = rules?.labels?.[button.id];
-    const display = {
+    return {
       ...button,
       title: labels?.title ?? button.title,
       subtitle: sitterFriendlySubtitle(labels?.subtitle ?? button.subtitle ?? '')
     };
-    const element = createRoutineButton(display, async (pressed, el) => {
+  });
+
+  const fragment = document.createDocumentFragment();
+  const wrapper = document.createElement('section');
+  wrapper.className = 'controls-grid controls-grid--grouped controls-grid--sitter';
+  wrapper.setAttribute('aria-label', 'Home controls');
+
+  renderButtonGroups(
+    wrapper,
+    context.config,
+    displayButtons,
+    async (pressed, el) => {
       if (!navigator.onLine) {
         showToast(context.toast, 'You are offline — try again when connected.');
         return;
       }
       el.classList.add('is-pressing');
       navigator.vibrate?.(35);
+      const display = displayButtons.find((b) => b.id === pressed.id) ?? pressed;
       try {
         await triggerVirtualButton({ buttonId: pressed.id });
         showToast(context.toast, `✓ ${display.title}`);
@@ -47,11 +54,12 @@ export function mountSitterControlsGrid(context) {
       } finally {
         window.setTimeout(() => el.classList.remove('is-pressing'), 180);
       }
-    });
-    element.classList.add('routine-button--sitter');
-    grid.append(element);
-  }
+    },
+    (element) => {
+      element.classList.add('routine-button--sitter');
+    }
+  );
 
-  fragment.append(grid);
+  fragment.append(wrapper);
   return fragment;
 }

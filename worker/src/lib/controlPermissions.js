@@ -5,13 +5,13 @@ export const CONTROL_PERMISSIONS = Object.freeze({
   VB01: ['owner', 'house-sitter'],
   VB02: ['owner', 'house-sitter'],
   VB09: ['owner', 'house-sitter'],
+  VB08: ['owner', 'house-sitter'],
   VB10: ['owner', 'house-sitter'],
   VB03: ['owner'],
   VB04: ['owner'],
   VB05: ['owner'],
   VB06: ['owner'],
-  VB07: ['owner'],
-  VB08: ['owner']
+  VB07: ['owner']
 });
 
 /**

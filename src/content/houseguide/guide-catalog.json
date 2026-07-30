@@ -759,11 +759,6 @@
               "type": "alexa",
               "buttonId": 7,
               "label": "Heat to 20°C"
-            },
-            {
-              "type": "alexa",
-              "buttonId": 8,
-              "label": "Heat to 9°C"
             }
           ]
         },
@@ -798,13 +793,7 @@
               "content": "If you manually turn heating on after 10:30 pm, please set the thermostat back to 9°C before bed."
             }
           ],
-          "actions": [
-            {
-              "type": "alexa",
-              "buttonId": 8,
-              "label": "Heat to 9°C"
-            }
-          ]
+          "actions": []
         },
         {
           "id": "hot-water-schedule",
