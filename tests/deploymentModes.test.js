@@ -97,6 +97,8 @@ describe('owner authentication', () => {
     expect(ids).toContain('settings');
     expect(ids).toContain('plex');
     expect(ids).not.toContain('emergency');
+    expect(ids).not.toContain('house-guide');
+    expect(ids).not.toContain('scooter');
     expect(getModeConfig().branding.eyebrow).toBe('LOVELY HOME HUB');
   });
 
