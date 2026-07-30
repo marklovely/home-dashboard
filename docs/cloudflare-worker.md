@@ -85,13 +85,14 @@ Preview deployments: add a pattern such as `https://*.pages.dev` when supported,
 
 ## Button allowlist
 
-The Worker only accepts `VB01`–`VB09` mapped to the same numeric Virtual Button IDs as `src/config.js`:
+The Worker only accepts `VB01`–`VB10` mapped to the same numeric Virtual Button IDs as `src/config.js`:
 
 | Code | Control |
 |------|---------|
 | VB01 | Downstairs On |
 | VB02 | Bedtime |
 | VB09 | Restore Lights After Movie |
+| VB10 | Bedroom Lights Toggle |
 
 The browser sends only the code (for example `POST /api/button/VB01`).
 

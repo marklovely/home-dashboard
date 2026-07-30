@@ -72,7 +72,8 @@ const houseSitterConfig = {
     labels: {
       1: { title: 'Downstairs Lights', subtitle: 'Turn on the main lights' },
       2: { title: 'Bedtime', subtitle: 'Settle the house for the night' },
-      9: { title: 'Restore Lights', subtitle: 'Return the lounge to normal' }
+      9: { title: 'Restore Lights', subtitle: 'Return the lounge to normal' },
+      10: { title: 'Bedroom Lights', subtitle: 'Toggle bedroom lights on or off' }
     }
   },
   appTitleOverrides: {
