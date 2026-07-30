@@ -52,7 +52,8 @@ export async function proxyWorkerResponse(upstream) {
       const proxyCookie = json[DEVICE_SESSION_PROXY_COOKIE_FIELD];
       if (typeof proxyCookie === 'string' && proxyCookie.startsWith(`${DEVICE_SESSION_COOKIE}=`)) {
         deviceCookies.push(proxyCookie);
-        const { [DEVICE_SESSION_PROXY_COOKIE_FIELD]: _removed, ...rest } = json;
+        const rest = { ...json };
+        delete rest[DEVICE_SESSION_PROXY_COOKIE_FIELD];
         body = JSON.stringify(rest);
         headers.set('content-type', 'application/json');
       }
