@@ -6,6 +6,8 @@
  */
 
 export const DEVICE_SESSION_COOKIE = 'lovely_home_device_session';
+/** Internal header for Pages proxy when Set-Cookie is dropped by service binding. */
+export const DEVICE_SESSION_SET_COOKIE_HEADER = 'X-Device-Session-Set-Cookie';
 export const DEVICE_SESSION_VERSION = 1;
 
 /** 30 days */
@@ -263,11 +265,11 @@ export async function resolveDeviceSession(request, env, nowMs = Date.now()) {
  * @param {number} maxAgeSec
  */
 export function buildDeviceSessionSetCookie(value, maxAgeSec) {
-  return `${DEVICE_SESSION_COOKIE}=${encodeURIComponent(value)}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${maxAgeSec}`;
+  return `${DEVICE_SESSION_COOKIE}=${encodeURIComponent(value)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAgeSec}`;
 }
 
 export function buildDeviceSessionClearCookie() {
-  return `${DEVICE_SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
+  return `${DEVICE_SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`;
 }
 
 /**
@@ -299,8 +301,10 @@ export function deviceSessionJsonBody(session) {
  */
 export function attachDeviceSessionCookie(response, cookieValue, claims) {
   if (!cookieValue) return response;
+  const cookieHeader = buildDeviceSessionSetCookie(cookieValue, cookieMaxAgeForClaims(claims));
   const headers = new Headers(response.headers);
-  headers.append('Set-Cookie', buildDeviceSessionSetCookie(cookieValue, cookieMaxAgeForClaims(claims)));
+  headers.append('Set-Cookie', cookieHeader);
+  headers.set(DEVICE_SESSION_SET_COOKIE_HEADER, cookieHeader);
   headers.set('Cache-Control', 'no-store');
   return new Response(response.body, {
     status: response.status,
@@ -313,8 +317,10 @@ export function attachDeviceSessionCookie(response, cookieValue, claims) {
  * @param {Response} response
  */
 export function attachClearDeviceSessionCookie(response) {
+  const cookieHeader = buildDeviceSessionClearCookie();
   const headers = new Headers(response.headers);
-  headers.append('Set-Cookie', buildDeviceSessionClearCookie());
+  headers.append('Set-Cookie', cookieHeader);
+  headers.set(DEVICE_SESSION_SET_COOKIE_HEADER, cookieHeader);
   headers.set('Cache-Control', 'no-store');
   return new Response(response.body, {
     status: response.status,
