@@ -1,37 +1,44 @@
 import { defineApp } from '../../components/App/defineApp.js';
-import { isHomeDeployment } from '../../auth/deploymentMode.js';
 import { canReturnToHouseSitterMode } from '../../auth/ownerSession.js';
 import { isOwnerUserMode } from '../../auth/userMode.js';
 import { enterSitterMode, getDeviceMode, lockOwner } from '../../auth/deviceSessionStore.js';
-import { setUserMode, UserMode } from '../../auth/userMode.js';
-import { profiles } from '../../profiles/index.js';
-import { getActiveProfileId, setActiveProfileId } from '../../services/profileService.js';
-import { getActiveTheme, setActiveTheme } from '../../services/themeService.js';
+import { getActiveTheme, getEffectiveTheme, setActiveTheme } from '../../services/themeService.js';
 import { showToast } from '../../js/modules/toast.js';
+
+/** @returns {string} */
+function deviceModeLabel() {
+  return getDeviceMode() === 'sitter' ? 'House sitter' : 'Owner';
+}
+
+/** @returns {string} */
+function themeLabel() {
+  const active = getActiveTheme();
+  if (active === 'auto') {
+    return `Auto (${getEffectiveTheme() === 'light' ? 'Light' : 'Dark'})`;
+  }
+  return active === 'light' ? 'Light' : 'Dark';
+}
 
 /**
  * @param {import('../../types/app.js').ShellContext} context
- * @param {() => void} onProfileChange
+ * @param {() => void} onRefresh
  */
-function mountSettingsApp(viewport, context, onProfileChange) {
+function mountSettingsApp(viewport, context, onRefresh) {
   const page = document.createElement('section');
   page.className = 'app-page settings-app';
   page.setAttribute('aria-label', 'Settings');
 
+  /** @type {HTMLElement[]} */
   const groups = [
-    createSettingsGroup('Profile', createProfileField(onProfileChange)),
-    createSettingsGroup('Theme', createThemeField()),
+    createSettingsGroup('Appearance', createThemeField(onRefresh)),
     createSettingsGroup('About', createAboutField())
   ];
 
   if (isOwnerUserMode()) {
-    groups.unshift(
-      createSettingsGroup('Guest mode', createHouseSitterModeFields(context, onProfileChange))
-    );
+    groups.unshift(createSettingsGroup('House sitter mode', createHouseSitterModeFields(context, onRefresh)));
   }
 
   page.append(...groups);
-
   viewport.replaceChildren(page);
 }
 
@@ -49,29 +56,31 @@ function createSettingsGroup(legend, body) {
   return fieldset;
 }
 
-/** @param {import('../../types/app.js').ShellContext} context @param {() => void} onProfileChange */
-function createHouseSitterModeFields(context, onProfileChange) {
+/** @param {import('../../types/app.js').ShellContext} context @param {() => void} onRefresh */
+function createHouseSitterModeFields(context, onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
 
   const enableCopy = document.createElement('p');
   enableCopy.className = 'settings-help subtle';
   enableCopy.textContent =
-    'The dashboard will remain in House Sitter Mode until an owner unlocks it again.';
+    'Hand the tablet to guests with owner-only apps and personal information hidden. The dashboard stays in House Sitter Mode after refreshes and restarts until an owner unlocks it.';
 
   const enableButton = document.createElement('button');
   enableButton.type = 'button';
   enableButton.className = 'settings-action-button';
   enableButton.textContent = 'Enable House Sitter Mode';
   enableButton.addEventListener('click', () => {
-    if (!window.confirm(
-      'Enable House Sitter Mode?\n\nOwner-only apps and personal information will be hidden. The dashboard will remain in House Sitter Mode after refreshes and tablet restarts.'
-    )) {
+    if (
+      !window.confirm(
+        'Enable House Sitter Mode?\n\nOwner-only apps and personal information will be hidden. The dashboard will remain in House Sitter Mode after refreshes and tablet restarts.'
+      )
+    ) {
       return;
     }
     void enterSitterMode(() => {
       context.navigate('home');
-      onProfileChange();
+      onRefresh();
       context.refreshShell?.();
       showToast(context.toast, 'House Sitter Mode enabled');
     }).then((ok) => {
@@ -89,7 +98,7 @@ function createHouseSitterModeFields(context, onProfileChange) {
     lockButton.addEventListener('click', () => {
       void lockOwner(() => {
         context.navigate('home');
-        onProfileChange();
+        onRefresh();
         context.refreshShell?.();
       }).then((ok) => {
         if (!ok) showToast(context.toast, 'Could not return to House Sitter Mode');
@@ -101,46 +110,15 @@ function createHouseSitterModeFields(context, onProfileChange) {
   return wrap;
 }
 
-/** @param {() => void} onProfileChange */
-function createProfileField(onProfileChange) {
+/** @param {() => void} onRefresh */
+function createThemeField(onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options';
-  const active = getActiveProfileId();
-
-  for (const profile of Object.values(profiles)) {
-    const label = document.createElement('label');
-    label.className = 'settings-option';
-    const input = document.createElement('input');
-    input.type = 'radio';
-    input.name = 'profile';
-    input.value = profile.id;
-    input.checked = profile.id === active;
-    if (isHomeDeployment() && profile.id === 'housesitter' && getDeviceMode() !== 'sitter') {
-      input.disabled = true;
-    }
-    input.addEventListener('change', () => {
-      if (!input.checked) return;
-      setActiveProfileId(/** @type {import('../../types/app.js').ProfileId} */ (profile.id));
-      if (isHomeDeployment()) {
-        setUserMode(profile.id === 'housesitter' ? UserMode.HouseSitter : UserMode.Owner);
-      }
-      onProfileChange();
-    });
-    const text = document.createElement('span');
-    text.textContent = profile.label;
-    label.append(input, text);
-    wrap.append(label);
-  }
-  return wrap;
-}
-
-function createThemeField() {
-  const wrap = document.createElement('div');
-  wrap.className = 'settings-options';
+  /** @type {Array<{ id: import('../../services/themeService.js').ThemeId, label: string, hint?: string }>} */
   const options = [
-    { id: 'dark', label: 'Dark', enabled: true },
-    { id: 'light', label: 'Light', enabled: false },
-    { id: 'auto', label: 'Auto', enabled: false }
+    { id: 'dark', label: 'Dark' },
+    { id: 'light', label: 'Light' },
+    { id: 'auto', label: 'Auto', hint: 'Follow system' }
   ];
   const active = getActiveTheme();
 
@@ -152,16 +130,23 @@ function createThemeField() {
     input.name = 'theme';
     input.value = option.id;
     input.checked = option.id === active;
-    input.disabled = !option.enabled;
     input.addEventListener('change', () => {
-      if (input.checked) setActiveTheme('dark');
+      if (!input.checked) return;
+      setActiveTheme(option.id);
+      onRefresh();
     });
-    const text = document.createElement('span');
-    text.textContent = option.label;
-    if (!option.enabled) {
-      text.append(document.createTextNode(' (soon)'));
+    const textWrap = document.createElement('span');
+    textWrap.className = 'settings-option-text';
+    const title = document.createElement('span');
+    title.textContent = option.label;
+    textWrap.append(title);
+    if (option.hint) {
+      const hint = document.createElement('small');
+      hint.className = 'settings-option-hint';
+      hint.textContent = option.hint;
+      textWrap.append(hint);
     }
-    label.append(input, text);
+    label.append(input, textWrap);
     wrap.append(label);
   }
   return wrap;
@@ -177,7 +162,8 @@ function createAboutField() {
   appendAboutRow(list, 'Application', 'Home Hub');
   appendAboutRow(list, 'Version', version);
   appendAboutRow(list, 'Build', formatBuildTime(buildTime));
-  appendAboutRow(list, 'Profile', profiles[getActiveProfileId()]?.label ?? getActiveProfileId(), true);
+  appendAboutRow(list, 'Device mode', deviceModeLabel(), 'mode');
+  appendAboutRow(list, 'Theme', themeLabel(), 'theme');
 
   return list;
 }
@@ -185,15 +171,15 @@ function createAboutField() {
 /** @param {HTMLDListElement} list
  * @param {string} term
  * @param {string} value
- * @param {boolean} [isProfile]
+ * @param {'mode' | 'theme'} [valueKey]
  */
-function appendAboutRow(list, term, value, isProfile = false) {
+function appendAboutRow(list, term, value, valueKey) {
   const dt = document.createElement('dt');
   dt.textContent = term;
   const dd = document.createElement('dd');
   dd.textContent = value;
-  if (isProfile) {
-    dd.dataset.settingsProfileValue = 'true';
+  if (valueKey) {
+    dd.dataset.settingsValue = valueKey;
   }
   list.append(dt, dd);
 }
@@ -205,26 +191,32 @@ function formatBuildTime(iso) {
   return date.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/** @param {ParentNode} viewport */
+function refreshAboutValues(viewport) {
+  const modeValue = viewport.querySelector('[data-settings-value="mode"]');
+  if (modeValue) modeValue.textContent = deviceModeLabel();
+  const themeValue = viewport.querySelector('[data-settings-value="theme"]');
+  if (themeValue) themeValue.textContent = themeLabel();
+}
+
 function settingsSummary() {
-  return { title: 'Configuration', subtitle: profiles[getActiveProfileId()]?.label ?? 'Profile' };
+  return { title: 'Configuration', subtitle: themeLabel() };
 }
 
 export const settingsApp = defineApp({
   id: 'settings',
   title: 'Settings',
   iconId: 'settings',
-  description: 'Profile, display, and about this hub',
-  capabilities: ['configuration', 'profiles', 'theme'],
+  description: 'Appearance, guest mode, and about this hub',
+  capabilities: ['configuration', 'theme'],
   accent: '#aeb7c6',
-  profiles: ['owner'],
+  profiles: ['owner', 'housesitter'],
   summary: settingsSummary,
   mount(viewport, context) {
-    mountSettingsApp(viewport, context, () => {
-      const profileValue = viewport.querySelector('[data-settings-profile-value]');
-      if (profileValue) {
-        profileValue.textContent = profiles[getActiveProfileId()]?.label ?? getActiveProfileId();
-      }
+    const refresh = () => {
+      refreshAboutValues(viewport);
       context.refreshShell?.();
-    });
+    };
+    mountSettingsApp(viewport, context, refresh);
   }
 });
