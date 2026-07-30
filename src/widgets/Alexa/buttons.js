@@ -1,3 +1,5 @@
+import { ensureRoutineButtonStatus } from './routineButtonFeedback.js';
+
 export function createRoutineButton(button, onTrigger) {
   const element = document.createElement('button');
   element.type = 'button';
@@ -18,6 +20,7 @@ export function createRoutineButton(button, onTrigger) {
   subtitle.textContent = button.subtitle ?? `Virtual Button ${button.id}`;
 
   element.append(icon, title, subtitle);
+  ensureRoutineButtonStatus(element);
   element.addEventListener('click', () => onTrigger(button, element));
   return element;
 }
