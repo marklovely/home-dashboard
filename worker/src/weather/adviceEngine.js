@@ -44,7 +44,7 @@ export function generateWeatherAdvice(weather, audience = 'owner') {
       icon: 'rain',
       title: houseSitter ? 'Rain may arrive later today.' : 'Rain may arrive this afternoon.',
       detail: houseSitter
-        ? 'An earlier walk with Scooter might stay drier. A towel could help if he gets wet.'
+        ? 'An earlier walk with Scooter might stay drier. A towel could help if she gets wet.'
         : 'You might prefer to walk Scooter earlier while it is still dry.'
     });
   } else if (rainChance <= 15 && !upcomingHours.some((h) => (h.rainChance ?? 0) > 30)) {

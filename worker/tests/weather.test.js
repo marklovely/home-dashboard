@@ -60,6 +60,24 @@ describe('weather advice audiences', () => {
     expect(advice.some((item) => /gardening/i.test(item.detail))).toBe(false);
   });
 
+  it('refers to Scooter with she/her in house sitter rain advice', () => {
+    const payload = mapOpenMeteoToDashboard(SAMPLE_OPEN_METEO_FORECAST, null, {
+      fetchedAt: new Date().toISOString(),
+      fromCache: false,
+      stale: false
+    });
+    payload.today.rainChance = 70;
+    payload.hourly = payload.hourly.map((hour, index) => ({
+      ...hour,
+      time: new Date(Date.now() + (index + 1) * 60 * 60 * 1000).toISOString(),
+      rainChance: index === 0 ? 70 : 5
+    }));
+    const advice = generateWeatherAdvice(payload, 'house-sitter');
+    const rainAdvice = advice.find((item) => /Scooter/i.test(item.detail));
+    expect(rainAdvice?.detail).toMatch(/she gets wet/i);
+    expect(rainAdvice?.detail).not.toMatch(/\bhe\b|\bhim\b|\bhis\b/i);
+  });
+
   it('uses informative language for house sitters', () => {
     const payload = mapOpenMeteoToDashboard(SAMPLE_OPEN_METEO_FORECAST, null, {
       fetchedAt: new Date().toISOString(),
