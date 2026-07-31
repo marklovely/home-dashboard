@@ -7,6 +7,10 @@ import { ensureRoutineButtonStatus } from '../Alexa/routineButtonFeedback.js';
 import { renderGuideMediaFallback, wireGuideImageLightbox } from './guideImageUi.js';
 import { highlightGuideText } from './highlight.js';
 import { wireGuideTopicManualLinks } from './guideTopicManualLinks.js';
+import {
+  appendWifiQrSectionIfNeeded,
+  shouldSkipStaleGuideBlock
+} from './guideTopicWifiQr.js';
 
 /**
  * @param {string} url
@@ -326,9 +330,13 @@ export function renderGuideTopicPage(topic, context, onBack, openTopic, options 
   const body = document.createElement('div');
   body.className = 'guide-topic-body';
   for (const block of topic.blocks ?? []) {
+    if (shouldSkipStaleGuideBlock(block)) {
+      continue;
+    }
     const node = renderBlock(block);
     if (node) body.append(node);
   }
+  appendWifiQrSectionIfNeeded(body, topic);
   article.append(body);
 
   backButton.addEventListener('click', onBack);
