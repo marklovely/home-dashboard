@@ -147,6 +147,7 @@
  * @property {string[]} searchTerms
  * @property {string[]} [applianceManualTerms]
  * @property {'guest' | 'owner'} [audience]
+ * @property {boolean} [hasDraft]
  */
 
 /**
