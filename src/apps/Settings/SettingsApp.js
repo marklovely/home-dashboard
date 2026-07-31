@@ -27,6 +27,8 @@ import {
 } from '../../services/weatherLocationService.js';
 import { geocodeWeatherLocation } from '../../api/weatherApi.js';
 import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
+import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
+import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { showToast } from '../../js/modules/toast.js';
 
 /** @returns {string} */
@@ -61,6 +63,7 @@ function mountSettingsApp(viewport, context, onRefresh) {
 
   /** @type {HTMLElement[]} */
   const groups = [
+    createSettingsGroup('Help', createHelpFields()),
     createSettingsGroup('Appearance', createAppearanceFields(onRefresh)),
     createSettingsGroup('About', createAboutField())
   ];
@@ -86,6 +89,36 @@ function createSettingsGroup(legend, body) {
   heading.textContent = legend;
   fieldset.append(heading, body);
   return fieldset;
+}
+
+function createHelpFields() {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options settings-options--stacked';
+
+  const intro = document.createElement('p');
+  intro.className = 'settings-help subtle';
+  intro.textContent =
+    'Searchable guides for running the hub as an owner and for what house sitters see on the tablet.';
+
+  wrap.append(intro);
+
+  if (isOwnerUserMode()) {
+    wrap.append(createOwnerHelpButton());
+    wrap.append(
+      createSitterHelpButton({
+        label: 'Guest tablet guide',
+        buttonClassName: 'button-secondary settings-help-guide-button'
+      })
+    );
+  } else {
+    wrap.append(
+      createSitterHelpButton({
+        buttonClassName: 'button-secondary settings-help-guide-button'
+      })
+    );
+  }
+
+  return wrap;
 }
 
 /** @param {import('../../types/app.js').ShellContext} context @param {() => void} onRefresh */

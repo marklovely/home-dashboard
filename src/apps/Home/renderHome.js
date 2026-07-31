@@ -1,4 +1,6 @@
 import { renderIcon } from '../../components/icons/renderIcon.js';
+import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
+import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 
 /**
  * @param {import('../types/app.js').App} app
@@ -70,6 +72,32 @@ export async function renderHomeScreen(viewport, apps, context) {
   });
 
   page.append(grid);
+
+  const helpSection = document.createElement('section');
+  helpSection.className = 'owner-help-section';
+  helpSection.setAttribute('aria-labelledby', 'owner-help-heading');
+
+  const helpTitle = document.createElement('h2');
+  helpTitle.id = 'owner-help-heading';
+  helpTitle.className = 'owner-help-title';
+  helpTitle.textContent = 'Need a hand?';
+
+  const helpText = document.createElement('p');
+  helpText.className = 'owner-help-text subtle';
+  helpText.textContent = 'Owner guide covers the whole hub; Guest tablet guide shows what sitters see.';
+
+  const helpActions = document.createElement('div');
+  helpActions.className = 'owner-help-actions';
+  helpActions.append(
+    createOwnerHelpButton(),
+    createSitterHelpButton({
+      label: 'Guest tablet guide',
+      buttonClassName: 'button-secondary owner-help-button'
+    })
+  );
+
+  helpSection.append(helpTitle, helpText, helpActions);
+  page.append(helpSection);
   viewport.append(page);
 
   await Promise.all(

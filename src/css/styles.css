@@ -1541,6 +1541,191 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .sitter-help-button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .sitter-help-button:active { transform: scale(0.98); }
 .sitter-help-button-icon { stroke: currentColor; }
+.sitter-help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.sitter-help-button--secondary {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+.owner-help-section {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+  padding: clamp(18px, 2.5vw, 22px) clamp(20px, 3vw, 26px);
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.owner-help-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+  font-weight: 800;
+}
+.owner-help-text {
+  margin: 0;
+  max-width: 42rem;
+  line-height: 1.45;
+}
+.owner-help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.owner-help-button {
+  min-height: 48px;
+}
+.settings-help-guide-button {
+  width: fit-content;
+  min-height: 48px;
+}
+
+.help-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgba(4, 6, 10, 0.86);
+}
+.help-guide-panel {
+  display: grid;
+  gap: 14px;
+  width: min(960px, 100%);
+  max-height: min(88vh, 920px);
+  padding: 18px 20px 20px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface, #10131a);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+.help-guide-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.help-guide-title {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+}
+.help-guide-search-row {
+  display: grid;
+  gap: 6px;
+}
+.help-guide-search-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.help-guide-search {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+}
+.help-guide-layout {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  gap: 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+.help-guide-nav {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  max-height: min(58vh, 640px);
+  overflow: auto;
+  padding-right: 4px;
+}
+.help-guide-nav-button {
+  text-align: left;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+.help-guide-nav-button.is-active {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+.help-guide-nav-button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.help-guide-content {
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+.help-guide-content-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+}
+.help-guide-section-body {
+  display: grid;
+  gap: 12px;
+}
+.help-guide-paragraph,
+.help-guide-subheading {
+  margin: 0;
+}
+.help-guide-subheading {
+  font-size: 1rem;
+  margin-top: 4px;
+}
+.help-guide-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 8px;
+  line-height: 1.45;
+}
+.help-guide-table-wrap {
+  overflow-x: auto;
+}
+.help-guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.help-guide-table th,
+.help-guide-table td {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.help-guide-table th {
+  background: rgba(255, 255, 255, 0.04);
+}
+@media (max-width: 720px) {
+  .help-guide-layout {
+    grid-template-columns: 1fr;
+  }
+  .help-guide-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: none;
+  }
+}
+
 @media (max-width: 960px) {
   .sitter-essentials-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
