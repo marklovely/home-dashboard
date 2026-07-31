@@ -12,7 +12,7 @@ import { handleHouseGuide } from './routes/houseGuide.js';
 import { handleDeviceSession } from './routes/deviceSessionRoute.js';
 import { handleDeviceMode, handleAuthLock } from './routes/deviceModeRoute.js';
 import { handleSession } from './routes/session.js';
-import { methodNotAllowed, notFound } from './lib/errors.js';
+import { jsonError, methodNotAllowed, notFound } from './lib/errors.js';
 import { bindFetch } from './lib/boundFetch.js';
 import { isAccessConfigured } from './lib/accessJwt.js';
 
@@ -63,42 +63,54 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
   const url = new URL(request.url);
   let response;
 
-  if (url.pathname === '/api/health' && request.method === 'GET') {
-    response = handleHealth();
-  } else if (!isAccessConfigured(env) && url.pathname.startsWith('/api/') && url.pathname !== '/api/health') {
-    response = Response.json(
-      { error: 'AUTH_NOT_CONFIGURED', message: 'Access authentication is not configured.' },
-      { status: 503 }
+  try {
+    if (url.pathname === '/api/health' && request.method === 'GET') {
+      response = handleHealth();
+    } else if (!isAccessConfigured(env) && url.pathname.startsWith('/api/') && url.pathname !== '/api/health') {
+      response = Response.json(
+        { error: 'AUTH_NOT_CONFIGURED', message: 'Access authentication is not configured.' },
+        { status: 503 }
+      );
+    } else if (url.pathname === '/api/device-session' && request.method === 'GET') {
+      response = await handleDeviceSession(request, env, fetchBound);
+    } else if (url.pathname === '/api/device-mode' && request.method === 'POST') {
+      response = await handleDeviceMode(request, env, fetchBound);
+    } else if (url.pathname === '/api/auth/lock' && request.method === 'POST') {
+      response = await handleAuthLock(request, env, fetchBound);
+    } else if (url.pathname === '/api/session' && request.method === 'GET') {
+      response = await handleSession(request, env, fetchBound);
+    } else if (url.pathname === '/api/private-config' && request.method === 'GET') {
+      response = await handlePrivateConfigRequest(request, env, fetchBound);
+    } else if (url.pathname === '/api/weather/geocode' && request.method === 'GET') {
+      response = await handleWeatherGeocode(request, env, fetchBound);
+    } else if (url.pathname === '/api/weather' && request.method === 'GET') {
+      response = await handleWeather(request, env, fetchBound);
+    } else if (url.pathname === '/api/auth/owner') {
+      response = await handleOwnerAuth(request, correlationId, env, fetchBound);
+    } else if (url.pathname === '/api/calendar' && request.method === 'GET') {
+      response = await handleCalendar(request, env, fetchBound);
+    } else if (url.pathname.startsWith('/api/appliance-manuals')) {
+      response = await handleApplianceManuals(request, url, env, correlationId);
+    } else if (url.pathname.startsWith('/api/house-guide')) {
+      response = await handleHouseGuide(request, url, env, correlationId);
+    } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {
+      const buttonParam = decodeURIComponent(url.pathname.slice('/api/button/'.length));
+      response = await handleButtonPress(request, buttonParam, env, correlationId, fetchBound);
+    } else if (url.pathname.startsWith('/api/button/')) {
+      response = methodNotAllowed(correlationId);
+    } else {
+      response = notFound(correlationId);
+    }
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'request_failed',
+        path: url.pathname,
+        method: request.method,
+        detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+      })
     );
-  } else if (url.pathname === '/api/device-session' && request.method === 'GET') {
-    response = await handleDeviceSession(request, env, fetchBound);
-  } else if (url.pathname === '/api/device-mode' && request.method === 'POST') {
-    response = await handleDeviceMode(request, env, fetchBound);
-  } else if (url.pathname === '/api/auth/lock' && request.method === 'POST') {
-    response = await handleAuthLock(request, env, fetchBound);
-  } else if (url.pathname === '/api/session' && request.method === 'GET') {
-    response = await handleSession(request, env, fetchBound);
-  } else if (url.pathname === '/api/private-config' && request.method === 'GET') {
-    response = await handlePrivateConfigRequest(request, env, fetchBound);
-  } else if (url.pathname === '/api/weather/geocode' && request.method === 'GET') {
-    response = await handleWeatherGeocode(request, env, fetchBound);
-  } else if (url.pathname === '/api/weather' && request.method === 'GET') {
-    response = await handleWeather(request, env, fetchBound);
-  } else if (url.pathname === '/api/auth/owner') {
-    response = await handleOwnerAuth(request, correlationId, env, fetchBound);
-  } else if (url.pathname === '/api/calendar' && request.method === 'GET') {
-    response = await handleCalendar(request, env, fetchBound);
-  } else if (url.pathname.startsWith('/api/appliance-manuals')) {
-    response = await handleApplianceManuals(request, url, env, correlationId);
-  } else if (url.pathname.startsWith('/api/house-guide')) {
-    response = await handleHouseGuide(request, url, env, correlationId);
-  } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {
-    const buttonParam = decodeURIComponent(url.pathname.slice('/api/button/'.length));
-    response = await handleButtonPress(request, buttonParam, env, correlationId, fetchBound);
-  } else if (url.pathname.startsWith('/api/button/')) {
-    response = methodNotAllowed(correlationId);
-  } else {
-    response = notFound(correlationId);
+    response = jsonError(500, 'INTERNAL_ERROR', 'Request failed.', { correlationId });
   }
 
   safeLog(request.method, url.pathname, response.status, correlationId, url.pathname.includes('/api/button/') ? url.pathname.split('/').pop() : undefined);
