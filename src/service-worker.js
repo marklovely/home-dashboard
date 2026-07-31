@@ -1,7 +1,17 @@
-const CACHE_NAME = 'home-dashboard-v1.0.8';
+const CACHE_NAME = 'home-dashboard-v1.0.9';
 
 /** @type {string[]} */
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+
+/**
+ * @param {URL} url
+ */
+function isGuideReadRequest(url) {
+  return (
+    url.pathname === '/api/house-guide/catalog' ||
+    /^\/api\/house-guide\/media\/[^/]+\/file$/.test(url.pathname)
+  );
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
@@ -34,12 +44,39 @@ async function networkFirst(request) {
   }
 }
 
+self.addEventListener('message', (event) => {
+  const urls = event.data?.urls;
+  if (event.data?.type !== 'cache-guide-reads' || !Array.isArray(urls)) return;
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await Promise.all(
+        urls.map(async (url) => {
+          try {
+            const response = await fetch(url);
+            if (response.ok) {
+              await cache.put(url, response.clone());
+            }
+          } catch {
+            // Ignore individual warm-cache failures.
+          }
+        })
+      );
+    })
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api/')) return;
   if (url.hostname.includes('virtualbuttons.com')) return;
+
+  if (isGuideReadRequest(url)) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/')) return;
 
   if (
     event.request.mode === 'navigate' ||

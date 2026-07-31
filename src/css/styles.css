@@ -203,6 +203,45 @@ button { font: inherit; }
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
+.shell-profile-switcher {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  align-self: center;
+}
+.shell-profile-switcher-label {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.shell-profile-switcher-controls {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+.shell-profile-switcher-button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.shell-profile-switcher-button.is-active {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.shell-profile-switcher-button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
 .shell-home-button {
   min-height: 52px;
   min-width: 112px;
@@ -544,8 +583,21 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   max-width: 12rem;
 }
 .mode-house-sitter.shell-route-home .shell-chrome {
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   gap: clamp(16px, 2.5vw, 28px);
+}
+.mode-house-sitter.shell-route-home .shell-profile-switcher:not([hidden]) {
+  grid-column: 2;
+  justify-self: end;
+}
+.mode-house-sitter.shell-route-home .shell-profile-switcher:not([hidden]) ~ .clock-block {
+  grid-column: 3;
+}
+.mode-house-sitter.shell-route-home .shell-profile-switcher:not([hidden]) ~ .shell-header-weather {
+  grid-column: 4;
+}
+.mode-house-sitter.shell-route-home .shell-profile-switcher[hidden] ~ .clock-block {
+  grid-column: 2;
 }
 .mode-house-sitter.shell-route-home .shell-home-button[hidden] + .shell-chrome-title-block {
   grid-column: 1;

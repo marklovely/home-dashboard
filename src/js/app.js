@@ -80,8 +80,8 @@ async function initialiseDashboard() {
     config: CONFIG,
     toast: elements.toast,
     lastCommand: elements.lastCommand,
-    navigate(appId) {
-      navigate(appId === HOME_ROUTE ? HOME_ROUTE : appId);
+    navigate(appId, options = {}) {
+      navigate(appId === HOME_ROUTE ? HOME_ROUTE : appId, options);
     }
   };
 
@@ -112,6 +112,7 @@ async function initialiseDashboard() {
     shellHeaderWeather: document.querySelector('#shell-header-weather'),
     shellFooter: document.querySelector('#shell-footer'),
     bottomNav: document.querySelector('#shell-bottom-nav'),
+    shellProfileSwitcher: document.querySelector('#shell-profile-switcher'),
     shellContext
   });
 

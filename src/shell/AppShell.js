@@ -5,6 +5,7 @@ import { getModeConfig, getAppDisplayTitle } from '../modes/modeConfig.js';
 import { applyShellBranding } from './shellBranding.js';
 import { mountShellBottomNav, syncShellBottomNav } from './bottomNav.js';
 import { getCurrentRoute, HOME_ROUTE, initRouter, navigate, subscribeToRoute } from './router.js';
+import { initProfileSwitcher } from './profileSwitcher.js';
 import { subscribeToProfileChange } from '../services/profileService.js';
 import { subscribeToUserMode } from '../auth/userMode.js';
 import { subscribeToDisplayPreferences } from '../services/displayPreferencesService.js';
@@ -20,6 +21,7 @@ import { subscribeToDisplayPreferences } from '../services/displayPreferencesSer
  * @param {HTMLElement | null} [options.shellHeaderWeather]
  * @param {HTMLElement} options.shellFooter
  * @param {HTMLElement} options.shellTagline
+ * @param {HTMLElement | null} [options.shellProfileSwitcher]
  * @param {import('../types/app.js').ShellContext} options.shellContext
  */
 export function createAppShell({
@@ -33,9 +35,19 @@ export function createAppShell({
   shellFooter,
   shellTagline,
   bottomNav,
+  shellProfileSwitcher,
   shellContext
 }) {
   applyShellBranding({ shellEyebrow, shellTagline });
+
+  if (shellProfileSwitcher) {
+    initProfileSwitcher(shellProfileSwitcher, {
+      onChange: () => {
+        shellContext.navigate(HOME_ROUTE);
+        shellContext.refreshShell?.();
+      }
+    });
+  }
 
   /** @param {string} route */
   const renderRoute = (route) => {
