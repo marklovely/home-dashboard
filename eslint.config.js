@@ -17,7 +17,7 @@ export default [
     }
   },
   {
-    files: ['worker/**/*.js'],
+    files: ['worker/**/*.js', 'worker/scripts/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
