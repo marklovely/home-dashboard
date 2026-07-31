@@ -1,9 +1,24 @@
 import { ensureApiBaseUrl, buildApiUrl } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
 
+/** @typedef {{ authenticated: boolean, mode: 'owner' | 'sitter', ownerSessionExpiresAt: string | null, sitterSecretsDisclosed?: boolean }} DeviceSessionPayload */
+
+const DEVICE_SESSION_FETCH_TIMEOUT_MS = 12_000;
+
 /**
- * @typedef {{ authenticated: boolean, mode: 'owner' | 'sitter', ownerSessionExpiresAt: string | null, sitterSecretsDisclosed?: boolean }} DeviceSessionPayload
+ * @param {typeof fetch} fetchImpl
+ * @param {string} url
+ * @param {RequestInit} init
  */
+async function fetchWithTimeout(fetchImpl, url, init) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DEVICE_SESSION_FETCH_TIMEOUT_MS);
+  try {
+    return await fetchImpl(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 /**
  * @param {typeof fetch} [fetchImpl]
@@ -12,7 +27,8 @@ import { withApiCredentials } from './accessFetch.js';
 export async function fetchDeviceSession(fetchImpl = fetch) {
   await ensureApiBaseUrl();
   try {
-    const response = await fetchImpl(
+    const response = await fetchWithTimeout(
+      fetchImpl,
       buildApiUrl('/api/device-session'),
       withApiCredentials({ method: 'GET', cache: 'no-store' })
     );
