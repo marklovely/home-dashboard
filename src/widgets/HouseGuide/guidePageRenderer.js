@@ -1,5 +1,6 @@
 import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
 import { getProtectedDisplayValue } from '../../content/houseguide/privateContent.js';
+import { createWifiQrSection } from '../../components/WifiQr/createWifiQrSection.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createGuidePanelOverlay, runGuideAction } from './guideActions.js';
 import { ensureRoutineButtonStatus } from '../Alexa/routineButtonFeedback.js';
@@ -176,6 +177,13 @@ function renderBlock(block) {
     list.append(dt, dd);
     section.append(list);
     return section;
+  }
+
+  if (block.type === 'wifiQr') {
+    return createWifiQrSection({
+      heading: block.heading,
+      caption: block.caption
+    });
   }
 
   if (block.type === 'contact' || block.type === 'keyValues') {
