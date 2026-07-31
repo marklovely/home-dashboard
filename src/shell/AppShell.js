@@ -49,8 +49,22 @@ export function createAppShell({
     });
   }
 
-  /** @param {string} route */
-  const renderRoute = (route) => {
+  /** @type {string | null} */
+  let lastMountedAppRoute = null;
+
+  /**
+   * @param {ParentNode} host
+   */
+  function disposeMountedHouseGuide(host) {
+    const root = host.querySelector('.house-guide-interactive');
+    const dispose = /** @type {{ houseGuideDispose?: () => void } | null} */ (root)?.houseGuideDispose;
+    dispose?.();
+  }
+
+  /** @param {string} route
+   * @param {{ forceRemount?: boolean }} [options]
+   */
+  const renderRoute = (route, options = {}) => {
     viewport.classList.remove('is-active');
     void viewport.offsetWidth;
     viewport.classList.add('is-active');
@@ -84,7 +98,17 @@ export function createAppShell({
     if (isHome) {
       document.title = branding.documentTitleBase;
       document.body.classList.remove('is-weather-route', 'is-bins-route');
+      lastMountedAppRoute = HOME_ROUTE;
       void renderModeHomeScreen(viewport, getVisibleApps(), shellContext);
+      return;
+    }
+
+    if (route === 'house-guide' && lastMountedAppRoute === 'house-guide' && !options.forceRemount) {
+      syncShellBottomNav(bottomNav);
+      const app = getAppById(route);
+      if (app) {
+        document.title = `${getAppDisplayTitle(app)} · ${branding.documentTitleBase}`;
+      }
       return;
     }
 
@@ -103,11 +127,13 @@ export function createAppShell({
     document.body.classList.remove('is-weather-route', 'is-bins-route');
     if (route === 'weather') document.body.classList.add('is-weather-route');
     if (route === 'bins') document.body.classList.add('is-bins-route');
+    disposeMountedHouseGuide(viewport);
     app.mount(viewport, shellContext);
+    lastMountedAppRoute = route;
   };
 
   shellContext.refreshShell = () => {
-    renderRoute(getCurrentRoute());
+    renderRoute(getCurrentRoute(), { forceRemount: true });
   };
 
   homeButton.addEventListener('click', () => shellContext.navigate(HOME_ROUTE));
@@ -118,7 +144,7 @@ export function createAppShell({
   });
   subscribeToUserMode(() => {
     applyShellBranding({ shellEyebrow, shellTagline });
-    renderRoute(getCurrentRoute());
+    renderRoute(getCurrentRoute(), { forceRemount: true });
   });
   subscribeToDisplayPreferences(() => {
     if (getCurrentRoute() === HOME_ROUTE) {
