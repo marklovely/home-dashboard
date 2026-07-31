@@ -575,3 +575,68 @@
 .guide-editor-list-row-rich input {
   width: 100%;
 }
+
+.guide-editor-tiptap-shell {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+.guide-editor-tiptap-shell-compact {
+  margin-top: 4px;
+}
+.guide-editor-tiptap-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.guide-editor-tiptap {
+  min-height: 120px;
+}
+.guide-editor-tiptap-shell-compact .guide-editor-tiptap {
+  min-height: 72px;
+}
+.guide-editor-tiptap .ProseMirror {
+  min-height: inherit;
+  padding: 12px 14px;
+  outline: none;
+  color: var(--text);
+  line-height: 1.55;
+  font-size: 0.98rem;
+}
+.guide-editor-tiptap .ProseMirror p {
+  margin: 0 0 0.65em;
+}
+.guide-editor-tiptap .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+.guide-editor-tiptap .ProseMirror ul,
+.guide-editor-tiptap .ProseMirror ol {
+  margin: 0.35em 0 0.65em;
+  padding-left: 1.25em;
+}
+.guide-editor-tiptap .ProseMirror a {
+  color: #9eb6ff;
+  text-decoration: underline;
+}
+.guide-editor-emoji-panel-host {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+}
+.guide-editor-emoji-panel-host[hidden] {
+  display: none;
+}
+emoji-picker.guide-editor-emoji-picker-widget {
+  --emoji-size: 1.15rem;
+  --num-columns: 8;
+  width: min(320px, 88vw);
+  max-height: 280px;
+}
