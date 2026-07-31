@@ -35,3 +35,15 @@ binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals"
 database_id = "6ba7c54d-8804-47c0-8648-77b1aa25e0e0"
 migrations_dir = "migrations"
+
+# House Guide CMS (same D1 database, separate binding).
+[[d1_databases]]
+binding = "HOUSE_GUIDE_DB"
+database_name = "lovely-home-appliance-manuals"
+database_id = "6ba7c54d-8804-47c0-8648-77b1aa25e0e0"
+migrations_dir = "migrations"
+
+# Guide images uploaded via CMS (private).
+[[r2_buckets]]
+binding = "GUIDE_MEDIA"
+bucket_name = "lovely-home-guide-media"

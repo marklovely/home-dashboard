@@ -271,5 +271,6 @@ describe('Owner controls hidden during session loading', () => {
     const dialog = viewport.querySelector('dialog.appliance-manuals-dialog');
     expect(dialog).toBeTruthy();
     expect(dialog?.textContent).toContain('Manual title');
+    expect(dialog?.textContent).toContain('House Guide help pages');
   });
 });

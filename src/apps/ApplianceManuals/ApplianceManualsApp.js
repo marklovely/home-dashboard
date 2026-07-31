@@ -347,7 +347,9 @@ function createFormDialog(options) {
   form.append(title, error);
   form.append(createField('Manual title', 'title', 'text', options.manual?.title ?? '', true));
   form.append(
-    createField('Appliance name', 'applianceName', 'text', options.manual?.applianceName ?? '', true)
+    createField('Appliance name', 'applianceName', 'text', options.manual?.applianceName ?? '', true, {
+      hint: 'Use a clear name sitters would recognise, such as Dishwasher or Nest Thermostat. Published manuals with matching names are linked automatically from related House Guide help pages.'
+    })
   );
   form.append(createField('Manufacturer', 'manufacturer', 'text', options.manual?.manufacturer ?? ''));
   form.append(createField('Model', 'model', 'text', options.manual?.model ?? ''));
@@ -603,7 +605,7 @@ function createDeleteDialog(manual, onClose, toastEl) {
   return dialog;
 }
 
-function createField(labelText, name, type, value, required = false) {
+function createField(labelText, name, type, value, required = false, options = {}) {
   const label = document.createElement('label');
   label.className = 'appliance-manuals-field';
   const span = document.createElement('span');
@@ -614,6 +616,12 @@ function createField(labelText, name, type, value, required = false) {
   input.value = value ?? '';
   input.required = required;
   label.append(span, input);
+  if (options.hint) {
+    const hint = document.createElement('p');
+    hint.className = 'appliance-manuals-field-hint subtle';
+    hint.textContent = options.hint;
+    label.append(hint);
+  }
   return label;
 }
 

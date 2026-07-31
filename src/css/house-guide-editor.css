@@ -1,0 +1,171 @@
+.house-guide-editor-app {
+  display: grid;
+  gap: 16px;
+}
+.house-guide-editor-header {
+  display: grid;
+  gap: 10px;
+}
+.house-guide-editor-intro {
+  margin: 0;
+  max-width: 60ch;
+}
+.house-guide-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.house-guide-editor-draft-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(244, 182, 79, 0.18);
+  border: 1px solid rgba(244, 182, 79, 0.35);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.house-guide-editor-onboarding {
+  display: grid;
+  gap: 14px;
+  max-width: 42rem;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.house-guide-editor-picker {
+  display: grid;
+  gap: 14px;
+}
+.house-guide-editor-topic-list {
+  display: grid;
+  gap: 10px;
+}
+.house-guide-editor-topic-row {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  width: 100%;
+  min-height: 56px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  font: inherit;
+}
+.house-guide-editor-topic-name {
+  font-weight: 700;
+}
+.house-guide-editor-topic {
+  display: grid;
+  gap: 16px;
+}
+.house-guide-editor-meta {
+  display: grid;
+  gap: 12px;
+}
+.house-guide-editor-blocks-title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.house-guide-editor-blocks {
+  display: grid;
+  gap: 14px;
+}
+.guide-editor-block {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.guide-editor-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.guide-editor-block-type {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.guide-editor-block-body {
+  display: grid;
+  gap: 12px;
+}
+.guide-editor-block-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.guide-editor-field {
+  display: grid;
+  gap: 6px;
+}
+.guide-editor-field span {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+.guide-editor-field input,
+.guide-editor-field textarea,
+.guide-editor-field select,
+.house-guide-editor-add-select {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  padding: 10px 12px;
+}
+.guide-editor-field textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.guide-editor-list {
+  display: grid;
+  gap: 10px;
+}
+.guide-editor-list-label {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+.guide-editor-list-items {
+  display: grid;
+  gap: 8px;
+}
+.guide-editor-list-row,
+.guide-editor-kv-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto;
+}
+.guide-editor-kv-row {
+  grid-template-columns: 1fr 1fr auto;
+}
+.house-guide-editor-add-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.house-guide-editor-add-select {
+  flex: 1 1 220px;
+}
+.house-guide-editor-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 620px) {
+  .guide-editor-kv-row {
+    grid-template-columns: 1fr;
+  }
+}
