@@ -145,6 +145,7 @@
  * @property {GuideBlock[]} blocks
  * @property {GuideAction[]} [actions]
  * @property {string[]} searchTerms
+ * @property {string[]} [applianceManualTerms]
  */
 
 /**

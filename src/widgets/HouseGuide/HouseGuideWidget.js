@@ -12,6 +12,10 @@ import {
   renderGuideTopicList,
   renderGuideTopicPage
 } from './guidePageRenderer.js';
+import { APPLIANCE_MANUALS_CATEGORY_ID } from '../../services/applianceManualsConstants.js';
+import { refreshApplianceManuals } from '../../services/applianceManualsService.js';
+import { renderApplianceManualsSitterView } from './applianceManualsSitterView.js';
+import { renderApplianceManualViewer } from './applianceManualsViewer.js';
 
 /**
  * @param {import('../../types/app.js').ShellContext} context
@@ -91,8 +95,20 @@ function createInteractiveHouseGuide(context) {
   let viewMode = 'explore';
   /** @type {string | null} */
   let activeCategoryId = null;
+  /** @type {(() => void) | null} */
+  let activeTopicCleanup = null;
+  /** @type {(HTMLElement & { cleanup?: () => void }) | null} */
+  let activeManualViewer = null;
+
+  function clearTopicView() {
+    activeTopicCleanup?.();
+    activeTopicCleanup = null;
+    activeManualViewer?.cleanup?.();
+    activeManualViewer = null;
+  }
 
   function showExplore() {
+    clearTopicView();
     viewMode = 'explore';
     activeCategoryId = null;
     topicHost.hidden = true;
@@ -105,6 +121,7 @@ function createInteractiveHouseGuide(context) {
   }
 
   function openCategory(categoryId) {
+    clearTopicView();
     const category = getGuideCategory(categoryId);
     if (!category) return;
 
@@ -115,12 +132,19 @@ function createInteractiveHouseGuide(context) {
     topicHost.hidden = false;
     topicHost.inert = false;
 
+    if (categoryId === APPLIANCE_MANUALS_CATEGORY_ID) {
+      const panel = renderApplianceManualsSitterView(showExplore);
+      topicHost.replaceChildren(panel);
+      return;
+    }
+
     const { panel, backButton } = renderGuideTopicList(category, openTopic);
     backButton.addEventListener('click', showExplore);
     topicHost.replaceChildren(panel);
   }
 
   function openTopic(topicId) {
+    clearTopicView();
     const topic = getGuideTopic(topicId);
     if (!topic) return;
 
@@ -135,17 +159,52 @@ function createInteractiveHouseGuide(context) {
 
     const backTarget = hit?.categoryId ?? activeCategoryId;
 
-    topicHost.replaceChildren(
-      renderGuideTopicPage(
-        topic,
-        context,
-        () => {
-          if (backTarget) openCategory(backTarget);
-          else showExplore();
-        },
-        openTopic
-      )
+    /**
+     * @param {import('../../api/applianceManualsApi.js').ApplianceManual} manual
+     * @param {HTMLElement} article
+     */
+    function openManualFromTopic(manual, article) {
+      activeManualViewer?.cleanup?.();
+
+      const viewerHost = document.createElement('div');
+      viewerHost.className = 'guide-topic-manual-viewer-host';
+
+      const hideTargets = article.querySelectorAll(
+        '.guide-topic-header, .guide-topic-manual-links-host, .guide-quick-actions, .guide-topic-body, .guide-back-button'
+      );
+      for (const node of hideTargets) {
+        node.hidden = true;
+      }
+
+      function closeViewer() {
+        activeManualViewer?.cleanup?.();
+        activeManualViewer = null;
+        viewerHost.remove();
+        for (const node of hideTargets) {
+          node.hidden = false;
+        }
+      }
+
+      const viewer = renderApplianceManualViewer(manual, closeViewer, { allowDownload: false });
+      activeManualViewer = viewer;
+      viewerHost.append(viewer);
+      article.append(viewerHost);
+    }
+
+    const article = renderGuideTopicPage(
+      topic,
+      context,
+      () => {
+        if (backTarget) openCategory(backTarget);
+        else showExplore();
+      },
+      openTopic,
+      {
+        onViewManual: (manual) => openManualFromTopic(manual, article)
+      }
     );
+    activeTopicCleanup = article.cleanup ?? null;
+    topicHost.replaceChildren(article);
   }
 
   function rebuildCategoryGrid(query = '') {
@@ -236,6 +295,7 @@ function createInteractiveHouseGuide(context) {
   });
 
   showExplore();
+  void refreshApplianceManuals(fetch, { owner: false, force: true });
   const pendingTopic = consumePendingGuideTopic();
   if (pendingTopic) {
     openTopic(pendingTopic);

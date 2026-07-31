@@ -408,6 +408,12 @@ Apple private ICS URL (Worker secret `APPLE_CALENDAR_ICS_URL` only)
 
 Deployment: [my-day-deployment.md](./my-day-deployment.md).
 
+## Appliance Manuals
+
+Owner-uploaded PDF user guides for appliances. PDFs live in a **private R2 bucket** (`APPLIANCE_GUIDES`); metadata lives in **D1** (`APPLIANCE_MANUALS_DB`). House sitters browse published manuals from **House Guide → Appliance Manuals**; owners manage guides from the **Appliance Manuals** app (Owner Mode only).
+
+See [appliance-manuals.md](./appliance-manuals.md) for bindings, migrations, authorization, and Preview/Production setup.
+
 ## Cloudflare Worker API
 
 Virtual Buttons and private house values are served through a Cloudflare Worker — see [cloudflare-worker.md](./cloudflare-worker.md). The PWA uses `VITE_API_BASE_URL`; the Virtual Buttons access code never ships to the browser.
