@@ -69,7 +69,9 @@ function mountHouseGuideEditorApp(viewport, context) {
     }
 
     if (state.source === 'loading' || state.source === 'idle') {
-      showStaticEditorPage();
+      if (!editorShell) {
+        showStaticEditorPage();
+      }
       return;
     }
 
@@ -440,9 +442,7 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRevert) {
   wirePointerReorder(list, (fromIndex, toIndex) => {
     const previous = topics.map((topic) => topic.id);
     const nextIds = moveItem(previous, fromIndex, toIndex);
-    const nextTopics = moveItem(topics, fromIndex, toIndex);
-    topics = nextTopics;
-    renderTopicRows();
+    topics = moveItem(topics, fromIndex, toIndex);
 
     void reorderHouseGuideTopicsInCategory(categoryId, nextIds).then((result) => {
       if (!result.ok) {

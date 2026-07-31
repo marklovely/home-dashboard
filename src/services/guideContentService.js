@@ -77,7 +77,7 @@ export function canManageHouseGuideContent() {
 
 /**
  * @param {typeof fetch} [fetchImpl]
- * @param {{ draft?: boolean, force?: boolean }} [options]
+ * @param {{ draft?: boolean, force?: boolean, silent?: boolean }} [options]
  */
 export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
   const draft = options.draft ?? canManageHouseGuideContent();
@@ -100,8 +100,10 @@ export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
   inFlightAbort = new AbortController();
   const signal = inFlightAbort.signal;
 
-  state = { ...state, source: 'loading', message: '' };
-  notify();
+  if (!options.silent) {
+    state = { ...state, source: 'loading', message: '' };
+    notify();
+  }
 
   const result = await fetchHouseGuideCatalog({
     fetchImpl: (url, init) => fetchImpl(url, { ...init, signal }),
@@ -260,7 +262,7 @@ export async function removeHouseGuideTopic(topicId, fetchImpl = fetch) {
 export async function reorderHouseGuideTopicsInCategory(categoryId, topicIds, fetchImpl = fetch) {
   const result = await reorderHouseGuideTopics(categoryId, topicIds, { fetchImpl });
   if (result.ok) {
-    await refreshGuideContent(fetchImpl, { draft: true, force: true });
+    await refreshGuideContent(fetchImpl, { draft: true, force: true, silent: true });
   }
   return result;
 }
