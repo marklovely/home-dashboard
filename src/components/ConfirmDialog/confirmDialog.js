@@ -15,13 +15,21 @@ export function showConfirmDialog({
   danger = false
 }) {
   return new Promise((resolve) => {
-    const dialog = document.createElement('dialog');
-    dialog.className = 'confirm-dialog';
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-dialog-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'confirm-dialog-title');
+    overlay.tabIndex = -1;
+
+    const panel = document.createElement('div');
+    panel.className = 'confirm-dialog';
 
     const body = document.createElement('div');
     body.className = 'confirm-dialog-body';
 
     const heading = document.createElement('h3');
+    heading.id = 'confirm-dialog-title';
     heading.className = 'confirm-dialog-title';
     heading.textContent = title;
 
@@ -44,35 +52,31 @@ export function showConfirmDialog({
 
     actions.append(cancelButton, confirmButton);
     body.append(heading, copy, actions);
-    dialog.append(body);
-    document.body.append(dialog);
+    panel.append(body);
+    overlay.append(panel);
+    document.body.append(overlay);
 
     let settled = false;
 
     function finish(confirmed) {
       if (settled) return;
       settled = true;
-      if (typeof dialog.close === 'function') {
-        dialog.close();
-      }
-      dialog.remove();
+      overlay.remove();
       resolve(confirmed);
     }
 
     cancelButton.addEventListener('click', () => finish(false));
     confirmButton.addEventListener('click', () => finish(true));
-    dialog.addEventListener('cancel', (event) => {
-      event.preventDefault();
-      finish(false);
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) finish(false);
+    });
+    overlay.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        finish(false);
+      }
     });
 
-    if (typeof dialog.showModal === 'function') {
-      dialog.showModal();
-      confirmButton.focus();
-      return;
-    }
-
-    dialog.setAttribute('open', '');
     confirmButton.focus();
   });
 }

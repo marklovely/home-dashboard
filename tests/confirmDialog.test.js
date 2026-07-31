@@ -10,17 +10,17 @@ describe('showConfirmDialog', () => {
       cancelLabel: 'Cancel'
     });
 
-    const dialog = document.querySelector('dialog.confirm-dialog');
-    expect(dialog).toBeTruthy();
-    expect(dialog?.textContent).toContain('Enable House Sitter Mode?');
+    const overlay = document.querySelector('.confirm-dialog-overlay');
+    expect(overlay).toBeTruthy();
+    expect(overlay?.textContent).toContain('Enable House Sitter Mode?');
 
     const confirmButton = /** @type {HTMLButtonElement | null} */ (
-      dialog?.querySelector('.button-primary')
+      overlay?.querySelector('.button-primary')
     );
     confirmButton?.click();
 
     await expect(promise).resolves.toBe(true);
-    expect(document.querySelector('dialog.confirm-dialog')).toBeNull();
+    expect(document.querySelector('.confirm-dialog-overlay')).toBeNull();
   });
 
   it('resolves false when cancel is clicked', async () => {
@@ -30,23 +30,23 @@ describe('showConfirmDialog', () => {
     });
 
     const cancelButton = /** @type {HTMLButtonElement | null} */ (
-      document.querySelector('dialog.confirm-dialog .button-secondary')
+      document.querySelector('.confirm-dialog-overlay .button-secondary')
     );
     cancelButton?.click();
 
     await expect(promise).resolves.toBe(false);
   });
 
-  it('removes the dialog when closed', async () => {
+  it('removes the dialog when Escape is pressed', async () => {
     const promise = showConfirmDialog({
       title: 'Test',
       message: 'Message'
     });
 
-    const dialog = document.querySelector('dialog.confirm-dialog');
-    dialog?.dispatchEvent(new Event('cancel', { cancelable: true }));
+    const overlay = document.querySelector('.confirm-dialog-overlay');
+    overlay?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 
     await expect(promise).resolves.toBe(false);
-    expect(document.querySelector('dialog.confirm-dialog')).toBeNull();
+    expect(document.querySelector('.confirm-dialog-overlay')).toBeNull();
   });
 });
