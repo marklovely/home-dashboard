@@ -2,18 +2,64 @@
 
 ## Unreleased
 
+## 2.0.0
+
+Major release: cloud House Guide CMS, appliance manuals, sitter secrets, and integrated help.
+
+### House Guide CMS
+
+- **Guide Editor** — edit, draft, and publish House Guide topics from the hub (D1 + R2)
+- **Cloud content** — sitters receive published topics from the Worker API; bundled JSON remains the seed/fallback
+- **Media library** — upload images to R2 and attach to topics
+- **Places, contacts, quick actions** — structured blocks with topic visibility and audience (owner vs sitter)
+- **Drag-and-drop topic reorder** and styled confirm dialogs
+
+### Appliance manuals
+
+- **Private PDF storage** (R2) with metadata in D1
+- Owners manage manuals in the **Appliance Manuals** app; sitters browse from House Guide
+- Manual links on relevant guide topics
+
+### Sitter access and secrets
+
+- **Sitter is here** toggle (Settings) — share Wi‑Fi, address, contacts, and lockbox with sitters via `/api/private-config`
+- **`PRIVATE_LOCKBOX_CODE`** Worker secret for lockbox access
+- D1 **`house_settings`** migration for the sharing toggle
+
+### Wi‑Fi and House Guide UX
+
+- **Scan-to-join Wi‑Fi QR codes** on Connecting and QR Code topics
+- **Primary contact (Mark)** — phone and email on QR and troubleshooting topics when sharing is enabled
+- Fix topic navigation bouncing back to explore on deep links
+- Hide stale cloud CMS placeholder copy when live credentials are available
+
+### Emergency app (tablet)
+
+- All cards open **in-page detail overlays** — no navigation to House Guide
+- Mark and Donna contacts shown as phone/email panels (no `tel:` links on tablet)
+
+### Help guides
+
+- Shared searchable overlay: **Owner guide**, **Tablet guide**, and **Writing guide** (Guide Editor)
+- Entry points on owner home, sitter home, and Settings → Help
+
 ### Settings and display
 
 - **Themes** — dark, light, and auto (system); persisted in `localStorage`
 - **Clock** — 12-hour or 24-hour format
-- **Home screen zoom** — smaller / default / larger / extra large; persisted across refresh (CSS `zoom` on home screen)
-- **Weather location** (owners) — UK postcode or place lookup; optional per-tablet override vs Worker default coordinates
-- **Settings cleanup** — removed redundant Owner/Housesitter profile picker; device sitter mode is the single guest control
-- **House sitter Settings** — fourth bottom-nav tab with appearance controls (theme, clock, home zoom) and about
+- **Home screen zoom** — smaller / default / larger / extra large
+- **Weather location** (owners) — UK postcode or place lookup; optional per-tablet override
+- **House sitter Settings** — fourth bottom-nav tab with appearance controls and about
+- Idle **screensaver** with drifting clock (Fully Kiosk)
+
+### Platform and navigation
+
+- Guide **deep links** (`#house-guide/...`), profile switcher, offline guide cache
+- Improved Alexa control button feedback; expanded sitter control permissions
 
 ### Documentation
 
-- Architecture and Worker README updated for settings, display preferences, and weather geocode endpoint
+- House Guide CMS, appliance manuals, architecture, and Worker docs updated for D1 migrations and secrets
 
 ## 1.1.0
 
