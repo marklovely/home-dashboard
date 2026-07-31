@@ -177,12 +177,11 @@ export const SITTER_HELP_SECTIONS = [
       {
         type: 'ul',
         items: [
-          'Call Mark or Call Donna — questions about the house or Scooter; we would rather you asked than worried.',
+          'Mark or Donna — contact details open in the House Guide (phone and email when hosts enable sharing).',
           'Vet — Vets 4 Pets, Waterlooville (opens the guide page with details).',
           'Water stop tap — how to turn off the water supply.',
           'Fuse box — consumer unit in the garage.',
-          'First aid — safety notes and NHS guidance.',
-          'Useful numbers — owners, email, and non-urgent help.'
+          'First aid — safety notes and NHS guidance.'
         ]
       },
       {
