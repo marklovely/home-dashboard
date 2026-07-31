@@ -7,6 +7,10 @@ const outPath = join(projectRoot, 'src/public/runtime-config.json');
 const apiBaseUrl = String(process.env.VITE_API_BASE_URL ?? '')
   .trim()
   .replace(/\/$/, '');
+const hubEnvironmentRaw = String(process.env.VITE_HUB_ENVIRONMENT ?? 'production')
+  .trim()
+  .toLowerCase();
+const hubEnvironment = hubEnvironmentRaw === 'test' || hubEnvironmentRaw === 'staging' ? 'test' : 'production';
 
 mkdirSync(dirname(outPath), { recursive: true });
-writeFileSync(outPath, `${JSON.stringify({ apiBaseUrl }, null, 2)}\n`);
+writeFileSync(outPath, `${JSON.stringify({ apiBaseUrl, hubEnvironment }, null, 2)}\n`);

@@ -19,6 +19,7 @@ import { registerOwnerLockNavigation } from '../auth/ownerLock.js';
 import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
 import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
+import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
 
 initTheme();
 initDisplayPreferences();
@@ -38,6 +39,7 @@ function setStartupLoading(active) {
 }
 
 async function initialiseDashboard() {
+  void initTestEnvironmentBanner();
   void preloadPrivateConfig();
   if (!isHouseSitterExperience()) {
     startMyDayCalendarService();

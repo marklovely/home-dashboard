@@ -13,6 +13,7 @@ import {
   handleHouseSettingsGet,
   handleSitterSecretsSetting
 } from './routes/houseSettingsRoute.js';
+import { handleSiteBackup } from './routes/siteBackup.js';
 import { handleDeviceSession } from './routes/deviceSessionRoute.js';
 import { handleDeviceMode, handleAuthLock } from './routes/deviceModeRoute.js';
 import { handleSession } from './routes/session.js';
@@ -99,6 +100,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleHouseSettingsGet(request, env, fetchBound);
     } else if (url.pathname === '/api/house-settings/sitter-secrets' && request.method === 'POST') {
       response = await handleSitterSecretsSetting(request, env, fetchBound);
+    } else if (url.pathname === '/api/site/backup' || url.pathname === '/api/site/restore') {
+      response = await handleSiteBackup(request, url, env, correlationId);
     } else if (url.pathname.startsWith('/api/house-guide')) {
       response = await handleHouseGuide(request, url, env, correlationId);
     } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {
