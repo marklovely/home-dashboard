@@ -2,6 +2,8 @@
 
 Cloud-hosted House Guide content for owners to edit in the dashboard without changing git or redeploying the frontend.
 
+**Owner handbook:** integrated **Writing guide** in Guide Editor, plus [house-guide-owner-guide.md](./house-guide-owner-guide.md) (same content for git/offline).
+
 ## Architecture
 
 | Layer | Choice |
