@@ -1,27 +1,32 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
+import { getProtectedDisplayValue } from '../../content/houseguide/privateContent.js';
 import { openHouseGuideTopic } from '../../services/guideNavigation.js';
+import { createGuidePanelOverlay } from '../../widgets/HouseGuide/guideActions.js';
 
-/** @typedef {{ id: string, label: string, subtitle?: string, iconId: string, topicId: string }} EmergencyCard */
+/** @typedef {{ id: string, label: string, subtitle?: string, iconId: string, kind: 'contact', person: 'mark' | 'donna' } | { id: string, label: string, subtitle?: string, iconId: string, kind: 'guide', topicId: string }} EmergencyCard */
 
 /** @type {EmergencyCard[]} */
 const EMERGENCY_CARDS = [
   {
     id: 'contact-mark',
+    kind: 'contact',
     label: 'Mark — contact details',
-    subtitle: 'Phone and email in House Guide',
+    subtitle: 'Questions about the house or Scooter',
     iconId: 'notebook',
-    topicId: 'contacting-mark-donna'
+    person: 'mark'
   },
   {
     id: 'contact-donna',
+    kind: 'contact',
     label: 'Donna — contact details',
-    subtitle: 'Phone and email in House Guide',
+    subtitle: 'We would rather you asked than worried',
     iconId: 'notebook',
-    topicId: 'contacting-mark-donna'
+    person: 'donna'
   },
   {
     id: 'vet',
+    kind: 'guide',
     label: 'Vet',
     subtitle: 'Vets 4 Pets — Waterlooville',
     iconId: 'heart-pulse',
@@ -29,6 +34,7 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'water-stop',
+    kind: 'guide',
     label: 'Water stop tap',
     subtitle: 'Turn off the water supply',
     iconId: 'droplets',
@@ -36,6 +42,7 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'fuse-box',
+    kind: 'guide',
     label: 'Fuse box',
     subtitle: 'Consumer unit in the garage',
     iconId: 'zap',
@@ -43,6 +50,7 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'first-aid',
+    kind: 'guide',
     label: 'First aid',
     subtitle: 'Safety notes and NHS guidance',
     iconId: 'cross',
@@ -51,10 +59,28 @@ const EMERGENCY_CARDS = [
 ];
 
 /**
+ * @param {'mark' | 'donna'} person
+ */
+function buildOwnerContactPanel(person) {
+  const prefix = person === 'mark' ? 'contacts.mark' : 'contacts.donna';
+  const firstName = person === 'mark' ? 'Mark' : 'Donna';
+  return createGuidePanelOverlay({
+    type: 'panel',
+    label: `Contact ${firstName}`,
+    heading: `Contact ${firstName}`,
+    items: [
+      { label: 'Phone', value: getProtectedDisplayValue(`${prefix}.phone`, 'contact') },
+      { label: 'Email', value: getProtectedDisplayValue(`${prefix}.email`, 'contact') }
+    ]
+  });
+}
+
+/**
  * @param {EmergencyCard} card
  * @param {import('../../types/app.js').ShellContext} context
+ * @param {HTMLElement} host
  */
-function createEmergencyCardElement(card, context) {
+function createEmergencyCardElement(card, context, host) {
   const iconWrap = document.createElement('span');
   iconWrap.className = 'emergency-card-icon';
   iconWrap.append(renderIcon(card.iconId, { size: 28, className: 'emergency-card-svg' }));
@@ -72,7 +98,16 @@ function createEmergencyCardElement(card, context) {
   button.className = 'emergency-card';
   button.setAttribute('aria-label', card.label);
   button.append(iconWrap, title, subtitle);
-  button.addEventListener('click', () => openHouseGuideTopic(context, card.topicId));
+
+  if (card.kind === 'contact') {
+    button.addEventListener('click', () => {
+      host.querySelector('.guide-panel-overlay')?.remove();
+      host.append(buildOwnerContactPanel(card.person));
+    });
+  } else {
+    button.addEventListener('click', () => openHouseGuideTopic(context, card.topicId));
+  }
+
   return button;
 }
 
@@ -96,7 +131,7 @@ export function mountEmergencyApp(viewport, context) {
   grid.className = 'emergency-grid';
   grid.setAttribute('role', 'list');
   for (const card of EMERGENCY_CARDS) {
-    const element = createEmergencyCardElement(card, context);
+    const element = createEmergencyCardElement(card, context, page);
     element.setAttribute('role', 'listitem');
     grid.append(element);
   }
