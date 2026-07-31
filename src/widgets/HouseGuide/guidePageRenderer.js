@@ -14,6 +14,7 @@ import {
   shouldSkipStaleGuideBlock,
   wireGuideTopicHeaderRefresh
 } from './guideTopicWifiQr.js';
+import { renderGuideRichText } from './guideRichText.js';
 
 /**
  * @param {string} url
@@ -101,7 +102,7 @@ function renderBlock(block) {
     list.className = 'guide-step-list';
     for (const step of block.steps ?? []) {
       const item = document.createElement('li');
-      item.textContent = step;
+      item.append(renderGuideRichText(step));
       list.append(item);
     }
     section.append(list);
@@ -114,10 +115,9 @@ function renderBlock(block) {
     if (block.heading) {
       const strong = document.createElement('strong');
       strong.textContent = block.heading;
-      aside.append(strong, document.createTextNode(` ${block.content}`));
-    } else {
-      aside.textContent = block.content;
+      aside.append(strong, document.createTextNode(' '));
     }
+    aside.append(renderGuideRichText(block.content));
     return aside;
   }
 
@@ -127,9 +127,9 @@ function renderBlock(block) {
     const heading = document.createElement('h3');
     heading.className = 'guide-section-heading';
     heading.textContent = block.heading;
-    const body = document.createElement('p');
+    const body = document.createElement('div');
     body.className = 'guide-section-body';
-    body.textContent = block.content;
+    body.append(renderGuideRichText(block.content));
     section.append(heading, body);
     return section;
   }
@@ -145,9 +145,9 @@ function renderBlock(block) {
     address.textContent = block.address;
     card.append(name, address);
     if (block.description) {
-      const description = document.createElement('p');
+      const description = document.createElement('div');
       description.className = 'guide-place-description';
-      description.textContent = block.description;
+      description.append(renderGuideRichText(block.description));
       card.append(description);
     }
     if (typeof block.dogFriendly === 'boolean') {
@@ -227,8 +227,9 @@ function renderBlock(block) {
     details.className = 'guide-collapsible';
     const summary = document.createElement('summary');
     summary.textContent = block.heading;
-    const body = document.createElement('p');
-    body.textContent = block.content;
+    const body = document.createElement('div');
+    body.className = 'guide-collapsible-body';
+    body.append(renderGuideRichText(block.content));
     details.append(summary, body);
     return details;
   }
@@ -242,10 +243,10 @@ function renderBlock(block) {
     section.append(heading);
   }
   if (block.content) {
-    const paragraph = document.createElement('p');
-    paragraph.className = 'guide-section-body';
-    paragraph.textContent = block.content;
-    section.append(paragraph);
+    const body = document.createElement('div');
+    body.className = 'guide-section-body';
+    body.append(renderGuideRichText(block.content));
+    section.append(body);
   }
   return section;
 }

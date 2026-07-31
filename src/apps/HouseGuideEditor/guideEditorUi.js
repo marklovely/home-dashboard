@@ -2,6 +2,7 @@
 
 import { buildHouseGuideMediaUrl } from '../../api/houseGuideApi.js';
 import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
+import { createGuideEditorFormattingBar } from './guideEditorFormatting.js';
 
 /**
  * @typedef {Object} GuideBlockEditorOptions
@@ -95,19 +96,36 @@ export function renderGuideBlockEditor(block, onChange, mediaIds, options = {}) 
 
   if (block.type === 'text') {
     body.append(
-      createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value })),
-      createTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value }))
+      createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value }), {
+        emoji: true
+      }),
+      createRichTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value }))
     );
   } else if (block.type === 'steps') {
-    body.append(createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value })));
-    body.append(renderStringList('Steps', block.steps ?? [], (steps) => onChange({ ...block, steps }), 'Add step'));
+    body.append(
+      createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value }), {
+        emoji: true
+      })
+    );
+    body.append(
+      renderStringList('Steps', block.steps ?? [], (steps) => onChange({ ...block, steps }), 'Add step', undefined, {
+        richText: true,
+        emoji: true
+      })
+    );
   } else if (block.type === 'tip' || block.type === 'warning' || block.type === 'note') {
     body.append(
-      createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value })),
-      createTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value }))
+      createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value }), {
+        emoji: true
+      }),
+      createRichTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value }))
     );
   } else if (block.type === 'keyValues' || block.type === 'contact') {
-    body.append(createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value })));
+    body.append(
+      createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value }), {
+        emoji: true
+      })
+    );
     body.append(
       renderKeyValueList(block.items ?? [], (items) => onChange({ ...block, items }), block.type === 'contact')
     );
@@ -115,19 +133,23 @@ export function renderGuideBlockEditor(block, onChange, mediaIds, options = {}) 
     body.append(renderHeroImageBlock(block, onChange, mediaIds, options));
   } else if (block.type === 'location') {
     body.append(
-      createField('Heading', block.heading ?? 'Location', (value) => onChange({ ...block, heading: value })),
-      createTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value }))
+      createField('Heading', block.heading ?? 'Location', (value) => onChange({ ...block, heading: value }), {
+        emoji: true
+      }),
+      createRichTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value }))
     );
   } else if (block.type === 'collapsible') {
     body.append(
-      createField('Title', block.heading ?? '', (value) => onChange({ ...block, heading: value })),
-      createTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value }))
+      createField('Title', block.heading ?? '', (value) => onChange({ ...block, heading: value }), { emoji: true }),
+      createRichTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value }))
     );
   } else if (block.type === 'place') {
     body.append(
-      createField('Name', block.name ?? '', (value) => onChange({ ...block, name: value })),
+      createField('Name', block.name ?? '', (value) => onChange({ ...block, name: value }), { emoji: true }),
       createField('Address', block.address ?? '', (value) => onChange({ ...block, address: value })),
-      createTextArea('Description (optional)', block.description ?? '', (value) => onChange({ ...block, description: value })),
+      createRichTextArea('Description (optional)', block.description ?? '', (value) =>
+        onChange({ ...block, description: value })
+      ),
       createCheckbox('Dog friendly', Boolean(block.dogFriendly), (checked) => onChange({ ...block, dogFriendly: checked })),
       createField('Website (optional)', block.website ?? '', (value) => onChange({ ...block, website: value }))
     );
@@ -138,7 +160,7 @@ export function renderGuideBlockEditor(block, onChange, mediaIds, options = {}) 
       'Private values (Wi‑Fi, contacts, etc.) are managed separately and are not edited here.';
     body.append(note);
   } else {
-    body.append(createTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value })));
+    body.append(createRichTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value })));
   }
 
   card.append(header, body);
@@ -174,7 +196,9 @@ function renderHeroImageBlock(block, onChange, mediaIds, options) {
   );
   wrap.append(
     existingPicker,
-    createField('Caption (optional)', block.caption ?? '', (value) => onChange({ ...block, caption: value }))
+    createField('Caption (optional)', block.caption ?? '', (value) => onChange({ ...block, caption: value }), {
+      emoji: true
+    })
   );
 
   return wrap;
@@ -335,8 +359,9 @@ function createCheckbox(label, checked, onChange) {
  * @param {string} label
  * @param {string} value
  * @param {(value: string) => void} onChange
+ * @param {{ emoji?: boolean }} [options]
  */
-function createField(label, value, onChange) {
+function createField(label, value, onChange, options = {}) {
   const wrap = document.createElement('label');
   wrap.className = 'guide-editor-field';
   const span = document.createElement('span');
@@ -345,7 +370,13 @@ function createField(label, value, onChange) {
   input.type = 'text';
   input.value = value;
   input.addEventListener('input', () => onChange(input.value));
-  wrap.append(span, input);
+
+  wrap.append(span);
+  if (options.emoji) {
+    wrap.append(createGuideEditorFormattingBar(() => input, { richText: false }), input);
+  } else {
+    wrap.append(input);
+  }
   return wrap;
 }
 
@@ -354,16 +385,24 @@ function createField(label, value, onChange) {
  * @param {string} value
  * @param {(value: string) => void} onChange
  */
-function createTextArea(label, value, onChange) {
+function createRichTextArea(label, value, onChange) {
   const wrap = document.createElement('label');
-  wrap.className = 'guide-editor-field';
+  wrap.className = 'guide-editor-field guide-editor-field-rich';
   const span = document.createElement('span');
   span.textContent = label;
   const textarea = document.createElement('textarea');
   textarea.rows = 4;
   textarea.value = value;
   textarea.addEventListener('input', () => onChange(textarea.value));
-  wrap.append(span, textarea);
+  const hint = document.createElement('p');
+  hint.className = 'subtle guide-editor-rich-hint';
+  hint.textContent = 'Use **bold**, *italic*, [links](https://), line breaks, and emojis.';
+  wrap.append(
+    span,
+    createGuideEditorFormattingBar(() => textarea),
+    textarea,
+    hint
+  );
   return wrap;
 }
 
@@ -400,8 +439,10 @@ function createMediaSelect(label, value, options, onChange) {
  * @param {string[]} items
  * @param {(items: string[]) => void} onChange
  * @param {string} [addLabel]
+ * @param {string} [itemPlaceholder]
+ * @param {{ richText?: boolean, emoji?: boolean }} [options]
  */
-export function renderStringList(label, items, onChange, addLabel = 'Add item', itemPlaceholder) {
+export function renderStringList(label, items, onChange, addLabel = 'Add item', itemPlaceholder, options = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'guide-editor-list';
   const heading = document.createElement('span');
@@ -418,7 +459,7 @@ export function renderStringList(label, items, onChange, addLabel = 'Add item', 
     list.replaceChildren();
     currentItems.forEach((item, index) => {
       const row = document.createElement('div');
-      row.className = 'guide-editor-list-row';
+      row.className = 'guide-editor-list-row guide-editor-list-row-rich';
       const input = document.createElement('input');
       input.type = 'text';
       input.value = item;
@@ -428,6 +469,14 @@ export function renderStringList(label, items, onChange, addLabel = 'Add item', 
         currentItems[index] = input.value;
         onChange(currentItems);
       });
+      if (options.richText || options.emoji) {
+        row.append(
+          createGuideEditorFormattingBar(() => input, { richText: options.richText !== false }),
+          input
+        );
+      } else {
+        row.append(input);
+      }
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'button-secondary guide-editor-list-remove';
