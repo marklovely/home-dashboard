@@ -33,5 +33,5 @@ bucket_name = "lovely-home-appliance-guides"
 [[d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "6ba7c54d-8804-47c0-8648-77b1aa25e0e0"
 migrations_dir = "migrations"
