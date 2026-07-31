@@ -17,6 +17,7 @@ import {
   saveHouseGuideTopic,
   subscribeToGuideContent
 } from '../../services/guideContentService.js';
+import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
 import { listCatalogMediaIds } from '../../content/houseguide/guideMedia.js';
 import {
   createEmptyGuideBlock,
@@ -318,7 +319,8 @@ function renderTopicPicker(categoryId, onBack, onOpen) {
     name.textContent = topic.title;
     const meta = document.createElement('span');
     meta.className = 'subtle';
-    meta.textContent = topic.subtitle;
+    meta.textContent =
+      topic.audience === 'owner' ? `${topic.subtitle} · Owner only` : topic.subtitle;
     row.append(name, meta);
     row.addEventListener('click', () => onOpen(topic.id));
     list.append(row);
@@ -334,6 +336,8 @@ function renderTopicPicker(categoryId, onBack, onOpen) {
  * @param {Object} handlers
  */
 function renderTopicEditor(topic, context, handlers) {
+  if (!topic.audience) topic.audience = 'guest';
+
   const panel = document.createElement('section');
   panel.className = 'house-guide-editor-topic';
 
@@ -350,6 +354,18 @@ function renderTopicEditor(topic, context, handlers) {
   const metaForm = document.createElement('div');
   metaForm.className = 'house-guide-editor-meta';
   metaForm.append(
+    createEditorSelect(
+      'Who can see this topic',
+      topic.audience === 'owner' ? 'owner' : 'guest',
+      [
+        { value: 'guest', label: 'House sitters and guests' },
+        { value: 'owner', label: 'Owner notes only (hidden from sitters)' }
+      ],
+      (value) => {
+        topic.audience = /** @type {'guest' | 'owner'} */ (value);
+        handlers.onTopicChange(topic);
+      }
+    ),
     createEditorField('Title', topic.title, (value) => {
       topic.title = value;
       handlers.onTopicChange(topic);
@@ -371,9 +387,14 @@ function renderTopicEditor(topic, context, handlers) {
   const blocksHost = document.createElement('div');
   blocksHost.className = 'house-guide-editor-blocks';
 
-  const mediaIds = listCatalogMediaIds();
-
   function renderBlocks() {
+    const mediaIds = listCatalogMediaIds();
+    const blockEditorOptions = {
+      onUploadImage: (formData) => uploadHouseGuideMedia(formData),
+      onMediaRefresh: () => refreshGuideContent(fetch, { draft: true, force: true }),
+      onUploadStatus: (message) => showToast(context.toast, message),
+      onAfterUpload: () => renderBlocks()
+    };
     blocksHost.replaceChildren();
     topic.blocks.forEach((block, index) => {
       const card = renderGuideBlockEditor(
@@ -382,7 +403,8 @@ function renderTopicEditor(topic, context, handlers) {
           topic.blocks[index] = next;
           handlers.onTopicChange(topic);
         },
-        mediaIds
+        mediaIds,
+        blockEditorOptions
       );
 
       const actions = document.createElement('div');
@@ -478,6 +500,7 @@ function renderTopicEditor(topic, context, handlers) {
       title: topic.title,
       subtitle: topic.subtitle,
       summary: topic.summary,
+      audience: topic.audience === 'owner' ? 'owner' : 'guest',
       blocks: topic.blocks
     }).then((result) => {
       saveButton.disabled = false;
@@ -499,6 +522,7 @@ function renderTopicEditor(topic, context, handlers) {
       title: topic.title,
       subtitle: topic.subtitle,
       summary: topic.summary,
+      audience: topic.audience === 'owner' ? 'owner' : 'guest',
       blocks: topic.blocks
     })
       .then((saveResult) => {
@@ -535,6 +559,30 @@ function createEditorField(label, value, onChange) {
   input.value = value;
   input.addEventListener('input', () => onChange(input.value));
   wrap.append(span, input);
+  return wrap;
+}
+
+/**
+ * @param {string} label
+ * @param {string} value
+ * @param {{ value: string, label: string }[]} options
+ * @param {(value: string) => void} onChange
+ */
+function createEditorSelect(label, value, options, onChange) {
+  const wrap = document.createElement('label');
+  wrap.className = 'guide-editor-field';
+  const span = document.createElement('span');
+  span.textContent = label;
+  const select = document.createElement('select');
+  for (const option of options) {
+    const node = document.createElement('option');
+    node.value = option.value;
+    node.textContent = option.label;
+    node.selected = option.value === value;
+    select.append(node);
+  }
+  select.addEventListener('change', () => onChange(select.value));
+  wrap.append(span, select);
   return wrap;
 }
 

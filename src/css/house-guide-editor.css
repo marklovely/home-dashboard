@@ -164,6 +164,34 @@
   padding-top: 8px;
   border-top: 1px solid var(--border);
 }
+.guide-editor-image-upload {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted, rgba(255, 255, 255, 0.03));
+}
+.guide-editor-image-upload-title {
+  font-weight: 600;
+}
+.guide-editor-image-upload-hint {
+  margin: 0;
+}
+.guide-editor-upload-button {
+  justify-self: start;
+}
+.guide-editor-upload-status {
+  margin: 0;
+}
+.guide-editor-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.guide-editor-checkbox input {
+  width: auto;
+}
 @media (max-width: 620px) {
   .guide-editor-kv-row {
     grid-template-columns: 1fr;
