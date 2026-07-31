@@ -23,20 +23,31 @@ import { renderApplianceManualViewer } from '../../widgets/HouseGuide/applianceM
 
 /**
  * @param {HTMLElement} viewport
+ * @param {import('../../types/app.js').ShellContext} context
  */
-function mountApplianceManualsApp(viewport) {
+function mountApplianceManualsApp(viewport, context) {
   const page = document.createElement('section');
   page.className = 'app-page appliance-manuals-app';
   page.setAttribute('aria-label', 'Appliance Manuals');
 
   viewport.replaceChildren(page);
-  renderPage(page);
+  renderPage(page, context);
+}
+
+/**
+ * @param {HTMLElement | undefined} toastEl
+ * @param {string} message
+ */
+function notifyToast(toastEl, message) {
+  if (toastEl) showToast(toastEl, message);
 }
 
 /**
  * @param {HTMLElement} page
+ * @param {import('../../types/app.js').ShellContext} context
  */
-function renderPage(page) {
+function renderPage(page, context) {
+  const toastEl = context?.toast;
   page.replaceChildren();
 
   if (getDeviceSessionStatus() === 'loading') {
@@ -219,9 +230,14 @@ function renderPage(page) {
           setError(result.message || 'Could not save manual.');
           return;
         }
-        showToast(manual ? 'Manual updated.' : 'Manual added.');
-        closeDialog();
-        setApplianceManualsOwnerDraftOpen(false);
+        if (manual) {
+          notifyToast(toastEl, 'Manual updated.');
+          closeDialog();
+          setApplianceManualsOwnerDraftOpen(false);
+          return;
+        }
+        notifyToast(toastEl, 'Manual added.');
+        dialog.showCreateSuccess?.();
       }
     });
     presentDialog(dialogHost, dialog);
@@ -232,7 +248,7 @@ function renderPage(page) {
    */
   function openReplaceDialog(manual) {
     closeDialog();
-    const dialog = createReplaceDialog(manual, closeDialog);
+    const dialog = createReplaceDialog(manual, closeDialog, toastEl);
     presentDialog(dialogHost, dialog);
   }
 
@@ -241,7 +257,7 @@ function renderPage(page) {
    */
   function openDeleteDialog(manual) {
     closeDialog();
-    const dialog = createDeleteDialog(manual, closeDialog);
+    const dialog = createDeleteDialog(manual, closeDialog, toastEl);
     presentDialog(dialogHost, dialog);
   }
 
@@ -259,10 +275,13 @@ function renderPage(page) {
   async function togglePublish(manual) {
     const result = await updateApplianceManualMetadata(manual.id, { published: !manual.published });
     if (!result.ok) {
-      showToast(result.message || 'Could not update manual.');
+      notifyToast(toastEl, result.message || 'Could not update manual.');
       return;
     }
-    showToast(manual.published ? 'Manual hidden from house sitters.' : 'Manual published.');
+    notifyToast(
+      toastEl,
+      manual.published ? 'Manual hidden from house sitters.' : 'Manual published.'
+    );
   }
 
   addButton.addEventListener('click', () => openEditor(null));
@@ -362,8 +381,34 @@ function createFormDialog(options) {
   actions.append(cancel, submit);
   form.append(actions);
 
+  const successPanel = document.createElement('div');
+  successPanel.className = 'appliance-manuals-form-success';
+  successPanel.hidden = true;
+
+  const successTitle = document.createElement('h3');
+  successTitle.textContent = 'Manual added';
+
+  const successCopy = document.createElement('p');
+  successCopy.className = 'subtle';
+  successCopy.textContent = 'Add another user guide, or finish when you are done.';
+
+  const successActions = document.createElement('div');
+  successActions.className = 'appliance-manuals-form-actions';
+
+  const addAnotherButton = document.createElement('button');
+  addAnotherButton.type = 'button';
+  addAnotherButton.className = 'button-primary';
+  addAnotherButton.textContent = 'Add another manual';
+
+  const doneButton = document.createElement('button');
+  doneButton.type = 'button';
+  doneButton.className = 'button-secondary';
+  doneButton.textContent = 'Done';
+
+  successActions.append(addAnotherButton, doneButton);
+  successPanel.append(successTitle, successCopy, successActions);
+
   cancel.addEventListener('click', () => options.onClose());
-  dialog.addEventListener('close', () => options.onClose());
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -406,6 +451,26 @@ function createFormDialog(options) {
   });
 
   dialog.append(form);
+  if (!options.manual) {
+    dialog.append(successPanel);
+    dialog.showCreateSuccess = () => {
+      form.hidden = true;
+      successPanel.hidden = false;
+    };
+    addAnotherButton.addEventListener('click', () => {
+      form.reset();
+      error.hidden = true;
+      error.textContent = '';
+      form.hidden = false;
+      successPanel.hidden = true;
+      submit.disabled = false;
+      submit.textContent = 'Add manual';
+      const titleInput = form.querySelector('input[name="title"]');
+      if (titleInput instanceof HTMLInputElement) titleInput.focus();
+    });
+    doneButton.addEventListener('click', () => options.onClose());
+  }
+
   dialog.addEventListener('cancel', (event) => {
     event.preventDefault();
     options.onClose();
@@ -416,8 +481,9 @@ function createFormDialog(options) {
 /**
  * @param {import('../../api/applianceManualsApi.js').ApplianceManual} manual
  * @param {() => void} onClose
+ * @param {HTMLElement | undefined} toastEl
  */
-function createReplaceDialog(manual, onClose) {
+function createReplaceDialog(manual, onClose, toastEl) {
   const dialog = document.createElement('dialog');
   dialog.className = 'appliance-manuals-dialog';
 
@@ -471,7 +537,7 @@ function createReplaceDialog(manual, onClose) {
       showFieldError(error, result.message || 'Could not replace PDF.');
       return;
     }
-    showToast('PDF replaced.');
+    notifyToast(toastEl, 'PDF replaced.');
     onClose();
   });
 
@@ -495,8 +561,9 @@ function presentDialog(host, dialog) {
 /**
  * @param {import('../../api/applianceManualsApi.js').ApplianceManual} manual
  * @param {() => void} onClose
+ * @param {HTMLElement | undefined} toastEl
  */
-function createDeleteDialog(manual, onClose) {
+function createDeleteDialog(manual, onClose, toastEl) {
   const dialog = document.createElement('dialog');
   dialog.className = 'appliance-manuals-dialog';
 
@@ -525,10 +592,10 @@ function createDeleteDialog(manual, onClose) {
     const result = await removeApplianceManual(manual.id);
     submit.disabled = false;
     if (!result.ok) {
-      showToast(result.message || 'Could not delete manual.');
+      notifyToast(toastEl, result.message || 'Could not delete manual.');
       return;
     }
-    showToast('Manual deleted.');
+    notifyToast(toastEl, 'Manual deleted.');
     onClose();
   });
 
@@ -609,7 +676,7 @@ export const applianceManualsApp = defineApp({
   capabilities: ['documents', 'owner-private'],
   accent: '#5b8def',
   profiles: ['owner'],
-  mount(viewport) {
-    mountApplianceManualsApp(viewport);
+  mount(viewport, context) {
+    mountApplianceManualsApp(viewport, context);
   }
 });
