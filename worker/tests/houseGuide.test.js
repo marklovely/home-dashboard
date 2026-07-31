@@ -1,0 +1,95 @@
+import { describe, expect, it } from 'vitest';
+import { assembleGuideCatalog } from '../src/houseGuide/assembleCatalog.js';
+import { createEmptyGuideBlock } from '../../src/apps/HouseGuideEditor/guideEditorUi.js';
+
+describe('assembleGuideCatalog', () => {
+  it('builds published catalog for sitters', () => {
+    const settings = {
+      version: 2,
+      home_summary_title: 'Welcome',
+      home_summary_subtitle: 'Help'
+    };
+    const categories = [
+      {
+        id: 'kitchen',
+        title: 'Kitchen',
+        card_subtitle: 'Cook',
+        icon_id: 'chef-hat',
+        accent: '#fff',
+        search_terms: '[]',
+        sort_order: 0,
+        published: 1
+      }
+    ];
+    const topics = [
+      {
+        id: 'dishwasher',
+        category_id: 'kitchen',
+        title: 'Dishwasher',
+        subtitle: 'Daily use',
+        summary: 'Wash dishes',
+        search_terms: '[]',
+        appliance_manual_terms: null,
+        blocks: JSON.stringify([{ type: 'text', content: 'Draft only' }]),
+        published_blocks: JSON.stringify([{ type: 'text', content: 'Published copy' }]),
+        actions: '[]',
+        sort_order: 0,
+        published: 1,
+        has_draft: 1
+      }
+    ];
+
+    const catalog = assembleGuideCatalog({}, settings, categories, topics, [], { publishedOnly: false });
+    expect(catalog.categories[0]?.topics[0]?.blocks[0]?.content).toBe('Published copy');
+    expect(catalog.draftCount).toBe(1);
+  });
+
+  it('returns draft blocks for owner edit mode', () => {
+    const settings = {
+      version: 2,
+      home_summary_title: 'Welcome',
+      home_summary_subtitle: 'Help'
+    };
+    const categories = [
+      {
+        id: 'kitchen',
+        title: 'Kitchen',
+        card_subtitle: 'Cook',
+        icon_id: 'chef-hat',
+        accent: '#fff',
+        search_terms: '[]',
+        sort_order: 0,
+        published: 1
+      }
+    ];
+    const topics = [
+      {
+        id: 'dishwasher',
+        category_id: 'kitchen',
+        title: 'Dishwasher',
+        subtitle: 'Daily use',
+        summary: 'Wash dishes',
+        search_terms: '[]',
+        appliance_manual_terms: null,
+        blocks: JSON.stringify([{ type: 'text', content: 'Draft copy' }]),
+        published_blocks: JSON.stringify([{ type: 'text', content: 'Published copy' }]),
+        actions: '[]',
+        sort_order: 0,
+        published: 1,
+        has_draft: 1
+      }
+    ];
+
+    const catalog = assembleGuideCatalog({}, settings, categories, topics, [], {
+      includeDraftBlocks: true
+    });
+    expect(catalog.categories[0]?.topics[0]?.blocks[0]?.content).toBe('Draft copy');
+  });
+});
+
+describe('guide editor blocks', () => {
+  it('creates empty blocks with sensible defaults', () => {
+    expect(createEmptyGuideBlock('text')).toEqual({ type: 'text', content: '' });
+    expect(createEmptyGuideBlock('steps').steps).toEqual(['']);
+  });
+});

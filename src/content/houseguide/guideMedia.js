@@ -1,4 +1,6 @@
 import catalog from './guide-catalog.json';
+import { buildHouseGuideMediaUrl } from '../../api/houseGuideApi.js';
+import { getActiveGuideCatalog, isGuideContentRemote } from '../../services/guideContentService.js';
 
 /** @typedef {{ ok: true, mediaId: string, url: string, alt: string }} GuideMediaResolved */
 /** @typedef {{ ok: false, mediaId: string, reason: string, expectedFilename?: string, availableMediaIds: string[] }} GuideMediaUnresolved */
@@ -23,7 +25,14 @@ for (const [modulePath, url] of Object.entries(mediaModules)) {
   urlByStem.set(stem, url);
 }
 
-/** @type {Record<string, { file: string, alt: string }>} */
+/** @type {Record<string, { file: string, alt: string, hasUpload?: boolean }>} */
+function getCatalogMediaMap() {
+  if (isGuideContentRemote()) {
+    return getActiveGuideCatalog().media ?? {};
+  }
+  return catalog.media ?? {};
+}
+
 const catalogMedia = catalog.media ?? {};
 
 /**
@@ -37,7 +46,7 @@ export function listBundledMediaStems() {
  * @returns {string[]}
  */
 export function listCatalogMediaIds() {
-  return Object.keys(catalogMedia).sort();
+  return Object.keys(getCatalogMediaMap()).sort();
 }
 
 /**
@@ -57,7 +66,8 @@ function resolveUrlForFileName(fileName) {
  */
 export function resolveGuideMedia(mediaId) {
   const availableMediaIds = listCatalogMediaIds();
-  const asset = catalogMedia[mediaId];
+  const mediaMap = getCatalogMediaMap();
+  const asset = mediaMap[mediaId] ?? catalogMedia[mediaId];
 
   if (!asset) {
     return {
@@ -65,6 +75,25 @@ export function resolveGuideMedia(mediaId) {
       mediaId,
       reason: 'unknown-media-id',
       availableMediaIds
+    };
+  }
+
+  if (!asset.alt?.trim()) {
+    return {
+      ok: false,
+      mediaId,
+      reason: 'missing-alt-text',
+      expectedFilename: asset.file,
+      availableMediaIds
+    };
+  }
+
+  if (asset.hasUpload) {
+    return {
+      ok: true,
+      mediaId,
+      url: buildHouseGuideMediaUrl(mediaId),
+      alt: asset.alt
     };
   }
 
@@ -83,16 +112,6 @@ export function resolveGuideMedia(mediaId) {
       );
     }
     return unresolved;
-  }
-
-  if (!asset.alt?.trim()) {
-    return {
-      ok: false,
-      mediaId,
-      reason: 'missing-alt-text',
-      expectedFilename: asset.file,
-      availableMediaIds
-    };
   }
 
   return {
@@ -118,5 +137,5 @@ export function resolveGuideMediaById(mediaId, mediaCatalog = catalogMedia) {
 }
 
 export function getGuideMediaCatalogFromModule() {
-  return catalogMedia;
+  return getCatalogMediaMap();
 }

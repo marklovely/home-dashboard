@@ -105,6 +105,10 @@
   display: grid;
   gap: 6px;
 }
+.appliance-manuals-field-hint {
+  margin: 0;
+  line-height: 1.4;
+}
 .appliance-manuals-field input,
 .appliance-manuals-field textarea,
 .appliance-manuals-field select {
