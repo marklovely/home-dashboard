@@ -1,8 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { listGuideMediaUrlsForCache } from '../src/services/guideOfflineCache.js';
 
 describe('guideOfflineCache', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('lists published catalog and uploaded media urls for caching', () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
     const urls = listGuideMediaUrlsForCache({
       version: 2,
       homeSummaryTitle: 'Guide',
