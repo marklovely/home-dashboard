@@ -122,6 +122,10 @@ button { font: inherit; }
   z-index: 9999;
 }
 
+.device-session-loading[hidden] {
+  display: none !important;
+}
+
 .settings-options--stacked {
   display: flex;
   flex-direction: column;
