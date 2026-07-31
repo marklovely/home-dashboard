@@ -1,25 +1,47 @@
 .house-guide-editor-app {
   display: grid;
-  gap: 16px;
+  gap: 20px;
+  max-width: 920px;
+  margin: 0 auto;
+  width: 100%;
+}
+.house-guide-editor-shell {
+  display: grid;
+  gap: 20px;
 }
 .house-guide-editor-header {
   display: grid;
-  gap: 10px;
+  gap: 14px;
+  padding: 20px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+.house-guide-editor-header h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.65rem);
 }
 .house-guide-editor-intro {
   margin: 0;
   max-width: 60ch;
+  line-height: 1.5;
 }
 .house-guide-editor-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  padding-top: 4px;
+}
+.house-guide-editor-main {
+  display: grid;
+  gap: 16px;
 }
 .house-guide-editor-draft-badge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 999px;
   background: rgba(244, 182, 79, 0.18);
   border: 1px solid rgba(244, 182, 79, 0.35);
@@ -30,14 +52,31 @@
   display: grid;
   gap: 14px;
   max-width: 42rem;
-  padding: 20px;
-  border-radius: 16px;
+  padding: 22px;
+  border-radius: 18px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.03);
 }
-.house-guide-editor-picker {
+.house-guide-editor-picker,
+.house-guide-editor-topic,
+.house-guide-editor-media-library {
   display: grid;
-  gap: 14px;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.025);
+}
+.house-guide-editor-picker .guide-section-heading,
+.house-guide-editor-topic .guide-section-heading {
+  margin: 0;
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+}
+.house-guide-editor-empty {
+  margin: 0;
+}
+.house-guide-editor-category-card {
+  min-height: 88px;
 }
 .house-guide-editor-topic-list {
   display: grid;
@@ -52,9 +91,14 @@
   padding: 14px 16px;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
   color: inherit;
   font: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.house-guide-editor-topic-row:hover {
+  border-color: color-mix(in srgb, var(--accent, #8b7cff) 35%, var(--border));
+  background: rgba(255, 255, 255, 0.06);
 }
 .house-guide-editor-topic-row-wrap {
   display: grid;
@@ -120,10 +164,6 @@
 .guide-editor-action-header {
   font-weight: 700;
 }
-.house-guide-editor-media-library {
-  display: grid;
-  gap: 16px;
-}
 .house-guide-editor-media-list {
   display: grid;
   gap: 12px;
@@ -184,6 +224,7 @@
   cursor: pointer;
   font-weight: 600;
   color: var(--muted);
+  padding: 4px 0;
 }
 .house-guide-editor-intro-form {
   display: grid;
@@ -195,6 +236,10 @@
 .house-guide-editor-meta-advanced {
   display: grid;
   gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px dashed var(--border);
+  background: rgba(255, 255, 255, 0.02);
 }
 .house-guide-editor-manual-hint {
   margin: -6px 0 0;
@@ -205,13 +250,13 @@
   gap: 8px;
   align-items: center;
 }
-.house-guide-editor-topic {
-  display: grid;
-  gap: 16px;
-}
 .house-guide-editor-meta {
   display: grid;
   gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
 }
 .house-guide-editor-blocks-title {
   margin: 0;
@@ -224,22 +269,25 @@
 .guide-editor-block {
   display: grid;
   gap: 12px;
-  padding: 16px;
+  padding: 16px 18px;
   border-radius: 16px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 .guide-editor-block-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .guide-editor-block-type {
   font-weight: 700;
-  font-size: 0.92rem;
-  color: var(--muted);
+  font-size: 0.82rem;
+  color: #f4b64f;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 .guide-editor-block-body {
   display: grid;
@@ -249,6 +297,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  padding-top: 4px;
 }
 .guide-editor-field {
   display: grid;
@@ -257,6 +306,7 @@
 .guide-editor-field span {
   font-size: 0.92rem;
   color: var(--muted);
+  font-weight: 600;
 }
 .guide-editor-field input,
 .guide-editor-field textarea,
@@ -274,6 +324,12 @@
   min-height: 96px;
   resize: vertical;
 }
+.guide-editor-file-field input[type='file'] {
+  min-height: auto;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+}
 .guide-editor-list {
   display: grid;
   gap: 10px;
@@ -281,6 +337,7 @@
 .guide-editor-list-label {
   font-size: 0.92rem;
   color: var(--muted);
+  font-weight: 600;
 }
 .guide-editor-list-items {
   display: grid;
@@ -299,6 +356,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  align-items: center;
 }
 .house-guide-editor-add-select {
   flex: 1 1 220px;
@@ -307,28 +365,88 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding-top: 8px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
+}
+.guide-editor-photo-block {
+  display: grid;
+  gap: 14px;
+}
+.guide-editor-photo-preview {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #28d17c 35%, var(--border));
+  background: rgba(40, 209, 124, 0.08);
+}
+.guide-editor-photo-preview-frame {
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 16 / 10;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+}
+.guide-editor-photo-preview-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.guide-editor-photo-preview-meta {
+  display: grid;
+  gap: 2px;
+}
+.guide-editor-photo-preview-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.guide-editor-photo-preview-id {
+  font-size: 0.95rem;
+}
+.guide-editor-photo-clear {
+  justify-self: start;
+}
+.guide-editor-photo-picker {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+.guide-editor-photo-picker summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--muted);
+}
+.guide-editor-photo-picker[open] summary {
+  margin-bottom: 10px;
 }
 .guide-editor-image-upload {
   display: grid;
   gap: 10px;
-  padding: 12px;
-  border: 1px dashed var(--border);
-  border-radius: 10px;
-  background: var(--surface-muted, rgba(255, 255, 255, 0.03));
+  padding: 14px 16px;
+  border: 1px dashed color-mix(in srgb, #f4b64f 45%, var(--border));
+  border-radius: 14px;
+  background: rgba(244, 182, 79, 0.06);
 }
 .guide-editor-image-upload-title {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1rem;
 }
 .guide-editor-image-upload-hint {
   margin: 0;
+  line-height: 1.45;
 }
 .guide-editor-upload-button {
   justify-self: start;
 }
 .guide-editor-upload-status {
   margin: 0;
+  color: #28d17c;
+  font-weight: 600;
 }
 .guide-editor-checkbox {
   display: flex;
@@ -339,6 +457,12 @@
   width: auto;
 }
 @media (max-width: 620px) {
+  .house-guide-editor-header,
+  .house-guide-editor-picker,
+  .house-guide-editor-topic,
+  .house-guide-editor-media-library {
+    padding: 16px;
+  }
   .guide-editor-kv-row,
   .guide-editor-contact-row {
     grid-template-columns: 1fr;
