@@ -857,6 +857,37 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   font-size: clamp(1.1rem, 2vw, 1.35rem);
   font-weight: 700;
 }
+.guide-section-wifi-qr { display: grid; gap: 12px; }
+.guide-wifi-qr {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+.guide-wifi-qr-code {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border-radius: 12px;
+  background: #fff;
+}
+.guide-wifi-qr-code svg {
+  display: block;
+  width: min(280px, 100%);
+  height: auto;
+}
+.guide-wifi-qr-caption {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
+  max-width: 24rem;
+}
+.guide-wifi-qr-status { margin: 0; text-align: center; }
 .guide-callout {
   margin: 0;
   padding: 14px 16px;

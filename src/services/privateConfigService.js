@@ -10,6 +10,21 @@ let sessionCache = null;
 /** @type {Promise<void> | null} */
 let inflight = null;
 
+/** @type {Set<() => void>} */
+const listeners = new Set();
+
+/** @param {() => void} listener */
+export function subscribeToPrivateConfig(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function notifyPrivateConfigListeners() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
 /**
  * @param {import('../api/privateConfigApi.js').WorkerPrivateConfig | null} payload
  */
@@ -80,6 +95,7 @@ export async function preloadPrivateConfig(fetchImpl) {
     }
     sessionCache = merged;
     inflight = null;
+    notifyPrivateConfigListeners();
   })();
 
   return inflight;
@@ -131,6 +147,7 @@ export function clearPrivateConfigSession() {
 export async function refreshPrivateConfig(fetchImpl) {
   clearPrivateConfigSession();
   await preloadPrivateConfig(fetchImpl);
+  notifyPrivateConfigListeners();
 }
 
 /** Test helper */
