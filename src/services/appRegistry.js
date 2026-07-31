@@ -8,6 +8,7 @@ const APP_DISPLAY_ORDER = [
   'plex',
   'my-day',
   'appliance-manuals',
+  'house-guide-editor',
   'settings'
 ];
 

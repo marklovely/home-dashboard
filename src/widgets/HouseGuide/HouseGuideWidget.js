@@ -14,6 +14,7 @@ import {
 } from './guidePageRenderer.js';
 import { APPLIANCE_MANUALS_CATEGORY_ID } from '../../services/applianceManualsConstants.js';
 import { refreshApplianceManuals } from '../../services/applianceManualsService.js';
+import { refreshGuideContent } from '../../services/guideContentService.js';
 import { renderApplianceManualsSitterView } from './applianceManualsSitterView.js';
 import { renderApplianceManualViewer } from './applianceManualsViewer.js';
 
@@ -295,6 +296,7 @@ function createInteractiveHouseGuide(context) {
   });
 
   showExplore();
+  void refreshGuideContent(fetch, { draft: false, force: true });
   void refreshApplianceManuals(fetch, { owner: false, force: true });
   const pendingTopic = consumePendingGuideTopic();
   if (pendingTopic) {
