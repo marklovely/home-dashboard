@@ -1,4 +1,5 @@
 import { renderIcon } from '../../components/icons/renderIcon.js';
+import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { getAppDisplayTitle, getModeConfig } from '../../modes/modeConfig.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 
@@ -231,8 +232,16 @@ export async function renderHouseSitterHome(viewport, apps, context) {
   const helpText = document.createElement('p');
   helpText.className = 'sitter-help-text';
   helpText.textContent =
-    'Open the House Guide for step-by-step instructions with photographs.';
+    'Open the House Guide for step-by-step instructions, or read the tablet guide for a tour of every app.';
+
   helpCopy.append(helpTitle, helpText);
+
+  const helpActions = document.createElement('div');
+  helpActions.className = 'sitter-help-actions';
+
+  const tabletGuideButton = createSitterHelpButton({
+    buttonClassName: 'sitter-help-button sitter-help-button--secondary'
+  });
 
   const helpButton = document.createElement('button');
   helpButton.type = 'button';
@@ -242,7 +251,9 @@ export async function renderHouseSitterHome(viewport, apps, context) {
     document.createTextNode('Open House Guide')
   );
   helpButton.addEventListener('click', () => context.navigate('house-guide'));
-  helpSection.append(helpCopy, helpButton);
+
+  helpActions.append(tabletGuideButton, helpButton);
+  helpSection.append(helpCopy, helpActions);
 
   page.append(welcome, essentialsSection, infoSection, helpSection);
   viewport.append(page);
