@@ -1255,6 +1255,15 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 6, 10, 0.82);
+}
 .confirm-dialog {
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -1263,13 +1272,6 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   width: calc(100vw - 32px);
   background: var(--surface);
   color: inherit;
-  z-index: 100;
-}
-.confirm-dialog[open] {
-  display: block;
-}
-.confirm-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.55);
 }
 .confirm-dialog-body {
   display: grid;
