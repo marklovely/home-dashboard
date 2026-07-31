@@ -1,5 +1,13 @@
 /** @typedef {import('../../types/guideContent.js').GuideBlock} GuideBlock */
 
+/**
+ * @typedef {Object} GuideBlockEditorOptions
+ * @property {(formData: FormData) => Promise<{ ok: boolean, message?: string, data?: { id: string } }>} [onUploadImage]
+ * @property {() => Promise<void>} [onMediaRefresh]
+ * @property {(message: string) => void} [onUploadStatus]
+ * @property {() => void} [onAfterUpload]
+ */
+
 export const GUIDE_BLOCK_TYPE_LABELS = {
   text: 'Paragraph',
   steps: 'Numbered steps',
@@ -25,7 +33,8 @@ export const EDITABLE_BLOCK_TYPES = [
   'keyValues',
   'heroImage',
   'location',
-  'collapsible'
+  'collapsible',
+  'place'
 ];
 
 /**
@@ -49,6 +58,8 @@ export function createEmptyGuideBlock(type) {
       return { type: 'location', heading: 'Location', content: '' };
     case 'collapsible':
       return { type: 'collapsible', heading: '', content: '' };
+    case 'place':
+      return { type: 'place', name: '', address: '', description: '', dogFriendly: false, website: '' };
     default:
       return { type: 'text', content: '' };
   }
@@ -58,8 +69,9 @@ export function createEmptyGuideBlock(type) {
  * @param {GuideBlock} block
  * @param {(block: GuideBlock) => void} onChange
  * @param {string[]} mediaIds
+ * @param {GuideBlockEditorOptions} [options]
  */
-export function renderGuideBlockEditor(block, onChange, mediaIds) {
+export function renderGuideBlockEditor(block, onChange, mediaIds, options = {}) {
   const card = document.createElement('article');
   card.className = 'guide-editor-block';
   card.dataset.blockType = block.type;
@@ -95,6 +107,7 @@ export function renderGuideBlockEditor(block, onChange, mediaIds) {
   } else if (block.type === 'heroImage') {
     body.append(
       createMediaSelect('Photo', block.mediaId ?? '', mediaIds, (value) => onChange({ ...block, mediaId: value })),
+      createImageUploadPanel(block.mediaId ?? '', (mediaId) => onChange({ ...block, mediaId }), options),
       createField('Caption (optional)', block.caption ?? '', (value) => onChange({ ...block, caption: value }))
     );
   } else if (block.type === 'location') {
@@ -107,16 +120,19 @@ export function renderGuideBlockEditor(block, onChange, mediaIds) {
       createField('Title', block.heading ?? '', (value) => onChange({ ...block, heading: value })),
       createTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value }))
     );
+  } else if (block.type === 'place') {
+    body.append(
+      createField('Name', block.name ?? '', (value) => onChange({ ...block, name: value })),
+      createField('Address', block.address ?? '', (value) => onChange({ ...block, address: value })),
+      createTextArea('Description (optional)', block.description ?? '', (value) => onChange({ ...block, description: value })),
+      createCheckbox('Dog friendly', Boolean(block.dogFriendly), (checked) => onChange({ ...block, dogFriendly: checked })),
+      createField('Website (optional)', block.website ?? '', (value) => onChange({ ...block, website: value }))
+    );
   } else if (block.type === 'protected') {
     const note = document.createElement('p');
     note.className = 'subtle';
     note.textContent =
       'Private values (Wi‑Fi, contacts, etc.) are managed separately and are not edited here.';
-    body.append(note);
-  } else if (block.type === 'place') {
-    const note = document.createElement('p');
-    note.className = 'subtle';
-    note.textContent = 'Place cards can be edited in a future update. They are preserved when you save other changes.';
     body.append(note);
   } else {
     body.append(createTextArea('Content', block.content ?? '', (value) => onChange({ ...block, content: value })));
@@ -124,6 +140,116 @@ export function renderGuideBlockEditor(block, onChange, mediaIds) {
 
   card.append(header, body);
   return card;
+}
+
+/**
+ * @param {string} currentMediaId
+ * @param {(mediaId: string) => void} onSelect
+ * @param {GuideBlockEditorOptions} options
+ */
+function createImageUploadPanel(currentMediaId, onSelect, options) {
+  const wrap = document.createElement('div');
+  wrap.className = 'guide-editor-image-upload';
+
+  const heading = document.createElement('span');
+  heading.className = 'guide-editor-image-upload-title';
+  heading.textContent = 'Upload a new photo';
+
+  const hint = document.createElement('p');
+  hint.className = 'subtle guide-editor-image-upload-hint';
+  hint.textContent = 'Use a short id (letters, numbers, hyphens). After upload it appears in the photo list above.';
+
+  const idField = createField('Photo id', currentMediaId, () => {});
+  const idInput = /** @type {HTMLInputElement} */ (idField.querySelector('input'));
+  idInput.placeholder = 'e.g. garden-hose-bins';
+
+  const altField = createField('Alt text', '', () => {});
+  const altInput = /** @type {HTMLInputElement} */ (altField.querySelector('input'));
+  altInput.placeholder = 'Describe the photo for accessibility';
+
+  const fileLabel = document.createElement('label');
+  fileLabel.className = 'guide-editor-field';
+  const fileSpan = document.createElement('span');
+  fileSpan.textContent = 'Image file';
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/jpeg,image/png,image/webp,image/gif';
+  fileLabel.append(fileSpan, fileInput);
+
+  const status = document.createElement('p');
+  status.className = 'guide-editor-upload-status subtle';
+  status.hidden = true;
+
+  const uploadButton = document.createElement('button');
+  uploadButton.type = 'button';
+  uploadButton.className = 'button-secondary guide-editor-upload-button';
+  uploadButton.textContent = 'Upload photo';
+
+  uploadButton.addEventListener('click', () => {
+    if (!options.onUploadImage) {
+      status.hidden = false;
+      status.textContent = 'Upload is not available right now.';
+      return;
+    }
+
+    const mediaId = idInput.value.trim();
+    const alt = altInput.value.trim();
+    const file = fileInput.files?.[0];
+
+    if (!mediaId || !alt || !file) {
+      status.hidden = false;
+      status.textContent = 'Photo id, alt text, and an image file are required.';
+      return;
+    }
+
+    uploadButton.disabled = true;
+    status.hidden = false;
+    status.textContent = 'Uploading…';
+
+    const formData = new FormData();
+    formData.set('id', mediaId);
+    formData.set('alt', alt);
+    formData.set('file', file);
+
+    void options
+      .onUploadImage(formData)
+      .then(async (result) => {
+        if (!result.ok) {
+          status.textContent = result.message || 'Upload failed.';
+          return;
+        }
+        await options.onMediaRefresh?.();
+        onSelect(result.data?.id ?? mediaId);
+        options.onAfterUpload?.();
+        status.textContent = 'Photo uploaded. It is selected above.';
+        options.onUploadStatus?.('Photo uploaded.');
+        fileInput.value = '';
+      })
+      .finally(() => {
+        uploadButton.disabled = false;
+      });
+  });
+
+  wrap.append(heading, hint, idField, altField, fileLabel, uploadButton, status);
+  return wrap;
+}
+
+/**
+ * @param {string} label
+ * @param {boolean} checked
+ * @param {(checked: boolean) => void} onChange
+ */
+function createCheckbox(label, checked, onChange) {
+  const wrap = document.createElement('label');
+  wrap.className = 'guide-editor-field guide-editor-checkbox';
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.checked = checked;
+  input.addEventListener('change', () => onChange(input.checked));
+  const span = document.createElement('span');
+  span.textContent = label;
+  wrap.append(input, span);
+  return wrap;
 }
 
 /**
