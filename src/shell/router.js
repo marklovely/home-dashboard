@@ -3,17 +3,32 @@ export const HOME_ROUTE = 'home';
 /** @type {string} */
 let currentRoute = HOME_ROUTE;
 
+/** @type {string | null} */
+let currentGuideTopicId = null;
+
 /** @type {Set<(route: string) => void>} */
 const listeners = new Set();
 
-/** @returns {string} */
-export function getCurrentRoute() {
-  return currentRoute;
+/**
+ * @param {string} route
+ * @param {string | null | undefined} guideTopicId
+ */
+function buildHash(route, guideTopicId) {
+  if (route === HOME_ROUTE && !guideTopicId) return '';
+  let hash = `#/${route}`;
+  if (guideTopicId) {
+    hash += `/topic/${encodeURIComponent(guideTopicId)}`;
+  }
+  return hash;
 }
 
-function parseRouteFromLocation() {
-  const match = window.location.hash.match(/^#\/([^/?#]+)/);
-  return match?.[1] ?? HOME_ROUTE;
+function parseLocation() {
+  const match = window.location.hash.match(/^#\/([^/?#]+)(?:\/(.*))?$/);
+  const route = match?.[1] ?? HOME_ROUTE;
+  const rest = match?.[2] ?? '';
+  const topicMatch = rest.match(/^topic\/([^/?#]+)/);
+  const guideTopicId = topicMatch?.[1] ? decodeURIComponent(topicMatch[1]) : null;
+  return { route, guideTopicId };
 }
 
 function notify() {
@@ -22,15 +37,29 @@ function notify() {
   }
 }
 
-/** @param {string} route */
-export function navigate(route) {
+/** @returns {string} */
+export function getCurrentRoute() {
+  return currentRoute;
+}
+
+/** @returns {string | null} */
+export function getGuideTopicFromRoute() {
+  return currentGuideTopicId;
+}
+
+/**
+ * @param {string} route
+ * @param {{ guideTopicId?: string | null }} [options]
+ */
+export function navigate(route, options = {}) {
   const nextRoute = route || HOME_ROUTE;
-  if (nextRoute === currentRoute) return;
+  const nextGuideTopicId = options.guideTopicId !== undefined ? options.guideTopicId : null;
+  if (nextRoute === currentRoute && nextGuideTopicId === currentGuideTopicId) return;
 
   currentRoute = nextRoute;
-  const hash = nextRoute === HOME_ROUTE ? '' : `#/${nextRoute}`;
-  const url = `${window.location.pathname}${window.location.search}${hash}`;
-  window.history.pushState({ route: nextRoute }, '', url);
+  currentGuideTopicId = nextGuideTopicId;
+  const url = `${window.location.pathname}${window.location.search}${buildHash(nextRoute, nextGuideTopicId)}`;
+  window.history.pushState({ route: nextRoute, guideTopicId: nextGuideTopicId }, '', url);
   notify();
 }
 
@@ -43,12 +72,14 @@ export function subscribeToRoute(listener) {
 /** @param {import('../services/appRegistry.js').getAppById} getAppById */
 export function initRouter(getAppById) {
   const applyLocation = () => {
-    const parsed = parseRouteFromLocation();
-    if (parsed !== HOME_ROUTE && !getAppById(parsed)) {
+    const parsed = parseLocation();
+    if (parsed.route !== HOME_ROUTE && !getAppById(parsed.route)) {
       currentRoute = HOME_ROUTE;
-      window.history.replaceState({ route: HOME_ROUTE }, '', window.location.pathname);
+      currentGuideTopicId = null;
+      window.history.replaceState({ route: HOME_ROUTE, guideTopicId: null }, '', window.location.pathname);
     } else {
-      currentRoute = parsed;
+      currentRoute = parsed.route;
+      currentGuideTopicId = parsed.guideTopicId;
     }
     notify();
   };
@@ -56,4 +87,11 @@ export function initRouter(getAppById) {
   window.addEventListener('hashchange', applyLocation);
   window.addEventListener('popstate', applyLocation);
   applyLocation();
+}
+
+/** @internal */
+export function resetRouterForTests() {
+  currentRoute = HOME_ROUTE;
+  currentGuideTopicId = null;
+  listeners.clear();
 }

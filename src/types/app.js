@@ -7,7 +7,7 @@
  * @property {import('../config.js').CONFIG extends infer C ? C : never} config
  * @property {HTMLElement} toast
  * @property {HTMLElement} lastCommand
- * @property {(appId: string) => void} navigate
+ * @property {(appId: string, options?: { guideTopicId?: string | null }) => void} navigate
  * @property {() => void} [refreshShell]
  */
 
