@@ -12,12 +12,13 @@ import {
   setHomeScreenScale
 } from '../../services/displayPreferencesService.js';
 import {
-  getNightModeSetting,
-  getNightModeWindowInputValues,
-  nightModeSettingLabel,
-  setNightModeSetting,
-  setNightModeWindowFromInputs
-} from '../../services/nightModeService.js';
+  getScreensaverSetting,
+  getScreensaverTimeoutMinutes,
+  SCREENSAVER_TIMEOUT_OPTIONS,
+  screensaverSettingLabel,
+  setScreensaverSetting,
+  setScreensaverTimeoutMinutes
+} from '../../services/screensaverService.js';
 import { getActiveTheme, getEffectiveTheme, setActiveTheme } from '../../services/themeService.js';
 import {
   clearWeatherLocationOverride,
@@ -148,85 +149,65 @@ function createAppearanceFields(onRefresh) {
     createThemeField(onRefresh),
     createClockFormatField(onRefresh),
     createHomeScaleField(onRefresh),
-    createNightModeField(onRefresh)
+    createScreensaverField(onRefresh)
   );
   return wrap;
 }
 
 /** @param {() => void} onRefresh */
-function createNightModeField(onRefresh) {
+function createScreensaverField(onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-subsection';
   const title = document.createElement('p');
   title.className = 'settings-subsection-title';
-  title.textContent = 'Night clock';
+  title.textContent = 'Screensaver';
   wrap.append(title);
 
   const hint = document.createElement('p');
   hint.className = 'settings-help subtle';
   hint.textContent =
-    'In House Sitter mode, show a dim clock on a black screen during these hours. Tap anywhere to wake the dashboard for five minutes.';
+    'In House Sitter mode, show a dim clock after the tablet has been idle. Tap anywhere to wake the dashboard.';
 
   const options = document.createElement('div');
   options.className = 'settings-options';
-  const active = getNightModeSetting();
+  const active = getScreensaverSetting();
   for (const option of [
-    { id: 'auto', label: 'Auto' },
+    { id: 'on', label: 'On' },
     { id: 'off', label: 'Off' }
   ]) {
     options.append(
-      createRadioOption('night-mode', option.id, option.label, option.id === active, undefined, () => {
-        setNightModeSetting(/** @type {'off' | 'auto'} */ (option.id));
+      createRadioOption('screensaver', option.id, option.label, option.id === active, undefined, () => {
+        setScreensaverSetting(/** @type {'off' | 'on'} */ (option.id));
         onRefresh();
       })
     );
   }
 
-  const schedule = document.createElement('div');
-  schedule.className = 'settings-night-schedule';
+  const timeoutTitle = document.createElement('p');
+  timeoutTitle.className = 'settings-subsection-title settings-subsection-title--nested';
+  timeoutTitle.textContent = 'Turn on after';
 
-  const { start, end } = getNightModeWindowInputValues();
-  const startField = createNightModeTimeField('From', 'night-mode-start', start, onRefresh);
-  const endField = createNightModeTimeField('Until', 'night-mode-end', end, onRefresh);
+  const timeoutOptions = document.createElement('div');
+  timeoutOptions.className = 'settings-options';
+  const activeTimeout = getScreensaverTimeoutMinutes();
+  for (const option of SCREENSAVER_TIMEOUT_OPTIONS) {
+    timeoutOptions.append(
+      createRadioOption(
+        'screensaver-timeout',
+        String(option.minutes),
+        option.label,
+        option.minutes === activeTimeout,
+        undefined,
+        () => {
+          setScreensaverTimeoutMinutes(option.minutes);
+          onRefresh();
+        }
+      )
+    );
+  }
 
-  schedule.append(startField, endField);
-  wrap.append(hint, options, schedule);
+  wrap.append(hint, options, timeoutTitle, timeoutOptions);
   return wrap;
-}
-
-/**
- * @param {string} label
- * @param {string} id
- * @param {string} value
- * @param {() => void} onRefresh
- */
-function createNightModeTimeField(label, id, value, onRefresh) {
-  const field = document.createElement('label');
-  field.className = 'settings-night-time-field';
-  field.htmlFor = id;
-
-  const title = document.createElement('span');
-  title.className = 'settings-night-time-label';
-  title.textContent = label;
-
-  const input = document.createElement('input');
-  input.type = 'time';
-  input.id = id;
-  input.className = 'settings-text-input settings-time-input';
-  input.value = value;
-  input.addEventListener('change', () => {
-    const startInput = document.querySelector('#night-mode-start');
-    const endInput = document.querySelector('#night-mode-end');
-    if (!(startInput instanceof HTMLInputElement) || !(endInput instanceof HTMLInputElement)) return;
-    if (!setNightModeWindowFromInputs(startInput.value, endInput.value)) {
-      input.value = id === 'night-mode-start' ? getNightModeWindowInputValues().start : getNightModeWindowInputValues().end;
-      return;
-    }
-    onRefresh();
-  });
-
-  field.append(title, input);
-  return field;
 }
 
 /** @param {() => void} onRefresh */
@@ -499,7 +480,7 @@ function createAboutField() {
   appendAboutRow(list, 'Theme', themeLabel(), 'theme');
   appendAboutRow(list, 'Clock', clockFormatLabel(), 'clock');
   appendAboutRow(list, 'Home screen', homeScreenScaleLabel(), 'home-scale');
-  appendAboutRow(list, 'Night clock', nightModeSettingLabel(), 'night-mode');
+  appendAboutRow(list, 'Screensaver', screensaverSettingLabel(), 'screensaver');
   if (isOwnerUserMode()) {
     appendAboutRow(list, 'Weather', weatherLocationSummary(), 'weather-location');
   }
@@ -520,7 +501,7 @@ function createAboutField() {
 /** @param {HTMLDListElement} list
  * @param {string} term
  * @param {string} value
- * @param {'mode' | 'theme' | 'clock' | 'home-scale' | 'weather-location' | 'night-mode'} [valueKey]
+ * @param {'mode' | 'theme' | 'clock' | 'home-scale' | 'weather-location' | 'screensaver'} [valueKey]
  */
 function appendAboutRow(list, term, value, valueKey) {
   const dt = document.createElement('dt');
@@ -550,8 +531,8 @@ function refreshAboutValues(viewport) {
   if (clockValue) clockValue.textContent = clockFormatLabel();
   const homeScaleValue = viewport.querySelector('dd[data-settings-value="home-scale"]');
   if (homeScaleValue) homeScaleValue.textContent = homeScreenScaleLabel();
-  const nightModeValue = viewport.querySelector('dd[data-settings-value="night-mode"]');
-  if (nightModeValue) nightModeValue.textContent = nightModeSettingLabel();
+  const screensaverValue = viewport.querySelector('dd[data-settings-value="screensaver"]');
+  if (screensaverValue) screensaverValue.textContent = screensaverSettingLabel();
   const weatherAbout = viewport.querySelector('dd[data-settings-value="weather-location"]');
   if (weatherAbout) weatherAbout.textContent = weatherLocationSummary();
   const weatherCurrent = viewport.querySelector('p[data-settings-value="weather-location"]');
