@@ -21,8 +21,21 @@ export function catalogToImportFormat(catalog) {
     homeSummaryTitle: catalog.homeSummaryTitle,
     homeSummarySubtitle: catalog.homeSummarySubtitle ?? '',
     media,
-    categories: catalog.categories ?? []
+    categories: (catalog.categories ?? []).map((category) => ({
+      ...category,
+      topics: (category.topics ?? []).map(topicToImportFormat)
+    }))
   };
+}
+
+/**
+ * @param {Record<string, unknown>} topic
+ */
+function topicToImportFormat(topic) {
+  const clean = { ...topic };
+  delete clean.hasDraft;
+  delete clean.published;
+  return clean;
 }
 
 /**
@@ -40,6 +53,22 @@ export function uploadedMediaFromCatalog(catalog) {
     }
   }
   return uploaded;
+}
+
+/**
+ * @param {{ catalog?: Record<string, unknown> | null, uploadedMedia?: { id: string, alt: string }[] }} guide
+ */
+export function buildGuideExportDocument(guide) {
+  const catalog = guide.catalog ? catalogToImportFormat(guide.catalog) : null;
+  const uploadedMedia =
+    guide.uploadedMedia?.length ? guide.uploadedMedia : uploadedMediaFromCatalog(guide.catalog);
+
+  return {
+    formatVersion: SITE_BACKUP_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    catalog,
+    uploadedMedia
+  };
 }
 
 /**

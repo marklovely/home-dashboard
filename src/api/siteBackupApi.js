@@ -2,7 +2,7 @@ import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
 import { fetchHouseGuideCatalog, importHouseGuideCatalog } from './houseGuideApi.js';
 import { fetchHouseSettings, postSitterSecretsDisclosed } from './houseSettingsApi.js';
-import { buildSiteBackupDocument } from '../utils/backupJson.js';
+import { buildSiteBackupDocument, buildGuideExportDocument } from '../utils/backupJson.js';
 
 /**
  * @param {Response} response
@@ -94,6 +94,33 @@ async function restoreSiteBackupLegacy(backup, fetchImpl) {
   }
 
   return fetchSiteBackup({ fetchImpl });
+}
+
+/**
+ * @param {typeof fetch} fetchImpl
+ */
+async function fetchHouseGuideExportFromLegacyApis(fetchImpl) {
+  const catalogResult = await fetchHouseGuideCatalog({ fetchImpl, draft: true });
+  if (!catalogResult.ok) {
+    return {
+      ok: false,
+      status: catalogResult.status,
+      message: catalogResult.message || 'Could not export guide.',
+      data: null
+    };
+  }
+
+  const payload = catalogResult.data;
+  if (!payload?.seeded && !payload?.catalog?.categories?.length) {
+    return { ok: false, status: 404, message: 'House guide is not seeded yet.', data: null };
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    message: '',
+    data: buildGuideExportDocument({ catalog: payload?.catalog ?? null })
+  };
 }
 
 /**
@@ -219,6 +246,9 @@ export async function fetchHouseGuideExport({ fetchImpl = fetch } = {}) {
     );
 
     if (!response.ok) {
+      if (response.status === 404) {
+        return fetchHouseGuideExportFromLegacyApis(fetchImpl);
+      }
       return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
     }
 

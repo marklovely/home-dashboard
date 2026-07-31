@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { isTestHubEnvironment, resetHubEnvironmentForTests } from '../src/auth/hubEnvironment.js';
 import {
   buildSiteBackupDocument,
+  buildGuideExportDocument,
   catalogToImportFormat,
   normalizeBackupForRestore,
   uploadedMediaFromCatalog,
@@ -51,10 +52,18 @@ describe('backupJson', () => {
       media: {
         photo: { alt: 'Kitchen', file: 'photo.jpg', hasUpload: true }
       },
-      categories: []
+      categories: [
+        {
+          id: 'cat',
+          title: 'Cat',
+          topics: [{ id: 't1', title: 'Topic', hasDraft: true, published: false, blocks: [] }]
+        }
+      ]
     });
     expect(catalog.media.photo).toEqual({ alt: 'Kitchen', file: 'photo.jpg' });
     expect(catalog.media.photo).not.toHaveProperty('hasUpload');
+    expect(catalog.categories[0].topics[0]).not.toHaveProperty('hasDraft');
+    expect(catalog.categories[0].topics[0]).not.toHaveProperty('published');
   });
 
   it('collects uploaded media ids from assembled catalogs', () => {
@@ -85,5 +94,21 @@ describe('backupJson', () => {
     expect(payload.formatVersion).toBe(1);
     expect(payload.siteSettings.sitterSecretsDisclosed).toBe(true);
     expect(payload.guide.seeded).toBe(true);
+  });
+
+  it('builds a guide-only export document', () => {
+    const payload = buildGuideExportDocument({
+      catalog: {
+        version: 2,
+        homeSummaryTitle: 'Hi',
+        homeSummarySubtitle: '',
+        media: { a: { alt: 'A', hasUpload: true } },
+        categories: []
+      }
+    });
+    expect(payload.formatVersion).toBe(1);
+    expect(payload.catalog?.categories).toEqual([]);
+    expect(payload.uploadedMedia).toEqual([{ id: 'a', alt: 'A' }]);
+    expect(payload).not.toHaveProperty('siteSettings');
   });
 });
