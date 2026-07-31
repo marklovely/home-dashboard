@@ -120,7 +120,7 @@ function createBackupRestoreFields(context) {
 
   const exportButton = document.createElement('button');
   exportButton.type = 'button';
-  exportButton.className = 'button-secondary';
+  exportButton.className = 'settings-action-button';
   exportButton.textContent = 'Download site backup';
   exportButton.addEventListener('click', () => {
     exportButton.disabled = true;
@@ -135,13 +135,15 @@ function createBackupRestoreFields(context) {
     });
   });
 
-  const importLabel = document.createElement('label');
-  importLabel.className = 'settings-file-input';
-  const importText = document.createElement('span');
-  importText.textContent = 'Restore from backup file';
+  const importButton = document.createElement('button');
+  importButton.type = 'button';
+  importButton.className = 'settings-action-button settings-action-button--secondary';
+  importButton.textContent = 'Restore from backup file';
   const importInput = document.createElement('input');
   importInput.type = 'file';
   importInput.accept = 'application/json,.json';
+  importInput.hidden = true;
+  importButton.addEventListener('click', () => importInput.click());
   importInput.addEventListener('change', () => {
     const file = importInput.files?.[0];
     importInput.value = '';
@@ -176,9 +178,7 @@ function createBackupRestoreFields(context) {
       }
     })();
   });
-  importLabel.append(importText, importInput);
-
-  wrap.append(intro, exportButton, importLabel);
+  wrap.append(intro, exportButton, importButton, importInput);
   return wrap;
 }
 
@@ -194,17 +194,17 @@ function createHelpFields() {
   wrap.append(intro);
 
   if (isOwnerUserMode()) {
-    wrap.append(createOwnerHelpButton());
+    wrap.append(createOwnerHelpButton({ buttonClassName: 'settings-action-button' }));
     wrap.append(
       createSitterHelpButton({
         label: 'Guest tablet guide',
-        buttonClassName: 'button-secondary settings-help-guide-button'
+        buttonClassName: 'settings-action-button'
       })
     );
   } else {
     wrap.append(
       createSitterHelpButton({
-        buttonClassName: 'button-secondary settings-help-guide-button'
+        buttonClassName: 'settings-action-button'
       })
     );
   }
