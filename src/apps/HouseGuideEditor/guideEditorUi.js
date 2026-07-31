@@ -325,7 +325,7 @@ function createMediaSelect(label, value, options, onChange) {
  * @param {(items: string[]) => void} onChange
  * @param {string} [addLabel]
  */
-export function renderStringList(label, items, onChange, addLabel = 'Add item') {
+export function renderStringList(label, items, onChange, addLabel = 'Add item', itemPlaceholder) {
   const wrap = document.createElement('div');
   wrap.className = 'guide-editor-list';
   const heading = document.createElement('span');
@@ -336,27 +336,30 @@ export function renderStringList(label, items, onChange, addLabel = 'Add item') 
   const list = document.createElement('div');
   list.className = 'guide-editor-list-items';
 
+  let currentItems = items.length ? [...items] : [];
+
   function render() {
     list.replaceChildren();
-    items.forEach((item, index) => {
+    currentItems.forEach((item, index) => {
       const row = document.createElement('div');
       row.className = 'guide-editor-list-row';
       const input = document.createElement('input');
       input.type = 'text';
       input.value = item;
-      input.placeholder = `Step ${index + 1}`;
+      input.placeholder = itemPlaceholder ?? `Item ${index + 1}`;
       input.addEventListener('input', () => {
-        const next = [...items];
-        next[index] = input.value;
-        onChange(next);
+        currentItems = [...currentItems];
+        currentItems[index] = input.value;
+        onChange(currentItems);
       });
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'button-secondary guide-editor-list-remove';
       remove.textContent = 'Remove';
       remove.addEventListener('click', () => {
-        const next = items.filter((_, i) => i !== index);
-        onChange(next.length ? next : ['']);
+        currentItems = currentItems.filter((_, i) => i !== index);
+        onChange(currentItems);
+        render();
       });
       row.append(input, remove);
       list.append(row);
@@ -369,7 +372,11 @@ export function renderStringList(label, items, onChange, addLabel = 'Add item') 
   add.type = 'button';
   add.className = 'button-secondary guide-editor-list-add';
   add.textContent = addLabel;
-  add.addEventListener('click', () => onChange([...items, '']));
+  add.addEventListener('click', () => {
+    currentItems = [...currentItems, ''];
+    onChange(currentItems);
+    render();
+  });
 
   wrap.append(list, add);
   return wrap;
@@ -386,9 +393,11 @@ function renderKeyValueList(items, onChange, allowHref = false) {
   const list = document.createElement('div');
   list.className = 'guide-editor-list-items';
 
+  let currentItems = items.length ? [...items] : [];
+
   function render() {
     list.replaceChildren();
-    items.forEach((item, index) => {
+    currentItems.forEach((item, index) => {
       const row = document.createElement('div');
       row.className = allowHref ? 'guide-editor-contact-row' : 'guide-editor-kv-row';
       const label = document.createElement('input');
@@ -408,7 +417,7 @@ function renderKeyValueList(items, onChange, allowHref = false) {
         href.value = item.href ?? '';
       }
       const update = () => {
-        const next = [...items];
+        currentItems = [...currentItems];
         const rowValue = {
           label: label.value,
           value: value.value
@@ -417,8 +426,8 @@ function renderKeyValueList(items, onChange, allowHref = false) {
           const hrefValue = href.value.trim();
           if (hrefValue) rowValue.href = hrefValue;
         }
-        next[index] = rowValue;
-        onChange(next);
+        currentItems[index] = rowValue;
+        onChange(currentItems);
       };
       label.addEventListener('input', update);
       value.addEventListener('input', update);
@@ -428,7 +437,9 @@ function renderKeyValueList(items, onChange, allowHref = false) {
       remove.className = 'button-secondary guide-editor-list-remove';
       remove.textContent = 'Remove';
       remove.addEventListener('click', () => {
-        onChange(items.filter((_, i) => i !== index));
+        currentItems = currentItems.filter((_, i) => i !== index);
+        onChange(currentItems);
+        render();
       });
       if (href) {
         row.append(label, value, href, remove);
@@ -445,9 +456,14 @@ function renderKeyValueList(items, onChange, allowHref = false) {
   add.type = 'button';
   add.className = 'button-secondary guide-editor-list-add';
   add.textContent = 'Add row';
-  add.addEventListener('click', () =>
-    onChange([...items, allowHref ? { label: '', value: '', href: '' } : { label: '', value: '' }])
-  );
+  add.addEventListener('click', () => {
+    currentItems = [
+      ...currentItems,
+      allowHref ? { label: '', value: '', href: '' } : { label: '', value: '' }
+    ];
+    onChange(currentItems);
+    render();
+  });
 
   wrap.append(list, add);
   return wrap;
