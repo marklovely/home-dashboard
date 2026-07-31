@@ -284,15 +284,17 @@ export function cookieMaxAgeForClaims(claims) {
 
 /**
  * @param {{ mode: DeviceMode, ownerSessionExpiresAtMs: number | null }} session
+ * @param {Record<string, unknown>} [extras]
  */
-export function deviceSessionJsonBody(session) {
+export function deviceSessionJsonBody(session, extras = {}) {
   return {
     authenticated: true,
     mode: session.mode,
     ownerSessionExpiresAt:
       session.ownerSessionExpiresAtMs != null
         ? new Date(session.ownerSessionExpiresAtMs).toISOString()
-        : null
+        : null,
+    ...extras
   };
 }
 
@@ -331,10 +333,11 @@ export function withProxySetCookieField(body, cookieHeader) {
  *   clearCookie?: boolean
  * }} session
  * @param {number} [status]
+ * @param {Record<string, unknown>} [extras]
  */
-export function finalizeDeviceSessionJsonResponse(session, status = 200) {
+export function finalizeDeviceSessionJsonResponse(session, status = 200, extras = {}) {
   const cookieHeader = buildDeviceSessionCookieHeader(session);
-  const body = deviceSessionJsonBody(session);
+  const body = deviceSessionJsonBody(session, extras);
   const payload = withProxySetCookieField(body, cookieHeader);
   const headers = new Headers({ 'Cache-Control': 'no-store' });
   if (cookieHeader) {

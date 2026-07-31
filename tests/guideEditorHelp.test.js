@@ -24,11 +24,11 @@ describe('guideEditorHelpContent', () => {
 describe('openGuideEditorHelp', () => {
   it('opens the help overlay and closes on Escape', () => {
     openGuideEditorHelp({ initialSectionId: 'blocks' });
-    const overlay = document.querySelector('.guide-editor-help-overlay');
+    const overlay = document.querySelector('.help-guide-overlay');
     expect(overlay).toBeTruthy();
-    expect(document.querySelector('.guide-editor-help-content-title')?.textContent).toBe('Block types');
+    expect(document.querySelector('.help-guide-content-title')?.textContent).toBe('Block types');
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    expect(document.querySelector('.guide-editor-help-overlay')).toBeNull();
+    expect(document.querySelector('.help-guide-overlay')).toBeNull();
   });
 });

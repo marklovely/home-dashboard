@@ -1,0 +1,128 @@
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import {
+  appendPrimaryContactSectionIfNeeded,
+  appendWifiQrSectionIfNeeded,
+  resolveGuideTopicHeader,
+  shouldSkipStaleGuideBlock,
+  topicShouldIncludeWifiQr
+} from '../src/widgets/HouseGuide/guideTopicWifiQr.js';
+import {
+  preloadPrivateConfig,
+  resetPrivateConfigForTests
+} from '../src/services/privateConfigService.js';
+
+vi.mock('qrcode', () => ({
+  default: {
+    toString: vi.fn(async () => '<svg data-testid="wifi-qr-svg"></svg>')
+  }
+}));
+
+describe('guideTopicWifiQr', () => {
+  beforeEach(() => {
+    resetPrivateConfigForTests();
+    vi.unstubAllEnvs();
+  });
+
+  it('detects wifi topics that should include a QR section', () => {
+    expect(topicShouldIncludeWifiQr({ id: 'connecting', blocks: [] })).toBe(true);
+    expect(topicShouldIncludeWifiQr({ id: 'qr-code-placeholder', blocks: [] })).toBe(true);
+    expect(topicShouldIncludeWifiQr({ id: 'coverage', blocks: [] })).toBe(false);
+  });
+
+  it('skips stale coming soon QR placeholder blocks from older CMS content', () => {
+    expect(
+      shouldSkipStaleGuideBlock(
+        {
+          type: 'note',
+          heading: 'Coming soon',
+          content: 'A Wi-Fi QR code will appear here once secure house-sitter access is enabled.'
+        },
+        { id: 'qr-code-placeholder', blocks: [] }
+      )
+    ).toBe(true);
+  });
+
+  it('appends Mark as primary contact on the QR topic', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+    await preloadPrivateConfig(
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          contacts: {
+            mark: { phone: '07123456789', email: 'mark@example.com' }
+          }
+        })
+      })
+    );
+
+    const body = document.createElement('div');
+    appendPrimaryContactSectionIfNeeded(body, {
+      id: 'qr-code-placeholder',
+      title: 'QR Code',
+      subtitle: '',
+      summary: '',
+      blocks: []
+    });
+
+    const section = body.querySelector('.guide-section-primary-contact');
+    expect(section?.textContent).toMatch(/Mark/);
+    expect(section?.textContent).toMatch(/07123456789/);
+    expect(section?.textContent).toMatch(/mark@example.com/);
+  });
+
+  it('replaces stale QR topic header copy when Wi-Fi credentials are available', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+    await preloadPrivateConfig(
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          wifi: { ssid: 'GuestNet', password: 'secret-pass' }
+        })
+      })
+    );
+
+    expect(
+      resolveGuideTopicHeader({
+        id: 'qr-code-placeholder',
+        title: 'QR Code',
+        subtitle: 'Quick join (coming soon)',
+        summary: 'Scan to connect',
+        blocks: []
+      })
+    ).toEqual({
+      title: 'QR Code',
+      subtitle: 'Scan to join Wi‑Fi',
+      summary: 'Quick join'
+    });
+  });
+
+  it('appends a live QR section for connecting even without a wifiQr block', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+    await preloadPrivateConfig(
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          wifi: { ssid: 'GuestNet', password: 'secret-pass' }
+        })
+      })
+    );
+
+    const body = document.createElement('div');
+    appendWifiQrSectionIfNeeded(body, {
+      id: 'connecting',
+      title: 'Connecting',
+      subtitle: '',
+      summary: '',
+      blocks: [
+        {
+          type: 'note',
+          heading: 'Coming soon',
+          content: 'A Wi-Fi QR code will appear here once secure house-sitter access is enabled.'
+        }
+      ]
+    });
+
+    await Promise.resolve();
+    expect(body.querySelector('[data-testid="wifi-qr-svg"]')).toBeTruthy();
+  });
+});

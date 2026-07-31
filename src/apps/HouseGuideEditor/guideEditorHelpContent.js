@@ -1,6 +1,8 @@
-/** @typedef {{ type: 'p', text: string } | { type: 'h4', text: string } | { type: 'ul', items: string[] } | { type: 'table', headers: string[], rows: string[][] }} GuideEditorHelpBlock */
+/** @typedef {import('../../components/HelpGuide/helpGuide.js').HelpGuideBlock} GuideEditorHelpBlock */
 
-/** @typedef {{ id: string, title: string, keywords: string[], blocks: GuideEditorHelpBlock[] }} GuideEditorHelpSection */
+/** @typedef {import('../../components/HelpGuide/helpGuide.js').HelpGuideSection} GuideEditorHelpSection */
+
+import { getHelpGuideSection, searchHelpGuideSections } from '../../components/HelpGuide/helpGuide.js';
 
 /** @type {GuideEditorHelpSection[]} */
 export const GUIDE_EDITOR_HELP_SECTIONS = [
@@ -323,29 +325,9 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
  * @returns {GuideEditorHelpSection | undefined}
  */
 export function getGuideEditorHelpSection(sectionId) {
-  if (!sectionId) return GUIDE_EDITOR_HELP_SECTIONS[0];
-  return GUIDE_EDITOR_HELP_SECTIONS.find((section) => section.id === sectionId);
+  return getHelpGuideSection(GUIDE_EDITOR_HELP_SECTIONS, sectionId);
 }
 
-/**
- * @param {string} query
- */
 export function searchGuideEditorHelpSections(query) {
-  const trimmed = query.trim().toLowerCase();
-  if (!trimmed) return GUIDE_EDITOR_HELP_SECTIONS;
-  return GUIDE_EDITOR_HELP_SECTIONS.filter((section) => {
-    if (section.title.toLowerCase().includes(trimmed)) return true;
-    if (section.keywords.some((word) => word.includes(trimmed))) return true;
-    return section.blocks.some((block) => {
-      if (block.type === 'p' || block.type === 'h4') return block.text.toLowerCase().includes(trimmed);
-      if (block.type === 'ul') return block.items.some((item) => item.toLowerCase().includes(trimmed));
-      if (block.type === 'table') {
-        return (
-          block.headers.some((cell) => cell.toLowerCase().includes(trimmed)) ||
-          block.rows.some((row) => row.some((cell) => cell.toLowerCase().includes(trimmed)))
-        );
-      }
-      return false;
-    });
-  });
+  return searchHelpGuideSections(GUIDE_EDITOR_HELP_SECTIONS, query);
 }

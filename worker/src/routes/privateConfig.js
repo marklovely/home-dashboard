@@ -9,6 +9,7 @@ export function buildPrivateConfig(env) {
   const donnaPhone = env.PRIVATE_DONNA_PHONE?.trim();
   const donnaEmail = env.PRIVATE_DONNA_EMAIL?.trim();
   const homeAddress = env.PRIVATE_HOME_ADDRESS?.trim();
+  const lockboxCode = env.PRIVATE_LOCKBOX_CODE?.trim();
 
   const payload = {
     wifi: {},
@@ -16,7 +17,8 @@ export function buildPrivateConfig(env) {
       mark: { name: 'Mark Lovely' },
       donna: { name: 'Donna Powell' }
     },
-    home: {}
+    home: {},
+    lockbox: {}
   };
 
   if (wifiSsid) payload.wifi.ssid = wifiSsid;
@@ -26,6 +28,7 @@ export function buildPrivateConfig(env) {
   if (donnaPhone) payload.contacts.donna.phone = donnaPhone;
   if (donnaEmail) payload.contacts.donna.email = donnaEmail;
   if (homeAddress) payload.home.address = homeAddress;
+  if (lockboxCode) payload.lockbox.code = lockboxCode;
 
   return payload;
 }

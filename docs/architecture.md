@@ -233,7 +233,7 @@ Public guide copy lives in `guide-catalog.json`. Values that must not ship in pu
 
 When keys are missing, the UI shows safe placeholders (for example Wi-Fi details once secure house-sitter access is enabled) — never `undefined`, empty buttons, or broken QR codes.
 
-Production: Cloudflare Access and the Worker `GET /api/private-config` path (see [cloudflare-access.md](./cloudflare-access.md)) serve protected values at runtime, not from the static Pages bundle.
+Production: Cloudflare Access and the Worker `GET /api/private-config` path (see [cloudflare-access.md](./cloudflare-access.md)) serve protected values at runtime, not from the static Pages bundle. Owners turn on **Settings → Sitter is here** when a sitter is staying so those values appear in House Guide protected blocks on the sitter tablet.
 
 ### Content pipeline (PDF not served in-app)
 

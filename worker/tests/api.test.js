@@ -64,12 +64,17 @@ describe('buttons', () => {
 });
 
 describe('private-config', () => {
-  it('returns expected shape without lockbox', async () => {
-    const payload = buildPrivateConfig(env);
+  it('returns expected shape including lockbox when configured', async () => {
+    const payload = buildPrivateConfig({ ...env, PRIVATE_LOCKBOX_CODE: '1234' });
     expect(payload.wifi.ssid).toBe('Net');
     expect(payload.contacts.mark.phone).toBe('111');
     expect(payload.home.address).toBe('1 Road');
-    expect(payload).not.toHaveProperty('lockbox');
+    expect(payload.lockbox.code).toBe('1234');
+  });
+
+  it('omits lockbox when secret is not set', async () => {
+    const payload = buildPrivateConfig(env);
+    expect(payload.lockbox).toEqual({});
   });
 
   it('requires Access authentication', async () => {

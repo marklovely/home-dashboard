@@ -10,6 +10,21 @@ let sessionCache = null;
 /** @type {Promise<void> | null} */
 let inflight = null;
 
+/** @type {Set<() => void>} */
+const listeners = new Set();
+
+/** @param {() => void} listener */
+export function subscribeToPrivateConfig(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function notifyPrivateConfigListeners() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
 /**
  * @param {import('../api/privateConfigApi.js').WorkerPrivateConfig | null} payload
  */
@@ -18,6 +33,7 @@ function workerPayloadToNested(payload) {
   return {
     wifi: payload.wifi ?? {},
     contacts: payload.contacts ?? {},
+    lockbox: payload.lockbox ?? {},
     address: payload.home?.address ? { full: payload.home.address } : {}
   };
 }
@@ -79,6 +95,7 @@ export async function preloadPrivateConfig(fetchImpl) {
     }
     sessionCache = merged;
     inflight = null;
+    notifyPrivateConfigListeners();
   })();
 
   return inflight;
@@ -121,6 +138,16 @@ export function clearPrivateConfigSession() {
   status = 'idle';
   sessionCache = null;
   inflight = null;
+}
+
+/**
+ * Reload private config after sitter secret sharing changes.
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function refreshPrivateConfig(fetchImpl) {
+  clearPrivateConfigSession();
+  await preloadPrivateConfig(fetchImpl);
+  notifyPrivateConfigListeners();
 }
 
 /** Test helper */

@@ -27,7 +27,14 @@ import {
 } from '../../services/weatherLocationService.js';
 import { geocodeWeatherLocation } from '../../api/weatherApi.js';
 import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
+import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
+import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { showToast } from '../../js/modules/toast.js';
+import {
+  getSitterSecretsDisclosed,
+  setSitterSecretsDisclosed,
+  subscribeToSitterSecrets
+} from '../../services/sitterSecretsService.js';
 
 /** @returns {string} */
 function deviceModeLabel() {
@@ -61,6 +68,7 @@ function mountSettingsApp(viewport, context, onRefresh) {
 
   /** @type {HTMLElement[]} */
   const groups = [
+    createSettingsGroup('Help', createHelpFields()),
     createSettingsGroup('Appearance', createAppearanceFields(onRefresh)),
     createSettingsGroup('About', createAboutField())
   ];
@@ -86,6 +94,100 @@ function createSettingsGroup(legend, body) {
   heading.textContent = legend;
   fieldset.append(heading, body);
   return fieldset;
+}
+
+function createHelpFields() {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options settings-options--stacked';
+
+  const intro = document.createElement('p');
+  intro.className = 'settings-help subtle';
+  intro.textContent =
+    'Searchable guides for running the hub as an owner and for what house sitters see on the tablet.';
+
+  wrap.append(intro);
+
+  if (isOwnerUserMode()) {
+    wrap.append(createOwnerHelpButton());
+    wrap.append(
+      createSitterHelpButton({
+        label: 'Guest tablet guide',
+        buttonClassName: 'button-secondary settings-help-guide-button'
+      })
+    );
+  } else {
+    wrap.append(
+      createSitterHelpButton({
+        buttonClassName: 'button-secondary settings-help-guide-button'
+      })
+    );
+  }
+
+  return wrap;
+}
+
+/** @param {import('../../types/app.js').ShellContext} context */
+function createSitterSecretsToggle(context) {
+  const subsection = document.createElement('div');
+  subsection.className = 'settings-subsection';
+
+  const title = document.createElement('p');
+  title.className = 'settings-subsection-title';
+  title.textContent = 'Sitter is here';
+
+  const hint = document.createElement('p');
+  hint.className = 'settings-help subtle';
+  hint.textContent =
+    'When a house sitter is staying, turn this on so Wi‑Fi, the home address, contact details, and the key lockbox code appear in the House Guide. Turn it off when they leave. You can change this from any signed-in owner device.';
+
+  const label = document.createElement('label');
+  label.className = 'settings-option settings-option--toggle';
+
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.className = 'settings-toggle-input';
+  input.checked = getSitterSecretsDisclosed() === true;
+  input.disabled = getSitterSecretsDisclosed() === null;
+
+  const textWrap = document.createElement('span');
+  textWrap.className = 'settings-option-text';
+  const toggleTitle = document.createElement('span');
+  toggleTitle.textContent = 'Show home access details to sitters';
+  const toggleHint = document.createElement('small');
+  toggleHint.className = 'settings-option-hint';
+  toggleHint.textContent =
+    'Wi‑Fi, address, contacts, and lockbox code in House Guide protected blocks — not owner apps or calendar.';
+  textWrap.append(toggleTitle, toggleHint);
+  label.append(input, textWrap);
+
+  input.addEventListener('change', () => {
+    const next = input.checked;
+    input.disabled = true;
+    void setSitterSecretsDisclosed(next).then((ok) => {
+      input.disabled = false;
+      if (!ok) {
+        input.checked = !next;
+        showToast(context.toast, 'Could not update sitter access to home details');
+        return;
+      }
+      showToast(
+        context.toast,
+        next ? 'Home details shared with sitters' : 'Home details hidden from sitters'
+      );
+    });
+  });
+
+  subscribeToSitterSecrets(() => {
+    if (getSitterSecretsDisclosed() === null) {
+      input.disabled = true;
+      return;
+    }
+    input.disabled = false;
+    input.checked = getSitterSecretsDisclosed() === true;
+  });
+
+  subsection.append(title, hint, label);
+  return subsection;
 }
 
 /** @param {import('../../types/app.js').ShellContext} context @param {() => void} onRefresh */
@@ -122,7 +224,7 @@ function createHouseSitterModeFields(context, onRefresh) {
     });
   });
 
-  wrap.append(enableCopy, enableButton);
+  wrap.append(createSitterSecretsToggle(context), enableCopy, enableButton);
 
   if (canReturnToHouseSitterMode()) {
     const lockButton = document.createElement('button');

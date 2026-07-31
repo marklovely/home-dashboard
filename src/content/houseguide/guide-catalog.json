@@ -1676,6 +1676,11 @@
               "kind": "wifi",
               "label": "Password",
               "key": "wifi.password"
+            },
+            {
+              "type": "wifiQr",
+              "heading": "Quick join",
+              "caption": "Scan with your phone camera to join Wi‑Fi"
             }
           ],
           "actions": []
@@ -1716,14 +1721,14 @@
             {
               "type": "protected",
               "kind": "contact",
-              "label": "Mark — email",
-              "key": "contacts.mark.email"
+              "label": "Mark — phone",
+              "key": "contacts.mark.phone"
             },
             {
               "type": "protected",
               "kind": "contact",
-              "label": "Donna — phone",
-              "key": "contacts.donna.phone"
+              "label": "Mark — email",
+              "key": "contacts.mark.email"
             }
           ],
           "actions": []
@@ -1731,8 +1736,8 @@
         {
           "id": "qr-code-placeholder",
           "title": "QR Code",
-          "subtitle": "Quick join (coming soon)",
-          "summary": "Scan to connect",
+          "subtitle": "Scan to join Wi‑Fi",
+          "summary": "Quick join",
           "searchTerms": [
             "qr",
             "qr code",
@@ -1740,9 +1745,8 @@
           ],
           "blocks": [
             {
-              "type": "note",
-              "heading": "Coming soon",
-              "content": "A Wi-Fi QR code will appear here once secure house-sitter access is enabled."
+              "type": "wifiQr",
+              "caption": "Scan with your phone camera to join Wi‑Fi"
             }
           ],
           "actions": []

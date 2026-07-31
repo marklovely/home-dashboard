@@ -46,9 +46,14 @@ describe('house sitter home layout', () => {
     const infoCards = page?.querySelectorAll('.sitter-info-card') ?? [];
     expect(infoCards).toHaveLength(2);
 
-    const helpButton = page?.querySelector('.sitter-help-button');
-    expect(helpButton?.textContent).toMatch(/Open House Guide/);
-    helpButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const helpButtons = [...(page?.querySelectorAll('.sitter-help-button') ?? [])];
+    expect(helpButtons.map((button) => button.textContent?.trim())).toEqual([
+      'Tablet guide',
+      'Open House Guide'
+    ]);
+
+    const houseGuideButton = helpButtons.find((button) => /Open House Guide/.test(button.textContent ?? ''));
+    houseGuideButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(context.navigate).toHaveBeenCalledWith('house-guide');
   });
 });

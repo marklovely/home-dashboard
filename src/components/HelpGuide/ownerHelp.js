@@ -1,0 +1,32 @@
+import { createHelpGuideButton, openHelpGuide } from './helpGuide.js';
+import { OWNER_HELP_SECTIONS } from './ownerHelpContent.js';
+
+const OWNER_HELP_TITLE = 'Owner guide';
+const OWNER_HELP_DIALOG_ID = 'owner-help-title';
+
+/**
+ * @param {Object} [options]
+ * @param {string} [options.initialSectionId]
+ */
+export function openOwnerHelp(options = {}) {
+  openHelpGuide({
+    title: OWNER_HELP_TITLE,
+    sections: OWNER_HELP_SECTIONS,
+    initialSectionId: options.initialSectionId,
+    searchPlaceholder: 'House sitter mode, Guide Editor, manuals…',
+    dialogId: OWNER_HELP_DIALOG_ID
+  });
+}
+
+export function createOwnerHelpButton() {
+  return createHelpGuideButton({
+    label: 'Owner guide',
+    title: OWNER_HELP_TITLE,
+    sections: OWNER_HELP_SECTIONS,
+    searchPlaceholder: 'House sitter mode, Guide Editor, manuals…',
+    dialogId: OWNER_HELP_DIALOG_ID,
+    buttonClassName: 'button-secondary help-guide-trigger'
+  });
+}
+
+export { OWNER_HELP_SECTIONS } from './ownerHelpContent.js';
