@@ -40,11 +40,11 @@ import {
   createGuideEditorSectionHeading
 } from './guideEditorHelp.js';
 import {
+  createCommaSeparatedField,
   createEmptyGuideBlock,
   EDITABLE_BLOCK_TYPES,
   GUIDE_BLOCK_TYPE_LABELS,
-  renderGuideBlockEditor,
-  renderStringList
+  renderGuideBlockEditor
 } from './guideEditorUi.js';
 
 /**
@@ -600,36 +600,6 @@ function renderTopicEditor(topic, context, handlers) {
   if (!topic.searchTerms) topic.searchTerms = [];
   if (!topic.applianceManualTerms) topic.applianceManualTerms = [];
 
-  const metaAdvanced = document.createElement('div');
-  metaAdvanced.className = 'house-guide-editor-meta-advanced';
-  metaAdvanced.append(
-    renderStringList(
-      'Search keywords',
-      topic.searchTerms,
-      (terms) => {
-        topic.searchTerms = terms;
-        handlers.onTopicChange(topic);
-      },
-      'Add keyword',
-      'Keyword'
-    ),
-    renderStringList(
-      'Appliance manual links',
-      topic.applianceManualTerms ?? [],
-      (terms) => {
-        topic.applianceManualTerms = terms;
-        handlers.onTopicChange(topic);
-      },
-      'Add appliance name',
-      'Appliance name'
-    )
-  );
-  const manualHint = document.createElement('p');
-  manualHint.className = 'subtle house-guide-editor-manual-hint';
-  manualHint.textContent =
-    'Appliance names here link to matching manuals in House Guide (must match a published manual name).';
-  metaAdvanced.append(manualHint);
-
   if (!topic.actions) topic.actions = [];
 
   const actionsHeading = createGuideEditorSectionHeading('Quick actions', 'quick-actions');
@@ -751,8 +721,41 @@ function renderTopicEditor(topic, context, handlers) {
   });
   addRow.append(addSelect, addButton);
 
+  const discovery = document.createElement('div');
+  discovery.className = 'house-guide-editor-discovery';
+  discovery.append(
+    createGuideEditorSectionHeading('Search & links', 'discovery'),
+    createCommaSeparatedField(
+      'Search keywords',
+      topic.searchTerms,
+      (terms) => {
+        topic.searchTerms = terms;
+        handlers.onTopicChange(topic);
+      },
+      {
+        placeholder: 'e.g. netflix, wifi, kettle, bbq, charger',
+        hint: 'Comma-separated words sitters might search for. Title and body text are searched too.'
+      }
+    ),
+    createCommaSeparatedField(
+      'Appliance manual links',
+      topic.applianceManualTerms ?? [],
+      (terms) => {
+        topic.applianceManualTerms = terms;
+        handlers.onTopicChange(topic);
+      },
+      {
+        placeholder: 'e.g. Washing machine, Weber BBQ',
+        hint: 'Must match a published manual name exactly.'
+      }
+    )
+  );
+
   const footer = document.createElement('div');
   footer.className = 'house-guide-editor-footer';
+
+  const footerPrimary = document.createElement('div');
+  footerPrimary.className = 'house-guide-editor-footer-primary';
 
   const saveButton = document.createElement('button');
   saveButton.type = 'button';
@@ -803,7 +806,7 @@ function renderTopicEditor(topic, context, handlers) {
 
   const deleteButton = document.createElement('button');
   deleteButton.type = 'button';
-  deleteButton.className = 'button-secondary button-danger';
+  deleteButton.className = 'button-secondary button-danger house-guide-editor-footer-delete';
   deleteButton.textContent = 'Delete topic';
   deleteButton.addEventListener('click', () => {
     void showConfirmDialog({
@@ -826,18 +829,19 @@ function renderTopicEditor(topic, context, handlers) {
     });
   });
 
-  footer.append(saveButton, publishButton, deleteButton);
+  footerPrimary.append(saveButton, publishButton);
+  footer.append(footerPrimary, deleteButton);
   panel.append(
     back,
     heading,
     metaForm,
-    metaAdvanced,
     actionsHeading,
     actionsHint,
     actionsEditor,
     blocksHeading,
     blocksHost,
     addRow,
+    discovery,
     footer
   );
   return panel;

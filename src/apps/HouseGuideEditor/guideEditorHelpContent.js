@@ -187,7 +187,7 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Add keywords for synonyms and brand names: Netflix, kettle, Alexa, bbq, charger. Publish after adding keywords.'
+        text: 'At the bottom of each topic, add comma-separated keywords for synonyms and brand names: Netflix, kettle, Alexa, bbq, charger. Publish after editing.'
       }
     ]
   },
@@ -257,11 +257,11 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
     blocks: [
       {
         type: 'p',
-        text: 'The editor is plain text only — no bold buttons or WYSIWYG. HTML pasted into fields appears as literal characters, not formatting.'
+        text: 'Paragraph, tip, warning, note, location, expandable, and place description fields use a word-processor style editor — bold, lists, links, and emojis. What you see is what sitters get.'
       },
       {
         type: 'p',
-        text: 'Line breaks inside one paragraph field do not create separate lines on the sitter page. Use Numbered steps, separate blocks, or Details list instead.'
+        text: 'Press Enter for a new paragraph. Use the toolbar for formatting — no special codes or Markdown syntax.'
       },
       {
         type: 'h4',
@@ -269,15 +269,15 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Unicode emojis work if you type or paste them (🐕 ✅ ⚠️). There is no emoji picker yet — use your system emoji keyboard. Use sparingly; Warning blocks are clearer than emoji alone for safety.'
+        text: 'Tap 😀 in the toolbar to open the full emoji picker. Use sparingly — Warning blocks are clearer than emoji alone for safety.'
       },
       {
         type: 'h4',
-        text: 'Coming later'
+        text: 'Links'
       },
       {
         type: 'p',
-        text: 'Rich text may arrive as emoji picker first, then lightweight Markdown (bold, links) inside paragraph and callout fields — while keeping steps, photos, and warnings as structured blocks.'
+        text: 'Use the Link button for https://, tel:, or mailto: URLs. Paste from Word or email is fine — extra formatting is stripped automatically.'
       }
     ]
   },
