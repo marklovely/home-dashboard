@@ -33,8 +33,17 @@ import { showToast } from '../../js/modules/toast.js';
 import {
   getSitterSecretsDisclosed,
   setSitterSecretsDisclosed,
-  subscribeToSitterSecrets
+  subscribeToSitterSecrets,
+  syncSitterSecretsFromServer
 } from '../../services/sitterSecretsService.js';
+import { fetchSiteBackup, restoreSiteBackup } from '../../api/siteBackupApi.js';
+import {
+  downloadJsonFile,
+  normalizeBackupForRestore,
+  readJsonFile,
+  uploadedMediaRestoreHint
+} from '../../utils/backupJson.js';
+import { refreshGuideContent } from '../../services/guideContentService.js';
 
 /** @returns {string} */
 function deviceModeLabel() {
@@ -74,7 +83,8 @@ function mountSettingsApp(viewport, context, onRefresh) {
   ];
 
   if (isOwnerUserMode()) {
-    groups.splice(1, 0, createSettingsGroup('Weather location', createWeatherLocationField(context, onRefresh)));
+    groups.splice(1, 0, createSettingsGroup('Backup & restore', createBackupRestoreFields(context)));
+    groups.splice(2, 0, createSettingsGroup('Weather location', createWeatherLocationField(context, onRefresh)));
     groups.unshift(createSettingsGroup('House sitter mode', createHouseSitterModeFields(context, onRefresh)));
   }
 
@@ -96,6 +106,82 @@ function createSettingsGroup(legend, body) {
   return fieldset;
 }
 
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ */
+function createBackupRestoreFields(context) {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options settings-options--stacked';
+
+  const intro = document.createElement('p');
+  intro.className = 'subtle';
+  intro.textContent =
+    'Download a JSON backup of your House Guide and site settings (not Wi-Fi, PINs, or other Worker secrets). Restore replaces guide content on this hub only.';
+
+  const exportButton = document.createElement('button');
+  exportButton.type = 'button';
+  exportButton.className = 'settings-action-button';
+  exportButton.textContent = 'Download site backup';
+  exportButton.addEventListener('click', () => {
+    exportButton.disabled = true;
+    void fetchSiteBackup().then((result) => {
+      exportButton.disabled = false;
+      if (!result.ok || !result.data) {
+        showToast(context.toast, result.message || 'Could not export backup.');
+        return;
+      }
+      downloadJsonFile('lovely-home-hub-backup.json', result.data);
+      showToast(context.toast, 'Site backup downloaded.');
+    });
+  });
+
+  const importButton = document.createElement('button');
+  importButton.type = 'button';
+  importButton.className = 'settings-action-button settings-action-button--secondary';
+  importButton.textContent = 'Restore from backup file';
+  const importInput = document.createElement('input');
+  importInput.type = 'file';
+  importInput.accept = 'application/json,.json';
+  importInput.hidden = true;
+  importButton.addEventListener('click', () => importInput.click());
+  importInput.addEventListener('change', () => {
+    const file = importInput.files?.[0];
+    importInput.value = '';
+    if (!file) return;
+
+    void (async () => {
+      try {
+        const raw = await readJsonFile(file);
+        const backup = normalizeBackupForRestore(raw);
+        const uploaded = /** @type {{ id: string, alt: string }[]} */ (
+          backup.guide?.uploadedMedia ?? []
+        );
+        const confirmed = await showConfirmDialog({
+          title: 'Restore site backup?',
+          message: `This replaces House Guide content on this hub.${uploadedMediaRestoreHint(uploaded)}`,
+          confirmLabel: 'Restore',
+          danger: true
+        });
+        if (!confirmed) return;
+
+        const result = await restoreSiteBackup(backup);
+        if (!result.ok) {
+          showToast(context.toast, result.message || 'Restore failed.');
+          return;
+        }
+
+        await syncSitterSecretsFromServer();
+        await refreshGuideContent(fetch, { draft: true, force: true });
+        showToast(context.toast, 'Site backup restored.');
+      } catch (error) {
+        showToast(context.toast, error instanceof Error ? error.message : 'Invalid backup file.');
+      }
+    })();
+  });
+  wrap.append(intro, exportButton, importButton, importInput);
+  return wrap;
+}
+
 function createHelpFields() {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
@@ -108,17 +194,17 @@ function createHelpFields() {
   wrap.append(intro);
 
   if (isOwnerUserMode()) {
-    wrap.append(createOwnerHelpButton());
+    wrap.append(createOwnerHelpButton({ buttonClassName: 'settings-action-button' }));
     wrap.append(
       createSitterHelpButton({
         label: 'Guest tablet guide',
-        buttonClassName: 'button-secondary settings-help-guide-button'
+        buttonClassName: 'settings-action-button'
       })
     );
   } else {
     wrap.append(
       createSitterHelpButton({
-        buttonClassName: 'button-secondary settings-help-guide-button'
+        buttonClassName: 'settings-action-button'
       })
     );
   }

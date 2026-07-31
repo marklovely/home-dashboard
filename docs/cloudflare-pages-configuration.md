@@ -106,3 +106,9 @@ While logged in, open **`/api/access-probe`**. You want `canForwardJwt: true` an
 Deploy a commit **without** a root `wrangler.toml`, then retry Production deployment. Edit plaintext vars in the dashboard again.
 
 See also: [cloudflare-access-setup-guide.md](./cloudflare-access-setup-guide.md)
+
+## Test environment (isolated)
+
+Use a second Pages project **`home-dashboard-test`** with service binding **`lovely-home-hub-api-test`** and test-specific Access AUD values. Full checklist: [cloudflare-test-environment.md](./cloudflare-test-environment.md).
+
+Production Pages (`home-dashboard`) must keep **`HUB_API` → `lovely-home-hub-api`**. Never point production at the test Worker.

@@ -26,6 +26,13 @@ import {
   subscribeToGuideContent
 } from '../../services/guideContentService.js';
 import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
+import { fetchHouseGuideExport, restoreSiteBackup } from '../../api/siteBackupApi.js';
+import {
+  downloadJsonFile,
+  normalizeBackupForRestore,
+  readJsonFile,
+  uploadedMediaRestoreHint
+} from '../../utils/backupJson.js';
 import { listCatalogMediaIds } from '../../content/houseguide/guideMedia.js';
 import {
   normalizeGuideActionsForSave,
@@ -120,8 +127,22 @@ function renderEditorPage(page, context) {
     return;
   }
 
-  if (!isOwnerUserMode() || !canManageHouseGuideContent()) {
+  if (getDeviceSessionStatus() === 'error') {
+    page.append(
+      createStatus(
+        'Could not verify your session with the API. While logged in, check Network → /api/device-session (401/503 usually means test Worker secrets or Access AUD).'
+      )
+    );
+    return;
+  }
+
+  if (!isOwnerUserMode()) {
     page.append(createStatus('House Guide editing is available in Owner Mode only.'));
+    return;
+  }
+
+  if (!canManageHouseGuideContent()) {
+    page.append(createStatus('House Guide editing is unavailable right now.'));
     return;
   }
 
@@ -256,8 +277,71 @@ function createEditorShell(context) {
     renderMain();
   });
 
+  const exportButton = document.createElement('button');
+  exportButton.type = 'button';
+  exportButton.className = 'button-secondary';
+  exportButton.textContent = 'Export JSON';
+  exportButton.addEventListener('click', () => {
+    exportButton.disabled = true;
+    void fetchHouseGuideExport().then((result) => {
+      exportButton.disabled = false;
+      if (!result.ok || !result.data) {
+        showToast(context.toast, result.message || 'Could not export guide.');
+        return;
+      }
+      downloadJsonFile('house-guide-export.json', result.data);
+      showToast(context.toast, 'Guide export downloaded.');
+    });
+  });
+
+  const importLabel = document.createElement('label');
+  importLabel.className = 'house-guide-editor-file-input button-secondary';
+  importLabel.textContent = 'Import JSON';
+  const importInput = document.createElement('input');
+  importInput.type = 'file';
+  importInput.accept = 'application/json,.json';
+  importInput.hidden = true;
+  importLabel.append(importInput);
+  importInput.addEventListener('change', () => {
+    const file = importInput.files?.[0];
+    importInput.value = '';
+    if (!file) return;
+
+    void (async () => {
+      try {
+        const raw = await readJsonFile(file);
+        const backup = normalizeBackupForRestore(raw);
+        const uploaded = /** @type {{ id: string, alt: string }[]} */ (
+          backup.guide?.uploadedMedia ?? []
+        );
+        const confirmed = await showConfirmDialog({
+          title: 'Import House Guide?',
+          message: `This replaces all guide content on this hub.${uploadedMediaRestoreHint(uploaded)}`,
+          confirmLabel: 'Import',
+          danger: true
+        });
+        if (!confirmed) return;
+
+        const result = await restoreSiteBackup(backup);
+        if (!result.ok) {
+          showToast(context.toast, result.message || 'Import failed.');
+          return;
+        }
+        await refreshGuideContent(fetch, { draft: true, force: true });
+        showToast(context.toast, 'House Guide imported.');
+        view = 'categories';
+        activeCategoryId = null;
+        activeTopicId = null;
+        renderMain();
+        syncDraftBadge();
+      } catch (error) {
+        showToast(context.toast, error instanceof Error ? error.message : 'Invalid guide file.');
+      }
+    })();
+  });
+
   const helpButton = createGuideEditorHelpButton();
-  toolbar.append(helpButton, draftBadge, photosButton, publishAllButton);
+  toolbar.append(helpButton, draftBadge, exportButton, importLabel, photosButton, publishAllButton);
   header.append(title, intro, renderGuideIntroSettings(context), toolbar);
 
   const main = document.createElement('div');

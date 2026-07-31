@@ -45,6 +45,8 @@ Do **not** set `VITE_OWNER_PIN` on Pages. Owner PIN validation runs only on the 
 
 ## Deploy Worker
 
+**Production** (default environment):
+
 ```bash
 cd worker
 npx wrangler login
@@ -61,12 +63,16 @@ npx wrangler secret put OWNER_PIN
 npm run deploy
 ```
 
+**Test** (disposable stack, does not touch production data): [cloudflare-test-environment.md](./cloudflare-test-environment.md) — `npm run provision:test`, then `npm run secrets:test`, `npm run d1:migrate:test`, `npm run deploy:test`.
+
 After pulling CMS or house-settings changes, apply D1 migrations once:
 
 ```bash
 cd worker
-npx wrangler d1 migrations apply lovely-home-appliance-manuals --remote
+npm run d1:migrate:prod
 ```
+
+For the **isolated test stack** (separate D1/R2/Worker), see [cloudflare-test-environment.md](./cloudflare-test-environment.md) and use `npm run d1:migrate:test` / `npm run deploy:test`.
 
 `OWNER_PIN` is a **Worker secret**, not a Pages variable. Rate limiting for owner auth uses the `OWNER_AUTH_LIMITER` Durable Object binding defined in `worker/wrangler.toml` (applied on deploy via migrations).
 
