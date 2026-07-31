@@ -1775,6 +1775,20 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   line-height: 1.45;
 }
 .emergency-banner a { color: #ffb4bc; font-weight: 700; }
+.emergency-detail-panel {
+  width: min(680px, 100%);
+  max-height: min(88vh, 920px);
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+.emergency-detail-panel .guide-topic-page { padding: 0; }
+.emergency-detail-panel .guide-panel-close {
+  position: sticky;
+  bottom: 0;
+  margin-top: 4px;
+}
 .emergency-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
 .emergency-card {
   display: grid;
