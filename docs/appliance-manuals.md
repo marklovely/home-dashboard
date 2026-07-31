@@ -133,6 +133,14 @@ Unpublished manuals remain visible to owners only.
 - Switching to House Sitter Mode clears manual state, aborts in-flight requests, and closes owner dialogs.
 - PDF viewing uses a blob URL from an authenticated fetch, with iframe embedding and a new-tab fallback for Fully Kiosk Browser and other limited embedders.
 
+## House Guide integration
+
+Relevant help topics can link to published manuals. In `guide-catalog.json`, optional `applianceManualTerms` on a topic lists keywords matched against manual metadata (`applianceName`, `title`, manufacturer, and so on). When a sitter opens that topic, a **User guide** section appears with **View manual** if a published PDF matches.
+
+Topics with `applianceManualTerms` today include dishwasher, washing machine / tumble dryer, Nest heating, hot water machine, TV / Apple TV, and hairdryer. Add terms to other topics as you upload manuals — use the appliance name and any aliases sitters might search for.
+
+Matching uses **published manuals only** for house sitters. The link opens the same in-app PDF viewer used under **House Guide → Appliance Manuals**.
+
 ## Troubleshooting
 
 ### `404 Not Found` on `/api/appliance-manuals`

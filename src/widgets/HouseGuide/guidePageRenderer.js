@@ -5,6 +5,7 @@ import { createGuidePanelOverlay, runGuideAction } from './guideActions.js';
 import { ensureRoutineButtonStatus } from '../Alexa/routineButtonFeedback.js';
 import { renderGuideMediaFallback, wireGuideImageLightbox } from './guideImageUi.js';
 import { highlightGuideText } from './highlight.js';
+import { wireGuideTopicManualLinks } from './guideTopicManualLinks.js';
 
 /**
  * @param {string} url
@@ -263,9 +264,10 @@ function renderActionButton(action, context, openTopic, root) {
  * @param {import('../../types/app.js').ShellContext} context
  * @param {() => void} onBack
  * @param {(topicId: string) => void} openTopic
- * @returns {HTMLElement}
+ * @param {{ onViewManual?: (manual: import('../../api/applianceManualsApi.js').ApplianceManual) => void }} [options]
+ * @returns {HTMLElement & { cleanup?: () => void }}
  */
-export function renderGuideTopicPage(topic, context, onBack, openTopic) {
+export function renderGuideTopicPage(topic, context, onBack, openTopic, options = {}) {
   const article = document.createElement('article');
   article.className = 'guide-topic-page';
 
@@ -288,6 +290,14 @@ export function renderGuideTopicPage(topic, context, onBack, openTopic) {
   header.append(title, subtitle, summary);
 
   article.append(backButton, header);
+
+  const manualLinksHost = document.createElement('div');
+  manualLinksHost.className = 'guide-topic-manual-links-host';
+  article.append(manualLinksHost);
+
+  if (options.onViewManual) {
+    article.cleanup = wireGuideTopicManualLinks(manualLinksHost, topic, options.onViewManual);
+  }
 
   if (topic.actions?.length) {
     const actionsWrap = document.createElement('section');
