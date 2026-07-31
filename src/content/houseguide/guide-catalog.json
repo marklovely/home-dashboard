@@ -1947,6 +1947,25 @@
       ]
     },
     {
+      "id": "appliance-manuals",
+      "title": "Appliance Manuals",
+      "cardSubtitle": "Instructions and user guides for appliances around the house.",
+      "iconId": "book-open",
+      "accent": "#5b8def",
+      "searchTerms": [
+        "appliance",
+        "manual",
+        "user guide",
+        "pdf",
+        "instructions",
+        "oven",
+        "washer",
+        "dryer",
+        "dishwasher"
+      ],
+      "topics": []
+    },
+    {
       "id": "emergency",
       "title": "Emergency",
       "cardSubtitle": "Owners • Vet • Utilities",

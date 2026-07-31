@@ -12,6 +12,8 @@ import {
   renderGuideTopicList,
   renderGuideTopicPage
 } from './guidePageRenderer.js';
+import { APPLIANCE_MANUALS_CATEGORY_ID } from '../../services/applianceManualsConstants.js';
+import { renderApplianceManualsSitterView } from './applianceManualsSitterView.js';
 
 /**
  * @param {import('../../types/app.js').ShellContext} context
@@ -114,6 +116,12 @@ function createInteractiveHouseGuide(context) {
     exploreView.inert = true;
     topicHost.hidden = false;
     topicHost.inert = false;
+
+    if (categoryId === APPLIANCE_MANUALS_CATEGORY_ID) {
+      const panel = renderApplianceManualsSitterView(showExplore);
+      topicHost.replaceChildren(panel);
+      return;
+    }
 
     const { panel, backButton } = renderGuideTopicList(category, openTopic);
     backButton.addEventListener('click', showExplore);
