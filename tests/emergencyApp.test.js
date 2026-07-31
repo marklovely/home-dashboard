@@ -1,11 +1,30 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import '../src/apps/index.js';
 import { mountEmergencyApp } from '../src/apps/Emergency/EmergencyApp.js';
-import { consumePendingGuideTopic, setPendingGuideTopic } from '../src/services/guideNavigation.js';
+import {
+  preloadPrivateConfig,
+  resetPrivateConfigForTests
+} from '../src/services/privateConfigService.js';
 
 describe('Emergency app', () => {
-  it('opens owner contact details in House Guide instead of tel links', () => {
-    setPendingGuideTopic(null);
+  beforeEach(() => {
+    resetPrivateConfigForTests();
+    vi.unstubAllEnvs();
+  });
+
+  it('shows owner contact details in-page instead of tel links or House Guide', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        contacts: {
+          mark: { phone: '07123456789', email: 'mark@example.com' },
+          donna: { phone: '07987654321', email: 'donna@example.com' }
+        }
+      })
+    });
+    await preloadPrivateConfig(fetchImpl);
+
     const viewport = document.createElement('div');
     const navigate = vi.fn();
     const context = {
@@ -26,7 +45,10 @@ describe('Emergency app', () => {
     expect(markCard).toBeTruthy();
     markCard?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-    expect(navigate).toHaveBeenCalledWith('house-guide', { guideTopicId: 'contacting-mark-donna' });
-    expect(consumePendingGuideTopic()).toBe('contacting-mark-donna');
+    expect(navigate).not.toHaveBeenCalled();
+    const panel = viewport.querySelector('.guide-panel-overlay');
+    expect(panel).toBeTruthy();
+    expect(panel?.textContent).toMatch(/07123456789/);
+    expect(panel?.textContent).toMatch(/mark@example.com/);
   });
 });

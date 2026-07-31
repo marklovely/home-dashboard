@@ -177,7 +177,7 @@ export const SITTER_HELP_SECTIONS = [
       {
         type: 'ul',
         items: [
-          'Mark or Donna — contact details open in the House Guide (phone and email when hosts enable sharing).',
+          'Mark or Donna — tap contact details on this page for phone and email (when hosts enable sharing).',
           'Vet — Vets 4 Pets, Waterlooville (opens the guide page with details).',
           'Water stop tap — how to turn off the water supply.',
           'Fuse box — consumer unit in the garage.',
