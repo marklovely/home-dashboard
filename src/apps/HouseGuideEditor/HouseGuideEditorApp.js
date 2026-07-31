@@ -396,18 +396,25 @@ function renderTopicEditor(topic, context, handlers) {
   const metaAdvanced = document.createElement('div');
   metaAdvanced.className = 'house-guide-editor-meta-advanced';
   metaAdvanced.append(
-    renderStringList('Search keywords', topic.searchTerms, (terms) => {
-      topic.searchTerms = terms.filter((term) => term.trim());
-      handlers.onTopicChange(topic);
-    }, 'Add keyword'),
+    renderStringList(
+      'Search keywords',
+      topic.searchTerms,
+      (terms) => {
+        topic.searchTerms = terms;
+        handlers.onTopicChange(topic);
+      },
+      'Add keyword',
+      'Keyword'
+    ),
     renderStringList(
       'Appliance manual links',
       topic.applianceManualTerms ?? [],
       (terms) => {
-        topic.applianceManualTerms = terms.filter((term) => term.trim());
+        topic.applianceManualTerms = terms;
         handlers.onTopicChange(topic);
       },
-      'Add appliance name'
+      'Add appliance name',
+      'Appliance name'
     )
   );
   const manualHint = document.createElement('p');
@@ -628,8 +635,8 @@ function buildTopicPatch(topic) {
     subtitle: topic.subtitle,
     summary: topic.summary,
     audience: topic.audience === 'owner' ? 'owner' : 'guest',
-    searchTerms: topic.searchTerms ?? [],
-    applianceManualTerms: (topic.applianceManualTerms ?? []).filter(Boolean),
+    searchTerms: (topic.searchTerms ?? []).map((term) => term.trim()).filter(Boolean),
+    applianceManualTerms: (topic.applianceManualTerms ?? []).map((term) => term.trim()).filter(Boolean),
     blocks: topic.blocks
   };
 }
