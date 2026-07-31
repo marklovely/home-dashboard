@@ -75,7 +75,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Wi‑Fi passwords, the home address, and similar values live in Worker secrets — they never ship in the app bundle. When a sitter arrives, turn on Settings → Sitter is here → Show Wi‑Fi and home details to sitters. Protected blocks in the House Guide then fill in for sitters. Turn it off when they leave. You can flip this from your phone or laptop too — it applies to the whole home, not just one browser.'
+        text: 'Wi‑Fi passwords, the home address, contact numbers, and the key lockbox code live in Worker secrets — they never ship in the app bundle. When a sitter arrives, turn on Settings → Sitter is here → Show home access details to sitters. Protected blocks in the House Guide then fill in for sitters. Turn it off when they leave. You can flip this from your phone or laptop too — it applies to the whole home, not just one browser.'
       },
       {
         type: 'h4',

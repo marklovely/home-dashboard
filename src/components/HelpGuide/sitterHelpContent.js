@@ -80,7 +80,7 @@ export const SITTER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Some topics include Wi‑Fi, address, or contact details in highlighted boxes. Mark and Donna turn these on when you arrive — if a box says details are not available yet, ask them or check Emergency.'
+        text: 'Some topics include Wi‑Fi, address, lockbox code, or contact details in highlighted boxes. Mark and Donna turn these on when you arrive — if a box says details are not available yet, ask them or check Emergency.'
       },
       {
         type: 'h4',

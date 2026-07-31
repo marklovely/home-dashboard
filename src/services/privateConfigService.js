@@ -18,6 +18,7 @@ function workerPayloadToNested(payload) {
   return {
     wifi: payload.wifi ?? {},
     contacts: payload.contacts ?? {},
+    lockbox: payload.lockbox ?? {},
     address: payload.home?.address ? { full: payload.home.address } : {}
   };
 }

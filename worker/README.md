@@ -11,7 +11,7 @@ Proxies Alexa Virtual Buttons and serves private house configuration to the Home
 | GET | `/api/weather` | Home weather, forecasts, and advice (cached 15 minutes; optional `?lat=&lon=` override) |
 | GET | `/api/weather/geocode` | Postcode or place lookup for weather location (`?q=`) |
 | POST | `/api/auth/owner` | Validate owner PIN (JSON body `{ "pin": "...." }`; secret `OWNER_PIN`) |
-| GET | `/api/private-config` | Wi-Fi, contacts, home address (no lockbox in v1) |
+| GET | `/api/private-config` | Wi-Fi, contacts, home address, lockbox code (when sitter sharing enabled) |
 
 ## Local development
 

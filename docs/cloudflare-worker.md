@@ -56,6 +56,7 @@ npx wrangler secret put PRIVATE_MARK_EMAIL
 npx wrangler secret put PRIVATE_DONNA_PHONE
 npx wrangler secret put PRIVATE_DONNA_EMAIL
 npx wrangler secret put PRIVATE_HOME_ADDRESS
+npx wrangler secret put PRIVATE_LOCKBOX_CODE
 npx wrangler secret put OWNER_PIN
 npm run deploy
 ```

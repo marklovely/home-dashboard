@@ -7,6 +7,7 @@ PRIVATE_MARK_EMAIL=mark.example@example.com
 PRIVATE_DONNA_PHONE=00000000000
 PRIVATE_DONNA_EMAIL=donna.example@example.com
 PRIVATE_HOME_ADDRESS=Example Street, Example Town
+PRIVATE_LOCKBOX_CODE=0000
 ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
 # Cloudflare Access (required for protected API routes in dev/tests):
 CF_ACCESS_TEAM_DOMAIN=your-team-name
