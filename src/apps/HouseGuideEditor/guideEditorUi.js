@@ -4,6 +4,9 @@ import { buildHouseGuideMediaUrl } from '../../api/houseGuideApi.js';
 import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
 import { createGuideRichTextEditor } from './createGuideRichTextEditor.js';
 import { createGuideEmojiPicker } from './createGuideEmojiPicker.js';
+import { createEmptyGuideBlock } from './guideEditorBlockDefaults.js';
+
+export { createEmptyGuideBlock };
 
 /**
  * @typedef {Object} GuideBlockEditorOptions
@@ -43,36 +46,6 @@ export const EDITABLE_BLOCK_TYPES = [
   'place',
   'contact'
 ];
-
-/**
- * @param {GuideBlock['type']} type
- */
-export function createEmptyGuideBlock(type) {
-  switch (type) {
-    case 'text':
-      return { type: 'text', content: '' };
-    case 'steps':
-      return { type: 'steps', heading: '', steps: [''] };
-    case 'tip':
-    case 'warning':
-    case 'note':
-      return { type, content: '' };
-    case 'keyValues':
-      return { type: 'keyValues', heading: '', items: [{ label: '', value: '' }] };
-    case 'heroImage':
-      return { type: 'heroImage', mediaId: '', caption: '' };
-    case 'location':
-      return { type: 'location', heading: 'Location', content: '' };
-    case 'collapsible':
-      return { type: 'collapsible', heading: '', content: '' };
-    case 'place':
-      return { type: 'place', name: '', address: '', description: '', dogFriendly: false, website: '' };
-    case 'contact':
-      return { type: 'contact', heading: '', items: [{ label: '', value: '', href: '' }] };
-    default:
-      return { type: 'text', content: '' };
-  }
-}
 
 /**
  * @param {GuideBlock} block

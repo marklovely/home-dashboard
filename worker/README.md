@@ -48,12 +48,27 @@ Update `ALLOWED_ORIGINS` in `wrangler.toml` or as a secret/var when adding `dash
 
 ## Deploy
 
+**Production:**
+
 ```bash
 cd worker
 npm run deploy
+npm run d1:migrate:prod   # after schema changes
 ```
 
 Note the `*.workers.dev` URL and set `VITE_API_BASE_URL` in Cloudflare Pages project settings.
+
+**Test stack** (separate Worker, D1, R2 — safe for experiments):
+
+```bash
+cd worker
+npm run provision:test      # once: create test D1/R2, patch wrangler.toml
+npm run secrets:test        # checklist of wrangler secret put --env test
+npm run d1:migrate:test
+npm run deploy:test
+```
+
+See [docs/cloudflare-test-environment.md](../docs/cloudflare-test-environment.md).
 
 ## Button allowlist
 

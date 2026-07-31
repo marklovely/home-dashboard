@@ -34,6 +34,27 @@
   align-items: center;
   padding-top: 4px;
 }
+
+.house-guide-editor-file-input,
+.settings-file-input {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.house-guide-editor-file-input input[type='file'],
+.settings-file-input input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.settings-file-input {
+  width: fit-content;
+}
 .house-guide-editor-main {
   display: grid;
   gap: 16px;

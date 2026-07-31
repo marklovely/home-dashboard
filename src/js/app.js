@@ -19,6 +19,7 @@ import { registerOwnerLockNavigation } from '../auth/ownerLock.js';
 import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
 import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
+import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
 
 initTheme();
 initDisplayPreferences();
@@ -38,6 +39,7 @@ function setStartupLoading(active) {
 }
 
 async function initialiseDashboard() {
+  void initTestEnvironmentBanner();
   void preloadPrivateConfig();
   if (!isHouseSitterExperience()) {
     startMyDayCalendarService();
@@ -143,10 +145,22 @@ async function initialiseDashboard() {
 }
 
 setStartupLoading(true);
-void bootstrapDeviceSession().finally(() => {
-  setStartupLoading(false);
-  if (getDeviceSessionStatus() === 'error') {
-    console.warn('Device session could not be verified; staying on owner mode until Access succeeds.');
-  }
-  void initialiseDashboard();
-});
+void bootstrapDeviceSession()
+  .catch((error) => {
+    console.warn('Device session bootstrap failed:', error);
+  })
+  .finally(() => {
+    setStartupLoading(false);
+    if (getDeviceSessionStatus() === 'error') {
+      console.warn('Device session could not be verified; staying on owner mode until Access succeeds.');
+    }
+    try {
+      void initialiseDashboard();
+    } catch (error) {
+      console.error('Dashboard failed to start:', error);
+      if (loadingOverlay) {
+        loadingOverlay.textContent = 'Something went wrong loading the dashboard. Try a hard refresh.';
+        loadingOverlay.hidden = false;
+      }
+    }
+  });

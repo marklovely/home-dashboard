@@ -1,0 +1,16 @@
+# Copy to worker/.dev.vars for local wrangler dev with test-style dummy secrets.
+VIRTUAL_BUTTONS_ACCESS_CODE=test-vb-code-not-real
+PRIVATE_WIFI_SSID=TestNetwork
+PRIVATE_WIFI_PASSWORD=test-wifi-password
+PRIVATE_MARK_PHONE=00000000001
+PRIVATE_MARK_EMAIL=test-owner@example.com
+PRIVATE_DONNA_PHONE=00000000002
+PRIVATE_DONNA_EMAIL=test-secondary@example.com
+PRIVATE_HOME_ADDRESS=1 Test Street, Example City
+PRIVATE_LOCKBOX_CODE=9999
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
+CF_ACCESS_TEAM_DOMAIN=your-team-name
+CF_ACCESS_AUD=your-test-access-application-aud
+CF_ACCESS_JWT_TEST_SECRET=local-dev-only-test-signing-secret
+OWNER_EMAILS=test-owner@example.com
+# OWNER_PIN=0000

@@ -22,6 +22,8 @@ Cloud-hosted House Guide content for owners to edit in the dashboard without cha
 5. **Save draft** — stores unpublished changes.
 6. **Publish topic** or **Publish all changes** — makes updates visible to house sitters and guests.
 
+**Backup:** Settings → Backup & restore, or Guide Editor → Export JSON / Import JSON. See [site-backup.md](./site-backup.md).
+
 ### Topic visibility
 
 Each topic can be set to **House sitters and guests** (default) or **Owner notes only**. Owner-only topics are hidden from the published catalog that sitters receive; owners still see them in the editor and in draft catalog mode.
@@ -32,8 +34,8 @@ Sitters continue using **House Guide** as before; once cloud content is seeded a
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `GET` | `/api/house-guide/catalog` | Published catalog (sitter + owner) |
-| `GET` | `/api/house-guide/catalog?draft=1` | Draft blocks for owner editor |
+| `GET` | `/api/house-guide/catalog` | Published catalog (sitter + owner); owner adds `?draft=1` for draft blocks |
+| `GET` | `/api/house-guide/export` | Import-compatible guide JSON download (owner) |
 | `POST` | `/api/house-guide/import` | Import full catalog JSON (seed) |
 | `PATCH` | `/api/house-guide/topics/:id` | Save topic draft |
 | `POST` | `/api/house-guide/topics/:id/publish` | Publish one topic |

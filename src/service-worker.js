@@ -1,4 +1,4 @@
-const CACHE_NAME = 'home-dashboard-v1.0.9';
+const CACHE_NAME = 'home-dashboard-v1.0.10';
 
 /** @type {string[]} */
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
@@ -83,7 +83,8 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('/index.html') ||
     url.pathname.endsWith('/') ||
     url.pathname.endsWith('.js') ||
-    url.pathname.endsWith('.css')
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('/runtime-config.json')
   ) {
     event.respondWith(networkFirst(event.request));
     return;

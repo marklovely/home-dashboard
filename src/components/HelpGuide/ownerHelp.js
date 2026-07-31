@@ -18,14 +18,18 @@ export function openOwnerHelp(options = {}) {
   });
 }
 
-export function createOwnerHelpButton() {
+/**
+ * @param {Object} [options]
+ * @param {string} [options.buttonClassName]
+ */
+export function createOwnerHelpButton(options = {}) {
   return createHelpGuideButton({
     label: 'Owner guide',
     title: OWNER_HELP_TITLE,
     sections: OWNER_HELP_SECTIONS,
     searchPlaceholder: 'House sitter mode, Guide Editor, manuals…',
     dialogId: OWNER_HELP_DIALOG_ID,
-    buttonClassName: 'button-secondary help-guide-trigger'
+    buttonClassName: options.buttonClassName ?? 'button-secondary help-guide-trigger'
   });
 }
 
