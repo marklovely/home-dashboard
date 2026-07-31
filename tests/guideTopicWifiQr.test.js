@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
+  appendPrimaryContactSectionIfNeeded,
   appendWifiQrSectionIfNeeded,
   resolveGuideTopicHeader,
   shouldSkipStaleGuideBlock,
@@ -30,12 +31,43 @@ describe('guideTopicWifiQr', () => {
 
   it('skips stale coming soon QR placeholder blocks from older CMS content', () => {
     expect(
-      shouldSkipStaleGuideBlock({
-        type: 'note',
-        heading: 'Coming soon',
-        content: 'A Wi-Fi QR code will appear here once secure house-sitter access is enabled.'
-      })
+      shouldSkipStaleGuideBlock(
+        {
+          type: 'note',
+          heading: 'Coming soon',
+          content: 'A Wi-Fi QR code will appear here once secure house-sitter access is enabled.'
+        },
+        { id: 'qr-code-placeholder', blocks: [] }
+      )
     ).toBe(true);
+  });
+
+  it('appends Mark as primary contact on the QR topic', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+    await preloadPrivateConfig(
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          contacts: {
+            mark: { phone: '07123456789', email: 'mark@example.com' }
+          }
+        })
+      })
+    );
+
+    const body = document.createElement('div');
+    appendPrimaryContactSectionIfNeeded(body, {
+      id: 'qr-code-placeholder',
+      title: 'QR Code',
+      subtitle: '',
+      summary: '',
+      blocks: []
+    });
+
+    const section = body.querySelector('.guide-section-primary-contact');
+    expect(section?.textContent).toMatch(/Mark/);
+    expect(section?.textContent).toMatch(/07123456789/);
+    expect(section?.textContent).toMatch(/mark@example.com/);
   });
 
   it('replaces stale QR topic header copy when Wi-Fi credentials are available', async () => {
