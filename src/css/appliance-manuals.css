@@ -92,6 +92,15 @@
   gap: 12px;
   padding: 20px;
 }
+.appliance-manuals-form-success {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+}
+.appliance-manuals-form[hidden],
+.appliance-manuals-form-success[hidden] {
+  display: none;
+}
 .appliance-manuals-field {
   display: grid;
   gap: 6px;
