@@ -36,6 +36,7 @@ import {
   sanitizeStringArray
 } from '../houseGuide/sanitize.js';
 import { validateGuideImageBuffer, validateGuideImageUpload } from '../houseGuide/validateImage.js';
+import { handleGuideExportGet } from './siteBackup.js';
 
 /**
  * @param {Request} request
@@ -60,6 +61,12 @@ export async function handleHouseGuide(request, url, env, correlationId) {
     if (segments[0] === 'catalog') {
       if (segments.length !== 1) return jsonError(404, 'NOT_FOUND', 'Route not found.', { correlationId });
       if (request.method === 'GET') return getCatalog(request, env, url, correlationId);
+      return methodNotAllowed(correlationId);
+    }
+
+    if (segments[0] === 'export') {
+      if (segments.length !== 1) return jsonError(404, 'NOT_FOUND', 'Route not found.', { correlationId });
+      if (request.method === 'GET') return exportCatalog(request, env, correlationId);
       return methodNotAllowed(correlationId);
     }
 
@@ -182,6 +189,15 @@ async function getCatalog(request, env, url, correlationId) {
     },
     { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
   );
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} correlationId
+ */
+async function exportCatalog(request, env, correlationId) {
+  return handleGuideExportGet(request, env, correlationId);
 }
 
 /**

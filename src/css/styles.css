@@ -1,6 +1,25 @@
 @import url('./appliance-manuals.css');
 @import url('./house-guide-editor.css');
 
+.hub-environment-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+  padding: 8px 14px;
+  background: #b45309;
+  color: #fff;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.hub-has-environment-banner .hub-shell {
+  min-height: calc(100dvh - 36px);
+}
+
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
@@ -405,6 +424,22 @@ body.is-bins-route .app-viewport > .bins-app {
   color: var(--muted);
 }
 .settings-options { display: grid; gap: 10px; margin-top: 12px; }
+
+.settings-file-input {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.settings-file-input input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
 .settings-option {
   display: flex;
   align-items: center;
