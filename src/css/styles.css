@@ -1163,6 +1163,23 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .guide-markdown strong {
   color: var(--text);
 }
+.guide-markdown em {
+  font-style: italic;
+}
+.guide-section-body.guide-markdown,
+.guide-section-body .guide-markdown,
+.guide-collapsible-body .guide-markdown,
+.guide-place-description .guide-markdown,
+.guide-callout .guide-markdown {
+  margin: 0;
+}
+.guide-callout .guide-markdown p:first-child {
+  display: inline;
+  margin: 0;
+}
+.guide-callout .guide-markdown p {
+  margin: 0.35em 0 0;
+}
 .routine-button {
   --accent: #8b7cff;
   position: relative;
