@@ -79,6 +79,10 @@ export const SITTER_HELP_SECTIONS = [
         text: 'The House Guide is your main reference — organised by area (Kitchen, Scooter, and so on). Each topic answers one question with clear steps and pictures.'
       },
       {
+        type: 'p',
+        text: 'Some topics include Wi‑Fi, address, or contact details in highlighted boxes. Mark and Donna turn these on when you arrive — if a box says details are not available yet, ask them or check Emergency.'
+      },
+      {
         type: 'h4',
         text: 'Finding what you need'
       },

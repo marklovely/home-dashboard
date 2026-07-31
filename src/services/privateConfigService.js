@@ -123,6 +123,15 @@ export function clearPrivateConfigSession() {
   inflight = null;
 }
 
+/**
+ * Reload private config after sitter secret sharing changes.
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function refreshPrivateConfig(fetchImpl) {
+  clearPrivateConfigSession();
+  await preloadPrivateConfig(fetchImpl);
+}
+
 /** Test helper */
 export function resetPrivateConfigForTests() {
   status = 'idle';

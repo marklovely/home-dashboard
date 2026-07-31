@@ -60,6 +60,13 @@ npx wrangler secret put OWNER_PIN
 npm run deploy
 ```
 
+After pulling CMS or house-settings changes, apply D1 migrations once:
+
+```bash
+cd worker
+npx wrangler d1 migrations apply lovely-home-appliance-manuals --remote
+```
+
 `OWNER_PIN` is a **Worker secret**, not a Pages variable. Rate limiting for owner auth uses the `OWNER_AUTH_LIMITER` Durable Object binding defined in `worker/wrangler.toml` (applied on deploy via migrations).
 
 For local dev, add `OWNER_PIN` to `worker/.dev.vars` (gitignored) — never commit the real PIN.

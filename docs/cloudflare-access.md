@@ -83,7 +83,7 @@ See `worker/.dev.vars.example` for local development (`CF_ACCESS_JWT_TEST_SECRET
 |----------|------------|------|
 | `GET /api/health` | No | — |
 | `GET /api/session` | Yes | Any |
-| `GET /api/private-config` | Yes | Any |
+| `GET /api/private-config` | Yes | Owner device mode, or sitter device mode when **Sitter is here** is enabled in Settings |
 | `GET /api/weather` | Yes | Any |
 | `POST /api/auth/owner` | Yes | Owner email + PIN |
 | `GET /api/calendar` | Yes | Owner |
