@@ -474,17 +474,27 @@ async function reorderTopics(request, env, categoryId, correlationId) {
     return jsonError(400, 'BAD_REQUEST', 'Topic ids must use letters, numbers, and hyphens only.', { correlationId });
   }
 
-  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
-  const result = await reorderGuideTopicsInCategory(db, categoryId, topicIds);
-  if (!result) return jsonError(404, 'NOT_FOUND', 'Category not found.', { correlationId });
-  if (result.invalid) {
-    return jsonError(400, 'BAD_REQUEST', 'Topic order must include every topic in the category once.', {
-      correlationId
-    });
-  }
+  try {
+    const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
+    const result = await reorderGuideTopicsInCategory(db, categoryId, topicIds);
+    if (!result) return jsonError(404, 'NOT_FOUND', 'Category not found.', { correlationId });
+    if (result.invalid) {
+      return jsonError(400, 'BAD_REQUEST', 'Topic order must include every topic in the category once.', {
+        correlationId
+      });
+    }
 
-  const catalog = await loadAssembledGuideCatalog(db, { includeDraftBlocks: true });
-  return Response.json({ ok: true, catalog }, { status: 200, headers: { 'Content-Type': 'application/json' } });
+    return Response.json({ ok: true }, { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'guide_reorder_failed',
+        categoryId,
+        detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+      })
+    );
+    return jsonError(500, 'INTERNAL_ERROR', 'Could not reorder topics.', { correlationId });
+  }
 }
 
 /**
