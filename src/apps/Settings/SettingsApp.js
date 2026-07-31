@@ -138,7 +138,7 @@ function createSitterSecretsToggle(context) {
   const hint = document.createElement('p');
   hint.className = 'settings-help subtle';
   hint.textContent =
-    'When a house sitter is staying, turn this on so Wi‑Fi, the home address, and contact details appear in the House Guide. Turn it off when they leave. You can change this from any signed-in owner device.';
+    'When a house sitter is staying, turn this on so Wi‑Fi, the home address, contact details, and the key lockbox code appear in the House Guide. Turn it off when they leave. You can change this from any signed-in owner device.';
 
   const label = document.createElement('label');
   label.className = 'settings-option settings-option--toggle';
@@ -152,10 +152,11 @@ function createSitterSecretsToggle(context) {
   const textWrap = document.createElement('span');
   textWrap.className = 'settings-option-text';
   const toggleTitle = document.createElement('span');
-  toggleTitle.textContent = 'Show Wi‑Fi and home details to sitters';
+  toggleTitle.textContent = 'Show home access details to sitters';
   const toggleHint = document.createElement('small');
   toggleHint.className = 'settings-option-hint';
-  toggleHint.textContent = 'House Guide protected blocks only — not owner apps or calendar.';
+  toggleHint.textContent =
+    'Wi‑Fi, address, contacts, and lockbox code in House Guide protected blocks — not owner apps or calendar.';
   textWrap.append(toggleTitle, toggleHint);
   label.append(input, textWrap);
 

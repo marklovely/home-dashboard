@@ -7,6 +7,7 @@ import { withApiCredentials } from './accessFetch.js';
  * @property {{ ssid?: string, password?: string }} [wifi]
  * @property {Record<string, { name?: string, phone?: string, email?: string }>} [contacts]
  * @property {{ address?: string }} [home]
+ * @property {{ code?: string }} [lockbox]
  */
 
 /**

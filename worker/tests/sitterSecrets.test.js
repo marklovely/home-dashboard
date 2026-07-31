@@ -20,7 +20,8 @@ import { createInMemoryHouseSettingsDb } from './mocks/houseSettingsStorage.js';
 const privateEnv = {
   PRIVATE_WIFI_SSID: 'GuestNet',
   PRIVATE_WIFI_PASSWORD: 'guest-pass',
-  PRIVATE_HOME_ADDRESS: '1 Example Lane'
+  PRIVATE_HOME_ADDRESS: '1 Example Lane',
+  PRIVATE_LOCKBOX_CODE: '5678'
 };
 
 function createEnv(overrides = {}) {
@@ -142,6 +143,7 @@ describe('private-config with sitter secret sharing', () => {
     const body = await response.json();
     expect(body.wifi.password).toBe('guest-pass');
     expect(body.home.address).toBe('1 Example Lane');
+    expect(body.lockbox.code).toBe('5678');
   });
 
   it('still allows owner device mode without the toggle', async () => {
