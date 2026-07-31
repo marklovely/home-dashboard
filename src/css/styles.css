@@ -2221,7 +2221,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   .button-icon { width: 42px; height: 42px; margin-bottom: 12px; }
 }
 
-.night-mode-overlay {
+.screensaver-overlay {
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -2235,44 +2235,47 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
-.night-mode-overlay[hidden] {
+.screensaver-overlay[hidden] {
   display: none;
 }
-.night-mode-panel {
+.screensaver-panel {
   display: grid;
   gap: 10px;
   justify-items: center;
   text-align: center;
   pointer-events: none;
 }
-.night-mode-clock {
+.screensaver-clock {
   font-size: clamp(4rem, 18vw, 8rem);
   font-weight: 700;
   line-height: 0.95;
   letter-spacing: -0.06em;
   font-variant-numeric: tabular-nums;
 }
-.night-mode-date {
+.screensaver-date {
   margin: 0;
   font-size: clamp(1rem, 2.8vw, 1.35rem);
   color: color-mix(in srgb, var(--text) 28%, #000);
 }
-.night-mode-hint {
+.screensaver-hint {
   margin: 18px 0 0;
   font-size: 0.92rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--text) 22%, #000);
 }
-body.night-mode-active {
+body.screensaver-active {
   overflow: hidden;
 }
+.settings-subsection-title--nested {
+  margin-top: 8px;
+}
 @media (prefers-reduced-motion: no-preference) {
-  .night-mode-overlay:not([hidden]) {
-    animation: night-mode-fade-in 420ms ease;
+  .screensaver-overlay:not([hidden]) {
+    animation: screensaver-fade-in 420ms ease;
   }
 }
-@keyframes night-mode-fade-in {
+@keyframes screensaver-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
