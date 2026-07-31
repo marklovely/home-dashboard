@@ -374,7 +374,10 @@ function createField(label, value, onChange, options = {}) {
 
   wrap.append(span);
   if (options.emoji) {
-    wrap.append(createGuideEmojiPicker(() => input), input);
+    const row = document.createElement('div');
+    row.className = 'guide-editor-inline-field';
+    row.append(input, createGuideEmojiPicker(() => input));
+    wrap.append(row);
   } else {
     wrap.append(input);
   }

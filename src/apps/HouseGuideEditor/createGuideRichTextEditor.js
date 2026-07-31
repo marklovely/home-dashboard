@@ -53,10 +53,8 @@ export function createGuideRichTextEditor(label, value, onChange, options = {}) 
 
   void mountEditor({
     shell,
-    wrap,
     value,
     onChange,
-    options,
     setEditor: (instance) => {
       editor = instance;
     }
@@ -74,13 +72,11 @@ export function createGuideRichTextEditor(label, value, onChange, options = {}) 
 /**
  * @param {object} params
  * @param {HTMLElement} params.shell
- * @param {HTMLElement} params.wrap
  * @param {string} params.value
  * @param {(value: string) => void} params.onChange
- * @param {{ compact?: boolean }} params.options
  * @param {(editor: import('@tiptap/core').Editor) => void} params.setEditor
  */
-async function mountEditor({ shell, wrap, value, onChange, options, setEditor }) {
+async function mountEditor({ shell, value, onChange, setEditor }) {
   const [{ Editor }, { default: StarterKit }, { default: Link }] = await loadEditorModules();
 
   shell.replaceChildren();
@@ -92,12 +88,6 @@ async function mountEditor({ shell, wrap, value, onChange, options, setEditor })
 
   const editorHost = document.createElement('div');
   editorHost.className = 'guide-editor-tiptap';
-
-  const hint = document.createElement('p');
-  hint.className = 'subtle guide-editor-rich-hint';
-  hint.textContent = options.compact
-    ? 'Format this step like a word processor.'
-    : 'Format like a word processor — bold, lists, links, and emojis.';
 
   const editor = new Editor({
     element: editorHost,
@@ -125,11 +115,25 @@ async function mountEditor({ shell, wrap, value, onChange, options, setEditor })
 
   setEditor(editor);
 
-  toolbar.append(
+  const textGroup = document.createElement('div');
+  textGroup.className = 'guide-editor-tiptap-toolbar-group';
+  textGroup.append(
     createToolbarButton('Bold', 'B', () => editor.chain().focus().toggleBold().run()),
-    createToolbarButton('Italic', 'I', () => editor.chain().focus().toggleItalic().run()),
-    createToolbarButton('Bullet list', '• List', () => editor.chain().focus().toggleBulletList().run()),
-    createToolbarButton('Numbered list', '1. List', () => editor.chain().focus().toggleOrderedList().run()),
+    createToolbarButton('Italic', 'I', () => editor.chain().focus().toggleItalic().run())
+  );
+
+  const listGroup = document.createElement('div');
+  listGroup.className = 'guide-editor-tiptap-toolbar-group';
+  listGroup.append(
+    createToolbarButton('Bullet list', '•', () => editor.chain().focus().toggleBulletList().run()),
+    createToolbarButton('Numbered list', '1.', () => editor.chain().focus().toggleOrderedList().run())
+  );
+
+  toolbar.append(
+    textGroup,
+    createToolbarDivider(),
+    listGroup,
+    createToolbarDivider(),
     createToolbarButton('Link', 'Link', () => {
       const previous = editor.getAttributes('link').href ?? '';
       const url = window.prompt('Link URL (https://, tel:, or mailto:)', previous || 'https://');
@@ -146,9 +150,13 @@ async function mountEditor({ shell, wrap, value, onChange, options, setEditor })
   );
 
   shell.append(toolbar, editorHost);
-  if (!options.compact) {
-    wrap.append(hint);
-  }
+}
+
+function createToolbarDivider() {
+  const divider = document.createElement('span');
+  divider.className = 'guide-editor-tiptap-toolbar-divider';
+  divider.setAttribute('aria-hidden', 'true');
+  return divider;
 }
 
 /**
