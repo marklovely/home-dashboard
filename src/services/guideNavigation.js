@@ -23,5 +23,5 @@ export function consumePendingGuideTopic() {
  */
 export function openHouseGuideTopic(context, topicId) {
   setPendingGuideTopic(topicId);
-  context.navigate('house-guide');
+  context.navigate('house-guide', { guideTopicId: topicId });
 }
