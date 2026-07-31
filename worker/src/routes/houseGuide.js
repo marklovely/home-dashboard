@@ -2,14 +2,19 @@ import { jsonError, methodNotAllowed } from '../lib/errors.js';
 import { requireAnyDeviceSession, requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
 import { loadAssembledGuideCatalog, toPublicGuideMedia, toPublicGuideTopic } from '../houseGuide/assembleCatalog.js';
 import {
+  createGuideTopic,
   countDraftGuideTopics,
+  deleteGuideMedia,
+  deleteGuideTopic,
   getGuideMediaById,
   getGuideTopicById,
   importGuideCatalog,
   insertGuideMedia,
   isHouseGuideSeeded,
+  listGuideMedia,
   publishAllGuideTopics,
   publishGuideTopic,
+  reorderGuideTopicsInCategory,
   requireHouseGuideDb,
   updateGuideSettings,
   updateGuideTopic
@@ -18,11 +23,13 @@ import {
   generateGuideMediaObjectKey,
   getGuideMediaObject,
   putGuideMediaObject,
-  requireGuideMediaBucket
+  requireGuideMediaBucket,
+  safeDeleteGuideMediaObject
 } from '../houseGuide/r2Storage.js';
 import {
   sanitizeBlocks,
   sanitizeAudience,
+  sanitizeGuideActions,
   sanitizeMediaId,
   sanitizeOriginalFilename,
   sanitizeRequiredText,
@@ -74,10 +81,27 @@ export async function handleHouseGuide(request, url, env, correlationId) {
       return methodNotAllowed(correlationId);
     }
 
+    if (segments[0] === 'categories') {
+      const categoryId = segments[1];
+      const action = segments[2];
+      if (action === 'reorder-topics') {
+        if (segments.length !== 3 || !categoryId) {
+          return jsonError(404, 'NOT_FOUND', 'Route not found.', { correlationId });
+        }
+        if (request.method === 'POST') return reorderTopics(request, env, categoryId, correlationId);
+        return methodNotAllowed(correlationId);
+      }
+      return jsonError(404, 'NOT_FOUND', 'Route not found.', { correlationId });
+    }
+
     if (segments[0] === 'topics') {
       const topicId = segments[1];
       const action = segments[2];
-      if (!topicId) return jsonError(404, 'NOT_FOUND', 'Topic not found.', { correlationId });
+      if (!topicId) {
+        if (segments.length !== 1) return jsonError(404, 'NOT_FOUND', 'Route not found.', { correlationId });
+        if (request.method === 'POST') return createTopic(request, env, correlationId);
+        return methodNotAllowed(correlationId);
+      }
       if (action === 'publish') {
         if (segments.length !== 3) return jsonError(404, 'NOT_FOUND', 'Topic not found.', { correlationId });
         if (request.method === 'POST') return publishTopic(request, env, topicId, correlationId);
@@ -86,6 +110,7 @@ export async function handleHouseGuide(request, url, env, correlationId) {
       if (segments.length !== 2) return jsonError(404, 'NOT_FOUND', 'Topic not found.', { correlationId });
       if (request.method === 'GET') return getTopic(request, env, topicId, correlationId);
       if (request.method === 'PATCH') return patchTopic(request, env, topicId, correlationId);
+      if (request.method === 'DELETE') return removeTopic(request, env, topicId, correlationId);
       return methodNotAllowed(correlationId);
     }
 
@@ -99,7 +124,12 @@ export async function handleHouseGuide(request, url, env, correlationId) {
         if (request.method === 'GET') return streamMediaFile(request, env, mediaId, correlationId);
         return methodNotAllowed(correlationId);
       }
+      if (segments.length === 2 && mediaId) {
+        if (request.method === 'DELETE') return removeMedia(request, env, mediaId, correlationId);
+        return methodNotAllowed(correlationId);
+      }
       if (segments.length !== 1) return jsonError(404, 'NOT_FOUND', 'Route not found.', { correlationId });
+      if (request.method === 'GET') return listMedia(request, env, correlationId);
       if (request.method === 'POST') return uploadMedia(request, env, correlationId);
       return methodNotAllowed(correlationId);
     }
@@ -239,6 +269,11 @@ async function patchTopic(request, env, topicId, correlationId) {
     return jsonError(400, 'BAD_REQUEST', 'Audience must be guest or owner.', { correlationId });
   }
 
+  const actions = body.actions !== undefined ? sanitizeGuideActions(body.actions) : undefined;
+  if (body.actions !== undefined && actions === null) {
+    return jsonError(400, 'BAD_REQUEST', 'Actions must be a valid array.', { correlationId });
+  }
+
   const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
   const updated = await updateGuideTopic(db, topicId, {
     title,
@@ -248,7 +283,7 @@ async function patchTopic(request, env, topicId, correlationId) {
     applianceManualTerms:
       body.applianceManualTerms !== undefined ? sanitizeStringArray(body.applianceManualTerms) : undefined,
     blocks,
-    actions: body.actions !== undefined ? sanitizeBlocks(body.actions) : undefined,
+    actions,
     audience,
     updatedAt: new Date().toISOString()
   });
@@ -344,6 +379,164 @@ async function patchSettings(request, env, correlationId) {
  * @param {Record<string, unknown>} env
  * @param {string} correlationId
  */
+async function createTopic(request, env, correlationId) {
+  const ownerGate = await requireOwnerDeviceMode(request, env);
+  if (!ownerGate.ok) {
+    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError(400, 'BAD_REQUEST', 'Invalid JSON body.', { correlationId });
+  }
+
+  const id = sanitizeMediaId(String(body.id ?? ''));
+  const categoryId = sanitizeMediaId(String(body.categoryId ?? ''));
+  const title = sanitizeRequiredText(body.title, 120);
+  const subtitle = sanitizeRequiredText(body.subtitle, 160);
+  const summary = sanitizeRequiredText(body.summary, 240);
+  const audience = sanitizeAudience(body.audience ?? 'guest');
+
+  if (!id) return jsonError(400, 'BAD_REQUEST', 'Topic id is required (letters, numbers, hyphens).', { correlationId });
+  if (!categoryId) return jsonError(400, 'BAD_REQUEST', 'Category id is required.', { correlationId });
+  if (!title) return jsonError(400, 'BAD_REQUEST', 'Title is required.', { correlationId });
+  if (!subtitle) return jsonError(400, 'BAD_REQUEST', 'Subtitle is required.', { correlationId });
+  if (!summary) return jsonError(400, 'BAD_REQUEST', 'Summary is required.', { correlationId });
+  if (!audience) return jsonError(400, 'BAD_REQUEST', 'Audience must be guest or owner.', { correlationId });
+
+  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
+  const created = await createGuideTopic(db, {
+    id,
+    categoryId,
+    title,
+    subtitle,
+    summary,
+    audience,
+    searchTerms: sanitizeStringArray(body.searchTerms ?? []),
+    actions: sanitizeGuideActions(body.actions ?? []) ?? []
+  });
+
+  if (!created) return jsonError(404, 'NOT_FOUND', 'Category not found.', { correlationId });
+  if (created.conflict) return jsonError(409, 'CONFLICT', 'A topic with that id already exists.', { correlationId });
+
+  return Response.json(toPublicGuideTopic(created), {
+    status: 201,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} topicId
+ * @param {string} correlationId
+ */
+async function removeTopic(request, env, topicId, correlationId) {
+  const ownerGate = await requireOwnerDeviceMode(request, env);
+  if (!ownerGate.ok) {
+    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+  }
+
+  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
+  const removed = await deleteGuideTopic(db, topicId);
+  if (!removed) return jsonError(404, 'NOT_FOUND', 'Topic not found.', { correlationId });
+
+  return Response.json({ ok: true, id: topicId }, { status: 200, headers: { 'Content-Type': 'application/json' } });
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} categoryId
+ * @param {string} correlationId
+ */
+async function reorderTopics(request, env, categoryId, correlationId) {
+  const ownerGate = await requireOwnerDeviceMode(request, env);
+  if (!ownerGate.ok) {
+    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError(400, 'BAD_REQUEST', 'Invalid JSON body.', { correlationId });
+  }
+
+  if (!Array.isArray(body.topicIds) || body.topicIds.length === 0) {
+    return jsonError(400, 'BAD_REQUEST', 'Expected { topicIds: string[] }.', { correlationId });
+  }
+
+  const topicIds = body.topicIds.map((value) => sanitizeMediaId(String(value ?? ''))).filter(Boolean);
+  if (topicIds.length !== body.topicIds.length) {
+    return jsonError(400, 'BAD_REQUEST', 'Topic ids must use letters, numbers, and hyphens only.', { correlationId });
+  }
+
+  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
+  const result = await reorderGuideTopicsInCategory(db, categoryId, topicIds);
+  if (!result) return jsonError(404, 'NOT_FOUND', 'Category not found.', { correlationId });
+  if (result.invalid) {
+    return jsonError(400, 'BAD_REQUEST', 'Topic order must include every topic in the category once.', {
+      correlationId
+    });
+  }
+
+  const catalog = await loadAssembledGuideCatalog(db, { includeDraftBlocks: true });
+  return Response.json({ ok: true, catalog }, { status: 200, headers: { 'Content-Type': 'application/json' } });
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} correlationId
+ */
+async function listMedia(request, env, correlationId) {
+  const ownerGate = await requireOwnerDeviceMode(request, env);
+  if (!ownerGate.ok) {
+    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+  }
+
+  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
+  const rows = await listGuideMedia(db);
+  return Response.json(
+    { media: rows.map((row) => toPublicGuideMedia(row)) },
+    { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
+  );
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} mediaId
+ * @param {string} correlationId
+ */
+async function removeMedia(request, env, mediaId, correlationId) {
+  const ownerGate = await requireOwnerDeviceMode(request, env);
+  if (!ownerGate.ok) {
+    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+  }
+
+  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
+  const existing = await getGuideMediaById(db, mediaId);
+  if (!existing) return jsonError(404, 'NOT_FOUND', 'Media not found.', { correlationId });
+  if (!existing.object_key) {
+    return jsonError(400, 'BAD_REQUEST', 'Bundled guide photos cannot be deleted here.', { correlationId });
+  }
+
+  const bucket = requireGuideMediaBucket(env.GUIDE_MEDIA);
+  await safeDeleteGuideMediaObject(bucket, String(existing.object_key));
+  await deleteGuideMedia(db, mediaId);
+
+  return Response.json({ ok: true, id: mediaId }, { status: 200, headers: { 'Content-Type': 'application/json' } });
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} correlationId
+ */
 async function uploadMedia(request, env, correlationId) {
   const ownerGate = await requireOwnerDeviceMode(request, env);
   if (!ownerGate.ok) {
@@ -371,6 +564,9 @@ async function uploadMedia(request, env, correlationId) {
   await putGuideMediaObject(bucket, objectKey, buffer, bufferCheck.mimeType);
 
   const existing = await getGuideMediaById(db, id);
+  if (existing?.object_key) {
+    await safeDeleteGuideMediaObject(bucket, String(existing.object_key));
+  }
   if (existing) {
     await db
       .prepare(
