@@ -11,7 +11,6 @@ import {
   publishAllGuideTopics,
   publishGuideTopic,
   requireHouseGuideDb,
-  updateGuideMedia,
   updateGuideSettings,
   updateGuideTopic
 } from '../houseGuide/repository.js';
@@ -24,7 +23,6 @@ import {
 import {
   sanitizeBlocks,
   sanitizeMediaId,
-  sanitizeOptionalText,
   sanitizeOriginalFilename,
   sanitizeRequiredText,
   sanitizeStringArray
@@ -76,7 +74,8 @@ export async function handleHouseGuide(request, url, env, correlationId) {
     }
 
     if (segments[0] === 'topics') {
-      const [_, topicId, action] = segments;
+      const topicId = segments[1];
+      const action = segments[2];
       if (!topicId) return jsonError(404, 'NOT_FOUND', 'Topic not found.', { correlationId });
       if (action === 'publish') {
         if (segments.length !== 3) return jsonError(404, 'NOT_FOUND', 'Topic not found.', { correlationId });
@@ -90,7 +89,8 @@ export async function handleHouseGuide(request, url, env, correlationId) {
     }
 
     if (segments[0] === 'media') {
-      const [_, mediaId, action] = segments;
+      const mediaId = segments[1];
+      const action = segments[2];
       if (action === 'file') {
         if (segments.length !== 3 || !mediaId) {
           return jsonError(404, 'NOT_FOUND', 'Media not found.', { correlationId });
