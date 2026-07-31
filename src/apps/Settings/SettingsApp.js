@@ -18,6 +18,7 @@ import {
   setNightModeSetting,
   setNightModeWindowFromInputs
 } from '../../services/nightModeService.js';
+import { getActiveTheme, getEffectiveTheme, setActiveTheme } from '../../services/themeService.js';
 import {
   clearWeatherLocationOverride,
   getWeatherLocationOverride,
