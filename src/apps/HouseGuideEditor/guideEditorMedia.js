@@ -4,6 +4,7 @@ import {
   refreshGuideContent,
   removeHouseGuideMediaItem
 } from '../../services/guideContentService.js';
+import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
 import { showToast } from '../../js/modules/toast.js';
 
 /**
@@ -135,18 +136,24 @@ function renderMediaRow(item, context, onChange) {
     deleteButton.className = 'button-secondary button-danger';
     deleteButton.textContent = 'Delete';
     deleteButton.addEventListener('click', () => {
-      if (!window.confirm(`Delete photo "${item.id}"? Topics using it will show a broken image until you pick another.`)) {
-        return;
-      }
-      deleteButton.disabled = true;
-      void removeHouseGuideMediaItem(item.id).then((deleteResult) => {
-        deleteButton.disabled = false;
-        if (!deleteResult.ok) {
-          showToast(context.toast, deleteResult.message || 'Could not delete photo.');
-          return;
-        }
-        showToast(context.toast, 'Photo deleted.');
-        onChange();
+      void showConfirmDialog({
+        title: `Delete photo "${item.id}"?`,
+        message: 'Topics using this photo will show a broken image until you pick another.',
+        confirmLabel: 'Delete photo',
+        cancelLabel: 'Cancel',
+        danger: true
+      }).then((confirmed) => {
+        if (!confirmed) return;
+        deleteButton.disabled = true;
+        void removeHouseGuideMediaItem(item.id).then((deleteResult) => {
+          deleteButton.disabled = false;
+          if (!deleteResult.ok) {
+            showToast(context.toast, deleteResult.message || 'Could not delete photo.');
+            return;
+          }
+          showToast(context.toast, 'Photo deleted.');
+          onChange();
+        });
       });
     });
 

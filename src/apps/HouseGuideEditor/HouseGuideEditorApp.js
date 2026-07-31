@@ -1,6 +1,7 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { getDeviceSessionStatus } from '../../auth/deviceSessionStore.js';
 import { isOwnerUserMode } from '../../auth/userMode.js';
+import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
   getGuideCategory,
@@ -793,15 +794,23 @@ function renderTopicEditor(topic, context, handlers) {
   deleteButton.className = 'button-secondary button-danger';
   deleteButton.textContent = 'Delete topic';
   deleteButton.addEventListener('click', () => {
-    if (!window.confirm(`Delete "${topic.title}"? This cannot be undone.`)) return;
-    deleteButton.disabled = true;
-    void removeHouseGuideTopic(topic.id).then((result) => {
-      deleteButton.disabled = false;
-      if (!result.ok) {
-        showToast(context.toast, result.message || 'Could not delete topic.');
-        return;
-      }
-      handlers.onDeleted();
+    void showConfirmDialog({
+      title: `Delete "${topic.title}"?`,
+      message: 'This cannot be undone.',
+      confirmLabel: 'Delete topic',
+      cancelLabel: 'Cancel',
+      danger: true
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      deleteButton.disabled = true;
+      void removeHouseGuideTopic(topic.id).then((result) => {
+        deleteButton.disabled = false;
+        if (!result.ok) {
+          showToast(context.toast, result.message || 'Could not delete topic.');
+          return;
+        }
+        handlers.onDeleted();
+      });
     });
   });
 
