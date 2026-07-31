@@ -1,4 +1,5 @@
 import { getActiveGuideCatalog } from '../../../services/guideContentService.js';
+import { searchTopicsInCatalog } from './jsonGuideProvider.js';
 
 /** @type {Map<string, { topic: import('../../../types/guideContent.js').GuideTopic, category: import('../../../types/guideContent.js').GuideCategory }>} */
 let topicIndex = new Map();
@@ -97,4 +98,7 @@ export function invalidateApiGuideIndex() {
   topicIndex = new Map();
 }
 
-export { searchTopicsFromJson as searchTopicsFromApi } from './jsonGuideProvider.js';
+export function searchTopicsFromApi(query) {
+  rebuildIndex();
+  return searchTopicsInCatalog(getActiveGuideCatalog(), query);
+}
