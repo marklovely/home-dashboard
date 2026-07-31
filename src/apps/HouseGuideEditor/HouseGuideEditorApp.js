@@ -26,7 +26,11 @@ import {
 } from '../../services/guideContentService.js';
 import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
 import { listCatalogMediaIds } from '../../content/houseguide/guideMedia.js';
-import { renderGuideActionsEditor } from './guideEditorActions.js';
+import {
+  normalizeGuideActionsForSave,
+  renderGuideActionsEditor,
+  validateGuideActions
+} from './guideEditorActions.js';
 import { renderMediaLibrary } from './guideEditorMedia.js';
 import { moveItem, wirePointerReorder } from './guideEditorReorder.js';
 import {
@@ -742,6 +746,11 @@ function renderTopicEditor(topic, context, handlers) {
   saveButton.className = 'button-secondary';
   saveButton.textContent = 'Save draft';
   saveButton.addEventListener('click', () => {
+    const actionsError = validateGuideActions(topic.actions);
+    if (actionsError) {
+      showToast(context.toast, actionsError);
+      return;
+    }
     saveButton.disabled = true;
     void saveHouseGuideTopic(topic.id, buildTopicPatch(topic)).then((result) => {
       saveButton.disabled = false;
@@ -758,6 +767,11 @@ function renderTopicEditor(topic, context, handlers) {
   publishButton.className = 'button-primary';
   publishButton.textContent = 'Publish topic';
   publishButton.addEventListener('click', () => {
+    const actionsError = validateGuideActions(topic.actions);
+    if (actionsError) {
+      showToast(context.toast, actionsError);
+      return;
+    }
     publishButton.disabled = true;
     void saveHouseGuideTopic(topic.id, buildTopicPatch(topic))
       .then((saveResult) => {
@@ -870,7 +884,7 @@ function buildTopicPatch(topic) {
     audience: topic.audience === 'owner' ? 'owner' : 'guest',
     searchTerms: (topic.searchTerms ?? []).map((term) => term.trim()).filter(Boolean),
     applianceManualTerms: (topic.applianceManualTerms ?? []).map((term) => term.trim()).filter(Boolean),
-    actions: topic.actions ?? [],
+    actions: normalizeGuideActionsForSave(topic.actions),
     blocks: topic.blocks
   };
 }

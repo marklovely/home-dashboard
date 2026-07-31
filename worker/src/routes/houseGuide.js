@@ -271,7 +271,12 @@ async function patchTopic(request, env, topicId, correlationId) {
 
   const actions = body.actions !== undefined ? sanitizeGuideActions(body.actions) : undefined;
   if (body.actions !== undefined && actions === null) {
-    return jsonError(400, 'BAD_REQUEST', 'Actions must be a valid array.', { correlationId });
+    return jsonError(
+      400,
+      'BAD_REQUEST',
+      'One or more quick actions is incomplete or invalid. Check button labels, topic links, and Alexa button numbers.',
+      { correlationId }
+    );
   }
 
   const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);

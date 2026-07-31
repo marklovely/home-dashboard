@@ -1,5 +1,7 @@
 /** @typedef {import('../../types/guideContent.js').GuideAction} GuideAction */
 
+const TOPIC_ID_PATTERN = /^[a-z0-9-]{1,64}$/i;
+
 export const GUIDE_ACTION_TYPE_LABELS = {
   alexa: 'Alexa routine',
   navigate: 'Open another topic',
@@ -13,6 +15,101 @@ export function createEmptyGuideAction(type) {
   if (type === 'alexa') return { type: 'alexa', buttonId: 1, label: '' };
   if (type === 'navigate') return { type: 'navigate', topicId: '', label: '' };
   return { type: 'panel', label: '', heading: '', items: [{ label: '', value: '' }] };
+}
+
+/**
+ * @param {GuideAction[] | undefined} actions
+ * @returns {string | null}
+ */
+export function validateGuideActions(actions) {
+  if (!Array.isArray(actions)) return 'Quick actions must be a list.';
+  if (actions.length > 12) return 'A topic can have at most 12 quick actions.';
+
+  for (let index = 0; index < actions.length; index += 1) {
+    const action = actions[index];
+    const position = index + 1;
+
+    if (!action || typeof action !== 'object') {
+      return `Quick action ${position} is invalid.`;
+    }
+
+    if (action.type === 'alexa') {
+      const buttonId = Number(action.buttonId);
+      const label = String(action.label ?? '').trim();
+      if (!label) return `Quick action ${position}: enter a button label.`;
+      if (!Number.isInteger(buttonId) || buttonId < 1 || buttonId > 99) {
+        return `Quick action ${position}: Alexa button number must be between 1 and 99.`;
+      }
+      continue;
+    }
+
+    if (action.type === 'navigate') {
+      const label = String(action.label ?? '').trim();
+      const topicId = String(action.topicId ?? '').trim();
+      if (!label) return `Quick action ${position}: enter a button label.`;
+      if (!topicId) return `Quick action ${position}: choose a topic to open.`;
+      if (!TOPIC_ID_PATTERN.test(topicId)) {
+        return `Quick action ${position}: topic id "${topicId}" is invalid (letters, numbers, and hyphens only).`;
+      }
+      continue;
+    }
+
+    if (action.type === 'panel') {
+      const label = String(action.label ?? '').trim();
+      if (!label) return `Quick action ${position}: enter a button label.`;
+      const items = Array.isArray(action.items) ? action.items : [];
+      if (items.length > 24) return `Quick action ${position}: info panel can have at most 24 rows.`;
+      for (let rowIndex = 0; rowIndex < items.length; rowIndex += 1) {
+        const row = items[rowIndex];
+        const rowLabel = String(row?.label ?? '').trim();
+        const rowValue = String(row?.value ?? '').trim();
+        if (!rowLabel || !rowValue) {
+          return `Quick action ${position}, row ${rowIndex + 1}: enter both label and value, or remove the row.`;
+        }
+      }
+      continue;
+    }
+
+    return `Quick action ${position}: unknown action type "${String(action.type ?? '')}".`;
+  }
+
+  return null;
+}
+
+/**
+ * @param {GuideAction[] | undefined} actions
+ * @returns {GuideAction[]}
+ */
+export function normalizeGuideActionsForSave(actions) {
+  return (actions ?? []).map((action) => {
+    if (action.type === 'alexa') {
+      return {
+        type: 'alexa',
+        buttonId: Number(action.buttonId),
+        label: String(action.label ?? '').trim()
+      };
+    }
+    if (action.type === 'navigate') {
+      return {
+        type: 'navigate',
+        topicId: String(action.topicId ?? '').trim(),
+        label: String(action.label ?? '').trim()
+      };
+    }
+    const items = (action.items ?? [])
+      .map((row) => ({
+        label: String(row?.label ?? '').trim(),
+        value: String(row?.value ?? '').trim()
+      }))
+      .filter((row) => row.label && row.value);
+    const heading = String(action.heading ?? '').trim();
+    return {
+      type: 'panel',
+      label: String(action.label ?? '').trim(),
+      ...(heading ? { heading } : {}),
+      items
+    };
+  });
 }
 
 /**
@@ -51,7 +148,7 @@ export function renderGuideActionsEditor(actions, onChange, topicOptions) {
       body.append(
         createField('Button label', action.label ?? '', (value) => {
           const next = [...currentActions];
-          next[index] = { ...action, label: value };
+          next[index] = { ...next[index], label: value };
           currentActions = next;
           onChange(next);
         })
@@ -61,7 +158,7 @@ export function renderGuideActionsEditor(actions, onChange, topicOptions) {
         body.append(
           createField('Alexa button number', String(action.buttonId ?? ''), (value) => {
             const next = [...currentActions];
-            next[index] = { ...action, buttonId: Number(value) || 1 };
+            next[index] = { ...next[index], buttonId: Number(value) || 1 };
             currentActions = next;
             onChange(next);
           })
@@ -70,7 +167,7 @@ export function renderGuideActionsEditor(actions, onChange, topicOptions) {
         body.append(
           createTopicSelect('Topic to open', action.topicId ?? '', topicOptions, (value) => {
             const next = [...currentActions];
-            next[index] = { ...action, topicId: value };
+            next[index] = { ...next[index], topicId: value };
             currentActions = next;
             onChange(next);
           })
@@ -79,13 +176,13 @@ export function renderGuideActionsEditor(actions, onChange, topicOptions) {
         body.append(
           createField('Panel heading (optional)', action.heading ?? '', (value) => {
             const next = [...currentActions];
-            next[index] = { ...action, heading: value };
+            next[index] = { ...next[index], heading: value };
             currentActions = next;
             onChange(next);
           }),
           renderPanelItems(action.items ?? [], (items) => {
             const next = [...currentActions];
-            next[index] = { ...action, items };
+            next[index] = { ...next[index], items };
             currentActions = next;
             onChange(next);
           })

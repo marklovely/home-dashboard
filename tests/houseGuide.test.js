@@ -70,3 +70,24 @@ describe('guide service', () => {
     expect(guideHaystackMatches('po8 9zz', 'PO89ZZ')).toBe(true);
   });
 });
+
+describe('guide quick action validation', () => {
+  it('accepts bedtime plus navigate quick actions', async () => {
+    const { validateGuideActions, normalizeGuideActionsForSave } = await import(
+      '../src/apps/HouseGuideEditor/guideEditorActions.js'
+    );
+    const actions = [
+      { type: 'alexa', buttonId: 2, label: 'Alexa bedtime routine' },
+      { type: 'navigate', topicId: 'test-topic', label: 'Test' }
+    ];
+    expect(validateGuideActions(actions)).toBeNull();
+    expect(normalizeGuideActionsForSave(actions)).toEqual(actions);
+  });
+
+  it('reports missing topic links clearly', async () => {
+    const { validateGuideActions } = await import('../src/apps/HouseGuideEditor/guideEditorActions.js');
+    expect(
+      validateGuideActions([{ type: 'navigate', topicId: '', label: 'Test' }])
+    ).toContain('choose a topic to open');
+  });
+});
