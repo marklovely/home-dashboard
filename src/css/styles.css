@@ -1,4 +1,5 @@
 @import url('./appliance-manuals.css');
+@import url('./house-guide-editor.css');
 
 :root,
 [data-theme="dark"] {

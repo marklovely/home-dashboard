@@ -1,22 +1,28 @@
 import {
-  getCategoryFromJson,
-  getHomeSummaryFromJson,
-  getTopicContextFromJson,
-  getTopicFromJson,
-  listCategoriesFromJson,
-  listTopicCardsFromJson,
-  searchTopicsFromJson
-} from '../content/houseguide/providers/jsonGuideProvider.js';
+  getCategoryFromApi,
+  getHomeSummaryFromApi,
+  getTopicContextFromApi,
+  getTopicFromApi,
+  invalidateApiGuideIndex,
+  listCategoriesFromApi,
+  listTopicCardsFromApi,
+  searchTopicsFromApi
+} from '../content/houseguide/providers/apiGuideProvider.js';
+import { subscribeToGuideContent } from './guideContentService.js';
+
+subscribeToGuideContent(() => {
+  invalidateApiGuideIndex();
+});
 
 /**
- * Guide service — UI talks only to this layer, not to raw JSON or PDF.
+ * Guide service — UI talks only to this layer, not to raw JSON or storage.
  */
 
 /**
  * @returns {import('../types/guideContent.js').GuideCategory[]}
  */
 export function listGuideCategories() {
-  return listCategoriesFromJson();
+  return listCategoriesFromApi();
 }
 
 /**
@@ -24,14 +30,14 @@ export function listGuideCategories() {
  * @returns {import('../types/guideContent.js').GuideCategory | undefined}
  */
 export function getGuideCategory(categoryId) {
-  return getCategoryFromJson(categoryId);
+  return getCategoryFromApi(categoryId);
 }
 
 /**
  * @returns {import('../types/guideContent.js').GuideTopicSearchHit[]}
  */
 export function listGuideTopics() {
-  return listTopicCardsFromJson();
+  return listTopicCardsFromApi();
 }
 
 /**
@@ -39,7 +45,7 @@ export function listGuideTopics() {
  * @returns {import('../types/guideContent.js').GuideTopic | undefined}
  */
 export function getGuideTopic(topicId) {
-  return getTopicFromJson(topicId);
+  return getTopicFromApi(topicId);
 }
 
 /** @deprecated Use getGuideTopic */
@@ -51,14 +57,14 @@ export function getGuidePage(topicId) {
  * @param {string} topicId
  */
 export function getGuideTopicContext(topicId) {
-  return getTopicContextFromJson(topicId);
+  return getTopicContextFromApi(topicId);
 }
 
 /**
  * @returns {{ title: string, subtitle: string }}
  */
 export function getGuideHomeSummary() {
-  return getHomeSummaryFromJson();
+  return getHomeSummaryFromApi();
 }
 
 /**
@@ -66,7 +72,7 @@ export function getGuideHomeSummary() {
  * @returns {import('../types/guideContent.js').GuideTopicSearchHit[]}
  */
 export function searchGuideTopics(query) {
-  return searchTopicsFromJson(query);
+  return searchTopicsFromApi(query);
 }
 
 /**
