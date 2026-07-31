@@ -35,6 +35,11 @@ import {
 import { renderMediaLibrary } from './guideEditorMedia.js';
 import { moveItem, wirePointerReorder } from './guideEditorReorder.js';
 import {
+  createGuideEditorContextHelpLink,
+  createGuideEditorHelpButton,
+  createGuideEditorSectionHeading
+} from './guideEditorHelp.js';
+import {
   createEmptyGuideBlock,
   EDITABLE_BLOCK_TYPES,
   GUIDE_BLOCK_TYPE_LABELS,
@@ -179,7 +184,17 @@ function createOnboardingPanel(page, context) {
     });
   });
 
-  panel.append(title, copy, button);
+  panel.append(title, copy, button, createGuideEditorHelpButton());
+
+  const helpHint = document.createElement('p');
+  helpHint.className = 'subtle house-guide-editor-help-hint';
+  helpHint.append(
+    'New to the editor? Open ',
+    createGuideEditorContextHelpLink('checklist', 'Writing guide'),
+    ' for how topics, blocks, and publishing work.'
+  );
+  panel.append(helpHint);
+
   return panel;
 }
 
@@ -241,7 +256,8 @@ function createEditorShell(context) {
     renderMain();
   });
 
-  toolbar.append(draftBadge, photosButton, publishAllButton);
+  const helpButton = createGuideEditorHelpButton();
+  toolbar.append(helpButton, draftBadge, photosButton, publishAllButton);
   header.append(title, intro, renderGuideIntroSettings(context), toolbar);
 
   const main = document.createElement('div');
@@ -616,9 +632,7 @@ function renderTopicEditor(topic, context, handlers) {
 
   if (!topic.actions) topic.actions = [];
 
-  const actionsHeading = document.createElement('h4');
-  actionsHeading.className = 'house-guide-editor-blocks-title';
-  actionsHeading.textContent = 'Quick actions';
+  const actionsHeading = createGuideEditorSectionHeading('Quick actions', 'quick-actions');
   const actionsHint = document.createElement('p');
   actionsHint.className = 'subtle house-guide-editor-manual-hint';
   actionsHint.textContent = 'Optional buttons at the bottom of a guide page (Alexa routines, links to other topics).';
@@ -631,9 +645,7 @@ function renderTopicEditor(topic, context, handlers) {
     listGuideTopics().map((hit) => ({ id: hit.id, title: hit.title }))
   );
 
-  const blocksHeading = document.createElement('h4');
-  blocksHeading.className = 'house-guide-editor-blocks-title';
-  blocksHeading.textContent = 'Content blocks';
+  const blocksHeading = createGuideEditorSectionHeading('Content blocks', 'blocks');
 
   const blocksHost = document.createElement('div');
   blocksHost.className = 'house-guide-editor-blocks';

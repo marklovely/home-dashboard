@@ -456,6 +456,180 @@
 .guide-editor-checkbox input {
   width: auto;
 }
+
+.guide-editor-section-heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.guide-editor-section-heading-row .house-guide-editor-blocks-title {
+  margin: 0;
+}
+.guide-editor-inline-help {
+  border: 0;
+  background: transparent;
+  color: var(--accent, #8b7cff);
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 4px 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.guide-editor-inline-help:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.house-guide-editor-help-hint {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.guide-editor-help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgba(4, 6, 10, 0.86);
+}
+.guide-editor-help-panel {
+  display: grid;
+  gap: 14px;
+  width: min(960px, 100%);
+  max-height: min(88vh, 920px);
+  padding: 18px 20px 20px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface, #10131a);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+.guide-editor-help-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.guide-editor-help-title {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+}
+.guide-editor-help-search-row {
+  display: grid;
+  gap: 6px;
+}
+.guide-editor-help-search-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.guide-editor-help-search {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+}
+.guide-editor-help-layout {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  gap: 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+.guide-editor-help-nav {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  max-height: min(58vh, 640px);
+  overflow: auto;
+  padding-right: 4px;
+}
+.guide-editor-help-nav-button {
+  text-align: left;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+.guide-editor-help-nav-button.is-active {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+.guide-editor-help-nav-button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.guide-editor-help-content {
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+.guide-editor-help-content-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+}
+.guide-editor-help-section-body {
+  display: grid;
+  gap: 12px;
+}
+.guide-editor-help-paragraph,
+.guide-editor-help-subheading {
+  margin: 0;
+}
+.guide-editor-help-subheading {
+  font-size: 1rem;
+  margin-top: 4px;
+}
+.guide-editor-help-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 8px;
+  line-height: 1.45;
+}
+.guide-editor-help-table-wrap {
+  overflow-x: auto;
+}
+.guide-editor-help-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.guide-editor-help-table th,
+.guide-editor-help-table td {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.guide-editor-help-table th {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 720px) {
+  .guide-editor-help-layout {
+    grid-template-columns: 1fr;
+  }
+  .guide-editor-help-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: none;
+  }
+}
+
 @media (max-width: 620px) {
   .house-guide-editor-header,
   .house-guide-editor-picker,

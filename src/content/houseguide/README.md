@@ -1,8 +1,8 @@
 # House Guide — editing content
 
-**Edit this file:** [`guide-catalog.json`](./guide-catalog.json)
+**Primary workflow (owners):** use the **Guide Editor** app on the dashboard — see [`docs/house-guide-owner-guide.md`](../../../docs/house-guide-owner-guide.md).
 
-That JSON is what the dashboard loads. No Python, no build step for text changes.
+**Legacy / fallback:** [`guide-catalog.json`](./guide-catalog.json) in git (used when cloud is not seeded or offline fallback).
 
 ## Quick workflow
 
