@@ -64,11 +64,14 @@
   border-radius: 14px;
   transition: box-shadow 0.15s ease, opacity 0.15s ease;
 }
-.house-guide-editor-topic-row-wrap.is-dragging {
-  opacity: 0.72;
+.house-guide-editor-topic-list.is-reordering .house-guide-editor-topic-row-wrap {
+  transition: transform 0.15s ease;
 }
-.house-guide-editor-topic-row-wrap.is-drop-target {
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, #f4b64f 70%, transparent);
+.house-guide-editor-topic-row-wrap.is-dragging {
+  opacity: 1;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
 }
 .guide-editor-drag-handle {
   align-self: stretch;

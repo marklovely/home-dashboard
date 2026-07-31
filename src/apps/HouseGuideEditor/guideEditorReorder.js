@@ -5,37 +5,68 @@
  * @param {(fromIndex: number, toIndex: number) => void} onReorder
  */
 export function wirePointerReorder(container, onReorder) {
-  /** @type {{ row: HTMLElement, fromIndex: number, pointerId: number } | null} */
+  /** @type {{ row: HTMLElement, originIndex: number, pointerId: number } | null} */
   let active = null;
 
   function rows() {
     return [...container.querySelectorAll('[data-reorder-row]')];
   }
 
-  function indexAt(clientY) {
-    const list = rows();
-    if (!list.length) return 0;
-    for (let i = 0; i < list.length; i++) {
-      const rect = list[i].getBoundingClientRect();
-      if (clientY < rect.top + rect.height / 2) return i;
-    }
-    return list.length - 1;
+  /**
+   * @param {number} y
+   * @returns {HTMLElement | null}
+   */
+  function getDragAfterElement(y) {
+    const draggableElements = [...container.querySelectorAll('[data-reorder-row]:not(.is-dragging)')];
+    return draggableElements.reduce(
+      (closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        }
+        return closest;
+      },
+      { offset: Number.NEGATIVE_INFINITY, element: /** @type {HTMLElement | null} */ (null) }
+    ).element;
   }
 
-  function clearTargets() {
-    for (const row of rows()) {
-      row.classList.remove('is-drop-target');
+  function insertAtIndex(row, index) {
+    const siblings = rows().filter((item) => item !== row);
+    const before = siblings[index] ?? null;
+    if (before) {
+      container.insertBefore(row, before);
+      return;
     }
+    container.appendChild(row);
+  }
+
+  function moveRowToPointer(y) {
+    if (!active) return;
+    const afterElement = getDragAfterElement(y);
+    if (afterElement == null) {
+      container.appendChild(active.row);
+      return;
+    }
+    container.insertBefore(active.row, afterElement);
   }
 
   function finishDrag(pointerId, commit) {
     if (!active || active.pointerId !== pointerId) return;
-    const fromIndex = active.fromIndex;
-    const toIndex = commit ? indexAt(active.lastY ?? 0) : fromIndex;
-    active.row.classList.remove('is-dragging');
-    clearTargets();
+    const { row, originIndex } = active;
+    row.classList.remove('is-dragging');
+    container.classList.remove('is-reordering');
+    const finalIndex = rows().indexOf(row);
     active = null;
-    if (commit && fromIndex !== toIndex) onReorder(fromIndex, toIndex);
+
+    if (!commit) {
+      insertAtIndex(row, originIndex);
+      return;
+    }
+
+    if (originIndex !== finalIndex) {
+      onReorder(originIndex, finalIndex);
+    }
   }
 
   container.addEventListener('pointerdown', (event) => {
@@ -47,20 +78,17 @@ export function wirePointerReorder(container, onReorder) {
     event.preventDefault();
     handle.setPointerCapture(event.pointerId);
 
-    const fromIndex = rows().indexOf(row);
-    if (fromIndex < 0) return;
+    const originIndex = rows().indexOf(row);
+    if (originIndex < 0) return;
 
-    active = { row, fromIndex, pointerId: event.pointerId, lastY: event.clientY };
+    active = { row, originIndex, pointerId: event.pointerId };
     row.classList.add('is-dragging');
+    container.classList.add('is-reordering');
   });
 
   container.addEventListener('pointermove', (event) => {
     if (!active || event.pointerId !== active.pointerId) return;
-    active.lastY = event.clientY;
-    clearTargets();
-    const target = indexAt(event.clientY);
-    const list = rows();
-    if (list[target]) list[target].classList.add('is-drop-target');
+    moveRowToPointer(event.clientY);
   });
 
   container.addEventListener('pointerup', (event) => {
