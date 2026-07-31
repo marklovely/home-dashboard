@@ -23,3 +23,15 @@ new_sqlite_classes = ["OwnerAuthLimiter"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["ControlActionLimiter"]
+
+# Private PDF storage for appliance user guides (never public).
+[[r2_buckets]]
+binding = "APPLIANCE_GUIDES"
+bucket_name = "lovely-home-appliance-guides"
+
+# Manual metadata (titles, publish state, opaque R2 keys).
+[[d1_databases]]
+binding = "APPLIANCE_MANUALS_DB"
+database_name = "lovely-home-appliance-manuals"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

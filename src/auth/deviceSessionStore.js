@@ -9,6 +9,7 @@ import { ownerAuthProvider } from './OwnerAuthProvider.js';
 import { completeOwnerUnlock, lockToHouseSitterMode } from './ownerLock.js';
 import { clearMyDayCalendarState } from '../services/myDayCalendarService.js';
 import { clearPrivateConfigSession } from '../services/privateConfigService.js';
+import { clearApplianceManualsState } from '../services/applianceManualsService.js';
 import { clearOwnerAccessToken } from './ownerAccessToken.js';
 
 /** @typedef {'loading' | 'ready' | 'error'} DeviceSessionStatus */
@@ -74,6 +75,7 @@ async function verifyPersistedSitterSession(fetchImpl) {
 export function clearOwnerOnlyClientData() {
   clearMyDayCalendarState();
   clearPrivateConfigSession();
+  clearApplianceManualsState();
   clearOwnerAccessToken();
 }
 

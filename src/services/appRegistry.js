@@ -7,6 +7,7 @@ const APP_DISPLAY_ORDER = [
   'emergency',
   'plex',
   'my-day',
+  'appliance-manuals',
   'settings'
 ];
 
