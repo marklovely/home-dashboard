@@ -17,6 +17,7 @@ import {
   publishAllHouseGuideChanges,
   publishHouseGuideTopicContent,
   refreshGuideContent,
+  registerGuideMediaUpload,
   removeHouseGuideTopic,
   reorderHouseGuideTopicsInCategory,
   saveHouseGuideSettings,
@@ -323,9 +324,11 @@ function createEditorShell(context) {
   }
 
   const unsubscribe = subscribeToGuideContent(() => {
-    if (activeTopicId) {
-      const refreshed = getGuideTopic(activeTopicId);
-      if (refreshed) draftTopic = structuredClone(refreshed);
+    if (view !== 'topic' || !draftTopic) {
+      if (activeTopicId) {
+        const refreshed = getGuideTopic(activeTopicId);
+        if (refreshed) draftTopic = structuredClone(refreshed);
+      }
     }
     renderMain();
   });
@@ -354,11 +357,19 @@ function renderCategoryPicker(onOpen) {
     if (category.id === 'appliance-manuals') continue;
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'guide-category-card';
+    button.className = 'guide-category-card house-guide-editor-category-card';
     button.style.setProperty('--accent', category.accent);
-    button.innerHTML = `<span class="guide-category-title">${category.title}</span><span class="guide-category-subtitle">${category.topics.length} topics</span>`;
+    button.innerHTML = `<span class="guide-category-title">${category.title}</span><span class="guide-category-subtitle">${category.topics.length} topic${category.topics.length === 1 ? '' : 's'}</span>`;
     button.addEventListener('click', () => onOpen(category.id));
     grid.append(button);
+  }
+
+  if (!grid.children.length) {
+    const empty = document.createElement('p');
+    empty.className = 'house-guide-editor-empty subtle';
+    empty.textContent = 'No guide areas found. Use “Copy current guide to cloud” on first setup.';
+    panel.append(heading, empty);
+    return panel;
   }
 
   panel.append(heading, grid);
@@ -626,7 +637,8 @@ function renderTopicEditor(topic, context, handlers) {
     const mediaIds = listCatalogMediaIds();
     const blockEditorOptions = {
       onUploadImage: (formData) => uploadHouseGuideMedia(formData),
-      onMediaRefresh: () => refreshGuideContent(fetch, { draft: true, force: true }),
+      onRegisterMedia: (mediaId, alt, fileName) => registerGuideMediaUpload(mediaId, alt, fileName),
+      onMediaRefresh: () => refreshGuideContent(fetch, { draft: true, force: true, silent: true }),
       onUploadStatus: (message) => showToast(context.toast, message),
       onAfterUpload: () => renderBlocks()
     };

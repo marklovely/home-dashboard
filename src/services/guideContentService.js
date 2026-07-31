@@ -268,6 +268,23 @@ export async function reorderHouseGuideTopicsInCategory(categoryId, topicIds, fe
 }
 
 /**
+ * @param {string} mediaId
+ * @param {string} alt
+ * @param {string} [fileName]
+ */
+export function registerGuideMediaUpload(mediaId, alt, fileName) {
+  if (!state.catalog) return;
+  const media = { ...state.catalog.media };
+  media[mediaId] = {
+    file: fileName ?? `${mediaId}.jpg`,
+    alt,
+    hasUpload: true
+  };
+  state = { ...state, catalog: { ...state.catalog, media } };
+  notify();
+}
+
+/**
  * @param {typeof fetch} [fetchImpl]
  */
 export async function loadHouseGuideMediaLibrary(fetchImpl = fetch) {

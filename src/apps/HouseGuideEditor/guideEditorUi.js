@@ -1,8 +1,12 @@
 /** @typedef {import('../../types/guideContent.js').GuideBlock} GuideBlock */
 
+import { buildHouseGuideMediaUrl } from '../../api/houseGuideApi.js';
+import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
+
 /**
  * @typedef {Object} GuideBlockEditorOptions
  * @property {(formData: FormData) => Promise<{ ok: boolean, message?: string, data?: { id: string } }>} [onUploadImage]
+ * @property {(mediaId: string, alt: string, fileName?: string) => void} [onRegisterMedia]
  * @property {() => Promise<void>} [onMediaRefresh]
  * @property {(message: string) => void} [onUploadStatus]
  * @property {() => void} [onAfterUpload]
@@ -108,11 +112,7 @@ export function renderGuideBlockEditor(block, onChange, mediaIds, options = {}) 
       renderKeyValueList(block.items ?? [], (items) => onChange({ ...block, items }), block.type === 'contact')
     );
   } else if (block.type === 'heroImage') {
-    body.append(
-      createMediaSelect('Photo', block.mediaId ?? '', mediaIds, (value) => onChange({ ...block, mediaId: value })),
-      createImageUploadPanel(block.mediaId ?? '', (mediaId) => onChange({ ...block, mediaId }), options),
-      createField('Caption (optional)', block.caption ?? '', (value) => onChange({ ...block, caption: value }))
-    );
+    body.append(renderHeroImageBlock(block, onChange, mediaIds, options));
   } else if (block.type === 'location') {
     body.append(
       createField('Heading', block.heading ?? 'Location', (value) => onChange({ ...block, heading: value })),
@@ -146,32 +146,104 @@ export function renderGuideBlockEditor(block, onChange, mediaIds, options = {}) 
 }
 
 /**
- * @param {string} currentMediaId
- * @param {(mediaId: string) => void} onSelect
+ * @param {GuideBlock & { type: 'heroImage' }} block
+ * @param {(block: GuideBlock) => void} onChange
+ * @param {string[]} mediaIds
  * @param {GuideBlockEditorOptions} options
  */
-function createImageUploadPanel(currentMediaId, onSelect, options) {
+function renderHeroImageBlock(block, onChange, mediaIds, options) {
+  const wrap = document.createElement('div');
+  wrap.className = 'guide-editor-photo-block';
+
+  if (block.mediaId) {
+    wrap.append(
+      createPhotoPreview(block.mediaId, () => onChange({ ...block, mediaId: '' }))
+    );
+  }
+
+  wrap.append(createImageUploadPanel(block, onChange, options));
+
+  const existingPicker = document.createElement('details');
+  existingPicker.className = 'guide-editor-photo-picker';
+  existingPicker.open = !block.mediaId && mediaIds.length > 0;
+  const pickerSummary = document.createElement('summary');
+  pickerSummary.textContent = block.mediaId ? 'Choose a different existing photo' : 'Or choose an existing photo';
+  existingPicker.append(
+    pickerSummary,
+    createMediaSelect('Photo library', block.mediaId ?? '', mediaIds, (value) => onChange({ ...block, mediaId: value }))
+  );
+  wrap.append(
+    existingPicker,
+    createField('Caption (optional)', block.caption ?? '', (value) => onChange({ ...block, caption: value }))
+  );
+
+  return wrap;
+}
+
+/**
+ * @param {string} mediaId
+ * @param {() => void} onClear
+ */
+function createPhotoPreview(mediaId, onClear) {
+  const wrap = document.createElement('div');
+  wrap.className = 'guide-editor-photo-preview';
+
+  const frame = document.createElement('div');
+  frame.className = 'guide-editor-photo-preview-frame';
+  const resolved = resolveGuideMedia(mediaId);
+  const img = document.createElement('img');
+  img.alt = resolved.ok ? resolved.alt : mediaId;
+  img.src = resolved.ok ? resolved.url : buildHouseGuideMediaUrl(mediaId);
+  frame.append(img);
+
+  const meta = document.createElement('div');
+  meta.className = 'guide-editor-photo-preview-meta';
+  const label = document.createElement('span');
+  label.className = 'guide-editor-photo-preview-label';
+  label.textContent = 'Selected photo';
+  const id = document.createElement('strong');
+  id.className = 'guide-editor-photo-preview-id';
+  id.textContent = mediaId;
+  meta.append(label, id);
+
+  const clear = document.createElement('button');
+  clear.type = 'button';
+  clear.className = 'button-secondary guide-editor-photo-clear';
+  clear.textContent = 'Remove photo';
+  clear.addEventListener('click', onClear);
+
+  wrap.append(frame, meta, clear);
+  return wrap;
+}
+
+/**
+ * @param {GuideBlock & { type: 'heroImage' }} block
+ * @param {(block: GuideBlock) => void} onChange
+ * @param {GuideBlockEditorOptions} options
+ */
+function createImageUploadPanel(block, onChange, options) {
   const wrap = document.createElement('div');
   wrap.className = 'guide-editor-image-upload';
 
   const heading = document.createElement('span');
   heading.className = 'guide-editor-image-upload-title';
-  heading.textContent = 'Upload a new photo';
+  heading.textContent = block.mediaId ? 'Replace with a new upload' : 'Upload a photo';
 
   const hint = document.createElement('p');
   hint.className = 'subtle guide-editor-image-upload-hint';
-  hint.textContent = 'Use a short id (letters, numbers, hyphens). After upload it appears in the photo list above.';
+  hint.textContent =
+    'Pick a file and upload — it will be attached to this block automatically. Use a short id (letters, numbers, hyphens).';
 
-  const idField = createField('Photo id', currentMediaId, () => {});
+  const idField = createField('Photo id', block.mediaId ?? '', () => {});
   const idInput = /** @type {HTMLInputElement} */ (idField.querySelector('input'));
-  idInput.placeholder = 'e.g. garden-hose-bins';
+  idInput.placeholder = 'e.g. test-topic-photo';
 
   const altField = createField('Alt text', '', () => {});
   const altInput = /** @type {HTMLInputElement} */ (altField.querySelector('input'));
   altInput.placeholder = 'Describe the photo for accessibility';
 
   const fileLabel = document.createElement('label');
-  fileLabel.className = 'guide-editor-field';
+  fileLabel.className = 'guide-editor-field guide-editor-file-field';
   const fileSpan = document.createElement('span');
   fileSpan.textContent = 'Image file';
   const fileInput = document.createElement('input');
@@ -185,8 +257,8 @@ function createImageUploadPanel(currentMediaId, onSelect, options) {
 
   const uploadButton = document.createElement('button');
   uploadButton.type = 'button';
-  uploadButton.className = 'button-secondary guide-editor-upload-button';
-  uploadButton.textContent = 'Upload photo';
+  uploadButton.className = 'button-primary guide-editor-upload-button';
+  uploadButton.textContent = block.mediaId ? 'Upload and replace' : 'Upload and use photo';
 
   uploadButton.addEventListener('click', () => {
     if (!options.onUploadImage) {
@@ -221,12 +293,16 @@ function createImageUploadPanel(currentMediaId, onSelect, options) {
           status.textContent = result.message || 'Upload failed.';
           return;
         }
-        await options.onMediaRefresh?.();
-        onSelect(result.data?.id ?? mediaId);
+
+        const uploadedId = result.data?.id ?? mediaId;
+        onChange({ ...block, mediaId: uploadedId });
+        options.onRegisterMedia?.(uploadedId, alt, file.name);
         options.onAfterUpload?.();
-        status.textContent = 'Photo uploaded. It is selected above.';
-        options.onUploadStatus?.('Photo uploaded.');
+        await options.onMediaRefresh?.();
+        status.textContent = 'Photo uploaded and attached to this block.';
+        options.onUploadStatus?.('Photo uploaded and attached to this block.');
         fileInput.value = '';
+        altInput.value = '';
       })
       .finally(() => {
         uploadButton.disabled = false;
