@@ -27,6 +27,7 @@ import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
 import { listCatalogMediaIds } from '../../content/houseguide/guideMedia.js';
 import { renderGuideActionsEditor } from './guideEditorActions.js';
 import { renderMediaLibrary } from './guideEditorMedia.js';
+import { moveItem, wirePointerReorder } from './guideEditorReorder.js';
 import {
   createEmptyGuideBlock,
   EDITABLE_BLOCK_TYPES,
@@ -45,13 +46,53 @@ function mountHouseGuideEditorApp(viewport, context) {
   page.setAttribute('aria-label', 'House Guide Editor');
   viewport.replaceChildren(page);
 
-  const unsubscribe = subscribeToGuideContent(() => {
-    renderEditorPage(page, context);
-  });
-  void refreshGuideContent(fetch, { draft: true, force: true });
-  renderEditorPage(page, context);
+  /** @type {HTMLElement | null} */
+  let editorShell = null;
 
-  page.cleanup = () => unsubscribe();
+  function showStaticEditorPage() {
+    editorShell?.cleanup?.();
+    editorShell = null;
+    renderEditorPage(page, context);
+  }
+
+  function ensureEditorShell() {
+    const state = getGuideContentState();
+
+    if (getDeviceSessionStatus() === 'loading') {
+      showStaticEditorPage();
+      return;
+    }
+
+    if (!isOwnerUserMode() || !canManageHouseGuideContent()) {
+      showStaticEditorPage();
+      return;
+    }
+
+    if (state.source === 'loading' || state.source === 'idle') {
+      showStaticEditorPage();
+      return;
+    }
+
+    if (!state.seeded) {
+      showStaticEditorPage();
+      return;
+    }
+
+    if (!editorShell) {
+      page.replaceChildren();
+      editorShell = createEditorShell(context);
+      page.append(editorShell);
+    }
+  }
+
+  const unsubscribe = subscribeToGuideContent(ensureEditorShell);
+  void refreshGuideContent(fetch, { draft: true, force: true });
+  ensureEditorShell();
+
+  page.cleanup = () => {
+    unsubscribe();
+    editorShell?.cleanup?.();
+  };
 }
 
 /**
@@ -232,7 +273,7 @@ function createEditorShell(context) {
           draftTopic = topic ? structuredClone(topic) : null;
           view = 'topic';
           renderMain();
-        }, renderMain)
+        }, () => renderMain())
       );
       return;
     }
@@ -327,9 +368,10 @@ function renderCategoryPicker(onOpen) {
  * @param {import('../../types/app.js').ShellContext} context
  * @param {() => void} onBack
  * @param {(topicId: string) => void} onOpen
- * @param {() => void} onRefresh
+ * @param {(topicId: string) => void} onOpen
+ * @param {() => void} onRevert
  */
-function renderTopicPicker(categoryId, context, onBack, onOpen, onRefresh) {
+function renderTopicPicker(categoryId, context, onBack, onOpen, onRevert) {
   const category = getGuideCategory(categoryId);
   const panel = document.createElement('section');
   panel.className = 'house-guide-editor-picker';
@@ -344,16 +386,29 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRefresh) {
   heading.className = 'guide-section-heading';
   heading.textContent = category?.title ?? 'Topics';
 
+  const reorderHint = document.createElement('p');
+  reorderHint.className = 'subtle house-guide-editor-reorder-hint';
+  reorderHint.textContent = 'Drag the handle beside a topic to change its order.';
+
   const list = document.createElement('div');
   list.className = 'house-guide-editor-topic-list';
 
-  const topics = [...(category?.topics ?? [])];
+  /** @type {import('../../types/guideContent.js').GuideTopic[]} */
+  let topics = [...(category?.topics ?? [])];
 
   function renderTopicRows() {
     list.replaceChildren();
-    topics.forEach((topic, index) => {
+    topics.forEach((topic) => {
       const row = document.createElement('div');
       row.className = 'house-guide-editor-topic-row-wrap';
+      row.dataset.reorderRow = 'true';
+
+      const handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'guide-editor-drag-handle';
+      handle.dataset.reorderHandle = 'true';
+      handle.setAttribute('aria-label', `Drag to reorder ${topic.title}`);
+      handle.innerHTML = '<span aria-hidden="true">⠿</span>';
 
       const open = document.createElement('button');
       open.type = 'button';
@@ -375,55 +430,29 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRefresh) {
       open.append(meta);
       open.addEventListener('click', () => onOpen(topic.id));
 
-      const controls = document.createElement('div');
-      controls.className = 'house-guide-editor-topic-controls';
-
-      if (index > 0) {
-        const up = document.createElement('button');
-        up.type = 'button';
-        up.className = 'button-secondary';
-        up.textContent = 'Up';
-        up.addEventListener('click', () => {
-          void reorderHouseGuideTopicsInCategory(
-            categoryId,
-            swapTopicOrder(topics, index, index - 1)
-          ).then((result) => {
-            if (!result.ok) {
-              showToast(context.toast, result.message || 'Could not reorder topics.');
-              return;
-            }
-            onRefresh();
-          });
-        });
-        controls.append(up);
-      }
-
-      if (index < topics.length - 1) {
-        const down = document.createElement('button');
-        down.type = 'button';
-        down.className = 'button-secondary';
-        down.textContent = 'Down';
-        down.addEventListener('click', () => {
-          void reorderHouseGuideTopicsInCategory(
-            categoryId,
-            swapTopicOrder(topics, index, index + 1)
-          ).then((result) => {
-            if (!result.ok) {
-              showToast(context.toast, result.message || 'Could not reorder topics.');
-              return;
-            }
-            onRefresh();
-          });
-        });
-        controls.append(down);
-      }
-
-      row.append(open, controls);
+      row.append(handle, open);
       list.append(row);
     });
   }
 
   renderTopicRows();
+
+  wirePointerReorder(list, (fromIndex, toIndex) => {
+    const previous = topics.map((topic) => topic.id);
+    const nextIds = moveItem(previous, fromIndex, toIndex);
+    const nextTopics = moveItem(topics, fromIndex, toIndex);
+    topics = nextTopics;
+    renderTopicRows();
+
+    void reorderHouseGuideTopicsInCategory(categoryId, nextIds).then((result) => {
+      if (!result.ok) {
+        topics = [...(getGuideCategory(categoryId)?.topics ?? [])];
+        renderTopicRows();
+        showToast(context.toast, result.message || 'Could not reorder topics.');
+        onRevert();
+      }
+    });
+  });
 
   const addSection = document.createElement('section');
   addSection.className = 'house-guide-editor-new-topic';
@@ -482,19 +511,8 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRefresh) {
   });
   addSection.append(createButton);
 
-  panel.append(back, heading, list, addSection);
+  panel.append(back, heading, reorderHint, list, addSection);
   return panel;
-}
-
-/**
- * @param {import('../../types/guideContent.js').GuideTopic[]} topics
- * @param {number} fromIndex
- * @param {number} toIndex
- */
-function swapTopicOrder(topics, fromIndex, toIndex) {
-  const ids = topics.map((topic) => topic.id);
-  [ids[fromIndex], ids[toIndex]] = [ids[toIndex], ids[fromIndex]];
-  return ids;
 }
 
 /**
