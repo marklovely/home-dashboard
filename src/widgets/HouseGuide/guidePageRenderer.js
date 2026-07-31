@@ -1,11 +1,19 @@
 import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
 import { getProtectedDisplayValue } from '../../content/houseguide/privateContent.js';
+import { createWifiQrSection } from '../../components/WifiQr/createWifiQrSection.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createGuidePanelOverlay, runGuideAction } from './guideActions.js';
 import { ensureRoutineButtonStatus } from '../Alexa/routineButtonFeedback.js';
 import { renderGuideMediaFallback, wireGuideImageLightbox } from './guideImageUi.js';
 import { highlightGuideText } from './highlight.js';
 import { wireGuideTopicManualLinks } from './guideTopicManualLinks.js';
+import {
+  appendPrimaryContactSectionIfNeeded,
+  appendWifiQrSectionIfNeeded,
+  resolveGuideTopicHeader,
+  shouldSkipStaleGuideBlock,
+  wireGuideTopicHeaderRefresh
+} from './guideTopicWifiQr.js';
 
 /**
  * @param {string} url
@@ -178,6 +186,13 @@ function renderBlock(block) {
     return section;
   }
 
+  if (block.type === 'wifiQr') {
+    return createWifiQrSection({
+      heading: block.heading,
+      caption: block.caption
+    });
+  }
+
   if (block.type === 'contact' || block.type === 'keyValues') {
     const section = document.createElement('section');
     section.className = 'guide-section guide-section-values';
@@ -278,25 +293,34 @@ export function renderGuideTopicPage(topic, context, onBack, openTopic, options 
 
   const header = document.createElement('header');
   header.className = 'guide-topic-header';
+  const headerText = resolveGuideTopicHeader(topic);
   const title = document.createElement('h2');
   title.className = 'guide-topic-title';
-  title.textContent = topic.title;
+  title.textContent = headerText.title;
   const subtitle = document.createElement('p');
   subtitle.className = 'guide-topic-subtitle';
-  subtitle.textContent = topic.subtitle;
+  subtitle.textContent = headerText.subtitle;
   const summary = document.createElement('p');
   summary.className = 'guide-topic-summary';
-  summary.textContent = topic.summary;
+  summary.textContent = headerText.summary;
   header.append(title, subtitle, summary);
 
   article.append(backButton, header);
+
+  let cleanupHeaderRefresh = wireGuideTopicHeaderRefresh(topic, subtitle, summary);
 
   const manualLinksHost = document.createElement('div');
   manualLinksHost.className = 'guide-topic-manual-links-host';
   article.append(manualLinksHost);
 
   if (options.onViewManual) {
-    article.cleanup = wireGuideTopicManualLinks(manualLinksHost, topic, options.onViewManual);
+    const cleanupManualLinks = wireGuideTopicManualLinks(manualLinksHost, topic, options.onViewManual);
+    article.cleanup = () => {
+      cleanupHeaderRefresh?.();
+      cleanupManualLinks?.();
+    };
+  } else if (cleanupHeaderRefresh) {
+    article.cleanup = cleanupHeaderRefresh;
   }
 
   if (topic.actions?.length) {
@@ -318,9 +342,14 @@ export function renderGuideTopicPage(topic, context, onBack, openTopic, options 
   const body = document.createElement('div');
   body.className = 'guide-topic-body';
   for (const block of topic.blocks ?? []) {
+    if (shouldSkipStaleGuideBlock(block, topic)) {
+      continue;
+    }
     const node = renderBlock(block);
     if (node) body.append(node);
   }
+  appendWifiQrSectionIfNeeded(body, topic);
+  appendPrimaryContactSectionIfNeeded(body, topic);
   article.append(body);
 
   backButton.addEventListener('click', onBack);

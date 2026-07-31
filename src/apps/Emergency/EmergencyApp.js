@@ -1,31 +1,33 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
-import { openHouseGuideTopic } from '../../services/guideNavigation.js';
-import { phoneHref, resolveContactPhone } from '../../services/emergencyContacts.js';
+import {
+  openEmergencyTopicOverlay,
+  openOwnerContactOverlay
+} from './emergencyDetailOverlay.js';
 
-/** @typedef {{ id: string, label: string, subtitle?: string, iconId: string, kind: 'call', contactKey: string } | { id: string, label: string, subtitle?: string, iconId: string, kind: 'guide', topicId: string }} EmergencyCard */
+/** @typedef {{ id: string, label: string, subtitle?: string, iconId: string, kind: 'contact', person: 'mark' | 'donna' } | { id: string, label: string, subtitle?: string, iconId: string, kind: 'topic', topicId: string }} EmergencyCard */
 
 /** @type {EmergencyCard[]} */
 const EMERGENCY_CARDS = [
   {
-    id: 'call-mark',
-    kind: 'call',
-    label: 'Call Mark',
+    id: 'contact-mark',
+    kind: 'contact',
+    label: 'Mark — contact details',
     subtitle: 'Questions about the house or Scooter',
-    iconId: 'phone',
-    contactKey: 'contacts.mark.phone'
+    iconId: 'notebook',
+    person: 'mark'
   },
   {
-    id: 'call-donna',
-    kind: 'call',
-    label: 'Call Donna',
+    id: 'contact-donna',
+    kind: 'contact',
+    label: 'Donna — contact details',
     subtitle: 'We would rather you asked than worried',
-    iconId: 'phone',
-    contactKey: 'contacts.donna.phone'
+    iconId: 'notebook',
+    person: 'donna'
   },
   {
     id: 'vet',
-    kind: 'guide',
+    kind: 'topic',
     label: 'Vet',
     subtitle: 'Vets 4 Pets — Waterlooville',
     iconId: 'heart-pulse',
@@ -33,7 +35,7 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'water-stop',
-    kind: 'guide',
+    kind: 'topic',
     label: 'Water stop tap',
     subtitle: 'Turn off the water supply',
     iconId: 'droplets',
@@ -41,7 +43,7 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'fuse-box',
-    kind: 'guide',
+    kind: 'topic',
     label: 'Fuse box',
     subtitle: 'Consumer unit in the garage',
     iconId: 'zap',
@@ -49,27 +51,20 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'first-aid',
-    kind: 'guide',
+    kind: 'topic',
     label: 'First aid',
     subtitle: 'Safety notes and NHS guidance',
     iconId: 'cross',
     topicId: 'general-safety'
-  },
-  {
-    id: 'owners-guide',
-    kind: 'guide',
-    label: 'Useful numbers',
-    subtitle: 'Owners, email, and non-urgent help',
-    iconId: 'notebook',
-    topicId: 'contacting-mark-donna'
   }
 ];
 
 /**
  * @param {EmergencyCard} card
  * @param {import('../../types/app.js').ShellContext} context
+ * @param {HTMLElement} host
  */
-function createEmergencyCardElement(card, context) {
+function createEmergencyCardElement(card, context, host) {
   const iconWrap = document.createElement('span');
   iconWrap.className = 'emergency-card-icon';
   iconWrap.append(renderIcon(card.iconId, { size: 28, className: 'emergency-card-svg' }));
@@ -82,33 +77,20 @@ function createEmergencyCardElement(card, context) {
   subtitle.className = 'emergency-card-subtitle';
   subtitle.textContent = card.subtitle ?? '';
 
-  if (card.kind === 'guide') {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'emergency-card';
-    button.setAttribute('aria-label', card.label);
-    button.append(iconWrap, title, subtitle);
-    button.addEventListener('click', () => openHouseGuideTopic(context, card.topicId));
-    return button;
-  }
-
-  const phone = resolveContactPhone(card.contactKey);
-  const href = phone ? phoneHref(phone) : null;
-  if (href) {
-    const link = document.createElement('a');
-    link.className = 'emergency-card';
-    link.href = href;
-    link.setAttribute('aria-label', card.label);
-    link.append(iconWrap, title, subtitle);
-    return link;
-  }
-
-  subtitle.textContent = 'Contact details will appear when you are online.';
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'emergency-card';
-  button.disabled = true;
+  button.setAttribute('aria-label', card.label);
   button.append(iconWrap, title, subtitle);
+
+  button.addEventListener('click', () => {
+    if (card.kind === 'contact') {
+      openOwnerContactOverlay(host, card.person);
+      return;
+    }
+    openEmergencyTopicOverlay(host, card.topicId, context);
+  });
+
   return button;
 }
 
@@ -126,13 +108,13 @@ export function mountEmergencyApp(viewport, context) {
   const banner = document.createElement('div');
   banner.className = 'emergency-banner';
   banner.innerHTML =
-    '<strong>Immediate danger?</strong> Call <a href="tel:999">999</a> for fire, medical, or security emergencies.';
+    '<strong>Immediate danger?</strong> Dial <strong>999</strong> for fire, medical, or security emergencies.';
 
   const grid = document.createElement('div');
   grid.className = 'emergency-grid';
   grid.setAttribute('role', 'list');
   for (const card of EMERGENCY_CARDS) {
-    const element = createEmergencyCardElement(card, context);
+    const element = createEmergencyCardElement(card, context, page);
     element.setAttribute('role', 'listitem');
     grid.append(element);
   }
@@ -149,6 +131,6 @@ export const emergencyApp = defineApp({
   capabilities: ['contacts', 'offline', 'urgent'],
   accent: '#ff5f6d',
   profiles: ['housesitter'],
-  summary: () => ({ title: 'Help is here', subtitle: 'Owners, vet, utilities' }),
+  summary: () => ({ title: 'Help is here', subtitle: 'Owner contacts, vet, utilities' }),
   mount: mountEmergencyApp
 });

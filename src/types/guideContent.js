@@ -110,7 +110,14 @@
  * @property {string} key
  */
 
-/** @typedef {GuideBlockText | GuideBlockSteps | GuideBlockCallout | GuideBlockHeroImage | GuideBlockGallery | GuideBlockLocation | GuideBlockContact | GuideBlockKeyValues | GuideBlockCollapsible | GuideBlockPlace | GuideBlockProtected} GuideBlock */
+/**
+ * @typedef {Object} GuideBlockWifiQr
+ * @property {'wifiQr'} type
+ * @property {string} [heading]
+ * @property {string} [caption]
+ */
+
+/** @typedef {GuideBlockText | GuideBlockSteps | GuideBlockCallout | GuideBlockHeroImage | GuideBlockGallery | GuideBlockLocation | GuideBlockContact | GuideBlockKeyValues | GuideBlockCollapsible | GuideBlockPlace | GuideBlockProtected | GuideBlockWifiQr} GuideBlock */
 
 /**
  * @typedef {Object} GuideActionAlexa

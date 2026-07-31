@@ -165,7 +165,7 @@ describe('device session HTTP routes', () => {
     expect(response.status).toBe(200);
   });
 
-  it('sitter cookie blocks private-config', async () => {
+  it('sitter cookie blocks private-config until secrets are shared', async () => {
     const jwt = await signTestAccessJwt('owner@example.com', env);
     const response = await handlePrivateConfigRequest(
       new Request(

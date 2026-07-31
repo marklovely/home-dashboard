@@ -38,8 +38,8 @@ function setStartupLoading(active) {
 }
 
 async function initialiseDashboard() {
+  void preloadPrivateConfig();
   if (!isHouseSitterExperience()) {
-    void preloadPrivateConfig();
     startMyDayCalendarService();
   }
 
