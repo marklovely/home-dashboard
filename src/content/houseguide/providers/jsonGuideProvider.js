@@ -89,10 +89,9 @@ export function getHomeSummaryFromJson() {
 
 /**
  * @param {import('../../../types/guideContent.js').GuideTopic} topic
+ * @param {import('../../../types/guideContent.js').GuideCategory} [category]
  */
-function topicHaystack(topic) {
-  const context = topicIndex.get(topic.id);
-  const category = context?.category;
+function topicHaystack(topic, category) {
   const blockText = (topic.blocks ?? [])
     .flatMap((block) => {
       if (block.type === 'steps') return block.steps ?? [];
@@ -124,6 +123,18 @@ function topicHaystack(topic) {
   ]
     .join(' ')
     .toLowerCase();
+}
+
+/**
+ * @param {string} haystack
+ * @param {string} query
+ */
+export function guideHaystackMatches(haystack, query) {
+  const normalizedHaystack = haystack.toLowerCase();
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return false;
+  if (normalizedHaystack.includes(normalizedQuery)) return true;
+  return normalizedHaystack.replace(/\s/g, '').includes(normalizedQuery.replace(/\s/g, ''));
 }
 
 /** @type {Record<string, { topicId: string, bonus: number }[]>} */
@@ -170,16 +181,23 @@ const SEARCH_ALIASES = {
 };
 
 /**
+ * @param {import('../../../types/guideContent.js').GuideCatalog} catalog
  * @param {string} query
  * @returns {import('../../../types/guideContent.js').GuideTopicSearchHit[]}
  */
-export function searchTopicsFromJson(query) {
+export function searchTopicsInCatalog(catalog, query) {
   const trimmed = query.trim().toLowerCase();
-  if (!trimmed) return listTopicCardsFromJson();
+  const entries = catalog.categories.flatMap((category) =>
+    (category.topics ?? []).map((topic) => ({ topic, category }))
+  );
+
+  if (!trimmed) {
+    return entries.map(({ topic, category }) => toTopicCard(topic, category));
+  }
 
   const aliasBoost = new Map();
   for (const [term, matches] of Object.entries(SEARCH_ALIASES)) {
-    if (trimmed.includes(term) || term.includes(trimmed)) {
+    if (guideHaystackMatches(term, trimmed) || guideHaystackMatches(trimmed, term)) {
       for (const match of matches) {
         aliasBoost.set(match.topicId, (aliasBoost.get(match.topicId) ?? 0) + match.bonus);
       }
@@ -191,14 +209,14 @@ export function searchTopicsFromJson(query) {
     }
   }
 
-  const scored = [...topicIndex.values()]
+  const scored = entries
     .map(({ topic, category }) => {
-      const haystack = topicHaystack(topic);
+      const haystack = topicHaystack(topic, category);
       let score = aliasBoost.get(topic.id) ?? 0;
       if (topic.id.includes(trimmed)) score += 2;
-      if (haystack.includes(trimmed)) score += 3;
-      if (topic.title.toLowerCase().includes(trimmed)) score += 4;
-      if (category.title.toLowerCase().includes(trimmed)) score += 1;
+      if (guideHaystackMatches(haystack, trimmed)) score += 3;
+      if (guideHaystackMatches(topic.title, trimmed)) score += 4;
+      if (guideHaystackMatches(category.title, trimmed)) score += 1;
       return { topic, category, score };
     })
     .filter((entry) => entry.score > 0)
@@ -208,10 +226,20 @@ export function searchTopicsFromJson(query) {
     return scored.map(({ topic, category }) => toTopicCard(topic, category));
   }
 
-  return listTopicCardsFromJson().filter((card) => {
-    const haystack = `${card.title} ${card.cardSubtitle} ${card.categoryTitle} ${(card.searchTerms ?? []).join(' ')}`.toLowerCase();
-    return haystack.includes(trimmed);
-  });
+  return entries
+    .map(({ topic, category }) => toTopicCard(topic, category))
+    .filter((card) => {
+      const haystack = `${card.title} ${card.cardSubtitle} ${card.categoryTitle} ${(card.searchTerms ?? []).join(' ')}`;
+      return guideHaystackMatches(haystack, trimmed);
+    });
+}
+
+/**
+ * @param {string} query
+ * @returns {import('../../../types/guideContent.js').GuideTopicSearchHit[]}
+ */
+export function searchTopicsFromJson(query) {
+  return searchTopicsInCatalog(guideCatalog, query);
 }
 
 export function getJsonCatalog() {

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { findBestGuideTopic, getGuideHomeSummary, searchGuideTopics } from '../src/services/guideService.js';
+import {
+  guideHaystackMatches,
+  searchTopicsInCatalog
+} from '../src/content/houseguide/providers/jsonGuideProvider.js';
 import { highlightGuideText } from '../src/widgets/HouseGuide/highlight.js';
 
 describe('guide service', () => {
@@ -25,5 +29,37 @@ describe('guide service', () => {
 
   it('highlights matched substrings in titles', () => {
     expect(highlightGuideText('Heating', 'heat')).toContain('<mark class="guide-search-mark">');
+  });
+
+  it('matches custom topic keywords including postcodes', () => {
+    const hits = searchTopicsInCatalog(
+      {
+        version: 2,
+        homeSummaryTitle: 'Guide',
+        homeSummarySubtitle: '',
+        categories: [
+          {
+            id: 'arrival',
+            title: 'Arrival',
+            cardSubtitle: 'Getting here',
+            iconId: 'map-pin',
+            accent: '#fff',
+            topics: [
+              {
+                id: 'finding-us',
+                title: 'Finding Us',
+                subtitle: 'Directions',
+                summary: 'How to find the house',
+                searchTerms: ['PO8 9ZZ', 'wagtail road'],
+                blocks: []
+              }
+            ]
+          }
+        ]
+      },
+      'PO8 9ZZ'
+    );
+    expect(hits[0]?.id).toBe('finding-us');
+    expect(guideHaystackMatches('po8 9zz', 'PO89ZZ')).toBe(true);
   });
 });
