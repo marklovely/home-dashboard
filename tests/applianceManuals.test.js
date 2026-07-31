@@ -195,11 +195,18 @@ describe('Appliance Manuals sitter UI', () => {
 
 describe('Appliance Manuals PDF viewer', () => {
   beforeEach(() => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://worker.test');
+    resetApiBaseForTests();
     const dom = new JSDOM('<!doctype html><html><body></body></html>');
     global.document = dom.window.document;
     global.window = dom.window;
     global.URL.createObjectURL = vi.fn(() => 'blob:manual');
     global.URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    resetApiBaseForTests();
   });
 
   it('includes fallback open action and manual titles', async () => {
