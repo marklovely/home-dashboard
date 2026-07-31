@@ -37,8 +37,13 @@ Sitters continue using **House Guide** as before; once cloud content is seeded a
 | `POST` | `/api/house-guide/topics/:id/publish` | Publish one topic |
 | `POST` | `/api/house-guide/publish-all` | Publish all draft topics |
 | `PATCH` | `/api/house-guide/settings` | Update guide home intro text |
+| `GET` | `/api/house-guide/media` | List uploaded/bundled photo metadata (owner) |
 | `POST` | `/api/house-guide/media` | Upload image (multipart) |
+| `DELETE` | `/api/house-guide/media/:id` | Delete uploaded photo (R2 + metadata) |
 | `GET` | `/api/house-guide/media/:id/file` | Stream uploaded image |
+| `POST` | `/api/house-guide/topics` | Create a new topic (starts unpublished) |
+| `DELETE` | `/api/house-guide/topics/:id` | Delete a topic |
+| `POST` | `/api/house-guide/categories/:id/reorder-topics` | Reorder topics in an area |
 
 ## Cloudflare setup
 
@@ -52,7 +57,7 @@ Sitters continue using **House Guide** as before; once cloud content is seeded a
 
 Paragraph, numbered steps, tips/warnings/notes, details lists, contact cards (with optional links), photos (pick existing or upload to R2), locations, expandable sections, and place cards. Private info blocks are preserved but not editable here.
 
-Topics also support **search keywords** and **appliance manual links** (matching published manual names). Unpublished topic edits show a **Draft** label in the topic list.
+Topics also support **search keywords**, **appliance manual links**, **quick actions** (Alexa routines, topic links, info panels), and **topic management** (create, reorder, delete). Use **Photo library** in the editor toolbar to browse, replace, or delete uploaded photos. Unpublished topic edits show a **Draft** label in the topic list.
 
 ## Migrations
 

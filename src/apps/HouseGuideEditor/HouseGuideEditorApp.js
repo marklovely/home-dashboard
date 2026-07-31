@@ -5,22 +5,28 @@ import { showToast } from '../../js/modules/toast.js';
 import {
   getGuideCategory,
   getGuideTopic,
-  listGuideCategories
+  listGuideCategories,
+  listGuideTopics
 } from '../../services/guideService.js';
 import {
   canManageHouseGuideContent,
+  createNewHouseGuideTopic,
   getActiveGuideCatalog,
   getGuideContentState,
   importBundledGuideToCloud,
   publishAllHouseGuideChanges,
   publishHouseGuideTopicContent,
   refreshGuideContent,
+  removeHouseGuideTopic,
+  reorderHouseGuideTopicsInCategory,
   saveHouseGuideSettings,
   saveHouseGuideTopic,
   subscribeToGuideContent
 } from '../../services/guideContentService.js';
 import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
 import { listCatalogMediaIds } from '../../content/houseguide/guideMedia.js';
+import { renderGuideActionsEditor } from './guideEditorActions.js';
+import { renderMediaLibrary } from './guideEditorMedia.js';
 import {
   createEmptyGuideBlock,
   EDITABLE_BLOCK_TYPES,
@@ -133,7 +139,7 @@ function createEditorShell(context) {
   const shell = document.createElement('div');
   shell.className = 'house-guide-editor-shell';
 
-  /** @type {'categories' | 'topics' | 'topic'} */
+  /** @type {'categories' | 'topics' | 'topic' | 'media'} */
   let view = 'categories';
   /** @type {string | null} */
   let activeCategoryId = null;
@@ -177,7 +183,16 @@ function createEditorShell(context) {
     });
   });
 
-  toolbar.append(draftBadge, publishAllButton);
+  const photosButton = document.createElement('button');
+  photosButton.type = 'button';
+  photosButton.className = 'button-secondary';
+  photosButton.textContent = 'Photo library';
+  photosButton.addEventListener('click', () => {
+    view = 'media';
+    renderMain();
+  });
+
+  toolbar.append(draftBadge, photosButton, publishAllButton);
   header.append(title, intro, renderGuideIntroSettings(context), toolbar);
 
   const main = document.createElement('div');
@@ -207,7 +222,7 @@ function createEditorShell(context) {
 
     if (view === 'topics' && activeCategoryId) {
       main.append(
-        renderTopicPicker(activeCategoryId, () => {
+        renderTopicPicker(activeCategoryId, context, () => {
           view = 'categories';
           activeCategoryId = null;
           renderMain();
@@ -216,6 +231,16 @@ function createEditorShell(context) {
           const topic = getGuideTopic(topicId);
           draftTopic = topic ? structuredClone(topic) : null;
           view = 'topic';
+          renderMain();
+        }, renderMain)
+      );
+      return;
+    }
+
+    if (view === 'media') {
+      main.append(
+        renderMediaLibrary(context, () => {
+          view = 'categories';
           renderMain();
         })
       );
@@ -241,6 +266,13 @@ function createEditorShell(context) {
           onPublished: () => {
             syncDraftBadge();
             showToast(context.toast, 'Topic published.');
+          },
+          onDeleted: () => {
+            view = 'topics';
+            activeTopicId = null;
+            draftTopic = null;
+            renderMain();
+            showToast(context.toast, 'Topic deleted.');
           }
         })
       );
@@ -292,10 +324,12 @@ function renderCategoryPicker(onOpen) {
 
 /**
  * @param {string} categoryId
+ * @param {import('../../types/app.js').ShellContext} context
  * @param {() => void} onBack
  * @param {(topicId: string) => void} onOpen
+ * @param {() => void} onRefresh
  */
-function renderTopicPicker(categoryId, onBack, onOpen) {
+function renderTopicPicker(categoryId, context, onBack, onOpen, onRefresh) {
   const category = getGuideCategory(categoryId);
   const panel = document.createElement('section');
   panel.className = 'house-guide-editor-picker';
@@ -313,31 +347,154 @@ function renderTopicPicker(categoryId, onBack, onOpen) {
   const list = document.createElement('div');
   list.className = 'house-guide-editor-topic-list';
 
-  for (const topic of category?.topics ?? []) {
-    const row = document.createElement('button');
-    row.type = 'button';
-    row.className = 'house-guide-editor-topic-row';
-    const name = document.createElement('span');
-    name.className = 'house-guide-editor-topic-name';
-    name.textContent = topic.title;
-    const meta = document.createElement('span');
-    meta.className = 'subtle';
-    meta.textContent =
-      topic.audience === 'owner' ? `${topic.subtitle} · Owner only` : topic.subtitle;
-    row.append(name);
-    if (topic.hasDraft) {
-      const draftLabel = document.createElement('span');
-      draftLabel.className = 'house-guide-editor-topic-draft';
-      draftLabel.textContent = 'Draft';
-      row.append(draftLabel);
-    }
-    row.append(meta);
-    row.addEventListener('click', () => onOpen(topic.id));
-    list.append(row);
+  const topics = [...(category?.topics ?? [])];
+
+  function renderTopicRows() {
+    list.replaceChildren();
+    topics.forEach((topic, index) => {
+      const row = document.createElement('div');
+      row.className = 'house-guide-editor-topic-row-wrap';
+
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'house-guide-editor-topic-row';
+      const name = document.createElement('span');
+      name.className = 'house-guide-editor-topic-name';
+      name.textContent = topic.title;
+      const meta = document.createElement('span');
+      meta.className = 'subtle';
+      meta.textContent =
+        topic.audience === 'owner' ? `${topic.subtitle} · Owner only` : topic.subtitle;
+      open.append(name);
+      if (topic.hasDraft) {
+        const draftLabel = document.createElement('span');
+        draftLabel.className = 'house-guide-editor-topic-draft';
+        draftLabel.textContent = 'Draft';
+        open.append(draftLabel);
+      }
+      open.append(meta);
+      open.addEventListener('click', () => onOpen(topic.id));
+
+      const controls = document.createElement('div');
+      controls.className = 'house-guide-editor-topic-controls';
+
+      if (index > 0) {
+        const up = document.createElement('button');
+        up.type = 'button';
+        up.className = 'button-secondary';
+        up.textContent = 'Up';
+        up.addEventListener('click', () => {
+          void reorderHouseGuideTopicsInCategory(
+            categoryId,
+            swapTopicOrder(topics, index, index - 1)
+          ).then((result) => {
+            if (!result.ok) {
+              showToast(context.toast, result.message || 'Could not reorder topics.');
+              return;
+            }
+            onRefresh();
+          });
+        });
+        controls.append(up);
+      }
+
+      if (index < topics.length - 1) {
+        const down = document.createElement('button');
+        down.type = 'button';
+        down.className = 'button-secondary';
+        down.textContent = 'Down';
+        down.addEventListener('click', () => {
+          void reorderHouseGuideTopicsInCategory(
+            categoryId,
+            swapTopicOrder(topics, index, index + 1)
+          ).then((result) => {
+            if (!result.ok) {
+              showToast(context.toast, result.message || 'Could not reorder topics.');
+              return;
+            }
+            onRefresh();
+          });
+        });
+        controls.append(down);
+      }
+
+      row.append(open, controls);
+      list.append(row);
+    });
   }
 
-  panel.append(back, heading, list);
+  renderTopicRows();
+
+  const addSection = document.createElement('section');
+  addSection.className = 'house-guide-editor-new-topic';
+  const addHeading = document.createElement('h4');
+  addHeading.className = 'house-guide-editor-blocks-title';
+  addHeading.textContent = 'Add a new topic';
+
+  let newTopicId = '';
+  let newTitle = '';
+  let newSubtitle = '';
+  let newSummary = '';
+
+  addSection.append(
+    addHeading,
+    createEditorField('Topic id', '', (value) => {
+      newTopicId = value;
+    }),
+    createEditorField('Title', '', (value) => {
+      newTitle = value;
+    }),
+    createEditorField('Subtitle', '', (value) => {
+      newSubtitle = value;
+    }),
+    createEditorField('Summary', '', (value) => {
+      newSummary = value;
+    })
+  );
+
+  const idHint = document.createElement('p');
+  idHint.className = 'subtle house-guide-editor-manual-hint';
+  idHint.textContent = 'Use a short id with letters, numbers, and hyphens (e.g. bin-day). New topics start unpublished until you publish them.';
+  addSection.append(idHint);
+
+  const createButton = document.createElement('button');
+  createButton.type = 'button';
+  createButton.className = 'button-primary';
+  createButton.textContent = 'Create topic';
+  createButton.addEventListener('click', () => {
+    createButton.disabled = true;
+    void createNewHouseGuideTopic({
+      id: newTopicId.trim(),
+      categoryId,
+      title: newTitle.trim(),
+      subtitle: newSubtitle.trim(),
+      summary: newSummary.trim(),
+      audience: 'guest'
+    }).then((result) => {
+      createButton.disabled = false;
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Could not create topic.');
+        return;
+      }
+      showToast(context.toast, 'Topic created.');
+      onOpen(newTopicId.trim());
+    });
+  });
+  addSection.append(createButton);
+
+  panel.append(back, heading, list, addSection);
   return panel;
+}
+
+/**
+ * @param {import('../../types/guideContent.js').GuideTopic[]} topics
+ * @param {number} fromIndex
+ * @param {number} toIndex
+ */
+function swapTopicOrder(topics, fromIndex, toIndex) {
+  const ids = topics.map((topic) => topic.id);
+  [ids[fromIndex], ids[toIndex]] = [ids[toIndex], ids[fromIndex]];
+  return ids;
 }
 
 /**
@@ -422,6 +579,23 @@ function renderTopicEditor(topic, context, handlers) {
   manualHint.textContent =
     'Appliance names here link to matching manuals in House Guide (must match a published manual name).';
   metaAdvanced.append(manualHint);
+
+  if (!topic.actions) topic.actions = [];
+
+  const actionsHeading = document.createElement('h4');
+  actionsHeading.className = 'house-guide-editor-blocks-title';
+  actionsHeading.textContent = 'Quick actions';
+  const actionsHint = document.createElement('p');
+  actionsHint.className = 'subtle house-guide-editor-manual-hint';
+  actionsHint.textContent = 'Optional buttons at the bottom of a guide page (Alexa routines, links to other topics).';
+  const actionsEditor = renderGuideActionsEditor(
+    topic.actions,
+    (next) => {
+      topic.actions = next;
+      handlers.onTopicChange(topic);
+    },
+    listGuideTopics().map((hit) => ({ id: hit.id, title: hit.title }))
+  );
 
   const blocksHeading = document.createElement('h4');
   blocksHeading.className = 'house-guide-editor-blocks-title';
@@ -570,8 +744,37 @@ function renderTopicEditor(topic, context, handlers) {
       });
   });
 
-  footer.append(saveButton, publishButton);
-  panel.append(back, heading, metaForm, metaAdvanced, blocksHeading, blocksHost, addRow, footer);
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.className = 'button-secondary button-danger';
+  deleteButton.textContent = 'Delete topic';
+  deleteButton.addEventListener('click', () => {
+    if (!window.confirm(`Delete "${topic.title}"? This cannot be undone.`)) return;
+    deleteButton.disabled = true;
+    void removeHouseGuideTopic(topic.id).then((result) => {
+      deleteButton.disabled = false;
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Could not delete topic.');
+        return;
+      }
+      handlers.onDeleted();
+    });
+  });
+
+  footer.append(saveButton, publishButton, deleteButton);
+  panel.append(
+    back,
+    heading,
+    metaForm,
+    metaAdvanced,
+    actionsHeading,
+    actionsHint,
+    actionsEditor,
+    blocksHeading,
+    blocksHost,
+    addRow,
+    footer
+  );
   return panel;
 }
 
@@ -637,6 +840,7 @@ function buildTopicPatch(topic) {
     audience: topic.audience === 'owner' ? 'owner' : 'guest',
     searchTerms: (topic.searchTerms ?? []).map((term) => term.trim()).filter(Boolean),
     applianceManualTerms: (topic.applianceManualTerms ?? []).map((term) => term.trim()).filter(Boolean),
+    actions: topic.actions ?? [],
     blocks: topic.blocks
   };
 }

@@ -1,10 +1,15 @@
 import {
+  createHouseGuideTopic,
+  deleteHouseGuideMedia,
+  deleteHouseGuideTopic,
   fetchHouseGuideCatalog,
+  fetchHouseGuideMediaLibrary,
   importHouseGuideCatalog,
-  patchHouseGuideTopic,
   patchHouseGuideSettings,
+  patchHouseGuideTopic,
   publishAllHouseGuideTopics,
-  publishHouseGuideTopic
+  publishHouseGuideTopic,
+  reorderHouseGuideTopics
 } from '../api/houseGuideApi.js';
 import { getJsonCatalog } from '../content/houseguide/providers/jsonGuideProvider.js';
 import { getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
@@ -217,6 +222,62 @@ export async function publishAllHouseGuideChanges(fetchImpl = fetch) {
  */
 export async function saveHouseGuideSettings(patch, fetchImpl = fetch) {
   const result = await patchHouseGuideSettings(patch, { fetchImpl });
+  if (result.ok) {
+    await refreshGuideContent(fetchImpl, { draft: true, force: true });
+  }
+  return result;
+}
+
+/**
+ * @param {Record<string, unknown>} input
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function createNewHouseGuideTopic(input, fetchImpl = fetch) {
+  const result = await createHouseGuideTopic(input, { fetchImpl });
+  if (result.ok) {
+    await refreshGuideContent(fetchImpl, { draft: true, force: true });
+  }
+  return result;
+}
+
+/**
+ * @param {string} topicId
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function removeHouseGuideTopic(topicId, fetchImpl = fetch) {
+  const result = await deleteHouseGuideTopic(topicId, { fetchImpl });
+  if (result.ok) {
+    await refreshGuideContent(fetchImpl, { draft: true, force: true });
+  }
+  return result;
+}
+
+/**
+ * @param {string} categoryId
+ * @param {string[]} topicIds
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function reorderHouseGuideTopicsInCategory(categoryId, topicIds, fetchImpl = fetch) {
+  const result = await reorderHouseGuideTopics(categoryId, topicIds, { fetchImpl });
+  if (result.ok) {
+    await refreshGuideContent(fetchImpl, { draft: true, force: true });
+  }
+  return result;
+}
+
+/**
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function loadHouseGuideMediaLibrary(fetchImpl = fetch) {
+  return fetchHouseGuideMediaLibrary({ fetchImpl });
+}
+
+/**
+ * @param {string} mediaId
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function removeHouseGuideMediaItem(mediaId, fetchImpl = fetch) {
+  const result = await deleteHouseGuideMedia(mediaId, { fetchImpl });
   if (result.ok) {
     await refreshGuideContent(fetchImpl, { draft: true, force: true });
   }

@@ -359,3 +359,114 @@ export async function updateGuideSettings(db, patch) {
 
   return getGuideSettings(db);
 }
+
+/**
+ * @param {D1Database} db
+ * @param {string} categoryId
+ */
+export async function getGuideCategoryById(db, categoryId) {
+  return db.prepare(`SELECT * FROM guide_categories WHERE id = ?`).bind(categoryId).first();
+}
+
+/**
+ * @param {D1Database} db
+ * @param {Object} input
+ */
+export async function createGuideTopic(db, input) {
+  const category = await getGuideCategoryById(db, input.categoryId);
+  if (!category) return null;
+
+  const existing = await getGuideTopicById(db, input.id);
+  if (existing) return { conflict: true };
+
+  const maxRow = await db
+    .prepare(`SELECT MAX(sort_order) AS max_order FROM guide_topics WHERE category_id = ?`)
+    .bind(input.categoryId)
+    .first();
+  const sortOrder = Number(maxRow?.max_order ?? -1) + 1;
+  const now = new Date().toISOString();
+  const blocks = JSON.stringify(input.blocks ?? [{ type: 'text', content: '' }]);
+
+  await db
+    .prepare(
+      `INSERT INTO guide_topics (
+        id, category_id, title, subtitle, summary, search_terms, appliance_manual_terms,
+        blocks, published_blocks, actions, sort_order, published, has_draft, audience, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(
+      input.id,
+      input.categoryId,
+      input.title,
+      input.subtitle,
+      input.summary,
+      JSON.stringify(input.searchTerms ?? []),
+      null,
+      blocks,
+      null,
+      JSON.stringify(input.actions ?? []),
+      sortOrder,
+      0,
+      1,
+      input.audience ?? 'guest',
+      now
+    )
+    .run();
+
+  return getGuideTopicById(db, input.id);
+}
+
+/**
+ * @param {D1Database} db
+ * @param {string} id
+ */
+export async function deleteGuideTopic(db, id) {
+  const existing = await getGuideTopicById(db, id);
+  if (!existing) return null;
+  await db.prepare(`DELETE FROM guide_topics WHERE id = ?`).bind(id).run();
+  return existing;
+}
+
+/**
+ * @param {D1Database} db
+ * @param {string} categoryId
+ * @param {string[]} topicIds
+ */
+export async function reorderGuideTopicsInCategory(db, categoryId, topicIds) {
+  const category = await getGuideCategoryById(db, categoryId);
+  if (!category) return null;
+
+  const rows = await db
+    .prepare(`SELECT id FROM guide_topics WHERE category_id = ?`)
+    .bind(categoryId)
+    .all();
+  const existingIds = new Set((rows.results ?? []).map((row) => String(row.id)));
+  if (topicIds.length !== existingIds.size) return { invalid: true };
+
+  for (const topicId of topicIds) {
+    if (!existingIds.has(topicId)) return { invalid: true };
+  }
+
+  const now = new Date().toISOString();
+  let order = 0;
+  for (const topicId of topicIds) {
+    await db
+      .prepare(`UPDATE guide_topics SET sort_order = ?, updated_at = ? WHERE id = ? AND category_id = ?`)
+      .bind(order, now, topicId, categoryId)
+      .run();
+    order += 1;
+  }
+
+  return { ok: true };
+}
+
+/**
+ * @param {D1Database} db
+ * @param {string} id
+ */
+export async function deleteGuideMedia(db, id) {
+  const existing = await getGuideMediaById(db, id);
+  if (!existing) return null;
+  await db.prepare(`DELETE FROM guide_media WHERE id = ?`).bind(id).run();
+  return existing;
+}

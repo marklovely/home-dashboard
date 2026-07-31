@@ -242,3 +242,155 @@ export async function uploadHouseGuideMedia(formData, { fetchImpl = fetch } = {}
     return { ok: false, status: 503, message: 'Could not upload image.', data: null };
   }
 }
+
+/**
+ * @param {Record<string, unknown>} input
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function createHouseGuideTopic(input, { fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Could not create topic.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl('/api/house-guide/topics'),
+      withApiCredentials({
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify(input)
+      })
+    );
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+    }
+
+    const data = await response.json();
+    return { ok: true, status: response.status, message: '', data };
+  } catch {
+    return { ok: false, status: 503, message: 'Could not create topic.', data: null };
+  }
+}
+
+/**
+ * @param {string} topicId
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function deleteHouseGuideTopic(topicId, { fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Could not delete topic.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl(`/api/house-guide/topics/${encodeURIComponent(topicId)}`),
+      withApiCredentials({
+        method: 'DELETE',
+        headers: { Accept: 'application/json' }
+      })
+    );
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+    }
+
+    const data = await response.json();
+    return { ok: true, status: 200, message: '', data };
+  } catch {
+    return { ok: false, status: 503, message: 'Could not delete topic.', data: null };
+  }
+}
+
+/**
+ * @param {string} categoryId
+ * @param {string[]} topicIds
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function reorderHouseGuideTopics(categoryId, topicIds, { fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Could not reorder topics.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl(`/api/house-guide/categories/${encodeURIComponent(categoryId)}/reorder-topics`),
+      withApiCredentials({
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topicIds })
+      })
+    );
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+    }
+
+    const data = await response.json();
+    return { ok: true, status: 200, message: '', data };
+  } catch {
+    return { ok: false, status: 503, message: 'Could not reorder topics.', data: null };
+  }
+}
+
+/**
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function fetchHouseGuideMediaLibrary({ fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Could not load photos.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl('/api/house-guide/media'),
+      withApiCredentials({
+        headers: { Accept: 'application/json' },
+        cache: 'no-store'
+      })
+    );
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+    }
+
+    const data = await response.json();
+    return { ok: true, status: 200, message: '', data };
+  } catch {
+    return { ok: false, status: 503, message: 'Could not load photos.', data: null };
+  }
+}
+
+/**
+ * @param {string} mediaId
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function deleteHouseGuideMedia(mediaId, { fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Could not delete photo.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl(`/api/house-guide/media/${encodeURIComponent(mediaId)}`),
+      withApiCredentials({
+        method: 'DELETE',
+        headers: { Accept: 'application/json' }
+      })
+    );
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+    }
+
+    const data = await response.json();
+    return { ok: true, status: 200, message: '', data };
+  } catch {
+    return { ok: false, status: 503, message: 'Could not delete photo.', data: null };
+  }
+}

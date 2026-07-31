@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assembleGuideCatalog } from '../src/houseGuide/assembleCatalog.js';
+import { sanitizeGuideActions } from '../src/houseGuide/sanitize.js';
 import { createEmptyGuideBlock } from '../../src/apps/HouseGuideEditor/guideEditorUi.js';
 
 describe('assembleGuideCatalog', () => {
@@ -145,6 +146,20 @@ describe('assembleGuideCatalog', () => {
       includeDraftBlocks: true
     });
     expect(catalog.categories[0]?.topics[0]?.blocks[0]?.content).toBe('Draft copy');
+  });
+});
+
+describe('sanitizeGuideActions', () => {
+  it('accepts alexa and navigate actions', () => {
+    const actions = sanitizeGuideActions([
+      { type: 'alexa', buttonId: 2, label: 'Bedtime' },
+      { type: 'navigate', topicId: 'feeding', label: 'Feeding guide' }
+    ]);
+    expect(actions).toHaveLength(2);
+  });
+
+  it('rejects invalid actions', () => {
+    expect(sanitizeGuideActions([{ type: 'alexa', buttonId: 0, label: '' }])).toBeNull();
   });
 });
 
