@@ -2312,6 +2312,12 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   justify-items: center;
   text-align: center;
   pointer-events: none;
+  transform: translate(var(--screensaver-shift-x, 0), var(--screensaver-shift-y, 0));
+  transition: transform 60s ease-in-out;
+  will-change: transform;
+}
+.screensaver-panel.screensaver-panel--shift-instant {
+  transition: none;
 }
 .screensaver-clock {
   font-size: clamp(4rem, 18vw, 8rem);
@@ -2337,6 +2343,11 @@ body.screensaver-active {
 }
 .settings-subsection-title--nested {
   margin-top: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .screensaver-panel {
+    transition: none;
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
   .screensaver-overlay:not([hidden]) {

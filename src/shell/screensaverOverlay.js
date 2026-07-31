@@ -8,12 +8,14 @@ import {
 } from '../services/screensaverService.js';
 import { subscribeToUserMode } from '../auth/userMode.js';
 import { navigate, HOME_ROUTE } from './router.js';
+import { startBurnInProtection, stopBurnInProtection } from './screensaverBurnIn.js';
 
 /**
  * @param {{
  *   overlay: HTMLElement,
  *   clock: HTMLElement,
- *   date: HTMLElement
+ *   date: HTMLElement,
+ *   panel: HTMLElement
  * }} elements
  */
 function updateScreensaverClock(elements) {
@@ -26,29 +28,44 @@ function updateScreensaverClock(elements) {
  * @param {{
  *   overlay: HTMLElement,
  *   clock: HTMLElement,
- *   date: HTMLElement
+ *   date: HTMLElement,
+ *   panel: HTMLElement
  * }} elements
  */
 function syncScreensaverVisibility(elements) {
   const active = shouldShowScreensaver();
+  const wasActive = !elements.overlay.hidden;
   elements.overlay.hidden = !active;
   elements.overlay.setAttribute('aria-hidden', active ? 'false' : 'true');
   document.body.classList.toggle('screensaver-active', active);
   if (active) {
     updateScreensaverClock(elements);
+    if (!wasActive) {
+      startBurnInProtection(elements.panel);
+    }
+    return;
+  }
+  if (wasActive) {
+    stopBurnInProtection(elements.panel);
   }
 }
 
 export function initScreensaverOverlay() {
   const overlay = document.querySelector('#screensaver-overlay');
+  const panel = overlay?.querySelector('.screensaver-panel');
   const clock = document.querySelector('#screensaver-clock');
   const date = document.querySelector('#screensaver-date');
 
-  if (!(overlay instanceof HTMLElement) || !(clock instanceof HTMLElement) || !(date instanceof HTMLElement)) {
+  if (
+    !(overlay instanceof HTMLElement) ||
+    !(panel instanceof HTMLElement) ||
+    !(clock instanceof HTMLElement) ||
+    !(date instanceof HTMLElement)
+  ) {
     return;
   }
 
-  const elements = { overlay, clock, date };
+  const elements = { overlay, panel, clock, date };
 
   const refresh = () => syncScreensaverVisibility(elements);
 
