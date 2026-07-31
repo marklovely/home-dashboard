@@ -48,6 +48,14 @@ export function sanitizeMediaId(value) {
 }
 
 /**
+ * @param {unknown} value
+ */
+export function sanitizeAudience(value) {
+  if (value === 'owner' || value === 'guest') return value;
+  return null;
+}
+
+/**
  * @param {string} filename
  */
 export function sanitizeOriginalFilename(filename) {

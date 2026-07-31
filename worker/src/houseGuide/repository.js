@@ -153,8 +153,8 @@ export async function importGuideCatalog(db, catalog) {
         .prepare(
           `INSERT INTO guide_topics (
             id, category_id, title, subtitle, summary, search_terms, appliance_manual_terms,
-            blocks, published_blocks, actions, sort_order, published, has_draft, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            blocks, published_blocks, actions, sort_order, published, has_draft, audience, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .bind(
           topic.id,
@@ -170,6 +170,7 @@ export async function importGuideCatalog(db, catalog) {
           topicOrder,
           1,
           0,
+          topic.audience === 'owner' ? 'owner' : 'guest',
           now
         )
         .run();
@@ -219,7 +220,7 @@ export async function updateGuideTopic(db, id, patch) {
     .prepare(
       `UPDATE guide_topics SET
         title = ?, subtitle = ?, summary = ?, search_terms = ?, appliance_manual_terms = ?,
-        blocks = ?, actions = ?, has_draft = ?, updated_at = ?
+        blocks = ?, actions = ?, has_draft = ?, audience = ?, updated_at = ?
       WHERE id = ?`
     )
     .bind(
@@ -235,6 +236,7 @@ export async function updateGuideTopic(db, id, patch) {
       blocksJson,
       patch.actions !== undefined ? JSON.stringify(patch.actions) : existing.actions,
       hasDraft,
+      patch.audience ?? existing.audience ?? 'guest',
       patch.updatedAt ?? new Date().toISOString(),
       id
     )

@@ -11,6 +11,7 @@ function mapTopicRow(topicRows, publishedOnly, includeDraftBlocks) {
 
   for (const row of topicRows) {
     if (publishedOnly && !row.published) continue;
+    if (publishedOnly && row.audience === 'owner') continue;
 
     const publishedBlocks = row.published_blocks
       ? parseJsonBlocks(row.published_blocks)
@@ -31,7 +32,8 @@ function mapTopicRow(topicRows, publishedOnly, includeDraftBlocks) {
       blocks,
       actions: parseJsonArray(row.actions),
       hasDraft: Boolean(row.has_draft),
-      published: Boolean(row.published)
+      published: Boolean(row.published),
+      audience: row.audience === 'owner' ? 'owner' : 'guest'
     };
 
     const categoryId = String(row.category_id);
@@ -139,6 +141,7 @@ export function toPublicGuideTopic(row) {
     actions: parseJsonArray(row.actions),
     hasDraft: Boolean(row.has_draft),
     published: Boolean(row.published),
+    audience: row.audience === 'owner' ? 'owner' : 'guest',
     updatedAt: String(row.updated_at)
   };
 }

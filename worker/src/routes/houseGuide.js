@@ -22,6 +22,7 @@ import {
 } from '../houseGuide/r2Storage.js';
 import {
   sanitizeBlocks,
+  sanitizeAudience,
   sanitizeMediaId,
   sanitizeOriginalFilename,
   sanitizeRequiredText,
@@ -233,6 +234,11 @@ async function patchTopic(request, env, topicId, correlationId) {
     return jsonError(400, 'BAD_REQUEST', 'Blocks must be a valid array.', { correlationId });
   }
 
+  const audience = body.audience !== undefined ? sanitizeAudience(body.audience) : undefined;
+  if (body.audience !== undefined && !audience) {
+    return jsonError(400, 'BAD_REQUEST', 'Audience must be guest or owner.', { correlationId });
+  }
+
   const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
   const updated = await updateGuideTopic(db, topicId, {
     title,
@@ -243,6 +249,7 @@ async function patchTopic(request, env, topicId, correlationId) {
       body.applianceManualTerms !== undefined ? sanitizeStringArray(body.applianceManualTerms) : undefined,
     blocks,
     actions: body.actions !== undefined ? sanitizeBlocks(body.actions) : undefined,
+    audience,
     updatedAt: new Date().toISOString()
   });
 
