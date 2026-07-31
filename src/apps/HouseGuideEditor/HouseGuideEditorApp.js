@@ -9,11 +9,13 @@ import {
 } from '../../services/guideService.js';
 import {
   canManageHouseGuideContent,
+  getActiveGuideCatalog,
   getGuideContentState,
   importBundledGuideToCloud,
   publishAllHouseGuideChanges,
   publishHouseGuideTopicContent,
   refreshGuideContent,
+  saveHouseGuideSettings,
   saveHouseGuideTopic,
   subscribeToGuideContent
 } from '../../services/guideContentService.js';
@@ -23,7 +25,8 @@ import {
   createEmptyGuideBlock,
   EDITABLE_BLOCK_TYPES,
   GUIDE_BLOCK_TYPE_LABELS,
-  renderGuideBlockEditor
+  renderGuideBlockEditor,
+  renderStringList
 } from './guideEditorUi.js';
 
 /**
@@ -175,7 +178,7 @@ function createEditorShell(context) {
   });
 
   toolbar.append(draftBadge, publishAllButton);
-  header.append(title, intro, toolbar);
+  header.append(title, intro, renderGuideIntroSettings(context), toolbar);
 
   const main = document.createElement('div');
   main.className = 'house-guide-editor-main';
@@ -321,7 +324,14 @@ function renderTopicPicker(categoryId, onBack, onOpen) {
     meta.className = 'subtle';
     meta.textContent =
       topic.audience === 'owner' ? `${topic.subtitle} · Owner only` : topic.subtitle;
-    row.append(name, meta);
+    row.append(name);
+    if (topic.hasDraft) {
+      const draftLabel = document.createElement('span');
+      draftLabel.className = 'house-guide-editor-topic-draft';
+      draftLabel.textContent = 'Draft';
+      row.append(draftLabel);
+    }
+    row.append(meta);
     row.addEventListener('click', () => onOpen(topic.id));
     list.append(row);
   }
@@ -379,6 +389,39 @@ function renderTopicEditor(topic, context, handlers) {
       handlers.onTopicChange(topic);
     })
   );
+
+  if (!topic.searchTerms) topic.searchTerms = [];
+  if (!topic.applianceManualTerms) topic.applianceManualTerms = [];
+
+  const metaAdvanced = document.createElement('div');
+  metaAdvanced.className = 'house-guide-editor-meta-advanced';
+  metaAdvanced.append(
+    renderStringList(
+      'Search keywords',
+      topic.searchTerms,
+      (terms) => {
+        topic.searchTerms = terms;
+        handlers.onTopicChange(topic);
+      },
+      'Add keyword',
+      'Keyword'
+    ),
+    renderStringList(
+      'Appliance manual links',
+      topic.applianceManualTerms ?? [],
+      (terms) => {
+        topic.applianceManualTerms = terms;
+        handlers.onTopicChange(topic);
+      },
+      'Add appliance name',
+      'Appliance name'
+    )
+  );
+  const manualHint = document.createElement('p');
+  manualHint.className = 'subtle house-guide-editor-manual-hint';
+  manualHint.textContent =
+    'Appliance names here link to matching manuals in House Guide (must match a published manual name).';
+  metaAdvanced.append(manualHint);
 
   const blocksHeading = document.createElement('h4');
   blocksHeading.className = 'house-guide-editor-blocks-title';
@@ -496,13 +539,7 @@ function renderTopicEditor(topic, context, handlers) {
   saveButton.textContent = 'Save draft';
   saveButton.addEventListener('click', () => {
     saveButton.disabled = true;
-    void saveHouseGuideTopic(topic.id, {
-      title: topic.title,
-      subtitle: topic.subtitle,
-      summary: topic.summary,
-      audience: topic.audience === 'owner' ? 'owner' : 'guest',
-      blocks: topic.blocks
-    }).then((result) => {
+    void saveHouseGuideTopic(topic.id, buildTopicPatch(topic)).then((result) => {
       saveButton.disabled = false;
       if (!result.ok) {
         showToast(context.toast, result.message || 'Could not save.');
@@ -518,13 +555,7 @@ function renderTopicEditor(topic, context, handlers) {
   publishButton.textContent = 'Publish topic';
   publishButton.addEventListener('click', () => {
     publishButton.disabled = true;
-    void saveHouseGuideTopic(topic.id, {
-      title: topic.title,
-      subtitle: topic.subtitle,
-      summary: topic.summary,
-      audience: topic.audience === 'owner' ? 'owner' : 'guest',
-      blocks: topic.blocks
-    })
+    void saveHouseGuideTopic(topic.id, buildTopicPatch(topic))
       .then((saveResult) => {
         if (!saveResult.ok) return saveResult;
         return publishHouseGuideTopicContent(topic.id);
@@ -540,8 +571,74 @@ function renderTopicEditor(topic, context, handlers) {
   });
 
   footer.append(saveButton, publishButton);
-  panel.append(back, heading, metaForm, blocksHeading, blocksHost, addRow, footer);
+  panel.append(back, heading, metaForm, metaAdvanced, blocksHeading, blocksHost, addRow, footer);
   return panel;
+}
+
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ */
+function renderGuideIntroSettings(context) {
+  const catalog = getActiveGuideCatalog();
+  const details = document.createElement('details');
+  details.className = 'house-guide-editor-intro-settings';
+
+  const summary = document.createElement('summary');
+  summary.textContent = 'Guide intro text';
+
+  const form = document.createElement('div');
+  form.className = 'house-guide-editor-intro-form';
+
+  let homeSummaryTitle = catalog.homeSummaryTitle;
+  let homeSummarySubtitle = catalog.homeSummarySubtitle;
+
+  form.append(
+    createEditorField('Home title', homeSummaryTitle, (value) => {
+      homeSummaryTitle = value;
+    }),
+    createEditorField('Home subtitle', homeSummarySubtitle, (value) => {
+      homeSummarySubtitle = value;
+    })
+  );
+
+  const hint = document.createElement('p');
+  hint.className = 'subtle';
+  hint.textContent = 'Shown at the top of House Guide on the dashboard. Updates apply immediately after saving.';
+
+  const saveButton = document.createElement('button');
+  saveButton.type = 'button';
+  saveButton.className = 'button-secondary';
+  saveButton.textContent = 'Save intro';
+  saveButton.addEventListener('click', () => {
+    saveButton.disabled = true;
+    void saveHouseGuideSettings({
+      homeSummaryTitle: homeSummaryTitle.trim(),
+      homeSummarySubtitle: homeSummarySubtitle.trim()
+    }).then((result) => {
+      saveButton.disabled = false;
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Could not save intro.');
+        return;
+      }
+      showToast(context.toast, 'Guide intro saved.');
+    });
+  });
+
+  form.append(hint, saveButton);
+  details.append(summary, form);
+  return details;
+}
+
+function buildTopicPatch(topic) {
+  return {
+    title: topic.title,
+    subtitle: topic.subtitle,
+    summary: topic.summary,
+    audience: topic.audience === 'owner' ? 'owner' : 'guest',
+    searchTerms: (topic.searchTerms ?? []).map((term) => term.trim()).filter(Boolean),
+    applianceManualTerms: (topic.applianceManualTerms ?? []).map((term) => term.trim()).filter(Boolean),
+    blocks: topic.blocks
+  };
 }
 
 /**

@@ -16,8 +16,9 @@ Cloud-hosted House Guide content for owners to edit in the dashboard without cha
 1. Open **Guide Editor** (Owner Mode).
 2. First time only: **Copy current guide to cloud** — imports the bundled JSON catalog into D1.
 3. Pick an area → topic → edit title, blocks, and photos.
-4. **Save draft** — stores unpublished changes.
-5. **Publish topic** or **Publish all changes** — makes updates visible to house sitters and guests.
+4. Optionally expand **Guide intro text** to change the House Guide home title and subtitle.
+5. **Save draft** — stores unpublished changes.
+6. **Publish topic** or **Publish all changes** — makes updates visible to house sitters and guests.
 
 ### Topic visibility
 
@@ -35,6 +36,7 @@ Sitters continue using **House Guide** as before; once cloud content is seeded a
 | `PATCH` | `/api/house-guide/topics/:id` | Save topic draft |
 | `POST` | `/api/house-guide/topics/:id/publish` | Publish one topic |
 | `POST` | `/api/house-guide/publish-all` | Publish all draft topics |
+| `PATCH` | `/api/house-guide/settings` | Update guide home intro text |
 | `POST` | `/api/house-guide/media` | Upload image (multipart) |
 | `GET` | `/api/house-guide/media/:id/file` | Stream uploaded image |
 
@@ -48,7 +50,9 @@ Sitters continue using **House Guide** as before; once cloud content is seeded a
 
 ## Block types in the editor
 
-Paragraph, numbered steps, tips/warnings/notes, details lists, photos (pick existing or upload to R2), locations, expandable sections, and place cards. Private info blocks are preserved but not editable here.
+Paragraph, numbered steps, tips/warnings/notes, details lists, contact cards (with optional links), photos (pick existing or upload to R2), locations, expandable sections, and place cards. Private info blocks are preserved but not editable here.
+
+Topics also support **search keywords** and **appliance manual links** (matching published manual names). Unpublished topic edits show a **Draft** label in the topic list.
 
 ## Migrations
 
