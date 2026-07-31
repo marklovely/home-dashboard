@@ -71,6 +71,14 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'h4',
+        text: 'Share Wi‑Fi and home details'
+      },
+      {
+        type: 'p',
+        text: 'Wi‑Fi passwords, the home address, and similar values live in Worker secrets — they never ship in the app bundle. When a sitter arrives, turn on Settings → Sitter is here → Show Wi‑Fi and home details to sitters. Protected blocks in the House Guide then fill in for sitters. Turn it off when they leave. You can flip this from your phone or laptop too — it applies to the whole home, not just one browser.'
+      },
+      {
+        type: 'h4',
         text: 'Enable before you leave'
       },
       {
