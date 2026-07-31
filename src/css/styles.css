@@ -152,6 +152,29 @@ button { font: inherit; }
   outline-offset: 2px;
 }
 
+.settings-night-schedule {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.settings-night-time-field {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-night-time-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.settings-time-input {
+  color-scheme: dark light;
+}
+
 .settings-lookup-results {
   display: grid;
   gap: 8px;
