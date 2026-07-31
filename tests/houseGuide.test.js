@@ -6,6 +6,13 @@ import {
 } from '../src/content/houseguide/providers/jsonGuideProvider.js';
 import { highlightGuideText } from '../src/widgets/HouseGuide/highlight.js';
 
+describe('guideHaystackMatches and reorder helpers', () => {
+  it('moves list items for drag reorder', async () => {
+    const { moveItem } = await import('../src/apps/HouseGuideEditor/guideEditorReorder.js');
+    expect(moveItem(['a', 'b', 'c'], 0, 2)).toEqual(['b', 'c', 'a']);
+  });
+});
+
 describe('guide service', () => {
   it('returns a meaningful home summary without document counts', () => {
     const summary = getGuideHomeSummary();
@@ -61,5 +68,26 @@ describe('guide service', () => {
     );
     expect(hits[0]?.id).toBe('finding-us');
     expect(guideHaystackMatches('po8 9zz', 'PO89ZZ')).toBe(true);
+  });
+});
+
+describe('guide quick action validation', () => {
+  it('accepts bedtime plus navigate quick actions', async () => {
+    const { validateGuideActions, normalizeGuideActionsForSave } = await import(
+      '../src/apps/HouseGuideEditor/guideEditorActions.js'
+    );
+    const actions = [
+      { type: 'alexa', buttonId: 2, label: 'Alexa bedtime routine' },
+      { type: 'navigate', topicId: 'test-topic', label: 'Test' }
+    ];
+    expect(validateGuideActions(actions)).toBeNull();
+    expect(normalizeGuideActionsForSave(actions)).toEqual(actions);
+  });
+
+  it('reports missing topic links clearly', async () => {
+    const { validateGuideActions } = await import('../src/apps/HouseGuideEditor/guideEditorActions.js');
+    expect(
+      validateGuideActions([{ type: 'navigate', topicId: '', label: 'Test' }])
+    ).toContain('choose a topic to open');
   });
 });

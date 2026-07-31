@@ -116,7 +116,9 @@ export async function loadAssembledGuideCatalog(db, options = {}) {
   }
 
   const categoryRows = (await db.prepare(`SELECT * FROM guide_categories ORDER BY sort_order ASC`).all()).results ?? [];
-  const topicRows = (await db.prepare(`SELECT * FROM guide_topics ORDER BY sort_order ASC`).all()).results ?? [];
+  const topicRows =
+    (await db.prepare(`SELECT * FROM guide_topics ORDER BY category_id ASC, sort_order ASC, title ASC`).all())
+      .results ?? [];
   const mediaRows = (await db.prepare(`SELECT * FROM guide_media ORDER BY id ASC`).all()).results ?? [];
 
   return assembleGuideCatalog({}, settings, categoryRows, topicRows, mediaRows, options);

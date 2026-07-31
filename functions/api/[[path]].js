@@ -156,9 +156,28 @@ export async function onRequest(context) {
 
   const hubApi = env.HUB_API;
   if (hubApi && typeof hubApi === 'object' && 'fetch' in hubApi && typeof hubApi.fetch === 'function') {
-    const upstream = new Request(`https://hub.internal${pathAndQuery}`, init);
-    const response = await hubApi.fetch(upstream);
-    return proxyWorkerResponse(response);
+    try {
+      const upstream = new Request(`https://hub.internal${pathAndQuery}`, init);
+      const response = await hubApi.fetch(upstream);
+      return proxyWorkerResponse(response);
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: 'hub_api_proxy_failed',
+          path: pathAndQuery,
+          detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+        })
+      );
+      return Response.json(
+        {
+          error: {
+            code: 'UPSTREAM_UNAVAILABLE',
+            message: 'Hub API is temporarily unavailable.'
+          }
+        },
+        { status: 502 }
+      );
+    }
   }
 
   const origin = workerApiOrigin(pagesEnv);
@@ -175,6 +194,25 @@ export async function onRequest(context) {
     );
   }
 
-  const response = await fetch(`${origin}${pathAndQuery}`, init);
-  return proxyWorkerResponse(response);
+  try {
+    const response = await fetch(`${origin}${pathAndQuery}`, init);
+    return proxyWorkerResponse(response);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'worker_origin_proxy_failed',
+        path: pathAndQuery,
+        detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+      })
+    );
+    return Response.json(
+      {
+        error: {
+          code: 'UPSTREAM_UNAVAILABLE',
+          message: 'Hub API is temporarily unavailable.'
+        }
+      },
+      { status: 502 }
+    );
+  }
 }
