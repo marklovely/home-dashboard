@@ -169,7 +169,11 @@ function createInteractiveHouseGuide(context) {
   function openTopic(topicId) {
     clearTopicView();
     const topic = getGuideTopic(topicId);
-    if (!topic) return;
+    if (!topic) {
+      if (activeCategoryId) openCategory(activeCategoryId);
+      else showExplore();
+      return;
+    }
 
     const hit = listGuideTopics().find((card) => card.id === topicId);
     if (hit?.categoryId) activeCategoryId = hit.categoryId;
@@ -327,7 +331,7 @@ function createInteractiveHouseGuide(context) {
     openTopic(initialTopic);
   }
 
-  subscribeToRoute((route) => {
+  const unsubscribeRoute = subscribeToRoute((route) => {
     if (route !== 'house-guide') return;
     const routedTopic = getGuideTopicFromRoute();
     if (routedTopic) {
@@ -339,6 +343,8 @@ function createInteractiveHouseGuide(context) {
     if (activeCategoryId) openCategory(activeCategoryId);
     else showExplore();
   });
+
+  root.houseGuideDispose = () => unsubscribeRoute();
 
   return root;
 }
