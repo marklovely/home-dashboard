@@ -257,11 +257,11 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
     blocks: [
       {
         type: 'p',
-        text: 'The editor is plain text only — no bold buttons or WYSIWYG. HTML pasted into fields appears as literal characters, not formatting.'
+        text: 'Paragraph, tip, warning, note, location, expandable, and place description fields support lightweight formatting. Use the toolbar for **bold**, *italic*, links, and emojis — or type Markdown directly.'
       },
       {
         type: 'p',
-        text: 'Line breaks inside one paragraph field do not create separate lines on the sitter page. Use Numbered steps, separate blocks, or Details list instead.'
+        text: 'Line breaks inside a paragraph create separate lines on the sitter page. For a numbered sequence, use a Numbered steps block instead.'
       },
       {
         type: 'h4',
@@ -269,15 +269,15 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Unicode emojis work if you type or paste them (🐕 ✅ ⚠️). There is no emoji picker yet — use your system emoji keyboard. Use sparingly; Warning blocks are clearer than emoji alone for safety.'
+        text: 'Tap 😀 on any formatted field to insert common emojis, or paste from your keyboard. Use sparingly — Warning blocks are clearer than emoji alone for safety.'
       },
       {
         type: 'h4',
-        text: 'Coming later'
+        text: 'Links'
       },
       {
         type: 'p',
-        text: 'Rich text may arrive as emoji picker first, then lightweight Markdown (bold, links) inside paragraph and callout fields — while keeping steps, photos, and warnings as structured blocks.'
+        text: 'Use the Link button or `[label](https://…)` syntax. `tel:` and `mailto:` links work for phone and email. HTML pasted into fields is not supported — stick to Markdown markers.'
       }
     ]
   },

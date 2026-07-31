@@ -507,3 +507,71 @@
     min-height: 44px;
   }
 }
+
+.guide-editor-field-rich {
+  gap: 8px;
+}
+.guide-editor-rich-hint {
+  margin: 0;
+  font-size: 0.82rem;
+}
+.guide-editor-formatting-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.guide-editor-format-button {
+  min-height: 34px;
+  min-width: 34px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.guide-editor-format-button:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.guide-editor-emoji-picker {
+  position: relative;
+}
+.guide-editor-emoji-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.guide-editor-emoji-panel[hidden] {
+  display: none;
+}
+.guide-editor-emoji-option {
+  min-height: 36px;
+  min-width: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+.guide-editor-emoji-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.guide-editor-list-row-rich {
+  display: grid;
+  gap: 6px;
+}
+.guide-editor-list-row-rich input {
+  width: 100%;
+}
