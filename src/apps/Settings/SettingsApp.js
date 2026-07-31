@@ -13,11 +13,11 @@ import {
 } from '../../services/displayPreferencesService.js';
 import {
   getNightModeSetting,
+  getNightModeWindowInputValues,
   nightModeSettingLabel,
-  setNightModeSetting
+  setNightModeSetting,
+  setNightModeWindowFromInputs
 } from '../../services/nightModeService.js';
-import { getActiveTheme, getEffectiveTheme, setActiveTheme } from '../../services/themeService.js';
-import { isHouseSitterExperience } from '../../auth/userMode.js';
 import {
   clearWeatherLocationOverride,
   getWeatherLocationOverride,
@@ -143,10 +143,12 @@ function createHouseSitterModeFields(context, onRefresh) {
 function createAppearanceFields(onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
-  wrap.append(createThemeField(onRefresh), createClockFormatField(onRefresh), createHomeScaleField(onRefresh));
-  if (isHouseSitterExperience()) {
-    wrap.append(createNightModeField(onRefresh));
-  }
+  wrap.append(
+    createThemeField(onRefresh),
+    createClockFormatField(onRefresh),
+    createHomeScaleField(onRefresh),
+    createNightModeField(onRefresh)
+  );
   return wrap;
 }
 
@@ -162,13 +164,13 @@ function createNightModeField(onRefresh) {
   const hint = document.createElement('p');
   hint.className = 'settings-help subtle';
   hint.textContent =
-    'Between midnight and 6am, show a dim clock on a black screen. Tap anywhere to wake the dashboard for five minutes.';
+    'In House Sitter mode, show a dim clock on a black screen during these hours. Tap anywhere to wake the dashboard for five minutes.';
 
   const options = document.createElement('div');
   options.className = 'settings-options';
   const active = getNightModeSetting();
   for (const option of [
-    { id: 'auto', label: 'Auto (midnight – 6am)' },
+    { id: 'auto', label: 'Auto' },
     { id: 'off', label: 'Off' }
   ]) {
     options.append(
@@ -179,8 +181,51 @@ function createNightModeField(onRefresh) {
     );
   }
 
-  wrap.append(hint, options);
+  const schedule = document.createElement('div');
+  schedule.className = 'settings-night-schedule';
+
+  const { start, end } = getNightModeWindowInputValues();
+  const startField = createNightModeTimeField('From', 'night-mode-start', start, onRefresh);
+  const endField = createNightModeTimeField('Until', 'night-mode-end', end, onRefresh);
+
+  schedule.append(startField, endField);
+  wrap.append(hint, options, schedule);
   return wrap;
+}
+
+/**
+ * @param {string} label
+ * @param {string} id
+ * @param {string} value
+ * @param {() => void} onRefresh
+ */
+function createNightModeTimeField(label, id, value, onRefresh) {
+  const field = document.createElement('label');
+  field.className = 'settings-night-time-field';
+  field.htmlFor = id;
+
+  const title = document.createElement('span');
+  title.className = 'settings-night-time-label';
+  title.textContent = label;
+
+  const input = document.createElement('input');
+  input.type = 'time';
+  input.id = id;
+  input.className = 'settings-text-input settings-time-input';
+  input.value = value;
+  input.addEventListener('change', () => {
+    const startInput = document.querySelector('#night-mode-start');
+    const endInput = document.querySelector('#night-mode-end');
+    if (!(startInput instanceof HTMLInputElement) || !(endInput instanceof HTMLInputElement)) return;
+    if (!setNightModeWindowFromInputs(startInput.value, endInput.value)) {
+      input.value = id === 'night-mode-start' ? getNightModeWindowInputValues().start : getNightModeWindowInputValues().end;
+      return;
+    }
+    onRefresh();
+  });
+
+  field.append(title, input);
+  return field;
 }
 
 /** @param {() => void} onRefresh */
@@ -453,9 +498,7 @@ function createAboutField() {
   appendAboutRow(list, 'Theme', themeLabel(), 'theme');
   appendAboutRow(list, 'Clock', clockFormatLabel(), 'clock');
   appendAboutRow(list, 'Home screen', homeScreenScaleLabel(), 'home-scale');
-  if (isHouseSitterExperience()) {
-    appendAboutRow(list, 'Night clock', nightModeSettingLabel(), 'night-mode');
-  }
+  appendAboutRow(list, 'Night clock', nightModeSettingLabel(), 'night-mode');
   if (isOwnerUserMode()) {
     appendAboutRow(list, 'Weather', weatherLocationSummary(), 'weather-location');
   }
