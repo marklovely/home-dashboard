@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assembleGuideCatalog } from '../src/houseGuide/assembleCatalog.js';
 import { sanitizeGuideActions } from '../src/houseGuide/sanitize.js';
-import { createEmptyGuideBlock } from '../../src/apps/HouseGuideEditor/guideEditorUi.js';
+import { createEmptyGuideBlock } from '../../src/apps/HouseGuideEditor/guideEditorBlockDefaults.js';
 
 describe('assembleGuideCatalog', () => {
   it('builds published catalog for sitters', () => {
