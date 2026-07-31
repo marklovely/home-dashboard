@@ -19,6 +19,10 @@ Cloud-hosted House Guide content for owners to edit in the dashboard without cha
 4. **Save draft** — stores unpublished changes.
 5. **Publish topic** or **Publish all changes** — makes updates visible to house sitters and guests.
 
+### Topic visibility
+
+Each topic can be set to **House sitters and guests** (default) or **Owner notes only**. Owner-only topics are hidden from the published catalog that sitters receive; owners still see them in the editor and in draft catalog mode.
+
 Sitters continue using **House Guide** as before; once cloud content is seeded and published, they read from the API instead of the static JSON bundle.
 
 ## API (Owner Mode unless noted)
@@ -44,4 +48,12 @@ Sitters continue using **House Guide** as before; once cloud content is seeded a
 
 ## Block types in the editor
 
-Paragraph, numbered steps, tips/warnings/notes, details lists, photos, locations, and expandable sections. Private info blocks and place cards are preserved but not fully editable in v1.
+Paragraph, numbered steps, tips/warnings/notes, details lists, photos (pick existing or upload to R2), locations, expandable sections, and place cards. Private info blocks are preserved but not editable here.
+
+## Migrations
+
+After pulling updates, apply new D1 migrations:
+
+```bash
+cd worker && npx wrangler d1 migrations apply lovely-home-appliance-manuals --remote
+```
