@@ -158,5 +158,10 @@ describe('guide editor blocks', () => {
       address: '',
       dogFriendly: false
     });
+    expect(createEmptyGuideBlock('contact').items?.[0]).toMatchObject({
+      label: '',
+      value: '',
+      href: ''
+    });
   });
 });

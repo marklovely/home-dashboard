@@ -176,6 +176,37 @@ export async function publishAllHouseGuideTopics({ fetchImpl = fetch } = {}) {
 }
 
 /**
+ * @param {{ homeSummaryTitle?: string, homeSummarySubtitle?: string }} patch
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function patchHouseGuideSettings(patch, { fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Could not save guide settings.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl('/api/house-guide/settings'),
+      withApiCredentials({
+        method: 'PATCH',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch)
+      })
+    );
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+    }
+
+    const data = await response.json();
+    return { ok: true, status: 200, message: '', data };
+  } catch {
+    return { ok: false, status: 503, message: 'Could not save guide settings.', data: null };
+  }
+}
+
+/**
  * @param {string} mediaId
  */
 export function buildHouseGuideMediaUrl(mediaId) {
