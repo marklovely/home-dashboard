@@ -14,6 +14,7 @@ import {
 import { getJsonCatalog } from '../content/houseguide/providers/jsonGuideProvider.js';
 import { getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
 import { isOwnerUserMode } from '../auth/userMode.js';
+import { cacheGuideCatalogForOffline } from './guideOfflineCache.js';
 
 /** @typedef {'idle' | 'loading' | 'json' | 'remote' | 'unavailable'} GuideContentSource */
 
@@ -144,6 +145,9 @@ export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
     catalog: normalizeRemoteCatalog(payload.catalog),
     message: ''
   };
+  if (!draft) {
+    cacheGuideCatalogForOffline(state.catalog);
+  }
   notify();
   return state;
 }

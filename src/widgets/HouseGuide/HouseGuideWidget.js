@@ -8,6 +8,12 @@ import {
 } from '../../services/guideService.js';
 import { consumePendingGuideTopic } from '../../services/guideNavigation.js';
 import {
+  getCurrentRoute,
+  getGuideTopicFromRoute,
+  navigate,
+  subscribeToRoute
+} from '../../shell/router.js';
+import {
   renderGuideCategoryCard,
   renderGuideTopicList,
   renderGuideTopicPage
@@ -96,6 +102,8 @@ function createInteractiveHouseGuide(context) {
   let viewMode = 'explore';
   /** @type {string | null} */
   let activeCategoryId = null;
+  /** @type {string | null} */
+  let activeTopicId = null;
   /** @type {(() => void) | null} */
   let activeTopicCleanup = null;
   /** @type {(HTMLElement & { cleanup?: () => void }) | null} */
@@ -108,10 +116,22 @@ function createInteractiveHouseGuide(context) {
     activeManualViewer = null;
   }
 
+  /**
+   * @param {string | null} topicId
+   */
+  function syncGuideTopicRoute(topicId) {
+    if (getCurrentRoute() !== 'house-guide') return;
+    const routedTopic = getGuideTopicFromRoute();
+    if ((topicId ?? null) === (routedTopic ?? null)) return;
+    navigate('house-guide', { guideTopicId: topicId });
+  }
+
   function showExplore() {
     clearTopicView();
     viewMode = 'explore';
     activeCategoryId = null;
+    activeTopicId = null;
+    syncGuideTopicRoute(null);
     topicHost.hidden = true;
     topicHost.inert = true;
     topicHost.replaceChildren();
@@ -123,6 +143,8 @@ function createInteractiveHouseGuide(context) {
 
   function openCategory(categoryId) {
     clearTopicView();
+    activeTopicId = null;
+    syncGuideTopicRoute(null);
     const category = getGuideCategory(categoryId);
     if (!category) return;
 
@@ -153,6 +175,8 @@ function createInteractiveHouseGuide(context) {
     if (hit?.categoryId) activeCategoryId = hit.categoryId;
 
     viewMode = 'topic';
+    activeTopicId = topicId;
+    syncGuideTopicRoute(topicId);
     exploreView.hidden = true;
     exploreView.inert = true;
     topicHost.hidden = false;
@@ -298,10 +322,24 @@ function createInteractiveHouseGuide(context) {
   showExplore();
   void refreshGuideContent(fetch, { draft: false, force: true });
   void refreshApplianceManuals(fetch, { owner: false, force: true });
-  const pendingTopic = consumePendingGuideTopic();
-  if (pendingTopic) {
-    openTopic(pendingTopic);
+  const initialTopic = consumePendingGuideTopic() ?? getGuideTopicFromRoute();
+  if (initialTopic) {
+    openTopic(initialTopic);
   }
+
+  subscribeToRoute((route) => {
+    if (route !== 'house-guide') return;
+    const routedTopic = getGuideTopicFromRoute();
+    if (routedTopic) {
+      if (routedTopic !== activeTopicId) openTopic(routedTopic);
+      return;
+    }
+    if (!activeTopicId || viewMode !== 'topic') return;
+    activeTopicId = null;
+    if (activeCategoryId) openCategory(activeCategoryId);
+    else showExplore();
+  });
+
   return root;
 }
 
