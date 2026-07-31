@@ -596,3 +596,60 @@ function renderKeyValueList(items, onChange, allowHref = false) {
   wrap.append(list, add);
   return wrap;
 }
+
+/**
+ * @param {string} value
+ * @returns {string[]}
+ */
+export function parseGuideCommaList(value) {
+  return value
+    .split(/[,;\n]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/**
+ * @param {string[] | undefined} items
+ */
+export function formatGuideCommaList(items) {
+  return (items ?? []).join(', ');
+}
+
+/**
+ * @param {string} label
+ * @param {string[]} items
+ * @param {(items: string[]) => void} onChange
+ * @param {{ placeholder?: string, hint?: string }} [options]
+ */
+export function createCommaSeparatedField(label, items, onChange, options = {}) {
+  const wrap = document.createElement('label');
+  wrap.className = 'guide-editor-field guide-editor-comma-field';
+
+  const span = document.createElement('span');
+  span.textContent = label;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'guide-editor-comma-input';
+  input.value = formatGuideCommaList(items);
+  input.placeholder = options.placeholder ?? 'Separate with commas';
+
+  function commit() {
+    const parsed = parseGuideCommaList(input.value);
+    input.value = formatGuideCommaList(parsed);
+    onChange(parsed);
+  }
+
+  input.addEventListener('change', commit);
+  input.addEventListener('blur', commit);
+
+  wrap.append(span, input);
+  if (options.hint) {
+    const hint = document.createElement('p');
+    hint.className = 'subtle guide-editor-field-hint';
+    hint.textContent = options.hint;
+    wrap.append(hint);
+  }
+
+  return wrap;
+}

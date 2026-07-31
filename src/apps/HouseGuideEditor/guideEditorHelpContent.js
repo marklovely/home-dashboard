@@ -187,7 +187,7 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Add keywords for synonyms and brand names: Netflix, kettle, Alexa, bbq, charger. Publish after adding keywords.'
+        text: 'At the bottom of each topic, add comma-separated keywords for synonyms and brand names: Netflix, kettle, Alexa, bbq, charger. Publish after editing.'
       }
     ]
   },

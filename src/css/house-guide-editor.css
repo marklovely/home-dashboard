@@ -442,12 +442,103 @@
 .house-guide-editor-add-select {
   flex: 1 1 220px;
 }
+.house-guide-editor-discovery {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.guide-editor-comma-input {
+  font-size: 0.96rem;
+}
+.guide-editor-field-hint {
+  margin: 0;
+  line-height: 1.45;
+  font-size: 0.82rem;
+}
+.house-guide-editor-app .button-primary,
+.house-guide-editor-app .button-secondary {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.house-guide-editor-app .button-primary {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(135deg, #9b8cff 0%, #7b66ff 100%);
+  box-shadow: 0 8px 20px rgba(123, 102, 255, 0.28);
+}
+.house-guide-editor-app .button-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(123, 102, 255, 0.34);
+}
+.house-guide-editor-app .button-primary:disabled,
+.house-guide-editor-app .button-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+.house-guide-editor-app .button-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+.house-guide-editor-app .button-secondary:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.house-guide-editor-app .button-danger {
+  border-color: rgba(255, 95, 109, 0.42);
+  color: #ffb8c0;
+  background: rgba(255, 95, 109, 0.08);
+}
+.house-guide-editor-app .button-danger:hover {
+  background: rgba(255, 95, 109, 0.14);
+  border-color: rgba(255, 95, 109, 0.55);
+}
 .house-guide-editor-footer {
   display: flex;
   flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 20px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.house-guide-editor-footer-primary {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
+  align-items: center;
+}
+.house-guide-editor-footer-delete {
+  margin-left: auto;
+}
+.house-guide-editor-add-block .button-secondary {
+  min-width: 88px;
+}
+.guide-editor-list-remove,
+.guide-editor-list-add {
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 0.84rem;
+  border-radius: 999px;
 }
 .guide-editor-photo-block {
   display: grid;
