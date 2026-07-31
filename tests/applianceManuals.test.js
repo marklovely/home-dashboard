@@ -248,4 +248,28 @@ describe('Owner controls hidden during session loading', () => {
     expect(viewport.textContent).toContain('Loading');
     expect(viewport.textContent).not.toContain('Add manual');
   });
+
+  it('opens the add manual dialog when Add manual is clicked', async () => {
+    await bootstrapDeviceSession(
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ authenticated: true, mode: 'owner', ownerSessionExpiresAt: null })
+      }))
+    );
+
+    const { applianceManualsApp } = await import('../src/apps/ApplianceManuals/ApplianceManualsApp.js');
+    const viewport = document.getElementById('viewport');
+    applianceManualsApp.mount(viewport, {});
+
+    const addButton = /** @type {HTMLButtonElement | null} */ (
+      viewport.querySelector('.appliance-manuals-owner-header .button-primary')
+    );
+    expect(addButton?.textContent).toBe('Add manual');
+    addButton?.click();
+
+    const dialog = viewport.querySelector('dialog.appliance-manuals-dialog');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.textContent).toContain('Manual title');
+  });
 });

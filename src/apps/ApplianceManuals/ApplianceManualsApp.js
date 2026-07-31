@@ -224,7 +224,7 @@ function renderPage(page) {
         setApplianceManualsOwnerDraftOpen(false);
       }
     });
-    dialogHost.append(dialog);
+    presentDialog(dialogHost, dialog);
   }
 
   /**
@@ -233,7 +233,7 @@ function renderPage(page) {
   function openReplaceDialog(manual) {
     closeDialog();
     const dialog = createReplaceDialog(manual, closeDialog);
-    dialogHost.append(dialog);
+    presentDialog(dialogHost, dialog);
   }
 
   /**
@@ -242,10 +242,14 @@ function renderPage(page) {
   function openDeleteDialog(manual) {
     closeDialog();
     const dialog = createDeleteDialog(manual, closeDialog);
-    dialogHost.append(dialog);
+    presentDialog(dialogHost, dialog);
   }
 
   function closeDialog() {
+    const openDialog = dialogHost.querySelector('dialog');
+    if (openDialog instanceof HTMLDialogElement && openDialog.open) {
+      openDialog.close();
+    }
     dialogHost.replaceChildren();
   }
 
@@ -359,7 +363,7 @@ function createFormDialog(options) {
   form.append(actions);
 
   cancel.addEventListener('click', () => options.onClose());
-  form.addEventListener('close', () => options.onClose());
+  dialog.addEventListener('close', () => options.onClose());
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -406,7 +410,6 @@ function createFormDialog(options) {
     event.preventDefault();
     options.onClose();
   });
-  dialog.showModal();
   return dialog;
 }
 
@@ -473,8 +476,20 @@ function createReplaceDialog(manual, onClose) {
   });
 
   dialog.append(form);
-  dialog.showModal();
   return dialog;
+}
+
+/**
+ * @param {HTMLElement} host
+ * @param {HTMLDialogElement} dialog
+ */
+function presentDialog(host, dialog) {
+  host.replaceChildren(dialog);
+  if (typeof dialog.showModal === 'function') {
+    dialog.showModal();
+    return;
+  }
+  dialog.setAttribute('open', '');
 }
 
 /**
@@ -518,7 +533,6 @@ function createDeleteDialog(manual, onClose) {
   });
 
   dialog.append(title, copy, actions);
-  dialog.showModal();
   return dialog;
 }
 
