@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
   appendWifiQrSectionIfNeeded,
+  resolveGuideTopicHeader,
   shouldSkipStaleGuideBlock,
   topicShouldIncludeWifiQr
 } from '../src/widgets/HouseGuide/guideTopicWifiQr.js';
@@ -35,6 +36,32 @@ describe('guideTopicWifiQr', () => {
         content: 'A Wi-Fi QR code will appear here once secure house-sitter access is enabled.'
       })
     ).toBe(true);
+  });
+
+  it('replaces stale QR topic header copy when Wi-Fi credentials are available', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+    await preloadPrivateConfig(
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          wifi: { ssid: 'GuestNet', password: 'secret-pass' }
+        })
+      })
+    );
+
+    expect(
+      resolveGuideTopicHeader({
+        id: 'qr-code-placeholder',
+        title: 'QR Code',
+        subtitle: 'Quick join (coming soon)',
+        summary: 'Scan to connect',
+        blocks: []
+      })
+    ).toEqual({
+      title: 'QR Code',
+      subtitle: 'Scan to join Wi‑Fi',
+      summary: 'Quick join'
+    });
   });
 
   it('appends a live QR section for connecting even without a wifiQr block', async () => {
