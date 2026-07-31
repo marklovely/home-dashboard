@@ -1,3 +1,70 @@
+export const SITE_BACKUP_FORMAT_VERSION = 1;
+
+/**
+ * Strip runtime-only fields from an assembled guide catalog.
+ *
+ * @param {Record<string, unknown>} catalog
+ */
+export function catalogToImportFormat(catalog) {
+  /** @type {Record<string, { alt: string, file?: string }>} */
+  const media = {};
+  for (const [id, asset] of Object.entries(catalog.media ?? {})) {
+    const entry = /** @type {{ alt?: string, file?: string }} */ (asset);
+    media[id] = {
+      alt: entry.alt ?? '',
+      ...(entry.file ? { file: entry.file } : {})
+    };
+  }
+
+  return {
+    version: catalog.version ?? 2,
+    homeSummaryTitle: catalog.homeSummaryTitle,
+    homeSummarySubtitle: catalog.homeSummarySubtitle ?? '',
+    media,
+    categories: catalog.categories ?? []
+  };
+}
+
+/**
+ * @param {Record<string, unknown> | null | undefined} catalog
+ * @returns {{ id: string, alt: string }[]}
+ */
+export function uploadedMediaFromCatalog(catalog) {
+  if (!catalog?.media) return [];
+  /** @type {{ id: string, alt: string }[]} */
+  const uploaded = [];
+  for (const [id, asset] of Object.entries(catalog.media)) {
+    const entry = /** @type {{ alt?: string, hasUpload?: boolean }} */ (asset);
+    if (entry.hasUpload) {
+      uploaded.push({ id, alt: entry.alt ?? '' });
+    }
+  }
+  return uploaded;
+}
+
+/**
+ * @param {{ seeded?: boolean, catalog?: Record<string, unknown> | null, uploadedMedia?: { id: string, alt: string }[] }} guide
+ * @param {{ sitterSecretsDisclosed?: boolean }} [siteSettings]
+ */
+export function buildSiteBackupDocument(guide, siteSettings = {}) {
+  const catalog = guide.catalog ? catalogToImportFormat(guide.catalog) : null;
+  const uploadedMedia =
+    guide.uploadedMedia?.length ? guide.uploadedMedia : uploadedMediaFromCatalog(guide.catalog);
+
+  return {
+    formatVersion: SITE_BACKUP_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    siteSettings: {
+      sitterSecretsDisclosed: Boolean(siteSettings.sitterSecretsDisclosed)
+    },
+    guide: {
+      seeded: Boolean(guide.seeded ?? catalog?.categories?.length),
+      catalog,
+      uploadedMedia
+    }
+  };
+}
+
 /**
  * @param {string} filename
  * @param {unknown} data

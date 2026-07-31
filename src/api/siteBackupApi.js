@@ -1,5 +1,8 @@
 import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
+import { fetchHouseGuideCatalog, importHouseGuideCatalog } from './houseGuideApi.js';
+import { fetchHouseSettings, postSitterSecretsDisclosed } from './houseSettingsApi.js';
+import { buildSiteBackupDocument } from '../utils/backupJson.js';
 
 /**
  * @param {Response} response
@@ -14,6 +17,83 @@ async function readErrorMessage(response) {
     /* ignore */
   }
   return 'Request failed';
+}
+
+/**
+ * @param {typeof fetch} fetchImpl
+ */
+async function readSiteSettings(fetchImpl) {
+  const settingsResult = await fetchHouseSettings(fetchImpl);
+  return settingsResult.ok ? settingsResult.data : { sitterSecretsDisclosed: false };
+}
+
+/**
+ * @param {typeof fetch} fetchImpl
+ */
+async function fetchSiteBackupFromLegacyApis(fetchImpl) {
+  const [catalogResult, siteSettings] = await Promise.all([
+    fetchHouseGuideCatalog({ fetchImpl, draft: true }),
+    readSiteSettings(fetchImpl)
+  ]);
+
+  if (!catalogResult.ok) {
+    return {
+      ok: false,
+      status: catalogResult.status,
+      message: catalogResult.message || 'Could not export backup.',
+      data: null
+    };
+  }
+
+  const payload = catalogResult.data;
+  return {
+    ok: true,
+    status: 200,
+    message: '',
+    data: buildSiteBackupDocument(
+      {
+        seeded: payload?.seeded,
+        catalog: payload?.catalog ?? null
+      },
+      siteSettings
+    )
+  };
+}
+
+/**
+ * @param {Record<string, unknown>} backup
+ * @param {typeof fetch} fetchImpl
+ */
+async function restoreSiteBackupLegacy(backup, fetchImpl) {
+  if (backup.siteSettings?.sitterSecretsDisclosed !== undefined) {
+    const settingsResult = await postSitterSecretsDisclosed(
+      Boolean(backup.siteSettings.sitterSecretsDisclosed),
+      fetchImpl
+    );
+    if (!settingsResult.ok) {
+      return {
+        ok: false,
+        status: settingsResult.status,
+        message: settingsResult.message || 'Could not restore site settings.',
+        data: null
+      };
+    }
+  }
+
+  const catalog = backup.guide?.catalog;
+  if (catalog && Array.isArray(catalog.categories)) {
+    const importResult = await importHouseGuideCatalog(catalog, { fetchImpl });
+    if (!importResult.ok) {
+      return {
+        ok: false,
+        status: importResult.status,
+        message: importResult.message || 'Restore failed.',
+        data: null
+      };
+    }
+  }
+
+  return fetchSiteBackup({ fetchImpl });
 }
 
 /**
@@ -34,12 +114,51 @@ export async function fetchSiteBackup({ fetchImpl = fetch } = {}) {
       })
     );
 
-    if (!response.ok) {
+    if (response.ok) {
+      const data = await response.json();
+      return { ok: true, status: 200, message: '', data };
+    }
+
+    if (response.status !== 404) {
       return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
     }
 
-    const data = await response.json();
-    return { ok: true, status: 200, message: '', data };
+    const exportResponse = await fetchImpl(
+      buildApiUrl('/api/house-guide/export'),
+      withApiCredentials({
+        headers: { Accept: 'application/json' },
+        cache: 'no-store'
+      })
+    );
+
+    if (exportResponse.ok) {
+      const exportData = await exportResponse.json();
+      const siteSettings = await readSiteSettings(fetchImpl);
+      return {
+        ok: true,
+        status: 200,
+        message: '',
+        data: buildSiteBackupDocument(
+          {
+            seeded: true,
+            catalog: exportData.catalog ?? null,
+            uploadedMedia: exportData.uploadedMedia
+          },
+          siteSettings
+        )
+      };
+    }
+
+    if (exportResponse.status !== 404) {
+      return {
+        ok: false,
+        status: exportResponse.status,
+        message: await readErrorMessage(exportResponse),
+        data: null
+      };
+    }
+
+    return fetchSiteBackupFromLegacyApis(fetchImpl);
   } catch {
     return { ok: false, status: 503, message: 'Backup is temporarily unavailable.', data: null };
   }
@@ -66,12 +185,16 @@ export async function restoreSiteBackup(backup, { fetchImpl = fetch } = {}) {
       })
     );
 
-    if (!response.ok) {
+    if (response.ok) {
+      const data = await response.json();
+      return { ok: true, status: 200, message: '', data };
+    }
+
+    if (response.status !== 404) {
       return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
     }
 
-    const data = await response.json();
-    return { ok: true, status: 200, message: '', data };
+    return restoreSiteBackupLegacy(backup, fetchImpl);
   } catch {
     return { ok: false, status: 503, message: 'Restore is temporarily unavailable.', data: null };
   }
