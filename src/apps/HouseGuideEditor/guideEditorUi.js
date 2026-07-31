@@ -486,7 +486,7 @@ export function renderStringList(label, items, onChange, addLabel = 'Add item', 
         onChange(currentItems);
         render();
       });
-      row.append(input, remove);
+      row.append(remove);
       list.append(row);
     });
   }

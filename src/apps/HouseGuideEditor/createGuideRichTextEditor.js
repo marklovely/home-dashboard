@@ -53,7 +53,6 @@ export function createGuideRichTextEditor(label, value, onChange, options = {}) 
 
   void mountEditor({
     shell,
-    heading,
     wrap,
     value,
     onChange,
@@ -75,14 +74,13 @@ export function createGuideRichTextEditor(label, value, onChange, options = {}) 
 /**
  * @param {object} params
  * @param {HTMLElement} params.shell
- * @param {HTMLElement} params.heading
  * @param {HTMLElement} params.wrap
  * @param {string} params.value
  * @param {(value: string) => void} params.onChange
  * @param {{ compact?: boolean }} params.options
  * @param {(editor: import('@tiptap/core').Editor) => void} params.setEditor
  */
-async function mountEditor({ shell, heading, wrap, value, onChange, options, setEditor }) {
+async function mountEditor({ shell, wrap, value, onChange, options, setEditor }) {
   const [{ Editor }, { default: StarterKit }, { default: Link }] = await loadEditorModules();
 
   shell.replaceChildren();
