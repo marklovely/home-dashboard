@@ -59,6 +59,45 @@
 .house-guide-editor-topic-name {
   font-weight: 700;
 }
+.house-guide-editor-topic-draft {
+  justify-self: start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f4b64f;
+  border: 1px solid color-mix(in srgb, #f4b64f 45%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.house-guide-editor-intro-settings {
+  margin-top: 4px;
+}
+.house-guide-editor-intro-settings summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--muted);
+}
+.house-guide-editor-intro-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.house-guide-editor-meta-advanced {
+  display: grid;
+  gap: 16px;
+}
+.house-guide-editor-manual-hint {
+  margin: -6px 0 0;
+}
+.guide-editor-contact-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr auto;
+  gap: 8px;
+  align-items: center;
+}
 .house-guide-editor-topic {
   display: grid;
   gap: 16px;
@@ -193,7 +232,8 @@
   width: auto;
 }
 @media (max-width: 620px) {
-  .guide-editor-kv-row {
+  .guide-editor-kv-row,
+  .guide-editor-contact-row {
     grid-template-columns: 1fr;
   }
 }

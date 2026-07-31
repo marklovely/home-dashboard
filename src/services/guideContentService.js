@@ -2,6 +2,7 @@ import {
   fetchHouseGuideCatalog,
   importHouseGuideCatalog,
   patchHouseGuideTopic,
+  patchHouseGuideSettings,
   publishAllHouseGuideTopics,
   publishHouseGuideTopic
 } from '../api/houseGuideApi.js';
@@ -204,6 +205,18 @@ export async function publishHouseGuideTopicContent(topicId, fetchImpl = fetch) 
  */
 export async function publishAllHouseGuideChanges(fetchImpl = fetch) {
   const result = await publishAllHouseGuideTopics({ fetchImpl });
+  if (result.ok) {
+    await refreshGuideContent(fetchImpl, { draft: true, force: true });
+  }
+  return result;
+}
+
+/**
+ * @param {{ homeSummaryTitle?: string, homeSummarySubtitle?: string }} patch
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function saveHouseGuideSettings(patch, fetchImpl = fetch) {
+  const result = await patchHouseGuideSettings(patch, { fetchImpl });
   if (result.ok) {
     await refreshGuideContent(fetchImpl, { draft: true, force: true });
   }

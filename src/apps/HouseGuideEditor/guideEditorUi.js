@@ -34,7 +34,8 @@ export const EDITABLE_BLOCK_TYPES = [
   'heroImage',
   'location',
   'collapsible',
-  'place'
+  'place',
+  'contact'
 ];
 
 /**
@@ -60,6 +61,8 @@ export function createEmptyGuideBlock(type) {
       return { type: 'collapsible', heading: '', content: '' };
     case 'place':
       return { type: 'place', name: '', address: '', description: '', dogFriendly: false, website: '' };
+    case 'contact':
+      return { type: 'contact', heading: '', items: [{ label: '', value: '', href: '' }] };
     default:
       return { type: 'text', content: '' };
   }
@@ -93,7 +96,7 @@ export function renderGuideBlockEditor(block, onChange, mediaIds, options = {}) 
     );
   } else if (block.type === 'steps') {
     body.append(createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value })));
-    body.append(renderStringList('Steps', block.steps ?? [], (steps) => onChange({ ...block, steps })));
+    body.append(renderStringList('Steps', block.steps ?? [], (steps) => onChange({ ...block, steps }), 'Add step'));
   } else if (block.type === 'tip' || block.type === 'warning' || block.type === 'note') {
     body.append(
       createField('Heading (optional)', block.heading ?? '', (value) => onChange({ ...block, heading: value })),
@@ -320,8 +323,9 @@ function createMediaSelect(label, value, options, onChange) {
  * @param {string} label
  * @param {string[]} items
  * @param {(items: string[]) => void} onChange
+ * @param {string} [addLabel]
  */
-function renderStringList(label, items, onChange) {
+export function renderStringList(label, items, onChange, addLabel = 'Add item') {
   const wrap = document.createElement('div');
   wrap.className = 'guide-editor-list';
   const heading = document.createElement('span');
@@ -364,7 +368,7 @@ function renderStringList(label, items, onChange) {
   const add = document.createElement('button');
   add.type = 'button';
   add.className = 'button-secondary guide-editor-list-add';
-  add.textContent = 'Add step';
+  add.textContent = addLabel;
   add.addEventListener('click', () => onChange([...items, '']));
 
   wrap.append(list, add);
@@ -386,7 +390,7 @@ function renderKeyValueList(items, onChange, allowHref = false) {
     list.replaceChildren();
     items.forEach((item, index) => {
       const row = document.createElement('div');
-      row.className = 'guide-editor-kv-row';
+      row.className = allowHref ? 'guide-editor-contact-row' : 'guide-editor-kv-row';
       const label = document.createElement('input');
       label.type = 'text';
       label.placeholder = 'Label';
@@ -395,17 +399,30 @@ function renderKeyValueList(items, onChange, allowHref = false) {
       value.type = 'text';
       value.placeholder = 'Value';
       value.value = item.value;
+      /** @type {HTMLInputElement | null} */
+      let href = null;
+      if (allowHref) {
+        href = document.createElement('input');
+        href.type = 'text';
+        href.placeholder = 'Link (optional, e.g. tel:… or https://…)';
+        href.value = item.href ?? '';
+      }
       const update = () => {
         const next = [...items];
-        next[index] = {
+        const rowValue = {
           label: label.value,
-          value: value.value,
-          ...(allowHref && item.href !== undefined ? { href: item.href } : {})
+          value: value.value
         };
+        if (allowHref && href) {
+          const hrefValue = href.value.trim();
+          if (hrefValue) rowValue.href = hrefValue;
+        }
+        next[index] = rowValue;
         onChange(next);
       };
       label.addEventListener('input', update);
       value.addEventListener('input', update);
+      href?.addEventListener('input', update);
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'button-secondary guide-editor-list-remove';
@@ -413,7 +430,11 @@ function renderKeyValueList(items, onChange, allowHref = false) {
       remove.addEventListener('click', () => {
         onChange(items.filter((_, i) => i !== index));
       });
-      row.append(label, value, remove);
+      if (href) {
+        row.append(label, value, href, remove);
+      } else {
+        row.append(label, value, remove);
+      }
       list.append(row);
     });
   }
@@ -424,7 +445,9 @@ function renderKeyValueList(items, onChange, allowHref = false) {
   add.type = 'button';
   add.className = 'button-secondary guide-editor-list-add';
   add.textContent = 'Add row';
-  add.addEventListener('click', () => onChange([...items, { label: '', value: '' }]));
+  add.addEventListener('click', () =>
+    onChange([...items, allowHref ? { label: '', value: '', href: '' } : { label: '', value: '' }])
+  );
 
   wrap.append(list, add);
   return wrap;
