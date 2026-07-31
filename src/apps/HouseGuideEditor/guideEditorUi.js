@@ -2,7 +2,8 @@
 
 import { buildHouseGuideMediaUrl } from '../../api/houseGuideApi.js';
 import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
-import { createGuideEditorFormattingBar } from './guideEditorFormatting.js';
+import { createGuideRichTextEditor } from './createGuideRichTextEditor.js';
+import { createGuideEmojiPicker } from './createGuideEmojiPicker.js';
 
 /**
  * @typedef {Object} GuideBlockEditorOptions
@@ -373,7 +374,7 @@ function createField(label, value, onChange, options = {}) {
 
   wrap.append(span);
   if (options.emoji) {
-    wrap.append(createGuideEditorFormattingBar(() => input, { richText: false }), input);
+    wrap.append(createGuideEmojiPicker(() => input), input);
   } else {
     wrap.append(input);
   }
@@ -386,24 +387,7 @@ function createField(label, value, onChange, options = {}) {
  * @param {(value: string) => void} onChange
  */
 function createRichTextArea(label, value, onChange) {
-  const wrap = document.createElement('label');
-  wrap.className = 'guide-editor-field guide-editor-field-rich';
-  const span = document.createElement('span');
-  span.textContent = label;
-  const textarea = document.createElement('textarea');
-  textarea.rows = 4;
-  textarea.value = value;
-  textarea.addEventListener('input', () => onChange(textarea.value));
-  const hint = document.createElement('p');
-  hint.className = 'subtle guide-editor-rich-hint';
-  hint.textContent = 'Use **bold**, *italic*, [links](https://), line breaks, and emojis.';
-  wrap.append(
-    span,
-    createGuideEditorFormattingBar(() => textarea),
-    textarea,
-    hint
-  );
-  return wrap;
+  return createGuideRichTextEditor(label, value, onChange);
 }
 
 /**
@@ -454,28 +438,44 @@ export function renderStringList(label, items, onChange, addLabel = 'Add item', 
   list.className = 'guide-editor-list-items';
 
   let currentItems = items.length ? [...items] : [];
+  /** @type {Array<() => void>} */
+  let destroyEditors = [];
 
   function render() {
+    for (const destroy of destroyEditors) {
+      destroy();
+    }
+    destroyEditors = [];
     list.replaceChildren();
     currentItems.forEach((item, index) => {
       const row = document.createElement('div');
       row.className = 'guide-editor-list-row guide-editor-list-row-rich';
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = item;
-      input.placeholder = itemPlaceholder ?? `Item ${index + 1}`;
-      input.addEventListener('input', () => {
-        currentItems = [...currentItems];
-        currentItems[index] = input.value;
-        onChange(currentItems);
-      });
-      if (options.richText || options.emoji) {
-        row.append(
-          createGuideEditorFormattingBar(() => input, { richText: options.richText !== false }),
-          input
-        );
+
+      if (options.richText) {
+        const editor = createGuideRichTextEditor(`Step ${index + 1}`, item, (next) => {
+          currentItems = [...currentItems];
+          currentItems[index] = next;
+          onChange(currentItems);
+        }, { compact: true });
+        if (editor.destroyEditor) {
+          destroyEditors.push(editor.destroyEditor);
+        }
+        row.append(editor);
       } else {
-        row.append(input);
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = item;
+        input.placeholder = itemPlaceholder ?? `Item ${index + 1}`;
+        input.addEventListener('input', () => {
+          currentItems = [...currentItems];
+          currentItems[index] = input.value;
+          onChange(currentItems);
+        });
+        if (options.emoji) {
+          row.append(createGuideEmojiPicker(() => input), input);
+        } else {
+          row.append(input);
+        }
       }
       const remove = document.createElement('button');
       remove.type = 'button';

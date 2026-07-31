@@ -257,11 +257,11 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
     blocks: [
       {
         type: 'p',
-        text: 'Paragraph, tip, warning, note, location, expandable, and place description fields support lightweight formatting. Use the toolbar for **bold**, *italic*, links, and emojis — or type Markdown directly.'
+        text: 'Paragraph, tip, warning, note, location, expandable, and place description fields use a word-processor style editor — bold, lists, links, and emojis. What you see is what sitters get.'
       },
       {
         type: 'p',
-        text: 'Line breaks inside a paragraph create separate lines on the sitter page. For a numbered sequence, use a Numbered steps block instead.'
+        text: 'Press Enter for a new paragraph. Use the toolbar for formatting — no special codes or Markdown syntax.'
       },
       {
         type: 'h4',
@@ -269,7 +269,7 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Tap 😀 on any formatted field to insert common emojis, or paste from your keyboard. Use sparingly — Warning blocks are clearer than emoji alone for safety.'
+        text: 'Tap 😀 in the toolbar to open the full emoji picker. Use sparingly — Warning blocks are clearer than emoji alone for safety.'
       },
       {
         type: 'h4',
@@ -277,7 +277,7 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Use the Link button or `[label](https://…)` syntax. `tel:` and `mailto:` links work for phone and email. HTML pasted into fields is not supported — stick to Markdown markers.'
+        text: 'Use the Link button for https://, tel:, or mailto: URLs. Paste from Word or email is fine — extra formatting is stripped automatically.'
       }
     ]
   },
