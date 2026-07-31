@@ -6,18 +6,17 @@ import { requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
  * @param {typeof fetch} fetchImpl
  */
 export async function handleCalendar(request, env, fetchImpl = fetch) {
-  if (request.method !== 'GET') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
-
-  const gate = await requireOwnerDeviceMode(request, env);
-  if (!gate.ok) {
-    return Response.json({ error: 'Forbidden', code: gate.code }, { status: gate.status });
-  }
-
-  const { getHomeCalendar } = await import('../calendar/calendarService.js');
-
   try {
+    if (request.method !== 'GET') {
+      return Response.json({ error: 'Method not allowed' }, { status: 405 });
+    }
+
+    const gate = await requireOwnerDeviceMode(request, env);
+    if (!gate.ok) {
+      return Response.json({ error: 'Forbidden', code: gate.code }, { status: gate.status ?? 403 });
+    }
+
+    const { getHomeCalendar } = await import('../calendar/calendarService.js');
     const payload = await getHomeCalendar(env, fetchImpl);
     return Response.json(payload, {
       status: 200,
