@@ -1,5 +1,6 @@
 import { hasProtectedValue } from '../../content/houseguide/privateContent.js';
 import { createWifiQrSection } from '../../components/WifiQr/createWifiQrSection.js';
+import { createPrimaryContactSection } from '../../components/PrimaryContact/createPrimaryContactSection.js';
 import { subscribeToPrivateConfig } from '../../services/privateConfigService.js';
 
 const STALE_QR_PLACEHOLDER = /wi-fi qr code will appear here once secure house-sitter access is enabled/i;
@@ -11,6 +12,11 @@ const QR_TOPIC_HEADER = {
   subtitle: 'Scan to join Wi‑Fi',
   summary: 'Quick join'
 };
+
+/** @param {import('../../types/guideContent.js').GuideTopic} topic */
+export function topicShouldIncludePrimaryContact(topic) {
+  return topic.id === 'qr-code-placeholder' || topic.id === 'troubleshooting';
+}
 
 /** @param {import('../../types/guideContent.js').GuideTopic} topic */
 export function topicShouldIncludeWifiQr(topic) {
@@ -27,10 +33,19 @@ export function topicShouldIncludeWifiQr(topic) {
 
 /**
  * @param {import('../../types/guideContent.js').GuideBlock} block
+ * @param {import('../../types/guideContent.js').GuideTopic} topic
  */
-export function shouldSkipStaleGuideBlock(block) {
+export function shouldSkipStaleGuideBlock(block, topic) {
   if (block.type === 'wifiQr') {
     return false;
+  }
+
+  if (
+    block.type === 'protected' &&
+    block.kind === 'contact' &&
+    topicShouldIncludePrimaryContact(topic)
+  ) {
+    return true;
   }
 
   if (block.type === 'note' || block.type === 'text' || block.type === 'tip') {
@@ -124,6 +139,29 @@ export function appendWifiQrSectionIfNeeded(body, topic) {
     createWifiQrSection({
       heading: topic.id === 'qr-code-placeholder' ? undefined : 'Quick join',
       caption: 'Scan with your phone camera to join Wi‑Fi'
+    })
+  );
+}
+
+/**
+ * @param {HTMLElement} body
+ * @param {import('../../types/guideContent.js').GuideTopic} topic
+ */
+export function appendPrimaryContactSectionIfNeeded(body, topic) {
+  if (!topicShouldIncludePrimaryContact(topic)) {
+    return;
+  }
+
+  if (body.querySelector('.guide-section-primary-contact')) {
+    return;
+  }
+
+  body.append(
+    createPrimaryContactSection({
+      intro:
+        topic.id === 'qr-code-placeholder'
+          ? 'If you have trouble connecting, contact Mark — we’re happy to help.'
+          : undefined
     })
   );
 }

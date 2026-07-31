@@ -1721,14 +1721,14 @@
             {
               "type": "protected",
               "kind": "contact",
-              "label": "Mark — email",
-              "key": "contacts.mark.email"
+              "label": "Mark — phone",
+              "key": "contacts.mark.phone"
             },
             {
               "type": "protected",
               "kind": "contact",
-              "label": "Donna — phone",
-              "key": "contacts.donna.phone"
+              "label": "Mark — email",
+              "key": "contacts.mark.email"
             }
           ],
           "actions": []
