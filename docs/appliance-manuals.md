@@ -133,6 +133,26 @@ Unpublished manuals remain visible to owners only.
 - Switching to House Sitter Mode clears manual state, aborts in-flight requests, and closes owner dialogs.
 - PDF viewing uses a blob URL from an authenticated fetch, with iframe embedding and a new-tab fallback for Fully Kiosk Browser and other limited embedders.
 
+## Troubleshooting
+
+### `404 Not Found` on `/api/appliance-manuals`
+
+PR **preview deployments** (e.g. `https://<hash>.home-dashboard-a11.pages.dev`) ship the **frontend only**. API calls are proxied to the separate **`lovely-home-hub-api` Worker**. A 404 means that Worker is still running an older build **without** the appliance-manuals routes.
+
+Fix:
+
+1. Merge or check out the branch that includes `worker/src/routes/applianceManuals.js`.
+2. Create the D1 database and private R2 bucket (see [Cloudflare configuration](#cloudflare-configuration)).
+3. Put the real D1 `database_id` in `worker/wrangler.toml`.
+4. Apply migrations: `npx wrangler d1 migrations apply lovely-home-appliance-manuals --remote`
+5. Deploy the Worker: `cd worker && npm run deploy`
+
+After deploy, uploads should return `201` (or `503` if bindings are missing — not `404`).
+
+### `503` after deploy
+
+Bindings or migrations are missing. Confirm `APPLIANCE_MANUALS_DB` and `APPLIANCE_GUIDES` appear on the Worker in the Cloudflare dashboard, and migrations have been applied.
+
 ## Limitations (v1)
 
 - PDF files only

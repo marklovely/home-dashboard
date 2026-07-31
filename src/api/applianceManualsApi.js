@@ -56,6 +56,15 @@ export async function fetchApplianceManuals({ fetchImpl = fetch } = {}) {
     if (response.status === 401 || response.status === 403) {
       return { ok: false, status: response.status, message: 'Forbidden.', data: null };
     }
+    if (response.status === 404) {
+      return {
+        ok: false,
+        status: 404,
+        message:
+          'Appliance manuals API is not available. Deploy the lovely-home-hub-api Worker from the appliance-manuals branch.',
+        data: null
+      };
+    }
     if (!response.ok) {
       return {
         ok: false,
@@ -131,6 +140,15 @@ export async function createApplianceManual(formData, { fetchImpl = fetch } = {}
 
     if (response.status === 401 || response.status === 403) {
       return { ok: false, status: response.status, message: 'Forbidden.', data: null };
+    }
+    if (response.status === 404) {
+      return {
+        ok: false,
+        status: 404,
+        message:
+          'Appliance manuals API is not available. Deploy the lovely-home-hub-api Worker from the appliance-manuals branch.',
+        data: null
+      };
     }
     if (!response.ok) {
       return {
