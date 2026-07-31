@@ -9,7 +9,9 @@ import { highlightGuideText } from './highlight.js';
 import { wireGuideTopicManualLinks } from './guideTopicManualLinks.js';
 import {
   appendWifiQrSectionIfNeeded,
-  shouldSkipStaleGuideBlock
+  resolveGuideTopicHeader,
+  shouldSkipStaleGuideBlock,
+  wireGuideTopicHeaderRefresh
 } from './guideTopicWifiQr.js';
 
 /**
@@ -290,25 +292,34 @@ export function renderGuideTopicPage(topic, context, onBack, openTopic, options 
 
   const header = document.createElement('header');
   header.className = 'guide-topic-header';
+  const headerText = resolveGuideTopicHeader(topic);
   const title = document.createElement('h2');
   title.className = 'guide-topic-title';
-  title.textContent = topic.title;
+  title.textContent = headerText.title;
   const subtitle = document.createElement('p');
   subtitle.className = 'guide-topic-subtitle';
-  subtitle.textContent = topic.subtitle;
+  subtitle.textContent = headerText.subtitle;
   const summary = document.createElement('p');
   summary.className = 'guide-topic-summary';
-  summary.textContent = topic.summary;
+  summary.textContent = headerText.summary;
   header.append(title, subtitle, summary);
 
   article.append(backButton, header);
+
+  let cleanupHeaderRefresh = wireGuideTopicHeaderRefresh(topic, subtitle, summary);
 
   const manualLinksHost = document.createElement('div');
   manualLinksHost.className = 'guide-topic-manual-links-host';
   article.append(manualLinksHost);
 
   if (options.onViewManual) {
-    article.cleanup = wireGuideTopicManualLinks(manualLinksHost, topic, options.onViewManual);
+    const cleanupManualLinks = wireGuideTopicManualLinks(manualLinksHost, topic, options.onViewManual);
+    article.cleanup = () => {
+      cleanupHeaderRefresh?.();
+      cleanupManualLinks?.();
+    };
+  } else if (cleanupHeaderRefresh) {
+    article.cleanup = cleanupHeaderRefresh;
   }
 
   if (topic.actions?.length) {
