@@ -58,14 +58,38 @@
 }
 .house-guide-editor-topic-row-wrap {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 8px;
-  align-items: start;
+  align-items: stretch;
+  border-radius: 14px;
+  transition: box-shadow 0.15s ease, opacity 0.15s ease;
 }
-.house-guide-editor-topic-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.house-guide-editor-topic-row-wrap.is-dragging {
+  opacity: 0.72;
+}
+.house-guide-editor-topic-row-wrap.is-drop-target {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, #f4b64f 70%, transparent);
+}
+.guide-editor-drag-handle {
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  touch-action: none;
+  cursor: grab;
+}
+.guide-editor-drag-handle:active {
+  cursor: grabbing;
+}
+.house-guide-editor-reorder-hint {
+  margin: 0;
 }
 .house-guide-editor-new-topic {
   display: grid;
@@ -319,5 +343,8 @@
   .house-guide-editor-media-row,
   .house-guide-editor-topic-row-wrap {
     grid-template-columns: 1fr;
+  }
+  .guide-editor-drag-handle {
+    min-height: 44px;
   }
 }

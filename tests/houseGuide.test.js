@@ -6,6 +6,13 @@ import {
 } from '../src/content/houseguide/providers/jsonGuideProvider.js';
 import { highlightGuideText } from '../src/widgets/HouseGuide/highlight.js';
 
+describe('guideHaystackMatches and reorder helpers', () => {
+  it('moves list items for drag reorder', async () => {
+    const { moveItem } = await import('../src/apps/HouseGuideEditor/guideEditorReorder.js');
+    expect(moveItem(['a', 'b', 'c'], 0, 2)).toEqual(['b', 'c', 'a']);
+  });
+});
+
 describe('guide service', () => {
   it('returns a meaningful home summary without document counts', () => {
     const summary = getGuideHomeSummary();
