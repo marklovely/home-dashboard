@@ -1,10 +1,11 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
-import { getProtectedDisplayValue } from '../../content/houseguide/privateContent.js';
-import { openHouseGuideTopic } from '../../services/guideNavigation.js';
-import { createGuidePanelOverlay } from '../../widgets/HouseGuide/guideActions.js';
+import {
+  openEmergencyTopicOverlay,
+  openOwnerContactOverlay
+} from './emergencyDetailOverlay.js';
 
-/** @typedef {{ id: string, label: string, subtitle?: string, iconId: string, kind: 'contact', person: 'mark' | 'donna' } | { id: string, label: string, subtitle?: string, iconId: string, kind: 'guide', topicId: string }} EmergencyCard */
+/** @typedef {{ id: string, label: string, subtitle?: string, iconId: string, kind: 'contact', person: 'mark' | 'donna' } | { id: string, label: string, subtitle?: string, iconId: string, kind: 'topic', topicId: string }} EmergencyCard */
 
 /** @type {EmergencyCard[]} */
 const EMERGENCY_CARDS = [
@@ -26,7 +27,7 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'vet',
-    kind: 'guide',
+    kind: 'topic',
     label: 'Vet',
     subtitle: 'Vets 4 Pets — Waterlooville',
     iconId: 'heart-pulse',
@@ -34,7 +35,7 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'water-stop',
-    kind: 'guide',
+    kind: 'topic',
     label: 'Water stop tap',
     subtitle: 'Turn off the water supply',
     iconId: 'droplets',
@@ -42,7 +43,7 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'fuse-box',
-    kind: 'guide',
+    kind: 'topic',
     label: 'Fuse box',
     subtitle: 'Consumer unit in the garage',
     iconId: 'zap',
@@ -50,30 +51,13 @@ const EMERGENCY_CARDS = [
   },
   {
     id: 'first-aid',
-    kind: 'guide',
+    kind: 'topic',
     label: 'First aid',
     subtitle: 'Safety notes and NHS guidance',
     iconId: 'cross',
     topicId: 'general-safety'
   }
 ];
-
-/**
- * @param {'mark' | 'donna'} person
- */
-function buildOwnerContactPanel(person) {
-  const prefix = person === 'mark' ? 'contacts.mark' : 'contacts.donna';
-  const firstName = person === 'mark' ? 'Mark' : 'Donna';
-  return createGuidePanelOverlay({
-    type: 'panel',
-    label: `Contact ${firstName}`,
-    heading: `Contact ${firstName}`,
-    items: [
-      { label: 'Phone', value: getProtectedDisplayValue(`${prefix}.phone`, 'contact') },
-      { label: 'Email', value: getProtectedDisplayValue(`${prefix}.email`, 'contact') }
-    ]
-  });
-}
 
 /**
  * @param {EmergencyCard} card
@@ -99,14 +83,13 @@ function createEmergencyCardElement(card, context, host) {
   button.setAttribute('aria-label', card.label);
   button.append(iconWrap, title, subtitle);
 
-  if (card.kind === 'contact') {
-    button.addEventListener('click', () => {
-      host.querySelector('.guide-panel-overlay')?.remove();
-      host.append(buildOwnerContactPanel(card.person));
-    });
-  } else {
-    button.addEventListener('click', () => openHouseGuideTopic(context, card.topicId));
-  }
+  button.addEventListener('click', () => {
+    if (card.kind === 'contact') {
+      openOwnerContactOverlay(host, card.person);
+      return;
+    }
+    openEmergencyTopicOverlay(host, card.topicId, context);
+  });
 
   return button;
 }
