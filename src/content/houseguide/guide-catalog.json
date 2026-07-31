@@ -549,6 +549,11 @@
             "cold water",
             "filtered"
           ],
+          "applianceManualTerms": [
+            "hot water",
+            "water machine",
+            "filtered water"
+          ],
           "blocks": [
             {
               "type": "heroImage",
@@ -593,6 +598,9 @@
             "dishwasher",
             "dishes",
             "program 3"
+          ],
+          "applianceManualTerms": [
+            "dishwasher"
           ],
           "blocks": [
             {
@@ -671,6 +679,12 @@
             "laundry",
             "tumble dryer",
             "washer"
+          ],
+          "applianceManualTerms": [
+            "washing machine",
+            "tumble dryer",
+            "washer",
+            "dryer"
           ],
           "blocks": [
             {
@@ -763,6 +777,10 @@
             "thermostat",
             "heating",
             "eco"
+          ],
+          "applianceManualTerms": [
+            "nest",
+            "thermostat"
           ],
           "blocks": [
             {
@@ -982,6 +1000,11 @@
             "remote",
             "power"
           ],
+          "applianceManualTerms": [
+            "tv",
+            "television",
+            "lg"
+          ],
           "blocks": [
             {
               "type": "heroImage",
@@ -1007,6 +1030,9 @@
             "input 3",
             "source",
             "hdmi"
+          ],
+          "applianceManualTerms": [
+            "apple tv"
           ],
           "blocks": [
             {
@@ -1226,6 +1252,9 @@
           "searchTerms": [
             "hairdryer",
             "dry hair"
+          ],
+          "applianceManualTerms": [
+            "hairdryer"
           ],
           "blocks": [
             {
@@ -1945,6 +1974,25 @@
           "actions": []
         }
       ]
+    },
+    {
+      "id": "appliance-manuals",
+      "title": "Appliance Manuals",
+      "cardSubtitle": "Instructions and user guides for appliances around the house.",
+      "iconId": "book-open",
+      "accent": "#5b8def",
+      "searchTerms": [
+        "appliance",
+        "manual",
+        "user guide",
+        "pdf",
+        "instructions",
+        "oven",
+        "washer",
+        "dryer",
+        "dishwasher"
+      ],
+      "topics": []
     },
     {
       "id": "emergency",

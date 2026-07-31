@@ -26,6 +26,7 @@ import {
   setWeatherLocationOverride
 } from '../../services/weatherLocationService.js';
 import { geocodeWeatherLocation } from '../../api/weatherApi.js';
+import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
 import { showToast } from '../../js/modules/toast.js';
 
 /** @returns {string} */
@@ -102,20 +103,22 @@ function createHouseSitterModeFields(context, onRefresh) {
   enableButton.className = 'settings-action-button';
   enableButton.textContent = 'Enable House Sitter Mode';
   enableButton.addEventListener('click', () => {
-    if (
-      !window.confirm(
-        'Enable House Sitter Mode?\n\nOwner-only apps and personal information will be hidden. The dashboard will remain in House Sitter Mode after refreshes and tablet restarts.'
-      )
-    ) {
-      return;
-    }
-    void enterSitterMode(() => {
-      context.navigate('home');
-      onRefresh();
-      context.refreshShell?.();
-      showToast(context.toast, 'House Sitter Mode enabled');
-    }).then((ok) => {
-      if (!ok) showToast(context.toast, 'Could not enable House Sitter Mode');
+    void showConfirmDialog({
+      title: 'Enable House Sitter Mode?',
+      message:
+        'Owner-only apps and personal information will be hidden. The dashboard will remain in House Sitter Mode after refreshes and tablet restarts.',
+      confirmLabel: 'Enable',
+      cancelLabel: 'Cancel'
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      void enterSitterMode(() => {
+        context.navigate('home');
+        onRefresh();
+        context.refreshShell?.();
+        showToast(context.toast, 'House Sitter Mode enabled');
+      }).then((ok) => {
+        if (!ok) showToast(context.toast, 'Could not enable House Sitter Mode');
+      });
     });
   });
 

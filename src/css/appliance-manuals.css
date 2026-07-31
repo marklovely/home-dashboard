@@ -1,0 +1,183 @@
+.appliance-manuals-owner-header,
+.appliance-manuals-sitter .guide-category-header {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.appliance-manuals-filter-row {
+  display: grid;
+  grid-template-columns: 1fr minmax(160px, 220px);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.appliance-manuals-category-select {
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  padding: 0 12px;
+}
+.appliance-manuals-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+.appliance-manual-card,
+.appliance-manual-owner-row {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 10px;
+}
+.appliance-manual-card-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.appliance-manual-card-manual,
+.appliance-manual-card-meta,
+.appliance-manual-card-model,
+.appliance-manual-card-description {
+  margin: 0;
+}
+.appliance-manual-card-action {
+  min-height: 48px;
+  width: 100%;
+}
+.appliance-manuals-owner-list {
+  display: grid;
+  gap: 12px;
+}
+.appliance-manual-owner-row {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+}
+.appliance-manual-owner-actions {
+  display: grid;
+  gap: 8px;
+  min-width: 180px;
+}
+.appliance-manual-badge {
+  display: inline-flex;
+  align-self: start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+.appliance-manual-badge--published {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+.appliance-manuals-dialog {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 0;
+  max-width: min(560px, calc(100vw - 32px));
+  width: calc(100vw - 32px);
+  background: var(--surface);
+  color: inherit;
+  z-index: 100;
+}
+.appliance-manuals-dialog[open] {
+  display: block;
+}
+.appliance-manuals-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.appliance-manuals-form {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+}
+.appliance-manuals-form-success {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+}
+.appliance-manuals-form[hidden],
+.appliance-manuals-form-success[hidden] {
+  display: none;
+}
+.appliance-manuals-field {
+  display: grid;
+  gap: 6px;
+}
+.appliance-manuals-field input,
+.appliance-manuals-field textarea,
+.appliance-manuals-field select {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  padding: 10px 12px;
+}
+.appliance-manuals-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.appliance-manuals-form-error {
+  margin: 0;
+  color: #ff8f8f;
+}
+.appliance-manuals-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.appliance-manual-viewer {
+  display: grid;
+  gap: 12px;
+  min-height: 60vh;
+}
+.appliance-manual-viewer-header {
+  display: grid;
+  gap: 10px;
+}
+.appliance-manual-viewer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.appliance-manual-viewer-frame-host {
+  min-height: 55vh;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+}
+.appliance-manual-viewer-frame {
+  width: 100%;
+  min-height: 55vh;
+  border: 0;
+  background: #fff;
+}
+.appliance-manual-viewer-fallback {
+  display: grid;
+  gap: 12px;
+  place-content: center;
+  min-height: 240px;
+  padding: 24px;
+  text-align: center;
+}
+.button-danger {
+  border-color: color-mix(in srgb, #ff6b6b 40%, var(--border));
+}
+@media (max-width: 900px) {
+  .appliance-manuals-filter-row {
+    grid-template-columns: 1fr;
+  }
+  .appliance-manual-owner-row {
+    grid-template-columns: 1fr;
+  }
+  .appliance-manual-owner-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+  }
+}
