@@ -2,6 +2,48 @@
  * Shared field builders for hub setup and onboarding forms.
  */
 
+import { CircleHelp, Eye, EyeOff, createElement } from 'lucide';
+
+/**
+ * @param {HTMLInputElement} input
+ */
+function attachRevealToggle(input) {
+  const inputWrap = document.createElement('div');
+  inputWrap.className = 'hub-setup-input-wrap';
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'hub-setup-reveal-button';
+  toggle.setAttribute('aria-label', 'Show value');
+  toggle.setAttribute('aria-pressed', 'false');
+
+  const showIcon = createElement(Eye, {
+    width: 20,
+    height: 20,
+    'stroke-width': 1.75,
+    class: 'hub-setup-reveal-icon hub-setup-reveal-icon--show',
+    'aria-hidden': 'true'
+  });
+  const hideIcon = createElement(EyeOff, {
+    width: 20,
+    height: 20,
+    'stroke-width': 1.75,
+    class: 'hub-setup-reveal-icon hub-setup-reveal-icon--hide',
+    'aria-hidden': 'true'
+  });
+  toggle.append(showIcon, hideIcon);
+
+  toggle.addEventListener('click', () => {
+    const revealing = input.type === 'password';
+    input.type = revealing ? 'text' : 'password';
+    toggle.setAttribute('aria-label', revealing ? 'Hide value' : 'Show value');
+    toggle.setAttribute('aria-pressed', revealing ? 'true' : 'false');
+  });
+
+  inputWrap.append(input, toggle);
+  return inputWrap;
+}
+
 /**
  * @param {string} label
  * @param {string} [value]
@@ -12,7 +54,7 @@
  * @param {string} [options.autocomplete]
  * @param {string} [options.inputMode]
  * @param {string} [options.pattern]
- * @param {string} [options.placeholder]
+ * @param {boolean} [options.revealable]
  */
 export function createSetupField(label, value = '', options = {}) {
   const wrap = document.createElement('label');
@@ -32,7 +74,11 @@ export function createSetupField(label, value = '', options = {}) {
   if (options.inputMode) input.inputMode = options.inputMode;
   if (options.pattern) input.pattern = options.pattern;
 
-  wrap.append(title, input);
+  if (options.revealable) {
+    wrap.append(title, attachRevealToggle(input));
+  } else {
+    wrap.append(title, input);
+  }
   return { wrap, input };
 }
 
@@ -122,7 +168,8 @@ export function createGuestAccessFields(_profile) {
   const wifiSsid = createSetupField('Wi-Fi network name', '', { autocomplete: 'off' });
   const wifiPassword = createSetupField('Wi-Fi password', '', {
     type: 'password',
-    autocomplete: 'new-password'
+    autocomplete: 'new-password',
+    revealable: true
   });
   const homeAddress = createSetupField('Home address', '', { autocomplete: 'street-address' });
   const lockbox = createSetupField('Lockbox / door code (optional)', '', { autocomplete: 'off' });
@@ -131,7 +178,8 @@ export function createGuestAccessFields(_profile) {
     inputMode: 'numeric',
     pattern: '[0-9]{4}',
     placeholder: '••••',
-    autocomplete: 'off'
+    autocomplete: 'off',
+    revealable: true
   });
   ownerPin.input.maxLength = 4;
 
@@ -155,6 +203,39 @@ export function createSetupIntro(text) {
   intro.className = 'settings-help subtle';
   intro.textContent = text;
   return intro;
+}
+
+/**
+ * @param {string} helpText
+ * @param {string} [label]
+ */
+export function createSetupInfoHint(helpText, label = 'More information') {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'hub-setup-info-button';
+  button.setAttribute('aria-label', label);
+  button.setAttribute('aria-expanded', 'false');
+  button.append(
+    createElement(CircleHelp, {
+      width: 20,
+      height: 20,
+      'stroke-width': 1.75,
+      'aria-hidden': 'true'
+    })
+  );
+
+  const panel = document.createElement('p');
+  panel.className = 'settings-help subtle hub-setup-info-panel';
+  panel.hidden = true;
+  panel.textContent = helpText;
+
+  button.addEventListener('click', () => {
+    const expanded = panel.hidden;
+    panel.hidden = !expanded;
+    button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  });
+
+  return { button, panel };
 }
 
 /**

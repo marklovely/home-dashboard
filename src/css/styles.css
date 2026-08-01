@@ -499,6 +499,96 @@ body.is-bins-route .app-viewport > .bins-app {
   outline-offset: 2px;
 }
 
+.hub-setup-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.hub-setup-input-wrap .hub-setup-input {
+  padding-right: 48px;
+}
+
+.hub-setup-reveal-button {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.hub-setup-reveal-button:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-glass) 70%, transparent);
+}
+
+.hub-setup-reveal-button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.hub-setup-reveal-icon {
+  display: block;
+}
+
+.hub-setup-reveal-button .hub-setup-reveal-icon--hide {
+  display: none;
+}
+
+.hub-setup-reveal-button[aria-pressed='true'] .hub-setup-reveal-icon--show {
+  display: none;
+}
+
+.hub-setup-reveal-button[aria-pressed='true'] .hub-setup-reveal-icon--hide {
+  display: block;
+}
+
+.hub-setup-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hub-setup-action-button {
+  flex: 1;
+}
+
+.hub-setup-info-button {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.hub-setup-info-button:hover {
+  color: var(--text);
+}
+
+.hub-setup-info-button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.hub-setup-info-panel {
+  margin: 0;
+}
+
 .settings-option {
   display: flex;
   align-items: center;

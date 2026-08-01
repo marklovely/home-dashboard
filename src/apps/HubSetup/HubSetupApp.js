@@ -4,6 +4,7 @@ import {
   createContactGroup,
   createGuestAccessFields,
   createSetupField,
+  createSetupInfoHint,
   createSetupIntro,
   createSetupSelect,
   contactSecretsPatch,
@@ -172,9 +173,16 @@ function mountHubSetupWizard(viewport, context) {
     const guideIntro = createSetupIntro(
       'Start with a starter House Guide you can edit in the Guide Editor, or skip and add content later.'
     );
+    const starterHelp = createSetupInfoHint(
+      'Adds a ready-made House Guide with Wi-Fi, emergency contacts, and house rules topics. You can edit everything in the Guide Editor after setup.',
+      'What is the starter guide?'
+    );
+    const starterRow = document.createElement('div');
+    starterRow.className = 'hub-setup-action-row';
+
     const starterButton = document.createElement('button');
     starterButton.type = 'button';
-    starterButton.className = 'settings-action-button';
+    starterButton.className = 'settings-action-button hub-setup-action-button';
     starterButton.textContent = 'Import starter guide';
     starterButton.addEventListener('click', () => {
       starterButton.disabled = true;
@@ -185,15 +193,21 @@ function mountHubSetupWizard(viewport, context) {
           return;
         }
         await refreshGuideContent(fetch, { draft: true, force: true });
-        showToast(context.toast, 'Starter guide imported.');
+        showToast(
+          context.toast,
+          'Starter guide imported. Tap Finish setup when you are ready, or Back to keep editing.',
+          4500
+        );
       });
     });
+
+    starterRow.append(starterButton, starterHelp.button);
 
     const skipNote = document.createElement('p');
     skipNote.className = 'subtle';
     skipNote.textContent = 'You can also copy your bundled guide or import JSON from Settings or the Guide Editor later.';
 
-    body.append(guideIntro, starterButton, skipNote);
+    body.append(guideIntro, starterRow, starterHelp.panel, skipNote);
   }
 
   backButton.addEventListener('click', () => {
