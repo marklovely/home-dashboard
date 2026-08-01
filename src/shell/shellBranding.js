@@ -1,4 +1,5 @@
 import { getModeConfig } from '../modes/modeConfig.js';
+import { getHubEyebrow } from '../services/siteProfileService.js';
 
 /**
  * @param {Object} elements
@@ -8,7 +9,7 @@ import { getModeConfig } from '../modes/modeConfig.js';
 export function applyShellBranding(elements) {
   const { branding } = getModeConfig();
   if (elements.shellEyebrow) {
-    elements.shellEyebrow.textContent = branding.eyebrow;
+    elements.shellEyebrow.textContent = getHubEyebrow() || branding.eyebrow;
   }
   if (elements.shellTagline) {
     if (branding.homeTagline) {

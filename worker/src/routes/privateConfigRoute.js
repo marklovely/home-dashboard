@@ -12,7 +12,7 @@ export async function handlePrivateConfigRequest(request, env, fetchImpl = fetch
     return Response.json({ error: gate.code }, { status: gate.status });
   }
 
-  return Response.json(buildPrivateConfig(env), {
+  return Response.json(await buildPrivateConfig(env), {
     headers: { 'Cache-Control': 'no-store' }
   });
 }

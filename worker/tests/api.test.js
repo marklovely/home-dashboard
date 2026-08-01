@@ -65,7 +65,7 @@ describe('buttons', () => {
 
 describe('private-config', () => {
   it('returns expected shape including lockbox when configured', async () => {
-    const payload = buildPrivateConfig({ ...env, PRIVATE_LOCKBOX_CODE: '1234' });
+    const payload = await buildPrivateConfig({ ...env, PRIVATE_LOCKBOX_CODE: '1234' });
     expect(payload.wifi.ssid).toBe('Net');
     expect(payload.contacts.mark.phone).toBe('111');
     expect(payload.home.address).toBe('1 Road');
@@ -73,7 +73,7 @@ describe('private-config', () => {
   });
 
   it('omits lockbox when secret is not set', async () => {
-    const payload = buildPrivateConfig(env);
+    const payload = await buildPrivateConfig(env);
     expect(payload.lockbox).toEqual({});
   });
 
@@ -89,13 +89,13 @@ describe('private-config', () => {
     );
     expect(response.status).toBe(200);
     const payload = await response.json();
-    expect(payload.contacts.mark.name).toBe('Mark Lovely');
+    expect(payload.contacts.mark.name).toBe('Primary contact');
   });
 
-  it('omits missing optional fields safely', () => {
-    const payload = buildPrivateConfig({});
+  it('omits missing optional fields safely', async () => {
+    const payload = await buildPrivateConfig({});
     expect(payload.wifi).toEqual({});
-    expect(payload.contacts.mark.name).toBe('Mark Lovely');
+    expect(payload.contacts.mark.name).toBe('Primary contact');
   });
   it('reads JWT from CF_Authorization cookie when header is absent', async () => {
     const jwt = await signTestAccessJwt('owner@example.com', env);

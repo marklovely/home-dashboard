@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS hub_secrets (
+  key TEXT PRIMARY KEY NOT NULL,
+  value TEXT NOT NULL,
+  updated_at INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS site_profile (
+  id TEXT PRIMARY KEY NOT NULL DEFAULT 'default',
+  payload TEXT NOT NULL DEFAULT '{}',
+  updated_at INTEGER NOT NULL DEFAULT 0
+);
