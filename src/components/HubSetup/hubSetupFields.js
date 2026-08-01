@@ -172,7 +172,11 @@ export function createGuestAccessFields(_profile) {
     revealable: true
   });
   const homeAddress = createSetupField('Home address', '', { autocomplete: 'street-address' });
-  const lockbox = createSetupField('Lockbox / door code (optional)', '', { autocomplete: 'off' });
+  const lockbox = createSetupField('Lockbox / door code (optional)', '', {
+    type: 'password',
+    autocomplete: 'off',
+    revealable: true
+  });
   const ownerPin = createSetupField('Owner PIN (4 digits)', '', {
     type: 'password',
     inputMode: 'numeric',

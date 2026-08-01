@@ -140,22 +140,21 @@ export async function unlockOwner(pin, fetchImpl = fetch, onUnlocked) {
 }
 
 /**
- * @param {() => void} [afterSitter]
  * @param {typeof fetch} [fetchImpl]
  */
 export async function enterSitterMode(afterSitter, fetchImpl = fetch) {
   const result = await postEnterSitterMode(fetchImpl);
   if (!result.ok) {
-    return false;
+    return { ok: false, code: result.code ?? '' };
   }
   if (!(await verifyPersistedSitterSession(fetchImpl))) {
     status = 'error';
     notify();
-    return false;
+    return { ok: false, code: 'SESSION_NOT_PERSISTED' };
   }
   clearOwnerOnlyClientData();
   lockToHouseSitterMode(afterSitter);
-  return true;
+  return { ok: true };
 }
 
 /**
@@ -165,16 +164,16 @@ export async function enterSitterMode(afterSitter, fetchImpl = fetch) {
 export async function lockOwner(afterSitter, fetchImpl = fetch) {
   const result = await postLockOwner(fetchImpl);
   if (!result.ok) {
-    return false;
+    return { ok: false, code: result.code ?? '' };
   }
   if (!(await verifyPersistedSitterSession(fetchImpl))) {
     status = 'error';
     notify();
-    return false;
+    return { ok: false, code: 'SESSION_NOT_PERSISTED' };
   }
   clearOwnerOnlyClientData();
   lockToHouseSitterMode(afterSitter);
-  return true;
+  return { ok: true };
 }
 
 /** @internal */

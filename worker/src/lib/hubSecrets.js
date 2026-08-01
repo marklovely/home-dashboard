@@ -12,6 +12,9 @@ export const HUB_SECRET_KEYS = /** @type {const} */ ([
   'lockbox_code'
 ]);
 
+/** @internal Persisted when OWNER_SESSION_SECRET is not configured via wrangler. */
+export const DEVICE_SESSION_SECRET_KEY = 'device_session_secret';
+
 /**
  * @param {D1Database | undefined} db
  */
@@ -85,6 +88,53 @@ export async function setHubSecrets(env, patch) {
       .bind(key, value, now)
       .run();
   }
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {string} key
+ * @param {string} value
+ */
+async function setInternalHubSecret(env, key, value) {
+  const db = requireHubDb(env.HOUSE_GUIDE_DB);
+  const now = Math.floor(Date.now() / 1000);
+  await db
+    .prepare(
+      `INSERT INTO hub_secrets (key, value, updated_at)
+       VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+    )
+    .bind(key, value, now)
+    .run();
+}
+
+/**
+ * @param {number} [byteLength]
+ */
+function generateRandomSecret(byteLength = 32) {
+  const bytes = new Uint8Array(byteLength);
+  crypto.getRandomValues(bytes);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/**
+ * Auto-provision a signing secret on the hub when wrangler secrets are not set.
+ *
+ * @param {Record<string, string | undefined>} env
+ */
+export async function getOrCreateDeviceSessionSecret(env) {
+  const db = env.HOUSE_GUIDE_DB;
+  if (!db) return '';
+
+  const map = await getHubSecretsMap(env);
+  const existing = map[DEVICE_SESSION_SECRET_KEY]?.trim();
+  if (existing) return existing;
+
+  const secret = generateRandomSecret();
+  await setInternalHubSecret(env, DEVICE_SESSION_SECRET_KEY, secret);
+  return secret;
 }
 
 /**
