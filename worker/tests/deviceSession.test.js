@@ -186,4 +186,27 @@ describe('device session HTTP routes', () => {
     expect(response.status).toBe(200);
     expect((await response.json()).mode).toBe('sitter');
   });
+
+  it('issues sitter cookie without wrangler OWNER_SESSION_SECRET when D1 is configured', async () => {
+    const { createInMemoryHubSetupDb } = await import('./mocks/hubSetupStorage.js');
+    const dbEnv = {
+      ...env,
+      OWNER_SESSION_SECRET: undefined,
+      HOUSE_GUIDE_DB: createInMemoryHubSetupDb()
+    };
+    const jwt = await signTestAccessJwt('owner@example.com', dbEnv);
+    const response = await handleDeviceMode(
+      new Request(
+        'https://worker.test/api/device-mode',
+        withAccessJwt(jwt, {
+          method: 'POST',
+          body: JSON.stringify({ mode: 'sitter' })
+        })
+      ),
+      dbEnv
+    );
+    expect(response.status).toBe(200);
+    expect((await response.json()).mode).toBe('sitter');
+    expect(response.headers.get('Set-Cookie')).toMatch(/lovely_home_device_session=/);
+  });
 });

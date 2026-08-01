@@ -66,8 +66,9 @@ describe('device session store', () => {
         json: async () => ({ authenticated: true, mode: 'owner', ownerSessionExpiresAt: null })
       });
 
-    const ok = await enterSitterMode(undefined, fetchImpl);
-    expect(ok).toBe(false);
+    const result = await enterSitterMode(undefined, fetchImpl);
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe('SESSION_NOT_PERSISTED');
     expect(getDeviceSessionStatus()).toBe('error');
     expect(isHouseSitterExperience()).toBe(false);
   });

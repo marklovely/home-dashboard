@@ -65,6 +65,17 @@ function deviceModeLabel() {
   return getDeviceMode() === 'sitter' ? 'House sitter' : 'Owner';
 }
 
+/** @param {string} [code] */
+function houseSitterModeErrorMessage(code) {
+  if (code === 'SESSION_UNAVAILABLE') {
+    return 'House Sitter Mode could not start because the hub could not create a secure session. Try again in a moment.';
+  }
+  if (code === 'SESSION_NOT_PERSISTED') {
+    return 'House Sitter Mode did not stick. Check that cookies are allowed on this tablet, then try again.';
+  }
+  return 'Could not enable House Sitter Mode';
+}
+
 /** @returns {string} */
 function themeLabel() {
   const active = getActiveTheme();
@@ -311,6 +322,7 @@ function createHomeDetailsFields(context) {
 
         guestFields.ownerPin.input.value = '';
         guestFields.wifiPassword.input.value = '';
+        guestFields.lockbox.input.value = '';
         context.refreshShell?.();
         showToast(context.toast, 'Home details saved.');
       } finally {
@@ -445,8 +457,8 @@ function createHouseSitterModeFields(context, onRefresh) {
         onRefresh();
         context.refreshShell?.();
         showToast(context.toast, 'House Sitter Mode enabled');
-      }).then((ok) => {
-        if (!ok) showToast(context.toast, 'Could not enable House Sitter Mode');
+      }).then((result) => {
+        if (!result.ok) showToast(context.toast, houseSitterModeErrorMessage(result.code));
       });
     });
   });
@@ -463,8 +475,8 @@ function createHouseSitterModeFields(context, onRefresh) {
         context.navigate('home');
         onRefresh();
         context.refreshShell?.();
-      }).then((ok) => {
-        if (!ok) showToast(context.toast, 'Could not return to House Sitter Mode');
+      }).then((result) => {
+        if (!result.ok) showToast(context.toast, houseSitterModeErrorMessage(result.code));
       });
     });
     wrap.append(lockButton);
