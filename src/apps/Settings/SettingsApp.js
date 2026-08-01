@@ -56,8 +56,7 @@ import {
   factoryResetHub,
   getSiteProfileState,
   saveHubSecrets,
-  saveSiteProfile,
-  syncSiteProfileFromServer
+  saveSiteProfile
 } from '../../services/siteProfileService.js';
 
 /** @returns {string} */
