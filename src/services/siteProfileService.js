@@ -5,26 +5,18 @@ import {
   patchSiteProfile,
   resetHubSite
 } from '../api/siteSetupApi.js';
-import { fetchHouseGuideCatalog } from '../api/houseGuideApi.js';
 import { refreshPrivateConfig } from './privateConfigService.js';
-import {
-  clearLocalSetup,
-  DEFAULT_LOCAL_PROFILE,
-  loadLocalProfile,
-  loadLocalSecrets,
-  mergeLocalProfile,
-  mergeLocalSecrets,
-  SITE_SETUP_LOCAL_ONLY_MESSAGE
-} from './siteSetupLocalStorage.js';
+import { clearLocalSetup } from './siteSetupLocalStorage.js';
 import { resetHubSetupWizardStep } from '../apps/HubSetup/hubSetupWizardState.js';
 
 /** @typedef {{ profile: Record<string, unknown>, guideSeeded?: boolean }} SiteProfileState */
+/** @typedef {'unknown' | 'available' | 'offline' | 'not_deployed'} SiteSetupAvailability */
 
 /** @type {SiteProfileState | null} */
 let state = null;
 
-/** @type {boolean} */
-let localOnlyMode = false;
+/** @type {SiteSetupAvailability} */
+let setupAvailability = 'unknown';
 
 /** @type {Set<() => void>} */
 const listeners = new Set();
@@ -36,25 +28,42 @@ function notify() {
 }
 
 /**
+ * @param {{ ok: boolean, status: number }} result
+ */
+function applySetupAvailability(result) {
+  if (result.ok) {
+    setupAvailability = 'available';
+    return;
+  }
+  if (result.status === 404) {
+    setupAvailability = 'not_deployed';
+    return;
+  }
+  if (result.status === 503 || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    setupAvailability = 'offline';
+    return;
+  }
+  setupAvailability = 'unknown';
+}
+
+/**
  * @returns {boolean}
  */
-export function isSiteSetupLocalOnly() {
-  return localOnlyMode;
+export function isSiteSetupAvailable() {
+  return setupAvailability === 'available';
 }
 
 /**
  * @returns {string}
  */
-export function getSiteSetupLocalOnlyMessage() {
-  return SITE_SETUP_LOCAL_ONLY_MESSAGE;
-}
-
-/**
- * @param {typeof fetch} fetchImpl
- */
-async function readGuideSeeded(fetchImpl) {
-  const catalog = await fetchHouseGuideCatalog({ fetchImpl, draft: true });
-  return catalog.ok && Boolean(catalog.data?.seeded);
+export function getSiteSetupUnavailableMessage() {
+  if (setupAvailability === 'offline') {
+    return "You're offline or this hub can't be reached right now. Check your internet connection, then tap Try again.";
+  }
+  if (setupAvailability === 'not_deployed') {
+    return "Hub setup isn't available yet. The hub server still needs to be updated before you can save your details. Try again later.";
+  }
+  return "Hub setup isn't available right now. Try again in a moment.";
 }
 
 /**
@@ -100,27 +109,15 @@ export function subscribeToSiteProfile(listener) {
  */
 export async function syncSiteProfileFromServer(fetchImpl = fetch) {
   const result = await fetchSiteProfile({ fetchImpl });
+  applySetupAvailability(result);
+
   if (result.ok && result.data) {
-    localOnlyMode = false;
     state = result.data;
     notify();
     return state;
   }
 
-  if (result.status === 404) {
-    localOnlyMode = true;
-    const local = loadLocalProfile();
-    const guideSeeded = await readGuideSeeded(fetchImpl);
-    const { _hasLocalRow, ...profileFields } = local;
-    void _hasLocalRow;
-    state = {
-      profile: profileFields,
-      guideSeeded
-    };
-    notify();
-    return state;
-  }
-
+  notify();
   return null;
 }
 
@@ -130,37 +127,19 @@ export async function syncSiteProfileFromServer(fetchImpl = fetch) {
  */
 export async function saveSiteProfile(patch, fetchImpl = fetch) {
   const result = await patchSiteProfile(patch, { fetchImpl });
-  if (result.ok) {
-    localOnlyMode = false;
-    if (result.data?.profile) {
-      state = {
-        profile: result.data.profile,
-        guideSeeded: state?.guideSeeded ?? false
-      };
-      notify();
-    }
-    return { ...result, localOnly: false };
+  applySetupAvailability(result);
+
+  if (!result.ok) {
+    return result;
   }
 
-  if (result.status === 404) {
-    localOnlyMode = true;
-    const merged = mergeLocalProfile(patch);
-    const { _hasLocalRow: hasLocalRow, ...profile } = merged;
-    void hasLocalRow;
+  if (result.data?.profile) {
     state = {
-      profile,
+      profile: result.data.profile,
       guideSeeded: state?.guideSeeded ?? false
     };
     notify();
-    return {
-      ok: true,
-      status: 200,
-      message: '',
-      data: { ok: true, profile },
-      localOnly: true
-    };
   }
-
   return result;
 }
 
@@ -170,24 +149,11 @@ export async function saveSiteProfile(patch, fetchImpl = fetch) {
  */
 export async function saveHubSecrets(patch, fetchImpl = fetch) {
   const result = await patchHubSecrets(patch, { fetchImpl });
+  applySetupAvailability(result);
+
   if (result.ok) {
-    localOnlyMode = false;
     await refreshPrivateConfig(fetchImpl);
-    return { ...result, localOnly: false };
   }
-
-  if (result.status === 404) {
-    localOnlyMode = true;
-    mergeLocalSecrets(patch);
-    return {
-      ok: true,
-      status: 200,
-      message: '',
-      data: { ok: true, configured: Object.fromEntries(Object.keys(patch).map((k) => [k, true])) },
-      localOnly: true
-    };
-  }
-
   return result;
 }
 
@@ -196,19 +162,8 @@ export async function saveHubSecrets(patch, fetchImpl = fetch) {
  */
 export async function fetchHubSecretsConfigured(fetchImpl = fetch) {
   const result = await fetchHubSecretsStatus({ fetchImpl });
-  if (result.ok || result.status !== 404) {
-    return result;
-  }
-
-  const secrets = loadLocalSecrets();
-  return {
-    ok: true,
-    status: 200,
-    message: '',
-    data: {
-      configured: Object.fromEntries(Object.keys(secrets).map((key) => [key, Boolean(secrets[key]?.trim())]))
-    }
-  };
+  applySetupAvailability(result);
+  return result;
 }
 
 /**
@@ -217,34 +172,18 @@ export async function fetchHubSecretsConfigured(fetchImpl = fetch) {
 export async function factoryResetHub(fetchImpl = fetch) {
   resetHubSetupWizardStep();
   const result = await resetHubSite({ fetchImpl });
-  if (result.ok && result.data) {
-    localOnlyMode = false;
-    clearLocalSetup();
-    state = {
-      profile: result.data.profile,
-      guideSeeded: result.data.guideSeeded === true
-    };
-    notify();
-    await refreshPrivateConfig(fetchImpl);
+  applySetupAvailability(result);
+
+  if (!result.ok || !result.data) {
     return result;
   }
 
-  if (result.status === 404) {
-    localOnlyMode = true;
-    clearLocalSetup();
-    state = {
-      profile: { ...DEFAULT_LOCAL_PROFILE },
-      guideSeeded: false
-    };
-    notify();
-    return {
-      ok: true,
-      status: 200,
-      message: '',
-      data: { profile: { ...DEFAULT_LOCAL_PROFILE }, guideSeeded: false },
-      localOnly: true
-    };
-  }
-
+  clearLocalSetup();
+  state = {
+    profile: result.data.profile,
+    guideSeeded: result.data.guideSeeded === true
+  };
+  notify();
+  await refreshPrivateConfig(fetchImpl);
   return result;
 }

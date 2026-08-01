@@ -85,6 +85,3 @@ export function clearLocalSetup() {
   localStorage.removeItem(PROFILE_KEY);
   localStorage.removeItem(SECRETS_KEY);
 }
-
-export const SITE_SETUP_LOCAL_ONLY_MESSAGE =
-  'Saved on this device only — deploy the Worker (with migration 0005) to persist hub setup on the server.';

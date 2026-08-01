@@ -13,8 +13,8 @@ import starterGuide from '../../content/houseguide/templates/starter-guide.json'
 import { importHouseGuideCatalog } from '../../api/houseGuideApi.js';
 import {
   getSiteProfileState,
-  getSiteSetupLocalOnlyMessage,
-  isSiteSetupLocalOnly,
+  getSiteSetupUnavailableMessage,
+  isSiteSetupAvailable,
   saveHubSecrets,
   saveSiteProfile,
   syncSiteProfileFromServer
@@ -35,9 +35,57 @@ const USE_CASE_OPTIONS = [
 ];
 
 /**
+ * @param {HTMLElement} viewport
  * @param {import('../../types/app.js').ShellContext} context
  */
-function mountHubSetupApp(viewport, context) {
+function mountHubSetupUnavailable(viewport, context) {
+  const page = document.createElement('section');
+  page.className = 'app-page settings-app hub-setup-app';
+  page.setAttribute('aria-label', 'Hub setup unavailable');
+
+  const title = document.createElement('h1');
+  title.className = 'hub-setup-title';
+  title.textContent = 'Set up your hub';
+
+  const message = document.createElement('p');
+  message.className = 'hub-setup-unavailable-message';
+  message.textContent = getSiteSetupUnavailableMessage();
+
+  const hint = document.createElement('p');
+  hint.className = 'subtle';
+  hint.textContent =
+    'Your answers cannot be saved until the hub is connected. If this keeps happening, whoever manages this hub may need to finish the server update.';
+
+  const actions = document.createElement('div');
+  actions.className = 'hub-setup-actions';
+
+  const retryButton = document.createElement('button');
+  retryButton.type = 'button';
+  retryButton.className = 'settings-action-button';
+  retryButton.textContent = 'Try again';
+  retryButton.addEventListener('click', () => {
+    retryButton.disabled = true;
+    void syncSiteProfileFromServer().finally(() => {
+      retryButton.disabled = false;
+      mountHubSetup(viewport, context);
+    });
+  });
+
+  const homeButton = document.createElement('button');
+  homeButton.type = 'button';
+  homeButton.className = 'settings-action-button settings-action-button--secondary';
+  homeButton.textContent = 'Back to Home';
+  homeButton.addEventListener('click', () => context.navigate('home'));
+
+  actions.append(retryButton, homeButton);
+  page.append(title, message, hint, actions);
+  viewport.replaceChildren(page);
+}
+
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ */
+function mountHubSetupWizard(viewport, context) {
   const page = document.createElement('section');
   page.className = 'app-page settings-app hub-setup-app';
   page.setAttribute('aria-label', 'Hub setup');
@@ -55,13 +103,6 @@ function mountHubSetupApp(viewport, context) {
   const progress = document.createElement('p');
   progress.className = 'hub-setup-progress subtle';
   header.append(title, progress);
-
-  if (isSiteSetupLocalOnly()) {
-    const localBanner = document.createElement('p');
-    localBanner.className = 'hub-setup-local-banner subtle';
-    localBanner.textContent = getSiteSetupLocalOnlyMessage();
-    header.append(localBanner);
-  }
 
   const body = document.createElement('div');
   body.className = 'hub-setup-body';
@@ -164,17 +205,17 @@ function mountHubSetupApp(viewport, context) {
   });
 
   /**
-   * @param {{ ok?: boolean, localOnly?: boolean, message?: string }} result
+   * @param {{ ok?: boolean, message?: string }} result
    * @param {string} fallback
    * @returns {boolean}
    */
   function handleSaveResult(result, fallback) {
     if (!result.ok) {
       showToast(context.toast, result.message || fallback);
+      if (!isSiteSetupAvailable()) {
+        mountHubSetupUnavailable(viewport, context);
+      }
       return false;
-    }
-    if (result.localOnly) {
-      showToast(context.toast, getSiteSetupLocalOnlyMessage());
     }
     return true;
   }
@@ -265,6 +306,18 @@ function mountHubSetupApp(viewport, context) {
   renderStep();
 }
 
+/**
+ * @param {HTMLElement} viewport
+ * @param {import('../../types/app.js').ShellContext} context
+ */
+function mountHubSetup(viewport, context) {
+  if (!isSiteSetupAvailable()) {
+    mountHubSetupUnavailable(viewport, context);
+    return;
+  }
+  mountHubSetupWizard(viewport, context);
+}
+
 export const hubSetupApp = defineApp({
   id: 'hub-setup',
   title: 'Hub setup',
@@ -274,10 +327,6 @@ export const hubSetupApp = defineApp({
   accent: '#7b66ff',
   profiles: ['owner'],
   mount(viewport, context) {
-    if (!getSiteProfileState()) {
-      void syncSiteProfileFromServer().finally(() => mountHubSetupApp(viewport, context));
-      return;
-    }
-    mountHubSetupApp(viewport, context);
+    void syncSiteProfileFromServer().finally(() => mountHubSetup(viewport, context));
   }
 });
