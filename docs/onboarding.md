@@ -62,9 +62,12 @@ Apply on prod and test:
 cd worker
 npm run d1:migrate:prod
 npm run d1:migrate:test
+npm run deploy
 ```
 
 Migration: `0005_hub_setup.sql` (`hub_secrets`, `site_profile`).
+
+Until the Worker is deployed, the setup wizard saves profile and secrets to **localStorage** on the device (banner shown). Deploy the Worker to persist on the hub and serve secrets via `/api/private-config`.
 
 ## Backup files
 

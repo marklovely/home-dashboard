@@ -445,6 +445,15 @@ body.is-bins-route .app-viewport > .bins-app {
   cursor: pointer;
 }
 
+.hub-setup-local-banner {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #f4b64f 45%, var(--border));
+  background: color-mix(in srgb, #f4b64f 12%, transparent);
+  line-height: 1.45;
+}
+
 .hub-setup-app {
   max-width: min(720px, 100%);
 }
