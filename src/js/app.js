@@ -159,7 +159,14 @@ async function initialiseDashboard() {
   });
 
   void syncSiteProfileFromServer().then(() => {
-    if (!isOwnerUserMode() || !isSiteSetupAvailable() || isOnboardingComplete()) return;
+    if (!isOwnerUserMode()) return;
+    if (isOnboardingComplete()) {
+      if (getCurrentRoute() === 'hub-setup') {
+        navigate('home');
+      }
+      return;
+    }
+    if (!isSiteSetupAvailable()) return;
     if (getCurrentRoute() !== 'hub-setup') {
       navigate('hub-setup');
     }

@@ -15,6 +15,7 @@ import { importHouseGuideCatalog } from '../../api/houseGuideApi.js';
 import {
   getSiteProfileState,
   getSiteSetupUnavailableMessage,
+  isOnboardingComplete,
   isSiteSetupAvailable,
   saveHubSecrets,
   saveSiteProfile,
@@ -327,6 +328,10 @@ function mountHubSetupWizard(viewport, context) {
 function mountHubSetup(viewport, context) {
   if (!isSiteSetupAvailable()) {
     mountHubSetupUnavailable(viewport, context);
+    return;
+  }
+  if (isOnboardingComplete()) {
+    context.navigate('home');
     return;
   }
   mountHubSetupWizard(viewport, context);
