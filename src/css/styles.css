@@ -456,6 +456,11 @@ body.is-bins-route .app-viewport > .bins-app {
 
 .hub-setup-app {
   max-width: min(720px, 100%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: clamp(4px, 1vw, 8px);
 }
 
 .hub-setup-header {

@@ -8,7 +8,7 @@ import { setActiveProfileId } from '../services/profileService.js';
 import { ownerAuthProvider } from './OwnerAuthProvider.js';
 import { completeOwnerUnlock, lockToHouseSitterMode } from './ownerLock.js';
 import { clearMyDayCalendarState } from '../services/myDayCalendarService.js';
-import { clearPrivateConfigSession } from '../services/privateConfigService.js';
+import { clearPrivateConfigSession, refreshPrivateConfig } from '../services/privateConfigService.js';
 import { applySitterSecretsDisclosed } from '../services/sitterSecretsService.js';
 import { clearApplianceManualsState } from '../services/applianceManualsService.js';
 import { clearOwnerAccessToken } from './ownerAccessToken.js';
@@ -153,6 +153,7 @@ export async function enterSitterMode(afterSitter, fetchImpl = fetch) {
     return { ok: false, code: 'SESSION_NOT_PERSISTED' };
   }
   clearOwnerOnlyClientData();
+  await refreshPrivateConfig(fetchImpl);
   lockToHouseSitterMode(afterSitter);
   return { ok: true };
 }
@@ -172,6 +173,7 @@ export async function lockOwner(afterSitter, fetchImpl = fetch) {
     return { ok: false, code: 'SESSION_NOT_PERSISTED' };
   }
   clearOwnerOnlyClientData();
+  await refreshPrivateConfig(fetchImpl);
   lockToHouseSitterMode(afterSitter);
   return { ok: true };
 }

@@ -21,7 +21,24 @@
           "blocks": [
             {
               "type": "paragraph",
-              "text": "Ask your host for the network name and password, or check the Wi-Fi topic once they have added it."
+              "text": "Your host shares Wi-Fi through secure access — turn on Settings → Sitter is here when guests arrive."
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Network name (SSID)",
+              "key": "wifi.ssid"
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Password",
+              "key": "wifi.password"
+            },
+            {
+              "type": "wifiQr",
+              "heading": "Quick join",
+              "caption": "Scan with your phone camera to join Wi‑Fi"
             }
           ],
           "actions": [],
