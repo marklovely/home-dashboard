@@ -13,6 +13,8 @@ import starterGuide from '../../content/houseguide/templates/starter-guide.json'
 import { importHouseGuideCatalog } from '../../api/houseGuideApi.js';
 import {
   getSiteProfileState,
+  getSiteSetupLocalOnlyMessage,
+  isSiteSetupLocalOnly,
   saveHubSecrets,
   saveSiteProfile,
   syncSiteProfileFromServer
@@ -47,6 +49,13 @@ function mountHubSetupApp(viewport, context) {
   const progress = document.createElement('p');
   progress.className = 'hub-setup-progress subtle';
   header.append(title, progress);
+
+  if (isSiteSetupLocalOnly()) {
+    const localBanner = document.createElement('p');
+    localBanner.className = 'hub-setup-local-banner subtle';
+    localBanner.textContent = getSiteSetupLocalOnlyMessage();
+    header.append(localBanner);
+  }
 
   const body = document.createElement('div');
   body.className = 'hub-setup-body';
@@ -146,6 +155,22 @@ function mountHubSetupApp(viewport, context) {
     }
   });
 
+  /**
+   * @param {{ ok?: boolean, localOnly?: boolean, message?: string }} result
+   * @param {string} fallback
+   * @returns {boolean}
+   */
+  function handleSaveResult(result, fallback) {
+    if (!result.ok) {
+      showToast(context.toast, result.message || fallback);
+      return false;
+    }
+    if (result.localOnly) {
+      showToast(context.toast, getSiteSetupLocalOnlyMessage());
+    }
+    return true;
+  }
+
   nextButton.addEventListener('click', () => {
     void (async () => {
       nextButton.disabled = true;
@@ -160,10 +185,7 @@ function mountHubSetupApp(viewport, context) {
             hubName: name,
             useCase: useCase.select.value
           });
-          if (!result.ok) {
-            showToast(context.toast, result.message || 'Could not save.');
-            return;
-          }
+          if (!handleSaveResult(result, 'Could not save.')) return;
           context.refreshShell?.();
         }
 
@@ -191,15 +213,9 @@ function mountHubSetupApp(viewport, context) {
             return;
           }
           const profileResult = await saveSiteProfile(contacts);
-          if (!profileResult.ok) {
-            showToast(context.toast, profileResult.message || 'Could not save contacts.');
-            return;
-          }
+          if (!handleSaveResult(profileResult, 'Could not save contacts.')) return;
           const secretsResult = await saveHubSecrets(contactSecretsPatch(contacts));
-          if (!secretsResult.ok) {
-            showToast(context.toast, secretsResult.message || 'Could not save contact details.');
-            return;
-          }
+          if (!handleSaveResult(secretsResult, 'Could not save contact details.')) return;
         }
 
         if (step === 2) {
@@ -209,18 +225,12 @@ function mountHubSetupApp(viewport, context) {
             return;
           }
           const secretsResult = await saveHubSecrets(readGuestAccessSecrets(guestFields));
-          if (!secretsResult.ok) {
-            showToast(context.toast, secretsResult.message || 'Could not save guest access details.');
-            return;
-          }
+          if (!handleSaveResult(secretsResult, 'Could not save guest access details.')) return;
         }
 
         if (step === 3) {
           const result = await saveSiteProfile({ onboardingComplete: true });
-          if (!result.ok) {
-            showToast(context.toast, result.message || 'Could not finish setup.');
-            return;
-          }
+          if (!handleSaveResult(result, 'Could not finish setup.')) return;
           await syncSiteProfileFromServer();
           context.refreshShell?.();
           showToast(context.toast, 'Hub setup complete.');
