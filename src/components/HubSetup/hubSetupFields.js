@@ -66,7 +66,7 @@ export function createSetupSelect(label, value, options) {
 /**
  * @param {Record<string, unknown>} profile
  */
-export function readContactFields(primaryWrap, secondaryWrap, profile) {
+export function readContactFields(primaryWrap, secondaryWrap, _profile) {
   const primary = /** @type {HTMLInputElement[]} */ (
     primaryWrap.querySelectorAll('input')
   );
@@ -115,7 +115,7 @@ export function createContactGroup(titleText, contact) {
 /**
  * @param {Record<string, unknown>} profile
  */
-export function createGuestAccessFields(profile) {
+export function createGuestAccessFields(_profile) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
 

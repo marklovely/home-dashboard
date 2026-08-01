@@ -1,4 +1,4 @@
-import { getHubSecret, getHubSecretsMap } from '../lib/hubSecrets.js';
+import { getHubSecretsMap } from '../lib/hubSecrets.js';
 import { getSiteProfile } from '../lib/siteProfile.js';
 
 /**
