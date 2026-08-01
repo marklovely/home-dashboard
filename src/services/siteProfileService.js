@@ -16,6 +16,7 @@ import {
   mergeLocalSecrets,
   SITE_SETUP_LOCAL_ONLY_MESSAGE
 } from './siteSetupLocalStorage.js';
+import { resetHubSetupWizardStep } from '../apps/HubSetup/hubSetupWizardState.js';
 
 /** @typedef {{ profile: Record<string, unknown>, guideSeeded?: boolean }} SiteProfileState */
 
@@ -46,18 +47,6 @@ export function isSiteSetupLocalOnly() {
  */
 export function getSiteSetupLocalOnlyMessage() {
   return SITE_SETUP_LOCAL_ONLY_MESSAGE;
-}
-
-/**
- * @param {Record<string, unknown>} profile
- * @param {boolean} hasLocalRow
- * @param {boolean} guideSeeded
- */
-function effectiveProfile(profile, hasLocalRow, guideSeeded) {
-  if (!hasLocalRow && guideSeeded) {
-    return { ...profile, onboardingComplete: true };
-  }
-  return profile;
 }
 
 /**
@@ -123,8 +112,9 @@ export async function syncSiteProfileFromServer(fetchImpl = fetch) {
     const local = loadLocalProfile();
     const guideSeeded = await readGuideSeeded(fetchImpl);
     const { _hasLocalRow, ...profileFields } = local;
+    void _hasLocalRow;
     state = {
-      profile: effectiveProfile(profileFields, _hasLocalRow, guideSeeded),
+      profile: profileFields,
       guideSeeded
     };
     notify();
@@ -225,6 +215,7 @@ export async function fetchHubSecretsConfigured(fetchImpl = fetch) {
  * @param {typeof fetch} [fetchImpl]
  */
 export async function factoryResetHub(fetchImpl = fetch) {
+  resetHubSetupWizardStep();
   const result = await resetHubSite({ fetchImpl });
   if (result.ok && result.data) {
     localOnlyMode = false;
