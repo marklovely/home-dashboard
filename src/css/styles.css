@@ -445,13 +445,13 @@ body.is-bins-route .app-viewport > .bins-app {
   cursor: pointer;
 }
 
-.hub-setup-local-banner {
+.hub-setup-unavailable-message {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, #f4b64f 45%, var(--border));
-  background: color-mix(in srgb, #f4b64f 12%, transparent);
-  line-height: 1.45;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-glass) 88%, transparent);
+  line-height: 1.5;
 }
 
 .hub-setup-app {

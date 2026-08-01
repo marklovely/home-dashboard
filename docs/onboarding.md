@@ -67,7 +67,7 @@ npm run deploy
 
 Migration: `0005_hub_setup.sql` (`hub_secrets`, `site_profile`).
 
-Until the Worker is deployed, the setup wizard saves profile and secrets to **localStorage** on the device (banner shown). Deploy the Worker to persist on the hub and serve secrets via `/api/private-config`.
+The setup wizard requires a working connection to the hub server. If the server has not been updated yet, or the tablet is offline, the wizard shows a **Try again** screen instead of saving locally.
 
 ## Backup files
 

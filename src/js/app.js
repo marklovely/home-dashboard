@@ -24,6 +24,7 @@ import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
 import { applyShellBranding } from '../shell/shellBranding.js';
 import {
   isOnboardingComplete,
+  isSiteSetupAvailable,
   subscribeToSiteProfile,
   syncSiteProfileFromServer
 } from '../services/siteProfileService.js';
@@ -158,7 +159,8 @@ async function initialiseDashboard() {
   });
 
   void syncSiteProfileFromServer().then(() => {
-    if (isOwnerUserMode() && !isOnboardingComplete() && getCurrentRoute() !== 'hub-setup') {
+    if (!isOwnerUserMode() || isOnboardingComplete()) return;
+    if (!isSiteSetupAvailable() || getCurrentRoute() !== 'hub-setup') {
       navigate('hub-setup');
     }
   });
