@@ -159,8 +159,8 @@ async function initialiseDashboard() {
   });
 
   void syncSiteProfileFromServer().then(() => {
-    if (!isOwnerUserMode() || isOnboardingComplete()) return;
-    if (!isSiteSetupAvailable() || getCurrentRoute() !== 'hub-setup') {
+    if (!isOwnerUserMode() || !isSiteSetupAvailable() || isOnboardingComplete()) return;
+    if (getCurrentRoute() !== 'hub-setup') {
       navigate('hub-setup');
     }
   });
