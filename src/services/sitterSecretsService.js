@@ -36,6 +36,7 @@ export function applySitterSecretsDisclosed(value) {
   if (sitterSecretsDisclosed === next) return;
   sitterSecretsDisclosed = next;
   notify();
+  void refreshPrivateConfig();
 }
 
 /**
@@ -60,7 +61,6 @@ export async function setSitterSecretsDisclosed(disclosed, fetchImpl = fetch) {
     return false;
   }
   applySitterSecretsDisclosed(result.data.sitterSecretsDisclosed);
-  await refreshPrivateConfig(fetchImpl);
   return true;
 }
 

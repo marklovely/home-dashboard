@@ -11,3 +11,11 @@ worker/node_modules/
 src/content/houseguide/source/*.pdf
 src/content/houseguide/source/extracted-text.txt
 src/content/houseguide/private-content.local.json
+
+# Hub backups and database dumps (never commit secrets or prod data)
+*-backup.json
+lovely-home-hub-backup.json
+house-guide-export.json
+worker/*-backup.sql
+worker/test-backup.sql
+*.d1.sql

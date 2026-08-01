@@ -153,6 +153,6 @@ describe('private-config with sitter secret sharing', () => {
       env
     );
     expect(response.status).toBe(200);
-    expect(buildPrivateConfig(env).wifi.password).toBe('guest-pass');
+    expect((await buildPrivateConfig(env)).wifi.password).toBe('guest-pass');
   });
 });

@@ -34,12 +34,22 @@ export const OWNER_ABSOLUTE_TTL_SEC = 4 * 60 * 60;
  * @property {number} [absoluteExpiresAt]
  */
 
+import { getConfiguredOwnerPin, getOrCreateDeviceSessionSecret } from './hubSecrets.js';
+
 /**
  * @param {Record<string, string | undefined>} env
  */
-function signingSecret(env) {
-  const secret = env.OWNER_SESSION_SECRET?.trim();
-  return secret || null;
+async function resolveSigningSecret(env) {
+  const fromEnv = env.OWNER_SESSION_SECRET?.trim();
+  if (fromEnv) return fromEnv;
+
+  const fromDb = await getOrCreateDeviceSessionSecret(env);
+  if (fromDb) return fromDb;
+
+  const pin = await getConfiguredOwnerPin(env);
+  if (pin) return pin;
+
+  return env.OWNER_PIN?.trim() || null;
 }
 
 /**
@@ -85,7 +95,7 @@ function base64UrlDecode(input) {
  * @param {Record<string, string | undefined>} env
  */
 export async function signDeviceSession(claims, env) {
-  const secret = signingSecret(env);
+  const secret = await resolveSigningSecret(env);
   if (!secret) return null;
   const payloadPart = base64UrlEncode(new TextEncoder().encode(JSON.stringify(claims)));
   const keyBytes = new TextEncoder().encode(secret);
@@ -99,7 +109,7 @@ export async function signDeviceSession(claims, env) {
  * @returns {Promise<DeviceSessionClaims | null>}
  */
 export async function verifyDeviceSessionToken(token, env) {
-  const secret = signingSecret(env);
+  const secret = await resolveSigningSecret(env);
   if (!secret || !token) return null;
 
   const [payloadPart, signaturePart] = token.split('.');

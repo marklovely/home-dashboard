@@ -57,7 +57,14 @@ export async function postEnterSitterMode(fetchImpl = fetch) {
     })
   );
   if (!response.ok) {
-    return { ok: false, status: response.status };
+    let code = '';
+    try {
+      const body = /** @type {{ error?: string }} */ (await response.json());
+      code = body.error ?? '';
+    } catch {
+      /* ignore */
+    }
+    return { ok: false, status: response.status, code };
   }
   return { ok: true, data: /** @type {DeviceSessionPayload} */ (await response.json()) };
 }
@@ -72,7 +79,14 @@ export async function postLockOwner(fetchImpl = fetch) {
     withApiCredentials({ method: 'POST', cache: 'no-store' })
   );
   if (!response.ok) {
-    return { ok: false, status: response.status };
+    let code = '';
+    try {
+      const body = /** @type {{ error?: string }} */ (await response.json());
+      code = body.error ?? '';
+    } catch {
+      /* ignore */
+    }
+    return { ok: false, status: response.status, code };
   }
   return { ok: true, data: /** @type {DeviceSessionPayload} */ (await response.json()) };
 }
