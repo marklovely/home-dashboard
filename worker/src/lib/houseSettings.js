@@ -1,6 +1,14 @@
 const SITTER_SECRETS_KEY = 'sitter_secrets_disclosed';
 
 /**
+ * @param {Record<string, string | undefined>} env
+ */
+export async function clearHouseSettings(env) {
+  const db = requireHouseSettingsDb(env.HOUSE_GUIDE_DB);
+  await db.prepare(`DELETE FROM house_settings`).run();
+}
+
+/**
  * @param {D1Database | undefined} db
  */
 function requireHouseSettingsDb(db) {

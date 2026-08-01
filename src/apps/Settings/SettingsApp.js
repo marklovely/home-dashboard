@@ -44,10 +44,36 @@ import {
   uploadedMediaRestoreHint
 } from '../../utils/backupJson.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
+import { applyShellBranding } from '../../shell/shellBranding.js';
+import {
+  createContactGroup,
+  createGuestAccessFields,
+  createSetupField,
+  createSetupIntro,
+  contactSecretsPatch,
+  readGuestAccessSecrets
+} from '../../components/HubSetup/hubSetupFields.js';
+import {
+  factoryResetHub,
+  getSiteProfileState,
+  saveHubSecrets,
+  saveSiteProfile
+} from '../../services/siteProfileService.js';
 
 /** @returns {string} */
 function deviceModeLabel() {
   return getDeviceMode() === 'sitter' ? 'House sitter' : 'Owner';
+}
+
+/** @param {string} [code] */
+function houseSitterModeErrorMessage(code) {
+  if (code === 'SESSION_UNAVAILABLE') {
+    return 'House Sitter Mode could not start because the hub could not create a secure session. Try again in a moment.';
+  }
+  if (code === 'SESSION_NOT_PERSISTED') {
+    return 'House Sitter Mode did not stick. Check that cookies are allowed on this tablet, then try again.';
+  }
+  return 'Could not enable House Sitter Mode';
 }
 
 /** @returns {string} */
@@ -84,6 +110,7 @@ function mountSettingsApp(viewport, context, onRefresh) {
 
   if (isOwnerUserMode()) {
     groups.splice(1, 0, createSettingsGroup('Backup & restore', createBackupRestoreFields(context)));
+    groups.splice(1, 0, createSettingsGroup('Home details', createHomeDetailsFields(context)));
     groups.splice(2, 0, createSettingsGroup('Weather location', createWeatherLocationField(context, onRefresh)));
     groups.unshift(createSettingsGroup('House sitter mode', createHouseSitterModeFields(context, onRefresh)));
   }
@@ -179,6 +206,132 @@ function createBackupRestoreFields(context) {
     })();
   });
   wrap.append(intro, exportButton, importButton, importInput);
+
+  const resetIntro = document.createElement('p');
+  resetIntro.className = 'settings-help subtle';
+  resetIntro.textContent =
+    'Factory reset clears House Guide content, hub secrets stored in the database, and site settings on this hub. Worker CLI secrets are not removed. Download a backup first if you need one.';
+
+  const resetButton = document.createElement('button');
+  resetButton.type = 'button';
+  resetButton.className = 'settings-action-button settings-action-button--secondary';
+  resetButton.textContent = 'Factory reset hub';
+  resetButton.addEventListener('click', () => {
+    void showConfirmDialog({
+      title: 'Factory reset this hub?',
+      message:
+        'This deletes guide content, saved home details, and settings in the database. This cannot be undone.',
+      confirmLabel: 'Reset everything',
+      danger: true
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      const result = await factoryResetHub();
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Reset failed.');
+        return;
+      }
+      await refreshGuideContent(fetch, { draft: true, force: true });
+      applyShellBranding({
+        shellEyebrow: document.querySelector('#shell-eyebrow'),
+        shellTagline: document.querySelector('#shell-tagline')
+      });
+      showToast(context.toast, 'Hub reset. Open Hub setup to configure again.');
+      context.navigate('hub-setup');
+    });
+  });
+
+  wrap.append(resetIntro, resetButton);
+  return wrap;
+}
+
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ */
+function createHomeDetailsFields(context) {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options settings-options--stacked';
+
+  const profileState = getSiteProfileState();
+  const profile = profileState?.profile ?? {};
+
+  wrap.append(
+    createSetupIntro(
+      'Store Wi-Fi, contacts, address, lockbox code, and owner PIN on your hub — no command line required. Leave a field blank when saving to keep its current value.'
+    )
+  );
+
+  const hubName = createSetupField('Hub name', String(profile.hubName ?? ''));
+  const primaryGroup = createContactGroup('Primary contact', profile.primaryContact ?? {});
+  const secondaryGroup = createContactGroup('Secondary contact', profile.secondaryContact ?? {});
+  const guestFields = createGuestAccessFields(profile);
+
+  const wizardButton = document.createElement('button');
+  wizardButton.type = 'button';
+  wizardButton.className = 'settings-action-button settings-action-button--secondary';
+  wizardButton.textContent = 'Open setup wizard';
+  wizardButton.addEventListener('click', () => context.navigate('hub-setup'));
+
+  const saveButton = document.createElement('button');
+  saveButton.type = 'button';
+  saveButton.className = 'settings-action-button';
+  saveButton.textContent = 'Save home details';
+  saveButton.addEventListener('click', () => {
+    saveButton.disabled = true;
+    void (async () => {
+      try {
+        const primaryInputs = /** @type {HTMLInputElement[]} */ (primaryGroup.querySelectorAll('input'));
+        const secondaryInputs = /** @type {HTMLInputElement[]} */ (secondaryGroup.querySelectorAll('input'));
+        const contacts = {
+          primaryContact: {
+            name: primaryInputs[0]?.value.trim() ?? '',
+            phone: primaryInputs[1]?.value.trim() ?? '',
+            email: primaryInputs[2]?.value.trim() ?? ''
+          },
+          secondaryContact: {
+            name: secondaryInputs[0]?.value.trim() ?? '',
+            phone: secondaryInputs[1]?.value.trim() ?? '',
+            email: secondaryInputs[2]?.value.trim() ?? ''
+          }
+        };
+
+        const profileResult = await saveSiteProfile({
+          hubName: hubName.input.value.trim(),
+          ...contacts
+        });
+        if (!profileResult.ok) {
+          showToast(context.toast, profileResult.message || 'Could not save profile.');
+          return;
+        }
+
+        const secretsPatch = {
+          ...contactSecretsPatch(contacts),
+          ...readGuestAccessSecrets(guestFields)
+        };
+        if (Object.keys(secretsPatch).length) {
+          const pin = secretsPatch.owner_pin;
+          if (pin && !/^\d{4}$/.test(pin)) {
+            showToast(context.toast, 'Owner PIN must be exactly 4 digits.');
+            return;
+          }
+          const secretsResult = await saveHubSecrets(secretsPatch);
+          if (!secretsResult.ok) {
+            showToast(context.toast, secretsResult.message || 'Could not save secrets.');
+            return;
+          }
+        }
+
+        guestFields.ownerPin.input.value = '';
+        guestFields.wifiPassword.input.value = '';
+        guestFields.lockbox.input.value = '';
+        context.refreshShell?.();
+        showToast(context.toast, 'Home details saved.');
+      } finally {
+        saveButton.disabled = false;
+      }
+    })();
+  });
+
+  wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, saveButton, wizardButton);
   return wrap;
 }
 
@@ -304,8 +457,8 @@ function createHouseSitterModeFields(context, onRefresh) {
         onRefresh();
         context.refreshShell?.();
         showToast(context.toast, 'House Sitter Mode enabled');
-      }).then((ok) => {
-        if (!ok) showToast(context.toast, 'Could not enable House Sitter Mode');
+      }).then((result) => {
+        if (!result.ok) showToast(context.toast, houseSitterModeErrorMessage(result.code));
       });
     });
   });
@@ -322,8 +475,8 @@ function createHouseSitterModeFields(context, onRefresh) {
         context.navigate('home');
         onRefresh();
         context.refreshShell?.();
-      }).then((ok) => {
-        if (!ok) showToast(context.toast, 'Could not return to House Sitter Mode');
+      }).then((result) => {
+        if (!result.ok) showToast(context.toast, houseSitterModeErrorMessage(result.code));
       });
     });
     wrap.append(lockButton);

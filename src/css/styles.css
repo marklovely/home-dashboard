@@ -444,6 +444,156 @@ body.is-bins-route .app-viewport > .bins-app {
   opacity: 0;
   cursor: pointer;
 }
+
+.hub-setup-unavailable-message {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-glass) 88%, transparent);
+  line-height: 1.5;
+}
+
+.hub-setup-app {
+  max-width: min(720px, 100%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: clamp(4px, 1vw, 8px);
+}
+
+.hub-setup-header {
+  display: grid;
+  gap: 8px;
+}
+
+.hub-setup-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+}
+
+.hub-setup-body {
+  display: grid;
+  gap: 14px;
+}
+
+.hub-setup-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.hub-setup-field {
+  display: grid;
+  gap: 8px;
+}
+
+.hub-setup-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: inherit;
+  font: inherit;
+}
+
+.hub-setup-input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.hub-setup-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.hub-setup-input-wrap .hub-setup-input {
+  padding-right: 48px;
+}
+
+.hub-setup-reveal-button {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.hub-setup-reveal-button:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-glass) 70%, transparent);
+}
+
+.hub-setup-reveal-button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.hub-setup-reveal-icon {
+  display: block;
+}
+
+.hub-setup-reveal-button .hub-setup-reveal-icon--hide {
+  display: none;
+}
+
+.hub-setup-reveal-button[aria-pressed='true'] .hub-setup-reveal-icon--show {
+  display: none;
+}
+
+.hub-setup-reveal-button[aria-pressed='true'] .hub-setup-reveal-icon--hide {
+  display: block;
+}
+
+.hub-setup-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hub-setup-action-button {
+  flex: 1;
+}
+
+.hub-setup-info-button {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.hub-setup-info-button:hover {
+  color: var(--text);
+}
+
+.hub-setup-info-button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.hub-setup-info-panel {
+  margin: 0;
+}
+
 .settings-option {
   display: flex;
   align-items: center;
@@ -1682,6 +1832,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 }
 .help-guide-panel {
   display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 14px;
   width: min(960px, 100%);
   max-height: min(88vh, 920px);
@@ -1690,6 +1841,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   border: 1px solid var(--border);
   background: var(--surface, #10131a);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
 .help-guide-header {
   display: flex;
@@ -1731,8 +1883,10 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   display: grid;
   gap: 6px;
   align-content: start;
-  max-height: min(58vh, 640px);
-  overflow: auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding-right: 4px;
 }
 .help-guide-nav-button {
@@ -1756,15 +1910,23 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   outline-offset: 2px;
 }
 .help-guide-content {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   min-height: 0;
-  overflow: auto;
-  padding-right: 4px;
+  overflow: hidden;
 }
 .help-guide-content-title {
   margin: 0;
   font-size: clamp(1.05rem, 2vw, 1.25rem);
+  flex-shrink: 0;
+}
+.help-guide-content-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
 }
 .help-guide-section-body {
   display: grid;
@@ -1806,10 +1968,11 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 @media (max-width: 720px) {
   .help-guide-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
   }
   .help-guide-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-height: none;
+    max-height: min(28vh, 240px);
   }
 }
 

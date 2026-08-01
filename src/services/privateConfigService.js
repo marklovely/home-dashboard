@@ -107,7 +107,13 @@ export async function preloadPrivateConfig(fetchImpl) {
 function getSessionRoot() {
   if (sessionCache === null) {
     sessionCache = loadLocalPrivateContent();
-    if (status === 'idle') status = 'loaded';
+    if (status === 'idle') {
+      if (isApiConfigured()) {
+        void preloadPrivateConfig();
+      } else {
+        status = 'loaded';
+      }
+    }
   }
   return sessionCache;
 }

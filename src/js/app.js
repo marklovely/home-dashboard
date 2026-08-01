@@ -18,8 +18,16 @@ import { attachOwnerAccessGesture } from '../auth/ownerAccessGesture.js';
 import { registerOwnerLockNavigation } from '../auth/ownerLock.js';
 import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
 import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
+import { isOwnerUserMode } from '../auth/userMode.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
 import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
+import { applyShellBranding } from '../shell/shellBranding.js';
+import {
+  isOnboardingComplete,
+  isSiteSetupAvailable,
+  subscribeToSiteProfile,
+  syncSiteProfileFromServer
+} from '../services/siteProfileService.js';
 
 initTheme();
 initDisplayPreferences();
@@ -142,6 +150,20 @@ async function initialiseDashboard() {
 
   registerServiceWorker();
   initScreensaverOverlay();
+
+  subscribeToSiteProfile(() => {
+    applyShellBranding({
+      shellEyebrow: document.querySelector('#shell-eyebrow'),
+      shellTagline: document.querySelector('#shell-tagline')
+    });
+  });
+
+  void syncSiteProfileFromServer().then(() => {
+    if (!isOwnerUserMode() || isOnboardingComplete()) return;
+    if (!isSiteSetupAvailable() || getCurrentRoute() !== 'hub-setup') {
+      navigate('hub-setup');
+    }
+  });
 }
 
 setStartupLoading(true);

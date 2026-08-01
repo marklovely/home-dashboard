@@ -10,7 +10,7 @@ export function createInMemoryHouseSettingsDb(initial = {}) {
     prepare(sql) {
       const normalized = sql.replace(/\s+/g, ' ').trim();
 
-      return {
+      const statement = {
         bind(...args) {
           return {
             async first() {
@@ -19,7 +19,16 @@ export function createInMemoryHouseSettingsDb(initial = {}) {
                 const value = settings[key];
                 return value === undefined ? null : { value };
               }
+              if (normalized.startsWith('SELECT key, value FROM hub_secrets')) {
+                return null;
+              }
               return null;
+            },
+            async all() {
+              if (normalized.startsWith('SELECT key, value FROM hub_secrets')) {
+                return { results: [] };
+              }
+              return { results: [] };
             },
             async run() {
               if (normalized.includes('INSERT INTO house_settings')) {
@@ -27,8 +36,13 @@ export function createInMemoryHouseSettingsDb(initial = {}) {
               }
             }
           };
+        },
+        async all() {
+          return statement.bind().all();
         }
       };
+
+      return statement;
     }
   });
 }

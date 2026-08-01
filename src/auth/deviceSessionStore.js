@@ -8,7 +8,7 @@ import { setActiveProfileId } from '../services/profileService.js';
 import { ownerAuthProvider } from './OwnerAuthProvider.js';
 import { completeOwnerUnlock, lockToHouseSitterMode } from './ownerLock.js';
 import { clearMyDayCalendarState } from '../services/myDayCalendarService.js';
-import { clearPrivateConfigSession } from '../services/privateConfigService.js';
+import { clearPrivateConfigSession, refreshPrivateConfig } from '../services/privateConfigService.js';
 import { applySitterSecretsDisclosed } from '../services/sitterSecretsService.js';
 import { clearApplianceManualsState } from '../services/applianceManualsService.js';
 import { clearOwnerAccessToken } from './ownerAccessToken.js';
@@ -140,22 +140,22 @@ export async function unlockOwner(pin, fetchImpl = fetch, onUnlocked) {
 }
 
 /**
- * @param {() => void} [afterSitter]
  * @param {typeof fetch} [fetchImpl]
  */
 export async function enterSitterMode(afterSitter, fetchImpl = fetch) {
   const result = await postEnterSitterMode(fetchImpl);
   if (!result.ok) {
-    return false;
+    return { ok: false, code: result.code ?? '' };
   }
   if (!(await verifyPersistedSitterSession(fetchImpl))) {
     status = 'error';
     notify();
-    return false;
+    return { ok: false, code: 'SESSION_NOT_PERSISTED' };
   }
   clearOwnerOnlyClientData();
+  await refreshPrivateConfig(fetchImpl);
   lockToHouseSitterMode(afterSitter);
-  return true;
+  return { ok: true };
 }
 
 /**
@@ -165,16 +165,17 @@ export async function enterSitterMode(afterSitter, fetchImpl = fetch) {
 export async function lockOwner(afterSitter, fetchImpl = fetch) {
   const result = await postLockOwner(fetchImpl);
   if (!result.ok) {
-    return false;
+    return { ok: false, code: result.code ?? '' };
   }
   if (!(await verifyPersistedSitterSession(fetchImpl))) {
     status = 'error';
     notify();
-    return false;
+    return { ok: false, code: 'SESSION_NOT_PERSISTED' };
   }
   clearOwnerOnlyClientData();
+  await refreshPrivateConfig(fetchImpl);
   lockToHouseSitterMode(afterSitter);
-  return true;
+  return { ok: true };
 }
 
 /** @internal */
