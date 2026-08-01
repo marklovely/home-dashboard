@@ -96,6 +96,18 @@ export async function getGuideMediaById(db, id) {
 
 /**
  * @param {D1Database} db
+ */
+export async function clearGuideCatalog(db) {
+  await db.batch([
+    db.prepare(`DELETE FROM guide_topics`),
+    db.prepare(`DELETE FROM guide_categories`),
+    db.prepare(`DELETE FROM guide_media`),
+    db.prepare(`DELETE FROM guide_settings`)
+  ]);
+}
+
+/**
+ * @param {D1Database} db
  * @param {Object} catalog
  */
 export async function importGuideCatalog(db, catalog) {

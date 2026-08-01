@@ -1,0 +1,185 @@
+/**
+ * Shared field builders for hub setup and onboarding forms.
+ */
+
+/**
+ * @param {string} label
+ * @param {string} [value]
+ * @param {Object} [options]
+ * @param {string} [options.type]
+ * @param {string} [options.placeholder]
+ * @param {boolean} [options.required]
+ * @param {string} [options.autocomplete]
+ * @param {string} [options.inputMode]
+ * @param {string} [options.pattern]
+ * @param {string} [options.placeholder]
+ */
+export function createSetupField(label, value = '', options = {}) {
+  const wrap = document.createElement('label');
+  wrap.className = 'settings-subsection hub-setup-field';
+
+  const title = document.createElement('span');
+  title.className = 'settings-subsection-title';
+  title.textContent = label;
+
+  const input = document.createElement('input');
+  input.className = 'hub-setup-input';
+  input.type = options.type ?? 'text';
+  input.value = value;
+  if (options.placeholder) input.placeholder = options.placeholder;
+  if (options.required) input.required = true;
+  if (options.autocomplete) input.autocomplete = options.autocomplete;
+  if (options.inputMode) input.inputMode = options.inputMode;
+  if (options.pattern) input.pattern = options.pattern;
+
+  wrap.append(title, input);
+  return { wrap, input };
+}
+
+/**
+ * @param {string} label
+ * @param {string} value
+ * @param {{ value: string, label: string }[]} options
+ */
+export function createSetupSelect(label, value, options) {
+  const wrap = document.createElement('label');
+  wrap.className = 'settings-subsection hub-setup-field';
+
+  const title = document.createElement('span');
+  title.className = 'settings-subsection-title';
+  title.textContent = label;
+
+  const select = document.createElement('select');
+  select.className = 'hub-setup-input';
+  for (const option of options) {
+    const el = document.createElement('option');
+    el.value = option.value;
+    el.textContent = option.label;
+    el.selected = option.value === value;
+    select.append(el);
+  }
+
+  wrap.append(title, select);
+  return { wrap, select };
+}
+
+/**
+ * @param {Record<string, unknown>} profile
+ */
+export function readContactFields(primaryWrap, secondaryWrap, profile) {
+  const primary = /** @type {HTMLInputElement[]} */ (
+    primaryWrap.querySelectorAll('input')
+  );
+  const secondary = /** @type {HTMLInputElement[]} */ (
+    secondaryWrap.querySelectorAll('input')
+  );
+  return {
+    primaryContact: {
+      name: primary[0]?.value.trim() ?? '',
+      phone: primary[1]?.value.trim() ?? '',
+      email: primary[2]?.value.trim() ?? ''
+    },
+    secondaryContact: {
+      name: secondary[0]?.value.trim() ?? '',
+      phone: secondary[1]?.value.trim() ?? '',
+      email: secondary[2]?.value.trim() ?? ''
+    }
+  };
+}
+
+/**
+ * @param {Record<string, unknown>} profile
+ */
+export function createContactGroup(titleText, contact) {
+  const group = document.createElement('div');
+  group.className = 'settings-subsection';
+
+  const title = document.createElement('h3');
+  title.className = 'settings-subsection-title';
+  title.textContent = titleText;
+
+  const name = createSetupField('Name', String(contact?.name ?? ''), { required: true });
+  const phone = createSetupField('Phone', String(contact?.phone ?? ''), {
+    type: 'tel',
+    autocomplete: 'tel'
+  });
+  const email = createSetupField('Email', String(contact?.email ?? ''), {
+    type: 'email',
+    autocomplete: 'email'
+  });
+
+  group.append(title, name.wrap, phone.wrap, email.wrap);
+  return group;
+}
+
+/**
+ * @param {Record<string, unknown>} profile
+ */
+export function createGuestAccessFields(profile) {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options settings-options--stacked';
+
+  const wifiSsid = createSetupField('Wi-Fi network name', '', { autocomplete: 'off' });
+  const wifiPassword = createSetupField('Wi-Fi password', '', {
+    type: 'password',
+    autocomplete: 'new-password'
+  });
+  const homeAddress = createSetupField('Home address', '', { autocomplete: 'street-address' });
+  const lockbox = createSetupField('Lockbox / door code (optional)', '', { autocomplete: 'off' });
+  const ownerPin = createSetupField('Owner PIN (4 digits)', '', {
+    type: 'password',
+    inputMode: 'numeric',
+    pattern: '[0-9]{4}',
+    placeholder: '••••',
+    autocomplete: 'off'
+  });
+  ownerPin.input.maxLength = 4;
+
+  wrap.append(
+    createSetupIntro('Guest-facing details. These stay on your hub and are only shown to sitters when you enable sharing in Settings.'),
+    wifiSsid.wrap,
+    wifiPassword.wrap,
+    homeAddress.wrap,
+    lockbox.wrap,
+    ownerPin.wrap
+  );
+
+  return { wrap, wifiSsid, wifiPassword, homeAddress, lockbox, ownerPin };
+}
+
+/**
+ * @param {string} text
+ */
+export function createSetupIntro(text) {
+  const intro = document.createElement('p');
+  intro.className = 'settings-help subtle';
+  intro.textContent = text;
+  return intro;
+}
+
+/**
+ * @param {{ wifiSsid: { input: HTMLInputElement }, wifiPassword: { input: HTMLInputElement }, homeAddress: { input: HTMLInputElement }, lockbox: { input: HTMLInputElement }, ownerPin: { input: HTMLInputElement } }} fields
+ */
+export function readGuestAccessSecrets(fields) {
+  /** @type {Record<string, string>} */
+  const patch = {};
+  if (fields.wifiSsid.input.value.trim()) patch.wifi_ssid = fields.wifiSsid.input.value.trim();
+  if (fields.wifiPassword.input.value.trim()) patch.wifi_password = fields.wifiPassword.input.value.trim();
+  if (fields.homeAddress.input.value.trim()) patch.home_address = fields.homeAddress.input.value.trim();
+  if (fields.lockbox.input.value.trim()) patch.lockbox_code = fields.lockbox.input.value.trim();
+  if (fields.ownerPin.input.value.trim()) patch.owner_pin = fields.ownerPin.input.value.trim();
+  return patch;
+}
+
+/**
+ * @param {{ primaryContact: { phone?: string, email?: string }, secondaryContact: { phone?: string, email?: string } }} contacts
+ */
+export function contactSecretsPatch(contacts) {
+  /** @type {Record<string, string>} */
+  const patch = {};
+  if (contacts.primaryContact.phone) patch.primary_phone = contacts.primaryContact.phone;
+  if (contacts.primaryContact.email) patch.primary_email = contacts.primaryContact.email;
+  if (contacts.secondaryContact.phone) patch.secondary_phone = contacts.secondaryContact.phone;
+  if (contacts.secondaryContact.email) patch.secondary_email = contacts.secondaryContact.email;
+  return patch;
+}

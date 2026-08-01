@@ -18,8 +18,14 @@ import { attachOwnerAccessGesture } from '../auth/ownerAccessGesture.js';
 import { registerOwnerLockNavigation } from '../auth/ownerLock.js';
 import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
 import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
+import { isOwnerUserMode } from '../auth/userMode.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
 import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
+import {
+  isOnboardingComplete,
+  subscribeToSiteProfile,
+  syncSiteProfileFromServer
+} from '../services/siteProfileService.js';
 
 initTheme();
 initDisplayPreferences();
@@ -142,6 +148,16 @@ async function initialiseDashboard() {
 
   registerServiceWorker();
   initScreensaverOverlay();
+
+  subscribeToSiteProfile(() => {
+    shellContext.refreshShell?.();
+  });
+
+  void syncSiteProfileFromServer().then(() => {
+    if (isOwnerUserMode() && !isOnboardingComplete()) {
+      navigate('hub-setup');
+    }
+  });
 }
 
 setStartupLoading(true);

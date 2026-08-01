@@ -6,6 +6,7 @@ import {
 } from '../lib/ownerAuthRateLimitClient.js';
 import { authenticateRequest, hasRequiredRole } from '../lib/requestAuth.js';
 import { issueOwnerUnlockResponse } from '../lib/deviceSessionAuth.js';
+import { getConfiguredOwnerPin } from '../lib/hubSecrets.js';
 
 /**
  * @param {boolean} authenticated
@@ -53,7 +54,7 @@ export async function handleOwnerAuth(request, correlationId, env, fetchImpl = f
     return authJson(false, 403, 'Owner access not permitted for this identity');
   }
 
-  const configuredPin = env.OWNER_PIN?.trim();
+  const configuredPin = await getConfiguredOwnerPin(env);
   if (!configuredPin) {
     return authJson(false, 503, 'Owner access is unavailable');
   }

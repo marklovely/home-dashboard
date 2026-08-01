@@ -444,6 +444,52 @@ body.is-bins-route .app-viewport > .bins-app {
   opacity: 0;
   cursor: pointer;
 }
+
+.hub-setup-app {
+  max-width: min(720px, 100%);
+}
+
+.hub-setup-header {
+  display: grid;
+  gap: 8px;
+}
+
+.hub-setup-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+}
+
+.hub-setup-body {
+  display: grid;
+  gap: 14px;
+}
+
+.hub-setup-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.hub-setup-field {
+  display: grid;
+  gap: 8px;
+}
+
+.hub-setup-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: inherit;
+  font: inherit;
+}
+
+.hub-setup-input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 .settings-option {
   display: flex;
   align-items: center;
