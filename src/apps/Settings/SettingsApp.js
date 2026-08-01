@@ -44,6 +44,7 @@ import {
   uploadedMediaRestoreHint
 } from '../../utils/backupJson.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
+import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
   createContactGroup,
   createGuestAccessFields,
@@ -219,7 +220,10 @@ function createBackupRestoreFields(context) {
         return;
       }
       await refreshGuideContent(fetch, { draft: true, force: true });
-      context.refreshShell?.();
+      applyShellBranding({
+        shellEyebrow: document.querySelector('#shell-eyebrow'),
+        shellTagline: document.querySelector('#shell-tagline')
+      });
       showToast(context.toast, 'Hub reset. Open Hub setup to configure again.');
       context.navigate('hub-setup');
     });

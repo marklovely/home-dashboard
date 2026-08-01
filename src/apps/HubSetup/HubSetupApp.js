@@ -20,6 +20,12 @@ import {
   syncSiteProfileFromServer
 } from '../../services/siteProfileService.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
+import { applyShellBranding } from '../../shell/shellBranding.js';
+import {
+  getHubSetupWizardStep,
+  resetHubSetupWizardStep,
+  setHubSetupWizardStep
+} from './hubSetupWizardState.js';
 
 const USE_CASE_OPTIONS = [
   { value: 'owner', label: 'Owner only' },
@@ -39,7 +45,7 @@ function mountHubSetupApp(viewport, context) {
   const profileState = getSiteProfileState();
   const profile = profileState?.profile ?? {};
 
-  let step = 0;
+  let step = getHubSetupWizardStep();
 
   const header = document.createElement('header');
   header.className = 'hub-setup-header';
@@ -93,6 +99,7 @@ function mountHubSetupApp(viewport, context) {
   const guestFields = createGuestAccessFields(profile);
 
   function renderStep() {
+    setHubSetupWizardStep(step);
     progress.textContent = `Step ${step + 1} of 4`;
     body.replaceChildren();
     backButton.hidden = step === 0;
@@ -151,6 +158,7 @@ function mountHubSetupApp(viewport, context) {
   backButton.addEventListener('click', () => {
     if (step > 0) {
       step -= 1;
+      setHubSetupWizardStep(step);
       renderStep();
     }
   });
@@ -186,7 +194,10 @@ function mountHubSetupApp(viewport, context) {
             useCase: useCase.select.value
           });
           if (!handleSaveResult(result, 'Could not save.')) return;
-          context.refreshShell?.();
+          applyShellBranding({
+            shellEyebrow: document.querySelector('#shell-eyebrow'),
+            shellTagline: document.querySelector('#shell-tagline')
+          });
         }
 
         if (step === 1) {
@@ -231,14 +242,19 @@ function mountHubSetupApp(viewport, context) {
         if (step === 3) {
           const result = await saveSiteProfile({ onboardingComplete: true });
           if (!handleSaveResult(result, 'Could not finish setup.')) return;
+          resetHubSetupWizardStep();
           await syncSiteProfileFromServer();
-          context.refreshShell?.();
+          applyShellBranding({
+            shellEyebrow: document.querySelector('#shell-eyebrow'),
+            shellTagline: document.querySelector('#shell-tagline')
+          });
           showToast(context.toast, 'Hub setup complete.');
           context.navigate('home');
           return;
         }
 
         step += 1;
+        setHubSetupWizardStep(step);
         renderStep();
       } finally {
         nextButton.disabled = false;
@@ -258,6 +274,10 @@ export const hubSetupApp = defineApp({
   accent: '#7b66ff',
   profiles: ['owner'],
   mount(viewport, context) {
-    void syncSiteProfileFromServer().finally(() => mountHubSetupApp(viewport, context));
+    if (!getSiteProfileState()) {
+      void syncSiteProfileFromServer().finally(() => mountHubSetupApp(viewport, context));
+      return;
+    }
+    mountHubSetupApp(viewport, context);
   }
 });

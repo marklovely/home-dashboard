@@ -21,6 +21,7 @@ import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSe
 import { isOwnerUserMode } from '../auth/userMode.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
 import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
+import { applyShellBranding } from '../shell/shellBranding.js';
 import {
   isOnboardingComplete,
   subscribeToSiteProfile,
@@ -150,11 +151,14 @@ async function initialiseDashboard() {
   initScreensaverOverlay();
 
   subscribeToSiteProfile(() => {
-    shellContext.refreshShell?.();
+    applyShellBranding({
+      shellEyebrow: document.querySelector('#shell-eyebrow'),
+      shellTagline: document.querySelector('#shell-tagline')
+    });
   });
 
   void syncSiteProfileFromServer().then(() => {
-    if (isOwnerUserMode() && !isOnboardingComplete()) {
+    if (isOwnerUserMode() && !isOnboardingComplete() && getCurrentRoute() !== 'hub-setup') {
       navigate('hub-setup');
     }
   });
