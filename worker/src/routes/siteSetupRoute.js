@@ -1,4 +1,4 @@
-import { requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
+import { requireOwnerForHubSetup } from '../lib/hubSetupAuth.js';
 import { clearHouseSettings } from '../lib/houseSettings.js';
 import { clearHubSecrets, getHubSecretsStatus, HUB_SECRET_KEYS, setHubSecrets } from '../lib/hubSecrets.js';
 import { getSiteProfile, hasSiteProfileRow, resetSiteProfile, updateSiteProfile } from '../lib/siteProfile.js';
@@ -30,7 +30,7 @@ function validateSecretsPatch(body) {
 export async function handleSiteProfileGet(request, env, correlationId) {
   if (request.method !== 'GET') return methodNotAllowed(correlationId);
 
-  const ownerGate = await requireOwnerDeviceMode(request, env);
+  const ownerGate = await requireOwnerForHubSetup(request, env);
   if (!ownerGate.ok) {
     return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
   }
@@ -54,7 +54,7 @@ export async function handleSiteProfileGet(request, env, correlationId) {
 export async function handleSiteProfilePatch(request, env, correlationId) {
   if (request.method !== 'PATCH') return methodNotAllowed(correlationId);
 
-  const ownerGate = await requireOwnerDeviceMode(request, env);
+  const ownerGate = await requireOwnerForHubSetup(request, env);
   if (!ownerGate.ok) {
     return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
   }
@@ -89,7 +89,7 @@ export async function handleSiteProfilePatch(request, env, correlationId) {
 export async function handleHubSecretsStatusGet(request, env, correlationId) {
   if (request.method !== 'GET') return methodNotAllowed(correlationId);
 
-  const ownerGate = await requireOwnerDeviceMode(request, env);
+  const ownerGate = await requireOwnerForHubSetup(request, env);
   if (!ownerGate.ok) {
     return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
   }
@@ -127,7 +127,7 @@ export async function handleHubSecretsStatusGet(request, env, correlationId) {
 export async function handleHubSecretsPatch(request, env, correlationId) {
   if (request.method !== 'PATCH') return methodNotAllowed(correlationId);
 
-  const ownerGate = await requireOwnerDeviceMode(request, env);
+  const ownerGate = await requireOwnerForHubSetup(request, env);
   if (!ownerGate.ok) {
     return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
   }
@@ -176,7 +176,7 @@ export async function resetHubToDefaults(env) {
 export async function handleSiteResetPost(request, env, correlationId) {
   if (request.method !== 'POST') return methodNotAllowed(correlationId);
 
-  const ownerGate = await requireOwnerDeviceMode(request, env);
+  const ownerGate = await requireOwnerForHubSetup(request, env);
   if (!ownerGate.ok) {
     return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
   }

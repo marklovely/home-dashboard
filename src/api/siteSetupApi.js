@@ -4,16 +4,27 @@ import { withApiCredentials } from './accessFetch.js';
 /**
  * @param {Response} response
  */
-async function readErrorMessage(response) {
+async function readErrorBody(response) {
   try {
     const body = await response.json();
-    if (typeof body?.error?.message === 'string') return body.error.message;
-    if (typeof body?.message === 'string') return body.message;
-    if (typeof body?.error === 'string') return body.error;
+    const code =
+      typeof body?.error?.code === 'string'
+        ? body.error.code
+        : typeof body?.code === 'string'
+          ? body.code
+          : '';
+    const message =
+      typeof body?.error?.message === 'string'
+        ? body.error.message
+        : typeof body?.message === 'string'
+          ? body.message
+          : typeof body?.error === 'string'
+            ? body.error
+            : 'Request failed';
+    return { code, message };
   } catch {
-    /* ignore */
+    return { code: '', message: 'Request failed' };
   }
-  return 'Request failed';
 }
 
 /**
@@ -31,11 +42,12 @@ export async function fetchSiteProfile({ fetchImpl = fetch } = {}) {
       withApiCredentials({ headers: { Accept: 'application/json' }, cache: 'no-store' })
     );
     if (!response.ok) {
-      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+      const { code, message } = await readErrorBody(response);
+      return { ok: false, status: response.status, code, message, data: null };
     }
-    return { ok: true, status: 200, message: '', data: await response.json() };
+    return { ok: true, status: 200, code: '', message: '', data: await response.json() };
   } catch {
-    return { ok: false, status: 503, message: 'Site profile is temporarily unavailable.', data: null };
+    return { ok: false, status: 503, code: 'NETWORK_ERROR', message: 'Site profile is temporarily unavailable.', data: null };
   }
 }
 
@@ -60,11 +72,12 @@ export async function patchSiteProfile(patch, { fetchImpl = fetch } = {}) {
       })
     );
     if (!response.ok) {
-      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+      const { code, message } = await readErrorBody(response);
+      return { ok: false, status: response.status, code, message, data: null };
     }
-    return { ok: true, status: 200, message: '', data: await response.json() };
+    return { ok: true, status: 200, code: '', message: '', data: await response.json() };
   } catch {
-    return { ok: false, status: 503, message: 'Could not save site profile.', data: null };
+    return { ok: false, status: 503, code: 'NETWORK_ERROR', message: 'Could not save site profile.', data: null };
   }
 }
 
@@ -83,11 +96,12 @@ export async function fetchHubSecretsStatus({ fetchImpl = fetch } = {}) {
       withApiCredentials({ headers: { Accept: 'application/json' }, cache: 'no-store' })
     );
     if (!response.ok) {
-      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+      const { code, message } = await readErrorBody(response);
+      return { ok: false, status: response.status, code, message, data: null };
     }
-    return { ok: true, status: 200, message: '', data: await response.json() };
+    return { ok: true, status: 200, code: '', message: '', data: await response.json() };
   } catch {
-    return { ok: false, status: 503, message: 'Secrets status is temporarily unavailable.', data: null };
+    return { ok: false, status: 503, code: 'NETWORK_ERROR', message: 'Secrets status is temporarily unavailable.', data: null };
   }
 }
 
@@ -112,11 +126,12 @@ export async function patchHubSecrets(patch, { fetchImpl = fetch } = {}) {
       })
     );
     if (!response.ok) {
-      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+      const { code, message } = await readErrorBody(response);
+      return { ok: false, status: response.status, code, message, data: null };
     }
-    return { ok: true, status: 200, message: '', data: await response.json() };
+    return { ok: true, status: 200, code: '', message: '', data: await response.json() };
   } catch {
-    return { ok: false, status: 503, message: 'Could not save secrets.', data: null };
+    return { ok: false, status: 503, code: 'NETWORK_ERROR', message: 'Could not save secrets.', data: null };
   }
 }
 
@@ -140,10 +155,11 @@ export async function resetHubSite({ fetchImpl = fetch } = {}) {
       })
     );
     if (!response.ok) {
-      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+      const { code, message } = await readErrorBody(response);
+      return { ok: false, status: response.status, code, message, data: null };
     }
-    return { ok: true, status: 200, message: '', data: await response.json() };
+    return { ok: true, status: 200, code: '', message: '', data: await response.json() };
   } catch {
-    return { ok: false, status: 503, message: 'Reset is temporarily unavailable.', data: null };
+    return { ok: false, status: 503, code: 'NETWORK_ERROR', message: 'Reset is temporarily unavailable.', data: null };
   }
 }
