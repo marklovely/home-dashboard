@@ -23,7 +23,13 @@ describe('calendar ICS parsing', () => {
     expect(dentist).toBeTruthy();
     expect(dentist?.allDay).toBe(false);
     expect(dentist?.location).toBe('Waterlooville');
-    expect(dentist?.start).toContain('14:00');
+    const londonTime = new Date(dentist.start).toLocaleString('en-GB', {
+      timeZone: 'Europe/London',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    expect(londonTime).toBe('14:00');
   });
 
   it('includes all-day events', () => {

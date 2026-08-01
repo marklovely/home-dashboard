@@ -18,6 +18,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TZ: Europe/London
     steps:
       - name: Checkout
         uses: actions/checkout@v4
