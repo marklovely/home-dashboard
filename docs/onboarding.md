@@ -63,9 +63,10 @@ cd worker
 npm run d1:migrate:prod
 npm run d1:migrate:test
 npm run deploy
+npm run deploy:test
 ```
 
-Migration: `0005_hub_setup.sql` (`hub_secrets`, `site_profile`).
+Migration: `0005_hub_setup.sql` (`hub_secrets`, `site_profile`). **The wizard will not work until this migration has been applied** — deploy alone is not enough.
 
 The setup wizard requires a working connection to the hub server. If the server has not been updated yet, or the tablet is offline, the wizard shows a **Try again** screen instead of saving locally.
 

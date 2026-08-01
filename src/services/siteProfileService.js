@@ -18,6 +18,9 @@ let state = null;
 /** @type {SiteSetupAvailability} */
 let setupAvailability = 'unknown';
 
+/** @type {string} */
+let setupUnavailableCode = '';
+
 /** @type {Set<() => void>} */
 const listeners = new Set();
 
@@ -28,18 +31,24 @@ function notify() {
 }
 
 /**
- * @param {{ ok: boolean, status: number }} result
+ * @param {{ ok: boolean, status: number, code?: string }} result
  */
 function applySetupAvailability(result) {
+  setupUnavailableCode = result.code ?? '';
   if (result.ok) {
     setupAvailability = 'available';
     return;
   }
-  if (result.status === 404) {
+  if (result.status === 404 || result.code === 'NOT_FOUND') {
     setupAvailability = 'not_deployed';
     return;
   }
-  if (result.status === 503 || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+  if (
+    result.status === 503 ||
+    result.code === 'NETWORK_ERROR' ||
+    result.code === 'SETUP_DB_NOT_MIGRATED' ||
+    (typeof navigator !== 'undefined' && !navigator.onLine)
+  ) {
     setupAvailability = 'offline';
     return;
   }
@@ -57,6 +66,12 @@ export function isSiteSetupAvailable() {
  * @returns {string}
  */
 export function getSiteSetupUnavailableMessage() {
+  if (setupUnavailableCode === 'SETUP_DB_NOT_MIGRATED') {
+    return 'Hub setup needs a database update on the server. Whoever manages this hub should run Worker migration 0005, then tap Try again.';
+  }
+  if (setupUnavailableCode === 'DEVICE_MODE_REQUIRED') {
+    return 'Unlock owner mode to finish setup — press and hold the Lovely Home logo, enter your owner PIN, then try again.';
+  }
   if (setupAvailability === 'offline') {
     return "You're offline or this hub can't be reached right now. Check your internet connection, then tap Try again.";
   }
