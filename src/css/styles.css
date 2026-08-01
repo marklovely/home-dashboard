@@ -1832,6 +1832,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 }
 .help-guide-panel {
   display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 14px;
   width: min(960px, 100%);
   max-height: min(88vh, 920px);
@@ -1840,6 +1841,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   border: 1px solid var(--border);
   background: var(--surface, #10131a);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
 .help-guide-header {
   display: flex;
@@ -1881,8 +1883,10 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   display: grid;
   gap: 6px;
   align-content: start;
-  max-height: min(58vh, 640px);
-  overflow: auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding-right: 4px;
 }
 .help-guide-nav-button {
@@ -1906,15 +1910,23 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   outline-offset: 2px;
 }
 .help-guide-content {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   min-height: 0;
-  overflow: auto;
-  padding-right: 4px;
+  overflow: hidden;
 }
 .help-guide-content-title {
   margin: 0;
   font-size: clamp(1.05rem, 2vw, 1.25rem);
+  flex-shrink: 0;
+}
+.help-guide-content-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
 }
 .help-guide-section-body {
   display: grid;
@@ -1956,10 +1968,11 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 @media (max-width: 720px) {
   .help-guide-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
   }
   .help-guide-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-height: none;
+    max-height: min(28vh, 240px);
   }
 }
 
