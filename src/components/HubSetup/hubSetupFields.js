@@ -3,6 +3,10 @@
  */
 
 import { CircleHelp, Eye, EyeOff, createElement } from 'lucide';
+import {
+  formatPropertyAddress,
+  normalizePropertyAddress
+} from '../../lib/propertyAddress.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -84,6 +88,132 @@ export function createSetupField(label, value = '', options = {}) {
 
 /**
  * @param {string} label
+ * @param {string} [value]
+ * @param {Object} [options]
+ * @param {string} [options.placeholder]
+ * @param {number} [options.rows]
+ */
+export function createSetupTextarea(label, value = '', options = {}) {
+  const wrap = document.createElement('label');
+  wrap.className = 'settings-subsection hub-setup-field';
+
+  const title = document.createElement('span');
+  title.className = 'settings-subsection-title';
+  title.textContent = label;
+
+  const textarea = document.createElement('textarea');
+  textarea.className = 'hub-setup-input hub-setup-textarea';
+  textarea.value = value;
+  textarea.rows = options.rows ?? 3;
+  if (options.placeholder) textarea.placeholder = options.placeholder;
+
+  wrap.append(title, textarea);
+  return { wrap, textarea };
+}
+
+/**
+ * @param {Record<string, unknown>} profile
+ */
+export function createPetDetailsFields(profile) {
+  const petCare = /** @type {Record<string, string | boolean>} */ (profile?.petCare ?? {});
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options settings-options--stacked';
+
+  const hasPets = createSetupSelect(
+    'Will sitters need to care for pets?',
+    petCare.hasPets === true ? 'yes' : 'no',
+    [
+      { value: 'no', label: 'No pets to look after' },
+      { value: 'yes', label: 'Yes — add pet details' }
+    ]
+  );
+
+  const details = document.createElement('div');
+  details.className = 'hub-setup-pet-details';
+
+  const name = createSetupField('Pet name', String(petCare.name ?? ''), { placeholder: 'e.g. Bailey' });
+  const species = createSetupField('Species / breed', String(petCare.species ?? ''), {
+    placeholder: 'e.g. Labrador'
+  });
+  const age = createSetupField('Age', String(petCare.age ?? ''), { placeholder: 'e.g. 5 years' });
+  const temperament = createSetupTextarea('Personality & rules', String(petCare.temperament ?? ''), {
+    placeholder: 'Friendly with people, allowed on sofa, nervous around bikes…',
+    rows: 3
+  });
+  const feeding = createSetupTextarea('Feeding routine', String(petCare.feeding ?? ''), {
+    placeholder: 'One line per meal or step, e.g.\nMorning: 1 scoop dry food\nEvening: 1/4 tin wet food',
+    rows: 4
+  });
+  const walks = createSetupTextarea('Walks & exercise', String(petCare.walks ?? ''), {
+    placeholder: 'How often, where the lead is, favourite routes…',
+    rows: 3
+  });
+  const vet = createSetupField('Regular vet', String(petCare.vet ?? ''), { placeholder: 'Clinic name' });
+  const vetPhone = createSetupField('Vet phone', String(petCare.vetPhone ?? ''), { type: 'tel' });
+  const vetEmergency = createSetupField('Emergency vet (optional)', String(petCare.vetEmergency ?? ''), {
+    type: 'tel'
+  });
+
+  details.append(
+    name.wrap,
+    species.wrap,
+    age.wrap,
+    temperament.wrap,
+    feeding.wrap,
+    walks.wrap,
+    vet.wrap,
+    vetPhone.wrap,
+    vetEmergency.wrap
+  );
+
+  function syncDetailsVisibility() {
+    const show = hasPets.select.value === 'yes';
+    details.hidden = !show;
+  }
+
+  hasPets.select.addEventListener('change', syncDetailsVisibility);
+  syncDetailsVisibility();
+
+  wrap.append(
+    createSetupIntro(
+      'These details are written into the Pets section when you import the starter House Guide. Nothing from another home is copied.'
+    ),
+    hasPets.wrap,
+    details
+  );
+
+  return {
+    wrap,
+    hasPets,
+    name,
+    species,
+    age,
+    temperament,
+    feeding,
+    walks,
+    vet,
+    vetPhone,
+    vetEmergency,
+    readPetCare() {
+      const hasPetCare = hasPets.select.value === 'yes';
+      return {
+        hasPets: hasPetCare,
+        name: name.input.value.trim(),
+        species: species.input.value.trim(),
+        age: age.input.value.trim(),
+        temperament: temperament.textarea.value.trim(),
+        feeding: feeding.textarea.value.trim(),
+        walks: walks.textarea.value.trim(),
+        vet: vet.input.value.trim(),
+        vetPhone: vetPhone.input.value.trim(),
+        vetEmergency: vetEmergency.input.value.trim()
+      };
+    }
+  };
+}
+
+/**
+ * @param {string} label
  * @param {string} value
  * @param {{ value: string, label: string }[]} options
  */
@@ -161,7 +291,70 @@ export function createContactGroup(titleText, contact) {
 /**
  * @param {Record<string, unknown>} profile
  */
-export function createGuestAccessFields(_profile) {
+export function createPropertyAddressFields(profile) {
+  const address = normalizePropertyAddress(profile?.propertyAddress);
+  const group = document.createElement('fieldset');
+  group.className = 'hub-setup-property-address';
+
+  const legend = document.createElement('legend');
+  legend.className = 'settings-subsection-title';
+  legend.textContent = 'Address of the property';
+
+  const line1 = createSetupField('Address line 1', address.line1, {
+    autocomplete: 'address-line1',
+    placeholder: 'House name or number and street'
+  });
+  const line2 = createSetupField('Address line 2 (optional)', address.line2, {
+    autocomplete: 'address-line2',
+    placeholder: 'Flat, building, or extra detail'
+  });
+  const line3 = createSetupField('Address line 3 (optional)', address.line3, {
+    autocomplete: 'address-line3'
+  });
+  const city = createSetupField('City / town', address.city, {
+    autocomplete: 'address-level2'
+  });
+  const county = createSetupField('County (optional)', address.county, {
+    autocomplete: 'address-level1'
+  });
+  const country = createSetupField('Country', address.country, {
+    autocomplete: 'country-name',
+    placeholder: 'United Kingdom'
+  });
+  const postcode = createSetupField('Postcode', address.postcode, {
+    autocomplete: 'postal-code'
+  });
+
+  group.append(
+    legend,
+    line1.wrap,
+    line2.wrap,
+    line3.wrap,
+    city.wrap,
+    county.wrap,
+    country.wrap,
+    postcode.wrap
+  );
+
+  function readPropertyAddress() {
+    return normalizePropertyAddress({
+      line1: line1.input.value,
+      line2: line2.input.value,
+      line3: line3.input.value,
+      city: city.input.value,
+      county: county.input.value,
+      country: country.input.value,
+      postcode: postcode.input.value
+    });
+  }
+
+  return { group, readPropertyAddress };
+}
+
+/**
+ * @param {Record<string, unknown>} profile
+ */
+export function createGuestAccessFields(profile) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
 
@@ -171,7 +364,7 @@ export function createGuestAccessFields(_profile) {
     autocomplete: 'new-password',
     revealable: true
   });
-  const homeAddress = createSetupField('Home address', '', { autocomplete: 'street-address' });
+  const propertyAddress = createPropertyAddressFields(profile);
   const lockbox = createSetupField('Lockbox / door code (optional)', '', {
     type: 'password',
     autocomplete: 'off',
@@ -188,15 +381,17 @@ export function createGuestAccessFields(_profile) {
   ownerPin.input.maxLength = 4;
 
   wrap.append(
-    createSetupIntro('Guest-facing details. These stay on your hub and are only shown to sitters when you enable sharing in Settings.'),
+    createSetupIntro(
+      'Guest-facing details for this property. They stay on your hub and are only shown when you enable sharing in Settings.'
+    ),
     wifiSsid.wrap,
     wifiPassword.wrap,
-    homeAddress.wrap,
+    propertyAddress.group,
     lockbox.wrap,
     ownerPin.wrap
   );
 
-  return { wrap, wifiSsid, wifiPassword, homeAddress, lockbox, ownerPin };
+  return { wrap, wifiSsid, wifiPassword, propertyAddress, lockbox, ownerPin };
 }
 
 /**
@@ -243,17 +438,33 @@ export function createSetupInfoHint(helpText, label = 'More information') {
 }
 
 /**
- * @param {{ wifiSsid: { input: HTMLInputElement }, wifiPassword: { input: HTMLInputElement }, homeAddress: { input: HTMLInputElement }, lockbox: { input: HTMLInputElement }, ownerPin: { input: HTMLInputElement } }} fields
+ * @param {{
+ *   wifiSsid: { input: HTMLInputElement },
+ *   wifiPassword: { input: HTMLInputElement },
+ *   propertyAddress: { readPropertyAddress: () => import('../../lib/propertyAddress.js').PropertyAddress },
+ *   lockbox: { input: HTMLInputElement },
+ *   ownerPin: { input: HTMLInputElement }
+ * }} fields
  */
 export function readGuestAccessSecrets(fields) {
   /** @type {Record<string, string>} */
   const patch = {};
   if (fields.wifiSsid.input.value.trim()) patch.wifi_ssid = fields.wifiSsid.input.value.trim();
   if (fields.wifiPassword.input.value.trim()) patch.wifi_password = fields.wifiPassword.input.value.trim();
-  if (fields.homeAddress.input.value.trim()) patch.home_address = fields.homeAddress.input.value.trim();
+  const formattedAddress = formatPropertyAddress(fields.propertyAddress.readPropertyAddress());
+  if (formattedAddress) patch.home_address = formattedAddress;
   if (fields.lockbox.input.value.trim()) patch.lockbox_code = fields.lockbox.input.value.trim();
   if (fields.ownerPin.input.value.trim()) patch.owner_pin = fields.ownerPin.input.value.trim();
   return patch;
+}
+
+/**
+ * @param {{
+ *   propertyAddress: { readPropertyAddress: () => import('../../lib/propertyAddress.js').PropertyAddress }
+ * }} fields
+ */
+export function readPropertyAddressProfilePatch(fields) {
+  return { propertyAddress: fields.propertyAddress.readPropertyAddress() };
 }
 
 /**

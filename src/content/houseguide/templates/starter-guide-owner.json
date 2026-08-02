@@ -1,0 +1,194 @@
+{
+  "version": 2,
+  "homeSummaryTitle": "Everything you need to know",
+  "homeSummarySubtitle": "Wi-Fi • Contacts • Home notes • Manuals",
+  "media": {},
+  "categories": [
+    {
+      "id": "getting-started",
+      "title": "Getting started",
+      "cardSubtitle": "Wi-Fi • Contacts • Access",
+      "iconId": "wifi",
+      "accent": "#6ea8ff",
+      "searchTerms": ["wifi", "internet", "contact", "access"],
+      "topics": [
+        {
+          "id": "wifi",
+          "title": "Wi-Fi",
+          "subtitle": "Connect to the home network",
+          "summary": "Network name and password for this home.",
+          "searchTerms": ["wifi", "internet", "password"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Your Wi-Fi details are shared securely when guest access is turned on in Settings."
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Network name (SSID)",
+              "key": "wifi.ssid"
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Password",
+              "key": "wifi.password"
+            },
+            {
+              "type": "wifiQr",
+              "heading": "Quick join",
+              "caption": "Scan with your phone camera to join Wi‑Fi"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "emergency-contacts",
+          "title": "Emergency contacts",
+          "subtitle": "Who to call",
+          "summary": "Primary and secondary contacts for this home.",
+          "searchTerms": ["emergency", "contact", "phone"],
+          "blocks": [
+            {
+              "type": "warning",
+              "heading": "Immediate danger",
+              "content": "Call 999 for fire, medical or security emergencies."
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — phone",
+              "key": "contacts.mark.phone"
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — email",
+              "key": "contacts.mark.email"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "home-notes",
+      "title": "Home notes",
+      "cardSubtitle": "Appliances • Rubbish • Reminders",
+      "iconId": "book-open",
+      "accent": "#f4b64f",
+      "searchTerms": ["home", "notes", "appliance", "rubbish"],
+      "topics": [
+        {
+          "id": "daily-routines",
+          "title": "Daily routines",
+          "subtitle": "Rubbish, post, and regular jobs",
+          "summary": "Add collection days and anything you do every week.",
+          "searchTerms": ["rubbish", "bins", "recycling", "post"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Replace this with your bin collection days, where to leave keys, and any weekly tasks."
+            }
+          ],
+          "actions": [],
+          "audience": "owner"
+        },
+        {
+          "id": "appliances-overview",
+          "title": "Appliances overview",
+          "subtitle": "Heating, kitchen, and utilities",
+          "summary": "Quick notes before you add detailed topics.",
+          "searchTerms": ["heating", "boiler", "kitchen", "utilities"],
+          "blocks": [
+            {
+              "type": "tip",
+              "content": "Add one topic per area in the Guide Editor — Kitchen, Heating, TV, Garden, and so on."
+            }
+          ],
+          "actions": [],
+          "audience": "owner"
+        }
+      ]
+    },
+    {
+      "id": "safety-notes",
+      "title": "Safety & utilities",
+      "cardSubtitle": "Shutoffs • First aid • Family notes",
+      "iconId": "heart-pulse",
+      "accent": "#22c55e",
+      "searchTerms": ["safety", "first aid", "fuse", "water", "children", "child"],
+      "topics": [
+        {
+          "id": "utility-shutoffs",
+          "title": "Utility shutoffs",
+          "subtitle": "Stop tap, fuse box, and gas",
+          "summary": "Owner reference for emergencies.",
+          "searchTerms": ["stop tap", "fuse", "gas", "boiler", "utilities"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Add photos and directions to the water stop tap, fuse box / consumer unit, and boiler controls."
+            },
+            {
+              "type": "warning",
+              "content": "If you smell gas, open windows, leave, and call **0800 111 999** — do not use switches or flames."
+            }
+          ],
+          "actions": [],
+          "audience": "owner"
+        },
+        {
+          "id": "family-safety-notes",
+          "title": "Children & safety notes",
+          "subtitle": "Hazards and childproofing",
+          "summary": "Private reminders before you host families.",
+          "searchTerms": ["children", "child", "baby", "pool", "gate", "hazard"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Note stair gates, unfenced water, medication storage, and anything to mention when guests bring children."
+            }
+          ],
+          "actions": [],
+          "audience": "owner"
+        },
+        {
+          "id": "first-aid-location",
+          "title": "First aid kit",
+          "subtitle": "Where it lives",
+          "summary": "So sitters and guests can find it quickly.",
+          "searchTerms": ["first aid", "plaster", "medicine"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Describe where the first aid kit is kept and whether children's medicines are available to guests."
+            }
+          ],
+          "actions": [],
+          "audience": "owner"
+        }
+      ]
+    },
+    {
+      "id": "appliance-manuals",
+      "title": "Appliance Manuals",
+      "cardSubtitle": "PDF guides for appliances",
+      "iconId": "book-open",
+      "accent": "#5b8def",
+      "searchTerms": [
+        "appliance",
+        "manual",
+        "user guide",
+        "pdf",
+        "instructions",
+        "oven",
+        "washer"
+      ],
+      "topics": []
+    }
+  ]
+}

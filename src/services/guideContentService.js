@@ -11,7 +11,7 @@ import {
   publishHouseGuideTopic,
   reorderHouseGuideTopics
 } from '../api/houseGuideApi.js';
-import { getJsonCatalog } from '../content/houseguide/providers/jsonGuideProvider.js';
+import { getFallbackGuideCatalog, getBundledSiteCatalog } from '../content/houseguide/providers/jsonGuideProvider.js';
 import { getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
 import { isOwnerUserMode } from '../auth/userMode.js';
 import { cacheGuideCatalogForOffline } from './guideOfflineCache.js';
@@ -65,7 +65,8 @@ export function subscribeToGuideContent(listener) {
  */
 export function getActiveGuideCatalog() {
   if (state.catalog) return state.catalog;
-  return getJsonCatalog();
+  if (import.meta.env.MODE === 'test') return getBundledSiteCatalog();
+  return getFallbackGuideCatalog();
 }
 
 export function isGuideContentRemote() {
@@ -88,7 +89,7 @@ export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
       source: 'json',
       seeded: false,
       draftCount: 0,
-      catalog: getJsonCatalog(),
+      catalog: import.meta.env.MODE === 'test' ? getBundledSiteCatalog() : getFallbackGuideCatalog(),
       message: ''
     };
     notify();
@@ -118,7 +119,7 @@ export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
       source: result.status >= 500 ? 'unavailable' : 'json',
       seeded: false,
       draftCount: 0,
-      catalog: getJsonCatalog(),
+      catalog: import.meta.env.MODE === 'test' ? getBundledSiteCatalog() : getFallbackGuideCatalog(),
       message: result.status >= 500 ? result.message : ''
     };
     notify();
@@ -131,7 +132,7 @@ export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
       source: 'json',
       seeded: false,
       draftCount: 0,
-      catalog: getJsonCatalog(),
+      catalog: import.meta.env.MODE === 'test' ? getBundledSiteCatalog() : getFallbackGuideCatalog(),
       message: ''
     };
     notify();
@@ -179,7 +180,7 @@ function normalizeRemoteCatalog(remoteCatalog) {
  * @param {typeof fetch} [fetchImpl]
  */
 export async function importBundledGuideToCloud(fetchImpl = fetch) {
-  const catalog = getJsonCatalog();
+  const catalog = getBundledSiteCatalog();
   const result = await importHouseGuideCatalog(catalog, { fetchImpl });
   if (!result.ok) return result;
   await refreshGuideContent(fetchImpl, { draft: true, force: true });

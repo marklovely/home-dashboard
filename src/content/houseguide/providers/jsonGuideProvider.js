@@ -1,4 +1,5 @@
 import catalog from '../guide-catalog.json';
+import neutralFallback from '../neutral-guide-fallback.json';
 
 /** @type {import('../../../types/guideContent.js').GuideCatalog} */
 const guideCatalog = catalog;
@@ -242,8 +243,21 @@ export function searchTopicsFromJson(query) {
   return searchTopicsInCatalog(guideCatalog, query);
 }
 
+/** @type {import('../../../types/guideContent.js').GuideCatalog} */
+const neutralGuideCatalog = neutralFallback;
+
 export function getJsonCatalog() {
   return guideCatalog;
+}
+
+/** Rose Cottage bundled catalog — only for explicit "copy bundled guide" actions. */
+export function getBundledSiteCatalog() {
+  return guideCatalog;
+}
+
+/** Generic placeholder when cloud guide is not seeded — never Rose Cottage content. */
+export function getFallbackGuideCatalog() {
+  return neutralGuideCatalog;
 }
 
 export function getGuideMediaCatalog() {
