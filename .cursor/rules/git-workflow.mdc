@@ -1,0 +1,29 @@
+---
+description: Git branching, commits, and pushes — use feature branches unless told otherwise
+alwaysApply: true
+---
+
+# Git workflow
+
+## Default: feature branches
+
+- Do **not** commit or push directly to `main` unless the user explicitly asks to merge or ship to production.
+- For new features, fixes, or experiments: create a branch named `feature/<short-topic>` (or `fix/<topic>` for bugs).
+- Push the feature branch and offer a PR — do not push to `main` to "deploy for testing".
+
+## Commits and pushes
+
+- Only create commits when the user asks, or when finishing agreed work on a feature branch.
+- Never force-push `main` unless the user explicitly requests it (e.g. undoing an accidental push).
+- Do not push to remote unless asked.
+
+## When the user wants to test without affecting main
+
+1. Create/checkout a feature branch from current work.
+2. Push **only** the feature branch.
+3. If work was already pushed to `main` by mistake, move it: branch preserves the commits, reset `main` to the previous tip, then `git push origin main --force-with-lease` if the user confirms.
+
+## Deployments
+
+- Production dashboard deploys from `main` via GitHub Pages CI.
+- Worker deploy (`npm run deploy`) is separate — confirm which environment (prod vs test) before running.
