@@ -4,7 +4,6 @@
 
 import { CircleHelp, Eye, EyeOff, createElement } from 'lucide';
 import {
-  EMPTY_PROPERTY_ADDRESS,
   formatPropertyAddress,
   normalizePropertyAddress
 } from '../../lib/propertyAddress.js';
