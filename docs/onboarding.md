@@ -34,8 +34,9 @@ Steps:
 
 1. Hub name and guest use case
 2. Primary and secondary contacts
-3. Wi-Fi, address, lockbox, owner PIN
-4. Optional starter House Guide import — template depends on **use case** from step 1 (owner, housesitter, airbnb, or both)
+3. Pet details *(housesitter and both use cases only)*
+4. Wi-Fi, address, lockbox, owner PIN
+5. Optional starter House Guide import — template matches use case; pet answers are written into the Pets section at import time
 
 Re-open from **Settings → Home details → Open setup wizard**.
 
@@ -55,6 +56,8 @@ Templates live in `src/content/houseguide/templates/`. All use protected blocks 
 The **Appliance Manuals** category starts empty. Upload PDFs in the **Appliance Manuals** app; they appear automatically in House Guide for guests.
 
 After import, edit and publish topics in the Guide Editor. Delete optional sections (Pets, EV charging, Children) if they do not apply.
+
+Until a guide is imported to the cloud, the House Guide shows a **neutral placeholder** — not the Rose Cottage bundled JSON from git (that is only used when you explicitly copy the bundled guide in the Guide Editor).
 
 ## Factory reset
 

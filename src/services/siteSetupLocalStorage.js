@@ -3,7 +3,19 @@ export const DEFAULT_LOCAL_PROFILE = {
   hubName: '',
   useCase: 'owner',
   primaryContact: { name: '', phone: '', email: '' },
-  secondaryContact: { name: '', phone: '', email: '' }
+  secondaryContact: { name: '', phone: '', email: '' },
+  petCare: {
+    hasPets: false,
+    name: '',
+    species: '',
+    age: '',
+    temperament: '',
+    feeding: '',
+    walks: '',
+    vet: '',
+    vetPhone: '',
+    vetEmergency: ''
+  }
 };
 
 const PROFILE_KEY = 'lovely-home-hub-site-profile';
@@ -24,6 +36,7 @@ export function loadLocalProfile() {
       ...parsed,
       primaryContact: { ...DEFAULT_LOCAL_PROFILE.primaryContact, ...parsed?.primaryContact },
       secondaryContact: { ...DEFAULT_LOCAL_PROFILE.secondaryContact, ...parsed?.secondaryContact },
+      petCare: { ...DEFAULT_LOCAL_PROFILE.petCare, ...parsed?.petCare },
       _hasLocalRow: true
     };
   } catch {
@@ -45,6 +58,7 @@ export function mergeLocalProfile(patch) {
     secondaryContact: patch.secondaryContact
       ? { ...current.secondaryContact, ...patch.secondaryContact }
       : current.secondaryContact,
+    petCare: patch.petCare ? { ...current.petCare, ...patch.petCare } : current.petCare,
     _hasLocalRow: true
   };
   const { _hasLocalRow: hasLocalRow, ...stored } = next;

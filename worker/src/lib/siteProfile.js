@@ -3,7 +3,19 @@ export const DEFAULT_SITE_PROFILE = {
   hubName: '',
   useCase: 'owner',
   primaryContact: { name: '', phone: '', email: '' },
-  secondaryContact: { name: '', phone: '', email: '' }
+  secondaryContact: { name: '', phone: '', email: '' },
+  petCare: {
+    hasPets: false,
+    name: '',
+    species: '',
+    age: '',
+    temperament: '',
+    feeding: '',
+    walks: '',
+    vet: '',
+    vetPhone: '',
+    vetEmergency: ''
+  }
 };
 
 /**
@@ -18,7 +30,8 @@ function parseProfilePayload(value) {
       ...DEFAULT_SITE_PROFILE,
       ...parsed,
       primaryContact: { ...DEFAULT_SITE_PROFILE.primaryContact, ...parsed.primaryContact },
-      secondaryContact: { ...DEFAULT_SITE_PROFILE.secondaryContact, ...parsed.secondaryContact }
+      secondaryContact: { ...DEFAULT_SITE_PROFILE.secondaryContact, ...parsed.secondaryContact },
+      petCare: { ...DEFAULT_SITE_PROFILE.petCare, ...parsed.petCare }
     };
   } catch {
     return { ...DEFAULT_SITE_PROFILE };
@@ -71,7 +84,8 @@ export async function updateSiteProfile(env, patch) {
       : current.primaryContact,
     secondaryContact: patch.secondaryContact
       ? { ...current.secondaryContact, ...patch.secondaryContact }
-      : current.secondaryContact
+      : current.secondaryContact,
+    petCare: patch.petCare ? { ...current.petCare, ...patch.petCare } : current.petCare
   };
 
   const now = Math.floor(Date.now() / 1000);
