@@ -3,14 +3,19 @@ import { showToast } from '../../js/modules/toast.js';
 import {
   createContactGroup,
   createGuestAccessFields,
+  createPetDetailsFields,
   createSetupField,
   createSetupInfoHint,
   createSetupIntro,
   createSetupSelect,
   contactSecretsPatch,
-  readGuestAccessSecrets
+  readGuestAccessSecrets,
+  readPropertyAddressProfilePatch
 } from '../../components/HubSetup/hubSetupFields.js';
-import starterGuide from '../../content/houseguide/templates/starter-guide.json';
+import { buildStarterGuideCatalog } from '../../content/houseguide/templates/buildStarterGuideCatalog.js';
+import {
+  getStarterGuideTemplate
+} from '../../content/houseguide/templates/starterGuideTemplates.js';
 import { importHouseGuideCatalog } from '../../api/houseGuideApi.js';
 import {
   getSiteProfileState,
@@ -35,6 +40,22 @@ const USE_CASE_OPTIONS = [
   { value: 'airbnb', label: 'Airbnb / short lets' },
   { value: 'both', label: 'Both sitters and short lets' }
 ];
+
+/** @typedef {'hub' | 'contacts' | 'pets' | 'access' | 'guide'} WizardStepId */
+
+/**
+ * @param {string} useCase
+ * @returns {WizardStepId[]}
+ */
+function getWizardSteps(useCase) {
+  /** @type {WizardStepId[]} */
+  const steps = ['hub', 'contacts'];
+  if (useCase === 'housesitter' || useCase === 'both') {
+    steps.push('pets');
+  }
+  steps.push('access', 'guide');
+  return steps;
+}
 
 /**
  * @param {HTMLElement} viewport
@@ -140,15 +161,35 @@ function mountHubSetupWizard(viewport, context) {
   const secondaryGroup = createContactGroup('Secondary contact (optional)', profile.secondaryContact ?? {});
 
   const guestFields = createGuestAccessFields(profile);
+  const petFields = createPetDetailsFields(profile);
+
+  function wizardSteps() {
+    return getWizardSteps(useCase.select.value);
+  }
+
+  function currentStepId() {
+    const steps = wizardSteps();
+    if (step >= steps.length) {
+      step = steps.length - 1;
+      setHubSetupWizardStep(step);
+    }
+    return steps[step];
+  }
+
+  function isLastWizardStep() {
+    return step >= wizardSteps().length - 1;
+  }
 
   function renderStep() {
     setHubSetupWizardStep(step);
-    progress.textContent = `Step ${step + 1} of 4`;
+    progress.textContent = `Step ${step + 1} of ${wizardSteps().length}`;
     body.replaceChildren();
     backButton.hidden = step === 0;
-    nextButton.textContent = step === 3 ? 'Finish setup' : 'Continue';
+    nextButton.textContent = isLastWizardStep() ? 'Finish setup' : 'Continue';
 
-    if (step === 0) {
+    const stepId = currentStepId();
+
+    if (stepId === 'hub') {
       body.append(
         createSetupIntro('Give your hub a name and choose how guests will use it. You can change these later in Settings.'),
         hubName.wrap,
@@ -157,7 +198,7 @@ function mountHubSetupWizard(viewport, context) {
       return;
     }
 
-    if (step === 1) {
+    if (stepId === 'contacts') {
       body.append(
         createSetupIntro('Who should guests call? Names appear in the House Guide; phone and email are stored securely on your hub.'),
         primaryGroup,
@@ -166,18 +207,33 @@ function mountHubSetupWizard(viewport, context) {
       return;
     }
 
-    if (step === 2) {
+    if (stepId === 'pets') {
+      body.append(petFields.wrap);
+      return;
+    }
+
+    if (stepId === 'access') {
       body.append(guestFields.wrap);
       return;
     }
 
+    const selectedUseCase = useCase.select.value;
+    const starterTemplate = getStarterGuideTemplate(selectedUseCase);
+    const liveProfile = {
+      ...profile,
+      ...getSiteProfileState()?.profile,
+      useCase: selectedUseCase,
+      petCare: petFields.readPetCare()
+    };
+
     const guideIntro = createSetupIntro(
-      'Start with a starter House Guide you can edit in the Guide Editor, or skip and add content later.'
+      `Start with a ${starterTemplate.label.toLowerCase()} you can edit in the Guide Editor, or skip and add content later.`
     );
-    const starterHelp = createSetupInfoHint(
-      'Adds a ready-made House Guide with Wi-Fi, emergency contacts, and house rules topics. You can edit everything in the Guide Editor after setup.',
-      'What is the starter guide?'
-    );
+    const starterHelp = createSetupInfoHint(starterTemplate.hint, 'What is the starter guide?');
+    const starterSummary = document.createElement('p');
+    starterSummary.className = 'hub-setup-starter-summary subtle';
+    starterSummary.textContent = `Includes: ${starterTemplate.summary}. Based on your choice in step 1 (${USE_CASE_OPTIONS.find((option) => option.value === selectedUseCase)?.label ?? 'Owner only'}).`;
+
     const starterRow = document.createElement('div');
     starterRow.className = 'hub-setup-action-row';
 
@@ -187,7 +243,8 @@ function mountHubSetupWizard(viewport, context) {
     starterButton.textContent = 'Import starter guide';
     starterButton.addEventListener('click', () => {
       starterButton.disabled = true;
-      void importHouseGuideCatalog(starterGuide).then(async (result) => {
+      const catalog = buildStarterGuideCatalog(selectedUseCase, liveProfile);
+      void importHouseGuideCatalog(catalog).then(async (result) => {
         starterButton.disabled = false;
         if (!result.ok) {
           showToast(context.toast, result.message || 'Could not import starter guide.');
@@ -206,9 +263,10 @@ function mountHubSetupWizard(viewport, context) {
 
     const skipNote = document.createElement('p');
     skipNote.className = 'subtle';
-    skipNote.textContent = 'You can also copy your bundled guide or import JSON from Settings or the Guide Editor later.';
+    skipNote.textContent =
+      'You can skip import and add topics later in the Guide Editor. Until a guide is imported, the House Guide shows a neutral placeholder — not another home\'s content.';
 
-    body.append(guideIntro, starterRow, starterHelp.panel, skipNote);
+    body.append(guideIntro, starterSummary, starterRow, starterHelp.panel, skipNote);
   }
 
   backButton.addEventListener('click', () => {
@@ -239,7 +297,9 @@ function mountHubSetupWizard(viewport, context) {
     void (async () => {
       nextButton.disabled = true;
       try {
-        if (step === 0) {
+        const stepId = currentStepId();
+
+        if (stepId === 'hub') {
           const name = hubName.input.value.trim();
           if (!name) {
             showToast(context.toast, 'Enter a hub name.');
@@ -256,7 +316,7 @@ function mountHubSetupWizard(viewport, context) {
           });
         }
 
-        if (step === 1) {
+        if (stepId === 'contacts') {
           const primaryInputs = /** @type {HTMLInputElement[]} */ (
             primaryGroup.querySelectorAll('input')
           );
@@ -285,7 +345,17 @@ function mountHubSetupWizard(viewport, context) {
           if (!handleSaveResult(secretsResult, 'Could not save contact details.')) return;
         }
 
-        if (step === 2) {
+        if (stepId === 'pets') {
+          const petCare = petFields.readPetCare();
+          if (petCare.hasPets && !petCare.name) {
+            showToast(context.toast, 'Enter your pet\'s name, or choose No pets to look after.');
+            return;
+          }
+          const result = await saveSiteProfile({ petCare });
+          if (!handleSaveResult(result, 'Could not save pet details.')) return;
+        }
+
+        if (stepId === 'access') {
           const pin = guestFields.ownerPin.input.value.trim();
           if (pin && !/^\d{4}$/.test(pin)) {
             showToast(context.toast, 'Owner PIN must be exactly 4 digits.');
@@ -293,9 +363,11 @@ function mountHubSetupWizard(viewport, context) {
           }
           const secretsResult = await saveHubSecrets(readGuestAccessSecrets(guestFields));
           if (!handleSaveResult(secretsResult, 'Could not save guest access details.')) return;
+          const addressResult = await saveSiteProfile(readPropertyAddressProfilePatch(guestFields));
+          if (!handleSaveResult(addressResult, 'Could not save property address.')) return;
         }
 
-        if (step === 3) {
+        if (stepId === 'guide') {
           const result = await saveSiteProfile({ onboardingComplete: true });
           if (!handleSaveResult(result, 'Could not finish setup.')) return;
           resetHubSetupWizardStep();

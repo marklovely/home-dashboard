@@ -19,3 +19,4 @@ house-guide-export.json
 worker/*-backup.sql
 worker/test-backup.sql
 *.d1.sql
+worker/.wrangler/

@@ -51,7 +51,8 @@ import {
   createSetupField,
   createSetupIntro,
   contactSecretsPatch,
-  readGuestAccessSecrets
+  readGuestAccessSecrets,
+  readPropertyAddressProfilePatch
 } from '../../components/HubSetup/hubSetupFields.js';
 import {
   factoryResetHub,
@@ -296,7 +297,8 @@ function createHomeDetailsFields(context) {
 
         const profileResult = await saveSiteProfile({
           hubName: hubName.input.value.trim(),
-          ...contacts
+          ...contacts,
+          ...readPropertyAddressProfilePatch(guestFields)
         });
         if (!profileResult.ok) {
           showToast(context.toast, profileResult.message || 'Could not save profile.');
@@ -377,7 +379,7 @@ function createSitterSecretsToggle(context) {
   const hint = document.createElement('p');
   hint.className = 'settings-help subtle';
   hint.textContent =
-    'When a house sitter is staying, turn this on so Wi‑Fi, the home address, contact details, and the key lockbox code appear in the House Guide. Turn it off when they leave. You can change this from any signed-in owner device.';
+    'When a house sitter is staying, turn this on so Wi‑Fi, the property address, contact details, and the key lockbox code appear in the House Guide. Turn it off when they leave. You can change this from any signed-in owner device.';
 
   const label = document.createElement('label');
   label.className = 'settings-option settings-option--toggle';

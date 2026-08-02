@@ -1,5 +1,5 @@
 ---
-description: Git branching, commits, and pushes — use feature branches unless told otherwise
+description: Git branching, commits, pushes, and PR CI checks
 alwaysApply: true
 ---
 
@@ -16,6 +16,12 @@ alwaysApply: true
 - Only create commits when the user asks, or when finishing agreed work on a feature branch.
 - Never force-push `main` unless the user explicitly requests it (e.g. undoing an accidental push).
 - Do not push to remote unless asked.
+
+## After every push to a feature branch
+
+- **Always check GitHub Actions** on the open PR before telling the user the work is done.
+- Run `gh pr checks <number>` or `gh run list --branch <branch> --limit 3` and inspect failures with `gh run view <id> --log-failed`.
+- If CI failed, fix and push again — do not leave a red PR unchecked.
 
 ## When the user wants to test without affecting main
 

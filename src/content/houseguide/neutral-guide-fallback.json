@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "homeSummaryTitle": "House Guide",
+  "homeSummarySubtitle": "Finish setup or add topics in the Guide Editor",
+  "media": {},
+  "categories": [
+    {
+      "id": "getting-started",
+      "title": "Getting started",
+      "cardSubtitle": "Setup • Guide Editor",
+      "iconId": "book-open",
+      "accent": "#6ea8ff",
+      "searchTerms": ["setup", "guide", "start"],
+      "topics": [
+        {
+          "id": "guide-not-imported",
+          "title": "Your guide is not set up yet",
+          "subtitle": "Import a starter or write your own",
+          "summary": "This hub does not have guide content in the cloud yet.",
+          "searchTerms": ["setup", "import", "starter"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Finish the hub setup wizard and tap **Import starter guide**, or open the **Guide Editor** to write topics for this home."
+            },
+            {
+              "type": "note",
+              "content": "You should not see another home's pet or appliance details here — if you do, finish setup or contact whoever manages this hub."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    }
+  ]
+}
