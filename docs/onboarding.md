@@ -35,9 +35,26 @@ Steps:
 1. Hub name and guest use case
 2. Primary and secondary contacts
 3. Wi-Fi, address, lockbox, owner PIN
-4. Optional starter House Guide import
+4. Optional starter House Guide import — template depends on **use case** from step 1 (owner, housesitter, airbnb, or both)
 
 Re-open from **Settings → Home details → Open setup wizard**.
+
+## Starter House Guide templates
+
+Step 4 imports a template based on the **use case** chosen in step 1:
+
+| Use case | Template focus |
+|----------|----------------|
+| Owner only | Wi-Fi, contacts, owner home notes, **safety & utility shutoffs**, **appliance manuals** |
+| Trusted housesitters | Home routines, **pets**, local area, **children & safety**, **emergency utilities**, **manuals**, house rules |
+| Airbnb / short lets | Check-in, **accessibility**, amenities (**EV** placeholder), local guide, **children & safety**, **emergency**, **manuals**, **neighbours & noise**, checkout |
+| Both | Combined template — all of the above; delete Pets / EV / Children if not needed |
+
+Templates live in `src/content/houseguide/templates/`. All use protected blocks for Wi-Fi, address, lockbox, and contacts — values come from wizard step 3 and Settings, not hard-coded in the JSON.
+
+The **Appliance Manuals** category starts empty. Upload PDFs in the **Appliance Manuals** app; they appear automatically in House Guide for guests.
+
+After import, edit and publish topics in the Guide Editor. Delete optional sections (Pets, EV charging, Children) if they do not apply.
 
 ## Factory reset
 

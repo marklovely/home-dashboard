@@ -1,0 +1,521 @@
+{
+  "version": 2,
+  "homeSummaryTitle": "Welcome to the home",
+  "homeSummarySubtitle": "Access • Amenities • Pets • Local • Safety • Manuals • Rules",
+  "media": {},
+  "categories": [
+    {
+      "id": "arrival",
+      "title": "Arrival & access",
+      "cardSubtitle": "Check-in • Wi-Fi • Parking",
+      "iconId": "key-round",
+      "accent": "#6ea8ff",
+      "searchTerms": ["arrival", "check-in", "wifi", "access", "parking"],
+      "topics": [
+        {
+          "id": "check-in",
+          "title": "Check-in & access",
+          "subtitle": "Short stays and long visits",
+          "summary": "How to arrive, park, and get inside.",
+          "searchTerms": ["check-in", "arrival", "key", "lockbox", "parking"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Add check-in windows for short lets and any extra instructions for long-term sitters."
+            },
+            {
+              "type": "protected",
+              "kind": "address",
+              "label": "Property address",
+              "key": "address.full"
+            },
+            {
+              "type": "protected",
+              "kind": "lockbox",
+              "label": "Lockbox / door code",
+              "key": "lockbox.code"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "wifi",
+          "title": "Wi-Fi",
+          "subtitle": "Connect to the home network",
+          "summary": "Network name and password.",
+          "searchTerms": ["wifi", "internet", "password"],
+          "blocks": [
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Network name (SSID)",
+              "key": "wifi.ssid"
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Password",
+              "key": "wifi.password"
+            },
+            {
+              "type": "wifiQr",
+              "heading": "Quick join",
+              "caption": "Scan with your phone camera to join Wi‑Fi"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "emergency-contacts",
+          "title": "Contacts",
+          "subtitle": "Host and emergency numbers",
+          "summary": "Who to call for help.",
+          "searchTerms": ["contact", "host", "emergency", "phone"],
+          "blocks": [
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — phone",
+              "key": "contacts.mark.phone"
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — email",
+              "key": "contacts.mark.email"
+            },
+            {
+              "type": "note",
+              "content": "For life-threatening emergencies call **999**. For urgent property issues contact the host."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "accessibility",
+          "title": "Accessibility",
+          "subtitle": "Steps, parking, and mobility",
+          "summary": "Help guests plan their stay.",
+          "searchTerms": ["accessibility", "steps", "wheelchair", "mobility", "parking"],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Steps at entrance", "value": "e.g. step-free / 3 steps" },
+                { "label": "Bedrooms & bathroom", "value": "Floors and walk-in shower?" },
+                { "label": "Parking", "value": "Driveway, street, or bay" }
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "living-here",
+      "title": "Living here",
+      "cardSubtitle": "Kitchen • Heating • Rubbish • Checkout",
+      "iconId": "chef-hat",
+      "accent": "#ff9f43",
+      "searchTerms": ["kitchen", "heating", "rubbish", "checkout", "daily"],
+      "topics": [
+        {
+          "id": "kitchen-amenities",
+          "title": "Kitchen & amenities",
+          "subtitle": "Cooking, laundry, and entertainment",
+          "summary": "What's in the home and how to use it.",
+          "searchTerms": ["kitchen", "laundry", "tv", "dishwasher"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Cover appliances for both quick visits and longer stays — dishwasher tabs, streaming apps, iron location."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "heating-utilities",
+          "title": "Heating & utilities",
+          "subtitle": "Stay comfortable safely",
+          "summary": "Thermostat, hot water, and fuse box.",
+          "searchTerms": ["heating", "thermostat", "boiler", "utilities"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Explain heating for winter sitters and cooling if relevant for summer guests."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "rubbish-recycling",
+          "title": "Rubbish & recycling",
+          "subtitle": "Collection days and bins",
+          "summary": "Important for longer stays.",
+          "searchTerms": ["rubbish", "bins", "recycling"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "List collection days and checkout rubbish expectations for short stays."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "checkout",
+          "title": "Checkout (short stays)",
+          "subtitle": "Before you leave",
+          "summary": "Leaving checklist for Airbnb guests.",
+          "searchTerms": ["checkout", "check-out", "departure"],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Checkout checklist",
+              "steps": [
+                "Strip beds and start laundry",
+                "Run the dishwasher or wash up",
+                "Rubbish out if collection is soon",
+                "Lock up and return keys"
+              ]
+            },
+            {
+              "type": "note",
+              "content": "Long-term sitters can ignore this topic — add your own end-of-stay notes if needed."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "ev-charging",
+          "title": "EV charging",
+          "subtitle": "Electric vehicle charging",
+          "summary": "Delete if not applicable.",
+          "searchTerms": ["ev", "electric car", "charger"],
+          "blocks": [
+            {
+              "type": "tip",
+              "content": "Delete this topic if you do not offer EV charging."
+            },
+            {
+              "type": "text",
+              "content": "Charger location, how to start a charge, and overnight rules."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "pets",
+      "title": "Pets",
+      "cardSubtitle": "Feeding • Walks • Vet",
+      "iconId": "dog",
+      "accent": "#e879f9",
+      "searchTerms": ["pet", "dog", "cat", "feeding"],
+      "topics": [
+        {
+          "id": "pet-overview",
+          "title": "Pet care",
+          "subtitle": "For sitters looking after animals",
+          "summary": "Remove this category if you have no pets.",
+          "searchTerms": ["pet", "dog", "cat"],
+          "blocks": [
+            {
+              "type": "tip",
+              "content": "Delete this whole **Pets** category in the Guide Editor if you do not have animals."
+            },
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Name", "value": "Add pet name" },
+                { "label": "Feeding", "value": "Describe meals and times" },
+                { "label": "Walks", "value": "How often and where" },
+                { "label": "Vet", "value": "Clinic name and phone" }
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "local",
+      "title": "Local area",
+      "cardSubtitle": "Eat • See • Shop • Travel",
+      "iconId": "map-pin",
+      "accent": "#8b7cff",
+      "searchTerms": ["local", "restaurant", "attraction", "shop"],
+      "topics": [
+        {
+          "id": "local-eat",
+          "title": "Restaurants & pubs",
+          "subtitle": "Places we recommend",
+          "summary": "Good food nearby.",
+          "searchTerms": ["restaurant", "pub", "food"],
+          "blocks": [
+            {
+              "type": "place",
+              "name": "Local favourite",
+              "address": "Add address",
+              "description": "Best for dinner — booking?, dog-friendly?"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "local-attractions",
+          "title": "Attractions",
+          "subtitle": "Days out",
+          "summary": "Ideas for guests with time to explore.",
+          "searchTerms": ["attraction", "museum", "beach", "walk"],
+          "blocks": [
+            {
+              "type": "place",
+              "name": "Recommended day out",
+              "address": "Add address",
+              "description": "Why visitors love it and how long to allow."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "local-shops",
+          "title": "Shops & essentials",
+          "subtitle": "Supermarkets and pharmacy",
+          "summary": "Stock up quickly.",
+          "searchTerms": ["shop", "supermarket", "pharmacy"],
+          "blocks": [
+            {
+              "type": "place",
+              "name": "Nearest supermarket",
+              "address": "Add address",
+              "description": "Opening hours and delivery options."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "local-transport",
+          "title": "Getting around",
+          "subtitle": "Buses, trains, and taxis",
+          "summary": "Public transport and parking.",
+          "searchTerms": ["bus", "train", "taxi", "transport"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Nearest stops, taxi firms, and parking notes for guests with cars."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "children-safety",
+      "title": "Children & safety",
+      "cardSubtitle": "Family stay • Hazards • First aid",
+      "iconId": "heart-pulse",
+      "accent": "#22c55e",
+      "searchTerms": ["children", "child", "baby", "family", "safety", "cot"],
+      "topics": [
+        {
+          "id": "family-stay",
+          "title": "Children in the home",
+          "subtitle": "Equipment and supervision",
+          "summary": "For families and sitters with children visiting.",
+          "searchTerms": ["cot", "high chair", "baby", "child"],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Suitable for children", "value": "Yes / with supervision / not suitable" },
+                { "label": "Cot & high chair", "value": "Add locations or N/A" },
+                { "label": "Stair gates", "value": "Which stairs?" },
+                { "label": "Supervision", "value": "Any pool, pond, or garden notes" }
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "child-hazards",
+          "title": "Safety hazards",
+          "subtitle": "Pools, ponds, and off-limits areas",
+          "summary": "Extra care with children.",
+          "searchTerms": ["pool", "pond", "hazard", "fireplace"],
+          "blocks": [
+            {
+              "type": "warning",
+              "content": "List unfenced water, steep drops, fireplaces, and locked rooms."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "first-aid",
+          "title": "First aid",
+          "subtitle": "Kit and medical help",
+          "summary": "Where to find basics.",
+          "searchTerms": ["first aid", "111", "999"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "First aid kit location and nearest pharmacy."
+            },
+            {
+              "type": "note",
+              "content": "Urgent medical advice: **111**. Life-threatening emergencies: **999**."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "emergency",
+      "title": "Emergency",
+      "cardSubtitle": "Utilities • Outages • Help",
+      "iconId": "siren",
+      "accent": "#ff5f6d",
+      "searchTerms": ["emergency", "999", "water", "electric", "gas", "fuse"],
+      "topics": [
+        {
+          "id": "utility-emergencies",
+          "title": "Utility emergencies",
+          "subtitle": "Water, power, and gas",
+          "summary": "Leaks and outages.",
+          "searchTerms": ["leak", "fuse", "power", "gas"],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Water leak",
+              "steps": [
+                "Turn off the stop tap if safe",
+                "Contact the host",
+                "Do not use electrics near water"
+              ]
+            },
+            {
+              "type": "warning",
+              "content": "Gas smell: leave and call **0800 111 999**."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "emergency-services",
+          "title": "Emergency services",
+          "subtitle": "999 and host contacts",
+          "summary": "When to escalate.",
+          "searchTerms": ["999", "fire", "ambulance"],
+          "blocks": [
+            {
+              "type": "warning",
+              "content": "Call **999** for fire, medical or security emergencies."
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — phone",
+              "key": "contacts.mark.phone"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "appliance-manuals",
+      "title": "Appliance Manuals",
+      "cardSubtitle": "PDF guides for appliances",
+      "iconId": "book-open",
+      "accent": "#5b8def",
+      "searchTerms": ["appliance", "manual", "pdf", "instructions"],
+      "topics": []
+    },
+    {
+      "id": "house-rules",
+      "title": "House rules",
+      "cardSubtitle": "Quiet hours • Security • Respect",
+      "iconId": "shield",
+      "accent": "#f4b64f",
+      "searchTerms": ["rules", "quiet", "security", "smoking"],
+      "topics": [
+        {
+          "id": "house-rules-basics",
+          "title": "During your stay",
+          "subtitle": "Rules for all guests",
+          "summary": "Quiet hours, smoking, and parties.",
+          "searchTerms": ["rules", "quiet", "smoking", "parties"],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Quiet hours", "value": "e.g. 10pm – 8am" },
+                { "label": "Smoking", "value": "Not permitted indoors" },
+                { "label": "Parties", "value": "Not allowed" },
+                { "label": "Extra guests", "value": "Not without approval" }
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "neighbours-noise",
+          "title": "Neighbours & noise",
+          "subtitle": "Quiet hours and courtesy",
+          "summary": "Respect the neighbourhood.",
+          "searchTerms": ["neighbours", "noise", "quiet", "music"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Quiet hours, outdoor music rules, and shared parking or path etiquette."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "security-leaving",
+          "title": "Security when leaving",
+          "subtitle": "Especially for long stays",
+          "summary": "Locks, alarms, and lights.",
+          "searchTerms": ["security", "alarm", "lock"],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Before you go out",
+              "steps": [
+                "Lock doors and close ground-floor windows",
+                "Set alarm if used",
+                "Leave a light on if requested"
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    }
+  ]
+}

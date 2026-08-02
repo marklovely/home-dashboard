@@ -10,7 +10,10 @@ import {
   contactSecretsPatch,
   readGuestAccessSecrets
 } from '../../components/HubSetup/hubSetupFields.js';
-import starterGuide from '../../content/houseguide/templates/starter-guide.json';
+import {
+  getStarterGuideCatalog,
+  getStarterGuideTemplate
+} from '../../content/houseguide/templates/starterGuideTemplates.js';
 import { importHouseGuideCatalog } from '../../api/houseGuideApi.js';
 import {
   getSiteProfileState,
@@ -171,13 +174,17 @@ function mountHubSetupWizard(viewport, context) {
       return;
     }
 
+    const selectedUseCase = useCase.select.value;
+    const starterTemplate = getStarterGuideTemplate(selectedUseCase);
+
     const guideIntro = createSetupIntro(
-      'Start with a starter House Guide you can edit in the Guide Editor, or skip and add content later.'
+      `Start with a ${starterTemplate.label.toLowerCase()} you can edit in the Guide Editor, or skip and add content later.`
     );
-    const starterHelp = createSetupInfoHint(
-      'Adds a ready-made House Guide with Wi-Fi, emergency contacts, and house rules topics. You can edit everything in the Guide Editor after setup.',
-      'What is the starter guide?'
-    );
+    const starterHelp = createSetupInfoHint(starterTemplate.hint, 'What is the starter guide?');
+    const starterSummary = document.createElement('p');
+    starterSummary.className = 'hub-setup-starter-summary subtle';
+    starterSummary.textContent = `Includes: ${starterTemplate.summary}. Based on your choice in step 1 (${USE_CASE_OPTIONS.find((option) => option.value === selectedUseCase)?.label ?? 'Owner only'}).`;
+
     const starterRow = document.createElement('div');
     starterRow.className = 'hub-setup-action-row';
 
@@ -187,7 +194,8 @@ function mountHubSetupWizard(viewport, context) {
     starterButton.textContent = 'Import starter guide';
     starterButton.addEventListener('click', () => {
       starterButton.disabled = true;
-      void importHouseGuideCatalog(starterGuide).then(async (result) => {
+      const catalog = getStarterGuideCatalog(useCase.select.value);
+      void importHouseGuideCatalog(catalog).then(async (result) => {
         starterButton.disabled = false;
         if (!result.ok) {
           showToast(context.toast, result.message || 'Could not import starter guide.');
@@ -208,7 +216,7 @@ function mountHubSetupWizard(viewport, context) {
     skipNote.className = 'subtle';
     skipNote.textContent = 'You can also copy your bundled guide or import JSON from Settings or the Guide Editor later.';
 
-    body.append(guideIntro, starterRow, starterHelp.panel, skipNote);
+    body.append(guideIntro, starterSummary, starterRow, starterHelp.panel, skipNote);
   }
 
   backButton.addEventListener('click', () => {

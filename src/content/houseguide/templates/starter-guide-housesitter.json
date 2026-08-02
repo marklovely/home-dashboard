@@ -1,0 +1,558 @@
+{
+  "version": 2,
+  "homeSummaryTitle": "Welcome to the home",
+  "homeSummarySubtitle": "Wi-Fi • Pets • Local • Safety • Manuals • Rules",
+  "media": {},
+  "categories": [
+    {
+      "id": "getting-started",
+      "title": "Getting started",
+      "cardSubtitle": "Wi-Fi • Contacts • Access",
+      "iconId": "wifi",
+      "accent": "#6ea8ff",
+      "searchTerms": ["wifi", "internet", "contact", "access", "address"],
+      "topics": [
+        {
+          "id": "wifi",
+          "title": "Wi-Fi",
+          "subtitle": "Connect to the home network",
+          "summary": "Network name and password for this home.",
+          "searchTerms": ["wifi", "internet", "password"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Turn on **Settings → House Sitter Mode → Show home access details to sitters** so guests can see Wi-Fi here."
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Network name (SSID)",
+              "key": "wifi.ssid"
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Password",
+              "key": "wifi.password"
+            },
+            {
+              "type": "wifiQr",
+              "heading": "Quick join",
+              "caption": "Scan with your phone camera to join Wi‑Fi"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "home-access",
+          "title": "Home access",
+          "subtitle": "Address, keys, and lockbox",
+          "summary": "How to find the property and get inside.",
+          "searchTerms": ["address", "key", "lockbox", "access", "parking"],
+          "blocks": [
+            {
+              "type": "protected",
+              "kind": "address",
+              "label": "Full address",
+              "key": "address.full"
+            },
+            {
+              "type": "protected",
+              "kind": "lockbox",
+              "label": "Lockbox code",
+              "key": "lockbox.code"
+            },
+            {
+              "type": "text",
+              "content": "Add parking notes, gate codes, and where spare keys live."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "emergency-contacts",
+          "title": "Emergency contacts",
+          "subtitle": "Who to call",
+          "summary": "Primary and secondary contacts for this home.",
+          "searchTerms": ["emergency", "contact", "phone", "host"],
+          "blocks": [
+            {
+              "type": "warning",
+              "heading": "Immediate danger",
+              "content": "Call 999 for fire, medical or security emergencies."
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — phone",
+              "key": "contacts.mark.phone"
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — email",
+              "key": "contacts.mark.email"
+            },
+            {
+              "type": "text",
+              "content": "For urgent home issues (burst pipe, power out, break-in), call the primary contact first."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "home-life",
+      "title": "Home & daily life",
+      "cardSubtitle": "Kitchen • Heating • Rubbish",
+      "iconId": "chef-hat",
+      "accent": "#ff9f43",
+      "searchTerms": ["kitchen", "heating", "rubbish", "appliance", "daily"],
+      "topics": [
+        {
+          "id": "kitchen-basics",
+          "title": "Kitchen basics",
+          "subtitle": "Appliances and essentials",
+          "summary": "Where things live and how appliances work.",
+          "searchTerms": ["kitchen", "oven", "dishwasher", "coffee"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Describe the cooker, dishwasher, coffee machine, and anything non-obvious. Add photos in the Guide Editor."
+            },
+            {
+              "type": "tip",
+              "content": "Mention what sitters should restock, and where cleaning supplies are kept."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "heating-utilities",
+          "title": "Heating & utilities",
+          "subtitle": "Stay comfortable safely",
+          "summary": "Thermostat, hot water, and fuse box.",
+          "searchTerms": ["heating", "thermostat", "boiler", "fuse", "water"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Explain how to adjust heating, where the water stop tap is, and what to do if the power trips."
+            },
+            {
+              "type": "warning",
+              "content": "Never leave portable heaters unattended or block air vents."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "rubbish-recycling",
+          "title": "Rubbish & recycling",
+          "subtitle": "Collection days and bins",
+          "summary": "Which bin goes out when.",
+          "searchTerms": ["rubbish", "bins", "recycling", "trash", "collection"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "List collection days, bin colours, and where to store bags until collection."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "pets",
+      "title": "Pets",
+      "cardSubtitle": "Feeding • Walks • Vet",
+      "iconId": "dog",
+      "accent": "#e879f9",
+      "searchTerms": ["pet", "dog", "cat", "feeding", "vet"],
+      "topics": [
+        {
+          "id": "pet-at-a-glance",
+          "title": "At a glance",
+          "subtitle": "Name, breed, and temperament",
+          "summary": "Quick facts about your pet.",
+          "searchTerms": ["pet", "dog", "cat", "overview"],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Name", "value": "Add pet name" },
+                { "label": "Species / breed", "value": "e.g. Labrador" },
+                { "label": "Age", "value": "Add age" },
+                { "label": "Medication", "value": "None — or describe" }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Describe personality, favourite spots, and whether they are allowed on furniture or beds."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "pet-feeding",
+          "title": "Feeding",
+          "subtitle": "Meals and treats",
+          "summary": "What, when, and how much to feed.",
+          "searchTerms": ["feed", "food", "meals", "treats"],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Daily feeding",
+              "steps": [
+                "Morning: describe amount and food type",
+                "Evening: describe amount and food type",
+                "Fresh water — refill when low",
+                "Treats: only as listed here"
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "pet-walks",
+          "title": "Walks & exercise",
+          "subtitle": "Routine and favourite routes",
+          "summary": "How often and where to walk.",
+          "searchTerms": ["walk", "exercise", "lead", "dog walk"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "How many walks per day, lead location, and any local routes you recommend."
+            },
+            {
+              "type": "tip",
+              "content": "Note if your pet can be off-lead anywhere, and recall commands that work."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "pet-vet",
+          "title": "Vet & emergencies",
+          "subtitle": "Clinic details and warning signs",
+          "summary": "Who to call if your pet is unwell.",
+          "searchTerms": ["vet", "emergency", "sick", "insurance"],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Regular vet", "value": "Add clinic name and phone" },
+                { "label": "Out-of-hours", "value": "Add emergency vet" },
+                { "label": "Insurance / chip", "value": "Add policy or microchip ref" }
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "local",
+      "title": "Local area",
+      "cardSubtitle": "Shops • Walks • Food",
+      "iconId": "map-pin",
+      "accent": "#8b7cff",
+      "searchTerms": ["local", "shop", "pub", "walk", "restaurant"],
+      "topics": [
+        {
+          "id": "local-shops",
+          "title": "Shops & essentials",
+          "subtitle": "Supermarkets and chemists",
+          "summary": "Where to buy groceries and basics.",
+          "searchTerms": ["shop", "supermarket", "chemist", "pharmacy"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Add your nearest supermarkets, post office, and chemist."
+            },
+            {
+              "type": "place",
+              "name": "Nearest supermarket",
+              "address": "Add address",
+              "description": "Replace with your usual shop and opening hours."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "local-food",
+          "title": "Pubs & restaurants",
+          "subtitle": "Places you recommend",
+          "summary": "Somewhere nice for an evening out.",
+          "searchTerms": ["pub", "restaurant", "food", "takeaway"],
+          "blocks": [
+            {
+              "type": "place",
+              "name": "Local pub or restaurant",
+              "address": "Add address",
+              "description": "Why you like it — booking needed?, dog-friendly?, best dishes."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "local-walks",
+          "title": "Walks & outdoors",
+          "subtitle": "Parks and scenic routes",
+          "summary": "Fresh air nearby.",
+          "searchTerms": ["walk", "park", "countryside", "beach"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "List parks, coastal paths, or woodland walks within easy reach."
+            },
+            {
+              "type": "place",
+              "name": "Favourite walk",
+              "address": "Add starting point",
+              "description": "Rough duration, parking, and whether dogs are welcome."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "local-transport",
+          "title": "Getting around",
+          "subtitle": "Buses, trains, and taxis",
+          "summary": "Public transport and local taxi firms.",
+          "searchTerms": ["bus", "train", "taxi", "transport"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Nearest bus stops, train station, and trusted taxi numbers or apps."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "children-safety",
+      "title": "Children & safety",
+      "cardSubtitle": "Childproofing • Hazards • First aid",
+      "iconId": "heart-pulse",
+      "accent": "#22c55e",
+      "searchTerms": ["children", "child", "baby", "safety", "childproof", "cot", "stair gate"],
+      "topics": [
+        {
+          "id": "child-friendly-home",
+          "title": "Children in the home",
+          "subtitle": "Equipment and suitability",
+          "summary": "Cot, high chair, and areas to watch.",
+          "searchTerms": ["cot", "high chair", "baby", "child", "family"],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Suitable for children", "value": "Yes / with supervision / not suitable" },
+                { "label": "Cot & bedding", "value": "Add location or N/A" },
+                { "label": "High chair", "value": "Add location or N/A" },
+                { "label": "Stair gates", "value": "Which stairs are gated?" }
+              ]
+            },
+            {
+              "type": "tip",
+              "content": "Delete this category in the Guide Editor if children never stay here."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "child-safety-hazards",
+          "title": "Safety hazards",
+          "subtitle": "Pools, ponds, and off-limits areas",
+          "summary": "Extra care needed with children.",
+          "searchTerms": ["pool", "pond", "garden", "hazard", "safe", "childproof"],
+          "blocks": [
+            {
+              "type": "warning",
+              "content": "List unfenced water, fragile items, fireplaces, blind cords, and rooms that are off-limits."
+            },
+            {
+              "type": "text",
+              "content": "Note where medicines and cleaning products are stored — keep locked or out of reach."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "first-aid",
+          "title": "First aid",
+          "subtitle": "Kit location and help",
+          "summary": "If someone is hurt.",
+          "searchTerms": ["first aid", "plaster", "111", "999"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Where the first aid kit is kept and whether any children's medicines may be used."
+            },
+            {
+              "type": "note",
+              "content": "For urgent medical advice in the UK call **111**. For life-threatening emergencies call **999**."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "emergency",
+      "title": "Emergency",
+      "cardSubtitle": "Utilities • Outages • Help",
+      "iconId": "siren",
+      "accent": "#ff5f6d",
+      "searchTerms": ["emergency", "999", "water", "electric", "gas", "fuse", "leak"],
+      "topics": [
+        {
+          "id": "utility-emergencies",
+          "title": "Utility emergencies",
+          "subtitle": "Water, power, and gas",
+          "summary": "Leaks, outages, and what to do first.",
+          "searchTerms": ["water", "leak", "fuse", "power", "gas", "boiler"],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Water leak",
+              "steps": [
+                "Turn off the stop tap — add a photo in the Guide Editor",
+                "Contain water if safe",
+                "Contact the primary host",
+                "Arrange a plumber if instructed"
+              ]
+            },
+            {
+              "type": "steps",
+              "heading": "Power outage",
+              "steps": [
+                "Check if neighbours are affected",
+                "Locate the fuse box / consumer unit",
+                "Reset tripped switches only if safe",
+                "Contact the host if power does not return"
+              ]
+            },
+            {
+              "type": "warning",
+              "content": "If you smell gas, open windows, leave the property, and call **0800 111 999**. Do not use switches or flames."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "emergency-services",
+          "title": "Emergency services",
+          "subtitle": "When to call 999",
+          "summary": "Fire, medical, and security emergencies.",
+          "searchTerms": ["999", "fire", "ambulance", "police"],
+          "blocks": [
+            {
+              "type": "warning",
+              "heading": "Immediate danger",
+              "content": "Call **999** for fire, medical or security emergencies."
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — phone",
+              "key": "contacts.mark.phone"
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Secondary — phone",
+              "key": "contacts.donna.phone"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "appliance-manuals",
+      "title": "Appliance Manuals",
+      "cardSubtitle": "PDF guides for appliances",
+      "iconId": "book-open",
+      "accent": "#5b8def",
+      "searchTerms": [
+        "appliance",
+        "manual",
+        "user guide",
+        "pdf",
+        "instructions",
+        "oven",
+        "washer",
+        "dishwasher"
+      ],
+      "topics": []
+    },
+    {
+      "id": "house-rules",
+      "title": "House rules",
+      "cardSubtitle": "Security • Quiet hours • Leaving",
+      "iconId": "shield",
+      "accent": "#f4b64f",
+      "searchTerms": ["rules", "security", "quiet", "leaving"],
+      "topics": [
+        {
+          "id": "welcome",
+          "title": "Welcome",
+          "subtitle": "Thank you for looking after the home",
+          "summary": "A few important basics.",
+          "searchTerms": ["welcome", "rules", "basics"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Thank your sitter and set expectations: shoes off?, guests allowed?, smoking policy."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "security-leaving",
+          "title": "Security when leaving",
+          "subtitle": "Locks, alarms, and lights",
+          "summary": "What to check before you go out.",
+          "searchTerms": ["security", "alarm", "lock", "leaving"],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Before you leave",
+              "steps": [
+                "Lock front and back doors",
+                "Set alarm if used — code in owner notes if needed",
+                "Close windows on ground floor",
+                "Leave a light on if requested"
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    }
+  ]
+}

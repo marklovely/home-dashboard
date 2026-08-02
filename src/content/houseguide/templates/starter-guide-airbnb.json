@@ -1,0 +1,482 @@
+{
+  "version": 2,
+  "homeSummaryTitle": "Welcome — enjoy your stay",
+  "homeSummarySubtitle": "Check-in • Amenities • Local • Safety • Manuals • Rules",
+  "media": {},
+  "categories": [
+    {
+      "id": "arrival",
+      "title": "Arrival",
+      "cardSubtitle": "Check-in • Wi-Fi • Parking",
+      "iconId": "key-round",
+      "accent": "#6ea8ff",
+      "searchTerms": ["arrival", "check-in", "wifi", "parking", "key"],
+      "topics": [
+        {
+          "id": "check-in",
+          "title": "Check-in",
+          "subtitle": "Arrival time and access",
+          "summary": "How to get in and where to park.",
+          "searchTerms": ["check-in", "checkin", "arrival", "key", "lockbox"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Add your standard check-in window, key collection instructions, and parking details."
+            },
+            {
+              "type": "protected",
+              "kind": "address",
+              "label": "Property address",
+              "key": "address.full"
+            },
+            {
+              "type": "protected",
+              "kind": "lockbox",
+              "label": "Lockbox / door code",
+              "key": "lockbox.code"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "wifi",
+          "title": "Wi-Fi",
+          "subtitle": "Connect in seconds",
+          "summary": "Guest network details.",
+          "searchTerms": ["wifi", "internet", "password"],
+          "blocks": [
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Network name (SSID)",
+              "key": "wifi.ssid"
+            },
+            {
+              "type": "protected",
+              "kind": "wifi",
+              "label": "Password",
+              "key": "wifi.password"
+            },
+            {
+              "type": "wifiQr",
+              "heading": "Quick join",
+              "caption": "Scan with your phone camera to join Wi‑Fi"
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "emergency-contacts",
+          "title": "Host contact",
+          "subtitle": "Questions during your stay",
+          "summary": "Who to message or call.",
+          "searchTerms": ["host", "contact", "phone", "help"],
+          "blocks": [
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — phone",
+              "key": "contacts.mark.phone"
+            },
+            {
+              "type": "protected",
+              "kind": "contact",
+              "label": "Primary — email",
+              "key": "contacts.mark.email"
+            },
+            {
+              "type": "note",
+              "content": "For urgent property issues contact the host. For emergencies call **999**."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "accessibility",
+          "title": "Accessibility",
+          "subtitle": "Steps, parking, and mobility",
+          "summary": "Help guests plan their stay.",
+          "searchTerms": ["accessibility", "steps", "wheelchair", "mobility", "parking"],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Steps at entrance", "value": "e.g. 3 steps / step-free" },
+                { "label": "Bedrooms & bathroom", "value": "Which floors — any walk-in shower?" },
+                { "label": "Parking", "value": "Driveway, street, or allocated bay" },
+                { "label": "Notes", "value": "Anything else mobility-related" }
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "amenities",
+      "title": "Amenities",
+      "cardSubtitle": "Kitchen • Climate • Laundry • TV",
+      "iconId": "chef-hat",
+      "accent": "#ff9f43",
+      "searchTerms": ["amenities", "kitchen", "heating", "laundry", "tv"],
+      "topics": [
+        {
+          "id": "kitchen",
+          "title": "Kitchen",
+          "subtitle": "Cooking and essentials",
+          "summary": "What's provided and how appliances work.",
+          "searchTerms": ["kitchen", "oven", "microwave", "coffee", "dishwasher"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "List cookware, coffee/tea, dishwasher tabs location, and anything guests should not use."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "climate",
+          "title": "Heating & cooling",
+          "subtitle": "Stay comfortable",
+          "summary": "Thermostat and air conditioning.",
+          "searchTerms": ["heating", "air conditioning", "thermostat", "temperature"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Explain the thermostat or remote, ideal temperature, and how to report if something is not working."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "laundry",
+          "title": "Laundry",
+          "subtitle": "Washer and dryer",
+          "summary": "Where to find machines and supplies.",
+          "searchTerms": ["laundry", "washing machine", "dryer", "iron"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Location of washer/dryer, detergent, and any settings to avoid (delicate, high heat, etc.)."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "entertainment",
+          "title": "TV & streaming",
+          "subtitle": "Remotes and apps",
+          "summary": "How to watch something tonight.",
+          "searchTerms": ["tv", "netflix", "streaming", "remote"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Which remote controls what, which streaming apps are signed in, and the Wi-Fi password if needed for casting."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "ev-charging",
+          "title": "EV charging",
+          "subtitle": "Electric vehicle charging",
+          "summary": "Delete if not applicable.",
+          "searchTerms": ["ev", "electric car", "charger", "charging"],
+          "blocks": [
+            {
+              "type": "tip",
+              "content": "Delete this topic if you do not offer EV charging."
+            },
+            {
+              "type": "text",
+              "content": "Describe charger location, how to start a charge, and any overnight parking rules."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "local",
+      "title": "Local guide",
+      "cardSubtitle": "Eat • See • Shop • Travel",
+      "iconId": "map-pin",
+      "accent": "#8b7cff",
+      "searchTerms": ["local", "restaurant", "attraction", "shop", "transport"],
+      "topics": [
+        {
+          "id": "local-eat",
+          "title": "Restaurants & cafés",
+          "subtitle": "Our favourite places to eat",
+          "summary": "Walkable or a short drive away.",
+          "searchTerms": ["restaurant", "cafe", "coffee", "breakfast", "dinner"],
+          "blocks": [
+            {
+              "type": "place",
+              "name": "Breakfast or brunch spot",
+              "address": "Add address",
+              "description": "Best for mornings — booking needed?"
+            },
+            {
+              "type": "place",
+              "name": "Dinner recommendation",
+              "address": "Add address",
+              "description": "Your go-to for guests — cuisine type and price range."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "local-attractions",
+          "title": "Attractions",
+          "subtitle": "Days out and landmarks",
+          "summary": "What visitors love nearby.",
+          "searchTerms": ["attraction", "museum", "beach", "castle", "park"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Suggest a mix of half-day and full-day trips — include rough travel time from the property."
+            },
+            {
+              "type": "place",
+              "name": "Must-see attraction",
+              "address": "Add address",
+              "description": "Why guests enjoy it and best time to visit."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "local-shops",
+          "title": "Shops & essentials",
+          "subtitle": "Groceries and pharmacy",
+          "summary": "Stock up quickly.",
+          "searchTerms": ["shop", "supermarket", "pharmacy", "convenience"],
+          "blocks": [
+            {
+              "type": "place",
+              "name": "Nearest supermarket",
+              "address": "Add address",
+              "description": "Opening hours and whether delivery apps reach you."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "local-transport",
+          "title": "Getting around",
+          "subtitle": "Public transport and taxis",
+          "summary": "Explore without a car.",
+          "searchTerms": ["bus", "train", "taxi", "uber", "parking"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Nearest stops, typical fares to town, and where guests can park overnight."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "children-safety",
+      "title": "Children & safety",
+      "cardSubtitle": "Family stay • Hazards • First aid",
+      "iconId": "heart-pulse",
+      "accent": "#22c55e",
+      "searchTerms": ["children", "child", "baby", "family", "safety", "cot", "stair gate"],
+      "topics": [
+        {
+          "id": "family-stay",
+          "title": "Family-friendly stay",
+          "subtitle": "Cot, high chair, and toys",
+          "summary": "What we provide for children.",
+          "searchTerms": ["cot", "high chair", "baby", "family", "child"],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Suitable for children", "value": "Yes / ask host / not suitable" },
+                { "label": "Cot & bedding", "value": "Available on request / in bedroom X" },
+                { "label": "High chair", "value": "Add location" },
+                { "label": "Stair gates", "value": "Which stairs are gated?" }
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "child-hazards",
+          "title": "Safety around the property",
+          "subtitle": "Pools, ponds, and fragile areas",
+          "summary": "Please supervise children at all times.",
+          "searchTerms": ["pool", "pond", "hazard", "childproof", "fireplace"],
+          "blocks": [
+            {
+              "type": "warning",
+              "content": "List unfenced water, steep garden drops, fireplaces, and any rooms that are off-limits."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "first-aid",
+          "title": "First aid",
+          "subtitle": "Kit and medical help",
+          "summary": "Where to find basics.",
+          "searchTerms": ["first aid", "111", "999", "pharmacy"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Location of the first aid kit. Nearest pharmacy for late-night supplies."
+            },
+            {
+              "type": "note",
+              "content": "For urgent medical advice in the UK call **111**. For life-threatening emergencies call **999**."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "emergency",
+      "title": "Emergency",
+      "cardSubtitle": "Utilities • Outages • Help",
+      "iconId": "siren",
+      "accent": "#ff5f6d",
+      "searchTerms": ["emergency", "999", "water", "electric", "gas", "fuse"],
+      "topics": [
+        {
+          "id": "utility-emergencies",
+          "title": "Utility emergencies",
+          "subtitle": "Water, power, and gas",
+          "summary": "What to do before calling the host.",
+          "searchTerms": ["leak", "fuse", "power", "gas", "boiler"],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Water leak",
+              "steps": [
+                "Turn off the stop tap if you know where it is",
+                "Contact the host immediately",
+                "Do not use electrical switches near standing water"
+              ]
+            },
+            {
+              "type": "steps",
+              "heading": "No power",
+              "steps": [
+                "Check the fuse box for tripped switches",
+                "Contact the host if unsure",
+                "Use phone torch — avoid candles unless safe"
+              ]
+            },
+            {
+              "type": "warning",
+              "content": "If you smell gas, leave and call **0800 111 999**. Do not use switches or flames."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    },
+    {
+      "id": "appliance-manuals",
+      "title": "Appliance Manuals",
+      "cardSubtitle": "PDF guides for appliances",
+      "iconId": "book-open",
+      "accent": "#5b8def",
+      "searchTerms": ["appliance", "manual", "pdf", "oven", "washer", "dishwasher"],
+      "topics": []
+    },
+    {
+      "id": "house-rules",
+      "title": "House rules",
+      "cardSubtitle": "Quiet hours • Checkout • Respect",
+      "iconId": "shield",
+      "accent": "#f4b64f",
+      "searchTerms": ["rules", "quiet", "checkout", "smoking", "parties"],
+      "topics": [
+        {
+          "id": "house-rules-basics",
+          "title": "During your stay",
+          "subtitle": "Please respect the home",
+          "summary": "The essentials for a smooth visit.",
+          "searchTerms": ["rules", "quiet", "smoking", "parties", "guests"],
+          "blocks": [
+            {
+              "type": "keyValues",
+              "items": [
+                { "label": "Quiet hours", "value": "e.g. 10pm – 8am" },
+                { "label": "Smoking", "value": "Not permitted indoors" },
+                { "label": "Parties / events", "value": "Not allowed" },
+                { "label": "Maximum guests", "value": "As booked only" }
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "neighbours-noise",
+          "title": "Neighbours & noise",
+          "subtitle": "Being a good guest",
+          "summary": "Keep the peace in the neighbourhood.",
+          "searchTerms": ["neighbours", "noise", "quiet", "music", "party"],
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Describe quiet hours, outdoor noise rules, and whether neighbours should be contacted for anything."
+            },
+            {
+              "type": "tip",
+              "content": "Guests appreciate knowing if bins, parking, or shared paths affect neighbours."
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        },
+        {
+          "id": "checkout",
+          "title": "Checkout",
+          "subtitle": "Before you leave",
+          "summary": "A simple leaving checklist.",
+          "searchTerms": ["checkout", "check-out", "leaving", "departure"],
+          "blocks": [
+            {
+              "type": "steps",
+              "heading": "Checkout checklist",
+              "steps": [
+                "Strip used beds and leave linen in the laundry area",
+                "Load and start the dishwasher (or wash and put away)",
+                "Take rubbish to bins — note collection day if relevant",
+                "Turn off lights and adjust heating as instructed",
+                "Lock up and return keys / lock the smart lock"
+              ]
+            }
+          ],
+          "actions": [],
+          "audience": "guest"
+        }
+      ]
+    }
+  ]
+}
