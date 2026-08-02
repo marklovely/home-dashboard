@@ -35,7 +35,7 @@ Steps:
 1. Hub name and guest use case
 2. Primary and secondary contacts
 3. Pet details *(housesitter and both use cases only)*
-4. Wi-Fi, address, lockbox, owner PIN
+4. Wi-Fi, property address (structured lines), lockbox, owner PIN
 5. Optional starter House Guide import — template matches use case; pet answers are written into the Pets section at import time
 
 Re-open from **Settings → Home details → Open setup wizard**.

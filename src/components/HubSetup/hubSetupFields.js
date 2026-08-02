@@ -3,6 +3,11 @@
  */
 
 import { CircleHelp, Eye, EyeOff, createElement } from 'lucide';
+import {
+  EMPTY_PROPERTY_ADDRESS,
+  formatPropertyAddress,
+  normalizePropertyAddress
+} from '../../lib/propertyAddress.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -287,7 +292,70 @@ export function createContactGroup(titleText, contact) {
 /**
  * @param {Record<string, unknown>} profile
  */
-export function createGuestAccessFields(_profile) {
+export function createPropertyAddressFields(profile) {
+  const address = normalizePropertyAddress(profile?.propertyAddress);
+  const group = document.createElement('fieldset');
+  group.className = 'hub-setup-property-address';
+
+  const legend = document.createElement('legend');
+  legend.className = 'settings-subsection-title';
+  legend.textContent = 'Address of the property';
+
+  const line1 = createSetupField('Address line 1', address.line1, {
+    autocomplete: 'address-line1',
+    placeholder: 'House name or number and street'
+  });
+  const line2 = createSetupField('Address line 2 (optional)', address.line2, {
+    autocomplete: 'address-line2',
+    placeholder: 'Flat, building, or extra detail'
+  });
+  const line3 = createSetupField('Address line 3 (optional)', address.line3, {
+    autocomplete: 'address-line3'
+  });
+  const city = createSetupField('City / town', address.city, {
+    autocomplete: 'address-level2'
+  });
+  const county = createSetupField('County (optional)', address.county, {
+    autocomplete: 'address-level1'
+  });
+  const country = createSetupField('Country', address.country, {
+    autocomplete: 'country-name',
+    placeholder: 'United Kingdom'
+  });
+  const postcode = createSetupField('Postcode', address.postcode, {
+    autocomplete: 'postal-code'
+  });
+
+  group.append(
+    legend,
+    line1.wrap,
+    line2.wrap,
+    line3.wrap,
+    city.wrap,
+    county.wrap,
+    country.wrap,
+    postcode.wrap
+  );
+
+  function readPropertyAddress() {
+    return normalizePropertyAddress({
+      line1: line1.input.value,
+      line2: line2.input.value,
+      line3: line3.input.value,
+      city: city.input.value,
+      county: county.input.value,
+      country: country.input.value,
+      postcode: postcode.input.value
+    });
+  }
+
+  return { group, readPropertyAddress };
+}
+
+/**
+ * @param {Record<string, unknown>} profile
+ */
+export function createGuestAccessFields(profile) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
 
@@ -297,7 +365,7 @@ export function createGuestAccessFields(_profile) {
     autocomplete: 'new-password',
     revealable: true
   });
-  const homeAddress = createSetupField('Home address', '', { autocomplete: 'street-address' });
+  const propertyAddress = createPropertyAddressFields(profile);
   const lockbox = createSetupField('Lockbox / door code (optional)', '', {
     type: 'password',
     autocomplete: 'off',
@@ -314,15 +382,17 @@ export function createGuestAccessFields(_profile) {
   ownerPin.input.maxLength = 4;
 
   wrap.append(
-    createSetupIntro('Guest-facing details. These stay on your hub and are only shown to sitters when you enable sharing in Settings.'),
+    createSetupIntro(
+      'Guest-facing details for this property. They stay on your hub and are only shown when you enable sharing in Settings.'
+    ),
     wifiSsid.wrap,
     wifiPassword.wrap,
-    homeAddress.wrap,
+    propertyAddress.group,
     lockbox.wrap,
     ownerPin.wrap
   );
 
-  return { wrap, wifiSsid, wifiPassword, homeAddress, lockbox, ownerPin };
+  return { wrap, wifiSsid, wifiPassword, propertyAddress, lockbox, ownerPin };
 }
 
 /**
@@ -369,17 +439,33 @@ export function createSetupInfoHint(helpText, label = 'More information') {
 }
 
 /**
- * @param {{ wifiSsid: { input: HTMLInputElement }, wifiPassword: { input: HTMLInputElement }, homeAddress: { input: HTMLInputElement }, lockbox: { input: HTMLInputElement }, ownerPin: { input: HTMLInputElement } }} fields
+ * @param {{
+ *   wifiSsid: { input: HTMLInputElement },
+ *   wifiPassword: { input: HTMLInputElement },
+ *   propertyAddress: { readPropertyAddress: () => import('../../lib/propertyAddress.js').PropertyAddress },
+ *   lockbox: { input: HTMLInputElement },
+ *   ownerPin: { input: HTMLInputElement }
+ * }} fields
  */
 export function readGuestAccessSecrets(fields) {
   /** @type {Record<string, string>} */
   const patch = {};
   if (fields.wifiSsid.input.value.trim()) patch.wifi_ssid = fields.wifiSsid.input.value.trim();
   if (fields.wifiPassword.input.value.trim()) patch.wifi_password = fields.wifiPassword.input.value.trim();
-  if (fields.homeAddress.input.value.trim()) patch.home_address = fields.homeAddress.input.value.trim();
+  const formattedAddress = formatPropertyAddress(fields.propertyAddress.readPropertyAddress());
+  if (formattedAddress) patch.home_address = formattedAddress;
   if (fields.lockbox.input.value.trim()) patch.lockbox_code = fields.lockbox.input.value.trim();
   if (fields.ownerPin.input.value.trim()) patch.owner_pin = fields.ownerPin.input.value.trim();
   return patch;
+}
+
+/**
+ * @param {{
+ *   propertyAddress: { readPropertyAddress: () => import('../../lib/propertyAddress.js').PropertyAddress }
+ * }} fields
+ */
+export function readPropertyAddressProfilePatch(fields) {
+  return { propertyAddress: fields.propertyAddress.readPropertyAddress() };
 }
 
 /**

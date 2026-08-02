@@ -15,6 +15,15 @@ export const DEFAULT_SITE_PROFILE = {
     vet: '',
     vetPhone: '',
     vetEmergency: ''
+  },
+  propertyAddress: {
+    line1: '',
+    line2: '',
+    line3: '',
+    city: '',
+    county: '',
+    country: '',
+    postcode: ''
   }
 };
 
@@ -31,7 +40,8 @@ function parseProfilePayload(value) {
       ...parsed,
       primaryContact: { ...DEFAULT_SITE_PROFILE.primaryContact, ...parsed.primaryContact },
       secondaryContact: { ...DEFAULT_SITE_PROFILE.secondaryContact, ...parsed.secondaryContact },
-      petCare: { ...DEFAULT_SITE_PROFILE.petCare, ...parsed.petCare }
+      petCare: { ...DEFAULT_SITE_PROFILE.petCare, ...parsed.petCare },
+      propertyAddress: { ...DEFAULT_SITE_PROFILE.propertyAddress, ...parsed.propertyAddress }
     };
   } catch {
     return { ...DEFAULT_SITE_PROFILE };
@@ -85,7 +95,10 @@ export async function updateSiteProfile(env, patch) {
     secondaryContact: patch.secondaryContact
       ? { ...current.secondaryContact, ...patch.secondaryContact }
       : current.secondaryContact,
-    petCare: patch.petCare ? { ...current.petCare, ...patch.petCare } : current.petCare
+    petCare: patch.petCare ? { ...current.petCare, ...patch.petCare } : current.petCare,
+    propertyAddress: patch.propertyAddress
+      ? { ...current.propertyAddress, ...patch.propertyAddress }
+      : current.propertyAddress
   };
 
   const now = Math.floor(Date.now() / 1000);

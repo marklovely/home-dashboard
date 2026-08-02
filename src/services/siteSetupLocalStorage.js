@@ -15,6 +15,15 @@ export const DEFAULT_LOCAL_PROFILE = {
     vet: '',
     vetPhone: '',
     vetEmergency: ''
+  },
+  propertyAddress: {
+    line1: '',
+    line2: '',
+    line3: '',
+    city: '',
+    county: '',
+    country: '',
+    postcode: ''
   }
 };
 
@@ -37,6 +46,7 @@ export function loadLocalProfile() {
       primaryContact: { ...DEFAULT_LOCAL_PROFILE.primaryContact, ...parsed?.primaryContact },
       secondaryContact: { ...DEFAULT_LOCAL_PROFILE.secondaryContact, ...parsed?.secondaryContact },
       petCare: { ...DEFAULT_LOCAL_PROFILE.petCare, ...parsed?.petCare },
+      propertyAddress: { ...DEFAULT_LOCAL_PROFILE.propertyAddress, ...parsed?.propertyAddress },
       _hasLocalRow: true
     };
   } catch {
@@ -59,6 +69,9 @@ export function mergeLocalProfile(patch) {
       ? { ...current.secondaryContact, ...patch.secondaryContact }
       : current.secondaryContact,
     petCare: patch.petCare ? { ...current.petCare, ...patch.petCare } : current.petCare,
+    propertyAddress: patch.propertyAddress
+      ? { ...current.propertyAddress, ...patch.propertyAddress }
+      : current.propertyAddress,
     _hasLocalRow: true
   };
   const { _hasLocalRow: hasLocalRow, ...stored } = next;

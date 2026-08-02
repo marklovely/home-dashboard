@@ -54,7 +54,7 @@
             {
               "type": "protected",
               "kind": "address",
-              "label": "Full address",
+              "label": "Property address",
               "key": "address.full"
             },
             {

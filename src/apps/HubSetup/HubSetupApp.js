@@ -9,7 +9,8 @@ import {
   createSetupIntro,
   createSetupSelect,
   contactSecretsPatch,
-  readGuestAccessSecrets
+  readGuestAccessSecrets,
+  readPropertyAddressProfilePatch
 } from '../../components/HubSetup/hubSetupFields.js';
 import { buildStarterGuideCatalog } from '../../content/houseguide/templates/buildStarterGuideCatalog.js';
 import {
@@ -362,6 +363,8 @@ function mountHubSetupWizard(viewport, context) {
           }
           const secretsResult = await saveHubSecrets(readGuestAccessSecrets(guestFields));
           if (!handleSaveResult(secretsResult, 'Could not save guest access details.')) return;
+          const addressResult = await saveSiteProfile(readPropertyAddressProfilePatch(guestFields));
+          if (!handleSaveResult(addressResult, 'Could not save property address.')) return;
         }
 
         if (stepId === 'guide') {
