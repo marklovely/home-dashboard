@@ -18,4 +18,5 @@ lovely-home-hub-backup.json
 house-guide-export.json
 worker/*-backup.sql
 worker/test-backup.sql
-*.d1.sqlworker/.wrangler/
+*.d1.sql
+worker/.wrangler/
