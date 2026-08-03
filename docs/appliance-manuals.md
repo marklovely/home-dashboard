@@ -118,7 +118,7 @@ Unpublished manuals remain visible to owners only.
 1. Open **House Guide** from Home or bottom navigation.
 2. Choose **Appliance Manuals**.
 3. Search or filter by category.
-4. Tap **View Manual** to read the PDF in-app, or **Open PDF in new tab** if embedding is unavailable.
+4. Tap **View Manual** to read the PDF in the same page (scrollable pages rendered for kiosk tablets).
 
 ## Backup and recovery
 
@@ -131,7 +131,7 @@ Unpublished manuals remain visible to owners only.
 
 - Owner management UI mounts only after the server confirms **Owner Mode**.
 - Switching to House Sitter Mode clears manual state, aborts in-flight requests, and closes owner dialogs.
-- PDF viewing uses a blob URL from an authenticated fetch, with iframe embedding and a new-tab fallback for Fully Kiosk Browser and other limited embedders.
+- PDF viewing uses an authenticated fetch and **PDF.js** canvas rendering in-page (no new tab — required for Fully Kiosk Browser).
 
 ## House Guide integration
 

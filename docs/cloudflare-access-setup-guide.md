@@ -74,7 +74,7 @@ Keep these three hostnames on a sticky note:
 5. Click **Continue** (or **Continue with Self-hosted and private**).
 6. On the next screens, fill in:
    - **Application name:** `Lovely Home — Pages production`
-   - **Session Duration:** e.g. 24 hours (tablet-friendly) or shorter if you prefer
+   - **Session Duration:** **30 days** for the wall tablet (Fully Kiosk). Shorter durations (e.g. 24–48 hours) force Cloudflare sign-in even while House Sitter Mode is still active on the device cookie — confusing on a kiosk. Use the same duration on **both** Pages and Worker Access apps.
    - **Public hostname / domain:** your full Pages host, e.g. `home-dashboard-a11.pages.dev`  
      (Some UIs split “subdomain” + “domain”; for `home-dashboard-a11.pages.dev` you may enter subdomain `home-dashboard-a11` and domain `pages.dev`, or one field with the full hostname.)
    - **Path:** leave empty (protect entire site)

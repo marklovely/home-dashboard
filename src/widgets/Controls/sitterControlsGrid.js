@@ -6,6 +6,20 @@ import { runRoutineButtonAction } from '../Alexa/routineButtonFeedback.js';
 import { isButtonAllowedForSitter } from '../../config/controlPermissions.js';
 
 /**
+ * @param {unknown} error
+ */
+function formatControlErrorMessage(error) {
+  const status = error && typeof error === 'object' && 'status' in error ? Number(error.status) : NaN;
+  if (status === 401 || status === 403) {
+    return 'Sign in when prompted, then tap the control again.';
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return 'That control is unavailable right now. Please try again.';
+}
+
+/**
  * @param {string} subtitle
  */
 function sitterFriendlySubtitle(subtitle) {
@@ -54,10 +68,7 @@ export function mountSitterControlsGrid(context) {
           onSuccess: () => showToast(context.toast, `✓ ${display.title}`),
           onError: (error) => {
             console.error(error);
-            const message =
-              error instanceof Error && error.message
-                ? error.message
-                : 'That control is unavailable right now. Please try again.';
+            const message = formatControlErrorMessage(error);
             showToast(context.toast, message);
           }
         }

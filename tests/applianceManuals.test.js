@@ -209,7 +209,7 @@ describe('Appliance Manuals PDF viewer', () => {
     resetApiBaseForTests();
   });
 
-  it('includes fallback open action and manual titles', async () => {
+  it('shows retry action when the PDF cannot load', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => ({
@@ -220,8 +220,7 @@ describe('Appliance Manuals PDF viewer', () => {
 
     const viewer = renderApplianceManualViewer(sampleManual, () => {});
     expect(viewer.querySelector('.appliance-manual-viewer-title')?.textContent).toBe('User guide');
-    expect(viewer.textContent).toContain('Open PDF in new tab');
-    await Promise.resolve();
+    await vi.waitFor(() => expect(viewer.textContent).toContain('Try again'));
     viewer.cleanup?.();
   });
 });
