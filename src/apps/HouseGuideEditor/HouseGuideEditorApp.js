@@ -808,7 +808,7 @@ function renderTopicEditor(topic, context, handlers) {
   const discovery = document.createElement('div');
   discovery.className = 'house-guide-editor-discovery';
   discovery.append(
-    createGuideEditorSectionHeading('Search & links', 'discovery'),
+    createGuideEditorSectionHeading('Search & links', 'search-keywords'),
     createCommaSeparatedField(
       'Search keywords',
       topic.searchTerms,
