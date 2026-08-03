@@ -195,6 +195,18 @@ Do **not** reuse production AUD tags unless you intentionally share policies.
 
 To tell environments apart: a **TEST ENVIRONMENT** banner appears when `VITE_HUB_ENVIRONMENT=test` is set on the test Pages build (also auto-detected on `test.lovely-home.co.uk`).
 
+### Vanilla defaults on test (start from scratch)
+
+The test stack is meant for onboarding trials, not your production home setup:
+
+| Feature | Production | Test (`VITE_HUB_ENVIRONMENT=test`) |
+|---------|------------|-------------------------------------|
+| **Controls / Alexa routines** | `src/config.js` Virtual Buttons | Hidden — empty config until you add buttons for that deployment |
+| **Bin schedule** | East Hampshire calendar in repo | Generic **demo** fortnightly schedule and placeholder collection copy |
+| **House Guide** | D1 CMS + bundled fallback | Empty D1 until you import — use wizard starter or prod backup restore |
+
+Production `src/config.js` and bin calendar files are **not** copied to test automatically. Copy a prod guide backup via Settings if you want realistic content; Controls still stay hidden on test until you deliberately configure a test `config.js` build.
+
 **Copy prod guide to test:** Settings → Backup & restore → download on prod, restore on test. See [site-backup.md](./site-backup.md).
 
 ---

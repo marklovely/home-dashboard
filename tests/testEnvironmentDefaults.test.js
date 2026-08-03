@@ -1,0 +1,47 @@
+import '../src/apps/index.js';
+import { describe, expect, it, afterEach, vi } from 'vitest';
+import { resetHubEnvironmentForTests } from '../src/auth/hubEnvironment.js';
+import { getHubConfig } from '../src/config/resolveHubConfig.js';
+import { getCollectionInformationCopy } from '../src/apps/Bins/binCollectionCopy.js';
+import {
+  getScheduleMetadata,
+  __buildAllCollectionEventsForTests
+} from '../src/services/binCollectionService.js';
+import { getVisibleApps, isAppVisible } from '../src/services/appVisibility.js';
+import { resetUserModeForTests, setUserMode, UserMode } from '../src/auth/userMode.js';
+import { setActiveProfileId } from '../src/services/profileService.js';
+
+describe('test environment vanilla defaults', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    resetHubEnvironmentForTests();
+    resetUserModeForTests();
+    setActiveProfileId('owner');
+  });
+
+  it('uses empty Virtual Button config in test', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'test');
+    expect(getHubConfig().buttons).toEqual([]);
+    expect(getHubConfig().buttonGroups).toEqual([]);
+  });
+
+  it('hides Controls from visible apps in test', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'test');
+    setUserMode(UserMode.HouseSitter);
+    setActiveProfileId('housesitter');
+    const ids = getVisibleApps().map((app) => app.id);
+    expect(ids).not.toContain('controls');
+    expect(ids).toContain('bins');
+    expect(isAppVisible('controls')).toBe(false);
+    expect(isAppVisible('bins')).toBe(true);
+  });
+
+  it('serves demo bin schedule copy and metadata in test', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'test');
+    const copy = getCollectionInformationCopy();
+    expect(copy.title).toContain('demo');
+    const meta = getScheduleMetadata();
+    expect(meta.household.source).toBe('Demo schedule');
+    expect(__buildAllCollectionEventsForTests().length).toBeGreaterThan(0);
+  });
+});

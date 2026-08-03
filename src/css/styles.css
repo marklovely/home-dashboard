@@ -656,6 +656,18 @@ body.is-bins-route .app-viewport > .bins-app {
   font-size: 0.875rem;
 }
 
+.controls-unconfigured {
+  display: grid;
+  gap: 12px;
+  max-width: 42rem;
+  padding: 8px 0;
+}
+
+.controls-unconfigured h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
 .settings-option {
   display: flex;
   align-items: center;

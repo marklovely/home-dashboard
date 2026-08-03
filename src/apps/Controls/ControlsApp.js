@@ -1,3 +1,5 @@
+import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
+import { isControlsConfigured } from '../../services/environmentAppPolicy.js';
 import { defineApp } from '../../components/App/defineApp.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
 import { getWidgetById } from '../../services/widgetRegistry.js';
@@ -21,6 +23,26 @@ function collectMountedNodes(mounted) {
 export function mountControlsApp(viewport, context) {
   const page = document.createElement('div');
   page.className = 'app-page controls-app';
+
+  if (!isControlsConfigured(context.config)) {
+    const panel = document.createElement('section');
+    panel.className = 'controls-unconfigured';
+    panel.setAttribute('aria-label', 'Controls not configured');
+
+    const title = document.createElement('h2');
+    title.textContent = 'Home controls not set up';
+
+    const copy = document.createElement('p');
+    copy.className = 'subtle';
+    copy.textContent = isTestHubEnvironment()
+      ? 'This test hub starts without Alexa Virtual Button routines. Configure buttons in src/config.js on your production build when you are ready.'
+      : 'No Virtual Button routines are configured yet. Add them in src/config.js to enable lighting and scene controls.';
+
+    panel.append(title, copy);
+    page.append(panel);
+    viewport.replaceChildren(page);
+    return;
+  }
 
   if (isHouseSitterMode()) {
     page.append(...collectMountedNodes(mountSitterControlsGrid(context)));

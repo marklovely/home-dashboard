@@ -3,9 +3,16 @@ import {
   gardenWasteScheduleMeta
 } from '../data/binCollections/gardenWasteCollections.js';
 import {
+  demoGardenWasteCollections,
+  demoGardenWasteScheduleMeta,
+  demoHouseholdCollections,
+  demoHouseholdScheduleMeta
+} from '../data/binCollections/demoBinCollections.js';
+import {
   householdCollections,
   householdScheduleMeta
 } from '../data/binCollections/householdCollections.js';
+import { isTestHubEnvironment } from '../auth/hubEnvironment.js';
 import {
   COLLECTION_TYPES,
   formatBinLabel,
@@ -89,11 +96,29 @@ export function formatWeekdayOnly(isoDate) {
   return parseLocalDate(isoDate).toLocaleDateString('en-GB', { weekday: 'long' });
 }
 
+/** @returns {import('../data/binCollections/collectionTypes.js').HouseholdCollectionEntry[]} */
+function activeHouseholdCollections() {
+  return isTestHubEnvironment() ? demoHouseholdCollections : householdCollections;
+}
+
+/** @returns {import('../data/binCollections/collectionTypes.js').GardenWasteCollectionEntry[]} */
+function activeGardenWasteCollections() {
+  return isTestHubEnvironment() ? demoGardenWasteCollections : gardenWasteCollections;
+}
+
+function activeHouseholdScheduleMeta() {
+  return isTestHubEnvironment() ? demoHouseholdScheduleMeta : householdScheduleMeta;
+}
+
+function activeGardenWasteScheduleMeta() {
+  return isTestHubEnvironment() ? demoGardenWasteScheduleMeta : gardenWasteScheduleMeta;
+}
+
 /** @returns {CollectionEvent[]} */
 function buildAllEvents() {
   /** @type {CollectionEvent[]} */
   const events = [];
-  for (const entry of householdCollections) {
+  for (const entry of activeHouseholdCollections()) {
     events.push({
       date: entry.date,
       type: entry.type,
@@ -101,7 +126,7 @@ function buildAllEvents() {
       stream: 'household'
     });
   }
-  for (const entry of gardenWasteCollections) {
+  for (const entry of activeGardenWasteCollections()) {
     events.push({
       date: entry.date,
       type: 'gardenWaste',
@@ -113,26 +138,33 @@ function buildAllEvents() {
   return events;
 }
 
-const ALL_EVENTS = buildAllEvents();
+function getAllEvents() {
+  return buildAllEvents();
+}
 
-const SCHEDULE_VALID_UNTIL = householdScheduleMeta.validUntil;
+function getScheduleValidUntil() {
+  return activeHouseholdScheduleMeta().validUntil;
+}
 
 /**
  * @param {Date} [asOfDate]
  */
 export function isScheduleExpired(asOfDate = new Date()) {
   const asOf = startOfLocalDay(asOfDate);
-  const until = parseLocalDate(SCHEDULE_VALID_UNTIL);
+  const until = parseLocalDate(getScheduleValidUntil());
   return asOf > until;
 }
 
 export function getScheduleMetadata() {
+  const household = activeHouseholdCollections();
+  const garden = activeGardenWasteCollections();
+  const validUntil = getScheduleValidUntil();
   return {
-    household: householdScheduleMeta,
-    gardenWaste: gardenWasteScheduleMeta,
-    validUntil: SCHEDULE_VALID_UNTIL,
-    lastHouseholdDate: householdCollections[householdCollections.length - 1]?.date,
-    lastGardenWasteDate: gardenWasteCollections[gardenWasteCollections.length - 1]?.date
+    household: activeHouseholdScheduleMeta(),
+    gardenWaste: activeGardenWasteScheduleMeta(),
+    validUntil,
+    lastHouseholdDate: household[household.length - 1]?.date,
+    lastGardenWasteDate: garden[garden.length - 1]?.date
   };
 }
 
@@ -186,7 +218,7 @@ function firstOnOrAfter(asOfDate, events) {
  */
 export function getNextCollection(asOfDate = new Date()) {
   if (isScheduleExpired(asOfDate)) return null;
-  return firstOnOrAfter(asOfDate, ALL_EVENTS);
+  return firstOnOrAfter(asOfDate, getAllEvents());
 }
 
 /**
@@ -195,7 +227,7 @@ export function getNextCollection(asOfDate = new Date()) {
  */
 export function getNextHouseholdCollection(asOfDate = new Date()) {
   if (isScheduleExpired(asOfDate)) return null;
-  const household = ALL_EVENTS.filter((event) => event.stream === 'household');
+  const household = getAllEvents().filter((event) => event.stream === 'household');
   return firstOnOrAfter(asOfDate, household);
 }
 
@@ -205,7 +237,7 @@ export function getNextHouseholdCollection(asOfDate = new Date()) {
  */
 export function getNextGardenWasteCollection(asOfDate = new Date()) {
   if (isScheduleExpired(asOfDate)) return null;
-  const garden = ALL_EVENTS.filter((event) => event.stream === 'garden');
+  const garden = getAllEvents().filter((event) => event.stream === 'garden');
   return firstOnOrAfter(asOfDate, garden);
 }
 
@@ -217,7 +249,7 @@ export function getNextGardenWasteCollection(asOfDate = new Date()) {
 export function getUpcomingCollections(asOfDate = new Date(), count = 6) {
   if (isScheduleExpired(asOfDate)) return [];
   const asOfIso = formatIsoFromDate(startOfLocalDay(asOfDate));
-  return ALL_EVENTS.filter((event) => event.date >= asOfIso).slice(0, count);
+  return getAllEvents().filter((event) => event.date >= asOfIso).slice(0, count);
 }
 
 /**
@@ -313,7 +345,7 @@ export function getUpcomingBinCollection(referenceDate = new Date()) {
       stream: 'none',
       label: 'Bin Collection',
       emoji: '',
-      date: parseLocalDate(SCHEDULE_VALID_UNTIL),
+      date: parseLocalDate(getScheduleValidUntil()),
       relative: 'Calendar update needed'
     };
   }
@@ -328,4 +360,9 @@ export function getUpcomingBinCollection(referenceDate = new Date()) {
   };
 }
 
-export { ALL_EVENTS as __allCollectionEventsForTests, COLLECTION_TYPES, householdCollections, gardenWasteCollections };
+export {
+  buildAllEvents as __buildAllCollectionEventsForTests,
+  COLLECTION_TYPES,
+  householdCollections,
+  gardenWasteCollections
+};

@@ -1,4 +1,4 @@
-import { CONFIG } from '../config.js';
+import { CONFIG } from '../config/resolveHubConfig.js';
 import { initialiseHeader } from '../components/Header/Header.js';
 import { createAppShell, HOME_ROUTE, navigate } from '../shell/AppShell.js';
 import { getCurrentRoute } from '../shell/router.js';
