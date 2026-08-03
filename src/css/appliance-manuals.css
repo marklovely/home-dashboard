@@ -153,8 +153,22 @@
   min-height: 55vh;
   border: 1px solid var(--border);
   border-radius: 14px;
-  overflow: hidden;
+  overflow: auto;
   background: rgba(0, 0, 0, 0.2);
+}
+.appliance-manual-pdf-pages {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  justify-items: center;
+}
+.appliance-manual-pdf-page {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
 }
 .appliance-manual-viewer-frame {
   width: 100%;

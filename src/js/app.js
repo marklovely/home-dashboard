@@ -18,6 +18,8 @@ import { attachOwnerAccessGesture } from '../auth/ownerAccessGesture.js';
 import { registerOwnerLockNavigation } from '../auth/ownerLock.js';
 import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
 import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
+import { startDeviceSessionKeepalive } from '../auth/deviceSessionKeepalive.js';
+import { initAccessSessionBanner } from '../shell/accessSessionBanner.js';
 import { isOwnerUserMode } from '../auth/userMode.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
 import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
@@ -185,6 +187,8 @@ void bootstrapDeviceSession()
     }
     try {
       void initialiseDashboard();
+      startDeviceSessionKeepalive();
+      initAccessSessionBanner();
     } catch (error) {
       console.error('Dashboard failed to start:', error);
       if (loadingOverlay) {
