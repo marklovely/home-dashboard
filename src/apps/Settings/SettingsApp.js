@@ -47,6 +47,7 @@ import {
   uploadedMediaRestoreHint
 } from '../../utils/backupJson.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
+import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
   createContactGroup,
@@ -328,6 +329,10 @@ function createHomeDetailsFields(context) {
           showToast(context.toast, profileResult.message || 'Could not save profile.');
           return;
         }
+
+        void syncWeatherLocationFromPropertyAddress(
+          readPropertyAddressProfilePatch(guestFields).propertyAddress
+        );
 
         const secretsPatch = {
           ...contactSecretsPatch(contacts),

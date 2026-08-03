@@ -29,6 +29,12 @@ function validateSecretsPatch(body) {
   return { ok: true, patch };
 }
 
+function isTestHubWorker(env) {
+  return String(env.HUB_ENVIRONMENT ?? '')
+    .trim()
+    .toLowerCase() === 'test';
+}
+
 /**
  * @param {Request} request
  * @param {Record<string, unknown>} env
@@ -45,8 +51,11 @@ export async function handleSiteProfileGet(request, env, correlationId) {
   const profile = await getSiteProfile(env);
   const guideSeeded = env.HOUSE_GUIDE_DB ? await isHouseGuideSeeded(env.HOUSE_GUIDE_DB) : false;
   const hasProfile = await hasSiteProfileRow(env);
-  const effectiveProfile =
-    !hasProfile && guideSeeded ? { ...profile, onboardingComplete: true } : profile;
+  const skipOnboardingFromLegacyGuide =
+    !hasProfile && guideSeeded && !isTestHubWorker(env);
+  const effectiveProfile = skipOnboardingFromLegacyGuide
+    ? { ...profile, onboardingComplete: true }
+    : profile;
   return Response.json(
     { profile: effectiveProfile, guideSeeded },
     { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }

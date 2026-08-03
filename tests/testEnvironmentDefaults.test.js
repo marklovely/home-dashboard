@@ -13,6 +13,7 @@ import {
   getMyDayHomeSummary,
   refreshMyDayCalendar
 } from '../src/services/myDayCalendarService.js';
+import { getActiveGuideCatalog } from '../src/services/guideContentService.js';
 import { resetUserModeForTests, setUserMode, UserMode } from '../src/auth/userMode.js';
 import { setActiveProfileId } from '../src/services/profileService.js';
 
@@ -57,5 +58,16 @@ describe('test environment vanilla defaults', () => {
     const state = await refreshMyDayCalendar();
     expect(state.status).toBe('setup');
     expect(getMyDayHomeSummary().subtitle).toContain('Setup guide');
+  });
+
+  it('hides Scooter app and uses neutral guide fallback in test', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'test');
+    setUserMode(UserMode.HouseSitter);
+    setActiveProfileId('housesitter');
+    expect(isAppVisible('scooter')).toBe(false);
+    expect(getVisibleApps().map((app) => app.id)).not.toContain('scooter');
+    const catalog = getActiveGuideCatalog();
+    expect(JSON.stringify(catalog)).not.toContain('Scooter');
+    expect(catalog.categories?.some((category) => category.id === 'scooter')).toBe(false);
   });
 });
