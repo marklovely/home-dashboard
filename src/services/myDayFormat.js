@@ -1,5 +1,11 @@
+import { getSiteProfileState } from './siteProfileService.js';
+
 export const MY_DAY_TIMEZONE = 'Europe/London';
-export const MY_DAY_OWNER_NAME = 'Mark';
+
+function myDayOwnerName() {
+  const name = String(getSiteProfileState()?.profile?.primaryContact?.name ?? '').trim();
+  return name || 'there';
+}
 
 /**
  * @param {Date} [date]
@@ -13,7 +19,7 @@ export function greetingForTime(date = new Date()) {
     }).format(date)
   );
   const salutation = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  return `${salutation} ${MY_DAY_OWNER_NAME}`;
+  return `${salutation} ${myDayOwnerName()}`;
 }
 
 /**

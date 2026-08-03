@@ -18,7 +18,7 @@ export function createPrimaryContactSection(options = {}) {
 
   const name = document.createElement('h3');
   name.className = 'guide-section-heading';
-  name.textContent = options.heading ?? 'Mark';
+  name.textContent = options.heading ?? 'Primary contact';
 
   const list = document.createElement('dl');
   list.className = 'guide-value-list';

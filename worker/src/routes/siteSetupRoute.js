@@ -5,6 +5,7 @@ import { getSiteProfile, hasSiteProfileRow, resetSiteProfile, updateSiteProfile 
 import { clearGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { jsonError, methodNotAllowed } from '../lib/errors.js';
 import { normalizeAppleCalendarFeedUrl } from '../calendar/feedUrl.js';
+import { isTestHubWorker } from '../lib/hubEnvironment.js';
 
 /**
  * @param {Record<string, unknown>} body
@@ -27,12 +28,6 @@ function validateSecretsPatch(body) {
     patch[key] = value;
   }
   return { ok: true, patch };
-}
-
-function isTestHubWorker(env) {
-  return String(env.HUB_ENVIRONMENT ?? '')
-    .trim()
-    .toLowerCase() === 'test';
 }
 
 /**
