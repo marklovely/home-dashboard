@@ -1,4 +1,4 @@
-/** @typedef {'owner_pin' | 'wifi_ssid' | 'wifi_password' | 'primary_phone' | 'primary_email' | 'secondary_phone' | 'secondary_email' | 'home_address' | 'lockbox_code'} HubSecretKey */
+/** @typedef {'owner_pin' | 'wifi_ssid' | 'wifi_password' | 'primary_phone' | 'primary_email' | 'secondary_phone' | 'secondary_email' | 'home_address' | 'lockbox_code' | 'calendar_ics_url'} HubSecretKey */
 
 export const HUB_SECRET_KEYS = /** @type {const} */ ([
   'owner_pin',
@@ -9,7 +9,8 @@ export const HUB_SECRET_KEYS = /** @type {const} */ ([
   'secondary_phone',
   'secondary_email',
   'home_address',
-  'lockbox_code'
+  'lockbox_code',
+  'calendar_ics_url'
 ]);
 
 /** @internal Persisted when OWNER_SESSION_SECRET is not configured via wrangler. */

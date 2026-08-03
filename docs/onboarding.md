@@ -9,7 +9,9 @@ First-time setup wizard, in-app home details, and factory reset for a fresh hub 
 | Hub name & use case | Setup wizard / Settings → Home details | D1 `site_profile` |
 | Primary & secondary contacts | Setup wizard / Settings → Home details | Names in `site_profile`; phone/email in `hub_secrets` |
 | Wi-Fi, address, lockbox, owner PIN | Setup wizard / Settings → Home details | D1 `hub_secrets` |
-| House Guide starter | Setup wizard step 4 | D1 guide tables via import |
+| Bin collection dates & location | Setup wizard / Settings → Open setup wizard | D1 `site_profile.binSchedule` |
+| My Day calendar (ICS link) | Setup wizard / Settings → Home details | D1 `hub_secrets.calendar_ics_url` |
+| House Guide starter | Setup wizard (final step) | D1 guide tables via import |
 | Factory reset | Settings → Backup & restore | Clears D1 guide, secrets, profile, house settings |
 
 **Worker CLI secrets** (`wrangler secret put PRIVATE_*`, `OWNER_PIN`) still work and are used as fallbacks when a value is not stored in D1. Values saved in the app are stored in D1 and take precedence.
@@ -36,7 +38,9 @@ Steps:
 2. Primary and secondary contacts
 3. Pet details *(housesitter and both use cases only)*
 4. Wi-Fi, property address (structured lines), lockbox, owner PIN
-5. Optional starter House Guide import — template matches use case; pet answers are written into the Pets section at import time
+5. Bin collections — add each date from your council calendar (optional; drives home screen bin reminders)
+6. My Day calendar — paste private Apple/Google ICS subscribe link (optional; owner-only)
+7. Optional starter House Guide import — template matches use case; pet answers are written into the Pets section at import time
 
 Re-open from **Settings → Home details → Open setup wizard**.
 

@@ -24,6 +24,15 @@ export const DEFAULT_SITE_PROFILE = {
     county: '',
     country: '',
     postcode: ''
+  },
+  binSchedule: {
+    collectionLocation: '',
+    councilUrl: '',
+    validFrom: '',
+    validUntil: '',
+    normalCollectionDay: '',
+    household: [],
+    gardenWaste: []
   }
 };
 
@@ -41,7 +50,11 @@ function parseProfilePayload(value) {
       primaryContact: { ...DEFAULT_SITE_PROFILE.primaryContact, ...parsed.primaryContact },
       secondaryContact: { ...DEFAULT_SITE_PROFILE.secondaryContact, ...parsed.secondaryContact },
       petCare: { ...DEFAULT_SITE_PROFILE.petCare, ...parsed.petCare },
-      propertyAddress: { ...DEFAULT_SITE_PROFILE.propertyAddress, ...parsed.propertyAddress }
+      propertyAddress: { ...DEFAULT_SITE_PROFILE.propertyAddress, ...parsed.propertyAddress },
+      binSchedule: {
+        ...DEFAULT_SITE_PROFILE.binSchedule,
+        ...(parsed.binSchedule && typeof parsed.binSchedule === 'object' ? parsed.binSchedule : {})
+      }
     };
   } catch {
     return { ...DEFAULT_SITE_PROFILE };
@@ -98,7 +111,10 @@ export async function updateSiteProfile(env, patch) {
     petCare: patch.petCare ? { ...current.petCare, ...patch.petCare } : current.petCare,
     propertyAddress: patch.propertyAddress
       ? { ...current.propertyAddress, ...patch.propertyAddress }
-      : current.propertyAddress
+      : current.propertyAddress,
+    binSchedule: patch.binSchedule
+      ? { ...current.binSchedule, ...patch.binSchedule }
+      : current.binSchedule
   };
 
   const now = Math.floor(Date.now() / 1000);

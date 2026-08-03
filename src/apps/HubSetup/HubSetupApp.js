@@ -23,6 +23,14 @@ import {
 } from '../../content/houseguide/templates/starterGuideTemplates.js';
 import { importHouseGuideCatalog } from '../../api/houseGuideApi.js';
 import {
+  createBinScheduleFields,
+  createCalendarConnectionField
+} from '../../components/HubSetup/binScheduleFields.js';
+import {
+  validateBinSchedule
+} from '../../lib/binScheduleProfile.js';
+import {
+  fetchHubSecretsConfigured,
   getSiteProfileState,
   getSiteSetupUnavailableMessage,
   isOnboardingComplete,
@@ -46,7 +54,7 @@ const USE_CASE_OPTIONS = [
   { value: 'both', label: 'Both sitters and short lets' }
 ];
 
-/** @typedef {'hub' | 'contacts' | 'pets' | 'access' | 'guide'} WizardStepId */
+/** @typedef {'hub' | 'contacts' | 'pets' | 'access' | 'bins' | 'calendar' | 'guide'} WizardStepId */
 
 /**
  * @param {string} useCase
@@ -58,7 +66,7 @@ function getWizardSteps(useCase) {
   if (useCase === 'housesitter' || useCase === 'both') {
     steps.push('pets');
   }
-  steps.push('access', 'guide');
+  steps.push('access', 'bins', 'calendar', 'guide');
   return steps;
 }
 
@@ -181,6 +189,18 @@ function mountHubSetupWizard(viewport, context) {
   });
 
   const guestFields = createGuestAccessFields(profile);
+  const binFields = createBinScheduleFields(profile);
+  let calendarFields = createCalendarConnectionField();
+
+  void fetchHubSecretsConfigured().then((result) => {
+    if (result.ok && result.data?.configured?.calendar_ics_url) {
+      calendarFields = createCalendarConnectionField({ configured: true });
+      if (currentStepId() === 'calendar') {
+        renderStep();
+      }
+    }
+  });
+
   const petFields = createPetDetailsFields(profile);
 
   function wizardSteps() {
@@ -235,6 +255,20 @@ function mountHubSetupWizard(viewport, context) {
 
     if (stepId === 'access') {
       body.append(guestFields.wrap);
+      return;
+    }
+
+    if (stepId === 'bins') {
+      body.append(binFields.wrap);
+      return;
+    }
+
+    if (stepId === 'calendar') {
+      body.append(calendarFields.wrap);
+      return;
+    }
+
+    if (stepId !== 'guide') {
       return;
     }
 
@@ -389,6 +423,25 @@ function mountHubSetupWizard(viewport, context) {
           if (!handleSaveResult(secretsResult, 'Could not save guest access details.')) return;
           const addressResult = await saveSiteProfile(readPropertyAddressProfilePatch(guestFields));
           if (!handleSaveResult(addressResult, 'Could not save property address.')) return;
+        }
+
+        if (stepId === 'bins') {
+          const binSchedule = binFields.readBinSchedule();
+          const validation = validateBinSchedule(binSchedule);
+          if (!validation.ok) {
+            showToast(context.toast, validation.message || 'Could not save bin schedule.');
+            return;
+          }
+          const result = await saveSiteProfile({ binSchedule });
+          if (!handleSaveResult(result, 'Could not save bin schedule.')) return;
+        }
+
+        if (stepId === 'calendar') {
+          const calendarPatch = calendarFields.readCalendarPatch();
+          if (Object.keys(calendarPatch).length) {
+            const secretsResult = await saveHubSecrets(calendarPatch);
+            if (!handleSaveResult(secretsResult, 'Could not save calendar link.')) return;
+          }
         }
 
         if (stepId === 'guide') {
