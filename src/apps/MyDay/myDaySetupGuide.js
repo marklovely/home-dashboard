@@ -12,18 +12,18 @@ export const MY_DAY_CALENDAR_SETUP_GUIDES = [
       'Open Calendar and choose a personal calendar (not a shared work calendar).',
       'Turn on Public Calendar or get the private subscribe link (Calendar → Settings → Share → Public Calendar).',
       'Copy the webcal:// or https:// link Apple provides.',
-      'On the hub Worker, set secret APPLE_CALENDAR_ICS_URL to that full URL (production only — not the test hub).',
-      'Deploy the Worker, then unlock Owner access on the tablet and open My Day.'
+      'In Hub setup (Calendar step) or Settings → Home details, paste the link into Private calendar link.',
+      'Unlock Owner access on the tablet if needed, then open My Day.'
     ],
-    note: 'Security is the secret URL plus Cloudflare Access — never put the link in git or the Pages build.'
+    note: 'The link is stored securely on your hub — only owners can set it, and sitters never see My Day.'
   },
   {
     title: 'Google Calendar',
     steps: [
       'In Google Calendar on the web, open Settings → your calendar → Integrate calendar.',
       'Copy the Secret address in iCal format (ends with .ics — treat it like a password).',
-      'Set Worker secret APPLE_CALENDAR_ICS_URL to that HTTPS link (the hub accepts any standard ICS feed, not only Apple).',
-      'Deploy the Worker and open My Day after owner unlock.'
+      'Paste that HTTPS link in Hub setup → Calendar step, or Settings → Home details.',
+      'Open My Day after owner unlock — the hub accepts any standard ICS feed, not only Apple.'
     ],
     note: 'Use a personal calendar. Rotate the secret address in Google if it is ever exposed.'
   },
@@ -31,8 +31,8 @@ export const MY_DAY_CALENDAR_SETUP_GUIDES = [
     title: 'Other providers (Outlook, Fastmail, etc.)',
     steps: [
       'Find the private ICS or webcal subscribe URL in your provider\'s calendar sharing settings.',
-      'Ensure the URL is HTTPS (or webcal:// — the Worker normalises it).',
-      'Set APPLE_CALENDAR_ICS_URL on the production Worker with wrangler secret put.',
+      'Ensure the URL is HTTPS (or webcal:// — the hub normalises it).',
+      'Paste the link in Hub setup or Settings → Home details.',
       'My Day shows today, tomorrow, and the rest of the week — owner-only, never visible in House Sitter Mode.'
     ]
   }
@@ -42,13 +42,14 @@ export const MY_DAY_TEST_INTRO =
   'This test hub does not load anyone\'s personal calendar. Use the steps below when you configure production.';
 
 export const MY_DAY_NOT_CONFIGURED_INTRO =
-  'My Day is not connected to a calendar yet. Follow the steps below, then try again after setting the Worker secret.';
+  'My Day is not connected to a calendar yet. Follow the steps below, then add your private calendar link in Hub setup or Settings → Home details.';
 
 /**
  * @param {HTMLElement} host
  * @param {string} intro
+ * @param {{ onOpenSettings?: () => void }} [options]
  */
-export function renderMyDaySetupGuide(host, intro = MY_DAY_NOT_CONFIGURED_INTRO) {
+export function renderMyDaySetupGuide(host, intro = MY_DAY_NOT_CONFIGURED_INTRO, options = {}) {
   host.replaceChildren();
 
   const page = document.createElement('section');
@@ -64,6 +65,18 @@ export function renderMyDaySetupGuide(host, intro = MY_DAY_NOT_CONFIGURED_INTRO)
   lead.textContent = intro;
 
   page.append(heading, lead);
+
+  if (options.onOpenSettings) {
+    const actionRow = document.createElement('div');
+    actionRow.className = 'my-day-setup-actions';
+    const settingsButton = document.createElement('button');
+    settingsButton.type = 'button';
+    settingsButton.className = 'my-day-unlock-button';
+    settingsButton.textContent = 'Open Settings → Home details';
+    settingsButton.addEventListener('click', () => options.onOpenSettings?.());
+    actionRow.append(settingsButton);
+    page.append(actionRow);
+  }
 
   for (const guide of MY_DAY_CALENDAR_SETUP_GUIDES) {
     const section = document.createElement('section');
@@ -93,11 +106,5 @@ export function renderMyDaySetupGuide(host, intro = MY_DAY_NOT_CONFIGURED_INTRO)
     page.append(section);
   }
 
-  const docLink = document.createElement('p');
-  docLink.className = 'my-day-setup-doc subtle';
-  docLink.textContent =
-    'Full deployment notes live in docs/my-day-deployment.md in the repository (Worker secrets and troubleshooting).';
-
-  page.append(docLink);
   host.append(page);
 }

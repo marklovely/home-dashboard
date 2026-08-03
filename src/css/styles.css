@@ -2777,6 +2777,56 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   margin: 0;
   line-height: 1.45;
 }
+.my-day-setup-actions {
+  margin-top: 4px;
+}
+
+.hub-setup-bin-schedule {
+  display: grid;
+  gap: 16px;
+}
+.hub-setup-bin-entry-panel {
+  margin: 0;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 12px;
+}
+.hub-setup-bin-entry-legend {
+  font-weight: 800;
+  padding: 0 6px;
+}
+.hub-setup-bin-entry-list {
+  display: grid;
+  gap: 8px;
+}
+.hub-setup-bin-entry-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.hub-setup-bin-entry-text {
+  line-height: 1.4;
+}
+.hub-setup-bin-remove-button,
+.hub-setup-bin-add-button {
+  justify-self: start;
+}
+.hub-setup-checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hub-setup-calendar-field {
+  display: grid;
+  gap: 12px;
+}
 
 .owner-access-host { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
 .owner-access-host:not(:empty) { pointer-events: auto; }

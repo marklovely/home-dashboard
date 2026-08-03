@@ -11,17 +11,30 @@ describe('hub setup storage', () => {
     expect(await getHubSecret(env, 'owner_pin')).toBe('1234');
   });
 
+  it('stores calendar ICS URL secret', async () => {
+    const env = { HOUSE_GUIDE_DB: createInMemoryHubSetupDb() };
+    await setHubSecrets(env, { calendar_ics_url: 'https://calendar.example/private.ics' });
+    expect(await getHubSecret(env, 'calendar_ics_url')).toBe('https://calendar.example/private.ics');
+  });
+
   it('updates site profile fields', async () => {
     const env = { HOUSE_GUIDE_DB: createInMemoryHubSetupDb() };
     await updateSiteProfile(env, {
       hubName: 'Rose Cottage Hub',
       onboardingComplete: true,
-      primaryContact: { name: 'Alex', phone: '111', email: 'alex@example.com' }
+      primaryContact: { name: 'Alex', phone: '111', email: 'alex@example.com' },
+      binSchedule: {
+        collectionLocation: 'End of close',
+        household: [{ date: '2026-08-07', type: 'rubbish', bankHolidayChange: false }],
+        gardenWaste: []
+      }
     });
     const profile = await getSiteProfile(env);
     expect(profile.hubName).toBe('Rose Cottage Hub');
     expect(profile.onboardingComplete).toBe(true);
     expect(profile.primaryContact.name).toBe('Alex');
+    expect(profile.binSchedule.collectionLocation).toBe('End of close');
+    expect(profile.binSchedule.household).toHaveLength(1);
   });
 
   it('resets site profile to defaults', async () => {

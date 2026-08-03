@@ -17,6 +17,7 @@ import {
 } from '../../services/binCollectionService.js';
 import {
   COUNCIL_RECYCLING_URL,
+  getCouncilRecyclingUrl,
   getBankHolidayNote,
   getCollectionInformationCopy,
   getMissedBinNote
@@ -298,7 +299,7 @@ function mountBinsApp(viewport, _context) {
 
   const guide = document.createElement('a');
   guide.className = 'bins-guide-link';
-  guide.href = COUNCIL_RECYCLING_URL;
+  guide.href = getCouncilRecyclingUrl();
   guide.target = '_blank';
   guide.rel = 'noopener noreferrer';
   guide.textContent = 'Council recycling guidance ↗';

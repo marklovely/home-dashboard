@@ -1,4 +1,5 @@
 import { requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
+import { isCalendarFeedConfigured } from '../lib/calendarFeed.js';
 
 function isTestHubWorker(env) {
   return String(env.HUB_ENVIRONMENT ?? '')
@@ -41,7 +42,7 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
     });
   } catch (error) {
-    const feedConfigured = Boolean(env.APPLE_CALENDAR_ICS_URL?.trim());
+    const feedConfigured = await isCalendarFeedConfigured(env);
     /** @type {Record<string, unknown>} */
     let body;
     if (error?.code === 'CALENDAR_NOT_CONFIGURED') {

@@ -167,4 +167,25 @@ describe('owner calendar authorization', () => {
     expect(body.code).toBe('CALENDAR_NOT_CONFIGURED');
     expect(fetchImpl).not.toHaveBeenCalled();
   });
+
+  it('uses calendar link saved in hub secrets when env secret is absent', async () => {
+    const { createInMemoryHubSetupDb } = await import('./mocks/hubSetupStorage.js');
+    const { setHubSecrets } = await import('../src/lib/hubSecrets.js');
+    const db = createInMemoryHubSetupDb();
+    const env = {
+      ...accessEnv,
+      HOUSE_GUIDE_DB: db
+    };
+    await setHubSecrets(env, {
+      calendar_ics_url: 'https://calendar.example/private.ics'
+    });
+    const fetchImpl = vi.fn(async () => new Response(sampleIcs, { status: 200 }));
+    const response = await handleCalendar(
+      await authedOwnerAccessRequest('https://worker.test/api/calendar', env),
+      env,
+      fetchImpl
+    );
+    expect(response.status).toBe(200);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
 });

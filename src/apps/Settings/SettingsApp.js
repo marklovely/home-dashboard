@@ -30,6 +30,7 @@ import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { createHubSetupHelpButton } from '../../components/HubSetup/hubSetupHelp.js';
+import { createCalendarConnectionField } from '../../components/HubSetup/binScheduleFields.js';
 import { HUB_SETUP_FIELD_HELP } from '../../components/HubSetup/hubSetupHelpContent.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
@@ -58,6 +59,7 @@ import {
 } from '../../components/HubSetup/hubSetupFields.js';
 import {
   factoryResetHub,
+  fetchHubSecretsConfigured,
   getSiteProfileState,
   saveHubSecrets,
   saveSiteProfile
@@ -276,6 +278,17 @@ function createHomeDetailsFields(context) {
     variant: 'secondary'
   });
   const guestFields = createGuestAccessFields(profile);
+  let calendarFields = createCalendarConnectionField();
+
+  void fetchHubSecretsConfigured().then((result) => {
+    if (result.ok && result.data?.configured?.calendar_ics_url) {
+      const existing = calendarFields;
+      calendarFields = createCalendarConnectionField({ configured: true });
+      if (existing.wrap.parentElement) {
+        existing.wrap.replaceWith(calendarFields.wrap);
+      }
+    }
+  });
 
   const wizardButton = document.createElement('button');
   wizardButton.type = 'button';
@@ -318,7 +331,8 @@ function createHomeDetailsFields(context) {
 
         const secretsPatch = {
           ...contactSecretsPatch(contacts),
-          ...readGuestAccessSecrets(guestFields)
+          ...readGuestAccessSecrets(guestFields),
+          ...calendarFields.readCalendarPatch()
         };
         if (Object.keys(secretsPatch).length) {
           const pin = secretsPatch.owner_pin;
@@ -336,6 +350,7 @@ function createHomeDetailsFields(context) {
         guestFields.ownerPin.input.value = '';
         guestFields.wifiPassword.input.value = '';
         guestFields.lockbox.input.value = '';
+        calendarFields.input.value = '';
         context.refreshShell?.();
         showToast(context.toast, 'Home details saved.');
       } finally {
@@ -344,7 +359,7 @@ function createHomeDetailsFields(context) {
     })();
   });
 
-  wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, saveButton, wizardButton);
+  wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, calendarFields.wrap, saveButton, wizardButton);
   return wrap;
 }
 

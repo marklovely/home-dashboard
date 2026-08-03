@@ -10,9 +10,11 @@ import { openHubSetupHelp } from '../src/components/HubSetup/hubSetupHelp.js';
 
 describe('hub setup help', () => {
   it('defines unique setup guide sections for each wizard step', () => {
-    expect(HUB_SETUP_HELP_SECTIONS.length).toBe(6);
-    expect(new Set(HUB_SETUP_HELP_SECTIONS.map((section) => section.id)).size).toBe(6);
+    expect(HUB_SETUP_HELP_SECTIONS.length).toBe(8);
+    expect(new Set(HUB_SETUP_HELP_SECTIONS.map((section) => section.id)).size).toBe(8);
     expect(hubSetupHelpSectionForStep('hub')).toBe('step-hub');
+    expect(hubSetupHelpSectionForStep('bins')).toBe('step-bins');
+    expect(hubSetupHelpSectionForStep('calendar')).toBe('step-calendar');
     expect(hubSetupHelpSectionForStep('guide')).toBe('step-guide');
   });
 

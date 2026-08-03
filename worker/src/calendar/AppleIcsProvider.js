@@ -1,9 +1,12 @@
 import { parseAndExpandIcs } from './recurrence.js';
 import {
   classifyFetchNetworkError,
-  normalizeAppleCalendarFeedUrl,
   safeFetchErrorDetail
 } from './feedUrl.js';
+import {
+  getConfiguredCalendarFeedRaw,
+  getConfiguredCalendarFeedUrl
+} from '../lib/calendarFeed.js';
 
 const ICS_FETCH_HEADERS = {
   Accept: 'text/calendar,text/plain,*/*',
@@ -25,7 +28,11 @@ export class AppleIcsProvider {
   }
 
   getFeedUrl() {
-    return normalizeAppleCalendarFeedUrl(this.env.APPLE_CALENDAR_ICS_URL);
+    return null;
+  }
+
+  async resolveFeedUrl() {
+    return getConfiguredCalendarFeedUrl(this.env);
   }
 
   /**
@@ -83,8 +90,8 @@ export class AppleIcsProvider {
    * @param {Date} [asOf]
    */
   async fetchCalendarInner(asOf = new Date()) {
-    const rawConfigured = Boolean(this.env.APPLE_CALENDAR_ICS_URL?.trim());
-    const url = this.getFeedUrl();
+    const rawConfigured = Boolean((await getConfiguredCalendarFeedRaw(this.env)).trim());
+    const url = await this.resolveFeedUrl();
     if (!url) {
       const error = new Error(rawConfigured ? 'CALENDAR_INVALID_URL' : 'CALENDAR_NOT_CONFIGURED');
       error.code = rawConfigured ? 'CALENDAR_INVALID_URL' : 'CALENDAR_NOT_CONFIGURED';

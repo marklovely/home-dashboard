@@ -2,6 +2,7 @@ import { defineApp } from '../../components/App/defineApp.js';
 import { promptOwnerPinUnlock } from '../../auth/ownerAccessGesture.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
+import { navigate } from '../../shell/router.js';
 import {
   formatDayHeading,
   formatEventTimeRange,
@@ -101,7 +102,8 @@ function renderMyDayApp(viewport) {
   if (state.status === 'setup') {
     renderMyDaySetupGuide(
       viewport,
-      isTestHubEnvironment() ? MY_DAY_TEST_INTRO : MY_DAY_NOT_CONFIGURED_INTRO
+      isTestHubEnvironment() ? MY_DAY_TEST_INTRO : MY_DAY_NOT_CONFIGURED_INTRO,
+      isTestHubEnvironment() ? {} : { onOpenSettings: () => navigate('settings') }
     );
     return;
   }
@@ -149,7 +151,9 @@ function renderMyDayApp(viewport) {
 
   if (state.status === 'unavailable' && !state.data) {
     if (state.message === 'CALENDAR_NOT_CONFIGURED') {
-      renderMyDaySetupGuide(viewport, MY_DAY_NOT_CONFIGURED_INTRO);
+      renderMyDaySetupGuide(viewport, MY_DAY_NOT_CONFIGURED_INTRO, {
+        onOpenSettings: () => navigate('settings')
+      });
       return;
     }
     const message = document.createElement('p');

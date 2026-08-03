@@ -14,6 +14,11 @@ import {
 } from '../data/binCollections/householdCollections.js';
 import { isTestHubEnvironment } from '../auth/hubEnvironment.js';
 import {
+  hasConfiguredBinSchedule,
+  readBinScheduleFromProfile
+} from '../lib/binScheduleProfile.js';
+import { getSiteProfileState } from './siteProfileService.js';
+import {
   COLLECTION_TYPES,
   formatBinLabel,
   getCollectionType
@@ -98,19 +103,57 @@ export function formatWeekdayOnly(isoDate) {
 
 /** @returns {import('../data/binCollections/collectionTypes.js').HouseholdCollectionEntry[]} */
 function activeHouseholdCollections() {
+  const profileSchedule = readBinScheduleFromProfile(getSiteProfileState()?.profile);
+  if (hasConfiguredBinSchedule(profileSchedule)) {
+    return profileSchedule.household;
+  }
   return isTestHubEnvironment() ? demoHouseholdCollections : householdCollections;
 }
 
 /** @returns {import('../data/binCollections/collectionTypes.js').GardenWasteCollectionEntry[]} */
 function activeGardenWasteCollections() {
+  const profileSchedule = readBinScheduleFromProfile(getSiteProfileState()?.profile);
+  if (hasConfiguredBinSchedule(profileSchedule)) {
+    return profileSchedule.gardenWaste;
+  }
   return isTestHubEnvironment() ? demoGardenWasteCollections : gardenWasteCollections;
 }
 
 function activeHouseholdScheduleMeta() {
+  const profileSchedule = readBinScheduleFromProfile(getSiteProfileState()?.profile);
+  if (hasConfiguredBinSchedule(profileSchedule)) {
+    return {
+      validFrom: profileSchedule.validFrom || profileSchedule.household[0]?.date || '',
+      validUntil:
+        profileSchedule.validUntil ||
+        profileSchedule.household[profileSchedule.household.length - 1]?.date ||
+        profileSchedule.gardenWaste[profileSchedule.gardenWaste.length - 1]?.date ||
+        '',
+      source: 'Your schedule',
+      calendar: '',
+      normalCollectionDay: profileSchedule.normalCollectionDay || '',
+      putOutBy: '',
+      maintenanceFiles: []
+    };
+  }
   return isTestHubEnvironment() ? demoHouseholdScheduleMeta : householdScheduleMeta;
 }
 
 function activeGardenWasteScheduleMeta() {
+  const profileSchedule = readBinScheduleFromProfile(getSiteProfileState()?.profile);
+  if (hasConfiguredBinSchedule(profileSchedule)) {
+    return {
+      validFrom: profileSchedule.validFrom || profileSchedule.gardenWaste[0]?.date || '',
+      validUntil:
+        profileSchedule.validUntil ||
+        profileSchedule.gardenWaste[profileSchedule.gardenWaste.length - 1]?.date ||
+        '',
+      source: 'Your schedule',
+      round: '',
+      normalCollectionDay: profileSchedule.normalCollectionDay || '',
+      maintenanceFiles: []
+    };
+  }
   return isTestHubEnvironment() ? demoGardenWasteScheduleMeta : gardenWasteScheduleMeta;
 }
 
