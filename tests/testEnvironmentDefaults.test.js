@@ -14,6 +14,7 @@ import {
   refreshMyDayCalendar
 } from '../src/services/myDayCalendarService.js';
 import { getActiveGuideCatalog } from '../src/services/guideContentService.js';
+import { buildEmergencyCards } from '../src/apps/Emergency/emergencyCards.js';
 import { resetUserModeForTests, setUserMode, UserMode } from '../src/auth/userMode.js';
 import { setActiveProfileId } from '../src/services/profileService.js';
 
@@ -69,5 +70,15 @@ describe('test environment vanilla defaults', () => {
     const catalog = getActiveGuideCatalog();
     expect(JSON.stringify(catalog)).not.toContain('Scooter');
     expect(catalog.categories?.some((category) => category.id === 'scooter')).toBe(false);
+  });
+
+  it('builds vanilla Emergency cards without production names on test', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'test');
+    resetHubEnvironmentForTests();
+    const labels = buildEmergencyCards()
+      .map((card) => card.label)
+      .join(' ');
+    expect(labels).toContain('Primary contact');
+    expect(labels).not.toMatch(/Mark|Donna|Scooter|Vets 4 Pets/i);
   });
 });

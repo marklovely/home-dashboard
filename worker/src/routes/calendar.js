@@ -1,11 +1,6 @@
 import { requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
 import { isCalendarFeedConfigured } from '../lib/calendarFeed.js';
-
-function isTestHubWorker(env) {
-  return String(env.HUB_ENVIRONMENT ?? '')
-    .trim()
-    .toLowerCase() === 'test';
-}
+import { isTestHubWorker } from '../lib/hubEnvironment.js';
 
 /**
  * @param {Request} request
