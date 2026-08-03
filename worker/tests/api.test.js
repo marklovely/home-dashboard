@@ -97,6 +97,22 @@ describe('private-config', () => {
     expect(payload.wifi).toEqual({});
     expect(payload.contacts.mark.name).toBe('Primary contact');
   });
+
+  it('does not fall back to production env secrets on the test worker', async () => {
+    const payload = await buildPrivateConfig({
+      HUB_ENVIRONMENT: 'test',
+      PRIVATE_MARK_PHONE: '07111111111',
+      PRIVATE_MARK_EMAIL: 'mark@production.example',
+      PRIVATE_DONNA_PHONE: '07222222222',
+      PRIVATE_WIFI_SSID: 'ProdWifi',
+      PRIVATE_HOME_ADDRESS: 'Rose Cottage'
+    });
+    expect(payload.contacts.mark.phone).toBeUndefined();
+    expect(payload.contacts.mark.email).toBeUndefined();
+    expect(payload.contacts.donna?.phone).toBeUndefined();
+    expect(payload.wifi.ssid).toBeUndefined();
+    expect(payload.home.address).toBeUndefined();
+  });
   it('reads JWT from CF_Authorization cookie when header is absent', async () => {
     const jwt = await signTestAccessJwt('owner@example.com', env);
     const response = await handleRequest(

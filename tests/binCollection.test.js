@@ -6,7 +6,7 @@ import {
   formatBinLabel
 } from '../src/data/binCollections/collectionTypes.js';
 import {
-  __allCollectionEventsForTests,
+  __buildAllCollectionEventsForTests,
   describeCollectionEvent,
   formatIsoFromDate,
   getBinCollectionHomeSummary,
@@ -39,7 +39,7 @@ describe('bin calendar data integrity', () => {
   it('encodes the expected household and garden counts', () => {
     expect(householdCollections).toHaveLength(57);
     expect(gardenWasteCollections).toHaveLength(28);
-    expect(__allCollectionEventsForTests).toHaveLength(85);
+    expect(__buildAllCollectionEventsForTests()).toHaveLength(85);
   });
 
   it('preserves bank-holiday altered household dates', () => {

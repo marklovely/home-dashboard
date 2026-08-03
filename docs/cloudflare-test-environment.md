@@ -81,6 +81,8 @@ npx wrangler secret put OWNER_EMAILS --env test
 
 Suggested test values: PIN `0000`, fake Wi-Fi, `test@example.com` contacts, a random `HUB_PROXY_SECRET`.
 
+**Do not set `APPLE_CALENDAR_ICS_URL` on the test Worker.** My Day shows a setup guide on test instead of anyone’s calendar. If that secret was copied from production, delete it: `npx wrangler secret delete APPLE_CALENDAR_ICS_URL --env test`, then redeploy the test Worker so `HUB_ENVIRONMENT=test` blocks `/api/calendar` even if the secret returns.
+
 **`HUB_API` is not a Worker secret.** It is a **Pages service binding** (dashboard only): Pages → your project → **Settings → Bindings → Service binding** → variable name `HUB_API`, service `lovely-home-hub-api-test`. The Pages Function calls the Worker through that binding; you configure it on the **Pages** project, not with `wrangler secret put`.
 
 | Setting | Where | Test value |
@@ -191,9 +193,23 @@ Do **not** reuse production AUD tags unless you intentionally share policies.
 
 ### Empty test database vs production content
 
-`npm run d1:migrate:test` reporting **No migrations to apply** is correct — the schema exists; the database is just **empty**. Until you import guide content into test D1 (Milestone C), the hub shows the **same bundled** `guide-catalog.json` baked into the PWA on both prod and test. That is expected isolation, not a failed deploy. Production may additionally have CMS rows in its D1 that test does not.
+`npm run d1:migrate:test` reporting **No migrations to apply** is correct — the schema exists; the database is just **empty**. Until you **import a starter guide** in the hub setup wizard (or restore a backup you intend for test), the hub shows a **neutral placeholder** — not the production `guide-catalog.json` with Scooter and Rose Cottage content. Production may additionally have CMS rows in its D1 that test does not.
 
 To tell environments apart: a **TEST ENVIRONMENT** banner appears when `VITE_HUB_ENVIRONMENT=test` is set on the test Pages build (also auto-detected on `test.lovely-home.co.uk`).
+
+### Vanilla defaults on test (start from scratch)
+
+The test stack is meant for onboarding trials, not your production home setup:
+
+| Feature | Production | Test (`VITE_HUB_ENVIRONMENT=test`) |
+|---------|------------|-------------------------------------|
+| **Controls / Alexa routines** | `src/config.js` Virtual Buttons | Hidden — empty config until you add buttons for that deployment |
+| **Bin schedule** | East Hampshire calendar in repo | Generic **demo** fortnightly schedule and placeholder collection copy |
+| **My Day / calendar** | Apple or Google ICS via Worker secret | **No personal calendar** — in-app setup guide only; `/api/calendar` blocked on test Worker |
+| **House Guide** | D1 CMS + bundled fallback | **Neutral placeholder only** — no Rose Cottage / Scooter content; Scooter app hidden; bundled guide import blocked |
+| **Weather location** | Worker default coordinates | Set from **postcode** in hub setup (Guest access step) |
+
+Production `src/config.js` and bin calendar files are **not** copied to test automatically. Copy a prod guide backup via Settings if you want realistic content; Controls still stay hidden on test until you deliberately configure a test `config.js` build.
 
 **Copy prod guide to test:** Settings → Backup & restore → download on prod, restore on test. See [site-backup.md](./site-backup.md).
 

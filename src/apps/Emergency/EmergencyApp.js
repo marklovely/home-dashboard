@@ -1,63 +1,12 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
+import { buildEmergencyCards } from './emergencyCards.js';
 import {
   openEmergencyTopicOverlay,
   openOwnerContactOverlay
 } from './emergencyDetailOverlay.js';
 
-/** @typedef {{ id: string, label: string, subtitle?: string, iconId: string, kind: 'contact', person: 'mark' | 'donna' } | { id: string, label: string, subtitle?: string, iconId: string, kind: 'topic', topicId: string }} EmergencyCard */
-
-/** @type {EmergencyCard[]} */
-const EMERGENCY_CARDS = [
-  {
-    id: 'contact-mark',
-    kind: 'contact',
-    label: 'Mark — contact details',
-    subtitle: 'Questions about the house or Scooter',
-    iconId: 'notebook',
-    person: 'mark'
-  },
-  {
-    id: 'contact-donna',
-    kind: 'contact',
-    label: 'Donna — contact details',
-    subtitle: 'We would rather you asked than worried',
-    iconId: 'notebook',
-    person: 'donna'
-  },
-  {
-    id: 'vet',
-    kind: 'topic',
-    label: 'Vet',
-    subtitle: 'Vets 4 Pets — Waterlooville',
-    iconId: 'heart-pulse',
-    topicId: 'vet'
-  },
-  {
-    id: 'water-stop',
-    kind: 'topic',
-    label: 'Water stop tap',
-    subtitle: 'Turn off the water supply',
-    iconId: 'droplets',
-    topicId: 'water-stop-tap'
-  },
-  {
-    id: 'fuse-box',
-    kind: 'topic',
-    label: 'Fuse box',
-    subtitle: 'Consumer unit in the garage',
-    iconId: 'zap',
-    topicId: 'fuse-box'
-  },
-  {
-    id: 'first-aid',
-    kind: 'topic',
-    label: 'First aid',
-    subtitle: 'Safety notes and NHS guidance',
-    iconId: 'cross',
-    topicId: 'general-safety'
-  }
-];
+/** @typedef {import('./emergencyCards.js').EmergencyCard} EmergencyCard */
 
 /**
  * @param {EmergencyCard} card
@@ -113,7 +62,7 @@ export function mountEmergencyApp(viewport, context) {
   const grid = document.createElement('div');
   grid.className = 'emergency-grid';
   grid.setAttribute('role', 'list');
-  for (const card of EMERGENCY_CARDS) {
+  for (const card of buildEmergencyCards()) {
     const element = createEmergencyCardElement(card, context, page);
     element.setAttribute('role', 'listitem');
     grid.append(element);
@@ -131,6 +80,6 @@ export const emergencyApp = defineApp({
   capabilities: ['contacts', 'offline', 'urgent'],
   accent: '#ff5f6d',
   profiles: ['housesitter'],
-  summary: () => ({ title: 'Help is here', subtitle: 'Owner contacts, vet, utilities' }),
+  summary: () => ({ title: 'Help is here', subtitle: 'Host contacts and essential house info' }),
   mount: mountEmergencyApp
 });

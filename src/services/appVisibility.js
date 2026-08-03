@@ -1,5 +1,6 @@
 import { getModeConfig } from '../modes/modeConfig.js';
 import { getAppById, getAppsForProfile } from './appRegistry.js';
+import { filterAppsForEnvironment, isAppEnabledForEnvironment } from './environmentAppPolicy.js';
 import { getActiveProfileId } from './profileService.js';
 import { isOwnerUserMode } from '../auth/userMode.js';
 
@@ -10,9 +11,11 @@ import { isOwnerUserMode } from '../auth/userMode.js';
 export function getVisibleApps() {
   const { homeAppIds } = getModeConfig();
   if (homeAppIds) {
-    return homeAppIds.map((id) => getAppById(id)).filter(Boolean);
+    return filterAppsForEnvironment(homeAppIds.map((id) => getAppById(id)).filter(Boolean));
   }
-  return getAppsForProfile(getActiveProfileId()).filter((app) => app.id !== 'hub-setup');
+  return filterAppsForEnvironment(
+    getAppsForProfile(getActiveProfileId()).filter((app) => app.id !== 'hub-setup')
+  );
 }
 
 /**
@@ -21,6 +24,10 @@ export function getVisibleApps() {
 export function isAppVisible(appId) {
   if (appId === 'hub-setup') {
     return isOwnerUserMode();
+  }
+  const app = getAppById(appId);
+  if (!app || !isAppEnabledForEnvironment(app)) {
+    return false;
   }
   const { homeAppIds, routableAppIds } = getModeConfig();
   if (routableAppIds?.length) {

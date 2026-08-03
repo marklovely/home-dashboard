@@ -1,4 +1,6 @@
 import { requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
+import { isCalendarFeedConfigured } from '../lib/calendarFeed.js';
+import { isTestHubWorker } from '../lib/hubEnvironment.js';
 
 /**
  * @param {Request} request
@@ -9,6 +11,18 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
   try {
     if (request.method !== 'GET') {
       return Response.json({ error: 'Method not allowed' }, { status: 405 });
+    }
+
+    if (isTestHubWorker(env)) {
+      return Response.json(
+        {
+          error: 'Calendar unavailable',
+          code: 'CALENDAR_NOT_CONFIGURED',
+          feedConfigured: false,
+          message: 'Personal calendars are disabled on the test hub.'
+        },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } }
+      );
     }
 
     const gate = await requireOwnerDeviceMode(request, env);
@@ -23,7 +37,7 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
     });
   } catch (error) {
-    const feedConfigured = Boolean(env.APPLE_CALENDAR_ICS_URL?.trim());
+    const feedConfigured = await isCalendarFeedConfigured(env);
     /** @type {Record<string, unknown>} */
     let body;
     if (error?.code === 'CALENDAR_NOT_CONFIGURED') {

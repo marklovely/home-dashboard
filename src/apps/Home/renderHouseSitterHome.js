@@ -1,6 +1,8 @@
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
+import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { getAppDisplayTitle, getModeConfig } from '../../modes/modeConfig.js';
+import { getSiteProfileState } from '../../services/siteProfileService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 
 /** @type {Record<string, { headline: string, teaser?: string, teaserFromSummary?: 'title' | 'subtitle' }>} */
@@ -8,11 +10,27 @@ const ESSENTIAL_CARD_COPY = {
   scooter: { headline: 'Care guide', teaser: 'Walks · meals · bedtime' },
   'house-guide': {
     headline: 'Everything you need to know',
-    teaser: 'Appliances · Wi‑Fi · Scooter · More'
+    teaser: 'Appliances · Wi‑Fi · local info'
   },
   controls: { headline: 'Lighting, heating, and scenes', teaserFromSummary: 'title' },
   emergency: { headline: 'Help is here', teaser: 'Owners, vet, utilities and more' }
 };
+
+function getSitterWelcomeLead() {
+  if (isTestHubEnvironment()) {
+    return 'Everything for this stay is configured during hub setup — not copied from another home.';
+  }
+  const petCare = getSiteProfileState()?.profile?.petCare;
+  if (
+    petCare &&
+    typeof petCare === 'object' &&
+    petCare.hasPets &&
+    String(petCare.name ?? '').trim()
+  ) {
+    return `We're delighted you're looking after our home and ${String(petCare.name).trim()}.`;
+  }
+  return "We're delighted you're looking after our home.";
+}
 
 /**
  * @param {import('../types/app.js').App} app
@@ -88,7 +106,7 @@ function applyEssentialCardSummary(card, appId, summary) {
   }
   if (liveTitle) liveTitle.textContent = preset.headline;
   if (liveSubtitle) {
-    const teaser =
+    let teaser =
       preset.teaser ??
       (preset.teaserFromSummary === 'title'
         ? summary.title
@@ -96,6 +114,9 @@ function applyEssentialCardSummary(card, appId, summary) {
           ? summary.subtitle
           : '') ??
       '';
+    if (appId === 'house-guide' && isTestHubEnvironment()) {
+      teaser = 'Add your guide during hub setup';
+    }
     liveSubtitle.textContent = teaser;
     liveSubtitle.hidden = !teaser;
   }
@@ -176,7 +197,7 @@ export async function renderHouseSitterHome(viewport, apps, context) {
   welcome.innerHTML = `
     <p class="sitter-welcome-emoji" aria-hidden="true">🏡</p>
     <h2 class="sitter-welcome-title">Welcome to Lovely Home</h2>
-    <p class="sitter-welcome-lead">We're delighted you're looking after our home and Scooter.</p>
+    <p class="sitter-welcome-lead">${getSitterWelcomeLead()}</p>
     <p class="sitter-welcome-body">Everything you'll need during your stay is available below.</p>
   `;
 

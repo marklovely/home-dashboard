@@ -4,6 +4,8 @@ import { clearHubSecrets, getHubSecretsStatus, HUB_SECRET_KEYS, setHubSecrets } 
 import { getSiteProfile, hasSiteProfileRow, resetSiteProfile, updateSiteProfile } from '../lib/siteProfile.js';
 import { clearGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { jsonError, methodNotAllowed } from '../lib/errors.js';
+import { normalizeAppleCalendarFeedUrl } from '../calendar/feedUrl.js';
+import { isTestHubWorker } from '../lib/hubEnvironment.js';
 
 /**
  * @param {Record<string, unknown>} body
@@ -16,6 +18,12 @@ function validateSecretsPatch(body) {
     const value = String(body[key] ?? '').trim();
     if (key === 'owner_pin' && value && !/^\d{4}$/.test(value)) {
       return { ok: false, message: 'Owner PIN must be exactly 4 digits.' };
+    }
+    if (key === 'calendar_ics_url' && value && !normalizeAppleCalendarFeedUrl(value)) {
+      return {
+        ok: false,
+        message: 'Calendar link must be a valid https or webcal URL (private ICS subscribe link).'
+      };
     }
     patch[key] = value;
   }
@@ -38,8 +46,11 @@ export async function handleSiteProfileGet(request, env, correlationId) {
   const profile = await getSiteProfile(env);
   const guideSeeded = env.HOUSE_GUIDE_DB ? await isHouseGuideSeeded(env.HOUSE_GUIDE_DB) : false;
   const hasProfile = await hasSiteProfileRow(env);
-  const effectiveProfile =
-    !hasProfile && guideSeeded ? { ...profile, onboardingComplete: true } : profile;
+  const skipOnboardingFromLegacyGuide =
+    !hasProfile && guideSeeded && !isTestHubWorker(env);
+  const effectiveProfile = skipOnboardingFromLegacyGuide
+    ? { ...profile, onboardingComplete: true }
+    : profile;
   return Response.json(
     { profile: effectiveProfile, guideSeeded },
     { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
@@ -104,7 +115,8 @@ export async function handleHubSecretsStatusGet(request, env, correlationId) {
     secondary_phone: Boolean(env.PRIVATE_DONNA_PHONE?.trim()),
     secondary_email: Boolean(env.PRIVATE_DONNA_EMAIL?.trim()),
     home_address: Boolean(env.PRIVATE_HOME_ADDRESS?.trim()),
-    lockbox_code: Boolean(env.PRIVATE_LOCKBOX_CODE?.trim())
+    lockbox_code: Boolean(env.PRIVATE_LOCKBOX_CODE?.trim()),
+    calendar_ics_url: Boolean(env.APPLE_CALENDAR_ICS_URL?.trim())
   };
 
   /** @type {Record<string, boolean>} */

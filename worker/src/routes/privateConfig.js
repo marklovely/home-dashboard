@@ -1,14 +1,17 @@
 import { getHubSecretsMap } from '../lib/hubSecrets.js';
 import { getSiteProfile } from '../lib/siteProfile.js';
+import { isTestHubWorker } from '../lib/hubEnvironment.js';
 
 /**
  * @param {Record<string, string>} secrets
  * @param {string} key
  * @param {string | undefined} envValue
+ * @param {Record<string, string | undefined>} env
  */
-function pickSecret(secrets, key, envValue) {
+function pickSecret(secrets, key, envValue, env) {
   const fromDb = secrets[key]?.trim();
   if (fromDb) return fromDb;
+  if (isTestHubWorker(env)) return '';
   return envValue?.trim() || '';
 }
 
@@ -18,14 +21,14 @@ function pickSecret(secrets, key, envValue) {
 export async function buildPrivateConfig(env) {
   const [secrets, profile] = await Promise.all([getHubSecretsMap(env), getSiteProfile(env)]);
 
-  const wifiSsid = pickSecret(secrets, 'wifi_ssid', env.PRIVATE_WIFI_SSID);
-  const wifiPassword = pickSecret(secrets, 'wifi_password', env.PRIVATE_WIFI_PASSWORD);
-  const primaryPhone = pickSecret(secrets, 'primary_phone', env.PRIVATE_MARK_PHONE);
-  const primaryEmail = pickSecret(secrets, 'primary_email', env.PRIVATE_MARK_EMAIL);
-  const secondaryPhone = pickSecret(secrets, 'secondary_phone', env.PRIVATE_DONNA_PHONE);
-  const secondaryEmail = pickSecret(secrets, 'secondary_email', env.PRIVATE_DONNA_EMAIL);
-  const homeAddress = pickSecret(secrets, 'home_address', env.PRIVATE_HOME_ADDRESS);
-  const lockboxCode = pickSecret(secrets, 'lockbox_code', env.PRIVATE_LOCKBOX_CODE);
+  const wifiSsid = pickSecret(secrets, 'wifi_ssid', env.PRIVATE_WIFI_SSID, env);
+  const wifiPassword = pickSecret(secrets, 'wifi_password', env.PRIVATE_WIFI_PASSWORD, env);
+  const primaryPhone = pickSecret(secrets, 'primary_phone', env.PRIVATE_MARK_PHONE, env);
+  const primaryEmail = pickSecret(secrets, 'primary_email', env.PRIVATE_MARK_EMAIL, env);
+  const secondaryPhone = pickSecret(secrets, 'secondary_phone', env.PRIVATE_DONNA_PHONE, env);
+  const secondaryEmail = pickSecret(secrets, 'secondary_email', env.PRIVATE_DONNA_EMAIL, env);
+  const homeAddress = pickSecret(secrets, 'home_address', env.PRIVATE_HOME_ADDRESS, env);
+  const lockboxCode = pickSecret(secrets, 'lockbox_code', env.PRIVATE_LOCKBOX_CODE, env);
 
   const primaryName = profile.primaryContact?.name?.trim() || 'Primary contact';
   const secondaryName = profile.secondaryContact?.name?.trim() || 'Secondary contact';
