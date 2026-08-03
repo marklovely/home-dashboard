@@ -8,6 +8,11 @@ import {
   __buildAllCollectionEventsForTests
 } from '../src/services/binCollectionService.js';
 import { getVisibleApps, isAppVisible } from '../src/services/appVisibility.js';
+import {
+  canFetchMyDayCalendar,
+  getMyDayHomeSummary,
+  refreshMyDayCalendar
+} from '../src/services/myDayCalendarService.js';
 import { resetUserModeForTests, setUserMode, UserMode } from '../src/auth/userMode.js';
 import { setActiveProfileId } from '../src/services/profileService.js';
 
@@ -43,5 +48,14 @@ describe('test environment vanilla defaults', () => {
     const meta = getScheduleMetadata();
     expect(meta.household.source).toBe('Demo schedule');
     expect(__buildAllCollectionEventsForTests().length).toBeGreaterThan(0);
+  });
+
+  it('does not fetch personal calendar in test and shows setup summary', async () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'test');
+    setUserMode(UserMode.Owner);
+    expect(canFetchMyDayCalendar()).toBe(false);
+    const state = await refreshMyDayCalendar();
+    expect(state.status).toBe('setup');
+    expect(getMyDayHomeSummary().subtitle).toContain('Setup guide');
   });
 });

@@ -1,10 +1,11 @@
 import { fetchMyDayCalendar } from '../api/calendarApi.js';
+import { isTestHubEnvironment } from '../auth/hubEnvironment.js';
 import { isHouseSitterExperience, subscribeToUserMode } from '../auth/userMode.js';
 import { buildHomeCardSummary } from './myDayFormat.js';
 
 export const MY_DAY_REFRESH_MS = 5 * 60 * 1000;
 
-/** @typedef {'idle' | 'loading' | 'ready' | 'unauthorized' | 'unavailable'} MyDayStatus */
+/** @typedef {'idle' | 'loading' | 'ready' | 'unauthorized' | 'unavailable' | 'setup'} MyDayStatus */
 
 /** @typedef {{ status: MyDayStatus, data: import('./myDayTypes.js').MyDayCalendarPayload | null, message: string }} MyDayState */
 
@@ -38,7 +39,7 @@ export function clearMyDayCalendarState() {
 }
 
 export function canFetchMyDayCalendar() {
-  return !isHouseSitterExperience();
+  return !isHouseSitterExperience() && !isTestHubEnvironment();
 }
 
 export function getMyDayState() {
@@ -61,6 +62,16 @@ export function subscribeToMyDayCalendar(listener) {
 export async function refreshMyDayCalendar(fetchImpl = fetch, options = {}) {
   if (isHouseSitterExperience()) {
     clearMyDayCalendarState();
+    return state;
+  }
+
+  if (isTestHubEnvironment()) {
+    state = {
+      status: 'setup',
+      data: null,
+      message: 'CALENDAR_NOT_CONFIGURED'
+    };
+    notify();
     return state;
   }
 
@@ -108,6 +119,9 @@ export async function refreshMyDayCalendar(fetchImpl = fetch, options = {}) {
 export function getMyDayHomeSummary(asOf = new Date()) {
   if (isHouseSitterExperience()) {
     return { title: 'My Day', subtitle: '' };
+  }
+  if (isTestHubEnvironment()) {
+    return { title: 'My Day', subtitle: 'Setup guide — no personal calendar on test' };
   }
   if (state.status === 'unauthorized') {
     return { title: 'My Day', subtitle: 'Sign in required' };

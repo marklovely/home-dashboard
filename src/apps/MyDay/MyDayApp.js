@@ -1,5 +1,6 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { promptOwnerPinUnlock } from '../../auth/ownerAccessGesture.js';
+import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
 import {
   formatDayHeading,
@@ -17,6 +18,11 @@ import {
   refreshMyDayCalendar,
   subscribeToMyDayCalendar
 } from '../../services/myDayCalendarService.js';
+import {
+  MY_DAY_NOT_CONFIGURED_INTRO,
+  MY_DAY_TEST_INTRO,
+  renderMyDaySetupGuide
+} from './myDaySetupGuide.js';
 
 /**
  * @param {HTMLElement} host
@@ -92,6 +98,14 @@ function renderMyDayApp(viewport) {
   const state = getMyDayState();
   viewport.replaceChildren();
 
+  if (state.status === 'setup') {
+    renderMyDaySetupGuide(
+      viewport,
+      isTestHubEnvironment() ? MY_DAY_TEST_INTRO : MY_DAY_NOT_CONFIGURED_INTRO
+    );
+    return;
+  }
+
   const page = document.createElement('section');
   page.className = 'app-page my-day-app';
   page.setAttribute('aria-label', 'My Day');
@@ -134,6 +148,10 @@ function renderMyDayApp(viewport) {
   }
 
   if (state.status === 'unavailable' && !state.data) {
+    if (state.message === 'CALENDAR_NOT_CONFIGURED') {
+      renderMyDaySetupGuide(viewport, MY_DAY_NOT_CONFIGURED_INTRO);
+      return;
+    }
     const message = document.createElement('p');
     message.className = 'my-day-status';
     message.textContent = myDayUnavailableMessage(state.message);
