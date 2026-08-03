@@ -149,4 +149,22 @@ describe('owner calendar authorization', () => {
     );
     expect(response.status).toBe(503);
   });
+
+  it('blocks calendar on test Worker even when ICS secret is set', async () => {
+    const env = {
+      ...accessEnv,
+      HUB_ENVIRONMENT: 'test',
+      APPLE_CALENDAR_ICS_URL: 'https://calendar.example/private.ics'
+    };
+    const fetchImpl = vi.fn(async () => new Response(sampleIcs, { status: 200 }));
+    const response = await handleCalendar(
+      await authedOwnerAccessRequest('https://worker.test/api/calendar', env),
+      env,
+      fetchImpl
+    );
+    expect(response.status).toBe(503);
+    const body = await response.json();
+    expect(body.code).toBe('CALENDAR_NOT_CONFIGURED');
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
 });

@@ -1,5 +1,11 @@
 import { requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
 
+function isTestHubWorker(env) {
+  return String(env.HUB_ENVIRONMENT ?? '')
+    .trim()
+    .toLowerCase() === 'test';
+}
+
 /**
  * @param {Request} request
  * @param {Record<string, string | undefined>} env
@@ -9,6 +15,18 @@ export async function handleCalendar(request, env, fetchImpl = fetch) {
   try {
     if (request.method !== 'GET') {
       return Response.json({ error: 'Method not allowed' }, { status: 405 });
+    }
+
+    if (isTestHubWorker(env)) {
+      return Response.json(
+        {
+          error: 'Calendar unavailable',
+          code: 'CALENDAR_NOT_CONFIGURED',
+          feedConfigured: false,
+          message: 'Personal calendars are disabled on the test hub.'
+        },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } }
+      );
     }
 
     const gate = await requireOwnerDeviceMode(request, env);

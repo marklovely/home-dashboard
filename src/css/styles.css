@@ -2749,6 +2749,34 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   display: grid;
   gap: 8px;
 }
+.my-day-app--setup {
+  max-width: 46rem;
+}
+.my-day-setup-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+  font-weight: 800;
+}
+.my-day-setup-provider {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.my-day-setup-steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 8px;
+  line-height: 1.45;
+}
+.my-day-setup-note,
+.my-day-setup-doc {
+  margin: 0;
+  line-height: 1.45;
+}
 
 .owner-access-host { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
 .owner-access-host:not(:empty) { pointer-events: auto; }

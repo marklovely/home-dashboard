@@ -81,6 +81,8 @@ npx wrangler secret put OWNER_EMAILS --env test
 
 Suggested test values: PIN `0000`, fake Wi-Fi, `test@example.com` contacts, a random `HUB_PROXY_SECRET`.
 
+**Do not set `APPLE_CALENDAR_ICS_URL` on the test Worker.** My Day shows a setup guide on test instead of anyone’s calendar. If that secret was copied from production, delete it: `npx wrangler secret delete APPLE_CALENDAR_ICS_URL --env test`, then redeploy the test Worker so `HUB_ENVIRONMENT=test` blocks `/api/calendar` even if the secret returns.
+
 **`HUB_API` is not a Worker secret.** It is a **Pages service binding** (dashboard only): Pages → your project → **Settings → Bindings → Service binding** → variable name `HUB_API`, service `lovely-home-hub-api-test`. The Pages Function calls the Worker through that binding; you configure it on the **Pages** project, not with `wrangler secret put`.
 
 | Setting | Where | Test value |
@@ -203,6 +205,7 @@ The test stack is meant for onboarding trials, not your production home setup:
 |---------|------------|-------------------------------------|
 | **Controls / Alexa routines** | `src/config.js` Virtual Buttons | Hidden — empty config until you add buttons for that deployment |
 | **Bin schedule** | East Hampshire calendar in repo | Generic **demo** fortnightly schedule and placeholder collection copy |
+| **My Day / calendar** | Apple or Google ICS via Worker secret | **No personal calendar** — in-app setup guide only; `/api/calendar` blocked on test Worker |
 | **House Guide** | D1 CMS + bundled fallback | Empty D1 until you import — use wizard starter or prod backup restore |
 
 Production `src/config.js` and bin calendar files are **not** copied to test automatically. Copy a prod guide backup via Settings if you want realistic content; Controls still stay hidden on test until you deliberately configure a test `config.js` build.
