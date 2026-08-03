@@ -203,6 +203,39 @@ export const OWNER_HELP_SECTIONS = [
     ]
   },
   {
+    id: 'hub-setup',
+    title: 'Hub setup wizard',
+    keywords: ['setup', 'wizard', 'onboarding', 'first time', 'hub name', 'starter guide', 'contacts'],
+    blocks: [
+      {
+        type: 'p',
+        text: 'The first-time setup wizard runs when you open Hub setup from Settings or on a new hub. It saves your hub name, contacts, guest access secrets, optional pet care, and offers a starter House Guide import.'
+      },
+      {
+        type: 'h4',
+        text: 'Step-by-step help'
+      },
+      {
+        type: 'p',
+        text: 'Inside the wizard, tap Hub setup guide for the full searchable reference, or Help for this step on each screen. Tap the ? icon beside any field for a quick explanation.'
+      },
+      {
+        type: 'ul',
+        items: [
+          'Step 1 — Hub name and how guests will use the property (sets the starter template).',
+          'Step 2 — Primary and optional secondary emergency contacts.',
+          'Step 3 — Pet care (housesitter and mixed use cases only).',
+          'Step 4 — Wi‑Fi, address, lockbox, and owner PIN (stored securely on the hub).',
+          'Step 5 — Import a starter House Guide or skip and edit later.'
+        ]
+      },
+      {
+        type: 'p',
+        text: 'You can reopen the wizard from Settings → Home details → Open setup wizard, or edit the same fields directly on that page.'
+      }
+    ]
+  },
+  {
     id: 'settings',
     title: 'Settings',
     keywords: ['theme', 'clock', 'scale', 'screensaver', 'weather', 'location', 'appearance'],

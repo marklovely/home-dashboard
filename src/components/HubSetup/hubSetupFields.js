@@ -2,7 +2,9 @@
  * Shared field builders for hub setup and onboarding forms.
  */
 
-import { CircleHelp, Eye, EyeOff, createElement } from 'lucide';
+import { Eye, EyeOff, createElement } from 'lucide';
+import { createFieldInfoHint, createFieldLabelBlock } from '../HelpGuide/fieldHelp.js';
+import { HUB_SETUP_FIELD_HELP } from './hubSetupHelpContent.js';
 import {
   formatPropertyAddress,
   normalizePropertyAddress
@@ -59,14 +61,16 @@ function attachRevealToggle(input) {
  * @param {string} [options.inputMode]
  * @param {string} [options.pattern]
  * @param {boolean} [options.revealable]
+ * @param {string} [options.hint]
+ * @param {string} [options.helpText]
+ * @param {string} [options.helpLabel]
  */
 export function createSetupField(label, value = '', options = {}) {
   const wrap = document.createElement('label');
   wrap.className = 'settings-subsection hub-setup-field';
 
-  const title = document.createElement('span');
-  title.className = 'settings-subsection-title';
-  title.textContent = label;
+  const { fragment: labelBlock } = createFieldLabelBlock(label, options);
+  wrap.append(labelBlock);
 
   const input = document.createElement('input');
   input.className = 'hub-setup-input';
@@ -79,9 +83,9 @@ export function createSetupField(label, value = '', options = {}) {
   if (options.pattern) input.pattern = options.pattern;
 
   if (options.revealable) {
-    wrap.append(title, attachRevealToggle(input));
+    wrap.append(attachRevealToggle(input));
   } else {
-    wrap.append(title, input);
+    wrap.append(input);
   }
   return { wrap, input };
 }
@@ -92,14 +96,16 @@ export function createSetupField(label, value = '', options = {}) {
  * @param {Object} [options]
  * @param {string} [options.placeholder]
  * @param {number} [options.rows]
+ * @param {string} [options.hint]
+ * @param {string} [options.helpText]
+ * @param {string} [options.helpLabel]
  */
 export function createSetupTextarea(label, value = '', options = {}) {
   const wrap = document.createElement('label');
   wrap.className = 'settings-subsection hub-setup-field';
 
-  const title = document.createElement('span');
-  title.className = 'settings-subsection-title';
-  title.textContent = label;
+  const { fragment: labelBlock } = createFieldLabelBlock(label, options);
+  wrap.append(labelBlock);
 
   const textarea = document.createElement('textarea');
   textarea.className = 'hub-setup-input hub-setup-textarea';
@@ -107,7 +113,7 @@ export function createSetupTextarea(label, value = '', options = {}) {
   textarea.rows = options.rows ?? 3;
   if (options.placeholder) textarea.placeholder = options.placeholder;
 
-  wrap.append(title, textarea);
+  wrap.append(textarea);
   return { wrap, textarea };
 }
 
@@ -125,13 +131,17 @@ export function createPetDetailsFields(profile) {
     [
       { value: 'no', label: 'No pets to look after' },
       { value: 'yes', label: 'Yes — add pet details' }
-    ]
+    ],
+    HUB_SETUP_FIELD_HELP.hasPets
   );
 
   const details = document.createElement('div');
   details.className = 'hub-setup-pet-details';
 
-  const name = createSetupField('Pet name', String(petCare.name ?? ''), { placeholder: 'e.g. Bailey' });
+  const name = createSetupField('Pet name', String(petCare.name ?? ''), {
+    placeholder: 'e.g. Bailey',
+    ...HUB_SETUP_FIELD_HELP.petName
+  });
   const species = createSetupField('Species / breed', String(petCare.species ?? ''), {
     placeholder: 'e.g. Labrador'
   });
@@ -215,19 +225,19 @@ export function createPetDetailsFields(profile) {
 /**
  * @param {string} label
  * @param {string} value
- * @param {{ value: string, label: string }[]} options
+ * @param {{ value: string, label: string }[]} selectOptions
+ * @param {{ hint?: string, helpText?: string, helpLabel?: string }} [fieldOptions]
  */
-export function createSetupSelect(label, value, options) {
+export function createSetupSelect(label, value, selectOptions, fieldOptions = {}) {
   const wrap = document.createElement('label');
   wrap.className = 'settings-subsection hub-setup-field';
 
-  const title = document.createElement('span');
-  title.className = 'settings-subsection-title';
-  title.textContent = label;
+  const { fragment: labelBlock } = createFieldLabelBlock(label, fieldOptions);
+  wrap.append(labelBlock);
 
   const select = document.createElement('select');
   select.className = 'hub-setup-input';
-  for (const option of options) {
+  for (const option of selectOptions) {
     const el = document.createElement('option');
     el.value = option.value;
     el.textContent = option.label;
@@ -235,7 +245,7 @@ export function createSetupSelect(label, value, options) {
     select.append(el);
   }
 
-  wrap.append(title, select);
+  wrap.append(select);
   return { wrap, select };
 }
 
@@ -264,9 +274,11 @@ export function readContactFields(primaryWrap, secondaryWrap, _profile) {
 }
 
 /**
- * @param {Record<string, unknown>} profile
+ * @param {string} titleText
+ * @param {Record<string, unknown>} contact
+ * @param {{ variant?: 'primary' | 'secondary' }} [options]
  */
-export function createContactGroup(titleText, contact) {
+export function createContactGroup(titleText, contact, options = {}) {
   const group = document.createElement('div');
   group.className = 'settings-subsection';
 
@@ -274,7 +286,15 @@ export function createContactGroup(titleText, contact) {
   title.className = 'settings-subsection-title';
   title.textContent = titleText;
 
-  const name = createSetupField('Name', String(contact?.name ?? ''), { required: true });
+  const nameHelp =
+    options.variant === 'secondary'
+      ? HUB_SETUP_FIELD_HELP.secondaryContactName
+      : HUB_SETUP_FIELD_HELP.primaryContactName;
+
+  const name = createSetupField('Name', String(contact?.name ?? ''), {
+    required: true,
+    ...nameHelp
+  });
   const phone = createSetupField('Phone', String(contact?.phone ?? ''), {
     type: 'tel',
     autocomplete: 'tel'
@@ -299,6 +319,18 @@ export function createPropertyAddressFields(profile) {
   const legend = document.createElement('legend');
   legend.className = 'settings-subsection-title';
   legend.textContent = 'Address of the property';
+
+  const addressHelp = createFieldInfoHint(
+    HUB_SETUP_FIELD_HELP.propertyAddress.helpText ?? '',
+    'Help: property address'
+  );
+
+  group.append(legend);
+
+  const addressHelpRow = document.createElement('div');
+  addressHelpRow.className = 'hub-setup-fieldset-help-row';
+  addressHelpRow.append(addressHelp.button);
+  group.append(addressHelpRow, addressHelp.panel);
 
   const line1 = createSetupField('Address line 1', address.line1, {
     autocomplete: 'address-line1',
@@ -326,7 +358,8 @@ export function createPropertyAddressFields(profile) {
   });
 
   group.append(
-    legend,
+    addressHelpRow,
+    addressHelp.panel,
     line1.wrap,
     line2.wrap,
     line3.wrap,
@@ -358,17 +391,22 @@ export function createGuestAccessFields(profile) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
 
-  const wifiSsid = createSetupField('Wi-Fi network name', '', { autocomplete: 'off' });
+  const wifiSsid = createSetupField('Wi-Fi network name', '', {
+    autocomplete: 'off',
+    ...HUB_SETUP_FIELD_HELP.wifiSsid
+  });
   const wifiPassword = createSetupField('Wi-Fi password', '', {
     type: 'password',
     autocomplete: 'new-password',
-    revealable: true
+    revealable: true,
+    ...HUB_SETUP_FIELD_HELP.wifiPassword
   });
   const propertyAddress = createPropertyAddressFields(profile);
   const lockbox = createSetupField('Lockbox / door code (optional)', '', {
     type: 'password',
     autocomplete: 'off',
-    revealable: true
+    revealable: true,
+    ...HUB_SETUP_FIELD_HELP.lockbox
   });
   const ownerPin = createSetupField('Owner PIN (4 digits)', '', {
     type: 'password',
@@ -376,7 +414,8 @@ export function createGuestAccessFields(profile) {
     pattern: '[0-9]{4}',
     placeholder: '••••',
     autocomplete: 'off',
-    revealable: true
+    revealable: true,
+    ...HUB_SETUP_FIELD_HELP.ownerPin
   });
   ownerPin.input.maxLength = 4;
 
@@ -409,32 +448,7 @@ export function createSetupIntro(text) {
  * @param {string} [label]
  */
 export function createSetupInfoHint(helpText, label = 'More information') {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'hub-setup-info-button';
-  button.setAttribute('aria-label', label);
-  button.setAttribute('aria-expanded', 'false');
-  button.append(
-    createElement(CircleHelp, {
-      width: 20,
-      height: 20,
-      'stroke-width': 1.75,
-      'aria-hidden': 'true'
-    })
-  );
-
-  const panel = document.createElement('p');
-  panel.className = 'settings-help subtle hub-setup-info-panel';
-  panel.hidden = true;
-  panel.textContent = helpText;
-
-  button.addEventListener('click', () => {
-    const expanded = panel.hidden;
-    panel.hidden = !expanded;
-    button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-  });
-
-  return { button, panel };
+  return createFieldInfoHint(helpText, label);
 }
 
 /**
