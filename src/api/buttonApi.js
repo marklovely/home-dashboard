@@ -17,7 +17,7 @@ export function formatButtonCode(buttonId) {
  * @param {string} buttonCode e.g. VB01
  * @param {typeof fetch} [fetchImpl]
  */
-export async function pressButton(buttonCode, fetchImpl) {
+async function pressButtonOnce(buttonCode, fetchImpl) {
   await ensureApiBaseUrl();
   const normalized = buttonCode.trim().toUpperCase();
   const client = resolveApiClient(fetchImpl);
@@ -31,9 +31,28 @@ export async function pressButton(buttonCode, fetchImpl) {
     } catch {
       // ignore parse errors
     }
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
   }
   return true;
+}
+
+/**
+ * @param {string} buttonCode e.g. VB01
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function pressButton(buttonCode, fetchImpl) {
+  try {
+    return await pressButtonOnce(buttonCode, fetchImpl);
+  } catch (error) {
+    const status = /** @type {{ status?: number }} */ (error).status;
+    if (status === 502 || status === 503 || status === 504) {
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
+      return pressButtonOnce(buttonCode, fetchImpl);
+    }
+    throw error;
+  }
 }
 
 /**

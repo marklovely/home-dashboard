@@ -29,6 +29,20 @@ let ownerSessionExpiresAt = null;
 /** @type {Set<() => void>} */
 const listeners = new Set();
 
+const LAST_DEVICE_MODE_KEY = 'lovely_home_last_device_mode';
+
+function persistLastKnownMode() {
+  if (mode === 'sitter') {
+    sessionStorage.setItem(LAST_DEVICE_MODE_KEY, 'sitter');
+  } else {
+    sessionStorage.removeItem(LAST_DEVICE_MODE_KEY);
+  }
+}
+
+export function wasHouseSitterBeforeAccessChallenge() {
+  return sessionStorage.getItem(LAST_DEVICE_MODE_KEY) === 'sitter';
+}
+
 /** @param {() => void} listener */
 export function subscribeToDeviceSession(listener) {
   listeners.add(listener);
@@ -63,6 +77,7 @@ function applyServerSession(payload) {
   applyDeviceSessionMode(mode);
   setActiveProfileId(mode === 'sitter' ? 'housesitter' : 'owner');
   status = 'ready';
+  persistLastKnownMode();
   notify();
 }
 
