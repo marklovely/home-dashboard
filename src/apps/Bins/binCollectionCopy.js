@@ -1,11 +1,22 @@
+import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
+
 /** Collection point (informative, not a command). */
 export const BIN_COLLECTION_LOCATION =
   'the end of the road as you turn into the close from Wagtail Road';
 
 export const COUNCIL_RECYCLING_URL = 'https://www.easthants.gov.uk/your-bins';
 
+const DEMO_BIN_COLLECTION_LOCATION = 'the usual collection point at the end of your street';
+
 /** Single collection-information block copy (owner and house sitter). */
 export function getCollectionInformationCopy() {
+  if (isTestHubEnvironment()) {
+    return {
+      title: 'Collection information (demo)',
+      beginLine: 'Demo schedule only — replace with your council calendar on production.',
+      locationLine: `Bins are collected from ${DEMO_BIN_COLLECTION_LOCATION}.`
+    };
+  }
   return {
     title: 'Collection information',
     beginLine: 'Collections normally begin from 6am.',
@@ -30,6 +41,9 @@ export function getBankHolidayNote(event, houseSitter, timing) {
  * @param {boolean} houseSitter
  */
 export function getMissedBinNote(houseSitter) {
+  if (isTestHubEnvironment()) {
+    return 'Demo schedule — check your local council website for real missed-bin reporting.';
+  }
   if (houseSitter) {
     return 'Missed bins can be reported at easthants.gov.uk by 4pm on the next working day after a collection.';
   }
