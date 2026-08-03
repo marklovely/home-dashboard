@@ -611,6 +611,51 @@ body.is-bins-route .app-viewport > .bins-app {
   margin: 0;
 }
 
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.field-label-row .settings-subsection-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-help-hint {
+  margin: -4px 0 6px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.field-info-panel {
+  margin: 0 0 8px;
+}
+
+.hub-setup-fieldset-help-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: -4px 0 8px;
+}
+
+.hub-setup-help-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.hub-setup-step-help-host {
+  display: flex;
+  align-items: center;
+}
+
+.hub-setup-step-help-host .help-guide-inline-link {
+  font-size: 0.875rem;
+}
+
 .settings-option {
   display: flex;
   align-items: center;

@@ -29,6 +29,8 @@ import { geocodeWeatherLocation } from '../../api/weatherApi.js';
 import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
+import { createHubSetupHelpButton } from '../../components/HubSetup/hubSetupHelp.js';
+import { HUB_SETUP_FIELD_HELP } from '../../components/HubSetup/hubSetupHelpContent.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
   getSitterSecretsDisclosed,
@@ -258,12 +260,21 @@ function createHomeDetailsFields(context) {
   wrap.append(
     createSetupIntro(
       'Store Wi-Fi, contacts, address, lockbox code, and owner PIN on your hub — no command line required. Leave a field blank when saving to keep its current value.'
-    )
+    ),
+    createHubSetupHelpButton({
+      label: 'Home details & setup help',
+      initialSectionId: 'step-access',
+      buttonClassName: 'settings-action-button settings-action-button--secondary'
+    })
   );
 
-  const hubName = createSetupField('Hub name', String(profile.hubName ?? ''));
-  const primaryGroup = createContactGroup('Primary contact', profile.primaryContact ?? {});
-  const secondaryGroup = createContactGroup('Secondary contact', profile.secondaryContact ?? {});
+  const hubName = createSetupField('Hub name', String(profile.hubName ?? ''), HUB_SETUP_FIELD_HELP.hubName);
+  const primaryGroup = createContactGroup('Primary contact', profile.primaryContact ?? {}, {
+    variant: 'primary'
+  });
+  const secondaryGroup = createContactGroup('Secondary contact (optional)', profile.secondaryContact ?? {}, {
+    variant: 'secondary'
+  });
   const guestFields = createGuestAccessFields(profile);
 
   const wizardButton = document.createElement('button');
@@ -350,6 +361,11 @@ function createHelpFields() {
 
   if (isOwnerUserMode()) {
     wrap.append(createOwnerHelpButton({ buttonClassName: 'settings-action-button' }));
+    wrap.append(
+      createHubSetupHelpButton({
+        buttonClassName: 'settings-action-button settings-action-button--secondary'
+      })
+    );
     wrap.append(
       createSitterHelpButton({
         label: 'Guest tablet guide',

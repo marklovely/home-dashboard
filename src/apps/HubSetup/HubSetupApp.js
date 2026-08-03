@@ -12,6 +12,11 @@ import {
   readGuestAccessSecrets,
   readPropertyAddressProfilePatch
 } from '../../components/HubSetup/hubSetupFields.js';
+import { HUB_SETUP_FIELD_HELP } from '../../components/HubSetup/hubSetupHelpContent.js';
+import {
+  createHubSetupHelpButton,
+  createHubSetupStepHelpLink
+} from '../../components/HubSetup/hubSetupHelp.js';
 import { buildStarterGuideCatalog } from '../../content/houseguide/templates/buildStarterGuideCatalog.js';
 import {
   getStarterGuideTemplate
@@ -125,7 +130,16 @@ function mountHubSetupWizard(viewport, context) {
   title.textContent = 'Set up your hub';
   const progress = document.createElement('p');
   progress.className = 'hub-setup-progress subtle';
-  header.append(title, progress);
+
+  const helpRow = document.createElement('div');
+  helpRow.className = 'hub-setup-help-row';
+  helpRow.append(createHubSetupHelpButton({ buttonClassName: 'settings-action-button settings-action-button--secondary' }));
+
+  const stepHelpHost = document.createElement('div');
+  stepHelpHost.className = 'hub-setup-step-help-host';
+  helpRow.append(stepHelpHost);
+
+  header.append(title, progress, helpRow);
 
   const body = document.createElement('div');
   body.className = 'hub-setup-body';
@@ -149,16 +163,22 @@ function mountHubSetupWizard(viewport, context) {
 
   const hubName = createSetupField('Hub name', String(profile.hubName ?? ''), {
     placeholder: 'Rose Cottage Hub',
-    required: true
+    required: true,
+    ...HUB_SETUP_FIELD_HELP.hubName
   });
   const useCase = createSetupSelect(
     'How will guests use this hub?',
     String(profile.useCase ?? 'owner'),
-    USE_CASE_OPTIONS
+    USE_CASE_OPTIONS,
+    HUB_SETUP_FIELD_HELP.useCase
   );
 
-  const primaryGroup = createContactGroup('Primary contact', profile.primaryContact ?? {});
-  const secondaryGroup = createContactGroup('Secondary contact (optional)', profile.secondaryContact ?? {});
+  const primaryGroup = createContactGroup('Primary contact', profile.primaryContact ?? {}, {
+    variant: 'primary'
+  });
+  const secondaryGroup = createContactGroup('Secondary contact (optional)', profile.secondaryContact ?? {}, {
+    variant: 'secondary'
+  });
 
   const guestFields = createGuestAccessFields(profile);
   const petFields = createPetDetailsFields(profile);
@@ -188,6 +208,7 @@ function mountHubSetupWizard(viewport, context) {
     nextButton.textContent = isLastWizardStep() ? 'Finish setup' : 'Continue';
 
     const stepId = currentStepId();
+    stepHelpHost.replaceChildren(createHubSetupStepHelpLink(stepId));
 
     if (stepId === 'hub') {
       body.append(
@@ -229,7 +250,10 @@ function mountHubSetupWizard(viewport, context) {
     const guideIntro = createSetupIntro(
       `Start with a ${starterTemplate.label.toLowerCase()} you can edit in the Guide Editor, or skip and add content later.`
     );
-    const starterHelp = createSetupInfoHint(starterTemplate.hint, 'What is the starter guide?');
+    const starterHelp = createSetupInfoHint(
+      `${HUB_SETUP_FIELD_HELP.starterGuide.helpText} ${starterTemplate.hint}`,
+      'What is the starter guide?'
+    );
     const starterSummary = document.createElement('p');
     starterSummary.className = 'hub-setup-starter-summary subtle';
     starterSummary.textContent = `Includes: ${starterTemplate.summary}. Based on your choice in step 1 (${USE_CASE_OPTIONS.find((option) => option.value === selectedUseCase)?.label ?? 'Owner only'}).`;
