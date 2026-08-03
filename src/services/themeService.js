@@ -66,9 +66,14 @@ function onSystemColorSchemeChange() {
 }
 
 function applyTheme() {
+  const effective = getEffectiveTheme();
   document.documentElement.dataset.theme = activeTheme;
-  document.documentElement.style.colorScheme =
-    activeTheme === 'auto' ? 'light dark' : getEffectiveTheme();
+  document.documentElement.style.colorScheme = activeTheme === 'auto' ? 'light dark' : effective;
+
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeColorMeta) {
+    themeColorMeta.setAttribute('content', effective === 'light' ? '#eef1f7' : '#10131a');
+  }
 }
 
 /** @internal */
