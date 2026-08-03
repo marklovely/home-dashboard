@@ -30,6 +30,7 @@ function notify() {
 
 function applyHomeScreenScale() {
   document.documentElement.style.setProperty('--home-ui-scale', homeScreenScale);
+  document.documentElement.dataset.homeUiScale = homeScreenScale;
 }
 
 /** @returns {ClockFormat} */

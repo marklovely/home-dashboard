@@ -9,6 +9,12 @@ import {
 
 describe('themeService', () => {
   beforeEach(() => {
+    if (!document.querySelector('meta[name="theme-color"]')) {
+      const meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      meta.setAttribute('content', '#10131a');
+      document.head.append(meta);
+    }
     vi.stubGlobal(
       'matchMedia',
       vi.fn(() => ({
@@ -35,6 +41,7 @@ describe('themeService', () => {
     setActiveTheme('light');
     expect(getActiveTheme()).toBe('light');
     expect(document.documentElement.dataset.theme).toBe('light');
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#eef1f7');
     expect(localStorage.getItem('home-hub-theme')).toBe('light');
   });
 

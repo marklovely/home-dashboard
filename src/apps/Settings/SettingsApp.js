@@ -682,6 +682,18 @@ function createClockFormatField(onRefresh) {
 
 /**
  * @param {string} name
+ */
+function syncSettingsRadioGroup(name) {
+  for (const input of document.querySelectorAll(`input[type="radio"][name="${name}"]`)) {
+    const option = input.closest('.settings-option');
+    if (option) {
+      option.classList.toggle('is-selected', input.checked);
+    }
+  }
+}
+
+/**
+ * @param {string} name
  * @param {string} value
  * @param {string} label
  * @param {boolean} checked
@@ -691,6 +703,7 @@ function createClockFormatField(onRefresh) {
 function createRadioOption(name, value, label, checked, hint, onSelect) {
   const optionLabel = document.createElement('label');
   optionLabel.className = 'settings-option';
+  if (checked) optionLabel.classList.add('is-selected');
   const input = document.createElement('input');
   input.type = 'radio';
   input.name = name;
@@ -698,6 +711,7 @@ function createRadioOption(name, value, label, checked, hint, onSelect) {
   input.checked = checked;
   input.addEventListener('change', () => {
     if (!input.checked) return;
+    syncSettingsRadioGroup(name);
     onSelect();
   });
   const textWrap = document.createElement('span');
@@ -935,10 +949,13 @@ export const settingsApp = defineApp({
   profiles: ['owner', 'housesitter'],
   summary: settingsSummary,
   mount(viewport, context) {
-    const refresh = () => {
+    /** @type {() => void} */
+    let refreshSettings = () => {};
+    refreshSettings = () => {
       refreshAboutValues(viewport);
       context.refreshShell?.();
+      mountSettingsApp(viewport, context, refreshSettings);
     };
-    mountSettingsApp(viewport, context, refresh);
+    mountSettingsApp(viewport, context, refreshSettings);
   }
 });
