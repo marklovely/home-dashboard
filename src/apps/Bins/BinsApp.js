@@ -16,7 +16,6 @@ import {
   isScheduleExpired
 } from '../../services/binCollectionService.js';
 import {
-  COUNCIL_RECYCLING_URL,
   getCouncilRecyclingUrl,
   getBankHolidayNote,
   getCollectionInformationCopy,
