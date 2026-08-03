@@ -189,7 +189,7 @@ function mountHubSetupWizard(viewport, context) {
   });
 
   const guestFields = createGuestAccessFields(profile);
-  const binFields = createBinScheduleFields(profile);
+  let binFields = createBinScheduleFields(profile, String(profile.useCase ?? 'owner'));
   let calendarFields = createCalendarConnectionField();
 
   void fetchHubSecretsConfigured().then((result) => {
@@ -220,6 +220,16 @@ function mountHubSetupWizard(viewport, context) {
     return step >= wizardSteps().length - 1;
   }
 
+  function scrollWizardToTop() {
+    requestAnimationFrame(() => {
+      page.scrollTop = 0;
+      if (viewport.scrollTop > 0) {
+        viewport.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+    });
+  }
+
   function renderStep() {
     setHubSetupWizardStep(step);
     progress.textContent = `Step ${step + 1} of ${wizardSteps().length}`;
@@ -236,95 +246,83 @@ function mountHubSetupWizard(viewport, context) {
         hubName.wrap,
         useCase.wrap
       );
-      return;
-    }
-
-    if (stepId === 'contacts') {
+    } else if (stepId === 'contacts') {
       body.append(
         createSetupIntro('Who should guests call? Names appear in the House Guide; phone and email are stored securely on your hub.'),
         primaryGroup,
         secondaryGroup
       );
-      return;
-    }
-
-    if (stepId === 'pets') {
+    } else if (stepId === 'pets') {
       body.append(petFields.wrap);
-      return;
-    }
-
-    if (stepId === 'access') {
+    } else if (stepId === 'access') {
       body.append(guestFields.wrap);
-      return;
-    }
-
-    if (stepId === 'bins') {
+    } else if (stepId === 'bins') {
+      const selectedUseCase = useCase.select.value;
+      const schedule = binFields.readBinSchedule();
+      binFields = createBinScheduleFields(
+        { ...getSiteProfileState()?.profile, binSchedule: schedule },
+        selectedUseCase
+      );
       body.append(binFields.wrap);
-      return;
-    }
-
-    if (stepId === 'calendar') {
+    } else if (stepId === 'calendar') {
       body.append(calendarFields.wrap);
-      return;
-    }
+    } else if (stepId === 'guide') {
+      const selectedUseCase = useCase.select.value;
+      const starterTemplate = getStarterGuideTemplate(selectedUseCase);
+      const liveProfile = {
+        ...profile,
+        ...getSiteProfileState()?.profile,
+        useCase: selectedUseCase,
+        petCare: petFields.readPetCare()
+      };
 
-    if (stepId !== 'guide') {
-      return;
-    }
+      const guideIntro = createSetupIntro(
+        `Start with a ${starterTemplate.label.toLowerCase()} you can edit in the Guide Editor, or skip and add content later.`
+      );
+      const starterHelp = createSetupInfoHint(
+        `${HUB_SETUP_FIELD_HELP.starterGuide.helpText} ${starterTemplate.hint}`,
+        'What is the starter guide?'
+      );
+      const starterSummary = document.createElement('p');
+      starterSummary.className = 'hub-setup-starter-summary subtle';
+      starterSummary.textContent = `Includes: ${starterTemplate.summary}. Based on your choice in step 1 (${USE_CASE_OPTIONS.find((option) => option.value === selectedUseCase)?.label ?? 'Owner only'}).`;
 
-    const selectedUseCase = useCase.select.value;
-    const starterTemplate = getStarterGuideTemplate(selectedUseCase);
-    const liveProfile = {
-      ...profile,
-      ...getSiteProfileState()?.profile,
-      useCase: selectedUseCase,
-      petCare: petFields.readPetCare()
-    };
+      const starterRow = document.createElement('div');
+      starterRow.className = 'hub-setup-action-row';
 
-    const guideIntro = createSetupIntro(
-      `Start with a ${starterTemplate.label.toLowerCase()} you can edit in the Guide Editor, or skip and add content later.`
-    );
-    const starterHelp = createSetupInfoHint(
-      `${HUB_SETUP_FIELD_HELP.starterGuide.helpText} ${starterTemplate.hint}`,
-      'What is the starter guide?'
-    );
-    const starterSummary = document.createElement('p');
-    starterSummary.className = 'hub-setup-starter-summary subtle';
-    starterSummary.textContent = `Includes: ${starterTemplate.summary}. Based on your choice in step 1 (${USE_CASE_OPTIONS.find((option) => option.value === selectedUseCase)?.label ?? 'Owner only'}).`;
-
-    const starterRow = document.createElement('div');
-    starterRow.className = 'hub-setup-action-row';
-
-    const starterButton = document.createElement('button');
-    starterButton.type = 'button';
-    starterButton.className = 'settings-action-button hub-setup-action-button';
-    starterButton.textContent = 'Import starter guide';
-    starterButton.addEventListener('click', () => {
-      starterButton.disabled = true;
-      const catalog = buildStarterGuideCatalog(selectedUseCase, liveProfile);
-      void importHouseGuideCatalog(catalog).then(async (result) => {
-        starterButton.disabled = false;
-        if (!result.ok) {
-          showToast(context.toast, result.message || 'Could not import starter guide.');
-          return;
-        }
-        await refreshGuideContent(fetch, { draft: true, force: true });
-        showToast(
-          context.toast,
-          'Starter guide imported. Tap Finish setup when you are ready, or Back to keep editing.',
-          4500
-        );
+      const starterButton = document.createElement('button');
+      starterButton.type = 'button';
+      starterButton.className = 'settings-action-button hub-setup-action-button';
+      starterButton.textContent = 'Import starter guide';
+      starterButton.addEventListener('click', () => {
+        starterButton.disabled = true;
+        const catalog = buildStarterGuideCatalog(selectedUseCase, liveProfile);
+        void importHouseGuideCatalog(catalog).then(async (result) => {
+          starterButton.disabled = false;
+          if (!result.ok) {
+            showToast(context.toast, result.message || 'Could not import starter guide.');
+            return;
+          }
+          await refreshGuideContent(fetch, { draft: true, force: true });
+          showToast(
+            context.toast,
+            'Starter guide imported. Tap Finish setup when you are ready, or Back to keep editing.',
+            4500
+          );
+        });
       });
-    });
 
-    starterRow.append(starterButton, starterHelp.button);
+      starterRow.append(starterButton, starterHelp.button);
 
-    const skipNote = document.createElement('p');
-    skipNote.className = 'subtle';
-    skipNote.textContent =
-      'You can skip import and add topics later in the Guide Editor. Until a guide is imported, the House Guide shows a neutral placeholder — not another home\'s content.';
+      const skipNote = document.createElement('p');
+      skipNote.className = 'subtle';
+      skipNote.textContent =
+        'You can skip import and add topics later in the Guide Editor. Until a guide is imported, the House Guide shows a neutral placeholder — not another home\'s content.';
 
-    body.append(guideIntro, starterSummary, starterRow, starterHelp.panel, skipNote);
+      body.append(guideIntro, starterSummary, starterRow, starterHelp.panel, skipNote);
+    }
+
+    scrollWizardToTop();
   }
 
   backButton.addEventListener('click', () => {

@@ -201,7 +201,7 @@ export const HUB_SETUP_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Collection location and council website appear in the Bins app for sitters.'
+        text: 'Collection location and council website appear in the Bins app for guests on the tablet.'
       }
     ]
   },
@@ -330,7 +330,7 @@ export const HUB_SETUP_FIELD_HELP = {
       'A draft House Guide matched to your use case. Import creates editable topics on your hub — nothing is copied from another property. Skip and use Guide Editor later if you prefer.'
   },
   binCollectionLocation: {
-    hint: 'Where sitters should leave bins on collection day.',
+    hint: 'Where bins are collected from on collection day.',
     helpText:
       'Describe the collection point — for example end of the close, left-hand side. Shown in the Bins app.'
   },
@@ -338,7 +338,7 @@ export const HUB_SETUP_FIELD_HELP = {
     helpText: 'Link to your council\'s bin information or missed-bin reporting page. Optional.'
   },
   binNormalDay: {
-    helpText: 'Your usual weekday when nothing has changed for bank holidays. Optional — helps sitters understand the schedule.'
+    helpText: 'Your usual weekday when nothing has changed for bank holidays. Optional — helps anyone using the tablet understand the schedule.'
   },
   binValidFrom: {
     helpText: 'First date this council calendar applies. Leave blank to infer from your earliest collection date.'
@@ -352,6 +352,66 @@ export const HUB_SETUP_FIELD_HELP = {
       'Paste the secret ICS or webcal URL from Apple, Google, or another provider. Stored on your hub as a secret. Leave blank to skip or keep the current link when saving in Settings.'
   }
 };
+
+/** @typedef {'owner' | 'housesitter' | 'airbnb' | 'both' | string} HubUseCase */
+
+/**
+ * Guest-aware copy for the bin schedule wizard step.
+ * @param {HubUseCase} [useCase]
+ */
+export function getBinScheduleGuestCopy(useCase = 'owner') {
+  const baseLocationHelp =
+    'Describe the collection point — for example end of the close, left-hand side. Shown in the Bins app.';
+
+  switch (useCase) {
+    case 'airbnb':
+      return {
+        intro:
+          'Add collection dates from your council calendar. Short-stay guests see the next collection on the home screen — useful when a stay crosses bin day. You can skip and add dates later via Settings → Open setup wizard.',
+        locationHint: 'Where guests should put bins on collection day.',
+        locationHelpText: `${baseLocationHelp} Mention this in your checkout or House Guide if guests need to take rubbish out.`,
+        normalDayHelp:
+          'Your usual weekday when nothing has changed for bank holidays. Optional — helps guests spot when collection has moved.'
+      };
+    case 'housesitter':
+      return {
+        intro:
+          'Add collection dates from your council calendar. Sitters see the next collection on the home screen before bin day. You can skip and add dates later via Settings → Open setup wizard.',
+        locationHint: 'Where sitters should leave bins on collection day.',
+        locationHelpText: baseLocationHelp,
+        normalDayHelp:
+          'Your usual weekday when nothing has changed for bank holidays. Optional — helps sitters spot when collection has moved.'
+      };
+    case 'both':
+      return {
+        intro:
+          'Add collection dates from your council calendar. Guests and sitters see the next collection on the home screen. You can skip and add dates later via Settings → Open setup wizard.',
+        locationHint: 'Where guests and sitters should leave bins on collection day.',
+        locationHelpText: baseLocationHelp,
+        normalDayHelp:
+          'Your usual weekday when nothing has changed for bank holidays. Optional — helps guests and sitters spot when collection has moved.'
+      };
+    default:
+      return {
+        intro:
+          'Add collection dates from your council calendar. You can skip and add them later in Settings → Open setup wizard. Each date drives the home screen bin reminder.',
+        locationHint: 'Where bins are collected from on collection day.',
+        locationHelpText: baseLocationHelp,
+        normalDayHelp: HUB_SETUP_FIELD_HELP.binNormalDay.helpText ?? ''
+      };
+  }
+}
+
+/**
+ * @param {HubUseCase} [useCase]
+ */
+export function getBinScheduleFieldHelp(useCase = 'owner') {
+  const copy = getBinScheduleGuestCopy(useCase);
+  return {
+    hint: copy.locationHint,
+    helpText: copy.locationHelpText
+  };
+}
 
 /**
  * @param {'hub' | 'contacts' | 'pets' | 'access' | 'bins' | 'calendar' | 'guide'} stepId

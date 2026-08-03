@@ -7,7 +7,11 @@ import {
   normalizeBinSchedule,
   readBinScheduleFromProfile
 } from '../../lib/binScheduleProfile.js';
-import { HUB_SETUP_FIELD_HELP } from './hubSetupHelpContent.js';
+import {
+  getBinScheduleFieldHelp,
+  getBinScheduleGuestCopy,
+  HUB_SETUP_FIELD_HELP
+} from './hubSetupHelpContent.js';
 import { createSetupField, createSetupIntro, createSetupSelect } from './hubSetupFields.js';
 
 const WEEKDAY_OPTIONS = [
@@ -29,25 +33,23 @@ const BIN_TYPE_OPTIONS = [
 
 /**
  * @param {Record<string, unknown>} [profile]
+ * @param {import('./hubSetupHelpContent.js').HubUseCase} [useCase]
  */
-export function createBinScheduleFields(profile = {}) {
+export function createBinScheduleFields(profile = {}, useCase = 'owner') {
   const schedule = readBinScheduleFromProfile(profile);
+  const guestCopy = getBinScheduleGuestCopy(useCase);
 
   const wrap = document.createElement('div');
   wrap.className = 'hub-setup-bin-schedule';
 
-  wrap.append(
-    createSetupIntro(
-      'Add collection dates from your council calendar. You can skip and add them later in Settings → Open setup wizard. Each date drives the home screen bin reminder.'
-    )
-  );
+  wrap.append(createSetupIntro(guestCopy.intro));
 
   const location = createSetupField(
     'Where are bins collected from?',
     schedule.collectionLocation,
     {
       placeholder: 'End of the close, left-hand side',
-      ...HUB_SETUP_FIELD_HELP.binCollectionLocation
+      ...getBinScheduleFieldHelp(useCase)
     }
   );
 
@@ -61,7 +63,10 @@ export function createBinScheduleFields(profile = {}) {
     'Usual collection day (optional)',
     schedule.normalCollectionDay,
     WEEKDAY_OPTIONS,
-    HUB_SETUP_FIELD_HELP.binNormalDay
+    {
+      ...HUB_SETUP_FIELD_HELP.binNormalDay,
+      helpText: guestCopy.normalDayHelp
+    }
   );
 
   const validFrom = createSetupField('Schedule valid from (optional)', schedule.validFrom, {

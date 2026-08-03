@@ -4,6 +4,7 @@ import { createFieldInfoHint, createFieldLabelBlock } from '../src/components/He
 import { OWNER_HELP_SECTIONS } from '../src/components/HelpGuide/ownerHelpContent.js';
 import {
   HUB_SETUP_HELP_SECTIONS,
+  getBinScheduleGuestCopy,
   hubSetupHelpSectionForStep
 } from '../src/components/HubSetup/hubSetupHelpContent.js';
 import { openHubSetupHelp } from '../src/components/HubSetup/hubSetupHelp.js';
@@ -24,6 +25,13 @@ describe('hub setup help', () => {
     expect(document.querySelector('.help-guide-content-title')?.textContent).toBe('Step 4 — Guest access');
     document.querySelector('.help-guide-close')?.dispatchEvent(new Event('click'));
     expect(document.querySelector('.help-guide-overlay')).toBeNull();
+  });
+
+  it('uses guest-aware bin schedule copy for each use case', () => {
+    expect(getBinScheduleGuestCopy('airbnb').locationHint).toContain('guests');
+    expect(getBinScheduleGuestCopy('airbnb').locationHint).not.toContain('sitters');
+    expect(getBinScheduleGuestCopy('housesitter').locationHint).toContain('sitters');
+    expect(getBinScheduleGuestCopy('both').locationHint).toContain('guests and sitters');
   });
 });
 
