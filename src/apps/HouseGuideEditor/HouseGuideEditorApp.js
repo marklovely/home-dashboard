@@ -25,6 +25,7 @@ import {
   saveHouseGuideTopic,
   subscribeToGuideContent
 } from '../../services/guideContentService.js';
+import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
 import { fetchHouseGuideExport, restoreSiteBackup } from '../../api/siteBackupApi.js';
 import {
@@ -183,14 +184,21 @@ function createOnboardingPanel(page, context) {
 
   const copy = document.createElement('p');
   copy.className = 'subtle';
-  copy.textContent =
-    'Copy your current guide into the cloud so you can edit it here without changing code. House sitters and guests will see updates after you publish.';
+  copy.textContent = isTestHubEnvironment()
+    ? 'On the test hub, use Hub setup → Import starter guide to add content for this property. The production Rose Cottage guide cannot be copied here.'
+    : 'Copy your current guide into the cloud so you can edit it here without changing code. House sitters and guests will see updates after you publish.';
 
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'button-primary';
-  button.textContent = 'Copy current guide to cloud';
+  button.textContent = isTestHubEnvironment()
+    ? 'Open hub setup wizard'
+    : 'Copy current guide to cloud';
   button.addEventListener('click', () => {
+    if (isTestHubEnvironment()) {
+      context.navigate('hub-setup');
+      return;
+    }
     button.disabled = true;
     button.textContent = 'Copying…';
     void importBundledGuideToCloud().then((result) => {

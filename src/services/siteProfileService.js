@@ -202,3 +202,16 @@ export async function factoryResetHub(fetchImpl = fetch) {
   await refreshPrivateConfig(fetchImpl);
   return result;
 }
+
+/** @internal */
+export function setSiteProfileStateForTests(profileState) {
+  state = profileState;
+  notify();
+}
+
+/** @internal */
+export function resetSiteProfileStateForTests() {
+  state = null;
+  setupAvailability = 'unknown';
+  setupUnavailableCode = '';
+}

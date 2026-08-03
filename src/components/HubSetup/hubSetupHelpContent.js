@@ -9,7 +9,7 @@ export const HUB_SETUP_HELP_SECTIONS = [
     blocks: [
       {
         type: 'p',
-        text: 'The setup wizard walks you through naming your hub, adding contacts, optional pet care, guest access details, and importing a starter House Guide. You can change everything later in Settings → Home details.'
+        text: 'The setup wizard walks you through naming your hub, adding contacts, optional pet care, guest access details, bin collection dates, optional My Day calendar, and importing a starter House Guide. You can change everything later in Settings → Home details.'
       },
       {
         type: 'h4',
@@ -178,8 +178,67 @@ export const HUB_SETUP_HELP_SECTIONS = [
     ]
   },
   {
+    id: 'step-bins',
+    title: 'Step — Bin collections',
+    keywords: ['bins', 'rubbish', 'recycling', 'garden waste', 'collection', 'council'],
+    blocks: [
+      {
+        type: 'p',
+        text: 'Add each collection date from your council calendar. These dates power the home screen bin reminder and the Bins app timeline — not just a PDF in the House Guide.'
+      },
+      {
+        type: 'h4',
+        text: 'How to add dates'
+      },
+      {
+        type: 'ul',
+        items: [
+          'Open your council bin calendar (PDF or website) and add every date — do not guess from an alternating-week pattern.',
+          'Choose rubbish, recycling, or garden waste for each date.',
+          'Tick changed day for bank-holiday weeks when collection moves off the usual weekday.',
+          'You can skip this step and return via Settings → Open setup wizard.'
+        ]
+      },
+      {
+        type: 'p',
+        text: 'Collection location and council website appear in the Bins app for guests on the tablet.'
+      }
+    ]
+  },
+  {
+    id: 'step-calendar',
+    title: 'Step — My Day calendar',
+    keywords: ['calendar', 'my day', 'apple', 'google', 'ics', 'agenda'],
+    blocks: [
+      {
+        type: 'p',
+        text: 'Optional. Paste a private calendar subscribe link so My Day shows your personal agenda. Stored securely on the hub — no command line or server access needed.'
+      },
+      {
+        type: 'h4',
+        text: 'Apple Calendar'
+      },
+      {
+        type: 'p',
+        text: 'Calendar app → your calendar → Share → Public Calendar (or private subscribe link). Copy the webcal:// or https:// URL.'
+      },
+      {
+        type: 'h4',
+        text: 'Google Calendar'
+      },
+      {
+        type: 'p',
+        text: 'Settings → your calendar → Integrate calendar → Secret address in iCal format. Treat it like a password.'
+      },
+      {
+        type: 'p',
+        text: 'My Day is owner-only — house sitters never see your calendar. You can add or change the link later in Settings → Home details.'
+      }
+    ]
+  },
+  {
     id: 'step-guide',
-    title: 'Step 5 — Starter House Guide',
+    title: 'Starter House Guide',
     keywords: ['starter', 'import', 'guide', 'template', 'skip', 'publish'],
     blocks: [
       {
@@ -255,7 +314,7 @@ export const HUB_SETUP_FIELD_HELP = {
   },
   propertyAddress: {
     helpText:
-      'Structured address for emergencies and directions. Stored on the hub; revealed in protected guide blocks when sharing is enabled.'
+      'Structured address for emergencies and directions. The postcode also sets local weather on this tablet when you continue. Stored on the hub; revealed in protected guide blocks when sharing is enabled.'
   },
   lockbox: {
     hint: 'Optional — key safe or door entry code.',
@@ -269,11 +328,93 @@ export const HUB_SETUP_FIELD_HELP = {
   starterGuide: {
     helpText:
       'A draft House Guide matched to your use case. Import creates editable topics on your hub — nothing is copied from another property. Skip and use Guide Editor later if you prefer.'
+  },
+  binCollectionLocation: {
+    hint: 'Where bins are collected from on collection day.',
+    helpText:
+      'Describe the collection point — for example end of the close, left-hand side. Shown in the Bins app.'
+  },
+  binCouncilUrl: {
+    helpText: 'Link to your council\'s bin information or missed-bin reporting page. Optional.'
+  },
+  binNormalDay: {
+    helpText: 'Your usual weekday when nothing has changed for bank holidays. Optional — helps anyone using the tablet understand the schedule.'
+  },
+  binValidFrom: {
+    helpText: 'First date this council calendar applies. Leave blank to infer from your earliest collection date.'
+  },
+  binValidUntil: {
+    helpText: 'Last date in this calendar period. After this date the app asks for an updated schedule.'
+  },
+  calendarIcsUrl: {
+    hint: 'Private subscribe link — not your normal calendar login.',
+    helpText:
+      'Paste the secret ICS or webcal URL from Apple, Google, or another provider. Stored on your hub as a secret. Leave blank to skip or keep the current link when saving in Settings.'
   }
 };
 
+/** @typedef {'owner' | 'housesitter' | 'airbnb' | 'both' | string} HubUseCase */
+
 /**
- * @param {'hub' | 'contacts' | 'pets' | 'access' | 'guide'} stepId
+ * Guest-aware copy for the bin schedule wizard step.
+ * @param {HubUseCase} [useCase]
+ */
+export function getBinScheduleGuestCopy(useCase = 'owner') {
+  const baseLocationHelp =
+    'Describe the collection point — for example end of the close, left-hand side. Shown in the Bins app.';
+
+  switch (useCase) {
+    case 'airbnb':
+      return {
+        intro:
+          'Add collection dates from your council calendar. Short-stay guests see the next collection on the home screen — useful when a stay crosses bin day. You can skip and add dates later via Settings → Open setup wizard.',
+        locationHint: 'Where guests should put bins on collection day.',
+        locationHelpText: `${baseLocationHelp} Mention this in your checkout or House Guide if guests need to take rubbish out.`,
+        normalDayHelp:
+          'Your usual weekday when nothing has changed for bank holidays. Optional — helps guests spot when collection has moved.'
+      };
+    case 'housesitter':
+      return {
+        intro:
+          'Add collection dates from your council calendar. Sitters see the next collection on the home screen before bin day. You can skip and add dates later via Settings → Open setup wizard.',
+        locationHint: 'Where sitters should leave bins on collection day.',
+        locationHelpText: baseLocationHelp,
+        normalDayHelp:
+          'Your usual weekday when nothing has changed for bank holidays. Optional — helps sitters spot when collection has moved.'
+      };
+    case 'both':
+      return {
+        intro:
+          'Add collection dates from your council calendar. Guests and sitters see the next collection on the home screen. You can skip and add dates later via Settings → Open setup wizard.',
+        locationHint: 'Where guests and sitters should leave bins on collection day.',
+        locationHelpText: baseLocationHelp,
+        normalDayHelp:
+          'Your usual weekday when nothing has changed for bank holidays. Optional — helps guests and sitters spot when collection has moved.'
+      };
+    default:
+      return {
+        intro:
+          'Add collection dates from your council calendar. You can skip and add them later in Settings → Open setup wizard. Each date drives the home screen bin reminder.',
+        locationHint: 'Where bins are collected from on collection day.',
+        locationHelpText: baseLocationHelp,
+        normalDayHelp: HUB_SETUP_FIELD_HELP.binNormalDay.helpText ?? ''
+      };
+  }
+}
+
+/**
+ * @param {HubUseCase} [useCase]
+ */
+export function getBinScheduleFieldHelp(useCase = 'owner') {
+  const copy = getBinScheduleGuestCopy(useCase);
+  return {
+    hint: copy.locationHint,
+    helpText: copy.locationHelpText
+  };
+}
+
+/**
+ * @param {'hub' | 'contacts' | 'pets' | 'access' | 'bins' | 'calendar' | 'guide'} stepId
  */
 export function hubSetupHelpSectionForStep(stepId) {
   const map = {
@@ -281,6 +422,8 @@ export function hubSetupHelpSectionForStep(stepId) {
     contacts: 'step-contacts',
     pets: 'step-pets',
     access: 'step-access',
+    bins: 'step-bins',
+    calendar: 'step-calendar',
     guide: 'step-guide'
   };
   return map[stepId] ?? 'overview';

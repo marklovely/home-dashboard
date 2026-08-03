@@ -13,6 +13,7 @@ import {
 } from '../api/houseGuideApi.js';
 import { getFallbackGuideCatalog, getBundledSiteCatalog } from '../content/houseguide/providers/jsonGuideProvider.js';
 import { getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
+import { isTestHubEnvironment } from '../auth/hubEnvironment.js';
 import { isOwnerUserMode } from '../auth/userMode.js';
 import { cacheGuideCatalogForOffline } from './guideOfflineCache.js';
 
@@ -41,6 +42,38 @@ const listeners = new Set();
 /** @type {AbortController | null} */
 let inFlightAbort = null;
 
+/**
+ * Fingerprints of the bundled Rose Cottage guide — must never appear on the test hub.
+ */
+const PRODUCTION_GUIDE_MARKERS = [
+  'Scooter',
+  'Vets 4 Pets',
+  'Contacting Mark and Donna',
+  'Waterlooville',
+  'Rose Cottage'
+];
+
+/**
+ * @param {import('../types/guideContent.js').GuideCatalog | null | undefined} catalog
+ */
+function looksLikeProductionGuideCatalog(catalog) {
+  const blob = JSON.stringify(catalog ?? {});
+  return PRODUCTION_GUIDE_MARKERS.some((marker) => blob.includes(marker));
+}
+
+/**
+ * Local guide shown when cloud CMS is not seeded. Test hubs never use Rose Cottage bundled JSON.
+ */
+function getLocalGuideCatalogFallback() {
+  if (isTestHubEnvironment()) {
+    return getFallbackGuideCatalog();
+  }
+  if (import.meta.env.MODE === 'test') {
+    return getBundledSiteCatalog();
+  }
+  return getFallbackGuideCatalog();
+}
+
 function notify() {
   for (const listener of listeners) {
     listener(state);
@@ -65,8 +98,7 @@ export function subscribeToGuideContent(listener) {
  */
 export function getActiveGuideCatalog() {
   if (state.catalog) return state.catalog;
-  if (import.meta.env.MODE === 'test') return getBundledSiteCatalog();
-  return getFallbackGuideCatalog();
+  return getLocalGuideCatalogFallback();
 }
 
 export function isGuideContentRemote() {
@@ -89,7 +121,7 @@ export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
       source: 'json',
       seeded: false,
       draftCount: 0,
-      catalog: import.meta.env.MODE === 'test' ? getBundledSiteCatalog() : getFallbackGuideCatalog(),
+      catalog: getLocalGuideCatalogFallback(),
       message: ''
     };
     notify();
@@ -119,7 +151,7 @@ export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
       source: result.status >= 500 ? 'unavailable' : 'json',
       seeded: false,
       draftCount: 0,
-      catalog: import.meta.env.MODE === 'test' ? getBundledSiteCatalog() : getFallbackGuideCatalog(),
+      catalog: getLocalGuideCatalogFallback(),
       message: result.status >= 500 ? result.message : ''
     };
     notify();
@@ -132,8 +164,21 @@ export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
       source: 'json',
       seeded: false,
       draftCount: 0,
-      catalog: import.meta.env.MODE === 'test' ? getBundledSiteCatalog() : getFallbackGuideCatalog(),
+      catalog: getLocalGuideCatalogFallback(),
       message: ''
+    };
+    notify();
+    return state;
+  }
+
+  if (isTestHubEnvironment() && looksLikeProductionGuideCatalog(payload.catalog)) {
+    state = {
+      source: 'json',
+      seeded: false,
+      draftCount: 0,
+      catalog: getFallbackGuideCatalog(),
+      message:
+        'Production guide content was blocked on the test hub. Finish hub setup and import a starter guide, or use Settings → Factory reset.'
     };
     notify();
     return state;
@@ -180,6 +225,13 @@ function normalizeRemoteCatalog(remoteCatalog) {
  * @param {typeof fetch} [fetchImpl]
  */
 export async function importBundledGuideToCloud(fetchImpl = fetch) {
+  if (isTestHubEnvironment()) {
+    return {
+      ok: false,
+      message:
+        'The test hub cannot copy the production bundled guide. Use Hub setup → Import starter guide, or write topics in the Guide Editor.'
+    };
+  }
   const catalog = getBundledSiteCatalog();
   const result = await importHouseGuideCatalog(catalog, { fetchImpl });
   if (!result.ok) return result;

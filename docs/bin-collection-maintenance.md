@@ -26,6 +26,8 @@ Also update `validFrom` / `validUntil` in the `*ScheduleMeta` exports when the P
 4. Run `npm run check` — tests assert event counts and the four known January/December bank-holiday dates.
 5. Open the Bin Collection app and confirm the **next** collection and **upcoming** list against the PDF.
 
+**Owner self-service:** Hub setup wizard → **Bin collections** step (or Settings → Open setup wizard). Add each date manually — no command line required. Dates are stored in `site_profile.binSchedule` on the hub. Bundled JS files in this repo remain the fallback until an owner configures their schedule.
+
 ## Schedule expiry
 
 When `asOf` is after `validUntil` (currently `2026-10-31`), the UI shows **A newer collection calendar is needed** and does not generate future dates. Replace the data files above; no Worker or API change is required unless you choose to host schedules remotely later.

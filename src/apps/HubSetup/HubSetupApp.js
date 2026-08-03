@@ -23,6 +23,14 @@ import {
 } from '../../content/houseguide/templates/starterGuideTemplates.js';
 import { importHouseGuideCatalog } from '../../api/houseGuideApi.js';
 import {
+  createBinScheduleFields,
+  createCalendarConnectionField
+} from '../../components/HubSetup/binScheduleFields.js';
+import {
+  validateBinSchedule
+} from '../../lib/binScheduleProfile.js';
+import {
+  fetchHubSecretsConfigured,
   getSiteProfileState,
   getSiteSetupUnavailableMessage,
   isOnboardingComplete,
@@ -32,6 +40,7 @@ import {
   syncSiteProfileFromServer
 } from '../../services/siteProfileService.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
+import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
   getHubSetupWizardStep,
@@ -46,7 +55,7 @@ const USE_CASE_OPTIONS = [
   { value: 'both', label: 'Both sitters and short lets' }
 ];
 
-/** @typedef {'hub' | 'contacts' | 'pets' | 'access' | 'guide'} WizardStepId */
+/** @typedef {'hub' | 'contacts' | 'pets' | 'access' | 'bins' | 'calendar' | 'guide'} WizardStepId */
 
 /**
  * @param {string} useCase
@@ -58,7 +67,7 @@ function getWizardSteps(useCase) {
   if (useCase === 'housesitter' || useCase === 'both') {
     steps.push('pets');
   }
-  steps.push('access', 'guide');
+  steps.push('access', 'bins', 'calendar', 'guide');
   return steps;
 }
 
@@ -181,6 +190,18 @@ function mountHubSetupWizard(viewport, context) {
   });
 
   const guestFields = createGuestAccessFields(profile);
+  let binFields = createBinScheduleFields(profile, String(profile.useCase ?? 'owner'));
+  let calendarFields = createCalendarConnectionField();
+
+  void fetchHubSecretsConfigured().then((result) => {
+    if (result.ok && result.data?.configured?.calendar_ics_url) {
+      calendarFields = createCalendarConnectionField({ configured: true });
+      if (currentStepId() === 'calendar') {
+        renderStep();
+      }
+    }
+  });
+
   const petFields = createPetDetailsFields(profile);
 
   function wizardSteps() {
@@ -200,6 +221,16 @@ function mountHubSetupWizard(viewport, context) {
     return step >= wizardSteps().length - 1;
   }
 
+  function scrollWizardToTop() {
+    requestAnimationFrame(() => {
+      page.scrollTop = 0;
+      if (viewport.scrollTop > 0) {
+        viewport.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+    });
+  }
+
   function renderStep() {
     setHubSetupWizardStep(step);
     progress.textContent = `Step ${step + 1} of ${wizardSteps().length}`;
@@ -216,81 +247,83 @@ function mountHubSetupWizard(viewport, context) {
         hubName.wrap,
         useCase.wrap
       );
-      return;
-    }
-
-    if (stepId === 'contacts') {
+    } else if (stepId === 'contacts') {
       body.append(
         createSetupIntro('Who should guests call? Names appear in the House Guide; phone and email are stored securely on your hub.'),
         primaryGroup,
         secondaryGroup
       );
-      return;
-    }
-
-    if (stepId === 'pets') {
+    } else if (stepId === 'pets') {
       body.append(petFields.wrap);
-      return;
-    }
-
-    if (stepId === 'access') {
+    } else if (stepId === 'access') {
       body.append(guestFields.wrap);
-      return;
+    } else if (stepId === 'bins') {
+      const selectedUseCase = useCase.select.value;
+      const schedule = binFields.readBinSchedule();
+      binFields = createBinScheduleFields(
+        { ...getSiteProfileState()?.profile, binSchedule: schedule },
+        selectedUseCase
+      );
+      body.append(binFields.wrap);
+    } else if (stepId === 'calendar') {
+      body.append(calendarFields.wrap);
+    } else if (stepId === 'guide') {
+      const selectedUseCase = useCase.select.value;
+      const starterTemplate = getStarterGuideTemplate(selectedUseCase);
+      const liveProfile = {
+        ...profile,
+        ...getSiteProfileState()?.profile,
+        useCase: selectedUseCase,
+        petCare: petFields.readPetCare()
+      };
+
+      const guideIntro = createSetupIntro(
+        `Start with a ${starterTemplate.label.toLowerCase()} you can edit in the Guide Editor, or skip and add content later.`
+      );
+      const starterHelp = createSetupInfoHint(
+        `${HUB_SETUP_FIELD_HELP.starterGuide.helpText} ${starterTemplate.hint}`,
+        'What is the starter guide?'
+      );
+      const starterSummary = document.createElement('p');
+      starterSummary.className = 'hub-setup-starter-summary subtle';
+      starterSummary.textContent = `Includes: ${starterTemplate.summary}. Based on your choice in step 1 (${USE_CASE_OPTIONS.find((option) => option.value === selectedUseCase)?.label ?? 'Owner only'}).`;
+
+      const starterRow = document.createElement('div');
+      starterRow.className = 'hub-setup-action-row';
+
+      const starterButton = document.createElement('button');
+      starterButton.type = 'button';
+      starterButton.className = 'settings-action-button hub-setup-action-button';
+      starterButton.textContent = 'Import starter guide';
+      starterButton.addEventListener('click', () => {
+        starterButton.disabled = true;
+        const catalog = buildStarterGuideCatalog(selectedUseCase, liveProfile);
+        void importHouseGuideCatalog(catalog).then(async (result) => {
+          starterButton.disabled = false;
+          if (!result.ok) {
+            showToast(context.toast, result.message || 'Could not import starter guide.');
+            return;
+          }
+          await refreshGuideContent(fetch, { draft: true, force: true });
+          showToast(
+            context.toast,
+            'Starter guide imported. Tap Finish setup when you are ready, or Back to keep editing.',
+            4500
+          );
+        });
+      });
+
+      starterRow.append(starterButton, starterHelp.button);
+
+      const skipNote = document.createElement('p');
+      skipNote.className = 'subtle';
+      skipNote.textContent =
+        'You can skip import and add topics later in the Guide Editor. Until a guide is imported, the House Guide shows a neutral placeholder — not another home\'s content.';
+
+      body.append(guideIntro, starterSummary, starterRow, starterHelp.panel, skipNote);
     }
 
-    const selectedUseCase = useCase.select.value;
-    const starterTemplate = getStarterGuideTemplate(selectedUseCase);
-    const liveProfile = {
-      ...profile,
-      ...getSiteProfileState()?.profile,
-      useCase: selectedUseCase,
-      petCare: petFields.readPetCare()
-    };
-
-    const guideIntro = createSetupIntro(
-      `Start with a ${starterTemplate.label.toLowerCase()} you can edit in the Guide Editor, or skip and add content later.`
-    );
-    const starterHelp = createSetupInfoHint(
-      `${HUB_SETUP_FIELD_HELP.starterGuide.helpText} ${starterTemplate.hint}`,
-      'What is the starter guide?'
-    );
-    const starterSummary = document.createElement('p');
-    starterSummary.className = 'hub-setup-starter-summary subtle';
-    starterSummary.textContent = `Includes: ${starterTemplate.summary}. Based on your choice in step 1 (${USE_CASE_OPTIONS.find((option) => option.value === selectedUseCase)?.label ?? 'Owner only'}).`;
-
-    const starterRow = document.createElement('div');
-    starterRow.className = 'hub-setup-action-row';
-
-    const starterButton = document.createElement('button');
-    starterButton.type = 'button';
-    starterButton.className = 'settings-action-button hub-setup-action-button';
-    starterButton.textContent = 'Import starter guide';
-    starterButton.addEventListener('click', () => {
-      starterButton.disabled = true;
-      const catalog = buildStarterGuideCatalog(selectedUseCase, liveProfile);
-      void importHouseGuideCatalog(catalog).then(async (result) => {
-        starterButton.disabled = false;
-        if (!result.ok) {
-          showToast(context.toast, result.message || 'Could not import starter guide.');
-          return;
-        }
-        await refreshGuideContent(fetch, { draft: true, force: true });
-        showToast(
-          context.toast,
-          'Starter guide imported. Tap Finish setup when you are ready, or Back to keep editing.',
-          4500
-        );
-      });
-    });
-
-    starterRow.append(starterButton, starterHelp.button);
-
-    const skipNote = document.createElement('p');
-    skipNote.className = 'subtle';
-    skipNote.textContent =
-      'You can skip import and add topics later in the Guide Editor. Until a guide is imported, the House Guide shows a neutral placeholder — not another home\'s content.';
-
-    body.append(guideIntro, starterSummary, starterRow, starterHelp.panel, skipNote);
+    scrollWizardToTop();
   }
 
   backButton.addEventListener('click', () => {
@@ -387,8 +420,38 @@ function mountHubSetupWizard(viewport, context) {
           }
           const secretsResult = await saveHubSecrets(readGuestAccessSecrets(guestFields));
           if (!handleSaveResult(secretsResult, 'Could not save guest access details.')) return;
-          const addressResult = await saveSiteProfile(readPropertyAddressProfilePatch(guestFields));
+          const addressPatch = readPropertyAddressProfilePatch(guestFields);
+          const addressResult = await saveSiteProfile(addressPatch);
           if (!handleSaveResult(addressResult, 'Could not save property address.')) return;
+          const weatherResult = await syncWeatherLocationFromPropertyAddress(
+            addressPatch.propertyAddress
+          );
+          if (!weatherResult.ok && !weatherResult.skipped) {
+            showToast(
+              context.toast,
+              weatherResult.message || 'Address saved, but weather location could not be updated.',
+              5000
+            );
+          }
+        }
+
+        if (stepId === 'bins') {
+          const binSchedule = binFields.readBinSchedule();
+          const validation = validateBinSchedule(binSchedule);
+          if (!validation.ok) {
+            showToast(context.toast, validation.message || 'Could not save bin schedule.');
+            return;
+          }
+          const result = await saveSiteProfile({ binSchedule });
+          if (!handleSaveResult(result, 'Could not save bin schedule.')) return;
+        }
+
+        if (stepId === 'calendar') {
+          const calendarPatch = calendarFields.readCalendarPatch();
+          if (Object.keys(calendarPatch).length) {
+            const secretsResult = await saveHubSecrets(calendarPatch);
+            if (!handleSaveResult(secretsResult, 'Could not save calendar link.')) return;
+          }
         }
 
         if (stepId === 'guide') {

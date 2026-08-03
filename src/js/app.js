@@ -1,4 +1,4 @@
-import { CONFIG } from '../config.js';
+import { CONFIG } from '../config/resolveHubConfig.js';
 import { initialiseHeader } from '../components/Header/Header.js';
 import { createAppShell, HOME_ROUTE, navigate } from '../shell/AppShell.js';
 import { getCurrentRoute } from '../shell/router.js';
@@ -9,7 +9,8 @@ import { initialiseWeather } from './modules/weather.js';
 import { initTheme } from '../services/themeService.js';
 import { initDisplayPreferences } from '../services/displayPreferencesService.js';
 import { initScreensaverService } from '../services/screensaverService.js';
-import { initWeatherLocationPreference } from '../services/weatherLocationService.js';
+import { initWeatherLocationPreference, getWeatherLocationOverride } from '../services/weatherLocationService.js';
+import { syncWeatherLocationFromPropertyAddress } from '../services/weatherLocationFromProfile.js';
 import '../apps/index.js';
 import '../widgets/index.js';
 import { preloadPrivateConfig } from '../services/privateConfigService.js';
@@ -160,7 +161,10 @@ async function initialiseDashboard() {
     });
   });
 
-  void syncSiteProfileFromServer().then(() => {
+  void syncSiteProfileFromServer().then((state) => {
+    if (!getWeatherLocationOverride() && state?.profile?.propertyAddress) {
+      void syncWeatherLocationFromPropertyAddress(state.profile.propertyAddress);
+    }
     if (!isOwnerUserMode()) return;
     if (isOnboardingComplete()) {
       if (getCurrentRoute() === 'hub-setup') {

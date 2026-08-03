@@ -1,5 +1,6 @@
 import { getProtectedDisplayValue } from '../../content/houseguide/privateContent.js';
 import { getGuideTopic } from '../../services/guideService.js';
+import { getSiteProfileState } from '../../services/siteProfileService.js';
 import { createGuidePanelOverlay } from '../../widgets/HouseGuide/guideActions.js';
 import { renderGuideTopicPage } from '../../widgets/HouseGuide/guidePageRenderer.js';
 
@@ -42,15 +43,18 @@ function mountEmergencyOverlay(host, overlay) {
 }
 
 /**
- * @param {'mark' | 'donna'} person
+ * @param {'primary' | 'secondary'} person
  */
 function buildOwnerContactOverlay(person) {
-  const prefix = person === 'mark' ? 'contacts.mark' : 'contacts.donna';
-  const firstName = person === 'mark' ? 'Mark' : 'Donna';
+  const profile = getSiteProfileState()?.profile ?? {};
+  const contact =
+    person === 'primary' ? profile.primaryContact ?? {} : profile.secondaryContact ?? {};
+  const prefix = person === 'primary' ? 'contacts.mark' : 'contacts.donna';
+  const displayName = String(contact.name ?? '').trim() || (person === 'primary' ? 'Primary contact' : 'Secondary contact');
   return createGuidePanelOverlay({
     type: 'panel',
-    label: `Contact ${firstName}`,
-    heading: `Contact ${firstName}`,
+    label: `Contact ${displayName}`,
+    heading: `Contact ${displayName}`,
     items: [
       { label: 'Phone', value: getProtectedDisplayValue(`${prefix}.phone`, 'contact') },
       { label: 'Email', value: getProtectedDisplayValue(`${prefix}.email`, 'contact') }
@@ -60,7 +64,7 @@ function buildOwnerContactOverlay(person) {
 
 /**
  * @param {HTMLElement} host
- * @param {'mark' | 'donna'} person
+ * @param {'primary' | 'secondary'} person
  */
 export function openOwnerContactOverlay(host, person) {
   mountEmergencyOverlay(host, buildOwnerContactOverlay(person));

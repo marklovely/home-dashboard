@@ -30,6 +30,7 @@ import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { createHubSetupHelpButton } from '../../components/HubSetup/hubSetupHelp.js';
+import { createCalendarConnectionField } from '../../components/HubSetup/binScheduleFields.js';
 import { HUB_SETUP_FIELD_HELP } from '../../components/HubSetup/hubSetupHelpContent.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
@@ -46,6 +47,7 @@ import {
   uploadedMediaRestoreHint
 } from '../../utils/backupJson.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
+import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
   createContactGroup,
@@ -58,6 +60,7 @@ import {
 } from '../../components/HubSetup/hubSetupFields.js';
 import {
   factoryResetHub,
+  fetchHubSecretsConfigured,
   getSiteProfileState,
   saveHubSecrets,
   saveSiteProfile
@@ -276,6 +279,17 @@ function createHomeDetailsFields(context) {
     variant: 'secondary'
   });
   const guestFields = createGuestAccessFields(profile);
+  let calendarFields = createCalendarConnectionField();
+
+  void fetchHubSecretsConfigured().then((result) => {
+    if (result.ok && result.data?.configured?.calendar_ics_url) {
+      const existing = calendarFields;
+      calendarFields = createCalendarConnectionField({ configured: true });
+      if (existing.wrap.parentElement) {
+        existing.wrap.replaceWith(calendarFields.wrap);
+      }
+    }
+  });
 
   const wizardButton = document.createElement('button');
   wizardButton.type = 'button';
@@ -316,9 +330,14 @@ function createHomeDetailsFields(context) {
           return;
         }
 
+        void syncWeatherLocationFromPropertyAddress(
+          readPropertyAddressProfilePatch(guestFields).propertyAddress
+        );
+
         const secretsPatch = {
           ...contactSecretsPatch(contacts),
-          ...readGuestAccessSecrets(guestFields)
+          ...readGuestAccessSecrets(guestFields),
+          ...calendarFields.readCalendarPatch()
         };
         if (Object.keys(secretsPatch).length) {
           const pin = secretsPatch.owner_pin;
@@ -336,6 +355,7 @@ function createHomeDetailsFields(context) {
         guestFields.ownerPin.input.value = '';
         guestFields.wifiPassword.input.value = '';
         guestFields.lockbox.input.value = '';
+        calendarFields.input.value = '';
         context.refreshShell?.();
         showToast(context.toast, 'Home details saved.');
       } finally {
@@ -344,7 +364,7 @@ function createHomeDetailsFields(context) {
     })();
   });
 
-  wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, saveButton, wizardButton);
+  wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, calendarFields.wrap, saveButton, wizardButton);
   return wrap;
 }
 
@@ -662,6 +682,18 @@ function createClockFormatField(onRefresh) {
 
 /**
  * @param {string} name
+ */
+function syncSettingsRadioGroup(name) {
+  for (const input of document.querySelectorAll(`input[type="radio"][name="${name}"]`)) {
+    const option = input.closest('.settings-option');
+    if (option) {
+      option.classList.toggle('is-selected', input.checked);
+    }
+  }
+}
+
+/**
+ * @param {string} name
  * @param {string} value
  * @param {string} label
  * @param {boolean} checked
@@ -671,6 +703,7 @@ function createClockFormatField(onRefresh) {
 function createRadioOption(name, value, label, checked, hint, onSelect) {
   const optionLabel = document.createElement('label');
   optionLabel.className = 'settings-option';
+  if (checked) optionLabel.classList.add('is-selected');
   const input = document.createElement('input');
   input.type = 'radio';
   input.name = name;
@@ -678,6 +711,7 @@ function createRadioOption(name, value, label, checked, hint, onSelect) {
   input.checked = checked;
   input.addEventListener('change', () => {
     if (!input.checked) return;
+    syncSettingsRadioGroup(name);
     onSelect();
   });
   const textWrap = document.createElement('span');
@@ -915,10 +949,13 @@ export const settingsApp = defineApp({
   profiles: ['owner', 'housesitter'],
   summary: settingsSummary,
   mount(viewport, context) {
-    const refresh = () => {
+    /** @type {() => void} */
+    let refreshSettings = () => {};
+    refreshSettings = () => {
       refreshAboutValues(viewport);
       context.refreshShell?.();
+      mountSettingsApp(viewport, context, refreshSettings);
     };
-    mountSettingsApp(viewport, context, refresh);
+    mountSettingsApp(viewport, context, refreshSettings);
   }
 });

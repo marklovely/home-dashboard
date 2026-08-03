@@ -59,6 +59,7 @@ bucket_name = "lovely-home-guide-media"
 name = "lovely-home-hub-api-test"
 
 [env.test.vars]
+HUB_ENVIRONMENT = "test"
 ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://test.lovely-home.co.uk,https://home-dashboard-test.pages.dev,https://*.home-dashboard-test.pages.dev,https://*.pages.dev"
 HOME_LATITUDE = "51.5074"
 HOME_LONGITUDE = "-0.1278"
