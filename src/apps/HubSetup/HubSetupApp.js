@@ -40,6 +40,7 @@ import {
   syncSiteProfileFromServer
 } from '../../services/siteProfileService.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
+import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
   getHubSetupWizardStep,
@@ -419,8 +420,19 @@ function mountHubSetupWizard(viewport, context) {
           }
           const secretsResult = await saveHubSecrets(readGuestAccessSecrets(guestFields));
           if (!handleSaveResult(secretsResult, 'Could not save guest access details.')) return;
-          const addressResult = await saveSiteProfile(readPropertyAddressProfilePatch(guestFields));
+          const addressPatch = readPropertyAddressProfilePatch(guestFields);
+          const addressResult = await saveSiteProfile(addressPatch);
           if (!handleSaveResult(addressResult, 'Could not save property address.')) return;
+          const weatherResult = await syncWeatherLocationFromPropertyAddress(
+            addressPatch.propertyAddress
+          );
+          if (!weatherResult.ok && !weatherResult.skipped) {
+            showToast(
+              context.toast,
+              weatherResult.message || 'Address saved, but weather location could not be updated.',
+              5000
+            );
+          }
         }
 
         if (stepId === 'bins') {

@@ -314,7 +314,7 @@ export const HUB_SETUP_FIELD_HELP = {
   },
   propertyAddress: {
     helpText:
-      'Structured address for emergencies and directions. Stored on the hub; revealed in protected guide blocks when sharing is enabled.'
+      'Structured address for emergencies and directions. The postcode also sets local weather on this tablet when you continue. Stored on the hub; revealed in protected guide blocks when sharing is enabled.'
   },
   lockbox: {
     hint: 'Optional — key safe or door entry code.',

@@ -1,7 +1,7 @@
 import { isTestHubEnvironment } from '../auth/hubEnvironment.js';
 
 /** Apps hidden in test until site-specific setup exists. */
-const TEST_HIDDEN_APP_IDS = ['controls'];
+const TEST_HIDDEN_APP_IDS = ['controls', 'scooter'];
 
 /**
  * @param {import('../types/app.js').App} app
