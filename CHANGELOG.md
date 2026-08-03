@@ -2,6 +2,75 @@
 
 ## Unreleased
 
+## 2.1.0
+
+Minor release: onboarding wizard, vanilla test environment, kiosk reliability, and appearance fixes for launch readiness.
+
+### Onboarding and hub setup
+
+- **Hub setup wizard** — step-by-step first-run flow for property name, guest type (Airbnb, house sitter, both, or owner-only), contacts, Wi‑Fi, address, owner PIN, and starter guide import
+- **Bin collections in wizard** — manual collection dates, collection location, and council recycling URL; integrated with the Bins app via site profile
+- **Calendar in wizard** — Apple ICS subscribe URL saved to D1 (`hub_secrets.calendar_ics_url`) without Wrangler CLI for end users
+- **Field tooltips and in-app help** — contextual help on setup fields and a searchable step-by-step hub setup guide
+- **Purpose-specific starter guides** — separate templates for Airbnb, house sitter, both, and owner-only homes (no bundled personal content)
+- **Factory reset** — Settings → wipe hub profile, secrets, and guide content for a clean restart
+- **In-app secrets** — owners configure Wi‑Fi, contacts, lockbox, and calendar from Settings without editing Worker env vars
+- **Guest-aware copy** — bin setup and welcome text adapt to Airbnb vs sitter vs both vs owner
+- **Wizard scroll fixes** — each step scrolls to top on advance; improved field validation and lockbox masking
+
+### Test environment and data isolation
+
+- **Isolated test stack** — separate Cloudflare Pages, Worker, and D1 for `test.lovely-home.co.uk` with a visible TEST banner
+- **Vanilla test defaults** — empty Virtual Button config, demo bin schedule, no personal calendar on My Day
+- **No production data leakage** — test hubs use a neutral House Guide fallback; bundled Rose Cottage content cannot be copied to test
+- **Emergency app** — contact and utility cards built from site profile and guide content, not hardcoded owner names or vet details
+- **Scooter app hidden on test** — pet-specific app only appears when configured for that hub
+- **Production guide blocked on test** — if prod guide fingerprints are detected in test D1, content is rejected with a reset prompt
+- **Test Worker secret isolation** — test Worker does not fall back to production `PRIVATE_*` env vars for contacts or Wi‑Fi
+
+### Kiosk tablet reliability (Fully Kiosk / Android)
+
+- **PDF manuals in-page** — appliance PDFs render with PDF.js canvas scrolling (no new tab — required for Fully Kiosk)
+- **Session keepalive** — pings `/api/device-session` every 6 hours and on screen wake to renew House Sitter Mode
+- **Access re-auth banner** — clear prompt when Cloudflare Access expires; sitter mode resumes after sign-in without re-enabling in Settings
+- **Control retries** — virtual button calls retry once on 502/503/504 with clearer 401 errors
+- **Light theme on tablet** — theme-aware nav, overlays, toasts, and screensaver; `theme-color` meta updates dynamically
+- **Home screen size on tablet** — reliable radio selection (`.is-selected` fallback for WebViews without `:has()`); zoom with transform fallback for scaling
+- **Kiosk documentation** — checklist for Fully Kiosk settings and 30-day Access session duration
+
+### Guide Editor
+
+- **TipTap WYSIWYG** — replaces Markdown toolbar with rich text editing, formatting toolbar, and link support
+- **Emoji picker** — full emoji palette for topic content
+- **Modernised editor styling** — cleaner WYSIWYG layout and restyled action buttons
+- **Simplified topic keywords** — easier search term entry
+
+### Site backup and restore
+
+- **Download site backup** — JSON export of House Guide and site settings from Settings (owners)
+- **Restore from backup** — import guide content to the current hub with confirmation dialog
+- **Guide Editor export fallback** — graceful handling when export API is not yet deployed
+
+### My Day and calendar
+
+- **My Day setup guide** — in-app guidance when calendar is not configured (especially on test)
+- **Calendar blocked on test hub** — personal calendar never fetched on `test.lovely-home.co.uk`
+- **Calendar via hub secrets** — ICS URL stored in D1 and read by Worker at runtime
+- **Dynamic owner greeting** — My Day salutation uses primary contact name from profile, not a hardcoded default
+
+### Platform and stability
+
+- **Device session bootstrap** — no startup hang when session API is slow
+- **Hub setup during sitter mode** — owners can finish onboarding without leaving sitter device mode
+- **Production safety** — setup wizard does not hijack production when API is unavailable; leaves onboarded hubs alone
+- **localStorage fallback** — setup progress persists locally when hub API routes are not deployed yet
+- **CI and deploy fixes** — Worker dependencies installed in Pages workflow; Europe/London timezone in calendar tests
+
+### Documentation
+
+- Cloudflare test environment, onboarding, kiosk tablet, and bin collection docs updated
+- Architecture notes for appearance settings, test isolation, and hub environment detection
+
 ## 2.0.0
 
 Major release: cloud House Guide CMS, appliance manuals, sitter secrets, and integrated help.
