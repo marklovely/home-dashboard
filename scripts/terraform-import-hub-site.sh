@@ -151,6 +151,11 @@ fi
 import_resource() {
   local address="$1"
   local import_id="$2"
+  if terraform state show -no-color "$address" >/dev/null 2>&1; then
+    echo ""
+    echo "==> skip (already in state): ${address}"
+    return 0
+  fi
   echo ""
   echo "==> terraform import ${address}"
   echo "    id: ${import_id}"
@@ -158,8 +163,8 @@ import_resource() {
 }
 
 import_resource "${MODULE}.cloudflare_d1_database.manuals" "${ACCOUNT_ID}/${D1_ID}"
-import_resource "${MODULE}.cloudflare_r2_bucket.guides" "${ACCOUNT_ID}/${R2_GUIDES}"
-import_resource "${MODULE}.cloudflare_r2_bucket.media" "${ACCOUNT_ID}/${R2_MEDIA}"
+import_resource "${MODULE}.cloudflare_r2_bucket.guides" "${ACCOUNT_ID}/${R2_GUIDES}/default"
+import_resource "${MODULE}.cloudflare_r2_bucket.media" "${ACCOUNT_ID}/${R2_MEDIA}/default"
 import_resource "${MODULE}.cloudflare_zero_trust_access_application.pages" "accounts/${ACCOUNT_ID}/${PAGES_APP_ID}"
 import_resource "${MODULE}.cloudflare_zero_trust_access_application.worker" "accounts/${ACCOUNT_ID}/${WORKER_APP_ID}"
 import_resource "${MODULE}.cloudflare_pages_project.dashboard" "${ACCOUNT_ID}/${PAGES_NAME}"
