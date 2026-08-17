@@ -1,0 +1,32 @@
+# Import existing test stack into Terraform (see docs/platform-terraform.md).
+# Copy relevant blocks into terraform/environments/hub.tfvars (never commit real values).
+#
+# Prerequisites:
+#   - sandbox (or other sites) already in state OR import test alone on a fresh init
+#   - sites.test.terraform = true
+#   - hub_proxy_secret = existing HUB_PROXY_SECRET (required for import — do not rotate)
+#   - Remove HUB_PROXY_SECRET from Pages dashboard before running import script
+
+cloudflare_account_id = "YOUR_ACCOUNT_ID"
+cloudflare_zone_id    = "YOUR_ZONE_ID"
+workers_subdomain     = "mark-lovely67"
+access_team_domain    = "lovely-home"
+zone_name             = "lovely-home.co.uk"
+
+owner_emails = [
+  "you@example.com",
+]
+
+sitter_emails = [
+  # "sitter@example.com",
+]
+
+sites = {
+  test = {
+    hostname         = "test.lovely-home.co.uk"
+    hub_environment  = "test"
+    vanilla          = true
+    terraform        = true
+    hub_proxy_secret = "PASTE_EXISTING_HUB_PROXY_SECRET"
+  }
+}

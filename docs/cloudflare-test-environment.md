@@ -42,6 +42,8 @@ cd worker
 npm run provision:test
 ```
 
+For sites already provisioned, prefer Terraform import: [platform-terraform.md](./platform-terraform.md#importing-existing-testproduction).
+
 This script:
 
 1. Creates the test D1 database and R2 buckets (skips if they already exist).

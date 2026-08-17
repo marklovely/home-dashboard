@@ -158,7 +158,43 @@ terraform destroy -var-file=environments/sandbox.tfvars \
 
 ## Importing existing test/production
 
-Use [`cf-terraforming`](https://github.com/cloudflare/cf-terraforming) to generate config, set `terraform: true` only after import plan is clean. Keep production `terraform: false` until you are confident in destroy safeguards.
+Use when a site was provisioned manually (see [cloudflare-test-environment.md](./cloudflare-test-environment.md)) and you want Terraform to manage it without recreating D1/R2/Pages/Access/DNS.
+
+**Production:** keep `terraform: false` in `platform/sites.yaml` until you are confident in destroy safeguards.
+
+### Import test (step-by-step)
+
+1. **Merge site into tfvars** — add `test` with `terraform = true` to your var-file (see [`terraform/environments/hub.tfvars.example`](../terraform/environments/hub.tfvars.example)). Keep `sandbox` in the same file if it is already in state.
+
+2. **Preserve `HUB_PROXY_SECRET`** — copy the existing value from the test Pages project and test Worker. Set `hub_proxy_secret` on the `test` site block in tfvars (required so Terraform does not rotate secrets on apply).
+
+3. **Remove Pages secret for import** — Cloudflare **cannot import** a Pages project while `HUB_PROXY_SECRET` exists as a **secret** env var in the dashboard. Delete it from **home-dashboard-test → Settings → Environment variables → Production** only. Terraform restores it on the next apply from `hub_proxy_secret`.
+
+4. **Run the import script** (from repo root):
+
+   ```bash
+   export CLOUDFLARE_API_TOKEN="..."
+   cd terraform && terraform init
+   bash ../scripts/terraform-import-hub-site.sh test -var-file=environments/hub.tfvars
+   ```
+
+   The script imports D1, R2×2, Access apps, Pages project, custom domain, and DNS CNAME into `module.hub_site["test"]`.
+
+5. **Review plan** — expect some drift on Access app display names and Pages settings. Do **not** apply if the plan would replace D1 or R2 buckets.
+
+   ```bash
+   terraform plan -var-file=environments/hub.tfvars
+   ```
+
+6. **Apply when safe** — reconciles Pages env vars (including restored `HUB_PROXY_SECRET`), DNS comment, and Access policies.
+
+7. **Post-import** — confirm **HUB_API** Pages binding still points at `lovely-home-hub-api-test` (dashboard-only, same as production). Set `terraform: true` for `test` in [`platform/sites.yaml`](../platform/sites.yaml).
+
+Worker deploy, D1 migrations, and Worker secrets remain Wrangler/CI — unchanged from the manual test stack.
+
+### Alternative: cf-terraforming
+
+[`cf-terraforming`](https://github.com/cloudflare/cf-terraforming) can generate HCL and import IDs for comparison. Prefer the import script above when using this repo’s `hub_environment` module.
 
 ## Related
 

@@ -1,6 +1,5 @@
-# Copy to terraform/environments/sandbox.tfvars and fill in (never commit real values).
-# For sandbox + test together, see environments/hub.tfvars.example.
-# Apply sandbox only: terraform apply -var-file=environments/sandbox.tfvars
+# Combined hub sites — copy to terraform/environments/hub.tfvars (never commit).
+# Use for terraform apply / import across sandbox + test.
 
 cloudflare_account_id = "YOUR_ACCOUNT_ID"
 cloudflare_zone_id    = "YOUR_ZONE_ID"
@@ -12,9 +11,7 @@ owner_emails = [
   "you@example.com",
 ]
 
-sitter_emails = [
-  # "sitter@example.com",
-]
+sitter_emails = []
 
 sites = {
   sandbox = {
@@ -22,5 +19,13 @@ sites = {
     hub_environment = "sandbox"
     vanilla         = true
     terraform       = true
+  }
+
+  test = {
+    hostname         = "test.lovely-home.co.uk"
+    hub_environment  = "test"
+    vanilla          = true
+    terraform        = true
+    hub_proxy_secret = "PASTE_EXISTING_HUB_PROXY_SECRET"
   }
 }

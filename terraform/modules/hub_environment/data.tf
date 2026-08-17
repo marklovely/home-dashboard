@@ -18,6 +18,11 @@ resource "cloudflare_r2_bucket" "media" {
 }
 
 resource "random_password" "hub_proxy" {
+  count   = var.hub_proxy_secret == null ? 1 : 0
   length  = 48
   special = false
+}
+
+locals {
+  hub_proxy_secret_value = coalesce(var.hub_proxy_secret, random_password.hub_proxy[0].result)
 }
