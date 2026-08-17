@@ -82,11 +82,20 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 - Provisioning checklist hints
 - “Add a site” runbook links
 
-## v2 (not yet)
+## v2
+
+- Summary bar (site count, Terraform-managed count, health overview)
+- **Check all health** + auto-check on load when service auth is configured
+- Per-site status indicator (healthy / degraded / unhealthy)
+- **Cloudflare dashboard deep links** (Pages, Worker, D1, Access apps)
+- Copy-to-clipboard operator commands (Wrangler deploy, sync script)
+- Live provisioning checklist updates from health probe results
+- Direct **Access probe** link per site
+
+## Future
 
 - Trigger deploy / terraform via GitHub Actions
 - Edit `platform/sites.yaml` from UI
-- Cloudflare dashboard deep links
 
 ## Related
 

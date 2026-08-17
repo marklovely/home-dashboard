@@ -1,3 +1,18 @@
+output "cloudflare_account_id" {
+  description = "Cloudflare account ID (for platform admin dashboard links)."
+  value       = var.cloudflare_account_id
+}
+
+output "access_team_domain" {
+  description = "Zero Trust team slug (for platform admin dashboard links)."
+  value       = var.access_team_domain
+}
+
+output "zone_name" {
+  description = "DNS zone name."
+  value       = var.zone_name
+}
+
 output "sites" {
   description = "Provisioned hub sites (JSON contract for scripts and future platform admin)."
   value = {
