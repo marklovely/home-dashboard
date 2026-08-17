@@ -1,13 +1,23 @@
-import { ensureHubEnvironment, isTestHubEnvironment } from '../auth/hubEnvironment.js';
+import { ensureHubEnvironment, isVanillaHubEnvironment, getHubEnvironmentSync } from '../auth/hubEnvironment.js';
 
 const BANNER_ID = 'hub-environment-banner';
 
+/** @type {Record<string, string>} */
+const BANNER_LABELS = {
+  test: 'TEST ENVIRONMENT — changes here do not affect production',
+  staging: 'STAGING — changes here do not affect production',
+  sandbox: 'SANDBOX — isolated trial environment'
+};
+
 /**
- * Shows a sticky banner when this build targets the isolated test stack.
+ * Shows a sticky banner when this build targets a vanilla (non-production) hub stack.
  */
 export async function initTestEnvironmentBanner() {
   await ensureHubEnvironment();
-  if (!isTestHubEnvironment()) return;
+  if (!isVanillaHubEnvironment()) return;
+
+  const envId = getHubEnvironmentSync();
+  const label = BANNER_LABELS[envId] ?? `${envId.toUpperCase()} ENVIRONMENT`;
 
   if (document.getElementById(BANNER_ID)) return;
 
@@ -15,7 +25,7 @@ export async function initTestEnvironmentBanner() {
   banner.id = BANNER_ID;
   banner.className = 'hub-environment-banner';
   banner.setAttribute('role', 'status');
-  banner.textContent = 'TEST ENVIRONMENT — changes here do not affect production';
+  banner.textContent = label;
 
   document.body.prepend(banner);
   document.body.classList.add('hub-has-environment-banner');

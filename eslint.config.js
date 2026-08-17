@@ -39,7 +39,7 @@ export default [
     }
   },
   {
-    files: ['tests/**/*.js', 'vitest.config.js', 'scripts/**/*.js'],
+    files: ['tests/**/*.js', 'vitest.config.js', 'scripts/**/*.js', 'scripts/**/*.mjs', 'worker/scripts/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
