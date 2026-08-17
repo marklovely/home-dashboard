@@ -2,14 +2,15 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
-const platformRoot = dirname(fileURLToPath(import.meta.url));
+const repoRoot = dirname(fileURLToPath(import.meta.url));
+const platformRoot = join(repoRoot, 'platform-admin');
 
 export default defineConfig({
   root: platformRoot,
   publicDir: join(platformRoot, 'public'),
   base: './',
   build: {
-    outDir: join(platformRoot, '../dist-platform'),
+    outDir: join(repoRoot, 'dist-platform'),
     emptyOutDir: true
   },
   server: {
