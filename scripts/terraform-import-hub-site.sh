@@ -56,12 +56,7 @@ if [[ -z "$ACCOUNT_ID" || -z "$ZONE_ID" || -z "$HOSTNAME" ]]; then
   exit 1
 fi
 
-WORKER_NAME="lovely-home-hub-api-${SITE_ID}"
-PAGES_NAME="home-dashboard-${SITE_ID}"
-WORKER_HOST="${WORKER_NAME}.${WORKERS_SUBDOMAIN}.workers.dev"
-D1_NAME="lovely-home-appliance-manuals-${SITE_ID}"
-R2_GUIDES="lovely-home-appliance-guides-${SITE_ID}"
-R2_MEDIA="lovely-home-guide-media-${SITE_ID}"
+eval "$(bash "$ROOT/scripts/lib/hub-site-resource-names.sh" "$SITE_ID" "$WORKERS_SUBDOMAIN")"
 MODULE="module.hub_site[\"${SITE_ID}\"]"
 
 echo "==> Importing site: $SITE_ID"
@@ -86,7 +81,11 @@ cf_json_ok() {
 }
 
 echo "==> Resolving D1 database id"
-D1_ID="$(grep -A3 "\\[env\\.${SITE_ID}\\]" "$WRANGLER_TOML" | grep 'database_id' | head -1 | grep -Eo '[0-9a-f-]{36}' || true)"
+if [[ "$SITE_ID" == "production" ]]; then
+  D1_ID="$(grep -A5 '^\[\[d1_databases\]\]' "$WRANGLER_TOML" | grep 'database_id' | head -1 | grep -Eo '[0-9a-f-]{36}' || true)"
+else
+  D1_ID="$(grep -A3 "\\[env\\.${SITE_ID}\\]" "$WRANGLER_TOML" | grep 'database_id' | head -1 | grep -Eo '[0-9a-f-]{36}' || true)"
+fi
 if [[ -z "$D1_ID" ]]; then
   D1_LIST="$(cf_get "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database")"
   D1_ID="$(echo "$D1_LIST" | cf_json_ok | node -e "
@@ -180,3 +179,10 @@ echo "  2. cd terraform && terraform plan ${TF_ARGS[*]}"
 echo "  3. Review drift (Access policy names, Pages env vars). Apply when plan looks safe."
 echo "  4. Re-add HUB_API service binding in Pages dashboard if attach_hub_api_binding = false"
 echo "  5. Update platform/sites.yaml: set sites.${SITE_ID}.terraform: true"
+if [[ "$SITE_ID" == "production" ]]; then
+  echo ""
+  echo "Production notes:"
+  echo "  - Pages project: home-dashboard (not home-dashboard-production)"
+  echo "  - Worker: lovely-home-hub-api (default wrangler env, not --env production)"
+  echo "  - Run scripts/terraform-plan-production-safe.sh before apply"
+fi

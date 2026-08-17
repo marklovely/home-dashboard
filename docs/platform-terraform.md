@@ -14,7 +14,7 @@ Site registry: [`platform/sites.yaml`](../platform/sites.yaml).
 | DNS | `{hostname}` CNAME → Pages |
 | Access | Pages hostname + Worker `*.workers.dev` apps + email policies |
 
-**Production** remains `terraform: false` in the manifest until you import it deliberately. **Test** and **sandbox** are Terraform-managed.
+**Production** can be imported into Terraform (legacy names: `home-dashboard`, `lovely-home-hub-api`). Use `scripts/terraform-plan-production-safe.sh` before apply. **Test** and **sandbox** are Terraform-managed.
 
 ## Prerequisites
 
@@ -194,7 +194,7 @@ terraform destroy -var-file=environments/sandbox.tfvars \
 
 Use when a site was provisioned manually (see [cloudflare-test-environment.md](./cloudflare-test-environment.md)) and you want Terraform to manage it without recreating D1/R2/Pages/Access/DNS.
 
-**Production:** keep `terraform: false` in `platform/sites.yaml` until you are confident in destroy safeguards.
+**Production:** import when ready — see [Import production](#import-production) below. Until import completes, keep `terraform: false` in `platform/sites.yaml`.
 
 ### Import test (step-by-step)
 
@@ -225,6 +225,48 @@ Use when a site was provisioned manually (see [cloudflare-test-environment.md](.
 7. **Post-import** — set `terraform: true` for `test` in [`platform/sites.yaml`](../platform/sites.yaml). With `attach_hub_api_binding = true` (default), `/api/access-probe` should show `usesHubApiBinding: true` after apply.
 
 Worker deploy, D1 migrations, and Worker secrets remain Wrangler/CI — unchanged from the manual test stack.
+
+### Import production (step-by-step)
+
+Production uses **legacy Cloudflare names** (no `-production` suffix):
+
+| Resource | Name |
+|----------|------|
+| Pages | `home-dashboard` |
+| Worker | `lovely-home-hub-api` |
+| D1 | `lovely-home-appliance-manuals` |
+| R2 guides | `lovely-home-appliance-guides` |
+| R2 media | `lovely-home-guide-media` |
+
+1. **Add production to tfvars** with `terraform = true` and **`hub_proxy_secret`** (copy from Pages `home-dashboard` and production Worker — must match).
+
+2. **Remove Pages secret for import** — delete `HUB_PROXY_SECRET` from **home-dashboard → Settings → Environment variables → Production** (Terraform restores it on apply).
+
+3. **Import** (same script as test):
+
+   ```bash
+   export CLOUDFLARE_API_TOKEN="..."
+   cd terraform && terraform init
+   bash ../scripts/terraform-import-hub-site.sh production -var-file=environments/hub.tfvars
+   ```
+
+4. **Plan carefully** — expect drift on Access app display names (`Lovely Home — Pages production` vs module name). **Do not apply** if the plan replaces D1, R2, or destroys resources.
+
+   ```bash
+   terraform plan -var-file=environments/hub.tfvars
+   ```
+
+5. **Apply when safe** — reconciles env vars, HUB_API binding, and platform health Access policy.
+
+   Optional guard before apply:
+
+   ```bash
+   bash ../scripts/terraform-plan-production-safe.sh -var-file=environments/hub.tfvars
+   ```
+
+6. **Post-import** — set `terraform: true` in [`platform/sites.yaml`](../platform/sites.yaml) and run `npm run platform:manifest`.
+
+Production Worker deploy stays `cd worker && npm run deploy` (default env, not `--env production`).
 
 ### Alternative: cf-terraforming
 
