@@ -80,7 +80,7 @@ resource "cloudflare_dns_record" "pages" {
   zone_id = var.zone_id
   name    = local.hostname_label
   type    = "CNAME"
-  content = "${cloudflare_pages_project.dashboard.name}.pages.dev"
+  content = cloudflare_pages_project.dashboard.subdomain
   proxied = true
   ttl     = 1
   comment = "Lovely Home Hub ${var.site_id} (managed by Terraform)"

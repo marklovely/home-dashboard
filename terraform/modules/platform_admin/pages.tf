@@ -70,7 +70,7 @@ resource "cloudflare_dns_record" "platform" {
   zone_id = var.zone_id
   name    = local.hostname_label
   type    = "CNAME"
-  content = "${cloudflare_pages_project.admin.name}.pages.dev"
+  content = cloudflare_pages_project.admin.subdomain
   proxied = true
   ttl     = 1
   comment = "Lovely Home platform admin (managed by Terraform)"
