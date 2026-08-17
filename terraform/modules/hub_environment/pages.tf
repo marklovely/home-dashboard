@@ -55,12 +55,11 @@ resource "cloudflare_pages_project" "dashboard" {
           value = "22"
         }
       }
-      services = {
+      services = var.attach_worker_service_binding ? {
         HUB_API = {
-          service     = local.worker_name
-          environment = "production"
+          service = local.worker_name
         }
-      }
+      } : {}
     }
     preview = {
       fail_open           = true

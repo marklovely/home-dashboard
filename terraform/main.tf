@@ -22,5 +22,6 @@ module "hub_site" {
   sitter_emails            = var.sitter_emails
   github_owner             = var.github_owner
   github_repo              = var.github_repo
-  github_production_branch = var.github_production_branch
+  github_production_branch     = var.github_production_branch
+  attach_worker_service_binding = each.value.attach_worker_service_binding
 }
