@@ -21,15 +21,9 @@ if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
   echo "Note: unset CLOUDFLARE_API_TOKEN so wrangler uses OAuth (recommended for pages deploy)." >&2
 fi
 
-# Read hub_environment from terraform output when available
 HUB_ENV="$SITE_ID"
-if [[ -d "$ROOT/terraform/.terraform" ]] || [[ -f "$ROOT/terraform/.terraform.lock.hcl" ]]; then
-  HUB_ENV="$(cd "$ROOT/terraform" && terraform output -json sites 2>/dev/null | node -e "
-    const sites = JSON.parse(require('fs').readFileSync(0,'utf8'));
-    const site = sites[process.argv[1]];
-    if (site?.hub_environment) console.log(site.hub_environment);
-    else console.log(process.argv[1]);
-  " "$SITE_ID" 2>/dev/null || echo "$SITE_ID")"
+if [[ -f "$ROOT/terraform/.terraform.lock.hcl" ]]; then
+  HUB_ENV="$(node "$ROOT/scripts/lib/terraform-site-output.mjs" hub-environment "$SITE_ID" 2>/dev/null || echo "$SITE_ID")"
 fi
 
 echo "==> Building for Pages project: $PAGES_PROJECT (hub_environment=$HUB_ENV)"

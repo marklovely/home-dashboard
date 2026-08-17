@@ -10,27 +10,9 @@ if [[ -z "$SITE_ID" ]]; then
 fi
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-TF_DIR="$ROOT/terraform"
 
-cd "$TF_DIR"
-
-SITES_JSON="$(terraform output -json sites)"
-HUB_SECRETS_JSON="$(terraform output -json hub_proxy_secrets)"
-
-CONTRACT="$(node -e "
-  const sites = JSON.parse(process.argv[1]);
-  const site = sites[process.argv[2]];
-  if (!site) {
-    console.error('Site not in terraform output: ' + process.argv[2]);
-    process.exit(1);
-  }
-  console.log(JSON.stringify(site));
-" "$SITES_JSON" "$SITE_ID")"
-
-HUB_PROXY="$(node -e "
-  const secrets = JSON.parse(process.argv[1]);
-  console.log(secrets[process.argv[2]] ?? '');
-" "$HUB_SECRETS_JSON" "$SITE_ID")"
+CONTRACT="$(node "$ROOT/scripts/lib/terraform-site-output.mjs" site "$SITE_ID")"
+HUB_PROXY="$(node "$ROOT/scripts/lib/terraform-site-output.mjs" hub-proxy-secret "$SITE_ID")"
 
 WORKER_AUD="$(node -e "console.log(JSON.parse(process.argv[1]).access_worker_aud)" "$CONTRACT")"
 PAGES_AUD="$(node -e "console.log(JSON.parse(process.argv[1]).access_pages_aud)" "$CONTRACT")"
@@ -67,7 +49,5 @@ echo ""
 echo "Then add Pages binding (Worker must exist):"
 echo "  Dashboard → home-dashboard-${SITE_ID} → Settings → Bindings"
 echo "  Service binding: HUB_API → ${WORKER_NAME}"
-echo ""
-echo "Or set attach_worker_service_binding = true in terraform and apply after deploy."
 echo ""
 echo "Redeploy Pages after env/binding changes."
