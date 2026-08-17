@@ -33,7 +33,9 @@ PR **Preview** builds on the production Pages project still proxy to the **produ
 
 ## One-time provisioning
 
-From the repo root (Wrangler logged in, Node 22+ recommended):
+**Recommended (Terraform):** see [platform-terraform.md](./platform-terraform.md) — `terraform apply` for managed sites in `platform/sites.yaml`.
+
+**Legacy (Wrangler only):** from the repo root:
 
 ```bash
 cd worker
@@ -317,5 +319,6 @@ Empty test R2 buckets from the Cloudflare dashboard or `wrangler r2 object delet
 
 - [cloudflare-worker.md](./cloudflare-worker.md) — API overview and production deploy
 - [cloudflare-pages-configuration.md](./cloudflare-pages-configuration.md) — Pages proxy and Access
+- [platform-terraform.md](./platform-terraform.md) — Terraform provisioning for sandbox and future sites
 - [cloudflare-access-setup-guide.md](./cloudflare-access-setup-guide.md) — Zero Trust UI steps
 
