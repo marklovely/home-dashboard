@@ -50,6 +50,10 @@ resource "cloudflare_pages_project" "dashboard" {
           type  = "secret_text"
           value = random_password.hub_proxy.result
         }
+        NODE_VERSION = {
+          type  = "plain_text"
+          value = "22"
+        }
       }
       services = {
         HUB_API = {
