@@ -20,7 +20,20 @@ export async function onRequest(context) {
   if (!auth.ok) return auth.response;
 
   const suffix = normalizePath(params.path);
-  const manifest = await loadPlatformManifest(request);
+
+  let manifest;
+  try {
+    manifest = await loadPlatformManifest(request, env);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'unknown';
+    return Response.json(
+      {
+        error: 'MANIFEST_UNAVAILABLE',
+        message: `Could not load platform-manifest.json (${detail}). Rebuild with npm run build:platform.`
+      },
+      { status: 503 }
+    );
+  }
 
   if (suffix === 'sites' && request.method === 'GET') {
     return Response.json({
