@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "node scripts/write-runtime-config.js && vite --host 0.0.0.0",
     "build": "node scripts/write-runtime-config.js && vite build && node scripts/copy-pwa-assets.js",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
