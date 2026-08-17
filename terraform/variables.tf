@@ -55,7 +55,7 @@ variable "sites" {
     hostname        = string
     hub_environment = string
     vanilla         = bool
-    terraform         = bool
+    terraform       = bool
   }))
   description = "Site registry; only sites with terraform=true are managed by this stack."
 }
