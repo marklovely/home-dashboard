@@ -25,32 +25,44 @@ resource "cloudflare_pages_project" "admin" {
       fail_open           = true
       compatibility_date  = "2024-12-01"
       compatibility_flags = ["nodejs_compat"]
-      env_vars = {
-        CF_ACCESS_TEAM_DOMAIN = {
-          type  = "plain_text"
-          value = var.access_team_domain
-        }
-        CF_ACCESS_AUD_PAGES = {
-          type  = "plain_text"
-          value = cloudflare_zero_trust_access_application.platform.aud
-        }
-        PLATFORM_OPERATOR_EMAILS = {
-          type  = "plain_text"
-          value = local.operator_emails_csv
-        }
-        PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID = {
-          type  = "plain_text"
-          value = cloudflare_zero_trust_access_service_token.platform_health.client_id
-        }
-        PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET = {
-          type  = "secret_text"
-          value = cloudflare_zero_trust_access_service_token.platform_health.client_secret
-        }
-        NODE_VERSION = {
-          type  = "plain_text"
-          value = "22"
-        }
-      }
+      env_vars = merge(
+        {
+          CF_ACCESS_TEAM_DOMAIN = {
+            type  = "plain_text"
+            value = var.access_team_domain
+          }
+          CF_ACCESS_AUD_PAGES = {
+            type  = "plain_text"
+            value = cloudflare_zero_trust_access_application.platform.aud
+          }
+          PLATFORM_OPERATOR_EMAILS = {
+            type  = "plain_text"
+            value = local.operator_emails_csv
+          }
+          PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID = {
+            type  = "plain_text"
+            value = cloudflare_zero_trust_access_service_token.platform_health.client_id
+          }
+          PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET = {
+            type  = "secret_text"
+            value = cloudflare_zero_trust_access_service_token.platform_health.client_secret
+          }
+          NODE_VERSION = {
+            type  = "plain_text"
+            value = "22"
+          }
+        },
+        var.platform_github_token != "" ? {
+          PLATFORM_GITHUB_TOKEN = {
+            type  = "secret_text"
+            value = var.platform_github_token
+          }
+          PLATFORM_GITHUB_REPO = {
+            type  = "plain_text"
+            value = local.github_repo_slug
+          }
+        } : {}
+      )
     }
     preview = {
       fail_open           = true

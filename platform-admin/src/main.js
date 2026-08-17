@@ -11,10 +11,12 @@ import {
   siteDashboardLinks,
   siteOperatorCommands
 } from './links.js';
+import { confirmDeployWorker, openSiteWizard } from './wizard.js';
 
 const main = document.getElementById('main');
 const refreshBtn = document.getElementById('refresh-btn');
 const checkAllBtn = document.getElementById('check-all-btn');
+const addSiteBtn = document.getElementById('add-site-btn');
 const summaryEl = document.getElementById('summary');
 
 /** @type {Map<string, { status: string, result: ReturnType<typeof evaluateSiteHealth> }>} */
@@ -26,10 +28,15 @@ refreshBtn?.addEventListener('click', () => {
 });
 
 checkAllBtn?.addEventListener('click', () => {
-  const platform = /** @type {Record<string, unknown>} */ (
-    JSON.parse(main?.getAttribute('data-platform') ?? '{}')
-  );
-  runAllHealthChecks(platform).catch(showError);
+  runAllHealthChecks().catch(showError);
+});
+
+addSiteBtn?.addEventListener('click', () => {
+  openSiteWizard({
+    mode: 'create',
+    githubConfigured: addSiteBtn.getAttribute('data-github-configured') === 'true',
+    onComplete: () => render().catch(showError)
+  }).catch(showError);
 });
 
 render().catch(showError);
@@ -44,30 +51,30 @@ async function render() {
   );
 
   updateSummary(sites, data.healthServiceAuthConfigured);
+  addSiteBtn?.setAttribute(
+    'data-github-configured',
+    data.githubAutomationConfigured === true ? 'true' : 'false'
+  );
 
   main.innerHTML = `
     ${data.healthServiceAuthConfigured === false ? '<div class="banner banner-warn">Health checks need <code>PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID</code> and <code>PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET</code> on the platform Pages project. Run <code>terraform apply -var-file=environments/hub.tfvars</code>.</div>' : ''}
+    ${data.githubAutomationConfigured === false ? '<div class="banner banner-warn">Site wizard needs <code>PLATFORM_GITHUB_TOKEN</code> (contents:write, actions:write) and <code>PLATFORM_GITHUB_REPO</code> on the platform Pages project.</div>' : ''}
     <p class="meta">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
     <section class="grid">
-      ${sites.map((site) => renderSiteCard(site, platform)).join('')}
+      ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true)).join('')}
     </section>
     <section class="panel new-site">
-      <h2>Add a site</h2>
-      <p class="muted">Registry: <code>platform/sites.yaml</code> · Infra: <code>terraform apply</code> · Full guide: <code>docs/platform-terraform.md</code></p>
-      <ol>
-        <li>Add entry to <code>platform/sites.yaml</code> and <code>terraform/environments/*.tfvars</code></li>
-        <li><code>terraform apply</code> (new) or <code>scripts/terraform-import-hub-site.sh</code> (existing)</li>
-        <li><code>node scripts/sync-wrangler-from-terraform.mjs &lt;site&gt;</code> then deploy Worker</li>
-        <li><code>npm run platform:manifest</code> and redeploy platform admin if needed</li>
-      </ol>
+      <h2>Site automation</h2>
+      <p class="muted">Add, edit, or remove sites via a pull request opened by GitHub Actions. After merge, update local <code>hub.tfvars</code> and run <code>terraform apply</code>.</p>
+      <p class="muted">Production cannot be deleted from the wizard. Import existing stacks with <code>scripts/terraform-import-hub-site.sh</code>.</p>
     </section>
   `;
 
   main.setAttribute('data-platform', JSON.stringify(platform));
-  wireSiteActions(sites, platform);
+  wireSiteActions(sites, data.githubAutomationConfigured === true);
 
   if (data.healthServiceAuthConfigured && healthBySite.size === 0) {
-    runAllHealthChecks(platform).catch(showError);
+    runAllHealthChecks().catch(showError);
   }
 }
 
@@ -91,14 +98,50 @@ function updateSummary(sites, healthConfigured) {
 
 /**
  * @param {Record<string, unknown>[]} sites
- * @param {Record<string, unknown>} platform
+ * @param {boolean} githubConfigured
  */
-function wireSiteActions(sites, platform) {
+function wireSiteActions(sites, githubConfigured) {
   main.querySelectorAll('[data-check-site]').forEach((button) => {
     button.addEventListener('click', async () => {
       const siteId = button.getAttribute('data-check-site');
       if (!siteId) return;
-      await checkSiteHealth(siteId, platform);
+      await checkSiteHealth(siteId);
+    });
+  });
+
+  main.querySelectorAll('[data-edit-site]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const siteId = button.getAttribute('data-edit-site');
+      const site = sites.find((row) => String(row.siteId) === siteId);
+      if (!site) return;
+      openSiteWizard({
+        mode: 'update',
+        site,
+        githubConfigured,
+        onComplete: () => render().catch(showError)
+      }).catch(showError);
+    });
+  });
+
+  main.querySelectorAll('[data-delete-site]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const siteId = button.getAttribute('data-delete-site');
+      const site = sites.find((row) => String(row.siteId) === siteId);
+      if (!site) return;
+      openSiteWizard({
+        mode: 'delete',
+        site,
+        githubConfigured,
+        onComplete: () => render().catch(showError)
+      }).catch(showError);
+    });
+  });
+
+  main.querySelectorAll('[data-deploy-site]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const siteId = button.getAttribute('data-deploy-site');
+      if (!siteId) return;
+      confirmDeployWorker(siteId, () => render().catch(showError)).catch(showError);
     });
   });
 
@@ -120,7 +163,7 @@ function wireSiteActions(sites, platform) {
   });
 }
 
-async function runAllHealthChecks(platform) {
+async function runAllHealthChecks() {
   const buttons = main.querySelectorAll('[data-check-site]');
   checkAllBtn?.setAttribute('disabled', 'true');
   try {
@@ -128,7 +171,7 @@ async function runAllHealthChecks(platform) {
       [...buttons].map(async (button) => {
         const siteId = button.getAttribute('data-check-site');
         if (!siteId) return;
-        await checkSiteHealth(siteId, platform);
+        await checkSiteHealth(siteId);
       })
     );
   } finally {
@@ -138,9 +181,8 @@ async function runAllHealthChecks(platform) {
 
 /**
  * @param {string} siteId
- * @param {Record<string, unknown>} platform
  */
-async function checkSiteHealth(siteId, platform) {
+async function checkSiteHealth(siteId) {
   const row = main.querySelector(`[data-health-row="${siteId}"]`);
   const statusEl = main.querySelector(`[data-status-dot="${siteId}"]`);
   const checklistEl = main.querySelector(`[data-checklist="${siteId}"]`);
@@ -171,9 +213,11 @@ async function checkSiteHealth(siteId, platform) {
 /**
  * @param {Record<string, unknown>} site
  * @param {Record<string, unknown>} platform
+ * @param {boolean} githubConfigured
  */
-function renderSiteCard(site, platform) {
+function renderSiteCard(site, platform, githubConfigured) {
   const siteId = String(site.siteId);
+  const isProduction = siteId === 'production';
   const stored = healthBySite.get(siteId);
   const tfBadge = site.terraform
     ? '<span class="badge badge-ok">terraform</span>'
@@ -211,6 +255,9 @@ function renderSiteCard(site, platform) {
       </div>
       <div class="actions">
         <button type="button" class="btn btn-small" data-check-site="${escapeHtml(siteId)}">Check health</button>
+        ${githubConfigured ? `<button type="button" class="btn btn-small btn-ghost" data-edit-site="${escapeHtml(siteId)}">Edit</button>` : ''}
+        ${githubConfigured && !isProduction ? `<button type="button" class="btn btn-small btn-ghost" data-delete-site="${escapeHtml(siteId)}">Delete</button>` : ''}
+        ${githubConfigured && !isProduction ? `<button type="button" class="btn btn-small btn-ghost" data-deploy-site="${escapeHtml(siteId)}">Deploy Worker</button>` : ''}
         <a class="btn btn-small btn-ghost" href="${escapeHtml(String(site.pagesUrl))}/api/access-probe" target="_blank" rel="noopener">Access probe</a>
         <a class="btn btn-small btn-ghost" href="${escapeHtml(String(site.pagesUrl))}" target="_blank" rel="noopener">Open site</a>
       </div>

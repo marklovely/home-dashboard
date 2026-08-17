@@ -42,4 +42,5 @@ module "platform_admin" {
   github_owner             = var.github_owner
   github_repo              = var.github_repo
   github_production_branch = var.github_production_branch
+  platform_github_token    = var.platform_github_token
 }

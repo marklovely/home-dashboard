@@ -4,12 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       site_id:
-        description: Wrangler env / site id (e.g. test, sandbox)
+        description: Wrangler env / site id (e.g. test, sandbox, demo)
         required: true
-        type: choice
-        options:
-          - test
-          - sandbox
+        type: string
       skip_migrate:
         description: Skip D1 migrations
         required: false
