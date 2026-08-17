@@ -64,6 +64,8 @@ try {
 if (!platformMeta.cloudflareAccountId && process.env.CLOUDFLARE_ACCOUNT_ID?.trim()) {
   platformMeta.cloudflareAccountId = process.env.CLOUDFLARE_ACCOUNT_ID.trim();
 }
+
+const registry = loadSitesYaml(sitesYamlPath);
 /** @type {Record<string, object>} */
 const sites = {};
 
