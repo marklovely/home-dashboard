@@ -24,5 +24,5 @@ resource "random_password" "hub_proxy" {
 }
 
 locals {
-  hub_proxy_secret_value = coalesce(var.hub_proxy_secret, random_password.hub_proxy[0].result)
+  hub_proxy_secret_value = try(random_password.hub_proxy[0].result, var.hub_proxy_secret)
 }
