@@ -21,7 +21,7 @@ variable "workers_subdomain" {
 
 variable "access_team_domain" {
   type        = string
-  description = "Zero Trust team slug only (e.g. mark-lovely67), not the full cloudflareaccess.com URL."
+  description = "Zero Trust team slug only (e.g. lovely-home from https://lovely-home.cloudflareaccess.com). Not the Workers subdomain."
 }
 
 variable "owner_emails" {

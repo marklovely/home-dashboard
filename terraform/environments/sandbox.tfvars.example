@@ -4,7 +4,7 @@
 cloudflare_account_id = "YOUR_ACCOUNT_ID"
 cloudflare_zone_id    = "YOUR_ZONE_ID"
 workers_subdomain     = "mark-lovely67"
-access_team_domain    = "mark-lovely67"
+access_team_domain    = "lovely-home"
 zone_name             = "lovely-home.co.uk"
 
 owner_emails = [
