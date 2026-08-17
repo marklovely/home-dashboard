@@ -73,6 +73,8 @@ cd terraform && terraform apply -var-file=environments/hub.tfvars
 bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 ```
 
+**Terraform API token:** needs **Access: Service Tokens → Edit** (in addition to Access: Apps and Policies) to create the health-check service token. Without it, apply fails with `1010 auth.forbidden` on `access/service_tokens`.
+
 ## v1 features
 
 - Site list from registry + Terraform contract
