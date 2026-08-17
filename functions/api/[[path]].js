@@ -112,6 +112,21 @@ export async function onRequest(context) {
 
   const suffix = normalizePath(params.path);
 
+  // Platform admin uses /api/platform/* (functions/api/platform/[[path]].js).
+  // If that route is missing, avoid falling through to the Worker proxy.
+  if (suffix === 'platform' || suffix.startsWith('platform/')) {
+    return Response.json(
+      {
+        error: {
+          code: 'PLATFORM_API_UNAVAILABLE',
+          message:
+            'Platform API route not deployed. Redeploy with bash scripts/deploy-platform-admin.sh or ensure functions/api/platform exists in the build.'
+        }
+      },
+      { status: 503 }
+    );
+  }
+
   if (suffix === 'access-probe' && request.method === 'GET') {
     const probe = accessJwtProbe(request);
     const getIdentityOk = Boolean(await fetchAccessIdentityEmail(request, pagesEnv));

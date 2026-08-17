@@ -17,9 +17,13 @@ cd "$ROOT"
 npm ci
 npm run build:platform
 
-echo "==> Staging Pages Functions in dist-platform/functions"
+echo "==> Staging Pages Functions (shared repo functions + platform API route)"
 rm -rf dist-platform/functions
-cp -R platform-admin/functions dist-platform/functions
+mkdir -p dist-platform/functions/lib dist-platform/functions/api/platform
+cp functions/_middleware.js dist-platform/functions/
+cp functions/lib/accessTeamDomain.js dist-platform/functions/lib/
+cp functions/api/platform/[[path]].js dist-platform/functions/api/platform/
+cp functions/api/platform/platformApi.js dist-platform/functions/api/platform/
 
 echo "==> Deploying dist-platform/ to $PAGES_PROJECT (branch=$BRANCH)"
 npx wrangler pages deploy dist-platform \
@@ -28,4 +32,4 @@ npx wrangler pages deploy dist-platform \
   --commit-dirty=true
 
 echo ""
-echo "Done. Open https://platform.lovely-home.co.uk (after terraform apply + DNS) or Pages dashboard URL."
+echo "Done. Open https://platform.lovely-home.co.uk"

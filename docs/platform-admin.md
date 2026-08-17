@@ -12,7 +12,7 @@ Mark-only operator UI for deploying and managing Lovely Home Hub **sites** (prod
 | Admin UI | `platform-admin/` — separate Vite app → `dist-platform/` |
 | Operator API | `platform-admin/functions/api/` (Pages Functions) |
 
-Household hub tablets use the main `src/` app. Platform admin is a **separate Pages project** (future hostname e.g. `platform.lovely-home.co.uk`) with its own Cloudflare Access app — operator email allowlist only.
+Household hub tablets use the main `src/` app. Platform admin is a **separate Pages project** at `platform.lovely-home.co.uk` with its own Access app — operator email allowlist only. **No Worker or HUB_API binding** — API is `functions/api/platform/` on the same repo.
 
 ## Local development
 
