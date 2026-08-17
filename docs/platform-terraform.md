@@ -217,5 +217,6 @@ Worker deploy, D1 migrations, and Worker secrets remain Wrangler/CI — unchange
 
 ## Related
 
+- [platform-admin.md](./platform-admin.md) — operator dashboard (Mark-only)
 - [cloudflare-test-environment.md](./cloudflare-test-environment.md) — manual test stack (pre-Terraform)
 - [cloudflare-pages-configuration.md](./cloudflare-pages-configuration.md) — Pages proxy pattern
