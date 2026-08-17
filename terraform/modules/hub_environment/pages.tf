@@ -48,7 +48,7 @@ resource "cloudflare_pages_project" "dashboard" {
         }
         HUB_PROXY_SECRET = {
           type  = "secret_text"
-          value = random_password.hub_proxy.result
+          value = local.hub_proxy_secret_value
         }
         NODE_VERSION = {
           type  = "plain_text"
