@@ -57,11 +57,11 @@ export async function onRequest(context) {
     }
 
     if (action === 'health') {
-      return Response.json(await fetchSiteHealth(site));
+      return Response.json(await fetchSiteHealth(site, pagesEnv));
     }
 
     if (action === 'access-probe') {
-      return Response.json(await fetchSiteAccessProbe(site));
+      return Response.json(await fetchSiteAccessProbe(site, pagesEnv));
     }
   }
 

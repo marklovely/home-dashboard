@@ -61,11 +61,22 @@ Git-connected Production builds run `npm run build:platform`; use the deploy scr
 | `CF_ACCESS_TEAM_DOMAIN` | Zero Trust team slug |
 | `CF_ACCESS_AUD_PAGES` | Access app AUD for platform hostname |
 | `PLATFORM_OPERATOR_EMAILS` | Comma-separated operator emails |
+| `PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID` | Access service token client ID (Terraform) |
+| `PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET` | Access service token secret (Terraform) |
+
+Health probes call each hub site's `/api/health` and `/api/access-probe`. Those URLs are Access-protected, so Terraform creates a **service token**, stores it on the platform Pages project, and adds an allow policy on each hub site's Pages + Worker Access apps.
+
+After changing Terraform, run:
+
+```bash
+cd terraform && terraform apply -var-file=environments/hub.tfvars
+bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
+```
 
 ## v1 features
 
 - Site list from registry + Terraform contract
-- Per-site Worker health and Access probe (server-side fetch)
+- Per-site Worker health and Access probe (server-side fetch via Access service token)
 - Provisioning checklist hints
 - “Add a site” runbook links
 

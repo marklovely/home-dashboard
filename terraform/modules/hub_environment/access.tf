@@ -23,6 +23,16 @@ locals {
       decision   = "allow"
       precedence = 2
       include    = local.sitter_policy_includes
+    }] : [],
+    var.platform_health_service_token_id != null ? [{
+      name       = "Platform health checks"
+      decision   = "allow"
+      precedence = 10
+      include = [{
+        service_token = {
+          token_id = var.platform_health_service_token_id
+        }
+      }]
     }] : []
   )
 }

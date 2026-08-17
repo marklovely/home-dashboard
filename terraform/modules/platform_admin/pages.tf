@@ -38,6 +38,14 @@ resource "cloudflare_pages_project" "admin" {
           type  = "plain_text"
           value = local.operator_emails_csv
         }
+        PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID = {
+          type  = "plain_text"
+          value = cloudflare_zero_trust_access_service_token.platform_health.client_id
+        }
+        PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET = {
+          type  = "secret_text"
+          value = cloudflare_zero_trust_access_service_token.platform_health.client_secret
+        }
         NODE_VERSION = {
           type  = "plain_text"
           value = "22"
