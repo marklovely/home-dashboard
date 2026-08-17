@@ -23,4 +23,5 @@ module "hub_site" {
   github_owner             = var.github_owner
   github_repo              = var.github_repo
   github_production_branch = var.github_production_branch
+  hub_proxy_secret         = each.value.hub_proxy_secret
 }
