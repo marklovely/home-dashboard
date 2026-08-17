@@ -1,0 +1,215 @@
+:root {
+  color-scheme: dark;
+  --bg: #0f1419;
+  --panel: #1a222c;
+  --border: #2a3544;
+  --text: #e7edf5;
+  --muted: #93a1b3;
+  --accent: #6ea8fe;
+  --ok: #3ddc97;
+  --warn: #ffc857;
+  --bad: #ff6b6b;
+  font-family:
+    'SF Pro Text',
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+h1 {
+  margin: 0.25rem 0 0;
+  font-size: 1.5rem;
+}
+
+.main {
+  padding: 1.5rem 2rem 3rem;
+}
+
+.meta {
+  color: var(--muted);
+  margin-top: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 2rem;
+}
+
+.card,
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.badge {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: #243041;
+  color: var(--muted);
+}
+
+.badge-ok {
+  background: rgba(61, 220, 151, 0.15);
+  color: var(--ok);
+}
+
+.badge-warn {
+  background: rgba(255, 200, 87, 0.15);
+  color: var(--warn);
+}
+
+.facts {
+  margin: 0.85rem 0;
+}
+
+.facts div {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.facts dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.facts dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: 1px solid var(--border);
+  background: #243041;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  text-decoration: none;
+  font: inherit;
+}
+
+.btn-small {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+.checklist {
+  margin: 0.75rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.checklist .done {
+  color: var(--ok);
+}
+
+.checklist .todo {
+  color: var(--warn);
+}
+
+.health-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+}
+
+.health-list .ok {
+  color: var(--ok);
+}
+
+.health-list .bad {
+  color: var(--bad);
+}
+
+.health-list .warn {
+  color: var(--warn);
+}
+
+.new-site ol {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.error {
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid var(--bad);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+}
+
+a {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+}
