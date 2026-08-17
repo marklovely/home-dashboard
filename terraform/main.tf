@@ -25,7 +25,7 @@ module "hub_site" {
   github_production_branch = var.github_production_branch
   hub_proxy_secret         = each.value.hub_proxy_secret
   attach_hub_api_binding   = each.value.attach_hub_api_binding
-  platform_health_service_token_id = length(module.platform_admin) > 0 ? module.platform_admin[0].health_service_token_id : null
+  platform_health_checks_enabled   = var.platform_admin.enabled
 }
 
 module "platform_admin" {

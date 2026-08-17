@@ -64,7 +64,7 @@ Git-connected Production builds run `npm run build:platform`; use the deploy scr
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID` | Access service token client ID (Terraform) |
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET` | Access service token secret (Terraform) |
 
-Health probes call each hub site's `/api/health` and `/api/access-probe`. Those URLs are Access-protected, so Terraform creates a **service token**, stores it on the platform Pages project, and adds an allow policy on each hub site's Pages + Worker Access apps.
+Health probes call each hub site's `/api/health` and `/api/access-probe`. Those URLs are Access-protected, so Terraform creates a **service token** on the platform Pages project and adds an `any_valid_service_token` allow policy on each Terraform-managed hub site's Pages + Worker Access apps.
 
 After changing Terraform, run:
 
