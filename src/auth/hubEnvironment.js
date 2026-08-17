@@ -1,6 +1,10 @@
-/** @typedef {'production' | 'test'} HubEnvironmentId */
+/** @typedef {'production' | 'test' | 'sandbox' | 'staging'} HubEnvironmentId */
 
 const RUNTIME_CONFIG_PATH = './runtime-config.json';
+
+/** Environments that use vanilla/isolated defaults (no production home data). */
+/** @type {ReadonlySet<HubEnvironmentId>} */
+export const VANILLA_HUB_ENVIRONMENTS = new Set(['test', 'staging', 'sandbox']);
 
 /** @type {HubEnvironmentId | null} */
 let resolvedEnvironment = null;
@@ -16,7 +20,9 @@ function normalizeHubEnvironment(value) {
   const raw = String(value ?? '')
     .trim()
     .toLowerCase();
-  if (raw === 'test' || raw === 'staging') return 'test';
+  if (raw === 'staging') return 'staging';
+  if (raw === 'test') return 'test';
+  if (raw === 'sandbox') return 'sandbox';
   if (raw === 'production' || raw === 'prod') return 'production';
   return null;
 }
@@ -29,14 +35,24 @@ function readBuildTimeHubEnvironment() {
 }
 
 /**
+ * @param {string} host
+ * @returns {HubEnvironmentId | null}
+ */
+function hubEnvironmentFromHostname(host) {
+  const hostname = host.toLowerCase();
+  if (hostname === 'test.lovely-home.co.uk') return 'test';
+  if (hostname === 'sandbox.lovely-home.co.uk') return 'sandbox';
+  if (hostname.includes('home-dashboard-test')) return 'test';
+  if (hostname.includes('home-dashboard-sandbox')) return 'sandbox';
+  return null;
+}
+
+/**
  * @returns {HubEnvironmentId | null}
  */
 function readHostnameHubEnvironment() {
   if (typeof location === 'undefined') return null;
-  const host = location.hostname.toLowerCase();
-  if (host === 'test.lovely-home.co.uk') return 'test';
-  if (host.includes('home-dashboard-test')) return 'test';
-  return null;
+  return hubEnvironmentFromHostname(location.hostname);
 }
 
 /**
@@ -82,8 +98,17 @@ export async function ensureHubEnvironment() {
   return resolvePromise;
 }
 
+/**
+ * True for trial/sandbox stacks (test, sandbox, staging) — isolated vanilla defaults.
+ * @returns {boolean}
+ */
+export function isVanillaHubEnvironment() {
+  return VANILLA_HUB_ENVIRONMENTS.has(getHubEnvironmentSync());
+}
+
+/** @deprecated Prefer isVanillaHubEnvironment */
 export function isTestHubEnvironment() {
-  return getHubEnvironmentSync() === 'test';
+  return isVanillaHubEnvironment();
 }
 
 /** @internal */

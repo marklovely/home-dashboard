@@ -81,4 +81,12 @@ describe('test environment vanilla defaults', () => {
     expect(labels).toContain('Primary contact');
     expect(labels).not.toMatch(/Mark|Donna|Scooter|Vets 4 Pets/i);
   });
+
+  it('applies the same vanilla defaults on sandbox', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'sandbox');
+    resetHubEnvironmentForTests();
+    expect(getHubConfig().buttons).toEqual([]);
+    expect(canFetchMyDayCalendar()).toBe(false);
+    expect(isAppVisible('controls')).toBe(false);
+  });
 });
