@@ -84,9 +84,35 @@ npm run d1:migrate:sandbox
 npm run deploy:sandbox
 bash ../scripts/post-terraform-site-setup.sh sandbox
 
-# 3. Redeploy Pages (Git push to main, or dashboard redeploy)
+# 3. Deploy Pages (see below — feature branches do NOT auto-deploy)
+bash scripts/deploy-cloudflare-pages-site.sh sandbox
 # Open https://sandbox.lovely-home.co.uk/api/access-probe while logged in
 ```
+
+## Pages not deploying (“No production deployment yet”)
+
+Terraform creates the **Pages project** and env vars; it does **not** upload a build. Git-connected sandbox projects are configured with:
+
+| Setting | Value | Effect |
+|---------|-------|--------|
+| `production_branch` | `main` | Only **`main`** gets a Production deployment |
+| `preview_deployment_setting` | `none` | Feature/PR branches do **not** build |
+
+So commits on `feature/platform-terraform-sandbox` appear in the dashboard as Preview rows with **“No deployment available”** — that is expected until something deploys from **`main`**.
+
+**Option A — deploy now (no merge):**
+
+```bash
+unset CLOUDFLARE_API_TOKEN
+npx wrangler login
+bash scripts/deploy-cloudflare-pages-site.sh sandbox
+```
+
+**Option B — dashboard:** Workers & Pages → **home-dashboard-sandbox** → **Create deployment** → branch **`main`**.
+
+**Option C — merge PR to `main`:** triggers Production on sandbox (and your existing production Pages project if it also tracks `main`).
+
+After the first Pages deploy, ensure the **Worker** is up (`npm run deploy:sandbox` + secrets from `post-terraform-site-setup.sh`).
 
 ## Outputs contract
 
