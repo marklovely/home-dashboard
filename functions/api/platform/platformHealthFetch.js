@@ -13,6 +13,13 @@ export function platformHealthServiceAuth(env) {
 }
 
 /**
+ * @param {Record<string, string | undefined>} env
+ */
+export function platformHealthAuthConfigured(env) {
+  return Boolean(platformHealthServiceAuth(env));
+}
+
+/**
  * @param {string} url
  * @param {Record<string, string | undefined>} env
  * @param {RequestInit} [init]
@@ -41,7 +48,7 @@ export function describeHealthFetchResponse(response, env) {
       needsServiceAuth: !platformHealthServiceAuth(env),
       hint: platformHealthServiceAuth(env)
         ? 'Cloudflare Access rejected the platform health service token. Run terraform apply and ensure the token policy is on this site.'
-        : 'Hub sites are Access-protected. Run terraform apply (platform_admin) to install the health-check service token.'
+        : 'Hub sites are Access-protected. Set PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID and PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET on the home-dashboard-platform Pages project (terraform apply platform_admin), then retry.'
     };
   }
   return null;
