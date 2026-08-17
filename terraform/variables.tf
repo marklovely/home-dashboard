@@ -61,3 +61,23 @@ variable "sites" {
   }))
   description = "Site registry; only sites with terraform=true are managed by this stack."
 }
+
+variable "platform_operator_emails" {
+  type        = list(string)
+  default     = []
+  description = "Mark-only platform operator emails (Access + PLATFORM_OPERATOR_EMAILS on platform admin Pages)."
+}
+
+variable "platform_admin" {
+  type = object({
+    enabled    = bool
+    hostname   = string
+    pages_name = optional(string, "home-dashboard-platform")
+  })
+  default = {
+    enabled    = false
+    hostname   = "platform.lovely-home.co.uk"
+    pages_name = "home-dashboard-platform"
+  }
+  description = "Operator dashboard (separate Pages project). Not a household hub site."
+}
