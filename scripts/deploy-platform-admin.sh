@@ -17,12 +17,15 @@ cd "$ROOT"
 npm ci
 npm run build:platform
 
+echo "==> Staging Pages Functions in dist-platform/functions"
+rm -rf dist-platform/functions
+cp -R platform-admin/functions dist-platform/functions
+
 echo "==> Deploying dist-platform/ to $PAGES_PROJECT (branch=$BRANCH)"
 npx wrangler pages deploy dist-platform \
   --project-name="$PAGES_PROJECT" \
   --branch="$BRANCH" \
-  --commit-dirty=true \
-  --functions="platform-admin/functions"
+  --commit-dirty=true
 
 echo ""
 echo "Done. Open https://platform.lovely-home.co.uk (after terraform apply + DNS) or Pages dashboard URL."

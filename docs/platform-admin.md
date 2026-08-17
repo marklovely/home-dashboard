@@ -44,7 +44,7 @@ cd terraform && terraform apply -var-file=environments/hub.tfvars
 
 Creates **Pages** (`home-dashboard-platform`), **Access** (operators only), and **DNS** — no Worker/D1/R2.
 
-First deploy (includes Pages Functions):
+First deploy (includes Pages Functions — copied into `dist-platform/functions` by the deploy script):
 
 ```bash
 unset CLOUDFLARE_API_TOKEN
