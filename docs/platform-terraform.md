@@ -114,6 +114,10 @@ bash scripts/deploy-cloudflare-pages-site.sh sandbox
 
 After the first Pages deploy, ensure the **Worker** is up (`npm run deploy:sandbox` + secrets from `post-terraform-site-setup.sh`).
 
+**`access_team_domain` in tfvars** must match **Zero Trust → Settings** (`https://<team>.cloudflareaccess.com`), not the Workers `*.workers.dev` subdomain. Wrong value causes “Unable to find your Access organization” on login.
+
+If `terraform apply` errors on `cloudflare_pages_project` with “unknown value … HUB_API.environment”, pull the latest module (sets `environment = \"production\"` on the binding) and re-run apply.
+
 ## Outputs contract
 
 ```bash

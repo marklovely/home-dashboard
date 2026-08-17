@@ -57,7 +57,8 @@ resource "cloudflare_pages_project" "dashboard" {
       }
       services = {
         HUB_API = {
-          service = local.worker_name
+          service     = local.worker_name
+          environment = "production"
         }
       }
     }
