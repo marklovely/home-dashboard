@@ -9,7 +9,7 @@ access_team_domain    = "lovely-home"
 zone_name             = "lovely-home.co.uk"
 
 owner_emails = [
-  "you@example.com",
+  "owner@example.com", # real emails — placeholders overwrite Access policies on apply
 ]
 
 sitter_emails = [
@@ -18,9 +18,10 @@ sitter_emails = [
 
 sites = {
   sandbox = {
-    hostname        = "sandbox.lovely-home.co.uk"
-    hub_environment = "sandbox"
-    vanilla         = true
-    terraform       = true
+    hostname               = "sandbox.lovely-home.co.uk"
+    hub_environment        = "sandbox"
+    vanilla                = true
+    terraform              = true
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy + second apply
   }
 }

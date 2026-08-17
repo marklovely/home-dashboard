@@ -78,6 +78,12 @@ variable "hub_proxy_secret" {
   description = "Existing HUB_PROXY_SECRET when importing a manually provisioned site. Omit for new sites (Terraform generates one)."
 }
 
+variable "attach_hub_api_binding" {
+  type        = bool
+  default     = true
+  description = "Bind Pages HUB_API to the site Worker. Set false for the first apply before the Worker is deployed, then true and apply again."
+}
+
 locals {
   worker_name       = "lovely-home-hub-api-${var.site_id}"
   pages_name        = "home-dashboard-${var.site_id}"
@@ -87,4 +93,10 @@ locals {
   worker_hostname   = "${local.worker_name}.${var.workers_subdomain}.workers.dev"
   worker_api_origin = "https://${local.worker_hostname}"
   hostname_label    = replace(var.hostname, ".${var.zone_name}", "")
+  pages_hub_api_services = {
+    HUB_API = {
+      service     = local.worker_name
+      environment = "production"
+    }
+  }
 }

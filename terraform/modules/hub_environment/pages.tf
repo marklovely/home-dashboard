@@ -21,46 +21,52 @@ resource "cloudflare_pages_project" "dashboard" {
   }
 
   deployment_configs = {
-    production = {
-      fail_open           = true
-      compatibility_date  = "2024-12-01"
-      compatibility_flags = ["nodejs_compat"]
-      env_vars = {
-        WORKER_API_ORIGIN = {
-          type  = "plain_text"
-          value = local.worker_api_origin
+    production = merge(
+      {
+        fail_open           = true
+        compatibility_date  = "2024-12-01"
+        compatibility_flags = ["nodejs_compat"]
+        env_vars = {
+          WORKER_API_ORIGIN = {
+            type  = "plain_text"
+            value = local.worker_api_origin
+          }
+          VITE_DEPLOYMENT_MODE = {
+            type  = "plain_text"
+            value = "home"
+          }
+          VITE_HUB_ENVIRONMENT = {
+            type  = "plain_text"
+            value = var.hub_environment
+          }
+          CF_ACCESS_TEAM_DOMAIN = {
+            type  = "plain_text"
+            value = var.access_team_domain
+          }
+          CF_ACCESS_AUD_PAGES = {
+            type  = "plain_text"
+            value = cloudflare_zero_trust_access_application.pages.aud
+          }
+          HUB_PROXY_SECRET = {
+            type  = "secret_text"
+            value = local.hub_proxy_secret_value
+          }
+          NODE_VERSION = {
+            type  = "plain_text"
+            value = "22"
+          }
         }
-        VITE_DEPLOYMENT_MODE = {
-          type  = "plain_text"
-          value = "home"
-        }
-        VITE_HUB_ENVIRONMENT = {
-          type  = "plain_text"
-          value = var.hub_environment
-        }
-        CF_ACCESS_TEAM_DOMAIN = {
-          type  = "plain_text"
-          value = var.access_team_domain
-        }
-        CF_ACCESS_AUD_PAGES = {
-          type  = "plain_text"
-          value = cloudflare_zero_trust_access_application.pages.aud
-        }
-        HUB_PROXY_SECRET = {
-          type  = "secret_text"
-          value = local.hub_proxy_secret_value
-        }
-        NODE_VERSION = {
-          type  = "plain_text"
-          value = "22"
-        }
-      }
-    }
-    preview = {
-      fail_open           = true
-      compatibility_date  = "2024-12-01"
-      compatibility_flags = ["nodejs_compat"]
-    }
+      },
+      var.attach_hub_api_binding ? { services = local.pages_hub_api_services } : {}
+    )
+    preview = merge(
+      {
+        fail_open           = true
+        compatibility_date  = "2024-12-01"
+        compatibility_flags = ["nodejs_compat"]
+      },
+      var.attach_hub_api_binding ? { services = local.pages_hub_api_services } : {}
+    )
   }
 }
 
