@@ -158,6 +158,20 @@ Each site exposes `d1_database_id`, `access_pages_aud`, `access_worker_aud`, `ac
 
 Pages receives `HUB_PROXY_SECRET` and `CF_ACCESS_AUD_PAGES` from Terraform.
 
+## Platform admin (operator dashboard)
+
+Separate from hub sites — Mark-only UI at `platform.lovely-home.co.uk` (optional):
+
+```hcl
+platform_operator_emails = ["you@example.com"]
+platform_admin = {
+  enabled  = true
+  hostname = "platform.lovely-home.co.uk"
+}
+```
+
+See [platform-admin.md](./platform-admin.md). Output: `terraform output -json platform_admin`.
+
 ## Adding another site
 
 1. Add entry to `platform/sites.yaml` with `terraform: true`.

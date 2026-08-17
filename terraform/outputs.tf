@@ -12,3 +12,8 @@ output "hub_proxy_secrets" {
   }
   sensitive = true
 }
+
+output "platform_admin" {
+  description = "Platform operator dashboard (when platform_admin.enabled)."
+  value       = length(module.platform_admin) > 0 ? module.platform_admin[0].platform_contract : null
+}

@@ -23,25 +23,44 @@ npm run dev:platform        # API on :8791, UI on :5174
 
 Open http://localhost:5174 — dev API skips Cloudflare Access (uses `PLATFORM_OPERATOR_EMAILS` default `dev@localhost`).
 
-## Production deploy (manual until Terraform module exists)
+## Terraform + deploy
 
-```bash
-npm run build:platform
-# Deploy dist-platform/ to a dedicated Pages project with:
-#   - Functions directory: platform-admin/functions
-#   - Env: CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD_PAGES, PLATFORM_OPERATOR_EMAILS
-npx wrangler pages deploy dist-platform --project-name home-dashboard-platform
+Enable in `terraform/environments/hub.tfvars`:
+
+```hcl
+platform_operator_emails = ["marklovely67@gmail.com"]
+
+platform_admin = {
+  enabled    = true
+  hostname   = "platform.lovely-home.co.uk"
+  pages_name = "home-dashboard-platform"
+}
 ```
 
-Copy `platform-admin/functions/` into the deploy bundle or configure Pages **functions directory** in project settings to point at `platform-admin/functions` in the repo (monorepo root build).
+```bash
+export CLOUDFLARE_API_TOKEN="..."
+cd terraform && terraform apply -var-file=environments/hub.tfvars
+```
 
-### Required Pages env vars
+Creates **Pages** (`home-dashboard-platform`), **Access** (operators only), and **DNS** — no Worker/D1/R2.
+
+First deploy (includes Pages Functions):
+
+```bash
+unset CLOUDFLARE_API_TOKEN
+npx wrangler login
+bash scripts/deploy-platform-admin.sh
+```
+
+Git-connected Production builds run `npm run build:platform`; use the deploy script when Functions or env vars change.
+
+### Pages env vars (Terraform-managed)
 
 | Variable | Purpose |
 |----------|---------|
 | `CF_ACCESS_TEAM_DOMAIN` | Zero Trust team slug |
 | `CF_ACCESS_AUD_PAGES` | Access app AUD for platform hostname |
-| `PLATFORM_OPERATOR_EMAILS` | Comma-separated operator emails (you only) |
+| `PLATFORM_OPERATOR_EMAILS` | Comma-separated operator emails |
 
 ## v1 features
 
@@ -55,7 +74,6 @@ Copy `platform-admin/functions/` into the deploy bundle or configure Pages **fun
 - Trigger deploy / terraform via GitHub Actions
 - Edit `platform/sites.yaml` from UI
 - Cloudflare dashboard deep links
-- Dedicated Terraform module for platform Pages project
 
 ## Related
 

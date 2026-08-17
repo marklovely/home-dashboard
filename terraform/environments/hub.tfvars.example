@@ -13,6 +13,16 @@ owner_emails = [
 
 sitter_emails = []
 
+platform_operator_emails = [
+  "you@example.com", # Mark-only — not household owner_emails
+]
+
+platform_admin = {
+  enabled    = true
+  hostname   = "platform.lovely-home.co.uk"
+  pages_name = "home-dashboard-platform"
+}
+
 sites = {
   sandbox = {
     hostname        = "sandbox.lovely-home.co.uk"
