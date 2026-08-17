@@ -20,6 +20,6 @@ sites = {
     hostname        = "sandbox.lovely-home.co.uk"
     hub_environment = "sandbox"
     vanilla         = true
-    terraform         = true
+    terraform       = true
   }
 }
