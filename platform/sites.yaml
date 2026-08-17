@@ -13,7 +13,7 @@ sites:
     hostname: test.lovely-home.co.uk
     hub_environment: test
     vanilla: true
-    terraform: false # set true after: bash scripts/terraform-import-hub-site.sh test ...
+    terraform: true # set true after: bash scripts/terraform-import-hub-site.sh test ...
 
   sandbox:
     hostname: sandbox.lovely-home.co.uk
