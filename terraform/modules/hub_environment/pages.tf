@@ -6,7 +6,7 @@ resource "cloudflare_pages_project" "dashboard" {
   build_config = {
     build_command   = "npm run build"
     destination_dir = "dist"
-    root_dir        = "/"
+    root_dir        = ""
   }
 
   source = {
@@ -55,11 +55,6 @@ resource "cloudflare_pages_project" "dashboard" {
           value = "22"
         }
       }
-      services = var.attach_worker_service_binding ? {
-        HUB_API = {
-          service = local.worker_name
-        }
-      } : {}
     }
     preview = {
       fail_open           = true

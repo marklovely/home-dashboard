@@ -71,12 +71,6 @@ variable "default_longitude" {
   default = "-0.1278"
 }
 
-variable "attach_worker_service_binding" {
-  type        = bool
-  default     = false
-  description = "Set true only after the site Worker exists (wrangler deploy). Pages rejects HUB_API binding to a missing Worker."
-}
-
 locals {
   worker_name       = "lovely-home-hub-api-${var.site_id}"
   pages_name        = "home-dashboard-${var.site_id}"
