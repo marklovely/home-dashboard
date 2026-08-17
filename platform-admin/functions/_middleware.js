@@ -1,5 +1,5 @@
 import cloudflareAccessPlugin from '@cloudflare/pages-plugin-cloudflare-access';
-import { accessTeamOrigin } from '../../../functions/lib/accessTeamDomain.js';
+import { accessTeamOrigin } from './lib/accessTeamDomain.js';
 
 /** @type {import('@cloudflare/workers-types').PagesFunction} */
 async function accessMiddleware(context) {
