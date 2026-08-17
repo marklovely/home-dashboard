@@ -5,6 +5,7 @@ import {
   loadPlatformManifest,
   requirePlatformOperator
 } from './platformApi.js';
+import { platformHealthAuthConfigured } from './platformHealthFetch.js';
 
 /**
  * Platform operator API — /api/platform/*
@@ -39,7 +40,18 @@ export async function onRequest(context) {
     return Response.json({
       generatedAt: manifest.generatedAt,
       operator: auth.email,
+      healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
       sites: manifest.sites
+    });
+  }
+
+  if (suffix === 'config' && request.method === 'GET') {
+    return Response.json({
+      healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
+      hints: {
+        healthServiceAuth:
+          'Set PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID and PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET on home-dashboard-platform (terraform apply). Hub sites need non_identity service-token Access policies.'
+      }
     });
   }
 

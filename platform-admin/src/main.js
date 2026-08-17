@@ -18,6 +18,7 @@ async function render() {
   );
 
   main.innerHTML = `
+    ${data.healthServiceAuthConfigured === false ? '<div class="error">Health checks need PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID/SECRET on the platform Pages project. Run <code>terraform apply -var-file=environments/hub.tfvars</code> and confirm env vars under Pages → home-dashboard-platform → Settings.</div>' : ''}
     <p class="meta">Manifest: ${escapeHtml(data.generatedAt ?? 'unknown')} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
     <section class="grid">
       ${sites.map((site) => renderSiteCard(site)).join('')}

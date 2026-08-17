@@ -15,19 +15,19 @@ locals {
     length(var.owner_emails) > 0 ? [{
       name       = "Owners"
       decision   = "allow"
-      precedence = 1
+      precedence = var.platform_health_checks_enabled ? 2 : 1
       include    = local.owner_policy_includes
     }] : [],
     length(var.sitter_emails) > 0 ? [{
       name       = "House sitters"
       decision   = "allow"
-      precedence = 2
+      precedence = var.platform_health_checks_enabled ? 3 : 2
       include    = local.sitter_policy_includes
     }] : [],
     var.platform_health_checks_enabled ? [{
       name       = "Platform health checks"
-      decision   = "allow"
-      precedence = 10
+      decision   = "non_identity"
+      precedence = 1
       include = [{
         any_valid_service_token = {}
       }]
