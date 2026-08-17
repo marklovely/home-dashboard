@@ -24,6 +24,6 @@ output "site_contract" {
 }
 
 output "hub_proxy_secret" {
-  value     = random_password.hub_proxy.result
+  value     = local.hub_proxy_secret_value
   sensitive = true
 }

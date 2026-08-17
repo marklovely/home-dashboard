@@ -71,6 +71,13 @@ variable "default_longitude" {
   default = "-0.1278"
 }
 
+variable "hub_proxy_secret" {
+  type        = string
+  default     = null
+  sensitive   = true
+  description = "Existing HUB_PROXY_SECRET when importing a manually provisioned site. Omit for new sites (Terraform generates one)."
+}
+
 locals {
   worker_name       = "lovely-home-hub-api-${var.site_id}"
   pages_name        = "home-dashboard-${var.site_id}"
