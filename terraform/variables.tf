@@ -52,10 +52,11 @@ variable "github_production_branch" {
 
 variable "sites" {
   type = map(object({
-    hostname        = string
-    hub_environment = string
-    vanilla         = bool
-    terraform       = bool
+    hostname                      = string
+    hub_environment               = string
+    vanilla                       = bool
+    terraform                     = bool
+    attach_worker_service_binding = optional(bool, false)
   }))
   description = "Site registry; only sites with terraform=true are managed by this stack."
 }

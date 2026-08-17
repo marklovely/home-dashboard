@@ -84,7 +84,11 @@ npm run d1:migrate:sandbox
 npm run deploy:sandbox
 bash ../scripts/post-terraform-site-setup.sh sandbox
 
-# 3. Deploy Pages (see below — feature branches do NOT auto-deploy)
+# 3. Pages: HUB_API service binding (Worker must exist first)
+#    Dashboard → home-dashboard-sandbox → Settings → Bindings → HUB_API → lovely-home-hub-api-sandbox
+#    Or set attach_worker_service_binding = true in sandbox.tfvars and terraform apply again.
+
+# 4. Deploy Pages frontend
 bash scripts/deploy-cloudflare-pages-site.sh sandbox
 # Open https://sandbox.lovely-home.co.uk/api/access-probe while logged in
 ```
@@ -116,7 +120,7 @@ After the first Pages deploy, ensure the **Worker** is up (`npm run deploy:sandb
 
 **`access_team_domain` in tfvars** must match **Zero Trust → Settings** (`https://<team>.cloudflareaccess.com`), not the Workers `*.workers.dev` subdomain. Wrong value causes “Unable to find your Access organization” on login.
 
-If `terraform apply` errors on `cloudflare_pages_project` with “unknown value … HUB_API.environment”, pull the latest module (sets `environment = \"production\"` on the binding) and re-run apply.
+If `terraform apply` errors on `cloudflare_pages_project` with **Invalid Service name ()**, the **Worker is not deployed yet**. Deploy it (`npm run deploy:sandbox`), add **HUB_API** binding in the Pages dashboard, or set `attach_worker_service_binding = true` in tfvars and apply again.
 
 ## Outputs contract
 
