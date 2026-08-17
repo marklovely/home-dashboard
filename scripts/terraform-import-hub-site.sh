@@ -37,7 +37,7 @@ if [[ ! -f .terraform.lock.hcl ]]; then
 fi
 
 tf_console() {
-  terraform console "${TF_ARGS[@]}" <<< "$1" 2>/dev/null | tr -d '"'
+  terraform console "${TF_ARGS[@]}" -no-color <<< "$1" 2>/dev/null | tail -1 | tr -d ' "'
 }
 
 ACCOUNT_ID="$(tf_console 'var.cloudflare_account_id')"
