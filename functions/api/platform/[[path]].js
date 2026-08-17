@@ -5,6 +5,14 @@ import {
   loadPlatformManifest,
   requirePlatformOperator
 } from './platformApi.js';
+import {
+  dispatchSiteDeployWorkflow,
+  dispatchSiteManageWorkflow,
+  githubAutomationConfigured,
+  githubRepo,
+  listRecentWorkflowRuns
+} from './platformGitHub.js';
+import { buildSiteManagePayload, siteWizardSchema } from './platformSiteMutations.js';
 import { platformHealthAuthConfigured } from './platformHealthFetch.js';
 
 /**
@@ -42,39 +50,95 @@ export async function onRequest(context) {
       operator: auth.email,
       platform: manifest.platform ?? {},
       healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
+      githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
       sites: manifest.sites
     });
+  }
+
+  if (suffix === 'sites' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const siteId = String(body.siteId ?? '').trim();
+    const built = buildSiteManagePayload(manifest, 'create', siteId, body);
+    if (!built.ok) {
+      return Response.json(built, { status: 400 });
+    }
+    const result = await dispatchSiteManageWorkflow(pagesEnv, 'create', built.payload);
+    return Response.json(result, { status: result.ok ? 202 : 503 });
   }
 
   if (suffix === 'config' && request.method === 'GET') {
     return Response.json({
       healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
+      githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
+      githubRepo: githubRepo(pagesEnv),
       hints: {
         healthServiceAuth:
-          'Set PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID and PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET on home-dashboard-platform (terraform apply). Hub sites need non_identity service-token Access policies.'
+          'Set PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID and PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET on home-dashboard-platform (terraform apply). Hub sites need non_identity service-token Access policies.',
+        githubAutomation:
+          'Set PLATFORM_GITHUB_TOKEN (contents:write, actions:write) and PLATFORM_GITHUB_REPO on the platform Pages project to enable site wizard automation.'
       }
     });
   }
 
+  if (suffix === 'wizard/schema' && request.method === 'GET') {
+    return Response.json({
+      schema: siteWizardSchema(manifest),
+      githubAutomationConfigured: githubAutomationConfigured(pagesEnv)
+    });
+  }
+
+  if (suffix === 'automation/runs' && request.method === 'GET') {
+    const result = await listRecentWorkflowRuns(pagesEnv);
+    return Response.json(result, { status: result.ok ? 200 : 503 });
+  }
+
   const siteMatch = suffix.match(/^sites\/([^/]+)(?:\/(.*))?$/);
-  if (siteMatch && request.method === 'GET') {
+  if (siteMatch) {
     const siteId = decodeURIComponent(siteMatch[1]);
     const action = siteMatch[2] ?? '';
     const site = getSiteFromManifest(manifest, siteId);
-    if (!site) {
-      return Response.json({ error: 'NOT_FOUND', message: `Unknown site: ${siteId}` }, { status: 404 });
+
+    if (request.method === 'PATCH' && !action) {
+      const body = await readJsonBody(request);
+      const built = buildSiteManagePayload(manifest, 'update', siteId, body);
+      if (!built.ok) {
+        return Response.json(built, { status: 400 });
+      }
+      const result = await dispatchSiteManageWorkflow(pagesEnv, 'update', built.payload);
+      return Response.json(result, { status: result.ok ? 202 : 503 });
     }
 
-    if (!action) {
-      return Response.json({ site });
+    if (request.method === 'DELETE' && !action) {
+      const body = await readJsonBody(request);
+      const built = buildSiteManagePayload(manifest, 'delete', siteId, body);
+      if (!built.ok) {
+        return Response.json(built, { status: 400 });
+      }
+      const result = await dispatchSiteManageWorkflow(pagesEnv, 'delete', built.payload);
+      return Response.json(result, { status: result.ok ? 202 : 503 });
     }
 
-    if (action === 'health') {
-      return Response.json(await fetchSiteHealth(site, pagesEnv));
+    if (request.method === 'POST' && action === 'deploy') {
+      const result = await dispatchSiteDeployWorkflow(pagesEnv, siteId);
+      return Response.json(result, { status: result.ok ? 202 : 503 });
     }
 
-    if (action === 'access-probe') {
-      return Response.json(await fetchSiteAccessProbe(site, pagesEnv));
+    if (request.method === 'GET') {
+      if (!site) {
+        return Response.json({ error: 'NOT_FOUND', message: `Unknown site: ${siteId}` }, { status: 404 });
+      }
+
+      if (!action) {
+        return Response.json({ site });
+      }
+
+      if (action === 'health') {
+        return Response.json(await fetchSiteHealth(site, pagesEnv));
+      }
+
+      if (action === 'access-probe') {
+        return Response.json(await fetchSiteAccessProbe(site, pagesEnv));
+      }
     }
   }
 
@@ -87,4 +151,15 @@ export async function onRequest(context) {
 function normalizePath(pathParam) {
   if (Array.isArray(pathParam)) return pathParam.map(String).join('/');
   return pathParam ? String(pathParam) : '';
+}
+
+/**
+ * @param {Request} request
+ */
+async function readJsonBody(request) {
+  try {
+    return await request.json();
+  } catch {
+    return {};
+  }
 }

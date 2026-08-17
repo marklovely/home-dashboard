@@ -17,6 +17,9 @@ platform_operator_emails = [
   "you@example.com", # Mark-only — not household owner_emails
 ]
 
+# Optional — enables platform admin site wizard (GitHub Actions PR automation)
+# platform_github_token = "ghp_..."
+
 platform_admin = {
   enabled    = true
   hostname   = "platform.lovely-home.co.uk"

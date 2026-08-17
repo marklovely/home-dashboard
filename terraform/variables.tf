@@ -68,6 +68,13 @@ variable "platform_operator_emails" {
   description = "Mark-only platform operator emails (Access + PLATFORM_OPERATOR_EMAILS on platform admin Pages)."
 }
 
+variable "platform_github_token" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "GitHub PAT for platform site wizard (contents:write, actions:write). Never commit."
+}
+
 variable "platform_admin" {
   type = object({
     enabled    = bool

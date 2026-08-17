@@ -47,6 +47,13 @@ variable "access_session_duration" {
   default = "720h"
 }
 
+variable "platform_github_token" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "GitHub PAT for site wizard (contents:write, actions:write). Omit to disable automation UI."
+}
+
 locals {
   hostname_label = replace(var.hostname, ".${var.zone_name}", "")
   operator_policy_includes = [
@@ -55,4 +62,5 @@ locals {
     }
   ]
   operator_emails_csv = join(",", var.operator_emails)
+  github_repo_slug    = "${var.github_owner}/${var.github_repo}"
 }

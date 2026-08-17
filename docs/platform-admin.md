@@ -92,10 +92,40 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 - Live provisioning checklist updates from health probe results
 - Direct **Access probe** link per site
 
-## Future (v3)
+## v3 — site wizard
 
-- Add / remove sites from the platform admin UI (GitHub Actions + Terraform)
-- Trigger deploy / terraform from the dashboard
+Multi-step wizard (**Add site**, **Edit**, **Delete** on each card) dispatches GitHub Actions [`platform-site-manage.yml`](../.github/workflows/platform-site-manage.yml), which:
+
+1. Patches `platform/sites.yaml`, `hub.tfvars.example`, `worker/wrangler.toml`, and `worker/package.json`
+2. Runs `terraform validate` and registry tests
+3. Opens a pull request
+
+After the PR merges:
+
+1. Add the site block to local `terraform/environments/hub.tfvars` (secrets stay local)
+2. `terraform apply -var-file=environments/hub.tfvars`
+3. For new sites: sync wrangler, migrate D1, deploy Worker, redeploy platform admin manifest
+
+**Deploy Worker** on a card dispatches [`platform-site-deploy.yml`](../.github/workflows/platform-site-deploy.yml).
+
+### Enable automation
+
+Set on the platform Pages project (via Terraform or dashboard):
+
+| Variable | Purpose |
+|----------|---------|
+| `PLATFORM_GITHUB_TOKEN` | GitHub PAT with `contents:write` + `actions:write` |
+| `PLATFORM_GITHUB_REPO` | `owner/repo` (default from Terraform: `{github_owner}/{github_repo}`) |
+
+In `hub.tfvars` (never commit the token):
+
+```hcl
+platform_github_token = "ghp_..."
+```
+
+Then `terraform apply` and redeploy platform admin if needed.
+
+Production is **protected** — cannot be deleted from the wizard. Import existing stacks with `scripts/terraform-import-hub-site.sh`.
 
 ## Related
 
