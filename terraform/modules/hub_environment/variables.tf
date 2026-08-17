@@ -84,10 +84,10 @@ variable "attach_hub_api_binding" {
   description = "Bind Pages HUB_API to the site Worker. Set false for the first apply before the Worker is deployed, then true and apply again."
 }
 
-variable "platform_health_service_token_id" {
-  type        = string
-  default     = null
-  description = "Access service token ID for platform admin health probes (Pages + Worker)."
+variable "platform_health_checks_enabled" {
+  type        = bool
+  default     = false
+  description = "Allow Access service tokens on hub Pages/Worker (for platform admin health probes)."
 }
 
 locals {

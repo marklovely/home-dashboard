@@ -24,14 +24,12 @@ locals {
       precedence = 2
       include    = local.sitter_policy_includes
     }] : [],
-    var.platform_health_service_token_id != null ? [{
+    var.platform_health_checks_enabled ? [{
       name       = "Platform health checks"
       decision   = "allow"
       precedence = 10
       include = [{
-        service_token = {
-          token_id = var.platform_health_service_token_id
-        }
+        any_valid_service_token = {}
       }]
     }] : []
   )
