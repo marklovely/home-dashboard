@@ -1,0 +1,22 @@
+# Hub platform site registry.
+# Managed sites are provisioned via terraform/ (see docs/platform-terraform.md).
+# Future platform admin UI will read/write this manifest.
+
+sites:
+  production:
+    hostname: dashboard.lovely-home.co.uk
+    hub_environment: production
+    vanilla: false
+    terraform: false # import-only; do not terraform destroy production
+
+  test:
+    hostname: test.lovely-home.co.uk
+    hub_environment: test
+    vanilla: true
+    terraform: false # already provisioned manually; import when ready
+
+  sandbox:
+    hostname: sandbox.lovely-home.co.uk
+    hub_environment: sandbox
+    vanilla: true
+    terraform: true

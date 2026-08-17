@@ -1,0 +1,25 @@
+# Copy to terraform/terraform.tfvars and fill in (never commit real values).
+# Apply sandbox only: terraform apply -var-file=environments/sandbox.tfvars
+
+cloudflare_account_id = "YOUR_ACCOUNT_ID"
+cloudflare_zone_id    = "YOUR_ZONE_ID"
+workers_subdomain     = "mark-lovely67"
+access_team_domain    = "mark-lovely67"
+zone_name             = "lovely-home.co.uk"
+
+owner_emails = [
+  "you@example.com",
+]
+
+sitter_emails = [
+  # "sitter@example.com",
+]
+
+sites = {
+  sandbox = {
+    hostname        = "sandbox.lovely-home.co.uk"
+    hub_environment = "sandbox"
+    vanilla         = true
+    terraform         = true
+  }
+}

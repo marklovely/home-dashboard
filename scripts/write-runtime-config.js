@@ -10,7 +10,12 @@ const apiBaseUrl = String(process.env.VITE_API_BASE_URL ?? '')
 const hubEnvironmentRaw = String(process.env.VITE_HUB_ENVIRONMENT ?? 'production')
   .trim()
   .toLowerCase();
-const hubEnvironment = hubEnvironmentRaw === 'test' || hubEnvironmentRaw === 'staging' ? 'test' : 'production';
+const allowed = new Set(['production', 'prod', 'test', 'staging', 'sandbox']);
+const hubEnvironment = allowed.has(hubEnvironmentRaw)
+  ? hubEnvironmentRaw === 'prod'
+    ? 'production'
+    : hubEnvironmentRaw
+  : 'production';
 
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, `${JSON.stringify({ apiBaseUrl, hubEnvironment }, null, 2)}\n`);
