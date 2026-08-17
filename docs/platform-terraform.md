@@ -28,6 +28,7 @@ Site registry: [`platform/sites.yaml`](../platform/sites.yaml).
    | Account → Workers R2 Storage | Edit |
    | Account → Cloudflare Pages | Edit |
    | Account → Access: Apps and Policies | Edit |
+   | Account → Access: Service Tokens | Edit |
    | Account → Account Settings | Read |
    | Zone → `lovely-home.co.uk` → DNS | Edit |
    | Zone → `lovely-home.co.uk` → Zone | Read |

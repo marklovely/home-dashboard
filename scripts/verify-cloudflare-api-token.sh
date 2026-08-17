@@ -63,7 +63,8 @@ fi
 
 echo ""
 echo "Token looks valid. For terraform apply you also need WRITE permissions:"
-echo "  Account: D1 Edit, Workers R2 Storage, Cloudflare Pages Edit, Access: Apps and Policies"
+echo "  Account: D1 Edit, Workers R2 Storage, Cloudflare Pages Edit,"
+echo "           Access: Apps and Policies Edit, Access: Service Tokens Edit"
 echo "  Zone lovely-home.co.uk: DNS Edit"
 echo ""
 echo "Create at: https://dash.cloudflare.com/profile/api-tokens"
