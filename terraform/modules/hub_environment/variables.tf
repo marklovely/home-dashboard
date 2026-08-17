@@ -93,18 +93,24 @@ variable "platform_health_checks_enabled" {
 
 locals {
   # Production was provisioned before the {site_id} suffix convention.
-  worker_name    = var.site_id == "production" ? "lovely-home-hub-api" : "lovely-home-hub-api-${var.site_id}"
-  pages_name     = var.site_id == "production" ? "home-dashboard" : "home-dashboard-${var.site_id}"
-  d1_name        = var.site_id == "production" ? "lovely-home-appliance-manuals" : "lovely-home-appliance-manuals-${var.site_id}"
-  r2_guides_name = var.site_id == "production" ? "lovely-home-appliance-guides" : "lovely-home-appliance-guides-${var.site_id}"
-  r2_media_name  = var.site_id == "production" ? "lovely-home-guide-media" : "lovely-home-guide-media-${var.site_id}"
+  worker_name       = var.site_id == "production" ? "lovely-home-hub-api" : "lovely-home-hub-api-${var.site_id}"
+  pages_name        = var.site_id == "production" ? "home-dashboard" : "home-dashboard-${var.site_id}"
+  d1_name           = var.site_id == "production" ? "lovely-home-appliance-manuals" : "lovely-home-appliance-manuals-${var.site_id}"
+  r2_guides_name    = var.site_id == "production" ? "lovely-home-appliance-guides" : "lovely-home-appliance-guides-${var.site_id}"
+  r2_media_name     = var.site_id == "production" ? "lovely-home-guide-media" : "lovely-home-guide-media-${var.site_id}"
   worker_hostname   = "${local.worker_name}.${var.workers_subdomain}.workers.dev"
   worker_api_origin = "https://${local.worker_hostname}"
   hostname_label    = replace(var.hostname, ".${var.zone_name}", "")
+  # Imported production Pages projects return entrypoint = "default" for HUB_API.
+  # Omitting it in Terraform makes the Cloudflare API PATCH fail with 8000022
+  # ("Invalid Service name ()") when reconciling the binding.
   pages_hub_api_services = {
-    HUB_API = {
-      service     = local.worker_name
-      environment = "production"
-    }
+    HUB_API = merge(
+      {
+        service     = local.worker_name
+        environment = "production"
+      },
+      var.site_id == "production" ? { entrypoint = "default" } : {}
+    )
   }
 }
