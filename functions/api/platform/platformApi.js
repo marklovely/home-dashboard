@@ -1,5 +1,9 @@
 import { fetchAccessIdentityEmail } from '../accessIdentity.js';
 import { middlewareAccessEmail } from '../middlewareAccess.js';
+import {
+  describeHealthFetchResponse,
+  fetchWithPlatformHealthAuth
+} from './platformHealthFetch.js';
 
 /**
  * @param {Record<string, string | undefined>} env
@@ -114,16 +118,20 @@ export function getSiteFromManifest(manifest, siteId) {
 
 /**
  * @param {Record<string, unknown>} site
+ * @param {Record<string, string | undefined>} env
  */
-export async function fetchSiteHealth(site) {
+export async function fetchSiteHealth(site, env) {
   const origin = site.workerApiOrigin ?? site.pagesUrl;
   if (!origin) {
     return { ok: false, error: 'NO_ORIGIN' };
   }
   try {
-    const response = await fetch(`${String(origin).replace(/\/$/, '')}/api/health`, {
-      headers: { Accept: 'application/json' }
-    });
+    const response = await fetchWithPlatformHealthAuth(
+      `${String(origin).replace(/\/$/, '')}/api/health`,
+      env
+    );
+    const blocked = describeHealthFetchResponse(response, env);
+    if (blocked) return blocked;
     const body = await response.json().catch(() => null);
     return { ok: response.ok, status: response.status, body };
   } catch (error) {
@@ -133,16 +141,20 @@ export async function fetchSiteHealth(site) {
 
 /**
  * @param {Record<string, unknown>} site
+ * @param {Record<string, string | undefined>} env
  */
-export async function fetchSiteAccessProbe(site) {
+export async function fetchSiteAccessProbe(site, env) {
   const pagesUrl = site.pagesUrl;
   if (!pagesUrl) {
     return { ok: false, error: 'NO_PAGES_URL' };
   }
   try {
-    const response = await fetch(`${String(pagesUrl).replace(/\/$/, '')}/api/access-probe`, {
-      headers: { Accept: 'application/json' }
-    });
+    const response = await fetchWithPlatformHealthAuth(
+      `${String(pagesUrl).replace(/\/$/, '')}/api/access-probe`,
+      env
+    );
+    const blocked = describeHealthFetchResponse(response, env);
+    if (blocked) return blocked;
     const body = await response.json().catch(() => null);
     return { ok: response.ok, status: response.status, body };
   } catch (error) {

@@ -101,14 +101,21 @@ function renderProvisioning(site) {
  * @param {Record<string, unknown>} probe
  */
 function renderHealthSummary(health, probe) {
+  if (health.needsServiceAuth || probe.needsServiceAuth) {
+    const hint = health.hint ?? probe.hint ?? 'Run terraform apply to enable platform health checks.';
+    return `<ul class="health-list"><li class="warn">${escapeHtml(hint)}</li></ul>`;
+  }
+
   const workerOk = health.ok && health.body?.status === 'ok';
   const bindingOk = probe.body?.usesHubApiBinding === true;
-  const accessOk = probe.body?.canForwardJwt === true;
+  const accessOk = probe.body?.canForwardJwt === true || probe.body?.middlewareAccessValidated === true;
+  const workerLabel =
+    health.error === 'ACCESS_BLOCKED' ? 'blocked by Access' : workerOk ? 'OK' : 'fail';
   return `
     <ul class="health-list">
-      <li class="${workerOk ? 'ok' : 'bad'}">Worker /api/health ${workerOk ? 'OK' : 'fail'}</li>
+      <li class="${workerOk ? 'ok' : 'bad'}">Worker /api/health ${workerLabel}</li>
       <li class="${bindingOk ? 'ok' : 'bad'}">HUB_API binding ${bindingOk ? 'yes' : 'no'}</li>
-      <li class="${accessOk ? 'ok' : 'warn'}">Access JWT ${accessOk ? 'yes' : 'needs login'}</li>
+      <li class="${accessOk ? 'ok' : 'warn'}">Access probe ${accessOk ? 'OK' : 'check Pages env'}</li>
     </ul>
   `;
 }
