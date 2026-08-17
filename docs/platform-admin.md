@@ -92,10 +92,10 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 - Live provisioning checklist updates from health probe results
 - Direct **Access probe** link per site
 
-## Future
+## Future (v3)
 
-- Trigger deploy / terraform via GitHub Actions
-- Edit `platform/sites.yaml` from UI
+- Add / remove sites from the platform admin UI (GitHub Actions + Terraform)
+- Trigger deploy / terraform from the dashboard
 
 ## Related
 
