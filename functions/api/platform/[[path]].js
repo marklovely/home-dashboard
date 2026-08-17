@@ -16,7 +16,7 @@ export async function onRequest(context) {
   const { request, env, params, data } = context;
   const pagesEnv = /** @type {Record<string, string | undefined>} */ (env);
 
-  const auth = requirePlatformOperator(pagesEnv, data);
+  const auth = await requirePlatformOperator(request, pagesEnv, data);
   if (!auth.ok) return auth.response;
 
   const suffix = normalizePath(params.path);

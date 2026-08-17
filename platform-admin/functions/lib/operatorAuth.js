@@ -16,8 +16,11 @@ export function operatorEmailAllowlist(env) {
  */
 export function middlewareOperatorEmail(middlewareData) {
   if (!middlewareData || typeof middlewareData !== 'object') return null;
-  const email = /** @type {{ jwtPayload?: { email?: string } }} */ (middlewareData).jwtPayload?.email;
-  return email ? String(email).trim().toLowerCase() : null;
+  const access = /** @type {{ cloudflareAccess?: { JWT?: { payload?: { email?: string } } } } } */ (
+    middlewareData
+  );
+  const email = access.cloudflareAccess?.JWT?.payload?.email;
+  return typeof email === 'string' && email.trim() ? email.trim().toLowerCase() : null;
 }
 
 /**
