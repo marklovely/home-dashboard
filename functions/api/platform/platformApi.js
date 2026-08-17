@@ -1,3 +1,6 @@
+import { fetchAccessIdentityEmail } from '../accessIdentity.js';
+import { middlewareAccessEmail } from '../middlewareAccess.js';
+
 /**
  * @param {Record<string, string | undefined>} env
  * @returns {boolean}
@@ -19,21 +22,24 @@ export function operatorEmailAllowlist(env) {
 }
 
 /**
- * @param {unknown} middlewareData
- * @returns {string | null}
+ * @param {Request} request
+ * @param {Record<string, string | undefined>} env
+ * @param {unknown} [middlewareData]
+ * @returns {Promise<string | null>}
  */
-export function middlewareOperatorEmail(middlewareData) {
-  if (!middlewareData || typeof middlewareData !== 'object') return null;
-  const email = /** @type {{ jwtPayload?: { email?: string } }} */ (middlewareData).jwtPayload?.email;
-  return email ? String(email).trim().toLowerCase() : null;
+export async function resolvePlatformOperatorEmail(request, env, middlewareData) {
+  const fromMiddleware = middlewareAccessEmail(middlewareData);
+  if (fromMiddleware) return fromMiddleware;
+  return fetchAccessIdentityEmail(request, env);
 }
 
 /**
+ * @param {Request} request
  * @param {Record<string, string | undefined>} env
  * @param {unknown} [middlewareData]
- * @returns {{ ok: true, email: string } | { ok: false, response: Response }}
+ * @returns {Promise<{ ok: true, email: string } | { ok: false, response: Response }>}
  */
-export function requirePlatformOperator(env, middlewareData) {
+export async function requirePlatformOperator(request, env, middlewareData) {
   if (!isPlatformAdminProject(env)) {
     return {
       ok: false,
@@ -42,7 +48,7 @@ export function requirePlatformOperator(env, middlewareData) {
   }
 
   const allowlist = operatorEmailAllowlist(env);
-  const email = middlewareOperatorEmail(middlewareData);
+  const email = await resolvePlatformOperatorEmail(request, env, middlewareData);
 
   if (allowlist.length === 0) {
     return {
