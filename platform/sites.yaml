@@ -1,6 +1,6 @@
 # Hub platform site registry.
 # Managed sites are provisioned via terraform/ (see docs/platform-terraform.md).
-# Future platform admin UI will read/write this manifest.
+# Platform admin UI reads this manifest — see docs/platform-admin.md.
 
 sites:
   production:
