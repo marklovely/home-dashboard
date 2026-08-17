@@ -14,7 +14,7 @@ Site registry: [`platform/sites.yaml`](../platform/sites.yaml).
 | DNS | `{hostname}` CNAME → Pages |
 | Access | Pages hostname + Worker `*.workers.dev` apps + email policies |
 
-**Production** and **test** remain `terraform: false` in the manifest until you import them.
+**Production** remains `terraform: false` in the manifest until you import it deliberately. **Test** and **sandbox** are Terraform-managed.
 
 ## Prerequisites
 
@@ -64,9 +64,9 @@ Site registry: [`platform/sites.yaml`](../platform/sites.yaml).
 ## First-time sandbox
 
 ```bash
-# 1. Configure vars
+# 1. Configure vars (attach_hub_api_binding = false until Worker exists)
 cp terraform/environments/sandbox.tfvars.example terraform/environments/sandbox.tfvars
-# Edit with account ID, zone ID, emails
+# Edit with account ID, zone ID, real owner emails
 
 export CLOUDFLARE_API_TOKEN="..."
 cd terraform
@@ -84,11 +84,13 @@ npm run d1:migrate:sandbox
 npm run deploy:sandbox
 bash ../scripts/post-terraform-site-setup.sh sandbox
 
-# 3. Pages: HUB_API service binding (Worker must exist first)
-#    Dashboard → home-dashboard-sandbox → Settings → Bindings → HUB_API → lovely-home-hub-api-sandbox
+# 3. Enable HUB_API binding in Terraform (Worker must exist first)
+#    In sandbox.tfvars set attach_hub_api_binding = true on the sandbox site (default), then:
+cd ../terraform
+terraform apply -var-file=environments/sandbox.tfvars
 
 # 4. Deploy Pages frontend
-bash scripts/deploy-cloudflare-pages-site.sh sandbox
+bash ../scripts/deploy-cloudflare-pages-site.sh sandbox
 # Open https://sandbox.lovely-home.co.uk/api/access-probe while logged in
 ```
 
@@ -119,7 +121,24 @@ After the first Pages deploy, ensure the **Worker** is up (`npm run deploy:sandb
 
 **`access_team_domain` in tfvars** must match **Zero Trust → Settings** (`https://<team>.cloudflareaccess.com`), not the Workers `*.workers.dev` subdomain. Wrong value causes “Unable to find your Access organization” on login.
 
-**HUB_API** is configured manually in the Pages dashboard after the Worker exists (same as production). Terraform does not manage service bindings — a later `terraform apply` will not clear a dashboard binding.
+## HUB_API Pages binding
+
+Terraform manages the **HUB_API** service binding on Terraform-managed Pages projects (`HUB_API` → `lovely-home-hub-api-{site}`). This prevents `terraform apply` from clearing dashboard-only bindings.
+
+| Site block flag | When |
+|-----------------|------|
+| `attach_hub_api_binding = true` (default) | Worker is deployed — normal ops for test/sandbox |
+| `attach_hub_api_binding = false` | First `terraform apply` on a **new** site before the Worker exists; deploy Worker, set `true`, apply again |
+
+**Production** (`home-dashboard`) is not in this Terraform stack — configure **HUB_API → `lovely-home-hub-api`** in the dashboard as today.
+
+## tfvars hygiene
+
+Use real values in `hub.tfvars` (never commit it):
+
+- **`owner_emails`** / **`sitter_emails`** — must match who should pass Access. Placeholder emails in tfvars will overwrite Access policies on apply.
+- **`hub_proxy_secret`** — required when importing a site; preserves existing Pages/Worker proxy secret.
+- **`access_team_domain`** — Zero Trust team slug (`lovely-home`), not the Workers subdomain.
 
 ## Outputs contract
 
@@ -186,9 +205,9 @@ Use when a site was provisioned manually (see [cloudflare-test-environment.md](.
    terraform plan -var-file=environments/hub.tfvars
    ```
 
-6. **Apply when safe** — reconciles Pages env vars (including restored `HUB_PROXY_SECRET`), DNS comment, and Access policies.
+6. **Apply when safe** — reconciles Pages env vars (including restored `HUB_PROXY_SECRET`), DNS comment, Access policies, and **HUB_API** binding.
 
-7. **Post-import** — confirm **HUB_API** Pages binding still points at `lovely-home-hub-api-test` (dashboard-only, same as production). Set `terraform: true` for `test` in [`platform/sites.yaml`](../platform/sites.yaml).
+7. **Post-import** — set `terraform: true` for `test` in [`platform/sites.yaml`](../platform/sites.yaml). With `attach_hub_api_binding = true` (default), `/api/access-probe` should show `usesHubApiBinding: true` after apply.
 
 Worker deploy, D1 migrations, and Worker secrets remain Wrangler/CI — unchanged from the manual test stack.
 

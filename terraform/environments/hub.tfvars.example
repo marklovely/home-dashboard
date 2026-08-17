@@ -8,7 +8,7 @@ access_team_domain    = "lovely-home"
 zone_name             = "lovely-home.co.uk"
 
 owner_emails = [
-  "you@example.com",
+  "owner@example.com", # real owner emails — placeholders overwrite Access on apply
 ]
 
 sitter_emails = []
