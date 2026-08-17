@@ -40,6 +40,7 @@ export async function onRequest(context) {
     return Response.json({
       generatedAt: manifest.generatedAt,
       operator: auth.email,
+      platform: manifest.platform ?? {},
       healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
       sites: manifest.sites
     });

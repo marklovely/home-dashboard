@@ -17,6 +17,10 @@ const outPath = join(outDir, 'platform-manifest.json');
 
 /** @type {Record<string, object>} */
 let terraformSites = {};
+/** @type {Record<string, string>} */
+let platformMeta = {
+  githubRepo: 'marklovely/home-dashboard'
+};
 
 try {
   const raw = execFileSync('terraform', ['output', '-json', 'sites'], {
@@ -28,7 +32,38 @@ try {
   console.warn('build-platform-manifest: no terraform output (run terraform apply or import first).');
 }
 
-const registry = loadSitesYaml(sitesYamlPath);
+for (const [key, outputName, parser] of [
+  ['cloudflareAccountId', 'cloudflare_account_id', (v) => v.trim()],
+  ['accessTeamDomain', 'access_team_domain', (v) => v.trim()],
+  ['zoneName', 'zone_name', (v) => v.trim()]
+]) {
+  try {
+    const value = execFileSync('terraform', ['output', '-raw', outputName], {
+      cwd: tfDir,
+      encoding: 'utf8'
+    });
+    platformMeta[key] = parser(value);
+  } catch {
+    /* optional */
+  }
+}
+
+try {
+  const adminRaw = execFileSync('terraform', ['output', '-json', 'platform_admin'], {
+    cwd: tfDir,
+    encoding: 'utf8'
+  });
+  const admin = JSON.parse(adminRaw);
+  if (admin?.cf_access_team_domain) {
+    platformMeta.accessTeamDomain = admin.cf_access_team_domain;
+  }
+} catch {
+  /* optional */
+}
+
+if (!platformMeta.cloudflareAccountId && process.env.CLOUDFLARE_ACCOUNT_ID?.trim()) {
+  platformMeta.cloudflareAccountId = process.env.CLOUDFLARE_ACCOUNT_ID.trim();
+}
 /** @type {Record<string, object>} */
 const sites = {};
 
@@ -58,6 +93,7 @@ for (const [siteId, meta] of Object.entries(registry)) {
 
 const manifest = {
   generatedAt: new Date().toISOString(),
+  platform: platformMeta,
   sites
 };
 
