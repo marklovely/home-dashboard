@@ -64,6 +64,18 @@ function runTerraformApply() {
       process.exit(result.status ?? 1);
     }
 
+    if (/8000022|Invalid Service name \(\)/i.test(output)) {
+      console.error(
+        '\nTerraform apply failed updating Pages HUB_API binding (8000022). Check terraform/modules/hub_environment/variables.tf entrypoint = "default". Not retrying.'
+      );
+      process.exit(result.status ?? 1);
+    }
+
+    if (/\b400\b Bad Request/i.test(output) && !/429|rate limit/i.test(output)) {
+      console.error('\nTerraform apply failed with Cloudflare 400 Bad Request. Not retrying.');
+      process.exit(result.status ?? 1);
+    }
+
     if (attempt >= maxAttempts) {
       process.exit(result.status ?? 1);
     }

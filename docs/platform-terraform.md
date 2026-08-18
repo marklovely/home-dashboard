@@ -260,7 +260,7 @@ Production uses **legacy Cloudflare names** (no `-production` suffix):
 
 5. **Apply when safe** — reconciles env vars, HUB_API binding, and platform health Access policy.
 
-   If apply fails on `cloudflare_pages_project` with **`Invalid Service name ()` (8000022)**, the imported production binding includes `entrypoint = "default"`. Ensure you are on a module version that preserves that in `pages_hub_api_services` (see `terraform/modules/hub_environment/variables.tf`), then re-run apply. Do **not** set `attach_hub_api_binding = false` on an imported site — Terraform will send an empty services map and **remove** the dashboard binding.
+   If apply fails on `cloudflare_pages_project` with **`Invalid Service name ()` (8000022)**, ensure `pages_hub_api_services` sets `entrypoint = "default"` on the HUB_API binding (see `terraform/modules/hub_environment/variables.tf`). Do **not** set `attach_hub_api_binding = false` on an imported site — Terraform will send an empty services map and **remove** the dashboard binding.
 
    Optional guard before apply:
 
