@@ -3,6 +3,7 @@ import {
   deleteSite,
   deploySiteWorker,
   fetchWizardSchema,
+  provisionSite,
   updateSite
 } from './api.js';
 
@@ -189,7 +190,7 @@ function renderWizardStep(mode, step, form, ctx) {
   if ((mode === 'delete' && step === 2) || (mode !== 'delete' && step === 3)) {
     body += `<dl class="review">${renderReview(mode, form)}</dl>`;
     body += `<p class="muted">Step 1 (automated): GitHub opens a PR updating the site registry and Wrangler stubs.</p>`;
-    body += `<p class="muted">Step 2 (today, manual): merge PR → add site to local <code>hub.tfvars</code> → <code>terraform apply</code> → deploy Worker. Full one-click provisioning needs remote Terraform state + secrets in GitHub — planned for v4.</p>`;
+    body += `<p class="muted">Step 2 (automated): after merge to <code>main</code>, <strong>Platform site provision</strong> runs Terraform apply, Worker deploy, Pages deploy, and refreshes the platform manifest.</p>`;
   }
 
   const isFinal = step === totalSteps(mode);
@@ -342,7 +343,7 @@ async function submitWizard(mode, form, panel, githubConfigured, onComplete, clo
 
     panel.querySelector('.wizard-body').innerHTML = `
       <div class="banner banner-ok">${escapeHtml(result.message ?? 'Automation started.')}</div>
-      <p class="muted">Track progress in GitHub Actions → <strong>Platform site manage</strong>. After the PR merges, update <code>hub.tfvars</code> and run <code>terraform apply</code>.</p>
+      <p class="muted">Track progress in GitHub Actions → <strong>Platform site manage</strong>. After merge, <strong>Platform site provision</strong> provisions the hub automatically.</p>
     `;
     panel.querySelector('.wizard-foot').innerHTML =
       '<button type="button" class="btn" data-wizard-done>Done</button>';
@@ -366,6 +367,27 @@ export async function confirmDeployWorker(siteId, onComplete) {
   try {
     const result = await deploySiteWorker(siteId);
     window.alert(result.message ?? 'Deploy started.');
+    await onComplete?.();
+  } catch (error) {
+    window.alert(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * @param {string} siteId
+ * @param {() => void | Promise<void>} [onComplete]
+ */
+export async function confirmProvisionSite(siteId, onComplete) {
+  if (
+    !window.confirm(
+      `Provision hub "${siteId}" via GitHub Actions?\n\nThis runs terraform apply, Worker secrets, D1 migrate, Worker deploy, Pages deploy, and platform manifest refresh.`
+    )
+  ) {
+    return;
+  }
+  try {
+    const result = await provisionSite(siteId);
+    window.alert(result.message ?? 'Provision started.');
     await onComplete?.();
   } catch (error) {
     window.alert(error instanceof Error ? error.message : String(error));

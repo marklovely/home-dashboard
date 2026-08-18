@@ -132,6 +132,31 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
  * @param {string} siteId
  * @param {object} manifest
  */
+export function validateSiteProvision(siteId, manifest) {
+  const idError = validateSiteId(siteId);
+  if (idError) {
+    return { ok: false, error: 'VALIDATION_ERROR', message: idError };
+  }
+
+  if (PROTECTED_SITE_IDS.has(siteId)) {
+    return {
+      ok: false,
+      error: 'VALIDATION_ERROR',
+      message: 'Production provisioning is not supported via the platform UI.'
+    };
+  }
+
+  if (!manifest.sites?.[siteId]) {
+    return { ok: false, error: 'NOT_FOUND', message: `Unknown site: ${siteId}` };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * @param {string} siteId
+ * @param {object} manifest
+ */
 export function validateSiteDeploy(siteId, manifest) {
   const idError = validateSiteId(siteId);
   if (idError) {

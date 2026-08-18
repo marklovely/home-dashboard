@@ -18,7 +18,7 @@ PAGES_PROJECT="home-dashboard-${SITE_ID}"
 BRANCH="${PAGES_BRANCH:-main}"
 
 if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
-  echo "Note: unset CLOUDFLARE_API_TOKEN so wrangler uses OAuth (recommended for pages deploy)." >&2
+  echo "Using CLOUDFLARE_API_TOKEN for Pages deploy."
 fi
 
 HUB_ENV="$SITE_ID"

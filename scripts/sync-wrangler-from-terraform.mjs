@@ -16,7 +16,8 @@ if (!siteId) {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const wranglerPath = join(root, 'worker', 'wrangler.toml');
-const placeholder = `REPLACE_AFTER_PROVISION_${siteId.toUpperCase()}`;
+const placeholderTerraform = 'REPLACE_AFTER_TERRAFORM_APPLY';
+const placeholderProvision = `REPLACE_AFTER_PROVISION_${siteId.toUpperCase()}`;
 
 let sites;
 try {
@@ -50,15 +51,19 @@ if (!toml.includes(envHeader)) {
   process.exit(1);
 }
 
-if (toml.includes(placeholder)) {
-  toml = toml.replaceAll(placeholder, d1Id);
+if (toml.includes(placeholderProvision)) {
+  toml = toml.replaceAll(placeholderProvision, d1Id);
   writeFileSync(wranglerPath, toml);
-  console.log(`Patched ${placeholder} → ${d1Id}`);
+  console.log(`Patched ${placeholderProvision} → ${d1Id}`);
+} else if (toml.includes(placeholderTerraform)) {
+  toml = toml.replaceAll(placeholderTerraform, d1Id);
+  writeFileSync(wranglerPath, toml);
+  console.log(`Patched ${placeholderTerraform} → ${d1Id}`);
 } else if (toml.includes(d1Id)) {
   console.log(`wrangler.toml already contains database_id ${d1Id} for ${siteId}`);
 } else {
   console.warn(
-    `Placeholder ${placeholder} not found. Update [env.${siteId}] database_id manually to ${d1Id}`
+    `Placeholder not found (${placeholderProvision} or ${placeholderTerraform}). Update [env.${siteId}] database_id manually to ${d1Id}`
   );
 }
 

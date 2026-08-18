@@ -11,7 +11,7 @@ import {
   siteDashboardLinks,
   siteOperatorCommands
 } from './links.js';
-import { confirmDeployWorker, openSiteWizard } from './wizard.js';
+import { confirmDeployWorker, confirmProvisionSite, openSiteWizard } from './wizard.js';
 
 const main = document.getElementById('main');
 const refreshBtn = document.getElementById('refresh-btn');
@@ -65,8 +65,8 @@ async function render() {
     </section>
     <section class="panel new-site">
       <h2>Site automation</h2>
-      <p class="muted">Add, edit, or remove sites via a pull request opened by GitHub Actions. After merge, update local <code>hub.tfvars</code> and run <code>terraform apply</code>.</p>
-      <p class="muted">Production cannot be deleted from the wizard. Import existing stacks with <code>scripts/terraform-import-hub-site.sh</code>.</p>
+      <p class="muted">Add sites via wizard → merge PR → provisioning runs automatically on <code>main</code> (Terraform, Worker, Pages, manifest). Or click <strong>Provision</strong> on a site card to retry.</p>
+      <p class="muted">Requires remote Terraform state and GitHub secrets — see <code>docs/platform-provision.md</code>.</p>
     </section>
   `;
 
@@ -134,6 +134,14 @@ function wireSiteActions(sites, githubConfigured) {
         githubConfigured,
         onComplete: () => render().catch(showError)
       }).catch(showError);
+    });
+  });
+
+  main.querySelectorAll('[data-provision-site]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const siteId = button.getAttribute('data-provision-site');
+      if (!siteId) return;
+      confirmProvisionSite(siteId, () => render().catch(showError)).catch(showError);
     });
   });
 
@@ -227,6 +235,7 @@ function renderSiteCard(site, platform, githubConfigured) {
   const links = siteDashboardLinks(platform, site);
   const commands = siteOperatorCommands(site);
   const steps = Array.isArray(site.provisioning) ? site.provisioning : [];
+  const needsProvision = site.terraform && !site.contract && !isProduction;
 
   return `
     <article class="card">
@@ -257,6 +266,7 @@ function renderSiteCard(site, platform, githubConfigured) {
         <button type="button" class="btn btn-small" data-check-site="${escapeHtml(siteId)}">Check health</button>
         ${githubConfigured ? `<button type="button" class="btn btn-small btn-ghost" data-edit-site="${escapeHtml(siteId)}">Edit</button>` : ''}
         ${githubConfigured && !isProduction ? `<button type="button" class="btn btn-small btn-ghost" data-delete-site="${escapeHtml(siteId)}">Delete</button>` : ''}
+        ${githubConfigured && needsProvision ? `<button type="button" class="btn btn-small" data-provision-site="${escapeHtml(siteId)}">Provision</button>` : ''}
         ${githubConfigured && !isProduction ? `<button type="button" class="btn btn-small btn-ghost" data-deploy-site="${escapeHtml(siteId)}">Deploy Worker</button>` : ''}
         <a class="btn btn-small btn-ghost" href="${escapeHtml(String(site.pagesUrl))}/api/access-probe" target="_blank" rel="noopener">Access probe</a>
         <a class="btn btn-small btn-ghost" href="${escapeHtml(String(site.pagesUrl))}" target="_blank" rel="noopener">Open site</a>

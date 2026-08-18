@@ -8,6 +8,7 @@ import {
 import {
   dispatchSiteDeployWorkflow,
   dispatchSiteManageWorkflow,
+  dispatchSiteProvisionWorkflow,
   githubAutomationConfigured,
   githubRepo,
   listRecentWorkflowRuns
@@ -15,7 +16,8 @@ import {
 import {
   buildSiteManagePayload,
   siteWizardSchema,
-  validateSiteDeploy
+  validateSiteDeploy,
+  validateSiteProvision
 } from './platformSiteMutations.js';
 import { platformHealthAuthConfigured } from './platformHealthFetch.js';
 
@@ -119,6 +121,17 @@ export async function onRequest(context) {
         return Response.json(built, { status: 400 });
       }
       const result = await dispatchSiteManageWorkflow(pagesEnv, 'delete', built.payload);
+      return Response.json(result, { status: result.ok ? 202 : 503 });
+    }
+
+    if (request.method === 'POST' && action === 'provision') {
+      const provisionCheck = validateSiteProvision(siteId, manifest);
+      if (!provisionCheck.ok) {
+        return Response.json(provisionCheck, {
+          status: provisionCheck.error === 'NOT_FOUND' ? 404 : 400
+        });
+      }
+      const result = await dispatchSiteProvisionWorkflow(pagesEnv, siteId);
       return Response.json(result, { status: result.ok ? 202 : 503 });
     }
 
