@@ -21,3 +21,4 @@ sites:
     hub_environment: sandbox
     vanilla: true
     terraform: true
+    attach_hub_api_binding: true

@@ -108,6 +108,12 @@ bucket_name = "lovely-home-guide-media-test"
 name = "lovely-home-hub-api-sandbox"
 
 [env.sandbox.vars]
+ACCESS_WORKER_APP_ID = "ee4e495f-3ec8-4537-9a7a-96d31bb7596c"
+
+ACCESS_PAGES_APP_ID = "c1efaa74-4635-4ee0-9365-0651bf19ce94"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
 HUB_ENVIRONMENT = "sandbox"
 ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://sandbox.lovely-home.co.uk,https://home-dashboard-sandbox.pages.dev,https://*.home-dashboard-sandbox.pages.dev,https://*.pages.dev"
 HOME_LATITUDE = "51.5074"
