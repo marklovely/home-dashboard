@@ -4,9 +4,9 @@
  *
  * Usage: SITE_ID=demo node scripts/prune-hub-proxy-secrets-github-secret.mjs
  *
- * Requires GH_TOKEN or PLATFORM_GITHUB_TOKEN with permission to update repo secrets.
+ * Optional cleanup: failures to update the GitHub secret are logged and do not fail deprovision.
  */
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { pruneHubProxySecretsJson } from './lib/prune-hub-site-config.mjs';
 import { validateSiteId } from './lib/site-registry.mjs';
 
@@ -39,7 +39,18 @@ if (!token) {
 }
 
 console.log(`Updating HUB_PROXY_SECRETS_JSON (removed "${siteId}").`);
-execFileSync('gh', ['secret', 'set', 'HUB_PROXY_SECRETS_JSON', '--body', value ?? '{}'], {
+const result = spawnSync('gh', ['secret', 'set', 'HUB_PROXY_SECRETS_JSON', '--body', value ?? '{}'], {
   stdio: 'inherit',
   env: { ...process.env, GH_TOKEN: token }
 });
+
+if (result.status === 0) {
+  console.log(`Removed "${siteId}" from HUB_PROXY_SECRETS_JSON.`);
+  process.exit(0);
+}
+
+console.warn(
+  `Could not update HUB_PROXY_SECRETS_JSON (gh exit ${result.status ?? 'unknown'}). ` +
+    'Deprovision succeeded — remove the site entry from the secret manually if needed.'
+);
+process.exit(0);
