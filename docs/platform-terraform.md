@@ -184,11 +184,17 @@ See [platform-admin.md](./platform-admin.md). Output: `terraform output -json pl
 
 ## Destroy a site
 
+**Automated (v5):** delete via the platform admin wizard → merge the PR → [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) runs on push to `main`. See [platform-provision.md](./platform-provision.md#v5--automated-deprovision).
+
+**Manual (local):**
+
 ```bash
 cd terraform
 terraform destroy -var-file=environments/sandbox.tfvars \
   -target='module.hub_site["sandbox"]'
 ```
+
+Or use `node scripts/deprovision-hub-site.mjs <site_id>` after removing the site from `platform/sites.yaml`.
 
 **Warning:** destroys D1 data and R2 buckets for that site.
 

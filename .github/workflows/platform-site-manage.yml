@@ -89,6 +89,6 @@ jobs:
 
             **Manual retry:** Platform admin → **Provision** on the site card, or workflow dispatch with `site_id`.
 
-            **Delete only:** run `terraform destroy -target='module.hub_site["${{ steps.manage.outputs.site_id }}"]'` after the PR merges (destroy workflow not yet automated).
+            **Delete only:** after merge, [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) runs automatically (Worker delete → Terraform destroy → manifest). See [docs/platform-provision.md](../docs/platform-provision.md#v5--automated-deprovision).
 
             Triggered by platform operator via `platform-site-manage` workflow.

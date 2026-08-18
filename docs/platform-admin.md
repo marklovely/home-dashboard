@@ -157,6 +157,12 @@ Production is **protected** — cannot be deleted from the wizard. Import existi
 
 See [platform-provision.md](./platform-provision.md) for remote Terraform state, GitHub secrets, and the full CI pipeline.
 
+## v5 — automated deprovision
+
+**Delete** in the wizard opens a PR that removes the site from the registry. After merge, [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) deletes the Worker, runs `terraform destroy` for that site's module (D1, R2, Pages, Access, DNS), and refreshes the platform manifest.
+
+**Manual cleanup after deprovision:** remove the site block from local `hub.tfvars` and optional proxy secrets in GitHub. See [platform-provision.md](./platform-provision.md#v5--automated-deprovision).
+
 ## Related
 
 - [platform-terraform.md](./platform-terraform.md) — site provisioning
