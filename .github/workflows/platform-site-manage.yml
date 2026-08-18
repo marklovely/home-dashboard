@@ -40,6 +40,9 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Apply registry changes
         id: manage
         env:
