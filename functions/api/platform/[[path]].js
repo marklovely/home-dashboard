@@ -12,7 +12,11 @@ import {
   githubRepo,
   listRecentWorkflowRuns
 } from './platformGitHub.js';
-import { buildSiteManagePayload, siteWizardSchema } from './platformSiteMutations.js';
+import {
+  buildSiteManagePayload,
+  siteWizardSchema,
+  validateSiteDeploy
+} from './platformSiteMutations.js';
 import { platformHealthAuthConfigured } from './platformHealthFetch.js';
 
 /**
@@ -119,6 +123,10 @@ export async function onRequest(context) {
     }
 
     if (request.method === 'POST' && action === 'deploy') {
+      const deployCheck = validateSiteDeploy(siteId, manifest);
+      if (!deployCheck.ok) {
+        return Response.json(deployCheck, { status: deployCheck.error === 'NOT_FOUND' ? 404 : 400 });
+      }
       const result = await dispatchSiteDeployWorkflow(pagesEnv, siteId);
       return Response.json(result, { status: result.ok ? 202 : 503 });
     }

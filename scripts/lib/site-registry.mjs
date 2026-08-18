@@ -115,3 +115,17 @@ export function suggestedPagesProject(siteId) {
 export function suggestedWorkerName(siteId) {
   return siteId === 'production' ? 'lovely-home-hub-api' : `lovely-home-hub-api-${siteId}`;
 }
+
+/**
+ * Validate site id for worker deploy workflows (blocks production and invalid ids).
+ *
+ * @param {string} siteId
+ */
+export function validateDeploySiteId(siteId) {
+  const idError = validateSiteId(siteId);
+  if (idError) return idError;
+  if (PROTECTED_SITE_IDS.has(siteId)) {
+    return 'Production worker deploy is not supported via this workflow.';
+  }
+  return null;
+}
