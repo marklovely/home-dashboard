@@ -293,7 +293,7 @@ Fully automated hub teardown after the delete PR merges to `main`.
 flowchart TD
   A[Wizard: Delete via PR] --> B[Merge to main]
   B --> C[platform-site-deprovision.yml]
-  C --> D[wrangler delete Worker]
+  C --> D[DELETE Worker script via API]
   D --> E[terraform destroy module.hub_site]
   E --> F[Refresh platform manifest + redeploy admin]
 ```
@@ -307,7 +307,7 @@ flowchart TD
 
 | Resource | How |
 |----------|-----|
-| Worker script + secrets | `wrangler delete {worker} --force` |
+| Worker script + secrets | Cloudflare API `DELETE /workers/scripts/{name}` |
 | D1, R2×2, Pages, Access×2, DNS | `terraform destroy -target=module.hub_site["{id}"]` |
 | Platform admin site card | `build-platform-manifest.mjs` + `deploy-platform-admin.sh` |
 | Local `hub.tfvars` (if present) | `prune-local-hub-tfvars.mjs` during deprovision |
