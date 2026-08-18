@@ -7,7 +7,7 @@ sites:
     hostname: dashboard.lovely-home.co.uk
     hub_environment: production
     vanilla: false
-    terraform: true # set true after terraform import (see docs/platform-terraform.md)
+    terraform: true
 
   test:
     hostname: test.lovely-home.co.uk
@@ -20,3 +20,10 @@ sites:
     hub_environment: sandbox
     vanilla: true
     terraform: true
+
+  demo:
+    hostname: demo.lovely-home.co.uk
+    hub_environment: demo
+    vanilla: true
+    terraform: true
+    attach_hub_api_binding: false
