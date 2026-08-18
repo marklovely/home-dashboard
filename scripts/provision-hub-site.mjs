@@ -88,6 +88,13 @@ function runTerraformApply() {
   }
 }
 
+function runTerraformRefreshOnly() {
+  console.log(`\n==> terraform apply -refresh-only ${terraformApplyArgs().slice(1).join(' ')}`);
+  run('terraform', ['apply', '-refresh-only', '-auto-approve', ...terraformApplyArgs().slice(1)], {
+    cwd: tfDir
+  });
+}
+
 function run(command, commandArgs, options = {}) {
   console.log(`\n==> ${command} ${commandArgs.join(' ')}`);
   execFileSync(command, commandArgs, {
@@ -132,7 +139,8 @@ run('npm', ['run', `deploy:${siteId}`, '--prefix', 'worker'], {
 });
 
 generateTfvars('post-worker');
-runTerraformApply();
+run('node', [join(root, 'scripts/attach-hub-api-pages-binding.mjs'), siteId]);
+runTerraformRefreshOnly();
 
 run('node', [join(root, 'scripts/mark-site-provisioned.mjs'), siteId]);
 

@@ -59,14 +59,11 @@ resource "cloudflare_pages_project" "dashboard" {
       },
       var.attach_hub_api_binding ? { services = local.pages_hub_api_services } : {}
     )
-    preview = merge(
-      {
-        fail_open           = true
-        compatibility_date  = "2024-12-01"
-        compatibility_flags = ["nodejs_compat"]
-      },
-      var.attach_hub_api_binding ? { services = local.pages_hub_api_services } : {}
-    )
+    preview = {
+      fail_open           = true
+      compatibility_date  = "2024-12-01"
+      compatibility_flags = ["nodejs_compat"]
+    }
   }
 }
 
