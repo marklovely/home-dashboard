@@ -164,13 +164,13 @@ bucket_name = "lovely-home-appliance-guides-demo"
 [[env.demo.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-demo"
-database_id = "REPLACE_AFTER_PROVISION_DEMO"
+database_id = "6a225dbd-7f49-4950-a2b4-25672a447824"
 migrations_dir = "migrations"
 
 [[env.demo.d1_databases]]
 binding = "HOUSE_GUIDE_DB"
 database_name = "lovely-home-appliance-manuals-demo"
-database_id = "REPLACE_AFTER_PROVISION_DEMO"
+database_id = "6a225dbd-7f49-4950-a2b4-25672a447824"
 migrations_dir = "migrations"
 
 [[env.demo.r2_buckets]]
