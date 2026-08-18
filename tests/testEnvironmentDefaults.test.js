@@ -89,4 +89,12 @@ describe('test environment vanilla defaults', () => {
     expect(canFetchMyDayCalendar()).toBe(false);
     expect(isAppVisible('controls')).toBe(false);
   });
+
+  it('applies vanilla defaults on custom platform hub environments', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'demo');
+    resetHubEnvironmentForTests();
+    expect(getHubConfig().buttons).toEqual([]);
+    expect(canFetchMyDayCalendar()).toBe(false);
+    expect(isAppVisible('controls')).toBe(false);
+  });
 });

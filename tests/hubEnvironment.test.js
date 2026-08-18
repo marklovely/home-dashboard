@@ -22,4 +22,19 @@ describe('hubEnvironment', () => {
     expect(getHubEnvironmentSync()).toBe('staging');
     expect(isVanillaHubEnvironment()).toBe(true);
   });
+
+  it('recognizes platform site ids like demo as non-production vanilla stacks', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'demo');
+    expect(getHubEnvironmentSync()).toBe('demo');
+    expect(isVanillaHubEnvironment()).toBe(true);
+  });
+
+  it('detects demo from hostname', () => {
+    resetHubEnvironmentForTests();
+    vi.stubGlobal('location', { hostname: 'demo.lovely-home.co.uk' });
+    expect(getHubEnvironmentSync()).toBe('demo');
+    expect(isVanillaHubEnvironment()).toBe(true);
+    resetHubEnvironmentForTests();
+    vi.unstubAllGlobals();
+  });
 });
