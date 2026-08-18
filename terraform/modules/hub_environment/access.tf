@@ -11,7 +11,16 @@ locals {
     }
   ]
 
+  # List policies in precedence order (1, 2, 3…) so Terraform state matches Cloudflare API order.
   access_policies = concat(
+    var.platform_health_checks_enabled ? [{
+      name       = "Platform health checks"
+      decision   = "non_identity"
+      precedence = 1
+      include = [{
+        any_valid_service_token = {}
+      }]
+    }] : [],
     length(var.owner_emails) > 0 ? [{
       name       = "Owners"
       decision   = "allow"
@@ -23,14 +32,6 @@ locals {
       decision   = "allow"
       precedence = var.platform_health_checks_enabled ? 3 : 2
       include    = local.sitter_policy_includes
-    }] : [],
-    var.platform_health_checks_enabled ? [{
-      name       = "Platform health checks"
-      decision   = "non_identity"
-      precedence = 1
-      include = [{
-        any_valid_service_token = {}
-      }]
     }] : []
   )
 }

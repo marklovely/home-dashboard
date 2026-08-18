@@ -71,7 +71,10 @@ if (action === 'delete' && confirmHostname !== existing[siteId]?.hostname) {
 const nextSites = { ...existing };
 
 if (action === 'create') {
-  nextSites[siteId] = defaultSiteEntry(siteId, payload, zoneName);
+  nextSites[siteId] = {
+    ...defaultSiteEntry(siteId, payload, zoneName),
+    attach_hub_api_binding: false
+  };
 } else if (action === 'update') {
   nextSites[siteId] = {
     ...existing[siteId],
@@ -296,9 +299,7 @@ function buildSummary(action, siteId, nextEntry, prevEntry) {
   if (action === 'create') {
     lines.push(`Add site "${siteId}" to platform/sites.yaml and hub.tfvars.example.`);
     lines.push(`Append wrangler [env.${siteId}] stub (database_id placeholders).`);
-    lines.push('After merge: add matching block to terraform/environments/hub.tfvars, then terraform apply.');
-    lines.push(`Then: node scripts/sync-wrangler-from-terraform.mjs ${siteId}`);
-    lines.push(`Then: cd worker && npm run d1:migrate:${siteId} && npm run deploy:${siteId}`);
+    lines.push('After merge: platform-site-provision runs automatically (see docs/platform-provision.md).');
   } else if (action === 'update') {
     lines.push(`Update site "${siteId}" registry metadata.`);
     if (prevEntry?.hostname !== nextEntry?.hostname) {
