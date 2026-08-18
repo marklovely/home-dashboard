@@ -113,7 +113,13 @@ Set on the platform Pages project (via Terraform or dashboard):
 
 | Variable | Purpose |
 |----------|---------|
-| `PLATFORM_GITHUB_TOKEN` | GitHub PAT with `contents:write` + `actions:write` |
+| `PLATFORM_GITHUB_TOKEN` | GitHub PAT with `contents:write`, `pull_requests:write`, and `actions:write` |
+
+Set this in **two places** with the same PAT value:
+
+1. **Cloudflare Pages** (platform admin) — env var so the wizard can dispatch workflows.
+2. **GitHub → Settings → Secrets and variables → Actions** — repo secret so [`platform-site-manage.yml`](../.github/workflows/platform-site-manage.yml) can open PRs. The default `GITHUB_TOKEN` cannot create PRs unless you also enable **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests** (PAT is simpler).
+
 | `PLATFORM_GITHUB_REPO` | `owner/repo` (default from Terraform: `{github_owner}/{github_repo}`) |
 
 In `hub.tfvars` (never commit the token):

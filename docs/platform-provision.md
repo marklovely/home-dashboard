@@ -207,12 +207,12 @@ You no longer maintain a separate “CI only” state file — laptop and GitHub
 | `TF_STATE_R2_BUCKET` | R2 bucket name |
 | `TF_STATE_R2_ENDPOINT` | `https://<account_id>.r2.cloudflarestorage.com` |
 
-Optional:
+Optional (strongly recommended — required for wizard PRs unless you enable Actions PR creation in repo settings):
 
 | Secret | Purpose |
 |--------|---------|
 | `SITTER_EMAILS` | House-sitter Access emails |
-| `PLATFORM_GITHUB_TOKEN` | Platform wizard token (also injected into generated tfvars for platform admin) |
+| `PLATFORM_GITHUB_TOKEN` | Same PAT as platform admin Pages env — **must also be a GitHub Actions repo secret** so site-manage can open PRs and provision can push `sites.yaml` updates |
 | `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` — only needed if Terraform output is unavailable; CI normally reads secrets from remote state |
 
 CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.

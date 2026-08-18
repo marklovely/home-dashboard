@@ -60,10 +60,20 @@ jobs:
       - name: Run registry test
         run: npm test -- tests/platformSitesYaml.test.js
 
+      - name: Check PR token
+        run: |
+          if [ -z "${{ secrets.PLATFORM_GITHUB_TOKEN }}" ]; then
+            echo "::error title=Missing PLATFORM_GITHUB_TOKEN::Add repo secret PLATFORM_GITHUB_TOKEN (PAT with contents:write + pull_requests:write). Use the same token as platform admin. Or enable Settings → Actions → General → Allow GitHub Actions to create and approve pull requests."
+            exit 1
+          fi
+
       - name: Create pull request
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Default GITHUB_TOKEN cannot open PRs unless repo Settings → Actions →
+          # "Allow GitHub Actions to create and approve pull requests" is enabled.
+          # Use the same PAT as platform admin (repo secret PLATFORM_GITHUB_TOKEN).
+          token: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
           branch: platform/site-${{ steps.manage.outputs.site_id }}-${{ inputs.action }}-${{ github.run_id }}
           delete-branch: true
           title: "platform: ${{ inputs.action }} site ${{ steps.manage.outputs.site_id }}"
