@@ -35,6 +35,11 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
       - name: Apply registry changes
         id: manage
         env:

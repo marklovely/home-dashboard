@@ -30,6 +30,47 @@ function githubHeaders(env) {
 
 /**
  * @param {Record<string, string | undefined>} env
+ * @param {string} workflowFile
+ * @param {number} [dispatchedAtMs]
+ */
+async function waitForWorkflowRun(env, workflowFile, dispatchedAtMs = Date.now()) {
+  const repo = githubRepo(env);
+  const [owner, repoName] = repo.split('/');
+  if (!owner || !repoName) return null;
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/${workflowFile}/runs?event=workflow_dispatch&per_page=5`,
+      { headers: githubHeaders(env) }
+    );
+    if (!response.ok) continue;
+
+    const body = await response.json();
+    const runs = body.workflow_runs ?? [];
+    const run = runs.find((entry) => {
+      const createdAt = Date.parse(String(entry.created_at ?? ''));
+      return Number.isFinite(createdAt) && createdAt >= dispatchedAtMs - 5000;
+    });
+
+    if (run) {
+      return {
+        id: run.id,
+        htmlUrl: run.html_url,
+        status: run.status,
+        conclusion: run.conclusion
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
  * @param {string} action
  * @param {Record<string, unknown>} payload
  */
@@ -50,6 +91,7 @@ export async function dispatchSiteManageWorkflow(env, action, payload) {
   }
 
   const ref = env.PLATFORM_GITHUB_REF?.trim() || 'main';
+  const dispatchedAtMs = Date.now();
   const response = await fetch(
     `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/platform-site-manage.yml/dispatches`,
     {
@@ -77,6 +119,9 @@ export async function dispatchSiteManageWorkflow(env, action, payload) {
     };
   }
 
+  const run = await waitForWorkflowRun(env, 'platform-site-manage.yml', dispatchedAtMs);
+  const actionsWorkflowUrl = `https://github.com/${owner}/${repoName}/actions/workflows/platform-site-manage.yml`;
+
   return {
     ok: true,
     action,
@@ -84,7 +129,12 @@ export async function dispatchSiteManageWorkflow(env, action, payload) {
     repo,
     ref,
     workflow: 'platform-site-manage.yml',
-    message: 'Automation started — open GitHub Actions to track the pull request.'
+    actionsWorkflowUrl,
+    workflowRunUrl: run?.htmlUrl ?? actionsWorkflowUrl,
+    workflowRunStatus: run?.status ?? 'queued',
+    message: run?.htmlUrl
+      ? 'Automation started — the pull request opens when this workflow run succeeds.'
+      : 'Automation started — open GitHub Actions to track the pull request.'
   };
 }
 
