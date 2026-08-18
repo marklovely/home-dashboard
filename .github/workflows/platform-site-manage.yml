@@ -68,6 +68,7 @@ jobs:
           fi
 
       - name: Create pull request
+        id: cpr
         uses: peter-evans/create-pull-request@v7
         with:
           # Default GITHUB_TOKEN cannot open PRs unless repo Settings → Actions →
@@ -92,3 +93,13 @@ jobs:
             **Delete only:** run `terraform destroy -target='module.hub_site["${{ steps.manage.outputs.site_id }}"]'` after the PR merges (destroy workflow not yet automated).
 
             Triggered by platform operator via `platform-site-manage` workflow.
+
+      - name: Enable auto-merge
+        if: >-
+          steps.cpr.outputs.pull-request-operation == 'created' ||
+          steps.cpr.outputs.pull-request-operation == 'updated'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: squash
