@@ -21,6 +21,7 @@ import {
 } from './lib/site-registry.mjs';
 import { formatSitesYaml } from './lib/write-sites-yaml.mjs';
 import { removeHubTfvarsSiteBlock } from './lib/prune-hub-site-config.mjs';
+import { removeWranglerEnvBlock, replaceWranglerEnvBlock } from './lib/wrangler-env-block.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sitesYamlPath = join(root, 'platform/sites.yaml');
@@ -161,21 +162,12 @@ function parseOptionalBool(value) {
 function patchWranglerToml(text, action, siteId, entry) {
   if (siteId === 'production') return text;
 
-  const blockRe = new RegExp(
-    `# ---------------------------------------------------------------------------\\n# ${capitalize(siteId)} environment[\\s\\S]*?(?=\\n# ---------------------------------------------------------------------------|\\n*$)`,
-    'm'
-  );
-
   if (action === 'delete') {
-    return text.replace(blockRe, '').replace(/\n{3,}/g, '\n\n');
+    return removeWranglerEnvBlock(text, siteId).text;
   }
 
   const block = renderWranglerEnvBlock(siteId, entry);
-  if (blockRe.test(text)) {
-    return text.replace(blockRe, block.trimEnd());
-  }
-
-  return `${text.trimEnd()}\n\n${block}\n`;
+  return replaceWranglerEnvBlock(text, siteId, block);
 }
 
 /**
