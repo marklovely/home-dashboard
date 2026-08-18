@@ -130,6 +130,14 @@ platform_github_token = "ghp_..."
 
 Then `terraform apply` and redeploy platform admin if needed.
 
+### Auto-merge site PRs
+
+Wizard PRs (`platform/site-*` branches) are queued for **auto-merge (squash)** when CI passes. If any check fails, the PR stays open for manual fix.
+
+One-time repo setting: **Settings → General → Pull Requests → Allow auto-merge**.
+
+If branch protection requires approving reviews, auto-merge waits until someone approves (or add a ruleset exception for `platform/site-*` branches).
+
 Production is **protected** — cannot be deleted from the wizard. Import existing stacks with `scripts/terraform-import-hub-site.sh`.
 
 ## v4 — automated provisioning
