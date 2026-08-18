@@ -6,7 +6,7 @@ import {
   validateSiteId,
   validateSiteMutation
 } from '../scripts/lib/site-registry.mjs';
-import { validateSiteDeploy } from '../functions/api/platform/platformSiteMutations.js';
+import { validateSiteDeploy, validateSiteProvision } from '../functions/api/platform/platformSiteMutations.js';
 
 describe('site registry validation', () => {
   it('accepts valid site ids', () => {
@@ -24,6 +24,17 @@ describe('site registry validation', () => {
     expect(entry.hostname).toBe('demo.lovely-home.co.uk');
     expect(entry.hub_environment).toBe('demo');
     expect(entry.vanilla).toBe(true);
+  });
+
+  it('blocks provision for production and unknown sites', () => {
+    const manifest = {
+      sites: {
+        demo: { siteId: 'demo', hostname: 'demo.lovely-home.co.uk' }
+      }
+    };
+    expect(validateSiteProvision('production', manifest).ok).toBe(false);
+    expect(validateSiteProvision('missing', manifest).ok).toBe(false);
+    expect(validateSiteProvision('demo', manifest).ok).toBe(true);
   });
 
   it('blocks deploy for production and unknown sites', () => {

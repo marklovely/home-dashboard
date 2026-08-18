@@ -1,0 +1,19 @@
+# Copy to terraform/environments/backend.hcl (never commit credentials).
+# Create an R2 bucket + API token with Object Read & Write.
+#
+# One-time local migration from local state:
+#   cd terraform
+#   terraform init -backend-config=environments/backend.hcl
+#   terraform init -migrate-state
+#
+# CI uses secrets via platform-site-provision.yml (-backend-config flags).
+
+bucket                      = "YOUR_R2_BUCKET"
+key                         = "home-dashboard/hub.tfstate"
+region                      = "auto"
+endpoint                    = "https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com"
+skip_credentials_validation = true
+skip_metadata_api_check     = true
+skip_region_validation      = true
+skip_requesting_account_id  = true
+use_path_style              = true

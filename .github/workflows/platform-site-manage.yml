@@ -67,11 +67,10 @@ jobs:
 
             ## After merge
 
-            1. Add or update the matching block in `terraform/environments/hub.tfvars` (local, not committed).
-            2. `cd terraform && terraform apply -var-file=environments/hub.tfvars`
-            3. For **create**: `node scripts/sync-wrangler-from-terraform.mjs ${{ steps.manage.outputs.site_id }}`
-            4. For **create**: `cd worker && npm run d1:migrate:${{ steps.manage.outputs.site_id }} && npm run deploy:${{ steps.manage.outputs.site_id }}`
-            5. For **delete**: `terraform destroy -target='module.hub_site["${{ steps.manage.outputs.site_id }}"]'` then remove from hub.tfvars.
-            6. `npm run platform:manifest` and redeploy platform admin.
+            **Automated (v4):** merging to `main` triggers [`platform-site-provision.yml`](../.github/workflows/platform-site-provision.yml) for new sites (Terraform → Worker → Pages → manifest). Requires remote Terraform state + GitHub secrets — see [docs/platform-provision.md](../docs/platform-provision.md).
+
+            **Manual retry:** Platform admin → **Provision** on the site card, or workflow dispatch with `site_id`.
+
+            **Delete only:** run `terraform destroy -target='module.hub_site["${{ steps.manage.outputs.site_id }}"]'` after the PR merges (destroy workflow not yet automated).
 
             Triggered by platform operator via `platform-site-manage` workflow.

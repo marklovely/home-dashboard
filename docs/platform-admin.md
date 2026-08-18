@@ -102,11 +102,10 @@ Multi-step wizard (**Add site**, **Edit**, **Delete** on each card) dispatches G
 
 After the PR merges:
 
-1. Add the site block to local `terraform/environments/hub.tfvars` (secrets stay local)
-2. `terraform apply -var-file=environments/hub.tfvars`
-3. For new sites: sync wrangler, migrate D1, deploy Worker, redeploy platform admin manifest
+1. **Automated:** [`platform-site-provision.yml`](../.github/workflows/platform-site-provision.yml) runs on push to `main` (Terraform, Worker, Pages, manifest). See [platform-provision.md](./platform-provision.md) for one-time R2 + secrets setup.
+2. **Manual retry:** **Provision** on the site card in platform admin.
 
-**Deploy Worker** on a card dispatches [`platform-site-deploy.yml`](../.github/workflows/platform-site-deploy.yml).
+**Deploy Worker** on a card dispatches [`platform-site-deploy.yml`](../.github/workflows/platform-site-deploy.yml) (Worker only).
 
 ### Enable automation
 
@@ -126,6 +125,10 @@ platform_github_token = "ghp_..."
 Then `terraform apply` and redeploy platform admin if needed.
 
 Production is **protected** — cannot be deleted from the wizard. Import existing stacks with `scripts/terraform-import-hub-site.sh`.
+
+## v4 — automated provisioning
+
+See [platform-provision.md](./platform-provision.md) for remote Terraform state, GitHub secrets, and the full CI pipeline.
 
 ## Related
 

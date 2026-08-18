@@ -23,6 +23,8 @@ export function formatSitesYaml(sites) {
     }
     if (meta.attach_hub_api_binding === true) {
       lines.push(`    attach_hub_api_binding: true`);
+    } else if (meta.attach_hub_api_binding === false) {
+      lines.push(`    attach_hub_api_binding: false`);
     }
     lines.push('');
   }

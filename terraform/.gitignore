@@ -6,3 +6,4 @@ crash.*.log
 terraform.tfvars
 environments/*.tfvars
 !environments/*.tfvars.example
+environments/backend.hcl
