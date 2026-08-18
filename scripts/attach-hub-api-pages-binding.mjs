@@ -31,7 +31,6 @@ if (!token || !accountId) {
 }
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const tfDir = join(root, 'terraform');
 
 const contractRaw = execFileSync(
   'node',
