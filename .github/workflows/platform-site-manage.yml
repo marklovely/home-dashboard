@@ -35,34 +35,12 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Parse payload
-        id: parse
-        run: |
-          node -e "
-            const payload = JSON.parse(process.env.PAYLOAD);
-            const fs = require('fs');
-            const out = process.env.GITHUB_OUTPUT;
-            fs.appendFileSync(out, 'site_id=' + payload.siteId + '\n');
-            if (payload.hostname) fs.appendFileSync(out, 'hostname=' + payload.hostname + '\n');
-            if (payload.hub_environment) fs.appendFileSync(out, 'hub_environment=' + payload.hub_environment + '\n');
-            if (payload.vanilla !== undefined) fs.appendFileSync(out, 'vanilla=' + payload.vanilla + '\n');
-            if (payload.terraform !== undefined) fs.appendFileSync(out, 'terraform=' + payload.terraform + '\n');
-            if (payload.attach_hub_api_binding !== undefined) fs.appendFileSync(out, 'attach_hub_api_binding=' + payload.attach_hub_api_binding + '\n');
-            if (payload.confirm_hostname) fs.appendFileSync(out, 'confirm_hostname=' + payload.confirm_hostname + '\n');
-          "
-        env:
-          PAYLOAD: ${{ inputs.payload }}
-
       - name: Apply registry changes
-        run: |
-          ARGS=( "${{ inputs.action }}" --site-id "${{ steps.parse.outputs.site_id }}" )
-          if [ -n "${{ steps.parse.outputs.hostname }}" ]; then ARGS+=( --hostname "${{ steps.parse.outputs.hostname }}" ); fi
-          if [ -n "${{ steps.parse.outputs.hub_environment }}" ]; then ARGS+=( --hub-environment "${{ steps.parse.outputs.hub_environment }}" ); fi
-          if [ -n "${{ steps.parse.outputs.vanilla }}" ]; then ARGS+=( --vanilla "${{ steps.parse.outputs.vanilla }}" ); fi
-          if [ -n "${{ steps.parse.outputs.terraform }}" ]; then ARGS+=( --terraform "${{ steps.parse.outputs.terraform }}" ); fi
-          if [ -n "${{ steps.parse.outputs.attach_hub_api_binding }}" ]; then ARGS+=( --attach-hub-api-binding "${{ steps.parse.outputs.attach_hub_api_binding }}" ); fi
-          if [ -n "${{ steps.parse.outputs.confirm_hostname }}" ]; then ARGS+=( --confirm-hostname "${{ steps.parse.outputs.confirm_hostname }}" ); fi
-          node scripts/platform-site-manage.mjs "${ARGS[@]}"
+        id: manage
+        env:
+          SITE_MANAGE_ACTION: ${{ inputs.action }}
+          SITE_MANAGE_PAYLOAD: ${{ inputs.payload }}
+        run: node scripts/platform-site-manage-from-payload.mjs
 
       - name: Validate Terraform
         run: |
@@ -78,22 +56,22 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: platform/site-${{ steps.parse.outputs.site_id }}-${{ inputs.action }}-${{ github.run_id }}
+          branch: platform/site-${{ steps.manage.outputs.site_id }}-${{ inputs.action }}-${{ github.run_id }}
           delete-branch: true
-          title: "platform: ${{ inputs.action }} site ${{ steps.parse.outputs.site_id }}"
+          title: "platform: ${{ inputs.action }} site ${{ steps.manage.outputs.site_id }}"
           body: |
             Automated site registry change from **Platform Admin**.
 
             **Action:** `${{ inputs.action }}`
-            **Site:** `${{ steps.parse.outputs.site_id }}`
+            **Site:** `${{ steps.manage.outputs.site_id }}`
 
             ## After merge
 
             1. Add or update the matching block in `terraform/environments/hub.tfvars` (local, not committed).
             2. `cd terraform && terraform apply -var-file=environments/hub.tfvars`
-            3. For **create**: `node scripts/sync-wrangler-from-terraform.mjs ${{ steps.parse.outputs.site_id }}`
-            4. For **create**: `cd worker && npm run d1:migrate:${{ steps.parse.outputs.site_id }} && npm run deploy:${{ steps.parse.outputs.site_id }}`
-            5. For **delete**: `terraform destroy -target='module.hub_site["${{ steps.parse.outputs.site_id }}"]'` then remove from hub.tfvars.
+            3. For **create**: `node scripts/sync-wrangler-from-terraform.mjs ${{ steps.manage.outputs.site_id }}`
+            4. For **create**: `cd worker && npm run d1:migrate:${{ steps.manage.outputs.site_id }} && npm run deploy:${{ steps.manage.outputs.site_id }}`
+            5. For **delete**: `terraform destroy -target='module.hub_site["${{ steps.manage.outputs.site_id }}"]'` then remove from hub.tfvars.
             6. `npm run platform:manifest` and redeploy platform admin.
 
             Triggered by platform operator via `platform-site-manage` workflow.
