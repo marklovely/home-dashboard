@@ -2,7 +2,14 @@ import { ensureApiBaseUrl, buildApiUrl } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
 
 /**
- * @typedef {{ sitterSecretsDisclosed: boolean }} HouseSettingsPayload
+ * @typedef {{
+ *   sitterSecretsDisclosed: boolean,
+ *   sitterAccessEmails?: string[],
+ *   accessSitterSyncConfigured?: boolean,
+ *   accessSyncOk?: boolean,
+ *   accessSyncError?: string,
+ *   accessSyncMessage?: string | null
+ * }} HouseSettingsPayload
  */
 
 /**
@@ -45,6 +52,32 @@ export async function postSitterSecretsDisclosed(disclosed, fetchImpl = fetch) {
       return { ok: false, status: response.status };
     }
     return { ok: true, data: /** @type {HouseSettingsPayload} */ (await response.json()) };
+  } catch {
+    return { ok: false, status: 503 };
+  }
+}
+
+/**
+ * @param {string[]} emails
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function postSitterAccessEmails(emails, fetchImpl = fetch) {
+  await ensureApiBaseUrl();
+  try {
+    const response = await fetchImpl(
+      buildApiUrl('/api/house-settings/sitter-emails'),
+      withApiCredentials({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emails }),
+        cache: 'no-store'
+      })
+    );
+    const data = /** @type {HouseSettingsPayload} */ (await response.json());
+    if (!response.ok) {
+      return { ok: false, status: response.status, data };
+    }
+    return { ok: true, data };
   } catch {
     return { ok: false, status: 503 };
   }

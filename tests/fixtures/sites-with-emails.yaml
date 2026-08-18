@@ -1,0 +1,9 @@
+# Test fixture for loadSitesYaml email parsing
+sites:
+  demo:
+    hostname: demo.lovely-home.co.uk
+    hub_environment: demo
+    vanilla: true
+    terraform: true
+    owner_emails: owner@example.com,partner@example.com
+    sitter_emails: sitter@example.com

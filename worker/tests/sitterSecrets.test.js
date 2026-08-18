@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { handlePrivateConfigRequest } from '../src/routes/privateConfigRoute.js';
 import {
   handleHouseSettingsGet,
+  handleSitterAccessEmailsSetting,
   handleSitterSecretsSetting
 } from '../src/routes/houseSettingsRoute.js';
 import { handleDeviceSession } from '../src/routes/deviceSessionRoute.js';
@@ -110,7 +111,30 @@ describe('house settings', () => {
       env
     );
     expect(response.status).toBe(200);
-    expect((await response.json()).sitterSecretsDisclosed).toBe(true);
+    const body = await response.json();
+    expect(body.sitterSecretsDisclosed).toBe(true);
+    expect(body.sitterAccessEmails).toEqual([]);
+  });
+
+  it('owner can save sitter login emails', async () => {
+    const env = createEnv();
+    const jwt = await signTestAccessJwt('owner@example.com', env);
+    const response = await handleSitterAccessEmailsSetting(
+      new Request(
+        'https://worker.test/api/house-settings/sitter-emails',
+        withAccessJwt(jwt, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emails: ['sitter@example.com'] })
+        })
+      ),
+      env
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.sitterAccessEmails).toEqual(['sitter@example.com']);
+    expect(body.accessSyncOk).toBe(false);
+    expect(body.accessSyncError).toBe('ACCESS_SYNC_NOT_CONFIGURED');
   });
 });
 

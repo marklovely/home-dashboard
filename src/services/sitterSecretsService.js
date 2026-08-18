@@ -1,4 +1,5 @@
 import { fetchHouseSettings, postSitterSecretsDisclosed } from '../api/houseSettingsApi.js';
+import { applySitterAccessEmails } from './sitterAccessEmailsService.js';
 import { refreshPrivateConfig } from './privateConfigService.js';
 
 /** @type {boolean | null} */
@@ -48,6 +49,7 @@ export async function syncSitterSecretsFromServer(fetchImpl = fetch) {
     return false;
   }
   applySitterSecretsDisclosed(result.data.sitterSecretsDisclosed);
+  applySitterAccessEmails(result.data.sitterAccessEmails, result.data.accessSitterSyncConfigured);
   return true;
 }
 

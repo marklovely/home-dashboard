@@ -1,6 +1,6 @@
 /**
  * Write platform/sites.yaml from a sites map (preserves file header comments).
- * @param {Record<string, Record<string, string | boolean>>} sites
+ * @param {Record<string, Record<string, string | boolean | string[]>>} sites
  */
 export function formatSitesYaml(sites) {
   const lines = [
@@ -20,6 +20,12 @@ export function formatSitesYaml(sites) {
       lines.push(`    terraform: false`);
     } else {
       lines.push(`    terraform: true`);
+    }
+    if (Array.isArray(meta.owner_emails) && meta.owner_emails.length > 0) {
+      lines.push(`    owner_emails: ${meta.owner_emails.join(',')}`);
+    }
+    if (Array.isArray(meta.sitter_emails) && meta.sitter_emails.length > 0) {
+      lines.push(`    sitter_emails: ${meta.sitter_emails.join(',')}`);
     }
     if (meta.attach_hub_api_binding === true) {
       lines.push(`    attach_hub_api_binding: true`);

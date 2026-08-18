@@ -39,6 +39,12 @@ import {
   subscribeToSitterSecrets,
   syncSitterSecretsFromServer
 } from '../../services/sitterSecretsService.js';
+import {
+  getSitterAccessEmails,
+  saveSitterAccessEmails,
+  subscribeToSitterAccessEmails
+} from '../../services/sitterAccessEmailsService.js';
+import { createSetupTextarea } from '../../components/HubSetup/hubSetupFields.js';
 import { fetchSiteBackup, restoreSiteBackup } from '../../api/siteBackupApi.js';
 import {
   downloadJsonFile,
@@ -467,6 +473,66 @@ function createSitterSecretsToggle(context) {
   return subsection;
 }
 
+/** @param {import('../../types/app.js').ShellContext} context */
+function createSitterAccessEmailsField(context) {
+  const subsection = document.createElement('div');
+  subsection.className = 'settings-subsection';
+
+  const title = document.createElement('p');
+  title.className = 'settings-subsection-title';
+  title.textContent = 'Sitter login emails';
+
+  const hint = document.createElement('p');
+  hint.className = 'settings-help subtle';
+  hint.textContent =
+    'Cloudflare Access emails that can sign in to this hub as a house-sitter (not the same as contact details in Home details). Comma- or newline-separated. Leave empty to remove sitter login access.';
+
+  const emailsField = createSetupTextarea(
+    'Email addresses',
+    (getSitterAccessEmails() ?? []).join(', '),
+    {
+      rows: 3,
+      placeholder: 'sitter@example.com, partner-sitter@example.com',
+      helpText:
+        'Changes update Cloudflare Access immediately when the hub Worker is configured for Access sync.'
+    }
+  );
+
+  const saveButton = document.createElement('button');
+  saveButton.type = 'button';
+  saveButton.className = 'settings-action-button settings-action-button--secondary';
+  saveButton.textContent = 'Save sitter login emails';
+  saveButton.disabled = getSitterAccessEmails() === null;
+
+  saveButton.addEventListener('click', () => {
+    const raw = emailsField.textarea.value;
+    const emails = raw
+      .split(/[,;\n]+/)
+      .map((part) => part.trim().toLowerCase())
+      .filter(Boolean);
+    saveButton.disabled = true;
+    void saveSitterAccessEmails(emails).then((result) => {
+      saveButton.disabled = false;
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Could not save sitter login emails.');
+        return;
+      }
+      showToast(context.toast, 'Sitter login emails saved.');
+    });
+  });
+
+  subscribeToSitterAccessEmails(() => {
+    const current = getSitterAccessEmails();
+    saveButton.disabled = current === null;
+    if (current !== null) {
+      emailsField.textarea.value = current.join(', ');
+    }
+  });
+
+  subsection.append(title, hint, emailsField.wrap, saveButton);
+  return subsection;
+}
+
 /** @param {import('../../types/app.js').ShellContext} context @param {() => void} onRefresh */
 function createHouseSitterModeFields(context, onRefresh) {
   const wrap = document.createElement('div');
@@ -501,7 +567,7 @@ function createHouseSitterModeFields(context, onRefresh) {
     });
   });
 
-  wrap.append(createSitterSecretsToggle(context), enableCopy, enableButton);
+  wrap.append(createSitterSecretsToggle(context), createSitterAccessEmailsField(context), enableCopy, enableButton);
 
   if (canReturnToHouseSitterMode()) {
     const lockButton = document.createElement('button');

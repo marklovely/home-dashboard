@@ -21,6 +21,7 @@ echo "==> Staging Pages Functions (shared repo functions + platform API route)"
 rm -rf dist-platform/functions
 mkdir -p dist-platform/functions/lib dist-platform/functions/api/platform
 cp functions/_middleware.js dist-platform/functions/
+cp functions/lib/emailLists.js dist-platform/functions/lib/
 cp functions/lib/accessTeamDomain.js dist-platform/functions/lib/
 cp functions/api/middlewareAccess.js dist-platform/functions/api/
 cp functions/api/accessIdentity.js dist-platform/functions/api/

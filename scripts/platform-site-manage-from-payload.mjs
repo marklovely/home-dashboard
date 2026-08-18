@@ -61,6 +61,18 @@ if (payload.terraform !== undefined) args.push('--terraform', String(payload.ter
 if (payload.attach_hub_api_binding !== undefined) {
   args.push('--attach-hub-api-binding', String(payload.attach_hub_api_binding));
 }
+if (payload.owner_emails !== undefined) {
+  const emails = Array.isArray(payload.owner_emails)
+    ? payload.owner_emails.join(',')
+    : String(payload.owner_emails);
+  args.push('--owner-emails', emails);
+}
+if (payload.sitter_emails !== undefined) {
+  const emails = Array.isArray(payload.sitter_emails)
+    ? payload.sitter_emails.join(',')
+    : String(payload.sitter_emails);
+  args.push('--sitter-emails', emails);
+}
 if (payload.confirm_hostname !== undefined) {
   args.push('--confirm-hostname', String(payload.confirm_hostname));
 }

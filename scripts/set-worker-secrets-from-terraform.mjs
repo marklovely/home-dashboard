@@ -10,6 +10,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateDeploySiteId } from './lib/site-registry.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
+import { formatEmailList } from './lib/email-lists.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
@@ -40,14 +41,19 @@ const hubProxy = execFileSync(
   { encoding: 'utf8' }
 ).trim();
 
-const ownerEmails = (process.env.OWNER_EMAILS ?? '')
-  .split(',')
-  .map((value) => value.trim())
-  .filter(Boolean)
-  .join(',');
+const registryEntry = registry[siteId];
+let ownerEmails = formatEmailList(registryEntry?.owner_emails);
+if (!ownerEmails && Array.isArray(contract.owner_emails) && contract.owner_emails.length) {
+  ownerEmails = formatEmailList(contract.owner_emails);
+}
+if (!ownerEmails) {
+  ownerEmails = formatEmailList(process.env.OWNER_EMAILS);
+}
 
 if (!ownerEmails) {
-  console.error('OWNER_EMAILS env var is required (comma-separated).');
+  console.error(
+    'Owner emails are required — set owner_emails on the site in platform/sites.yaml or OWNER_EMAILS env (comma-separated).'
+  );
   process.exit(1);
 }
 
@@ -58,6 +64,12 @@ const secrets = {
   CF_ACCESS_AUD: String(contract.access_aud_combined ?? ''),
   OWNER_EMAILS: ownerEmails
 };
+
+const accessManagementToken =
+  process.env.CF_ACCESS_MANAGEMENT_TOKEN?.trim() || process.env.CLOUDFLARE_API_TOKEN?.trim();
+if (accessManagementToken) {
+  secrets.CF_ACCESS_MANAGEMENT_TOKEN = accessManagementToken;
+}
 
 if (vanilla) {
   Object.assign(secrets, {
