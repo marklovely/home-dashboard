@@ -83,6 +83,9 @@ jobs:
       - name: Install worker dependencies
         run: npm ci --prefix worker
 
+      - name: Verify Cloudflare API token
+        run: bash scripts/verify-cloudflare-api-token.sh
+
       - name: Provision hub site
         run: |
           ARGS=( "${{ inputs.site_id }}" )
