@@ -110,3 +110,16 @@ export function requireHubProxySecret(siteId, terraformSiteIds, envSecrets, stat
 export function escapeHcl(value) {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
+
+/**
+ * @param {string} deprovisionSiteId
+ * @param {Set<string>} writtenSiteIds
+ * @returns {string | null}
+ */
+export function deprovisionSiteMissingError(deprovisionSiteId, writtenSiteIds) {
+  const siteId = deprovisionSiteId?.trim();
+  if (!siteId || writtenSiteIds.has(siteId)) return null;
+  return (
+    `DEPROVISION_SITE_ID="${siteId}" must appear in generated tfvars but could not be resolved from terraform output.`
+  );
+}
