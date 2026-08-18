@@ -72,6 +72,8 @@ echo "==> Provision APIs (list/read — same auth as terraform create)"
 check_json "D1 databases" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database?per_page=1")"
 check_json "Zero Trust Access apps" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/access/apps?per_page=1")"
 check_json "R2 buckets" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets")"
+check_json "Workers scripts" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts")"
+check_json "Workers account subdomain" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/subdomain")"
 
 if [[ -n "$ZONE_ID" ]]; then
   echo ""
@@ -85,13 +87,15 @@ if [[ -n "$ZONE_ID" ]]; then
     }
     console.log('  zone:', j.result?.name);
   "
+  check_json "Workers routes" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/workers/routes?per_page=1")"
 else
   echo ""
   echo "(Skip zone check — set CLOUDFLARE_ZONE_ID)"
 fi
 
 echo ""
-echo "Token can reach Terraform provision APIs for account ${ACCOUNT_ID}."
+echo "Token can reach Terraform + Wrangler provision APIs for account ${ACCOUNT_ID}."
 echo "Required permissions: D1 Edit, R2 Edit, Pages Edit, Access Apps/Policies Edit,"
-echo "Access Service Tokens Edit, Workers Scripts Edit, Zone DNS Edit."
+echo "Access Service Tokens Edit, Workers Scripts Edit, Zone Workers Routes Edit, Zone DNS Edit."
+echo "Optional (quieter wrangler whoami): User Memberships Read, User Details Read."
 echo "Create at: https://dash.cloudflare.com/profile/api-tokens"

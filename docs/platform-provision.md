@@ -224,8 +224,9 @@ Provisioning runs **one site at a time** (`max-parallel: 1` + workflow concurren
 The CI token needs everything in [platform-terraform.md](./platform-terraform.md) **plus**:
 
 - Account → **Workers Scripts → Edit** (deploy Worker + `wrangler secret put`)
+- Zone → **Workers Routes → Edit** (wrangler deploy enables `*.workers.dev` after upload)
 
-Without Workers Scripts Edit, `set-worker-secrets-from-terraform.mjs` and deploy steps fail in CI.
+Without Workers Scripts Edit, `set-worker-secrets-from-terraform.mjs` fails in CI. Without Workers Routes Edit, `wrangler deploy` fails on `/workers/subdomain` even when the script upload succeeds.
 
 **Provision fails with `401 Unauthorized` (Access, D1, R2 create):** The GitHub secret `CLOUDFLARE_API_TOKEN` is invalid, expired, or does not include account `CLOUDFLARE_ACCOUNT_ID`. Re-create the token with the permissions above, update the repo secret, and run locally or in CI:
 
@@ -236,7 +237,7 @@ export CLOUDFLARE_ZONE_ID="..."
 bash scripts/verify-cloudflare-api-token.sh
 ```
 
-CI runs this check before `terraform apply` so auth problems fail in seconds instead of after several retry cycles.
+**Deploy fails with `Authentication error [code: 10000]` on `/workers/subdomain`:** Add **Workers Routes → Edit** on zone `lovely-home.co.uk` (included in Cloudflare’s “Edit Cloudflare Workers” template). Re-run verify — it checks the subdomain endpoint before terraform apply.
 
 ## What runs in CI
 
