@@ -2,9 +2,6 @@ name: Terraform validate
 
 on:
   pull_request:
-    paths:
-      - 'terraform/**'
-      - 'platform/**'
   push:
     branches:
       - main
