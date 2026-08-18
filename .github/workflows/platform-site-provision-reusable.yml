@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: platform-terraform-state
@@ -96,9 +97,10 @@ jobs:
       - name: Commit provisioned site registry flag
         env:
           GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          SITE_ID: ${{ inputs.site_id }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "::warning::PLATFORM_GITHUB_TOKEN not set — skipping sites.yaml commit (set repo secret or push attach_hub_api_binding manually)."
+            echo "::warning::PLATFORM_GITHUB_TOKEN not set — skipping sites.yaml commit (set repo secret or open a PR for attach_hub_api_binding manually)."
             exit 0
           fi
           git config user.name "github-actions[bot]"
@@ -108,5 +110,19 @@ jobs:
             echo "No provision follow-up changes to commit."
             exit 0
           fi
-          git commit -m "platform: mark ${{ inputs.site_id }} provisioned (attach HUB_API, sync D1 ids)"
-          git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main
+          BRANCH="platform/provision-${SITE_ID}-${GITHUB_RUN_ID}"
+          git checkout -b "$BRANCH"
+          git commit -m "platform: mark ${SITE_ID} provisioned (attach HUB_API, sync D1 ids)"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${BRANCH}"
+          gh pr create \
+            --title "platform: mark ${SITE_ID} provisioned (attach HUB_API, sync D1 ids)" \
+            --body "$(cat <<EOF
+          Automated provision follow-up from **Platform site provision**.
+
+          Site \`${SITE_ID}\` finished Terraform, Worker deploy, and Pages. This PR sets \`attach_hub_api_binding: true\` in \`platform/sites.yaml\` and syncs D1 ids in \`worker/wrangler.toml\`.
+
+          Auto-merge runs when required checks pass (see \`platform-site-pr-automerge.yml\`).
+          EOF
+          )" \
+            --base main \
+            --head "$BRANCH"

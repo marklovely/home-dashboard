@@ -134,7 +134,12 @@ Then `terraform apply` and redeploy platform admin if needed.
 
 Wizard PRs on `platform/site-*` branches are queued for **auto-merge (squash)** when required checks pass. If any check fails, the PR stays open.
 
-[`platform-site-pr-automerge.yml`](../.github/workflows/platform-site-pr-automerge.yml) enables auto-merge when the PR opens (with retries while GitHub registers check runs). It runs on `pull_request_target` (workflow from `main` only) and only for wizard PRs matching the `platform/site-*` branch, `platform:` title, and Platform Admin body marker. Auto-merge is enabled **before** CI finishes; GitHub merges only after required checks pass.
+[`platform-site-pr-automerge.yml`](../.github/workflows/platform-site-pr-automerge.yml) enables auto-merge when the PR opens (with retries while GitHub registers check runs). It runs on `pull_request_target` (workflow from `main` only) for:
+
+- Wizard PRs: `platform/site-*` branch + Platform Admin body marker
+- Provision follow-up PRs: `platform/provision-*` branch + Platform site provision body marker
+
+Auto-merge is enabled **before** CI finishes; GitHub merges only after required checks pass.
 
 **Required one-time repo settings:**
 
