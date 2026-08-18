@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Lovely Home Hub platform operator dashboard — manage and monitor hub sites."
+    />
+    <title>Platform Admin · Lovely Home Hub</title>
+    <link rel="icon" href="/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Platform operator</p>
+          <h1>Lovely Home Hub — Sites</h1>
+          <p id="summary" class="summary" aria-live="polite"></p>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" id="add-site-btn" class="btn">Add site</button>
+          <button type="button" id="check-all-btn" class="btn">Check all health</button>
+          <button type="button" id="refresh-btn" class="btn btn-ghost">Refresh</button>
+        </div>
+      </header>
+      <main id="main" class="main" aria-live="polite"></main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

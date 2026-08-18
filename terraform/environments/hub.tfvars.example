@@ -13,7 +13,28 @@ owner_emails = [
 
 sitter_emails = []
 
+platform_operator_emails = [
+  "you@example.com", # Mark-only — not household owner_emails
+]
+
+# Optional — enables platform admin site wizard (GitHub Actions PR automation)
+# platform_github_token = "ghp_..."
+
+platform_admin = {
+  enabled    = true
+  hostname   = "platform.lovely-home.co.uk"
+  pages_name = "home-dashboard-platform"
+}
+
 sites = {
+  production = {
+    hostname         = "dashboard.lovely-home.co.uk"
+    hub_environment  = "production"
+    vanilla          = false
+    terraform        = true
+    hub_proxy_secret = "PASTE_EXISTING_HUB_PROXY_SECRET"
+  }
+
   sandbox = {
     hostname        = "sandbox.lovely-home.co.uk"
     hub_environment = "sandbox"
