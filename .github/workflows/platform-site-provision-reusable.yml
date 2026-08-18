@@ -88,7 +88,13 @@ jobs:
           node scripts/provision-hub-site.mjs "${ARGS[@]}"
 
       - name: Commit provisioned site registry flag
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::PLATFORM_GITHUB_TOKEN not set — skipping sites.yaml commit (set repo secret or push attach_hub_api_binding manually)."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add platform/sites.yaml
@@ -97,4 +103,4 @@ jobs:
             exit 0
           fi
           git commit -m "platform: mark ${{ inputs.site_id }} provisioned (attach HUB_API)"
-          git push
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main
