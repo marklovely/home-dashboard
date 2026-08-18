@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  deprovisionSiteMissingError,
   hubProxySecretForGeneratedTfvars,
   resolveAttachHubApiBinding,
   resolveHubProxySecret
@@ -50,5 +51,11 @@ describe('hub tfvars helpers', () => {
       hubProxySecretForGeneratedTfvars('production', inState, randomProxy, {}, { production: 'pinned' })
     ).toBe('pinned');
     expect(hubProxySecretForGeneratedTfvars('demo', inState, randomProxy, {}, {})).toBeUndefined();
+  });
+
+  it('requires deprovision site to be written into generated tfvars', () => {
+    expect(deprovisionSiteMissingError('', new Set())).toBeNull();
+    expect(deprovisionSiteMissingError('demo', new Set(['demo']))).toBeNull();
+    expect(deprovisionSiteMissingError('demo', new Set())).toMatch(/must appear in generated tfvars/i);
   });
 });

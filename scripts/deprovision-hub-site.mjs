@@ -132,17 +132,18 @@ function deleteWorker(workerName) {
 console.log(`\n=== Deprovisioning hub site: ${siteId} ===`);
 
 const workerName = readWorkerName();
-deleteWorker(workerName);
-
 const inState = hubSiteModuleInState(siteId, tfDir);
-if (!inState) {
-  console.warn(`No module.hub_site["${siteId}"] in terraform state — skipping destroy.`);
-} else {
+
+if (inState) {
   run('node', [generatedTfvars, '--output', tfvarsPath], {
     env: { ...process.env, DEPROVISION_SITE_ID: siteId }
   });
   runTerraformDestroy();
+} else {
+  console.log(`No module.hub_site["${siteId}"] in terraform state — skipping terraform destroy.`);
 }
+
+deleteWorker(workerName);
 
 run('node', [join(root, 'scripts/build-platform-manifest.mjs')]);
 

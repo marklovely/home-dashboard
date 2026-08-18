@@ -12,17 +12,21 @@ export function stateListIncludesHubSite(stateList, siteId) {
 }
 
 /**
+ * @param {string} tfDir
+ * @returns {string}
+ */
+export function readTerraformStateList(tfDir) {
+  return execFileSync('terraform', ['state', 'list'], {
+    cwd: tfDir,
+    encoding: 'utf8'
+  });
+}
+
+/**
  * @param {string} siteId
  * @param {string} tfDir
  */
 export function hubSiteModuleInState(siteId, tfDir) {
-  try {
-    const stateList = execFileSync('terraform', ['state', 'list'], {
-      cwd: tfDir,
-      encoding: 'utf8'
-    });
-    return stateListIncludesHubSite(stateList, siteId);
-  } catch {
-    return false;
-  }
+  const stateList = readTerraformStateList(tfDir);
+  return stateListIncludesHubSite(stateList, siteId);
 }

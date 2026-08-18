@@ -12,6 +12,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  deprovisionSiteMissingError,
   escapeHcl,
   hubProxySecretForGeneratedTfvars,
   resolveAttachHubApiBinding
@@ -159,6 +160,12 @@ if (deprovisionSiteId && !writtenSiteIds.has(deprovisionSiteId) && terraformSite
       vanilla: contract.vanilla
     });
   }
+}
+
+const missingDeprovisionSite = deprovisionSiteMissingError(deprovisionSiteId, writtenSiteIds);
+if (missingDeprovisionSite) {
+  console.error(missingDeprovisionSite);
+  process.exit(1);
 }
 
 lines.push('}', '');
