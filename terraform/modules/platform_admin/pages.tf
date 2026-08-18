@@ -49,7 +49,7 @@ resource "cloudflare_pages_project" "admin" {
           }
           NODE_VERSION = {
             type  = "plain_text"
-            value = "22"
+            value = "24.19.0"
           }
         },
         var.platform_github_token != "" ? {

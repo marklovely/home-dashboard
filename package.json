@@ -3,6 +3,11 @@
   "version": "2.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.19.0",
+    "npm": ">=10.9.0"
+  },
+  "packageManager": "npm@10.9.9",
   "scripts": {
     "dev": "node scripts/write-runtime-config.js && vite --host 0.0.0.0",
     "build": "node scripts/write-runtime-config.js && vite build && node scripts/copy-pwa-assets.js",
