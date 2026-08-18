@@ -1,0 +1,73 @@
+name: Platform site provision
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - platform/sites.yaml
+  workflow_dispatch:
+    inputs:
+      site_id:
+        description: Site id to provision (e.g. demo)
+        required: true
+        type: string
+      skip_pages:
+        description: Skip Pages frontend deploy
+        required: false
+        type: boolean
+        default: false
+      skip_platform_admin:
+        description: Skip platform admin redeploy
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-site-provision-${{ github.event_name == 'workflow_dispatch' && inputs.site_id || 'auto' }}
+  cancel-in-progress: false
+
+jobs:
+  detect-new-sites:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      site_ids: ${{ steps.detect.outputs.site_ids }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - id: detect
+        run: node scripts/detect-new-sites-from-yaml.mjs
+
+  provision-auto:
+    if: github.event_name == 'push' && needs.detect-new-sites.outputs.site_ids != '[]'
+    needs: detect-new-sites
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        site_id: ${{ fromJson(needs.detect-new-sites.outputs.site_ids) }}
+    uses: ./.github/workflows/platform-site-provision-reusable.yml
+    with:
+      site_id: ${{ matrix.site_id }}
+      skip_pages: false
+      skip_platform_admin: false
+    secrets: inherit
+
+  provision-manual:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/platform-site-provision-reusable.yml
+    with:
+      site_id: ${{ inputs.site_id }}
+      skip_pages: ${{ inputs.skip_pages }}
+      skip_platform_admin: ${{ inputs.skip_platform_admin }}
+    secrets: inherit

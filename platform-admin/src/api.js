@@ -115,3 +115,17 @@ export async function deploySiteWorker(siteId) {
   }
   return body;
 }
+
+/**
+ * @param {string} siteId
+ */
+export async function provisionSite(siteId) {
+  const response = await fetch(`${API_BASE}/sites/${encodeURIComponent(siteId)}/provision`, {
+    method: 'POST'
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.message ?? `Provision failed (${response.status})`);
+  }
+  return body;
+}

@@ -78,6 +78,7 @@ for (const [siteId, meta] of Object.entries(registry)) {
     hubEnvironment: meta.hub_environment ?? siteId,
     vanilla: Boolean(meta.vanilla),
     terraform: Boolean(meta.terraform),
+    attachHubApiBinding: meta.attach_hub_api_binding === true,
     pagesProject:
       contract?.pages_project ??
       (siteId === 'production' ? 'home-dashboard' : `home-dashboard-${siteId}`),

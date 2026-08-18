@@ -126,6 +126,59 @@ export async function listRecentWorkflowRuns(env, options = {}) {
 /**
  * @param {Record<string, string | undefined>} env
  * @param {string} siteId
+ * @param {{ skipPages?: boolean, skipPlatformAdmin?: boolean }} [options]
+ */
+export async function dispatchSiteProvisionWorkflow(env, siteId, options = {}) {
+  if (!githubAutomationConfigured(env)) {
+    return {
+      ok: false,
+      error: 'GITHUB_NOT_CONFIGURED',
+      message: 'GitHub automation is not configured on this platform project.'
+    };
+  }
+
+  const repo = githubRepo(env);
+  const [owner, repoName] = repo.split('/');
+  const ref = env.PLATFORM_GITHUB_REF?.trim() || 'main';
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/platform-site-provision.yml/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        ...githubHeaders(env),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ref,
+        inputs: {
+          site_id: siteId,
+          skip_pages: String(options.skipPages === true),
+          skip_platform_admin: String(options.skipPlatformAdmin === true)
+        }
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    return {
+      ok: false,
+      error: 'GITHUB_DISPATCH_FAILED',
+      message: `Provision dispatch failed (${response.status}). ${detail.slice(0, 200)}`
+    };
+  }
+
+  return {
+    ok: true,
+    siteId,
+    workflow: 'platform-site-provision.yml',
+    message: `Full hub provisioning started for ${siteId}. Track progress in GitHub Actions.`
+  };
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {string} siteId
  */
 export async function dispatchSiteDeployWorkflow(env, siteId) {
   if (!githubAutomationConfigured(env)) {
