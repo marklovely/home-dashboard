@@ -26,4 +26,4 @@ sites:
     hub_environment: demo
     vanilla: true
     terraform: true
-    attach_hub_api_binding: false
+    attach_hub_api_binding: true
