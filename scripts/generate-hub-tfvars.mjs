@@ -13,7 +13,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   escapeHcl,
-  requireHubProxySecret,
+  hubProxySecretForGeneratedTfvars,
   resolveAttachHubApiBinding
 } from './lib/hub-tfvars.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
@@ -54,6 +54,7 @@ if (process.env.HUB_PROXY_SECRETS_JSON?.trim()) {
 const registry = loadSitesYaml(sitesYamlPath);
 const terraformSiteIds = readTerraformSiteIds();
 const hubProxySecretsState = readTerraformHubProxySecrets();
+const randomProxySiteIds = readRandomHubProxySiteIds();
 
 /** @type {Record<string, string>} */
 const hubProxySecretsOut = {};
@@ -109,9 +110,10 @@ for (const [siteId, meta] of Object.entries(registry)) {
 
   let proxySecret;
   try {
-    proxySecret = requireHubProxySecret(
+    proxySecret = hubProxySecretForGeneratedTfvars(
       siteId,
       terraformSiteIds,
+      randomProxySiteIds,
       hubProxySecretsEnv,
       hubProxySecretsState
     );
@@ -190,5 +192,27 @@ function readTerraformHubProxySecrets() {
     return JSON.parse(raw);
   } catch {
     return {};
+  }
+}
+
+/**
+ * Sites whose hub_proxy_secret is still managed by random_password in state.
+ * @returns {Set<string>}
+ */
+function readRandomHubProxySiteIds() {
+  try {
+    const raw = execFileSync('terraform', ['state', 'list'], {
+      cwd: tfDir,
+      encoding: 'utf8'
+    });
+    /** @type {Set<string>} */
+    const ids = new Set();
+    for (const line of raw.split('\n')) {
+      const match = line.match(/^module\.hub_site\["([^"]+)"\]\.random_password\.hub_proxy\[0\]$/);
+      if (match) ids.add(match[1]);
+    }
+    return ids;
+  } catch {
+    return new Set();
   }
 }

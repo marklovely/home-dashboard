@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAttachHubApiBinding, resolveHubProxySecret } from '../scripts/lib/hub-tfvars.mjs';
+import {
+  hubProxySecretForGeneratedTfvars,
+  resolveAttachHubApiBinding,
+  resolveHubProxySecret
+} from '../scripts/lib/hub-tfvars.mjs';
 
 describe('hub tfvars helpers', () => {
   it('honours post-worker phase over attach_hub_api_binding false in yaml', () => {
@@ -34,5 +38,17 @@ describe('hub tfvars helpers', () => {
     ).toBe('from-env');
     expect(resolveHubProxySecret('production', inState, {}, { production: 'from-state' })).toBe('from-state');
     expect(resolveHubProxySecret('demo', inState, {}, {})).toBe(null);
+  });
+
+  it('omits random_password-managed sites from generated secrets map', () => {
+    const inState = new Set(['sandbox', 'production']);
+    const randomProxy = new Set(['sandbox']);
+    expect(
+      hubProxySecretForGeneratedTfvars('sandbox', inState, randomProxy, {}, { sandbox: 'generated' })
+    ).toBeUndefined();
+    expect(
+      hubProxySecretForGeneratedTfvars('production', inState, randomProxy, {}, { production: 'pinned' })
+    ).toBe('pinned');
+    expect(hubProxySecretForGeneratedTfvars('demo', inState, randomProxy, {}, {})).toBeUndefined();
   });
 });
