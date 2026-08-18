@@ -14,6 +14,7 @@ sites:
     hub_environment: test
     vanilla: true
     terraform: true
+    attach_hub_api_binding: true
 
   sandbox:
     hostname: sandbox.lovely-home.co.uk
