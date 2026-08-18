@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Patch worker/wrangler.toml [env.{site}] database_id from terraform output.
+ * Patch worker/wrangler.toml [env.{site}] from terraform output.
  * Usage: node scripts/sync-wrangler-from-terraform.mjs sandbox
  */
 import { execFileSync } from 'node:child_process';
@@ -53,11 +53,9 @@ if (!toml.includes(envHeader)) {
 
 if (toml.includes(placeholderProvision)) {
   toml = toml.replaceAll(placeholderProvision, d1Id);
-  writeFileSync(wranglerPath, toml);
   console.log(`Patched ${placeholderProvision} → ${d1Id}`);
 } else if (toml.includes(placeholderTerraform)) {
   toml = toml.replaceAll(placeholderTerraform, d1Id);
-  writeFileSync(wranglerPath, toml);
   console.log(`Patched ${placeholderTerraform} → ${d1Id}`);
 } else if (toml.includes(d1Id)) {
   console.log(`wrangler.toml already contains database_id ${d1Id} for ${siteId}`);
@@ -67,4 +65,41 @@ if (toml.includes(placeholderProvision)) {
   );
 }
 
+const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim() || '';
+const accessVars = {
+  CLOUDFLARE_ACCOUNT_ID: accountId,
+  ACCESS_PAGES_APP_ID: String(contract.access_pages_app_id ?? ''),
+  ACCESS_WORKER_APP_ID: String(contract.access_worker_app_id ?? '')
+};
+
+for (const [key, value] of Object.entries(accessVars)) {
+  if (!value) continue;
+  toml = upsertEnvVar(toml, siteId, key, value);
+}
+
+writeFileSync(wranglerPath, toml);
 console.log(JSON.stringify(contract, null, 2));
+
+/**
+ * @param {string} toml
+ * @param {string} siteId
+ * @param {string} key
+ * @param {string} value
+ */
+function upsertEnvVar(toml, siteId, key, value) {
+  const varsHeader = `[env.${siteId}.vars]`;
+  const assignment = `${key} = "${value.replace(/"/g, '\\"')}"`;
+  const varsBlockRe = new RegExp(
+    `(\\[env\\.${siteId}\\.vars\\][\\s\\S]*?)(?=\\n\\[|\\n\\[\\[|$)`,
+    'm'
+  );
+  const match = toml.match(varsBlockRe);
+  if (!match) return toml;
+
+  const block = match[1];
+  const keyRe = new RegExp(`^${key}\\s*=.*$`, 'm');
+  const nextBlock = keyRe.test(block)
+    ? block.replace(keyRe, assignment)
+    : `${block.trimEnd()}\n${assignment}\n`;
+  return toml.replace(block, nextBlock);
+}

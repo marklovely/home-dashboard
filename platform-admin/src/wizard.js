@@ -15,6 +15,8 @@ import {
  * @property {string} hubEnvironment
  * @property {boolean} vanilla
  * @property {boolean} attachHubApiBinding
+ * @property {string} ownerEmailsText
+ * @property {string} sitterEmailsText
  * @property {string} confirmHostname
  */
 
@@ -38,6 +40,8 @@ export async function openSiteWizard({ mode, site = null, githubConfigured = fal
     hubEnvironment: site ? String(site.hubEnvironment ?? site.siteId) : '',
     vanilla: site ? Boolean(site.vanilla) : schema.defaults?.vanilla !== false,
     attachHubApiBinding: Boolean(site?.attachHubApiBinding ?? schema.defaults?.attachHubApiBinding),
+    ownerEmailsText: Array.isArray(site?.ownerEmails) ? site.ownerEmails.join(', ') : '',
+    sitterEmailsText: Array.isArray(site?.sitterEmails) ? site.sitterEmails.join(', ') : '',
     confirmHostname: ''
   };
   let hubEnvironmentCustom = mode === 'update' && form.hubEnvironment !== form.siteId;
@@ -174,6 +178,16 @@ function renderWizardStep(mode, step, form, ctx) {
         <span>Attach HUB_API binding on first Terraform apply</span>
         <small class="muted">Leave off until the Worker exists; enable on a second apply.</small>
       </label>
+      <label class="field">
+        <span>Owner emails</span>
+        <textarea name="ownerEmailsText" rows="2" placeholder="owner@example.com, partner@example.com">${escapeHtml(form.ownerEmailsText)}</textarea>
+        <small class="muted">Household owners for Cloudflare Access and calendar/API. Comma- or newline-separated.</small>
+      </label>
+      <label class="field">
+        <span>Sitter emails (optional)</span>
+        <textarea name="sitterEmailsText" rows="2" placeholder="sitter@example.com">${escapeHtml(form.sitterEmailsText)}</textarea>
+        <small class="muted">House-sitters who should pass Access on this site only.</small>
+      </label>
     `;
   }
 
@@ -231,6 +245,8 @@ function renderReview(mode, form) {
     <div><dt>Wrangler env</dt><dd><code>${escapeHtml(form.hubEnvironment || form.siteId)}</code></dd></div>
     <div><dt>Vanilla</dt><dd>${form.vanilla ? 'yes' : 'no'}</dd></div>
     <div><dt>HUB_API on first apply</dt><dd>${form.attachHubApiBinding ? 'yes' : 'no'}</dd></div>
+    <div><dt>Owner emails</dt><dd>${escapeHtml(form.ownerEmailsText || '—')}</dd></div>
+    <div><dt>Sitter emails</dt><dd>${escapeHtml(form.sitterEmailsText || '—')}</dd></div>
   `;
 }
 
@@ -267,6 +283,12 @@ function wireWizardStep(panel, form, mode, step, handlers) {
   panel.querySelector('[name="attachHubApiBinding"]')?.addEventListener('change', (event) => {
     form.attachHubApiBinding = /** @type {HTMLInputElement} */ (event.target).checked;
   });
+  panel.querySelector('[name="ownerEmailsText"]')?.addEventListener('input', (event) => {
+    form.ownerEmailsText = /** @type {HTMLTextAreaElement} */ (event.target).value;
+  });
+  panel.querySelector('[name="sitterEmailsText"]')?.addEventListener('input', (event) => {
+    form.sitterEmailsText = /** @type {HTMLTextAreaElement} */ (event.target).value;
+  });
   panel.querySelector('[name="confirmHostname"]')?.addEventListener('input', (event) => {
     form.confirmHostname = /** @type {HTMLInputElement} */ (event.target).value.trim();
   });
@@ -301,6 +323,44 @@ function validateStep(mode, step, form, ctx) {
     if (!form.hostname.endsWith(`.${ctx.zoneName}`)) return `Hostname must be under ${ctx.zoneName}.`;
   }
 
+  if (step === 2 && mode !== 'delete') {
+    if (!parseEmailList(form.ownerEmailsText).length) {
+      return 'At least one owner email is required.';
+    }
+    const ownerError = validateEmailList(form.ownerEmailsText, { required: true });
+    if (ownerError) return ownerError;
+    const sitterError = validateEmailList(form.sitterEmailsText);
+    if (sitterError) return sitterError;
+  }
+
+  return null;
+}
+
+/**
+ * @param {string} text
+ * @returns {string[]}
+ */
+function parseEmailList(text) {
+  return String(text ?? '')
+    .split(/[,;\n]+/)
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * @param {string} text
+ * @param {{ required?: boolean }} [options]
+ * @returns {string | null}
+ */
+function validateEmailList(text, options = {}) {
+  const list = parseEmailList(text);
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (options.required && list.length === 0) {
+    return 'At least one owner email is required.';
+  }
+  for (const email of list) {
+    if (!emailRe.test(email)) return `Invalid email address: ${email}`;
+  }
   return null;
 }
 
@@ -337,7 +397,9 @@ async function submitWizard(mode, form, panel, githubConfigured, onComplete, clo
       hostname: form.hostname,
       hubEnvironment: form.hubEnvironment || form.siteId,
       vanilla: form.vanilla,
-      attachHubApiBinding: form.attachHubApiBinding
+      attachHubApiBinding: form.attachHubApiBinding,
+      ownerEmails: parseEmailList(form.ownerEmailsText),
+      sitterEmails: parseEmailList(form.sitterEmailsText)
     };
 
     let result;

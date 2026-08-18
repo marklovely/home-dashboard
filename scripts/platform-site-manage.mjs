@@ -20,6 +20,7 @@ import {
   validateSiteMutation
 } from './lib/site-registry.mjs';
 import { formatSitesYaml } from './lib/write-sites-yaml.mjs';
+import { parseEmailList } from './lib/email-lists.mjs';
 import { removeHubTfvarsSiteBlock } from './lib/prune-hub-site-config.mjs';
 import { removeWranglerEnvBlock, replaceWranglerEnvBlock } from './lib/wrangler-env-block.mjs';
 
@@ -43,7 +44,9 @@ const payload = {
   hub_environment: args['hub-environment'] ? String(args['hub-environment']) : undefined,
   vanilla: parseOptionalBool(args.vanilla),
   terraform: parseOptionalBool(args.terraform),
-  attach_hub_api_binding: parseOptionalBool(args['attach-hub-api-binding'])
+  attach_hub_api_binding: parseOptionalBool(args['attach-hub-api-binding']),
+  owner_emails: args['owner-emails'] !== undefined ? parseEmailList(String(args['owner-emails'])) : undefined,
+  sitter_emails: args['sitter-emails'] !== undefined ? parseEmailList(String(args['sitter-emails'])) : undefined
 };
 
 const existing = loadSitesYaml(sitesYamlPath);
@@ -75,7 +78,11 @@ const nextSites = { ...existing };
 if (action === 'create') {
   nextSites[siteId] = {
     ...defaultSiteEntry(siteId, payload, zoneName),
-    attach_hub_api_binding: false
+    attach_hub_api_binding: false,
+    owner_emails: parseEmailList(payload.owner_emails),
+    ...(parseEmailList(payload.sitter_emails).length
+      ? { sitter_emails: parseEmailList(payload.sitter_emails) }
+      : {})
   };
 } else if (action === 'update') {
   nextSites[siteId] = {
@@ -86,6 +93,12 @@ if (action === 'create') {
     ...(payload.terraform !== undefined ? { terraform: payload.terraform } : {}),
     ...(payload.attach_hub_api_binding !== undefined
       ? { attach_hub_api_binding: payload.attach_hub_api_binding }
+      : {}),
+    ...(payload.owner_emails !== undefined ? { owner_emails: parseEmailList(payload.owner_emails) } : {}),
+    ...(payload.sitter_emails !== undefined
+      ? {
+          sitter_emails: parseEmailList(payload.sitter_emails)
+        }
       : {})
   };
 } else if (action === 'delete') {
@@ -262,12 +275,22 @@ function patchHubTfvarsExample(text, action, siteId, entry) {
 
   const attachBinding = entry?.attach_hub_api_binding === true;
   const vanilla = entry?.vanilla !== false;
+  const ownerEmails = Array.isArray(entry?.owner_emails) ? entry.owner_emails : [];
+  const sitterEmails = Array.isArray(entry?.sitter_emails) ? entry.sitter_emails : [];
+  const ownerBlock =
+    ownerEmails.length > 0
+      ? `\n    owner_emails = [${ownerEmails.map((email) => `"${email}"`).join(', ')}]`
+      : '';
+  const sitterBlock =
+    sitterEmails.length > 0
+      ? `\n    sitter_emails = [${sitterEmails.map((email) => `"${email}"`).join(', ')}]`
+      : '';
   const block = `
   ${siteId} = {
     hostname        = "${entry?.hostname ?? `${siteId}.${zoneName}`}"
     hub_environment = "${entry?.hub_environment ?? siteId}"
     vanilla         = ${vanilla ? 'true' : 'false'}
-    terraform       = true${attachBinding ? '' : '\n    attach_hub_api_binding = false # first apply only; set true after Worker deploy'}
+    terraform       = true${attachBinding ? '' : '\n    attach_hub_api_binding = false # first apply only; set true after Worker deploy'}${ownerBlock}${sitterBlock}
   }`;
 
   const blockRe = new RegExp(`\\n  ${siteId} = \\{[\\s\\S]*?\\n  \\}`, 'm');

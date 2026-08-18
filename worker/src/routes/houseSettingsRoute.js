@@ -1,13 +1,43 @@
 import { requireOwnerIdentity } from '../lib/deviceSessionAuth.js';
 import { authenticateRequest } from '../lib/requestAuth.js';
-import { getSitterSecretsDisclosed, setSitterSecretsDisclosed } from '../lib/houseSettings.js';
+import {
+  isAccessSitterSyncConfigured,
+  readSitterEmailsFromAccess,
+  syncSitterEmailsToAccess
+} from '../lib/accessSitterPolicy.js';
+import { validateEmailList } from '../lib/emailLists.js';
+import {
+  getSitterAccessEmailsRaw,
+  getSitterSecretsDisclosed,
+  setSitterAccessEmails,
+  setSitterSecretsDisclosed
+} from '../lib/houseSettings.js';
 
 /**
  * @param {Record<string, string | undefined>} env
+ * @param {typeof fetch} [fetchImpl]
  */
-export async function buildHouseSettingsPayload(env) {
+export async function resolveSitterAccessEmails(env, fetchImpl = fetch) {
+  const stored = await getSitterAccessEmailsRaw(env);
+  if (stored !== null) return stored;
+
+  const bootstrapped = await readSitterEmailsFromAccess(env, fetchImpl);
+  if (bootstrapped.length > 0 && env.HOUSE_GUIDE_DB) {
+    await setSitterAccessEmails(env, bootstrapped);
+  }
+  return bootstrapped;
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function buildHouseSettingsPayload(env, fetchImpl = fetch) {
+  const sitterAccessEmails = await resolveSitterAccessEmails(env, fetchImpl);
   return {
-    sitterSecretsDisclosed: await getSitterSecretsDisclosed(env)
+    sitterSecretsDisclosed: await getSitterSecretsDisclosed(env),
+    sitterAccessEmails,
+    accessSitterSyncConfigured: isAccessSitterSyncConfigured(env)
   };
 }
 
@@ -26,7 +56,7 @@ export async function handleHouseSettingsGet(request, env, fetchImpl = fetch) {
     return Response.json({ error: access.code }, { status: access.status });
   }
 
-  return Response.json(await buildHouseSettingsPayload(env), {
+  return Response.json(await buildHouseSettingsPayload(env, fetchImpl), {
     headers: { 'Cache-Control': 'no-store' }
   });
 }
@@ -63,7 +93,69 @@ export async function handleSitterSecretsSetting(request, env, fetchImpl = fetch
     return Response.json({ error: 'SETTINGS_UNAVAILABLE' }, { status: 503 });
   }
 
-  return Response.json(await buildHouseSettingsPayload(env), {
+  return Response.json(await buildHouseSettingsPayload(env, fetchImpl), {
     headers: { 'Cache-Control': 'no-store' }
   });
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, string | undefined>} env
+ * @param {typeof fetch} fetchImpl
+ */
+export async function handleSitterAccessEmailsSetting(request, env, fetchImpl = fetch) {
+  if (request.method !== 'POST') {
+    return Response.json({ error: 'Method not allowed' }, { status: 405 });
+  }
+
+  const ownerCheck = await requireOwnerIdentity(request, env, fetchImpl);
+  if (!ownerCheck.ok) {
+    return Response.json({ error: ownerCheck.code }, { status: ownerCheck.status });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid request' }, { status: 400 });
+  }
+
+  if (!Array.isArray(body?.emails)) {
+    return Response.json({ error: 'Invalid request' }, { status: 400 });
+  }
+
+  const validationError = validateEmailList(body.emails);
+  if (validationError) {
+    return Response.json({ error: 'VALIDATION_ERROR', message: validationError }, { status: 400 });
+  }
+
+  const emails = body.emails.map((email) => String(email).trim().toLowerCase()).filter(Boolean);
+
+  try {
+    await setSitterAccessEmails(env, emails);
+  } catch {
+    return Response.json({ error: 'SETTINGS_UNAVAILABLE' }, { status: 503 });
+  }
+
+  const syncResult = await syncSitterEmailsToAccess(env, emails, fetchImpl);
+  const payload = await buildHouseSettingsPayload(env, fetchImpl);
+  if (!syncResult.ok) {
+    return Response.json(
+      {
+        ...payload,
+        accessSyncOk: false,
+        accessSyncError: syncResult.code,
+        accessSyncMessage: syncResult.message ?? null
+      },
+      { status: syncResult.code === 'ACCESS_SYNC_NOT_CONFIGURED' ? 200 : 502 }
+    );
+  }
+
+  return Response.json(
+    {
+      ...payload,
+      accessSyncOk: true
+    },
+    { headers: { 'Cache-Control': 'no-store' } }
+  );
 }

@@ -130,6 +130,8 @@ run('npm', ['run', `d1:migrate:${siteId}`, '--prefix', 'worker'], {
   }
 });
 
+run('node', [join(root, 'scripts/seed-sitter-access-emails.mjs'), siteId]);
+
 run('npm', ['run', `deploy:${siteId}`, '--prefix', 'worker'], {
   env: {
     ...process.env,

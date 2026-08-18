@@ -8,6 +8,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
+import { parseEmailList } from './lib/email-lists.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sitesYamlPath = join(root, 'platform/sites.yaml');
@@ -79,6 +80,8 @@ for (const [siteId, meta] of Object.entries(registry)) {
     vanilla: Boolean(meta.vanilla),
     terraform: Boolean(meta.terraform),
     attachHubApiBinding: meta.attach_hub_api_binding === true,
+    ownerEmails: parseEmailList(meta.owner_emails),
+    sitterEmails: parseEmailList(meta.sitter_emails),
     pagesProject:
       contract?.pages_project ??
       (siteId === 'production' ? 'home-dashboard' : `home-dashboard-${siteId}`),
