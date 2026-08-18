@@ -132,9 +132,17 @@ Then `terraform apply` and redeploy platform admin if needed.
 
 ### Auto-merge site PRs
 
-Wizard PRs (`platform/site-*` branches) are queued for **auto-merge (squash)** when CI passes. If any check fails, the PR stays open for manual fix.
+Wizard PRs on `platform/site-*` branches are queued for **auto-merge (squash)** when required checks pass. If any check fails, the PR stays open.
 
-One-time repo setting: **Settings → General → Pull Requests → Allow auto-merge**.
+[`platform-site-pr-automerge.yml`](../.github/workflows/platform-site-pr-automerge.yml) enables auto-merge when the PR opens (with retries while GitHub registers check runs). Auto-merge is enabled **before** CI finishes; GitHub merges only after required checks pass.
+
+**Required one-time repo settings:**
+
+1. **Settings → General → Pull Requests → Allow auto-merge**
+2. **Settings → Branches → Branch protection rule for `main`:**
+   - **Require status checks to pass before merging**
+   - Required checks: **`test`** (CI) and **`validate`** (Terraform validate)
+   - GitHub's auto-merge API does not work without branch protection and at least one required check
 
 If branch protection requires approving reviews, auto-merge waits until someone approves (or add a ruleset exception for `platform/site-*` branches).
 
