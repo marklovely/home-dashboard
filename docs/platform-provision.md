@@ -93,7 +93,9 @@ Edit `terraform/environments/backend.hcl` — replace only the two placeholders:
 
 ```hcl
 bucket   = "lovely-home-terraform-state"   # Step A bucket name
-endpoint = "https://2c810bbed7e633623b99ae7c51dd0aa2.r2.cloudflarestorage.com"  # Step C
+endpoints = {
+  s3 = "https://2c810bbed7e633623b99ae7c51dd0aa2.r2.cloudflarestorage.com"  # Step C
+}
 ```
 
 Leave `key`, `region`, and the `skip_*` lines as in the example.  
@@ -128,25 +130,17 @@ export CLOUDFLARE_API_TOKEN="your existing terraform API token"
 cd terraform
 ```
 
-**Command 1 — configure the backend:**
+**Command 1 — configure the backend and migrate state:**
 
 ```bash
 terraform init -backend-config=environments/backend.hcl
 ```
 
-Terraform downloads providers and configures the R2 backend. It may ask to copy existing local state — say **no** if prompted here; the next command handles migration explicitly.
-
-**Command 2 — copy local state to R2 (one time only):**
-
-```bash
-terraform init -migrate-state
-```
-
 When prompted **“Do you want to copy existing state to the new backend?”** → type **`yes`**.
 
-After success you should see state in R2 (dashboard → your bucket → object `home-dashboard/hub.tfstate`).
+That single command both configures R2 **and** uploads your local `terraform.tfstate`. You do **not** need a second `terraform init -migrate-state` unless you answered `no` the first time.
 
-**Command 3 — verify nothing changed:**
+**Command 2 — verify nothing changed:**
 
 ```bash
 terraform plan -var-file=environments/hub.tfvars

@@ -6,7 +6,7 @@
 #   3. cp this file to backend.hcl and fill in bucket + endpoint below
 #   4. export AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY from the R2 token
 #   5. cd terraform && terraform init -backend-config=environments/backend.hcl
-#   6. terraform init -migrate-state   (answer yes to copy local state)
+#      (answer yes when asked to copy local state — that is the migration)
 #
 # See docs/platform-provision.md for the full walkthrough.
 #
@@ -15,7 +15,9 @@
 bucket                      = "YOUR_R2_BUCKET_NAME"
 key                         = "home-dashboard/hub.tfstate"
 region                      = "auto"
-endpoint                    = "https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com"
+endpoints = {
+  s3 = "https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com"
+}
 skip_credentials_validation = true
 skip_metadata_api_check     = true
 skip_region_validation      = true
