@@ -239,6 +239,8 @@ bash scripts/verify-cloudflare-api-token.sh
 
 **Deploy fails with `Authentication error [code: 10000]` on `/workers/subdomain`:** Add **Workers Routes → Edit** on zone `lovely-home.co.uk` (included in Cloudflare’s “Edit Cloudflare Workers” template). Re-run verify — it checks the subdomain endpoint before terraform apply.
 
+**Post-worker apply fails with `Invalid Service name ()` (8000022):** CI runs `scripts/attach-hub-api-pages-binding.mjs` (direct Cloudflare API) then `terraform apply -refresh-only` to sync state. Local: `node scripts/attach-hub-api-pages-binding.mjs demo` after Worker deploy.
+
 ## What runs in CI
 
 [`scripts/provision-hub-site.mjs`](../scripts/provision-hub-site.mjs):
