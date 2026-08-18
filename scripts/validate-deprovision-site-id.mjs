@@ -4,11 +4,11 @@
  * Exits 0 and prints site id to GITHUB_OUTPUT when valid.
  */
 import { appendFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { validateDeprovisionSiteId } from './lib/site-registry.mjs';
+import { hubSiteModuleInState } from './lib/terraform-state.mjs';
 
 const siteId = String(process.env.SITE_ID ?? '').trim();
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -21,18 +21,7 @@ if (deprovisionError) {
 }
 
 const tfDir = join(root, 'terraform');
-let inState = false;
-try {
-  const stateList = execFileSync('terraform', ['state', 'list'], {
-    cwd: tfDir,
-    encoding: 'utf8'
-  });
-  inState = stateList
-    .split('\n')
-    .some((line) => line.trim() === `module.hub_site[${JSON.stringify(siteId)}]`);
-} catch {
-  inState = false;
-}
+const inState = hubSiteModuleInState(siteId, tfDir);
 
 const githubOutput = process.env.GITHUB_OUTPUT;
 if (githubOutput) {

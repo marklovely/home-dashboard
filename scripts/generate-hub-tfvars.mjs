@@ -39,6 +39,7 @@ const operatorEmails = splitCsv(process.env.PLATFORM_OPERATOR_EMAILS);
 const platformGithubToken = process.env.PLATFORM_GITHUB_TOKEN?.trim() || '';
 const provisionSiteId = process.env.PROVISION_SITE_ID?.trim() || '';
 const provisionPhase = process.env.PROVISION_PHASE?.trim() || '';
+const deprovisionSiteId = process.env.DEPROVISION_SITE_ID?.trim() || '';
 
 /** @type {Record<string, string>} */
 let hubProxySecretsEnv = {};
@@ -97,8 +98,15 @@ lines.push(
   'sites = {'
 );
 
-for (const [siteId, meta] of Object.entries(registry)) {
-  if (meta.terraform === false) continue;
+/** @type {Set<string>} */
+const writtenSiteIds = new Set();
+
+/**
+ * @param {string} siteId
+ * @param {{ hostname?: string, hub_environment?: string, vanilla?: boolean, attach_hub_api_binding?: boolean }} meta
+ */
+function appendSiteBlock(siteId, meta) {
+  if (writtenSiteIds.has(siteId)) return;
 
   const hostname = String(meta.hostname ?? '');
   const hubEnvironment = String(meta.hub_environment ?? siteId);
@@ -133,6 +141,24 @@ for (const [siteId, meta] of Object.entries(registry)) {
   lines.push(`    terraform       = true`);
   lines.push(`    attach_hub_api_binding = ${attach ? 'true' : 'false'}`);
   lines.push('  }');
+  writtenSiteIds.add(siteId);
+}
+
+for (const [siteId, meta] of Object.entries(registry)) {
+  if (meta.terraform === false) continue;
+  appendSiteBlock(siteId, meta);
+}
+
+if (deprovisionSiteId && !writtenSiteIds.has(deprovisionSiteId) && terraformSiteIds.has(deprovisionSiteId)) {
+  const tfSites = readTerraformSitesOutput();
+  const contract = tfSites[deprovisionSiteId];
+  if (contract) {
+    appendSiteBlock(deprovisionSiteId, {
+      hostname: contract.hostname,
+      hub_environment: contract.hub_environment,
+      vanilla: contract.vanilla
+    });
+  }
 }
 
 lines.push('}', '');
@@ -163,6 +189,21 @@ function splitCsv(value) {
     .split(',')
     .map((part) => part.trim())
     .filter(Boolean);
+}
+
+/**
+ * @returns {Record<string, object>}
+ */
+function readTerraformSitesOutput() {
+  try {
+    const raw = execFileSync('terraform', ['output', '-json', 'sites'], {
+      cwd: tfDir,
+      encoding: 'utf8'
+    });
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
 }
 
 /**
