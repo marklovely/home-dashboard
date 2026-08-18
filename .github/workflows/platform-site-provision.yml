@@ -53,6 +53,7 @@ jobs:
     needs: detect-new-sites
     permissions:
       contents: write
+      pull-requests: write
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -69,6 +70,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
+      pull-requests: write
     uses: ./.github/workflows/platform-site-provision-reusable.yml
     with:
       site_id: ${{ inputs.site_id }}
