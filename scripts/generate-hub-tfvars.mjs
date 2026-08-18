@@ -18,6 +18,7 @@ import {
   resolveAttachHubApiBinding
 } from './lib/hub-tfvars.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
+import { parseEmailList } from './lib/email-lists.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sitesYamlPath = join(root, 'platform/sites.yaml');
@@ -104,7 +105,7 @@ const writtenSiteIds = new Set();
 
 /**
  * @param {string} siteId
- * @param {{ hostname?: string, hub_environment?: string, vanilla?: boolean, attach_hub_api_binding?: boolean }} meta
+ * @param {{ hostname?: string, hub_environment?: string, vanilla?: boolean, attach_hub_api_binding?: boolean, owner_emails?: string[], sitter_emails?: string[] }} meta
  */
 function appendSiteBlock(siteId, meta) {
   if (writtenSiteIds.has(siteId)) return;
@@ -141,6 +142,24 @@ function appendSiteBlock(siteId, meta) {
   lines.push(`    vanilla         = ${vanilla ? 'true' : 'false'}`);
   lines.push(`    terraform       = true`);
   lines.push(`    attach_hub_api_binding = ${attach ? 'true' : 'false'}`);
+
+  const siteOwnerEmails = parseEmailList(meta.owner_emails);
+  const siteSitterEmails = parseEmailList(meta.sitter_emails);
+  if (siteOwnerEmails.length > 0) {
+    lines.push('    owner_emails = [');
+    for (const email of siteOwnerEmails) {
+      lines.push(`      "${escapeHcl(email)}",`);
+    }
+    lines.push('    ]');
+  }
+  if (siteSitterEmails.length > 0) {
+    lines.push('    sitter_emails = [');
+    for (const email of siteSitterEmails) {
+      lines.push(`      "${escapeHcl(email)}",`);
+    }
+    lines.push('    ]');
+  }
+
   lines.push('  }');
   writtenSiteIds.add(siteId);
 }
@@ -157,7 +176,9 @@ if (deprovisionSiteId && !writtenSiteIds.has(deprovisionSiteId) && terraformSite
     appendSiteBlock(deprovisionSiteId, {
       hostname: contract.hostname,
       hub_environment: contract.hub_environment,
-      vanilla: contract.vanilla
+      vanilla: contract.vanilla,
+      owner_emails: contract.owner_emails,
+      sitter_emails: contract.sitter_emails
     });
   }
 }

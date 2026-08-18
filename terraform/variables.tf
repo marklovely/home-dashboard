@@ -65,6 +65,8 @@ variable "sites" {
     terraform              = bool
     hub_proxy_secret       = optional(string)
     attach_hub_api_binding = optional(bool, true)
+    owner_emails           = optional(list(string))
+    sitter_emails          = optional(list(string))
   }))
   description = "Site registry; only sites with terraform=true are managed by this stack."
 }

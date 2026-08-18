@@ -200,7 +200,6 @@ You no longer maintain a separate “CI only” state file — laptop and GitHub
 | `CLOUDFLARE_ZONE_ID` | Zone ID for `lovely-home.co.uk` |
 | `WORKERS_SUBDOMAIN` | e.g. `mark-lovely67` |
 | `ACCESS_TEAM_DOMAIN` | Zero Trust team slug, e.g. `lovely-home` |
-| `OWNER_EMAILS` | Comma-separated household owner emails |
 | `PLATFORM_OPERATOR_EMAILS` | Comma-separated operator emails |
 | `TF_STATE_R2_ACCESS_KEY_ID` | R2 API token access key |
 | `TF_STATE_R2_SECRET_ACCESS_KEY` | R2 API token secret |
@@ -211,7 +210,9 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 
 | Secret | Purpose |
 |--------|---------|
-| `SITTER_EMAILS` | House-sitter Access emails |
+| `OWNER_EMAILS` | Optional fallback when a site has no `owner_emails` in `platform/sites.yaml` (legacy production/test/sandbox) |
+| `SITTER_EMAILS` | Optional fallback when a site has no `sitter_emails` in the registry |
+| `CF_ACCESS_MANAGEMENT_TOKEN` | Optional dedicated token for hub Settings sitter-email sync (defaults to `CLOUDFLARE_API_TOKEN` in CI) |
 | `PLATFORM_GITHUB_TOKEN` | Same PAT as platform admin Pages env — **must also be a GitHub Actions repo secret** so site-manage can open PRs, provision can open the post-provision follow-up PR, and deprovision can prune `HUB_PROXY_SECRETS_JSON` (needs **repo secrets** write) |
 | `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` — only needed if Terraform output is unavailable; CI normally reads secrets from remote state |
 
@@ -264,8 +265,10 @@ export CLOUDFLARE_ACCOUNT_ID="..."
 export CLOUDFLARE_ZONE_ID="..."
 export WORKERS_SUBDOMAIN="..."
 export ACCESS_TEAM_DOMAIN="..."
-export OWNER_EMAILS="owner@example.com"
 export PLATFORM_OPERATOR_EMAILS="you@example.com"
+# Optional fallbacks for sites without per-site owner_emails in platform/sites.yaml:
+# export OWNER_EMAILS="owner@example.com"
+# export SITTER_EMAILS="sitter@example.com"
 export AWS_ACCESS_KEY_ID="..."   # R2
 export AWS_SECRET_ACCESS_KEY="..."
 

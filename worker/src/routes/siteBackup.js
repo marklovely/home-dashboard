@@ -1,5 +1,10 @@
 import { requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
-import { getSitterSecretsDisclosed, setSitterSecretsDisclosed } from '../lib/houseSettings.js';
+import { resolveSitterAccessEmails } from '../routes/houseSettingsRoute.js';
+import {
+  getSitterSecretsDisclosed,
+  setSitterAccessEmails,
+  setSitterSecretsDisclosed
+} from '../lib/houseSettings.js';
 import { importGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { loadImportableGuideCatalog } from '../houseGuide/exportCatalog.js';
 import { jsonError, methodNotAllowed } from '../lib/errors.js';
@@ -13,6 +18,7 @@ export async function buildSiteBackupPayload(env) {
   const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
   const seeded = await isHouseGuideSeeded(db);
   const sitterSecretsDisclosed = await getSitterSecretsDisclosed(env);
+  const sitterAccessEmails = await resolveSitterAccessEmails(env);
 
   /** @type {{ seeded: boolean, catalog: object | null, uploadedMedia: { id: string, alt: string }[] }} */
   let guide = { seeded: false, catalog: null, uploadedMedia: [] };
@@ -30,7 +36,8 @@ export async function buildSiteBackupPayload(env) {
     formatVersion: SITE_BACKUP_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
     siteSettings: {
-      sitterSecretsDisclosed
+      sitterSecretsDisclosed,
+      sitterAccessEmails
     },
     guide
   };
@@ -43,6 +50,12 @@ export async function buildSiteBackupPayload(env) {
 export async function restoreSiteBackupPayload(env, payload) {
   if (payload.siteSettings?.sitterSecretsDisclosed !== undefined) {
     await setSitterSecretsDisclosed(env, Boolean(payload.siteSettings.sitterSecretsDisclosed));
+  }
+  if (Array.isArray(payload.siteSettings?.sitterAccessEmails)) {
+    await setSitterAccessEmails(
+      env,
+      payload.siteSettings.sitterAccessEmails.map((email) => String(email))
+    );
   }
 
   if (payload.guide?.catalog && Array.isArray(payload.guide.catalog.categories)) {

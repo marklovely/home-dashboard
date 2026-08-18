@@ -7,7 +7,7 @@ import {
   validateSiteId,
   validateSiteMutation
 } from '../scripts/lib/site-registry.mjs';
-import { validateSiteDeploy, validateSiteProvision } from '../functions/api/platform/platformSiteMutations.js';
+import { validateSiteDeploy, validateSiteProvision, buildSiteManagePayload } from '../functions/api/platform/platformSiteMutations.js';
 
 describe('site registry validation', () => {
   it('accepts valid site ids', () => {
@@ -25,6 +25,33 @@ describe('site registry validation', () => {
     expect(entry.hostname).toBe('demo.lovely-home.co.uk');
     expect(entry.hub_environment).toBe('demo');
     expect(entry.vanilla).toBe(true);
+  });
+
+  it('requires owner emails on create', () => {
+    const existing = {};
+    expect(
+      validateSiteMutation(
+        'create',
+        'demo',
+        { hostname: 'demo.lovely-home.co.uk', hub_environment: 'demo', vanilla: true },
+        existing,
+        { zoneName: 'lovely-home.co.uk' }
+      )
+    ).toMatch(/owner email/i);
+    expect(
+      validateSiteMutation(
+        'create',
+        'demo',
+        {
+          hostname: 'demo.lovely-home.co.uk',
+          hub_environment: 'demo',
+          vanilla: true,
+          owner_emails: ['owner@example.com']
+        },
+        existing,
+        { zoneName: 'lovely-home.co.uk' }
+      )
+    ).toBeNull();
   });
 
   it('blocks provision for production and unknown sites', () => {
@@ -74,5 +101,21 @@ describe('site registry validation', () => {
     expect(validateDeprovisionSiteId('production', registry)).toMatch(/protected/i);
     expect(validateDeprovisionSiteId('demo', registry)).toMatch(/still in platform\/sites\.yaml/i);
     expect(validateDeprovisionSiteId('removed', {})).toBeNull();
+  });
+
+  it('requires owner emails when creating a site via platform API', () => {
+    const manifest = { platform: { zoneName: 'lovely-home.co.uk' }, sites: {} };
+    const missing = buildSiteManagePayload(manifest, 'create', 'demo', {
+      hostname: 'demo.lovely-home.co.uk'
+    });
+    expect(missing.ok).toBe(false);
+    expect(missing.message).toMatch(/owner email/i);
+
+    const ok = buildSiteManagePayload(manifest, 'create', 'demo', {
+      hostname: 'demo.lovely-home.co.uk',
+      ownerEmails: ['owner@example.com']
+    });
+    expect(ok.ok).toBe(true);
+    expect(ok.payload.owner_emails).toEqual(['owner@example.com']);
   });
 });
