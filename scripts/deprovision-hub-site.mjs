@@ -157,6 +157,6 @@ if (!skipPlatformAdmin) {
   });
 }
 
+run('node', [join(root, 'scripts/prune-local-hub-tfvars.mjs'), siteId]);
+
 console.log(`\n=== Deprovision complete: ${siteId} ===`);
-console.log('Remove the site block from local hub.tfvars if present.');
-console.log(`Optional: remove "${siteId}" from HUB_PROXY_SECRETS_JSON GitHub secret.`);
