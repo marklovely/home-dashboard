@@ -27,8 +27,12 @@ try {
   writeFileSync(tempPath, previous);
   before = loadSitesYaml(tempPath);
   unlinkSync(tempPath);
-} catch {
-  before = {};
+} catch (error) {
+  console.error(
+    'Could not read previous platform/sites.yaml from git (HEAD~1). Refusing to auto-provision — use workflow_dispatch with an explicit site_id instead.'
+  );
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
 }
 
 /** @type {string[]} */

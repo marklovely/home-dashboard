@@ -30,6 +30,10 @@ const tfDir = join(root, 'terraform');
 const tfvarsPath = join(tfDir, 'environments/hub.generated.tfvars');
 const generatedTfvars = join(root, 'scripts/generate-hub-tfvars.mjs');
 
+function terraformApplyArgs() {
+  return ['apply', '-auto-approve', '-var-file=environments/hub.generated.tfvars', '-var-file=environments/hub.generated.secrets.tfvars.json'];
+}
+
 function run(command, commandArgs, options = {}) {
   console.log(`\n==> ${command} ${commandArgs.join(' ')}`);
   execFileSync(command, commandArgs, {
@@ -52,7 +56,7 @@ function generateTfvars(phase) {
 console.log(`\n=== Provisioning hub site: ${siteId} ===`);
 
 generateTfvars('pre-worker');
-run('terraform', ['apply', '-auto-approve', '-var-file=environments/hub.generated.tfvars'], {
+run('terraform', terraformApplyArgs(), {
   cwd: tfDir
 });
 
@@ -76,9 +80,11 @@ run('npm', ['run', `deploy:${siteId}`, '--prefix', 'worker'], {
 });
 
 generateTfvars('post-worker');
-run('terraform', ['apply', '-auto-approve', '-var-file=environments/hub.generated.tfvars'], {
+run('terraform', terraformApplyArgs(), {
   cwd: tfDir
 });
+
+run('node', [join(root, 'scripts/mark-site-provisioned.mjs'), siteId]);
 
 if (!skipPages) {
   run('bash', [join(root, 'scripts/deploy-cloudflare-pages-site.sh'), siteId], {

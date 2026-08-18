@@ -213,7 +213,11 @@ Optional:
 |--------|---------|
 | `SITTER_EMAILS` | House-sitter Access emails |
 | `PLATFORM_GITHUB_TOKEN` | Platform wizard token (also injected into generated tfvars for platform admin) |
-| `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` for imported sites with existing secrets |
+| `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` — only needed if Terraform output is unavailable; CI normally reads secrets from remote state |
+
+CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.
+
+Provisioning runs **one site at a time** (`max-parallel: 1` + workflow concurrency) because R2 state locking does not use DynamoDB.
 
 ### 3. Cloudflare API token permissions
 
