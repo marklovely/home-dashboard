@@ -32,6 +32,7 @@ jobs:
       PLATFORM_OPERATOR_EMAILS: ${{ secrets.PLATFORM_OPERATOR_EMAILS }}
       SITTER_EMAILS: ${{ secrets.SITTER_EMAILS }}
       HUB_PROXY_SECRETS_JSON: ${{ secrets.HUB_PROXY_SECRETS_JSON }}
+      PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_R2_SECRET_ACCESS_KEY }}
     steps:
@@ -87,3 +88,10 @@ jobs:
           ARGS=( "${{ inputs.site_id }}" )
           if [ "${{ inputs.skip_platform_admin }}" = "true" ]; then ARGS+=( --skip-platform-admin ); fi
           node scripts/deprovision-hub-site.mjs "${ARGS[@]}"
+
+      - name: Prune HUB_PROXY_SECRETS_JSON
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          SITE_ID: ${{ inputs.site_id }}
+        run: node scripts/prune-hub-proxy-secrets-github-secret.mjs
