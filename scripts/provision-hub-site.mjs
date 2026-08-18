@@ -31,7 +31,32 @@ const tfvarsPath = join(tfDir, 'environments/hub.generated.tfvars');
 const generatedTfvars = join(root, 'scripts/generate-hub-tfvars.mjs');
 
 function terraformApplyArgs() {
-  return ['apply', '-auto-approve', '-var-file=environments/hub.generated.tfvars', '-var-file=environments/hub.generated.secrets.tfvars.json'];
+  return [
+    'apply',
+    '-auto-approve',
+    '-var-file=environments/hub.generated.tfvars',
+    '-var-file=environments/hub.generated.secrets.tfvars.json',
+    `-target=module.hub_site[${JSON.stringify(siteId)}]`
+  ];
+}
+
+function runTerraformApply() {
+  const retryDelaysSeconds = [45, 90, 120];
+  const maxAttempts = retryDelaysSeconds.length + 1;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      run('terraform', terraformApplyArgs(), { cwd: tfDir });
+      return;
+    } catch (error) {
+      if (attempt >= maxAttempts) throw error;
+      const delay = retryDelaysSeconds[attempt - 1] ?? 120;
+      console.warn(
+        `\nTerraform apply failed (attempt ${attempt}/${maxAttempts}, often Cloudflare 429). Retrying in ${delay}s...`
+      );
+      execFileSync('sleep', [String(delay)]);
+    }
+  }
 }
 
 function run(command, commandArgs, options = {}) {
@@ -56,9 +81,7 @@ function generateTfvars(phase) {
 console.log(`\n=== Provisioning hub site: ${siteId} ===`);
 
 generateTfvars('pre-worker');
-run('terraform', terraformApplyArgs(), {
-  cwd: tfDir
-});
+runTerraformApply();
 
 run('node', [join(root, 'scripts/sync-wrangler-from-terraform.mjs'), siteId]);
 run('node', [join(root, 'scripts/set-worker-secrets-from-terraform.mjs'), siteId]);
@@ -80,9 +103,7 @@ run('npm', ['run', `deploy:${siteId}`, '--prefix', 'worker'], {
 });
 
 generateTfvars('post-worker');
-run('terraform', terraformApplyArgs(), {
-  cwd: tfDir
-});
+runTerraformApply();
 
 run('node', [join(root, 'scripts/mark-site-provisioned.mjs'), siteId]);
 
