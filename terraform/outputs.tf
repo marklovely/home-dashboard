@@ -1,3 +1,18 @@
+output "cloudflare_account_id" {
+  description = "Cloudflare account ID (for platform admin dashboard links)."
+  value       = var.cloudflare_account_id
+}
+
+output "access_team_domain" {
+  description = "Zero Trust team slug (for platform admin dashboard links)."
+  value       = var.access_team_domain
+}
+
+output "zone_name" {
+  description = "DNS zone name."
+  value       = var.zone_name
+}
+
 output "sites" {
   description = "Provisioned hub sites (JSON contract for scripts and future platform admin)."
   value = {
@@ -11,4 +26,9 @@ output "hub_proxy_secrets" {
     for site_id, site in module.hub_site : site_id => site.hub_proxy_secret
   }
   sensitive = true
+}
+
+output "platform_admin" {
+  description = "Platform operator dashboard (when platform_admin.enabled)."
+  value       = length(module.platform_admin) > 0 ? module.platform_admin[0].platform_contract : null
 }
