@@ -9,6 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { suggestedWorkerName, validateDeprovisionSiteId } from './lib/site-registry.mjs';
+import { hubSiteModuleInState } from './lib/terraform-state.mjs';
 
 const args = process.argv.slice(2);
 const siteId = args.find((arg) => !arg.startsWith('--'))?.trim();
@@ -31,20 +32,6 @@ const tfDir = join(root, 'terraform');
 const workerDir = join(root, 'worker');
 const tfvarsPath = join(tfDir, 'environments/hub.generated.tfvars');
 const generatedTfvars = join(root, 'scripts/generate-hub-tfvars.mjs');
-
-function terraformInState() {
-  try {
-    const stateList = execFileSync('terraform', ['state', 'list'], {
-      cwd: tfDir,
-      encoding: 'utf8'
-    });
-    return stateList
-      .split('\n')
-      .some((line) => line.trim() === `module.hub_site[${JSON.stringify(siteId)}]`);
-  } catch {
-    return false;
-  }
-}
 
 function readWorkerName() {
   try {
@@ -147,11 +134,13 @@ console.log(`\n=== Deprovisioning hub site: ${siteId} ===`);
 const workerName = readWorkerName();
 deleteWorker(workerName);
 
-const inState = terraformInState();
+const inState = hubSiteModuleInState(siteId, tfDir);
 if (!inState) {
   console.warn(`No module.hub_site["${siteId}"] in terraform state — skipping destroy.`);
 } else {
-  run('node', [generatedTfvars, '--output', tfvarsPath]);
+  run('node', [generatedTfvars, '--output', tfvarsPath], {
+    env: { ...process.env, DEPROVISION_SITE_ID: siteId }
+  });
   runTerraformDestroy();
 }
 
