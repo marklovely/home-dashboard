@@ -107,7 +107,7 @@ locals {
       service     = local.worker_name
       environment = "production"
       entrypoint  = "default"
-    } : {
+      } : {
       service = local.worker_name
     }
   }
