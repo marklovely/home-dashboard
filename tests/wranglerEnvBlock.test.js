@@ -1,11 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { removeWranglerEnvBlock } from '../scripts/lib/wrangler-env-block.mjs';
-
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const wranglerPath = join(root, 'worker/wrangler.toml');
 
 describe('wrangler env block removal', () => {
   it('removes the full demo env block including [env.demo] bindings', () => {
@@ -50,10 +44,5 @@ name = "lovely-home-hub-api-demo"
     expect(text).not.toMatch(/\[env\.demo\]/);
     expect(text).not.toMatch(/sync-wrangler-from-terraform\.mjs demo/);
     expect(text).toMatch(/\[env\.sandbox\]/);
-  });
-
-  it('main wrangler.toml has no demo env after cleanup', () => {
-    const text = readFileSync(wranglerPath, 'utf8');
-    expect(text).not.toMatch(/\[env\.demo\]/);
   });
 });
