@@ -24,7 +24,7 @@ describe('hub tfvars helpers', () => {
     const inState = new Set(['demo']);
     expect(resolveAttachHubApiBinding('demo', meta, inState)).toBe(false);
     expect(resolveAttachHubApiBinding('demo', { attach_hub_api_binding: true }, inState)).toBe(true);
-    expect(resolveAttachHubApiBinding('other', {}, inState)).toBe(true);
+    expect(resolveAttachHubApiBinding('other', {}, inState)).toBe(false);
   });
 
   it('reads hub proxy secrets from env then state', () => {
