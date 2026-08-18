@@ -18,6 +18,10 @@ output "site_contract" {
     access_worker_aud     = cloudflare_zero_trust_access_application.worker.aud
     access_aud_combined   = "${cloudflare_zero_trust_access_application.worker.aud},${cloudflare_zero_trust_access_application.pages.aud}"
     cf_access_team_domain = var.access_team_domain
+    owner_emails          = var.owner_emails
+    sitter_emails         = var.sitter_emails
+    access_pages_app_id   = cloudflare_zero_trust_access_application.pages.id
+    access_worker_app_id  = cloudflare_zero_trust_access_application.worker.id
     default_latitude      = var.default_latitude
     default_longitude     = var.default_longitude
   }

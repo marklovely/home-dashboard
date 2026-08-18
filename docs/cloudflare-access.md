@@ -53,6 +53,8 @@ Create **separate** self-hosted (or SaaS) Access applications for each public en
 
 Revoking access = remove the email from the policy.
 
+On Terraform-managed hubs, owners can also edit the **House sitters** allow-list from **Settings → House sitter mode → Sitter login emails**. The hub Worker stores the list in D1 and updates Cloudflare Access via API (requires `CF_ACCESS_MANAGEMENT_TOKEN`, `ACCESS_PAGES_APP_ID`, and `ACCESS_WORKER_APP_ID` on the Worker — set automatically during platform provision).
+
 ### 2. Application audience (AUD)
 
 Set Worker secret `CF_ACCESS_AUD` to the Access application audience for requests hitting the Worker.

@@ -1,3 +1,5 @@
+import { parseEmailList, validateEmailList } from '../../lib/emailLists.js';
+
 const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
 const HOSTNAME_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 const PROTECTED_SITE_IDS = new Set(['production']);
@@ -62,7 +64,13 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
       hostname: String(site.hostname ?? ''),
       hub_environment: String(site.hubEnvironment ?? id),
       vanilla: Boolean(site.vanilla),
-      terraform: site.terraform !== false
+      terraform: site.terraform !== false,
+      ...(Array.isArray(site.ownerEmails) && site.ownerEmails.length
+        ? { owner_emails: site.ownerEmails }
+        : {}),
+      ...(Array.isArray(site.sitterEmails) && site.sitterEmails.length
+        ? { sitter_emails: site.sitterEmails }
+        : {})
     };
   }
 
@@ -82,6 +90,12 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
       : {}),
     ...(body.attach_hub_api_binding !== undefined
       ? { attach_hub_api_binding: Boolean(body.attach_hub_api_binding) }
+      : {}),
+    ...(body.ownerEmails !== undefined || body.owner_emails !== undefined
+      ? { owner_emails: parseEmailList(body.ownerEmails ?? body.owner_emails) }
+      : {}),
+    ...(body.sitterEmails !== undefined || body.sitter_emails !== undefined
+      ? { sitter_emails: parseEmailList(body.sitterEmails ?? body.sitter_emails) }
       : {})
   };
 
@@ -92,6 +106,10 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
     Object.assign(payload, defaultSiteEntry(siteId, payload, zoneName));
     const hostError = validateHostname(String(payload.hostname), zoneName);
     if (hostError) return { ok: false, error: 'VALIDATION_ERROR', message: hostError };
+    const ownerError = validateEmailList(payload.owner_emails, { required: true });
+    if (ownerError) return { ok: false, error: 'VALIDATION_ERROR', message: ownerError };
+    const sitterError = validateEmailList(payload.sitter_emails);
+    if (sitterError) return { ok: false, error: 'VALIDATION_ERROR', message: sitterError };
   } else if (action === 'update') {
     if (!existing[siteId]) {
       return { ok: false, error: 'VALIDATION_ERROR', message: `Site "${siteId}" is not in the registry.` };
@@ -100,6 +118,12 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
       const hostError = validateHostname(String(payload.hostname), zoneName);
       if (hostError) return { ok: false, error: 'VALIDATION_ERROR', message: hostError };
     }
+    if (payload.owner_emails !== undefined) {
+      const ownerError = validateEmailList(payload.owner_emails, { required: true });
+      if (ownerError) return { ok: false, error: 'VALIDATION_ERROR', message: ownerError };
+    }
+    const sitterError = validateEmailList(payload.sitter_emails);
+    if (sitterError) return { ok: false, error: 'VALIDATION_ERROR', message: sitterError };
   } else if (action === 'delete') {
     if (!existing[siteId]) {
       return { ok: false, error: 'VALIDATION_ERROR', message: `Site "${siteId}" is not in the registry.` };

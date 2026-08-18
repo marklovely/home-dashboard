@@ -2,6 +2,8 @@
  * Shared validation for platform site registry entries.
  */
 
+import { validateEmailList } from './email-lists.mjs';
+
 /** @typedef {'create' | 'update' | 'delete'} SiteAction */
 
 /** @typedef {object} SiteRegistryEntry
@@ -10,6 +12,8 @@
  * @property {boolean} vanilla
  * @property {boolean} [terraform]
  * @property {boolean} [attach_hub_api_binding]
+ * @property {string[]} [owner_emails]
+ * @property {string[]} [sitter_emails]
  */
 
 const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
@@ -60,6 +64,10 @@ export function validateSiteMutation(action, siteId, payload, existing, options 
     if (existing[siteId]) return `Site "${siteId}" already exists in the registry.`;
     const hostError = validateHostname(payload.hostname, zoneName);
     if (hostError) return hostError;
+    const ownerError = validateEmailList(payload.owner_emails, { required: true });
+    if (ownerError) return ownerError;
+    const sitterError = validateEmailList(payload.sitter_emails);
+    if (sitterError) return sitterError;
     return null;
   }
 
@@ -69,6 +77,12 @@ export function validateSiteMutation(action, siteId, payload, existing, options 
       const hostError = validateHostname(payload.hostname, zoneName);
       if (hostError) return hostError;
     }
+    if (payload.owner_emails !== undefined) {
+      const ownerError = validateEmailList(payload.owner_emails, { required: true });
+      if (ownerError) return ownerError;
+    }
+    const sitterError = validateEmailList(payload.sitter_emails);
+    if (sitterError) return sitterError;
     return null;
   }
 
