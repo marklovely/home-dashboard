@@ -280,7 +280,48 @@ node scripts/provision-hub-site.mjs demo
 |----------|---------|
 | [`platform-site-manage.yml`](../.github/workflows/platform-site-manage.yml) | Wizard → PR |
 | [`platform-site-provision.yml`](../.github/workflows/platform-site-provision.yml) | Push to `main` (sites.yaml) or manual / **Provision** button |
+| [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) | Push to `main` (sites.yaml removal) or manual |
 | [`platform-site-deploy.yml`](../.github/workflows/platform-site-deploy.yml) | Worker-only redeploy |
+
+## v5 — automated deprovision
+
+Fully automated hub teardown after the delete PR merges to `main`.
+
+### Flow
+
+```mermaid
+flowchart TD
+  A[Wizard: Delete via PR] --> B[Merge to main]
+  B --> C[platform-site-deprovision.yml]
+  C --> D[wrangler delete Worker]
+  D --> E[terraform destroy module.hub_site]
+  E --> F[Refresh platform manifest + redeploy admin]
+```
+
+1. **Wizard** dispatches `platform-site-manage.yml` (delete) → opens PR removing the site from registry and Wrangler stubs.
+2. **Merge PR** to `main`.
+3. **Auto-trigger**: push to `main` changing `platform/sites.yaml` starts `platform-site-deprovision.yml` for each removed site (`terraform: true`, not protected).
+4. **Manual retry**: workflow dispatch with `site_id` (site must already be absent from `platform/sites.yaml`).
+
+### What gets removed
+
+| Resource | How |
+|----------|-----|
+| Worker script + secrets | `wrangler delete {worker} --force` |
+| D1, R2×2, Pages, Access×2, DNS | `terraform destroy -target=module.hub_site["{id}"]` |
+| Platform admin site card | `build-platform-manifest.mjs` + `deploy-platform-admin.sh` |
+
+**Not automated:** remove the site block from your local `terraform/environments/hub.tfvars` and optional `HUB_PROXY_SECRETS_JSON` GitHub secret entry.
+
+### Manual deprovision (local)
+
+Same secrets as provision (see [Manual provision](#manual-provision-local)). Site must not appear in `platform/sites.yaml`.
+
+```bash
+node scripts/deprovision-hub-site.mjs demo
+```
+
+Use `--skip-platform-admin` to skip manifest rebuild and platform admin redeploy.
 
 ## Related
 
