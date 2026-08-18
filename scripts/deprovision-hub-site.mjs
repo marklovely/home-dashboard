@@ -29,9 +29,9 @@ if (deprovisionError) {
 }
 
 const tfDir = join(root, 'terraform');
-const workerDir = join(root, 'worker');
 const tfvarsPath = join(tfDir, 'environments/hub.generated.tfvars');
 const generatedTfvars = join(root, 'scripts/generate-hub-tfvars.mjs');
+const deleteWorkerScript = join(root, 'scripts/delete-worker-script.mjs');
 
 function readWorkerName() {
   try {
@@ -109,24 +109,7 @@ function run(command, commandArgs, options = {}) {
 }
 
 function deleteWorker(workerName) {
-  console.log(`\n==> npx wrangler delete ${workerName} --force`);
-  const result = spawnSync('npx', ['wrangler', 'delete', workerName, '--force'], {
-    cwd: workerDir,
-    env: process.env,
-    encoding: 'utf8'
-  });
-  if (result.stdout) process.stdout.write(result.stdout);
-  if (result.stderr) process.stderr.write(result.stderr);
-
-  if (result.status === 0) return;
-
-  const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
-  if (/not found|does not exist|10007|8000007|could not find|no worker/i.test(output)) {
-    console.warn(`Worker ${workerName} already absent — continuing.`);
-    return;
-  }
-
-  process.exit(result.status ?? 1);
+  run('node', [deleteWorkerScript, workerName]);
 }
 
 console.log(`\n=== Deprovisioning hub site: ${siteId} ===`);
