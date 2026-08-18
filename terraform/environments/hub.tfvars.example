@@ -49,12 +49,6 @@ sites = {
     terraform        = true
     hub_proxy_secret = "PASTE_EXISTING_HUB_PROXY_SECRET"
   }
-  demo = {
-    hostname        = "demo.lovely-home.co.uk"
-    hub_environment = "demo"
-    vanilla         = true
-    terraform       = true
-    attach_hub_api_binding = false # first apply only; set true after Worker deploy
-  }
+
 
 }
