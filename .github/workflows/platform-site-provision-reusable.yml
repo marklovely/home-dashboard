@@ -66,7 +66,7 @@ jobs:
             -backend-config="bucket=${{ secrets.TF_STATE_R2_BUCKET }}" \
             -backend-config="key=home-dashboard/hub.tfstate" \
             -backend-config="region=auto" \
-            -backend-config="endpoint=${{ secrets.TF_STATE_R2_ENDPOINT }}" \
+            -backend-config='endpoints={s3="${{ secrets.TF_STATE_R2_ENDPOINT }}"}' \
             -backend-config="skip_credentials_validation=true" \
             -backend-config="skip_metadata_api_check=true" \
             -backend-config="skip_region_validation=true" \
