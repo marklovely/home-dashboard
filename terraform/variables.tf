@@ -50,6 +50,13 @@ variable "github_production_branch" {
   default = "main"
 }
 
+variable "hub_proxy_secrets" {
+  type        = map(string)
+  sensitive   = true
+  default     = {}
+  description = "Per-site HUB_PROXY_SECRET overrides (CI). Prefer over sites.*.hub_proxy_secret in generated tfvars."
+}
+
 variable "sites" {
   type = map(object({
     hostname               = string

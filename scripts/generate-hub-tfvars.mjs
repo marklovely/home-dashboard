@@ -3,18 +3,19 @@
  * Generate terraform/environments/hub.tfvars from platform/sites.yaml + env secrets.
  * Used by GitHub Actions platform-site-provision (never commit the output).
  *
- * Env:
- *   CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_ZONE_ID, WORKERS_SUBDOMAIN, ACCESS_TEAM_DOMAIN
- *   OWNER_EMAILS (comma-separated), PLATFORM_OPERATOR_EMAILS (comma-separated)
- *   SITTER_EMAILS (optional), ZONE_NAME (default lovely-home.co.uk)
- *   PLATFORM_GITHUB_TOKEN (optional)
- *   HUB_PROXY_SECRETS_JSON (optional) — {"production":"..."} for imported sites
- *   PROVISION_SITE_ID + PROVISION_PHASE (pre-worker|post-worker) — attach_hub_api_binding toggle
+ * Writes two files:
+ *   hub.generated.tfvars        — site metadata (no secrets)
+ *   hub.generated.secrets.tfvars.json — sensitive hub_proxy_secrets map
  */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  escapeHcl,
+  requireHubProxySecret,
+  resolveAttachHubApiBinding
+} from './lib/hub-tfvars.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -25,6 +26,7 @@ const outputPath =
   outputArgIndex >= 0
     ? process.argv[outputArgIndex + 1]
     : join(tfDir, 'environments/hub.generated.tfvars');
+const secretsOutputPath = outputPath.replace(/\.tfvars$/, '.secrets.tfvars.json');
 
 const accountId = requiredEnv('CLOUDFLARE_ACCOUNT_ID');
 const zoneId = requiredEnv('CLOUDFLARE_ZONE_ID');
@@ -39,10 +41,10 @@ const provisionSiteId = process.env.PROVISION_SITE_ID?.trim() || '';
 const provisionPhase = process.env.PROVISION_PHASE?.trim() || '';
 
 /** @type {Record<string, string>} */
-let hubProxySecrets = {};
+let hubProxySecretsEnv = {};
 if (process.env.HUB_PROXY_SECRETS_JSON?.trim()) {
   try {
-    hubProxySecrets = JSON.parse(process.env.HUB_PROXY_SECRETS_JSON);
+    hubProxySecretsEnv = JSON.parse(process.env.HUB_PROXY_SECRETS_JSON);
   } catch {
     console.error('HUB_PROXY_SECRETS_JSON must be valid JSON.');
     process.exit(1);
@@ -51,6 +53,10 @@ if (process.env.HUB_PROXY_SECRETS_JSON?.trim()) {
 
 const registry = loadSitesYaml(sitesYamlPath);
 const terraformSiteIds = readTerraformSiteIds();
+const hubProxySecretsState = readTerraformHubProxySecrets();
+
+/** @type {Record<string, string>} */
+const hubProxySecretsOut = {};
 
 /** @type {string[]} */
 const lines = [
@@ -96,8 +102,27 @@ for (const [siteId, meta] of Object.entries(registry)) {
   const hostname = String(meta.hostname ?? '');
   const hubEnvironment = String(meta.hub_environment ?? siteId);
   const vanilla = meta.vanilla !== false;
-  const attach = resolveAttachHubApiBinding(siteId, meta, terraformSiteIds);
-  const proxySecret = hubProxySecrets[siteId];
+  const attach = resolveAttachHubApiBinding(siteId, meta, terraformSiteIds, {
+    provisionSiteId,
+    provisionPhase
+  });
+
+  let proxySecret;
+  try {
+    proxySecret = requireHubProxySecret(
+      siteId,
+      terraformSiteIds,
+      hubProxySecretsEnv,
+      hubProxySecretsState
+    );
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+
+  if (proxySecret) {
+    hubProxySecretsOut[siteId] = proxySecret;
+  }
 
   lines.push(`  ${siteId} = {`);
   lines.push(`    hostname        = "${escapeHcl(hostname)}"`);
@@ -105,9 +130,6 @@ for (const [siteId, meta] of Object.entries(registry)) {
   lines.push(`    vanilla         = ${vanilla ? 'true' : 'false'}`);
   lines.push(`    terraform       = true`);
   lines.push(`    attach_hub_api_binding = ${attach ? 'true' : 'false'}`);
-  if (proxySecret) {
-    lines.push(`    hub_proxy_secret = "${escapeHcl(proxySecret)}"`);
-  }
   lines.push('  }');
 }
 
@@ -115,7 +137,8 @@ lines.push('}', '');
 
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, lines.join('\n'));
-console.log(`Wrote ${outputPath} (${Object.keys(registry).length} registry sites)`);
+writeFileSync(secretsOutputPath, `${JSON.stringify({ hub_proxy_secrets: hubProxySecretsOut }, null, 2)}\n`);
+console.log(`Wrote ${outputPath} and ${secretsOutputPath} (${Object.keys(registry).length} registry sites)`);
 
 /**
  * @param {string} name
@@ -141,13 +164,6 @@ function splitCsv(value) {
 }
 
 /**
- * @param {string} value
- */
-function escapeHcl(value) {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-}
-
-/**
  * @returns {Set<string>}
  */
 function readTerraformSiteIds() {
@@ -163,18 +179,16 @@ function readTerraformSiteIds() {
 }
 
 /**
- * @param {string} siteId
- * @param {Record<string, string | boolean>} meta
- * @param {Set<string>} terraformSiteIds
+ * @returns {Record<string, string>}
  */
-function resolveAttachHubApiBinding(siteId, meta, terraformSiteIds) {
-  if (meta.attach_hub_api_binding === true) return true;
-  if (meta.attach_hub_api_binding === false) return false;
-
-  if (siteId === provisionSiteId) {
-    if (provisionPhase === 'pre-worker') return false;
-    if (provisionPhase === 'post-worker') return true;
+function readTerraformHubProxySecrets() {
+  try {
+    const raw = execFileSync('terraform', ['output', '-json', 'hub_proxy_secrets'], {
+      cwd: tfDir,
+      encoding: 'utf8'
+    });
+    return JSON.parse(raw);
+  } catch {
+    return {};
   }
-
-  return terraformSiteIds.has(siteId);
 }

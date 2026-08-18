@@ -235,7 +235,8 @@ function renderSiteCard(site, platform, githubConfigured) {
   const links = siteDashboardLinks(platform, site);
   const commands = siteOperatorCommands(site);
   const steps = Array.isArray(site.provisioning) ? site.provisioning : [];
-  const needsProvision = site.terraform && !site.contract && !isProduction;
+  const attachPending = site.attachHubApiBinding !== true;
+  const needsProvision = site.terraform && !isProduction && (!site.contract || attachPending);
 
   return `
     <article class="card">

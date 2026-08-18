@@ -53,6 +53,7 @@ jobs:
     needs: detect-new-sites
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         site_id: ${{ fromJson(needs.detect-new-sites.outputs.site_ids) }}
     uses: ./.github/workflows/platform-site-provision-reusable.yml
