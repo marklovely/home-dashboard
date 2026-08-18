@@ -135,8 +135,6 @@ migrations_dir = "migrations"
 binding = "GUIDE_MEDIA"
 bucket_name = "lovely-home-guide-media-sandbox"
 
-# ---------------------------------------------------------------------------
-# Demo environment — Terraform-managed (see docs/platform-terraform.md)
 # Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs demo
 # ---------------------------------------------------------------------------
 
