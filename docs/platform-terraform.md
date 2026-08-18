@@ -60,7 +60,7 @@ Site registry: [`platform/sites.yaml`](../platform/sites.yaml).
    npx wrangler secret put HUB_PROXY_SECRET --env sandbox
    ```
 
-   Alternatively, add **Account → Workers Scripts → Edit** and **Workers Secrets → Edit** to your API token and keep `CLOUDFLARE_API_TOKEN` set — OAuth is simpler for local setup.
+   Alternatively, add **Account → Workers Scripts → Edit** to your API token and keep `CLOUDFLARE_API_TOKEN` set — that permission covers deploy and `wrangler secret put`. OAuth is simpler for local setup.
 
 ## First-time sandbox
 

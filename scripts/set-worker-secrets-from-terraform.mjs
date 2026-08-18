@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Set Worker secrets from terraform output (non-interactive, for CI).
- * Requires CLOUDFLARE_API_TOKEN with Workers Scripts + Secrets Edit.
+ * Requires CLOUDFLARE_API_TOKEN with Workers Scripts Edit (covers wrangler secret put).
  *
  * Usage: node scripts/set-worker-secrets-from-terraform.mjs <site_id>
  */

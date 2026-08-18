@@ -195,7 +195,7 @@ You no longer maintain a separate “CI only” state file — laptop and GitHub
 
 | Secret | Purpose |
 |--------|---------|
-| `CLOUDFLARE_API_TOKEN` | Terraform + Wrangler (D1, R2, Pages, Workers, Access, DNS, **Workers Secrets**) |
+| `CLOUDFLARE_API_TOKEN` | Terraform + Wrangler (D1, R2, Pages, Workers, Access, DNS, **Workers Scripts** for deploy + secrets) |
 | `CLOUDFLARE_ACCOUNT_ID` | Account ID |
 | `CLOUDFLARE_ZONE_ID` | Zone ID for `lovely-home.co.uk` |
 | `WORKERS_SUBDOMAIN` | e.g. `mark-lovely67` |
@@ -223,10 +223,20 @@ Provisioning runs **one site at a time** (`max-parallel: 1` + workflow concurren
 
 The CI token needs everything in [platform-terraform.md](./platform-terraform.md) **plus**:
 
-- Account → **Workers Scripts → Edit**
-- Account → **Workers Secrets → Edit**
+- Account → **Workers Scripts → Edit** (deploy Worker + `wrangler secret put`)
 
-Without Workers Secrets, `set-worker-secrets-from-terraform.mjs` fails in CI.
+Without Workers Scripts Edit, `set-worker-secrets-from-terraform.mjs` and deploy steps fail in CI.
+
+**Provision fails with `401 Unauthorized` (Access, D1, R2 create):** The GitHub secret `CLOUDFLARE_API_TOKEN` is invalid, expired, or does not include account `CLOUDFLARE_ACCOUNT_ID`. Re-create the token with the permissions above, update the repo secret, and run locally or in CI:
+
+```bash
+export CLOUDFLARE_API_TOKEN="..."
+export CLOUDFLARE_ACCOUNT_ID="..."
+export CLOUDFLARE_ZONE_ID="..."
+bash scripts/verify-cloudflare-api-token.sh
+```
+
+CI runs this check before `terraform apply` so auth problems fail in seconds instead of after several retry cycles.
 
 ## What runs in CI
 

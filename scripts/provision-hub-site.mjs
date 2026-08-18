@@ -4,7 +4,7 @@
  *
  * Usage: node scripts/provision-hub-site.mjs <site_id> [--skip-pages] [--skip-platform-admin]
  */
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateDeploySiteId } from './lib/site-registry.mjs';
@@ -45,17 +45,34 @@ function runTerraformApply() {
   const maxAttempts = retryDelaysSeconds.length + 1;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      run('terraform', terraformApplyArgs(), { cwd: tfDir });
-      return;
-    } catch (error) {
-      if (attempt >= maxAttempts) throw error;
-      const delay = retryDelaysSeconds[attempt - 1] ?? 120;
-      console.warn(
-        `\nTerraform apply failed (attempt ${attempt}/${maxAttempts}, often Cloudflare 429). Retrying in ${delay}s...`
+    console.log(`\n==> terraform ${terraformApplyArgs().join(' ')}`);
+    const result = spawnSync('terraform', terraformApplyArgs(), {
+      cwd: tfDir,
+      env: process.env,
+      encoding: 'utf8'
+    });
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+
+    if (result.status === 0) return;
+
+    const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+    if (/\b401\b.*Unauthorized|Unauthorized.*\b401\b/i.test(output)) {
+      console.error(
+        '\nTerraform apply failed with Cloudflare 401 Unauthorized — fix CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID in GitHub secrets (see scripts/verify-cloudflare-api-token.sh). Not retrying.'
       );
-      execFileSync('sleep', [String(delay)]);
+      process.exit(result.status ?? 1);
     }
+
+    if (attempt >= maxAttempts) {
+      process.exit(result.status ?? 1);
+    }
+
+    const delay = retryDelaysSeconds[attempt - 1] ?? 120;
+    console.warn(
+      `\nTerraform apply failed (attempt ${attempt}/${maxAttempts}, often Cloudflare 429). Retrying in ${delay}s...`
+    );
+    execFileSync('sleep', [String(delay)]);
   }
 }
 
