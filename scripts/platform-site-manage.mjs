@@ -141,7 +141,7 @@ function parseArgs(argv) {
     if (token.startsWith('--')) {
       const key = token.slice(2);
       const next = argv[i + 1];
-      if (!next || next.startsWith('--')) {
+      if (next === undefined || next.startsWith('--')) {
         out[key] = true;
       } else {
         out[key] = next;
