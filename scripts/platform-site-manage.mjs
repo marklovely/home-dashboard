@@ -307,9 +307,7 @@ function buildSummary(action, siteId, nextEntry, prevEntry) {
     }
   } else {
     lines.push(`Remove site "${siteId}" from registry and wrangler example blocks.`);
-    lines.push(
-      `Run: terraform destroy -var-file=environments/hub.tfvars -target='module.hub_site["${siteId}"]'`
-    );
+    lines.push('After merge: platform-site-deprovision runs automatically (see docs/platform-provision.md).');
     lines.push('Remove the site block from your local hub.tfvars manually.');
   }
   return lines;

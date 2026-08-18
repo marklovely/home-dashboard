@@ -129,3 +129,21 @@ export function validateDeploySiteId(siteId) {
   }
   return null;
 }
+
+/**
+ * Validate site id for automated deprovision (site removed from registry, still in TF state).
+ *
+ * @param {string} siteId
+ * @param {Record<string, SiteRegistryEntry>} registrySites
+ */
+export function validateDeprovisionSiteId(siteId, registrySites) {
+  const idError = validateSiteId(siteId);
+  if (idError) return idError;
+  if (PROTECTED_SITE_IDS.has(siteId)) {
+    return `Site "${siteId}" is protected and cannot be deprovisioned.`;
+  }
+  if (registrySites[siteId]) {
+    return `Site "${siteId}" is still in platform/sites.yaml — merge the delete PR first.`;
+  }
+  return null;
+}
