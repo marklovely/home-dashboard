@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   defaultSiteEntry,
   PROTECTED_SITE_IDS,
+  validateDeploySiteId,
   validateSiteId,
   validateSiteMutation
 } from '../scripts/lib/site-registry.mjs';
+import { validateSiteDeploy } from '../functions/api/platform/platformSiteMutations.js';
 
 describe('site registry validation', () => {
   it('accepts valid site ids', () => {
@@ -22,6 +24,19 @@ describe('site registry validation', () => {
     expect(entry.hostname).toBe('demo.lovely-home.co.uk');
     expect(entry.hub_environment).toBe('demo');
     expect(entry.vanilla).toBe(true);
+  });
+
+  it('blocks deploy for production and unknown sites', () => {
+    const manifest = {
+      sites: {
+        test: { siteId: 'test', hostname: 'test.lovely-home.co.uk' }
+      }
+    };
+    expect(validateDeploySiteId('production')).toMatch(/production/i);
+    expect(validateDeploySiteId('bad;id')).toBeTruthy();
+    expect(validateSiteDeploy('production', manifest).ok).toBe(false);
+    expect(validateSiteDeploy('missing', manifest).ok).toBe(false);
+    expect(validateSiteDeploy('test', manifest).ok).toBe(true);
   });
 
   it('blocks delete for protected sites', () => {

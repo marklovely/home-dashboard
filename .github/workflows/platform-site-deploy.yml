@@ -31,18 +31,26 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Validate site_id
+        id: validate
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+        run: node scripts/validate-deploy-site-id.mjs
+
       - name: Install worker dependencies
         run: npm ci --prefix worker
 
       - name: Apply D1 migrations
         if: ${{ inputs.skip_migrate != true }}
-        run: npm run d1:migrate:${{ inputs.site_id }} --prefix worker
+        run: npm run "d1:migrate:${SITE_ID}" --prefix worker
         env:
+          SITE_ID: ${{ steps.validate.outputs.site_id }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy Worker
-        run: npm run deploy:${{ inputs.site_id }} --prefix worker
+        run: npm run "deploy:${SITE_ID}" --prefix worker
         env:
+          SITE_ID: ${{ steps.validate.outputs.site_id }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
