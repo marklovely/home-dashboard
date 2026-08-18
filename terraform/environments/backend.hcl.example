@@ -1,14 +1,18 @@
-# Copy to terraform/environments/backend.hcl (never commit credentials).
-# Create an R2 bucket + API token with Object Read & Write.
+# Terraform remote state — Cloudflare R2
 #
-# One-time local migration from local state:
-#   cd terraform
-#   terraform init -backend-config=environments/backend.hcl
-#   terraform init -migrate-state
+# SETUP (one time):
+#   1. Create R2 bucket in Cloudflare dashboard (e.g. lovely-home-terraform-state)
+#   2. Create R2 API token with Object Read & Write on that bucket
+#   3. cp this file to backend.hcl and fill in bucket + endpoint below
+#   4. export AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY from the R2 token
+#   5. cd terraform && terraform init -backend-config=environments/backend.hcl
+#   6. terraform init -migrate-state   (answer yes to copy local state)
 #
-# CI uses secrets via platform-site-provision.yml (-backend-config flags).
+# See docs/platform-provision.md for the full walkthrough.
+#
+# backend.hcl is gitignored — never commit it or the R2 token.
 
-bucket                      = "YOUR_R2_BUCKET"
+bucket                      = "YOUR_R2_BUCKET_NAME"
 key                         = "home-dashboard/hub.tfstate"
 region                      = "auto"
 endpoint                    = "https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com"
