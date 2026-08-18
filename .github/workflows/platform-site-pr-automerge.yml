@@ -1,7 +1,9 @@
 name: Platform site PR auto-merge
 
+# pull_request_target uses workflow YAML from the base branch (main), not the PR
+# head — so a PR cannot replace this job to exfiltrate PLATFORM_GITHUB_TOKEN.
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
@@ -18,7 +20,10 @@ jobs:
   automerge:
     if: >-
       !github.event.pull_request.draft &&
-      startsWith(github.event.pull_request.head.ref, 'platform/site-')
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'platform/site-') &&
+      startsWith(github.event.pull_request.title, 'platform:') &&
+      contains(github.event.pull_request.body, 'Automated site registry change from **Platform Admin**')
     runs-on: ubuntu-latest
     steps:
       - name: Check PR token
@@ -31,6 +36,7 @@ jobs:
       - name: Enable auto-merge (retry while GitHub registers checks)
         env:
           GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           pr="${{ github.event.pull_request.number }}"
           for attempt in $(seq 1 12); do
