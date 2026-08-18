@@ -53,7 +53,7 @@ resource "cloudflare_pages_project" "dashboard" {
           }
           NODE_VERSION = {
             type  = "plain_text"
-            value = "22"
+            value = "24.19.0"
           }
         }
       },
