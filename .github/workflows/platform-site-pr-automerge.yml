@@ -1,0 +1,50 @@
+name: Platform site PR auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: platform-site-pr-automerge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  automerge:
+    if: >-
+      !github.event.pull_request.draft &&
+      startsWith(github.event.pull_request.head.ref, 'platform/site-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR token
+        run: |
+          if [ -z "${{ secrets.PLATFORM_GITHUB_TOKEN }}" ]; then
+            echo "::error title=Missing PLATFORM_GITHUB_TOKEN::Add repo secret PLATFORM_GITHUB_TOKEN (PAT with contents:write + pull_requests:write)."
+            exit 1
+          fi
+
+      - name: Enable auto-merge (retry while GitHub registers checks)
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+        run: |
+          pr="${{ github.event.pull_request.number }}"
+          for attempt in $(seq 1 12); do
+            if gh pr merge "$pr" --squash --auto 2>/tmp/gh-merge.err; then
+              echo "Auto-merge enabled on PR #$pr."
+              exit 0
+            fi
+            err="$(cat /tmp/gh-merge.err)"
+            if echo "$err" | grep -qi 'already enabled'; then
+              echo "Auto-merge already enabled on PR #$pr."
+              exit 0
+            fi
+            echo "Attempt $attempt/12: $err"
+            sleep 15
+          done
+          echo "::error::Could not enable auto-merge on PR #$pr. Ensure Allow auto-merge is on and main has branch protection with required checks (test, validate). See docs/platform-admin.md."
+          exit 1
