@@ -21,9 +21,17 @@ jobs:
     if: >-
       !github.event.pull_request.draft &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      startsWith(github.event.pull_request.head.ref, 'platform/site-') &&
       startsWith(github.event.pull_request.title, 'platform:') &&
-      contains(github.event.pull_request.body, 'Automated site registry change from **Platform Admin**')
+      (
+        (
+          startsWith(github.event.pull_request.head.ref, 'platform/site-') &&
+          contains(github.event.pull_request.body, 'Automated site registry change from **Platform Admin**')
+        ) ||
+        (
+          startsWith(github.event.pull_request.head.ref, 'platform/provision-') &&
+          contains(github.event.pull_request.body, 'Automated provision follow-up from **Platform site provision**')
+        )
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Check PR token
