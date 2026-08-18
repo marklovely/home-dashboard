@@ -101,16 +101,13 @@ locals {
   worker_hostname   = "${local.worker_name}.${var.workers_subdomain}.workers.dev"
   worker_api_origin = "https://${local.worker_hostname}"
   hostname_label    = replace(var.hostname, ".${var.zone_name}", "")
-  # Imported production Pages projects return entrypoint = "default" for HUB_API.
-  # Omitting it in Terraform makes the Cloudflare API PATCH fail with 8000022
-  # ("Invalid Service name ()") when reconciling the binding.
+  # Cloudflare Pages HUB_API bindings require entrypoint = "default". Omitting it makes
+  # PATCH fail with 8000022 ("Invalid Service name ()") even when service is set.
   pages_hub_api_services = {
-    HUB_API = merge(
-      {
-        service     = local.worker_name
-        environment = "production"
-      },
-      var.site_id == "production" ? { entrypoint = "default" } : {}
-    )
+    HUB_API = {
+      service     = local.worker_name
+      environment = "production"
+      entrypoint  = "default"
+    }
   }
 }
