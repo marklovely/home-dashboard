@@ -348,6 +348,7 @@ async function submitWizard(mode, form, panel, githubConfigured, onComplete, clo
         ${result.actionsWorkflowUrl ? `<a class="btn btn-small btn-ghost" href="${escapeAttr(String(result.actionsWorkflowUrl))}" target="_blank" rel="noopener">All site-manage runs</a>` : ''}
       </p>
       <p class="muted">The pull request is created at the <strong>end</strong> of the workflow (after Terraform validate + tests). If the run fails, there is no PR — check the run log.</p>
+      <p class="muted">When the PR is created, auto-merge is enabled — it merges to <code>main</code> once CI passes; if checks fail, the PR stays open.</p>
       <p class="muted">After merge, <strong>Platform site provision</strong> provisions the hub automatically.</p>
     `;
     panel.querySelector('.wizard-foot').innerHTML =
