@@ -90,6 +90,7 @@ jobs:
           node scripts/deprovision-hub-site.mjs "${ARGS[@]}"
 
       - name: Prune HUB_PROXY_SECRETS_JSON
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
           SITE_ID: ${{ inputs.site_id }}
