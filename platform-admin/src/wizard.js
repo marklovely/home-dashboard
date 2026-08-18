@@ -179,7 +179,7 @@ function renderWizardStep(mode, step, form, ctx) {
 
   if (mode === 'delete' && step === 1) {
     body += `
-      <p class="muted">This opens a pull request that removes <code>${escapeHtml(form.siteId)}</code> from the registry. You must still run <code>terraform destroy</code> for Cloudflare resources.</p>
+      <p class="muted">This opens a pull request that removes <code>${escapeHtml(form.siteId)}</code> from the registry. After merge, CI tears down Cloudflare resources automatically.</p>
       <label class="field">
         <span>Type hostname to confirm</span>
         <input type="text" name="confirmHostname" value="${escapeAttr(form.confirmHostname)}" placeholder="${escapeAttr(String(ctx.site?.hostname ?? form.hostname))}" autocomplete="off" />
@@ -187,7 +187,11 @@ function renderWizardStep(mode, step, form, ctx) {
     `;
   }
 
-  if ((mode === 'delete' && step === 2) || (mode !== 'delete' && step === 3)) {
+  if (mode === 'delete' && step === 2) {
+    body += `<dl class="review">${renderReview(mode, form)}</dl>`;
+    body += `<p class="muted">Step 1 (automated): GitHub opens a PR removing the site from the registry and Wrangler stubs.</p>`;
+    body += `<p class="muted">Step 2 (automated): after merge to <code>main</code>, <strong>Platform site deprovision</strong> deletes the Worker, destroys Terraform resources (D1, R2, Pages, Access, DNS), and refreshes the platform manifest.</p>`;
+  } else if (mode !== 'delete' && step === 3) {
     body += `<dl class="review">${renderReview(mode, form)}</dl>`;
     body += `<p class="muted">Step 1 (automated): GitHub opens a PR updating the site registry and Wrangler stubs.</p>`;
     body += `<p class="muted">Step 2 (automated): after merge to <code>main</code>, <strong>Platform site provision</strong> runs Terraform apply, Worker deploy, Pages deploy, and refreshes the platform manifest.</p>`;

@@ -1,0 +1,70 @@
+name: Platform site deprovision
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - platform/sites.yaml
+  workflow_dispatch:
+    inputs:
+      site_id:
+        description: Site id to deprovision (must already be removed from sites.yaml)
+        required: true
+        type: string
+      skip_platform_admin:
+        description: Skip platform admin redeploy
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-site-deprovision-${{ github.event_name == 'workflow_dispatch' && inputs.site_id || 'auto' }}
+  cancel-in-progress: false
+
+jobs:
+  detect-removed-sites:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      site_ids: ${{ steps.detect.outputs.site_ids }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - id: detect
+        run: node scripts/detect-removed-sites-from-yaml.mjs
+
+  deprovision-auto:
+    if: github.event_name == 'push' && needs.detect-removed-sites.outputs.site_ids != '[]'
+    needs: detect-removed-sites
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        site_id: ${{ fromJson(needs.detect-removed-sites.outputs.site_ids) }}
+    uses: ./.github/workflows/platform-site-deprovision-reusable.yml
+    with:
+      site_id: ${{ matrix.site_id }}
+      skip_platform_admin: false
+    secrets: inherit
+
+  deprovision-manual:
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/platform-site-deprovision-reusable.yml
+    with:
+      site_id: ${{ inputs.site_id }}
+      skip_platform_admin: ${{ inputs.skip_platform_admin }}
+    secrets: inherit

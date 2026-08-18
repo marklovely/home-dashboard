@@ -3,6 +3,7 @@ import {
   defaultSiteEntry,
   PROTECTED_SITE_IDS,
   validateDeploySiteId,
+  validateDeprovisionSiteId,
   validateSiteId,
   validateSiteMutation
 } from '../scripts/lib/site-registry.mjs';
@@ -64,5 +65,14 @@ describe('site registry validation', () => {
         zoneName: 'lovely-home.co.uk'
       })
     ).toMatch(/protected/i);
+  });
+
+  it('blocks deprovision for protected sites and sites still in registry', () => {
+    const registry = {
+      demo: { hostname: 'demo.lovely-home.co.uk', hub_environment: 'demo', vanilla: true }
+    };
+    expect(validateDeprovisionSiteId('production', registry)).toMatch(/protected/i);
+    expect(validateDeprovisionSiteId('demo', registry)).toMatch(/still in platform\/sites\.yaml/i);
+    expect(validateDeprovisionSiteId('removed', {})).toBeNull();
   });
 });
