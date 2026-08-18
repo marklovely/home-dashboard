@@ -242,13 +242,13 @@ bucket_name = "lovely-home-appliance-guides-${siteId}"
 [[env.${siteId}.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-${siteId}"
-database_id = "REPLACE_AFTER_TERRAFORM_APPLY"
+database_id = "REPLACE_AFTER_PROVISION_${siteId.toUpperCase()}"
 migrations_dir = "migrations"
 
 [[env.${siteId}.d1_databases]]
 binding = "HOUSE_GUIDE_DB"
 database_name = "lovely-home-appliance-manuals-${siteId}"
-database_id = "REPLACE_AFTER_TERRAFORM_APPLY"
+database_id = "REPLACE_AFTER_PROVISION_${siteId.toUpperCase()}"
 migrations_dir = "migrations"
 
 [[env.${siteId}.r2_buckets]]
