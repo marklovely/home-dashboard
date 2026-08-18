@@ -420,6 +420,13 @@ h1 {
   margin: 0.5rem 0 0;
 }
 
+.wizard-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.85em;

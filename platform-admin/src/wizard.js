@@ -343,7 +343,12 @@ async function submitWizard(mode, form, panel, githubConfigured, onComplete, clo
 
     panel.querySelector('.wizard-body').innerHTML = `
       <div class="banner banner-ok">${escapeHtml(result.message ?? 'Automation started.')}</div>
-      <p class="muted">Track progress in GitHub Actions → <strong>Platform site manage</strong>. After merge, <strong>Platform site provision</strong> provisions the hub automatically.</p>
+      <p class="wizard-links">
+        ${result.workflowRunUrl ? `<a class="btn btn-small" href="${escapeAttr(String(result.workflowRunUrl))}" target="_blank" rel="noopener">Open workflow run</a>` : ''}
+        ${result.actionsWorkflowUrl ? `<a class="btn btn-small btn-ghost" href="${escapeAttr(String(result.actionsWorkflowUrl))}" target="_blank" rel="noopener">All site-manage runs</a>` : ''}
+      </p>
+      <p class="muted">The pull request is created at the <strong>end</strong> of the workflow (after Terraform validate + tests). If the run fails, there is no PR — check the run log.</p>
+      <p class="muted">After merge, <strong>Platform site provision</strong> provisions the hub automatically.</p>
     `;
     panel.querySelector('.wizard-foot').innerHTML =
       '<button type="button" class="btn" data-wizard-done>Done</button>';
