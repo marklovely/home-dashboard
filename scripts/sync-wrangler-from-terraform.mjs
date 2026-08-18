@@ -87,7 +87,6 @@ console.log(JSON.stringify(contract, null, 2));
  * @param {string} value
  */
 function upsertEnvVar(toml, siteId, key, value) {
-  const varsHeader = `[env.${siteId}.vars]`;
   const assignment = `${key} = "${value.replace(/"/g, '\\"')}"`;
   const varsBlockRe = new RegExp(
     `(\\[env\\.${siteId}\\.vars\\][\\s\\S]*?)(?=\\n\\[|\\n\\[\\[|$)`,

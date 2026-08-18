@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateDeploySiteId } from './lib/site-registry.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
-import { formatEmailList, parseEmailList } from './lib/email-lists.mjs';
+import { formatEmailList } from './lib/email-lists.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
