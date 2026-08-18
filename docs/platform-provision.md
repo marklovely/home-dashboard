@@ -212,7 +212,7 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 | Secret | Purpose |
 |--------|---------|
 | `SITTER_EMAILS` | House-sitter Access emails |
-| `PLATFORM_GITHUB_TOKEN` | Same PAT as platform admin Pages env — **must also be a GitHub Actions repo secret** so site-manage can open PRs and provision can open the post-provision follow-up PR (`sites.yaml`, `wrangler.toml`) |
+| `PLATFORM_GITHUB_TOKEN` | Same PAT as platform admin Pages env — **must also be a GitHub Actions repo secret** so site-manage can open PRs, provision can open the post-provision follow-up PR, and deprovision can prune `HUB_PROXY_SECRETS_JSON` (needs **repo secrets** write) |
 | `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` — only needed if Terraform output is unavailable; CI normally reads secrets from remote state |
 
 CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.
@@ -310,8 +310,10 @@ flowchart TD
 | Worker script + secrets | `wrangler delete {worker} --force` |
 | D1, R2×2, Pages, Access×2, DNS | `terraform destroy -target=module.hub_site["{id}"]` |
 | Platform admin site card | `build-platform-manifest.mjs` + `deploy-platform-admin.sh` |
+| Local `hub.tfvars` (if present) | `prune-local-hub-tfvars.mjs` during deprovision |
+| `HUB_PROXY_SECRETS_JSON` GitHub secret | `prune-hub-proxy-secrets-github-secret.mjs` in CI (requires `PLATFORM_GITHUB_TOKEN` with repo secrets write) |
 
-**Not automated:** remove the site block from your local `terraform/environments/hub.tfvars` and optional `HUB_PROXY_SECRETS_JSON` GitHub secret entry.
+**Already handled by the delete PR:** `hub.tfvars.example` is removed when the wizard opens the delete PR (step 1), before deprovision runs.
 
 ### Manual deprovision (local)
 

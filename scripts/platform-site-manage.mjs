@@ -20,6 +20,7 @@ import {
   validateSiteMutation
 } from './lib/site-registry.mjs';
 import { formatSitesYaml } from './lib/write-sites-yaml.mjs';
+import { removeHubTfvarsSiteBlock } from './lib/prune-hub-site-config.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sitesYamlPath = join(root, 'platform/sites.yaml');
@@ -263,10 +264,8 @@ bucket_name = "lovely-home-guide-media-${siteId}"`;
  * @param {Record<string, string | boolean> | undefined} entry
  */
 function patchHubTfvarsExample(text, action, siteId, entry) {
-  const blockRe = new RegExp(`\\n  ${siteId} = \\{[\\s\\S]*?\\n  \\}`, 'm');
-
   if (action === 'delete') {
-    return text.replace(blockRe, '\n');
+    return removeHubTfvarsSiteBlock(text, siteId).text;
   }
 
   const attachBinding = entry?.attach_hub_api_binding === true;
@@ -279,6 +278,7 @@ function patchHubTfvarsExample(text, action, siteId, entry) {
     terraform       = true${attachBinding ? '' : '\n    attach_hub_api_binding = false # first apply only; set true after Worker deploy'}
   }`;
 
+  const blockRe = new RegExp(`\\n  ${siteId} = \\{[\\s\\S]*?\\n  \\}`, 'm');
   if (blockRe.test(text)) {
     return text.replace(blockRe, block);
   }
@@ -308,7 +308,6 @@ function buildSummary(action, siteId, nextEntry, prevEntry) {
   } else {
     lines.push(`Remove site "${siteId}" from registry and wrangler example blocks.`);
     lines.push('After merge: platform-site-deprovision runs automatically (see docs/platform-provision.md).');
-    lines.push('Remove the site block from your local hub.tfvars manually.');
   }
   return lines;
 }
