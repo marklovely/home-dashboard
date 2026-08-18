@@ -1,9 +1,12 @@
-/** @typedef {'production' | 'test' | 'sandbox' | 'staging'} HubEnvironmentId */
+/** @typedef {string} HubEnvironmentId */
 
 const RUNTIME_CONFIG_PATH = './runtime-config.json';
 
+/** Valid Wrangler / platform hub environment ids (same rules as site ids). */
+const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
+
 /** Environments that use vanilla/isolated defaults (no production home data). */
-/** @type {ReadonlySet<HubEnvironmentId>} */
+/** @type {ReadonlySet<string>} */
 export const VANILLA_HUB_ENVIRONMENTS = new Set(['test', 'staging', 'sandbox']);
 
 /** @type {HubEnvironmentId | null} */
@@ -20,10 +23,11 @@ function normalizeHubEnvironment(value) {
   const raw = String(value ?? '')
     .trim()
     .toLowerCase();
+  if (raw === 'production' || raw === 'prod') return 'production';
   if (raw === 'staging') return 'staging';
   if (raw === 'test') return 'test';
   if (raw === 'sandbox') return 'sandbox';
-  if (raw === 'production' || raw === 'prod') return 'production';
+  if (SITE_ID_RE.test(raw)) return raw;
   return null;
 }
 
@@ -40,10 +44,16 @@ function readBuildTimeHubEnvironment() {
  */
 function hubEnvironmentFromHostname(host) {
   const hostname = host.toLowerCase();
-  if (hostname === 'test.lovely-home.co.uk') return 'test';
-  if (hostname === 'sandbox.lovely-home.co.uk') return 'sandbox';
+  if (hostname === 'dashboard.lovely-home.co.uk') return 'production';
+  const zoneSuffix = '.lovely-home.co.uk';
+  if (hostname.endsWith(zoneSuffix)) {
+    const sub = hostname.slice(0, -zoneSuffix.length);
+    if (sub && SITE_ID_RE.test(sub)) return sub;
+  }
   if (hostname.includes('home-dashboard-test')) return 'test';
   if (hostname.includes('home-dashboard-sandbox')) return 'sandbox';
+  const pagesMatch = hostname.match(/home-dashboard-([a-z][a-z0-9_-]{0,31})/);
+  if (pagesMatch) return pagesMatch[1];
   return null;
 }
 
@@ -99,11 +109,12 @@ export async function ensureHubEnvironment() {
 }
 
 /**
- * True for trial/sandbox stacks (test, sandbox, staging) — isolated vanilla defaults.
+ * True for non-production hub stacks — isolated vanilla defaults.
+ * Platform sites use their site id as hub_environment (e.g. demo, sandbox).
  * @returns {boolean}
  */
 export function isVanillaHubEnvironment() {
-  return VANILLA_HUB_ENVIRONMENTS.has(getHubEnvironmentSync());
+  return getHubEnvironmentSync() !== 'production';
 }
 
 /** @deprecated Prefer isVanillaHubEnvironment */
