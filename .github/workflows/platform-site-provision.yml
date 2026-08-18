@@ -51,6 +51,8 @@ jobs:
   provision-auto:
     if: github.event_name == 'push' && needs.detect-new-sites.outputs.site_ids != '[]'
     needs: detect-new-sites
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -65,6 +67,8 @@ jobs:
 
   provision-manual:
     if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
     uses: ./.github/workflows/platform-site-provision-reusable.yml
     with:
       site_id: ${{ inputs.site_id }}
