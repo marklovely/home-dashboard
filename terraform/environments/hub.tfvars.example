@@ -53,4 +53,13 @@ sites = {
 
 
 
+  demo = {
+    hostname        = "demo.lovely-home.co.uk"
+    hub_environment = "demo"
+    vanilla         = true
+    terraform       = true
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+    owner_emails = ["marklovely67@gmail.com"]
+  }
+
 }
