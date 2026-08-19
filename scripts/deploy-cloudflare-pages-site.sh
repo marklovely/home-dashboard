@@ -37,6 +37,17 @@ npx wrangler pages deploy dist \
   --branch="$BRANCH" \
   --commit-dirty=true
 
+if [[ -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+  echo ""
+  echo "==> Attaching HUB_API Pages binding (required for /api on this site)"
+  node "$ROOT/scripts/attach-hub-api-pages-binding.mjs" "$SITE_ID"
+else
+  echo ""
+  echo "NOTE: HUB_API binding was NOT attached (set CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID)."
+  echo "      Without it, /api/* on the hub will not reach the Worker. Run:"
+  echo "        node scripts/attach-hub-api-pages-binding.mjs $SITE_ID"
+fi
+
 echo ""
 echo "Done. Open the custom domain or https://${PAGES_PROJECT}.pages.dev"
-echo "Worker must also be deployed: cd worker && npm run deploy:${SITE_ID}"
+echo "Verify: https://${SITE_ID}.lovely-home.co.uk/api/access-probe (usesHubApiBinding should be true)"
