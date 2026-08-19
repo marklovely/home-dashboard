@@ -7,6 +7,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { applyLocalHubEnv, missingProvisionEnvKeys } from './lib/load-local-hub-env.mjs';
 import { validateDeploySiteId } from './lib/site-registry.mjs';
 
 const args = process.argv.slice(2);
@@ -27,8 +28,21 @@ if (deployError) {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const tfDir = join(root, 'terraform');
+const hubTfvarsPath = join(tfDir, 'environments/hub.tfvars');
 const tfvarsPath = join(tfDir, 'environments/hub.generated.tfvars');
 const generatedTfvars = join(root, 'scripts/generate-hub-tfvars.mjs');
+
+if (applyLocalHubEnv(hubTfvarsPath)) {
+  console.log('Loaded missing provision env from terraform/environments/hub.tfvars');
+}
+
+const missingEnv = missingProvisionEnvKeys();
+if (missingEnv.length) {
+  console.error(
+    `Missing required env: ${missingEnv.join(', ')}. Export them or add the values to terraform/environments/hub.tfvars (see docs/platform-provision.md).`
+  );
+  process.exit(1);
+}
 
 function terraformApplyArgs() {
   return [
@@ -67,6 +81,13 @@ function runTerraformApply() {
     if (/8000022|Invalid Service name \(\)/i.test(output)) {
       console.error(
         '\nTerraform apply failed updating Pages HUB_API binding (8000022). Check terraform/modules/hub_environment/variables.tf entrypoint = "default". Not retrying.'
+      );
+      process.exit(result.status ?? 1);
+    }
+
+    if (/Credential access key has length|InvalidArgument.*access key/i.test(output)) {
+      console.error(
+        '\nTerraform state backend failed — R2 credentials look wrong. Export Cloudflare R2 API token keys (32-char access key), not AWS IAM keys:\n  export AWS_ACCESS_KEY_ID="..."\n  export AWS_SECRET_ACCESS_KEY="..."\nSee docs/platform-provision.md § Remote Terraform state (R2). Not retrying.'
       );
       process.exit(result.status ?? 1);
     }
