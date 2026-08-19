@@ -134,12 +134,20 @@ After the first Pages deploy, ensure the **Worker** is up (`npm run deploy:sandb
 
 ## HUB_API Pages binding
 
-Terraform manages the **HUB_API** service binding on Terraform-managed Pages projects (`HUB_API` → `lovely-home-hub-api-{site}`). This prevents `terraform apply` from clearing dashboard-only bindings.
+Terraform manages Pages **env vars** on create; **`lifecycle { ignore_changes = [deployment_configs] }`** stops later applies from PATCHing deployment configs (the provider returns **8000022** or **unknown environment** on service bindings).
 
-| Site block flag | When |
-|-----------------|------|
-| `attach_hub_api_binding = true` (default) | Worker is deployed — normal ops for test/sandbox |
-| `attach_hub_api_binding = false` | First `terraform apply` on a **new** site before the Worker exists; deploy Worker, set `true`, apply again |
+**HUB_API** is attached with:
+
+```bash
+node scripts/attach-hub-api-pages-binding.mjs <site_id>
+```
+
+CI runs this after Worker deploy, then `terraform apply -refresh-only` to sync state. Local full applies skip deployment config changes — run the attach script after Worker deploy if health checks show `HUB_API binding no`.
+
+| Site block flag | Meaning |
+|-----------------|--------|
+| `attach_hub_api_binding = true` in `sites.yaml` | Site is fully provisioned; health checks expect HUB_API |
+| `attach_hub_api_binding = false` | Pre-worker / first apply only in CI generated tfvars |
 
 **Production** (`home-dashboard`) is not in this Terraform stack — configure **HUB_API → `lovely-home-hub-api`** in the dashboard as today.
 
