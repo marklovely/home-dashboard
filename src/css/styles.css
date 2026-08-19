@@ -671,12 +671,134 @@ body.is-bins-route .app-viewport > .bins-app {
 }
 
 .hub-setup-app {
+  overflow: hidden;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: 0;
+  max-width: none;
+}
+
+.hub-setup-app--unavailable {
+  display: block;
   max-width: min(720px, 100%);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  min-height: 0;
-  flex: 1 1 auto;
   padding: clamp(4px, 1vw, 8px);
+}
+
+.hub-setup-nav {
+  gap: 0;
+  min-height: 0;
+}
+
+.hub-setup-panel .hub-setup-body {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.hub-setup-nav-heading {
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hub-setup-nav-progress {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+}
+
+.hub-setup-nav-list {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.hub-setup-nav-footer {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.hub-setup-nav-item {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.hub-setup-nav-item.is-upcoming {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.hub-setup-nav-item.is-complete:not(.is-active) {
+  color: color-mix(in srgb, var(--text) 78%, var(--muted));
+}
+
+.hub-setup-nav-step {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.hub-setup-nav-item.is-active .hub-setup-nav-step {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  color: var(--text);
+}
+
+.hub-setup-nav-item.is-complete .hub-setup-nav-step {
+  border-color: color-mix(in srgb, #28d17c 40%, var(--border));
+  background: color-mix(in srgb, #28d17c 16%, var(--surface));
+  color: #8ef0bf;
+}
+
+.hub-setup-nav-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hub-setup-nav-label {
+  font-size: 0.96rem;
+  line-height: 1.25;
+}
+
+.hub-setup-nav-optional {
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.hub-setup-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.hub-setup-panel-header .hub-setup-step-help-host {
+  margin-top: 10px;
+}
+
+.hub-setup-panel-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding: 12px clamp(18px, 3vw, 28px) clamp(18px, 3vw, 28px);
+  border-top: 1px solid var(--border);
+  background: linear-gradient(
+    to top,
+    var(--surface) 75%,
+    color-mix(in srgb, var(--surface) 0%, transparent)
+  );
 }
 
 .hub-setup-header {
