@@ -109,4 +109,14 @@ await cfJson(baseUrl, {
   body: JSON.stringify({ deployment_configs: deploymentConfigs })
 });
 
-console.log(`HUB_API binding attached for ${siteId}.`);
+const updated = await cfJson(baseUrl);
+const attachedService =
+  updated?.deployment_configs?.production?.services?.HUB_API?.service ?? '';
+if (attachedService !== workerName) {
+  console.error(
+    `HUB_API binding verification failed for ${siteId}: expected ${workerName}, got ${attachedService || '(none)'}`
+  );
+  process.exit(1);
+}
+
+console.log(`HUB_API binding attached for ${siteId} (${pagesProject} → ${workerName}).`);
