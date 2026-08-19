@@ -20,7 +20,7 @@ export function parseHubTfvarsText(text) {
   /** @type {Record<string, string[]>} */
   const lists = {};
 
-  for (const [field, envKey] of Object.entries(STRING_FIELD_TO_ENV)) {
+  for (const field of Object.keys(STRING_FIELD_TO_ENV)) {
     const match = text.match(new RegExp(`^\\s*${field}\\s*=\\s*"([^"]*)"\\s*$`, 'm'));
     if (match) strings[field] = match[1];
   }
