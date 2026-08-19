@@ -238,6 +238,11 @@ function mountHubSetupWizard(viewport, context) {
     requestAnimationFrame(() => {
       panel.scrollTop = 0;
       body.scrollTop = 0;
+      page.scrollTop = 0;
+      if (viewport.scrollTop > 0) {
+        viewport.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
     });
   }
 
@@ -287,7 +292,7 @@ function mountHubSetupWizard(viewport, context) {
       if (isActive) {
         const doBadge = document.createElement('span');
         doBadge.className = 'hub-setup-nav-do';
-        doBadge.textContent = 'Do';
+        doBadge.textContent = 'To Do';
         item.append(doBadge);
       } else if (isComplete) {
         const doneBadge = document.createElement('span');
