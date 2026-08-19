@@ -70,16 +70,27 @@ jobs:
       - name: Terraform init (R2 backend)
         working-directory: terraform
         run: |
-          terraform init \
-            -backend-config="bucket=${{ secrets.TF_STATE_R2_BUCKET }}" \
-            -backend-config="key=home-dashboard/hub.tfstate" \
-            -backend-config="region=auto" \
-            -backend-config='endpoints={s3="${{ secrets.TF_STATE_R2_ENDPOINT }}"}' \
-            -backend-config="skip_credentials_validation=true" \
-            -backend-config="skip_metadata_api_check=true" \
-            -backend-config="skip_region_validation=true" \
-            -backend-config="skip_requesting_account_id=true" \
+          set -euo pipefail
+          init_args=(
+            -backend-config="bucket=${{ secrets.TF_STATE_R2_BUCKET }}"
+            -backend-config="key=home-dashboard/hub.tfstate"
+            -backend-config="region=auto"
+            -backend-config='endpoints={s3="${{ secrets.TF_STATE_R2_ENDPOINT }}"}'
+            -backend-config="skip_credentials_validation=true"
+            -backend-config="skip_metadata_api_check=true"
+            -backend-config="skip_region_validation=true"
+            -backend-config="skip_requesting_account_id=true"
             -backend-config="use_path_style=true"
+          )
+          for attempt in 1 2 3; do
+            if terraform init "${init_args[@]}"; then
+              exit 0
+            fi
+            echo "terraform init attempt ${attempt} failed; retrying in 30s..."
+            sleep 30
+          done
+          echo "terraform init failed after 3 attempts"
+          exit 1
 
       - name: Install worker dependencies
         run: npm ci --prefix worker
