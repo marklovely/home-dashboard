@@ -24,24 +24,26 @@ module "hub_site" {
   github_repo              = var.github_repo
   github_production_branch = var.github_production_branch
   # null → module generates random_password (sandbox). Explicit value for imports (production/test).
-  hub_proxy_secret               = lookup(var.hub_proxy_secrets, each.key, try(each.value.hub_proxy_secret, null))
-  attach_hub_api_binding         = each.value.attach_hub_api_binding
-  platform_health_checks_enabled = var.platform_admin.enabled
+  hub_proxy_secret                  = lookup(var.hub_proxy_secrets, each.key, try(each.value.hub_proxy_secret, null))
+  attach_hub_api_binding            = each.value.attach_hub_api_binding
+  platform_health_checks_enabled    = var.platform_admin.enabled
+  pages_preview_deployments_enabled = var.pages_preview_deployments_enabled
 }
 
 module "platform_admin" {
   count  = var.platform_admin.enabled ? 1 : 0
   source = "./modules/platform_admin"
 
-  account_id               = var.cloudflare_account_id
-  zone_id                  = var.cloudflare_zone_id
-  zone_name                = var.zone_name
-  hostname                 = var.platform_admin.hostname
-  pages_name               = var.platform_admin.pages_name
-  access_team_domain       = var.access_team_domain
-  operator_emails          = var.platform_operator_emails
-  github_owner             = var.github_owner
-  github_repo              = var.github_repo
-  github_production_branch = var.github_production_branch
-  platform_github_token    = var.platform_github_token
+  account_id                        = var.cloudflare_account_id
+  zone_id                           = var.cloudflare_zone_id
+  zone_name                         = var.zone_name
+  hostname                          = var.platform_admin.hostname
+  pages_name                        = var.platform_admin.pages_name
+  access_team_domain                = var.access_team_domain
+  operator_emails                   = var.platform_operator_emails
+  github_owner                      = var.github_owner
+  github_repo                       = var.github_repo
+  github_production_branch          = var.github_production_branch
+  platform_github_token             = var.platform_github_token
+  pages_preview_deployments_enabled = var.pages_preview_deployments_enabled
 }

@@ -90,6 +90,12 @@ variable "platform_health_checks_enabled" {
   description = "Allow Access service tokens on hub Pages/Worker (for platform admin health probes)."
 }
 
+variable "pages_preview_deployments_enabled" {
+  type        = bool
+  default     = true
+  description = "When true, non-production branches get Cloudflare Pages preview builds with the same env vars as production."
+}
+
 
 locals {
   # Production was provisioned before the {site_id} suffix convention.

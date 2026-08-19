@@ -84,6 +84,12 @@ variable "platform_github_token" {
   description = "GitHub PAT for platform site wizard (contents:write, actions:write). Never commit."
 }
 
+variable "pages_preview_deployments_enabled" {
+  type        = bool
+  default     = true
+  description = "When true, feature branches get Cloudflare Pages preview builds (platform admin + Terraform-managed hub sites)."
+}
+
 variable "platform_admin" {
   type = object({
     enabled    = bool

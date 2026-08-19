@@ -99,16 +99,21 @@ bash ../scripts/deploy-cloudflare-pages-site.sh sandbox
 
 ## Pages not deploying (“No production deployment yet”)
 
-Terraform creates the **Pages project** and env vars; it does **not** upload a build. Git-connected sandbox projects are configured with:
+Terraform creates the **Pages project** and env vars; it does **not** upload a build. Git-connected projects use:
 
 | Setting | Value | Effect |
 |---------|-------|--------|
-| `production_branch` | `main` | Only **`main`** gets a Production deployment |
-| `preview_deployment_setting` | `none` | Feature/PR branches do **not** build |
+| `production_branch` | `main` | **`main`** gets Production deployments |
+| `preview_deployment_setting` | `all` (default) | Feature/PR branches get **Preview** builds with the same env vars as production |
+| `pages_preview_deployments_enabled` | `true` in root tfvars | Set `false` to disable preview builds (previous behaviour) |
 
-So commits on `feature/platform-terraform-sandbox` appear in the dashboard as Preview rows with **“No deployment available”** — that is expected until something deploys from **`main`**.
+Preview URLs look like `https://<branch>.<project>.pages.dev` (exact pattern varies). They use **Preview** deployment env vars — Terraform mirrors production settings so operator UI and hub frontends work on branch builds.
 
-**Option A — deploy now (no merge):**
+**Access:** Custom domains (`platform.lovely-home.co.uk`, `demo.lovely-home.co.uk`) have Terraform-managed Access apps. Preview `*.pages.dev` hostnames may need a separate Access application (wildcard or per-branch) — see [cloudflare-access-runbook.md](./cloudflare-access-runbook.md).
+
+If preview rows show **“No deployment available”**, either previews are disabled (`pages_preview_deployments_enabled = false`) or Terraform has not been applied since enabling them.
+
+**First production deploy** (when the project has never built):
 
 ```bash
 unset CLOUDFLARE_API_TOKEN
