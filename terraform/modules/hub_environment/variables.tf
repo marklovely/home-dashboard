@@ -99,8 +99,8 @@ variable "pages_dev_hostname" {
 
 locals {
   # Production was provisioned before the {site_id} suffix convention.
-  worker_name       = var.site_id == "production" ? "lovely-home-hub-api" : "lovely-home-hub-api-${var.site_id}"
-  pages_name        = var.site_id == "production" ? "home-dashboard" : "home-dashboard-${var.site_id}"
+  worker_name = var.site_id == "production" ? "lovely-home-hub-api" : "lovely-home-hub-api-${var.site_id}"
+  pages_name  = var.site_id == "production" ? "home-dashboard" : "home-dashboard-${var.site_id}"
   # Default *.pages.dev host (production legacy suffix is -a11; override via pages_dev_hostname when importing).
   pages_dev_host    = coalesce(var.pages_dev_hostname, var.site_id == "production" ? "home-dashboard-a11.pages.dev" : "${local.pages_name}.pages.dev")
   d1_name           = var.site_id == "production" ? "lovely-home-appliance-manuals" : "lovely-home-appliance-manuals-${var.site_id}"
