@@ -48,6 +48,10 @@ import {
   resetHubSetupWizardStep,
   setHubSetupWizardStep
 } from './hubSetupWizardState.js';
+import {
+  getHubSetupStepMeta,
+  getWizardSteps
+} from './hubSetupNavigation.js';
 
 const USE_CASE_OPTIONS = [
   { value: 'owner', label: 'Owner only' },
@@ -56,29 +60,13 @@ const USE_CASE_OPTIONS = [
   { value: 'both', label: 'Both sitters and short lets' }
 ];
 
-/** @typedef {'hub' | 'contacts' | 'pets' | 'access' | 'bins' | 'calendar' | 'guide'} WizardStepId */
-
-/**
- * @param {string} useCase
- * @returns {WizardStepId[]}
- */
-function getWizardSteps(useCase) {
-  /** @type {WizardStepId[]} */
-  const steps = ['hub', 'contacts'];
-  if (useCase === 'housesitter' || useCase === 'both') {
-    steps.push('pets');
-  }
-  steps.push('access', 'bins', 'calendar', 'guide');
-  return steps;
-}
-
 /**
  * @param {HTMLElement} viewport
  * @param {import('../../types/app.js').ShellContext} context
  */
 function mountHubSetupUnavailable(viewport, context) {
   const page = document.createElement('section');
-  page.className = 'app-page settings-app hub-setup-app';
+  page.className = 'app-page settings-app hub-setup-app hub-setup-app--unavailable';
   page.setAttribute('aria-label', 'Hub setup unavailable');
 
   const title = document.createElement('h1');
@@ -133,29 +121,51 @@ function mountHubSetupWizard(viewport, context) {
 
   let step = getHubSetupWizardStep();
 
-  const header = document.createElement('header');
-  header.className = 'hub-setup-header';
-  const title = document.createElement('h1');
-  title.className = 'hub-setup-title';
-  title.textContent = 'Set up your hub';
-  const progress = document.createElement('p');
-  progress.className = 'hub-setup-progress subtle';
+  const nav = document.createElement('nav');
+  nav.className = 'settings-nav hub-setup-nav';
+  nav.setAttribute('aria-label', 'Setup steps');
 
-  const helpRow = document.createElement('div');
-  helpRow.className = 'hub-setup-help-row';
-  helpRow.append(createHubSetupHelpButton({ buttonClassName: 'settings-action-button settings-action-button--secondary' }));
+  const navHeading = document.createElement('p');
+  navHeading.className = 'hub-setup-nav-heading';
+  navHeading.textContent = 'Hub setup';
+
+  const navProgress = document.createElement('p');
+  navProgress.className = 'hub-setup-nav-progress subtle';
+
+  const navList = document.createElement('div');
+  navList.className = 'hub-setup-nav-list';
+  navList.setAttribute('role', 'list');
+
+  const navFooter = document.createElement('div');
+  navFooter.className = 'hub-setup-nav-footer';
+  navFooter.append(
+    createHubSetupHelpButton({ buttonClassName: 'settings-action-button settings-action-button--secondary' })
+  );
+
+  nav.append(navHeading, navProgress, navList, navFooter);
+
+  const panel = document.createElement('div');
+  panel.className = 'settings-panel hub-setup-panel';
+
+  const panelHeader = document.createElement('header');
+  panelHeader.className = 'settings-panel-header hub-setup-panel-header';
+
+  const panelTitle = document.createElement('h1');
+  panelTitle.className = 'settings-panel-title';
+
+  const panelDescription = document.createElement('p');
+  panelDescription.className = 'settings-panel-description subtle';
 
   const stepHelpHost = document.createElement('div');
   stepHelpHost.className = 'hub-setup-step-help-host';
-  helpRow.append(stepHelpHost);
 
-  header.append(title, progress, helpRow);
+  panelHeader.append(panelTitle, panelDescription, stepHelpHost);
 
   const body = document.createElement('div');
-  body.className = 'hub-setup-body';
+  body.className = 'settings-panel-body hub-setup-body';
 
   const actions = document.createElement('div');
-  actions.className = 'hub-setup-actions';
+  actions.className = 'hub-setup-actions hub-setup-panel-actions';
 
   const backButton = document.createElement('button');
   backButton.type = 'button';
@@ -168,7 +178,8 @@ function mountHubSetupWizard(viewport, context) {
   nextButton.textContent = 'Continue';
 
   actions.append(backButton, nextButton);
-  page.append(header, body, actions);
+  panel.append(panelHeader, body, actions);
+  page.append(nav, panel);
   viewport.replaceChildren(page);
 
   const hubName = createSetupField('Hub name', String(profile.hubName ?? ''), {
@@ -224,22 +235,76 @@ function mountHubSetupWizard(viewport, context) {
 
   function scrollWizardToTop() {
     requestAnimationFrame(() => {
-      page.scrollTop = 0;
-      if (viewport.scrollTop > 0) {
-        viewport.scrollTop = 0;
+      panel.scrollTop = 0;
+      body.scrollTop = 0;
+    });
+  }
+
+  function renderNav() {
+    const steps = wizardSteps();
+    navProgress.textContent = `Step ${step + 1} of ${steps.length}`;
+    navList.replaceChildren();
+
+    steps.forEach((stepId, index) => {
+      const meta = getHubSetupStepMeta(stepId);
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'settings-nav-item hub-setup-nav-item';
+      item.setAttribute('role', 'listitem');
+      if (index === step) {
+        item.classList.add('is-active');
+        item.setAttribute('aria-current', 'step');
+      } else if (index < step) {
+        item.classList.add('is-complete');
+      } else {
+        item.classList.add('is-upcoming');
+        item.disabled = true;
       }
-      window.scrollTo(0, 0);
+
+      const stepBadge = document.createElement('span');
+      stepBadge.className = 'hub-setup-nav-step';
+      stepBadge.textContent = index < step ? '✓' : String(index + 1);
+      stepBadge.setAttribute('aria-hidden', 'true');
+
+      const copy = document.createElement('span');
+      copy.className = 'hub-setup-nav-copy';
+
+      const label = document.createElement('span');
+      label.className = 'hub-setup-nav-label';
+      label.textContent = meta?.label ?? stepId;
+
+      copy.append(label);
+      if (meta?.optional) {
+        const optional = document.createElement('span');
+        optional.className = 'hub-setup-nav-optional subtle';
+        optional.textContent = 'Optional';
+        copy.append(optional);
+      }
+
+      item.append(stepBadge, copy);
+
+      if (index < step) {
+        item.addEventListener('click', () => {
+          step = index;
+          renderStep();
+        });
+      }
+
+      navList.append(item);
     });
   }
 
   function renderStep() {
     setHubSetupWizardStep(step);
-    progress.textContent = `Step ${step + 1} of ${wizardSteps().length}`;
+    renderNav();
     body.replaceChildren();
     backButton.hidden = step === 0;
     nextButton.textContent = isLastWizardStep() ? 'Finish setup' : 'Continue';
 
     const stepId = currentStepId();
+    const meta = getHubSetupStepMeta(stepId);
+    panelTitle.textContent = meta?.label ?? 'Hub setup';
+    panelDescription.textContent = meta?.description ?? '';
     stepHelpHost.replaceChildren(createHubSetupStepHelpLink(stepId));
 
     if (stepId === 'hub') {
