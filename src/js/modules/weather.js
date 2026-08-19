@@ -15,24 +15,33 @@ function renderStatusIcon(iconHost, iconId, size = 22) {
 }
 
 /**
- * @param {{ icon?: HTMLElement | null }} elements
+ * @param {{ icon?: HTMLElement | null, temp: HTMLElement, text: HTMLElement, condition?: HTMLElement | null }} elements
  * @param {import('../../services/weatherService.js').WeatherState} weatherState
  */
 export function applyWeatherToHomeHero(elements, weatherState) {
   const iconHost = elements.icon instanceof HTMLElement ? elements.icon : null;
-  if (!iconHost) return;
+  const conditionHost =
+    elements.condition instanceof HTMLElement ? elements.condition : elements.text;
 
   if (weatherState.status === 'ready' && weatherState.data) {
-    renderStatusIcon(iconHost, weatherState.data.current.icon, 72);
+    const { current } = weatherState.data;
+    elements.temp.textContent = `${current.temperature}°`;
+    conditionHost.textContent = current.condition;
+    renderStatusIcon(iconHost, current.icon, 36);
     return;
   }
 
   if (weatherState.status === 'loading') {
-    iconHost.replaceChildren();
+    elements.temp.textContent = '…';
+    conditionHost.textContent = 'Loading weather';
+    if (iconHost) iconHost.replaceChildren();
     return;
   }
 
-  renderStatusIcon(iconHost, 'cloudy', 72);
+  elements.temp.textContent = '—';
+  conditionHost.textContent =
+    weatherState.message === 'API not configured' ? 'Unavailable' : 'Unavailable';
+  renderStatusIcon(iconHost, 'cloudy', 36);
 }
 
 /**
@@ -68,10 +77,10 @@ export function applyWeatherToStatusStrip(elements, weatherState) {
 /**
  * @param {{ icon?: HTMLElement | null, temp: HTMLElement, text: HTMLElement }} elements
  * @param {Object} [_config]
- * @param {{ fetchImpl?: typeof fetch, headerElements?: { icon?: HTMLElement | null, temp: HTMLElement, text: HTMLElement }, heroElements?: { icon?: HTMLElement | null } }} [dependencies]
+ * @param {{ fetchImpl?: typeof fetch, headerElements?: { icon?: HTMLElement | null, temp: HTMLElement, text: HTMLElement }, heroElements?: { icon?: HTMLElement | null, temp: HTMLElement, text: HTMLElement, condition?: HTMLElement | null } }} [dependencies]
  */
 export function initialiseWeather(elements, _config, dependencies = {}) {
-  /** @type {Array<{ icon?: HTMLElement | null, temp?: HTMLElement, text?: HTMLElement }>} */
+  /** @type {Array<{ icon?: HTMLElement | null, temp: HTMLElement, text: HTMLElement, condition?: HTMLElement | null }>} */
   const targets = [elements];
   if (dependencies.headerElements) {
     targets.push(dependencies.headerElements);
