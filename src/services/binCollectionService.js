@@ -27,6 +27,7 @@ import {
 import {
   getBinCollectionLocationPhrase
 } from '../apps/Bins/binCollectionCopy.js';
+import { isBinAlertDismissed } from './binAlertDismissalService.js';
 
 /** @typedef {import('../data/binCollections/collectionTypes.js').CollectionTypeId} CollectionTypeId */
 
@@ -403,6 +404,10 @@ export function getBinCollectionAlert(asOfDate = new Date(), options = {}) {
 
   const next = getNextCollection(asOfDate);
   if (!next || !isBinCollectionInAlertWindow(next.date, asOfDate, alertHoursBefore)) {
+    return null;
+  }
+
+  if (isBinAlertDismissed(next.date)) {
     return null;
   }
 
