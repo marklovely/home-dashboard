@@ -4,8 +4,7 @@
  * Uses the Cloudflare API directly — Terraform PATCH of preview + HUB_API bindings
  * returns 8000022 for non-production Workers.
  *
- * Copies production env vars to preview and sets preview_deployment_setting = all.
- * Does not modify production.services (HUB_API stays as attached).
+ * Copies production env vars and HUB_API service binding to preview.
  *
  * Usage: node scripts/enable-hub-pages-previews.mjs [site_id...]
  *   With no args, updates every terraform site in platform/sites.yaml.
@@ -14,7 +13,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
-import { validateDeploySiteId } from './lib/site-registry.mjs';
+import { validateSiteId } from './lib/site-registry.mjs';
 
 const token = process.env.CLOUDFLARE_API_TOKEN?.trim();
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
@@ -38,9 +37,13 @@ const siteIds =
         .map(([siteId]) => siteId);
 
 for (const siteId of siteIds) {
-  const deployError = validateDeploySiteId(siteId);
-  if (deployError) {
-    console.error(deployError);
+  const siteError = validateSiteId(siteId);
+  if (siteError) {
+    console.error(siteError);
+    process.exit(1);
+  }
+  if (registry[siteId]?.terraform === false) {
+    console.error(`Site "${siteId}" is not terraform-managed.`);
     process.exit(1);
   }
 }
@@ -90,6 +93,9 @@ for (const siteId of siteIds) {
   if (deploymentConfigs.production.env_vars) {
     deploymentConfigs.preview.env_vars = structuredClone(deploymentConfigs.production.env_vars);
   }
+  if (deploymentConfigs.production.services) {
+    deploymentConfigs.preview.services = structuredClone(deploymentConfigs.production.services);
+  }
 
   const source = structuredClone(project.source ?? { type: 'github', config: {} });
   source.config ??= {};
@@ -107,5 +113,8 @@ for (const siteId of siteIds) {
 
 console.log(`Preview deployments enabled for: ${siteIds.join(', ')}`);
 console.log(
-  '\nIf preview URLs show "invalid redirect URL", run terraform apply so Pages Access apps include *.pages.dev destinations (see docs/platform-terraform.md).'
+  '\nPreview env vars and HUB_API binding were copied from production. Redeploy an open PR preview to pick them up.'
+);
+console.log(
+  'If Access login fails on preview URLs, run terraform apply (see docs/platform-terraform.md#pages-preview-access-invalid-redirect-url).'
 );

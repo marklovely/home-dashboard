@@ -32,7 +32,8 @@ export const DEFAULT_SITE_PROFILE = {
     validUntil: '',
     normalCollectionDay: '',
     household: [],
-    gardenWaste: []
+    gardenWaste: [],
+    alertHoursBefore: 24
   }
 };
 
