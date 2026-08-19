@@ -106,3 +106,6 @@ for (const siteId of siteIds) {
 }
 
 console.log(`Preview deployments enabled for: ${siteIds.join(', ')}`);
+console.log(
+  '\nIf preview URLs show "invalid redirect URL", run terraform apply so Pages Access apps include *.pages.dev destinations (see docs/platform-terraform.md).'
+);
