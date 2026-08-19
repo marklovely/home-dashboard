@@ -144,6 +144,11 @@ Terraform manages the **HUB_API** service binding on Terraform-managed Pages pro
 
 Use real values in `hub.tfvars` (never commit it):
 
+- **`hub.tfvars` must list every site with `terraform: true` in `platform/sites.yaml`.** If you add a site via the platform wizard but omit it from local `hub.tfvars`, the next `terraform apply -var-file=environments/hub.tfvars` **destroys** that site's Cloudflare resources. Before any local apply, run:
+  ```bash
+  node scripts/validate-local-hub-tfvars-sites.mjs
+  ```
+  Or generate tfvars from the registry (same as CI): `node scripts/generate-hub-tfvars.mjs` with the required env vars, then apply using `hub.generated.tfvars`.
 - **`owner_emails`** / **`sitter_emails`** — must match who should pass Access. Placeholder emails in tfvars will overwrite Access policies on apply.
 - **`hub_proxy_secret`** — required when importing a site; preserves existing Pages/Worker proxy secret.
 - **`access_team_domain`** — Zero Trust team slug (`lovely-home`), not the Workers subdomain.
