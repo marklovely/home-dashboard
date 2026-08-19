@@ -881,6 +881,18 @@ body.is-bins-route .app-viewport > .bins-app {
 .hub-setup-field {
   display: grid;
   gap: 8px;
+  padding-bottom: 6px;
+}
+
+.hub-setup-property-address {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  min-width: 0;
+}
+
+.hub-setup-property-address > legend {
+  margin-bottom: 2px;
 }
 
 .hub-setup-input {
