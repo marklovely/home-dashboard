@@ -122,7 +122,6 @@ async function initialiseDashboard() {
 
   createAppShell({
     viewport: document.querySelector('#app-viewport'),
-    homeWelcome: document.querySelector('#shell-home-welcome'),
     shellHomeHero: document.querySelector('#shell-home-hero'),
     homeGreeting: document.querySelector('#greeting'),
     shellEyebrow: document.querySelector('#shell-eyebrow'),

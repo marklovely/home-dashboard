@@ -13,7 +13,6 @@ import { subscribeToDisplayPreferences } from '../services/displayPreferencesSer
 /**
  * @param {Object} options
  * @param {HTMLElement} options.viewport
- * @param {HTMLElement} options.homeWelcome
  * @param {HTMLElement | null} [options.shellHomeHero]
  * @param {HTMLElement | null} [options.homeGreeting]
  * @param {HTMLElement} options.shellEyebrow
@@ -28,7 +27,6 @@ import { subscribeToDisplayPreferences } from '../services/displayPreferencesSer
  */
 export function createAppShell({
   viewport,
-  homeWelcome,
   shellHomeHero,
   homeGreeting,
   shellEyebrow,
