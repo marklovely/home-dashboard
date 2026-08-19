@@ -14,6 +14,7 @@ import {
 } from '../data/binCollections/householdCollections.js';
 import { isTestHubEnvironment } from '../auth/hubEnvironment.js';
 import {
+  getBinAlertHoursBefore,
   hasConfiguredBinSchedule,
   readBinScheduleFromProfile
 } from '../lib/binScheduleProfile.js';
@@ -315,6 +316,96 @@ export function describeCollectionEvent(event, asOfDate = new Date()) {
   };
 }
 
+/** Hour bins are normally put out (matches collection information copy). */
+export const BIN_COLLECTION_PUT_OUT_HOUR = 6;
+
+/**
+ * @typedef {Object} BinCollectionAlert
+ * @property {string} label Short line for cards and banners
+ * @property {string} title Banner heading
+ * @property {string} detail Which bins to put out
+ * @property {string} whenLabel today | tomorrow | weekday
+ * @property {CollectionEvent} event
+ */
+
+/**
+ * @param {string} isoDate
+ * @returns {Date}
+ */
+export function getCollectionPutOutTime(isoDate) {
+  const date = parseLocalDate(isoDate);
+  date.setHours(BIN_COLLECTION_PUT_OUT_HOUR, 0, 0, 0);
+  return date;
+}
+
+/**
+ * @param {string} collectionDateIso
+ * @param {Date} asOfDate
+ * @param {number} alertHoursBefore
+ */
+export function isBinCollectionInAlertWindow(collectionDateIso, asOfDate, alertHoursBefore) {
+  if (alertHoursBefore <= 0) return false;
+
+  const collectionDay = startOfLocalDay(parseLocalDate(collectionDateIso));
+  const asOfDay = startOfLocalDay(asOfDate);
+  if (asOfDay.getTime() > collectionDay.getTime()) return false;
+
+  if (asOfDay.getTime() === collectionDay.getTime()) {
+    return true;
+  }
+
+  const putOutTime = getCollectionPutOutTime(collectionDateIso);
+  const msUntil = putOutTime.getTime() - asOfDate.getTime();
+  return msUntil > 0 && msUntil <= alertHoursBefore * 3600000;
+}
+
+/**
+ * @param {Date} [asOfDate]
+ * @param {{ houseSitter?: boolean }} [options]
+ * @returns {BinCollectionAlert | null}
+ */
+export function getBinCollectionAlert(asOfDate = new Date(), options = {}) {
+  const { houseSitter = false } = options;
+
+  if (isScheduleExpired(asOfDate)) return null;
+
+  const schedule = readBinScheduleFromProfile(getSiteProfileState()?.profile);
+  const alertHoursBefore = getBinAlertHoursBefore(schedule);
+  if (alertHoursBefore <= 0) return null;
+
+  const next = getNextCollection(asOfDate);
+  if (!next || !isBinCollectionInAlertWindow(next.date, asOfDate, alertHoursBefore)) {
+    return null;
+  }
+
+  const described = describeCollectionEvent(next, asOfDate);
+  const typeDef = getCollectionType(next.type);
+  const whenPhrase =
+    described.timing.days === 0
+      ? 'today'
+      : described.timing.days === 1
+        ? 'tomorrow'
+        : `on ${described.timing.weekdayLabel}`;
+
+  let label = `${typeDef.displayName} ${whenPhrase} — ${typeDef.binDescription}`;
+  if (next.bankHolidayChange && houseSitter) {
+    label = `${typeDef.displayName} ${whenPhrase} (changed day) — ${typeDef.binDescription}`;
+  }
+
+  return {
+    label,
+    title: `${typeDef.emoji} Bin collection ${whenPhrase}`,
+    detail: typeDef.binDescription,
+    whenLabel:
+      described.timing.days === 0
+        ? 'today'
+        : described.timing.days === 1
+          ? 'tomorrow'
+          : described.timing.weekdayLabel.toLowerCase(),
+    event: next
+  };
+}
+
 /**
  * @param {Date} [asOfDate]
  * @param {{ houseSitter?: boolean }} [options]
@@ -366,9 +457,12 @@ export function getBinCollectionHomeSummary(asOfDate = new Date(), options = {})
     lines.push(`Garden waste ${gardenWhen}`);
   }
 
+  const alert = getBinCollectionAlert(asOfDate, options);
+
   return {
     title: `${typeDef.emoji} ${typeDef.displayName}`,
-    subtitle: lines.slice(1).join(' · ')
+    subtitle: lines.slice(1).join(' · '),
+    alert: alert ? { label: alert.label, prominent: true } : null
   };
 }
 

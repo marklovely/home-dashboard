@@ -7,6 +7,7 @@ import { resetUserModeForTests } from '../src/auth/userMode.js';
 describe('house sitter home layout', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.useRealTimers();
     resetUserModeForTests();
   });
 
@@ -55,5 +56,32 @@ describe('house sitter home layout', () => {
     const houseGuideButton = helpButtons.find((button) => /Open House Guide/.test(button.textContent ?? ''));
     houseGuideButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(context.navigate).toHaveBeenCalledWith('house-guide');
+  });
+
+  it('shows a bin alert banner when the next collection is within the reminder window', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-30T10:00:00'));
+    vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
+    resetUserModeForTests();
+
+    const viewport = document.createElement('div');
+    const context = {
+      config: { buttons: [{ id: 1 }, { id: 2 }] },
+      toast: document.createElement('div'),
+      lastCommand: document.createElement('span'),
+      navigate: vi.fn()
+    };
+
+    await renderHouseSitterHome(viewport, getVisibleApps(), context);
+
+    const banner = viewport.querySelector('.sitter-bin-alert');
+    expect(banner).toBeTruthy();
+    expect(banner?.querySelector('.sitter-bin-alert-title')?.textContent).toMatch(/tomorrow/i);
+
+    banner?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(context.navigate).toHaveBeenCalledWith('bins');
+
+    const binsCard = viewport.querySelector('.sitter-info-card--alert');
+    expect(binsCard).toBeTruthy();
   });
 });

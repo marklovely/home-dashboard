@@ -3,6 +3,8 @@
  */
 
 import {
+  BIN_ALERT_HOURS_OPTIONS,
+  DEFAULT_BIN_ALERT_HOURS_BEFORE,
   inferBinSchedulePeriod,
   normalizeBinSchedule,
   readBinScheduleFromProfile
@@ -78,6 +80,13 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
     type: 'date',
     ...HUB_SETUP_FIELD_HELP.binValidUntil
   });
+
+  const alertHours = createSetupSelect(
+    'Remind sitters before collection',
+    String(schedule.alertHoursBefore ?? DEFAULT_BIN_ALERT_HOURS_BEFORE),
+    BIN_ALERT_HOURS_OPTIONS,
+    HUB_SETUP_FIELD_HELP.binAlertHours
+  );
 
   const entryPanel = document.createElement('fieldset');
   entryPanel.className = 'hub-setup-bin-entry-panel';
@@ -190,6 +199,7 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
     normalDay.wrap,
     validFrom.wrap,
     validUntil.wrap,
+    alertHours.wrap,
     entryPanel,
     listHost
   );
@@ -221,10 +231,31 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
           normalCollectionDay: normalDay.select.value,
           validFrom: validFrom.input.value.trim(),
           validUntil: validUntil.input.value.trim(),
+          alertHoursBefore: Number(alertHours.select.value),
           household,
           gardenWaste
         })
       );
+    }
+  };
+}
+
+/**
+ * @param {Record<string, unknown>} [profile]
+ */
+export function createBinAlertHoursField(profile = {}) {
+  const schedule = readBinScheduleFromProfile(profile);
+  const field = createSetupSelect(
+    'Remind sitters before collection',
+    String(schedule.alertHoursBefore ?? DEFAULT_BIN_ALERT_HOURS_BEFORE),
+    BIN_ALERT_HOURS_OPTIONS,
+    HUB_SETUP_FIELD_HELP.binAlertHours
+  );
+
+  return {
+    wrap: field.wrap,
+    readAlertHoursBefore() {
+      return Number(field.select.value);
     }
   };
 }
