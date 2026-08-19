@@ -36,7 +36,7 @@ describe('owner home layout', () => {
     expect(metaLines.some((line) => /Put bins out by 6am/i.test(line ?? ''))).toBe(true);
     expect(metaLines.some((line) => /Collection point:/i.test(line ?? ''))).toBe(true);
 
-    banner?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    banner?.querySelector('.bin-alert-banner-main')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(context.navigate).toHaveBeenCalledWith('bins');
   });
 });
