@@ -77,7 +77,6 @@ export function createAppShell({
     const isHome = route === HOME_ROUTE;
     const showHomeHero = isHome && (mode.showHomeWelcomeGreeting || mode.showHomeDate);
     if (shellHomeHero) shellHomeHero.hidden = !showHomeHero;
-    homeWelcome.hidden = !showHomeHero;
     if (homeGreeting) {
       homeGreeting.hidden = !isHome || !mode.showHomeWelcomeGreeting;
     }

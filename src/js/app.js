@@ -108,7 +108,10 @@ async function initialiseDashboard() {
       text: document.querySelector('#shell-weather-text')
     },
     heroElements: {
-      icon: document.querySelector('#shell-hero-weather-icon')
+      icon: document.querySelector('#shell-hero-weather-icon'),
+      temp: document.querySelector('#shell-hero-weather-temp'),
+      text: document.querySelector('#shell-hero-weather-condition'),
+      condition: document.querySelector('#shell-hero-weather-condition')
     }
   });
 
@@ -133,6 +136,11 @@ async function initialiseDashboard() {
     shellProfileSwitcher: document.querySelector('#shell-profile-switcher'),
     shellContext
   });
+
+  const homeWeatherButton = document.querySelector('#shell-home-weather');
+  if (homeWeatherButton instanceof HTMLButtonElement) {
+    homeWeatherButton.addEventListener('click', () => shellContext.navigate('weather'));
+  }
 
   registerOwnerLockNavigation(() => {
     navigate(HOME_ROUTE);
