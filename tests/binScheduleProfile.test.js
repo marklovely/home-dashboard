@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getBinAlertHoursBefore,
   hasConfiguredBinSchedule,
   inferBinSchedulePeriod,
   normalizeBinSchedule,
@@ -41,5 +42,13 @@ describe('binScheduleProfile', () => {
     const schedule = normalizeBinSchedule({});
     expect(validateBinSchedule(schedule)).toEqual({ ok: true });
     expect(hasConfiguredBinSchedule(schedule)).toBe(false);
+  });
+
+  it('defaults alert hours to 24 and clamps custom values', () => {
+    expect(normalizeBinSchedule({}).alertHoursBefore).toBe(24);
+    expect(normalizeBinSchedule({ alertHoursBefore: 48 }).alertHoursBefore).toBe(48);
+    expect(normalizeBinSchedule({ alertHoursBefore: 0 }).alertHoursBefore).toBe(0);
+    expect(normalizeBinSchedule({ alertHoursBefore: 999 }).alertHoursBefore).toBe(168);
+    expect(getBinAlertHoursBefore({ alertHoursBefore: 12 })).toBe(12);
   });
 });

@@ -4,6 +4,8 @@ import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { getAppDisplayTitle, getModeConfig } from '../../modes/modeConfig.js';
 import { getSiteProfileState } from '../../services/siteProfileService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
+import { getBinCollectionAlert } from '../../services/binCollectionService.js';
+import { createBinAlertBanner } from './createBinAlertBanner.js';
 
 /** @type {Record<string, { headline: string, teaser?: string, teaserFromSummary?: 'title' | 'subtitle' }>} */
 const ESSENTIAL_CARD_COPY = {
@@ -148,6 +150,27 @@ function applySecondaryWeatherSummary(card, summary) {
 }
 
 /**
+ * @param {HTMLElement} card
+ * @param {import('../types/app.js').AppSummary} summary
+ */
+function applySecondaryBinsSummary(card, summary) {
+  if (summary.alert?.label) {
+    card.classList.add('sitter-info-card--alert');
+    const liveTitle = card.querySelector('.home-launcher-live-title');
+    const liveSubtitle = card.querySelector('.home-launcher-live-subtitle');
+    if (liveTitle) liveTitle.textContent = summary.alert.label;
+    if (liveSubtitle) {
+      liveSubtitle.textContent = summary.subtitle ?? '';
+      liveSubtitle.hidden = !summary.subtitle;
+    }
+    return;
+  }
+
+  card.classList.remove('sitter-info-card--alert');
+  applyCardSummary(card, summary);
+}
+
+/**
  * @param {string} title
  * @param {string} [subtext]
  */
@@ -276,7 +299,16 @@ export async function renderHouseSitterHome(viewport, apps, context) {
   helpActions.append(tabletGuideButton, helpButton);
   helpSection.append(helpCopy, helpActions);
 
-  page.append(welcome, essentialsSection, infoSection, helpSection);
+  const binAlert = getBinCollectionAlert(new Date(), { houseSitter: true });
+  const binAlertBanner = binAlert ? createBinAlertBanner(binAlert, (id) => context.navigate(id)) : null;
+
+  page.append(
+    welcome,
+    ...(binAlertBanner ? [binAlertBanner] : []),
+    essentialsSection,
+    infoSection,
+    helpSection
+  );
   viewport.append(page);
 
   await Promise.all([
@@ -295,6 +327,8 @@ export async function renderHouseSitterHome(viewport, apps, context) {
         const summary = await app.summary(context);
         if (app.id === 'weather') {
           applySecondaryWeatherSummary(card, summary);
+        } else if (app.id === 'bins') {
+          applySecondaryBinsSummary(card, summary);
         } else {
           applyCardSummary(card, summary);
         }

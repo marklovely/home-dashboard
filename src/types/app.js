@@ -12,9 +12,16 @@
  */
 
 /**
+ * @typedef {Object} AppAlert
+ * @property {string} label Short alert line for home cards and banners
+ * @property {boolean} [prominent] When true, home layout may emphasise the alert
+ */
+
+/**
  * @typedef {Object} AppSummary
  * @property {string} title
  * @property {string} [subtitle]
+ * @property {AppAlert | null} [alert]
  */
 
 /**

@@ -25,7 +25,20 @@
  * @property {string} normalCollectionDay e.g. Friday
  * @property {BinScheduleHouseholdEntry[]} household
  * @property {BinScheduleGardenEntry[]} gardenWaste
+ * @property {number} alertHoursBefore Hours before collection day (from 6am) to show sitter reminders; 0 disables
  */
+
+export const DEFAULT_BIN_ALERT_HOURS_BEFORE = 24;
+export const MIN_BIN_ALERT_HOURS_BEFORE = 0;
+export const MAX_BIN_ALERT_HOURS_BEFORE = 168;
+
+export const BIN_ALERT_HOURS_OPTIONS = [
+  { value: '0', label: 'Off' },
+  { value: '12', label: '12 hours before' },
+  { value: '24', label: '24 hours before (default)' },
+  { value: '48', label: '48 hours before' },
+  { value: '72', label: '72 hours before' }
+];
 
 export const DEFAULT_BIN_SCHEDULE = /** @type {BinScheduleProfile} */ ({
   collectionLocation: '',
@@ -34,7 +47,8 @@ export const DEFAULT_BIN_SCHEDULE = /** @type {BinScheduleProfile} */ ({
   validUntil: '',
   normalCollectionDay: '',
   household: [],
-  gardenWaste: []
+  gardenWaste: [],
+  alertHoursBefore: DEFAULT_BIN_ALERT_HOURS_BEFORE
 });
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -81,6 +95,16 @@ export function normalizeBinSchedule(value) {
   household.sort((a, b) => a.date.localeCompare(b.date));
   gardenWaste.sort((a, b) => a.date.localeCompare(b.date));
 
+  const alertRaw = raw.alertHoursBefore;
+  const alertParsed = Number(alertRaw);
+  const alertHoursBefore =
+    alertRaw === undefined || alertRaw === null || alertRaw === ''
+      ? DEFAULT_BIN_ALERT_HOURS_BEFORE
+      : Math.min(
+          MAX_BIN_ALERT_HOURS_BEFORE,
+          Math.max(MIN_BIN_ALERT_HOURS_BEFORE, Math.round(alertParsed))
+        );
+
   return {
     collectionLocation: String(raw.collectionLocation ?? '').trim(),
     councilUrl: String(raw.councilUrl ?? '').trim(),
@@ -88,8 +112,17 @@ export function normalizeBinSchedule(value) {
     validUntil: String(raw.validUntil ?? '').trim(),
     normalCollectionDay: String(raw.normalCollectionDay ?? '').trim(),
     household,
-    gardenWaste
+    gardenWaste,
+    alertHoursBefore: Number.isFinite(alertParsed) ? alertHoursBefore : DEFAULT_BIN_ALERT_HOURS_BEFORE
   };
+}
+
+/**
+ * @param {BinScheduleProfile | unknown} [schedule]
+ */
+export function getBinAlertHoursBefore(schedule) {
+  const normalized = normalizeBinSchedule(schedule);
+  return normalized.alertHoursBefore ?? DEFAULT_BIN_ALERT_HOURS_BEFORE;
 }
 
 /**

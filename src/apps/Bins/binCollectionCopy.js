@@ -18,6 +18,14 @@ function profileBinCopy() {
   };
 }
 
+/** @returns {string} */
+export function getBinCollectionLocationPhrase() {
+  const profileCopy = profileBinCopy();
+  if (profileCopy.location) return profileCopy.location;
+  if (isTestHubEnvironment()) return DEMO_BIN_COLLECTION_LOCATION;
+  return BIN_COLLECTION_LOCATION;
+}
+
 /** Single collection-information block copy (owner and house sitter). */
 export function getCollectionInformationCopy() {
   const profileCopy = profileBinCopy();

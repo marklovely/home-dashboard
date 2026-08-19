@@ -65,12 +65,20 @@ async function cfJson(url, options = {}) {
 const project = await cfJson(baseUrl);
 const deploymentConfigs = structuredClone(project.deployment_configs ?? {});
 deploymentConfigs.production ??= {};
-deploymentConfigs.production.services = {
+deploymentConfigs.preview ??= {
+  fail_open: true,
+  compatibility_date: '2024-12-01',
+  compatibility_flags: ['nodejs_compat']
+};
+
+const hubApiBinding = {
   ...(deploymentConfigs.production.services ?? {}),
   HUB_API: { service: workerName }
 };
+deploymentConfigs.production.services = hubApiBinding;
+deploymentConfigs.preview.services = structuredClone(hubApiBinding);
 
-console.log(`Attaching HUB_API → ${workerName} on Pages project ${pagesProject} (production)`);
+console.log(`Attaching HUB_API → ${workerName} on Pages project ${pagesProject} (production + preview)`);
 await cfJson(baseUrl, {
   method: 'PATCH',
   body: JSON.stringify({ deployment_configs: deploymentConfigs })

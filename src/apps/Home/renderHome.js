@@ -1,6 +1,8 @@
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
+import { getBinCollectionAlert } from '../../services/binCollectionService.js';
+import { createBinAlertBanner } from './createBinAlertBanner.js';
 
 /**
  * @param {import('../types/app.js').App} app
@@ -71,7 +73,13 @@ export async function renderHomeScreen(viewport, apps, context) {
     return { app, card };
   });
 
-  page.append(grid);
+  const binAlert = getBinCollectionAlert(new Date(), { houseSitter: false });
+  const binAlertBanner = binAlert ? createBinAlertBanner(binAlert, (id) => context.navigate(id)) : null;
+
+  page.append(
+    ...(binAlertBanner ? [binAlertBanner] : []),
+    grid
+  );
 
   const helpSection = document.createElement('section');
   helpSection.className = 'owner-help-section';
