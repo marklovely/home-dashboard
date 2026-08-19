@@ -107,15 +107,12 @@ locals {
   worker_hostname   = "${local.worker_name}.${var.workers_subdomain}.workers.dev"
   worker_api_origin = "https://${local.worker_hostname}"
   hostname_label    = replace(var.hostname, ".${var.zone_name}", "")
-  # Explicit environment avoids Cloudflare provider "unknown value after apply" on Pages service bindings.
+  # entrypoint = "default" required for Cloudflare Pages API (8000022 if omitted on PATCH).
   pages_hub_api_services = {
-    HUB_API = var.site_id == "production" ? {
+    HUB_API = {
       service     = local.worker_name
       environment = "production"
       entrypoint  = "default"
-      } : {
-      service     = local.worker_name
-      environment = "production"
     }
   }
 }
