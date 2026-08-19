@@ -7,8 +7,11 @@ import { createFieldInfoHint, createFieldLabelBlock } from '../HelpGuide/fieldHe
 import { HUB_SETUP_FIELD_HELP } from './hubSetupHelpContent.js';
 import {
   formatPropertyAddress,
-  normalizePropertyAddress
+  hasPropertyAddress,
+  normalizePropertyAddress,
+  parsePropertyAddressFromString
 } from '../../lib/propertyAddress.js';
+import { getPrivateConfigValue } from '../../services/privateConfigService.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -492,4 +495,83 @@ export function contactSecretsPatch(contacts) {
   if (contacts.secondaryContact.phone) patch.secondary_phone = contacts.secondaryContact.phone;
   if (contacts.secondaryContact.email) patch.secondary_email = contacts.secondaryContact.email;
   return patch;
+}
+
+/**
+ * Merge profile contacts with owner-only private config when profile fields are empty.
+ * @param {Record<string, unknown>} [profile]
+ */
+export function buildHomeDetailsFormProfile(profile = {}) {
+  /** @type {{ name: string, phone: string, email: string }} */
+  const primaryContact = {
+    name: String(/** @type {{ name?: string }} */ (profile.primaryContact)?.name ?? ''),
+    phone: String(/** @type {{ phone?: string }} */ (profile.primaryContact)?.phone ?? ''),
+    email: String(/** @type {{ email?: string }} */ (profile.primaryContact)?.email ?? '')
+  };
+  /** @type {{ name: string, phone: string, email: string }} */
+  const secondaryContact = {
+    name: String(/** @type {{ name?: string }} */ (profile.secondaryContact)?.name ?? ''),
+    phone: String(/** @type {{ phone?: string }} */ (profile.secondaryContact)?.phone ?? ''),
+    email: String(/** @type {{ email?: string }} */ (profile.secondaryContact)?.email ?? '')
+  };
+
+  if (!primaryContact.phone.trim()) {
+    primaryContact.phone = String(getPrivateConfigValue('contacts.mark.phone') ?? '');
+  }
+  if (!primaryContact.email.trim()) {
+    primaryContact.email = String(getPrivateConfigValue('contacts.mark.email') ?? '');
+  }
+  if (!secondaryContact.phone.trim()) {
+    secondaryContact.phone = String(getPrivateConfigValue('contacts.donna.phone') ?? '');
+  }
+  if (!secondaryContact.email.trim()) {
+    secondaryContact.email = String(getPrivateConfigValue('contacts.donna.email') ?? '');
+  }
+
+  let propertyAddress = normalizePropertyAddress(profile.propertyAddress);
+  if (!hasPropertyAddress(propertyAddress)) {
+    const legacyAddress = getPrivateConfigValue('address.full');
+    if (legacyAddress) {
+      propertyAddress = parsePropertyAddressFromString(String(legacyAddress));
+    }
+  }
+
+  return { ...profile, primaryContact, secondaryContact, propertyAddress };
+}
+
+/**
+ * @param {HTMLElement} fieldWrap
+ * @param {boolean | undefined} isConfigured
+ * @param {string} [message]
+ */
+function appendConfiguredSecretHint(fieldWrap, isConfigured, message) {
+  if (!isConfigured || fieldWrap.querySelector('.hub-setup-configured-hint')) return;
+  const hint = document.createElement('p');
+  hint.className = 'subtle hub-setup-configured-hint';
+  hint.textContent =
+    message ??
+    'A value is already saved. Enter a new one to replace it, or leave blank to keep the current value.';
+  fieldWrap.append(hint);
+}
+
+/**
+ * @param {ReturnType<typeof createGuestAccessFields>} fields
+ * @param {Partial<Record<string, boolean>>} [configured]
+ */
+export function applyGuestAccessDisplayValues(fields, configured = {}) {
+  const wifiSsid = getPrivateConfigValue('wifi.ssid');
+  if (wifiSsid && !fields.wifiSsid.input.value.trim()) {
+    fields.wifiSsid.input.value = String(wifiSsid);
+  }
+
+  appendConfiguredSecretHint(fields.wifiPassword.wrap, configured.wifi_password);
+  if (configured.wifi_ssid && !fields.wifiSsid.input.value.trim()) {
+    appendConfiguredSecretHint(
+      fields.wifiSsid.wrap,
+      true,
+      'Wi‑Fi network name is saved on the hub but could not be loaded here. Enter it again to replace the saved value.'
+    );
+  }
+  appendConfiguredSecretHint(fields.lockbox.wrap, configured.lockbox_code);
+  appendConfiguredSecretHint(fields.ownerPin.wrap, configured.owner_pin);
 }
