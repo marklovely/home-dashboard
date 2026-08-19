@@ -79,7 +79,7 @@ const houseSitterConfig = {
   ],
   showOwnerStatusStrip: false,
   showControlsFooter: false,
-  showHomeWelcomeGreeting: false,
+  showHomeWelcomeGreeting: true,
   showHomeDate: true,
   showHelpCard: true,
   showSitterHeaderWeather: true,
