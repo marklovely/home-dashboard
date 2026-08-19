@@ -296,8 +296,8 @@ Fully automated hub teardown after the delete PR merges to `main`.
 flowchart TD
   A[Wizard: Delete via PR] --> B[Merge to main]
   B --> C[platform-site-deprovision.yml]
-  C --> D[DELETE Worker script via API]
-  D --> E[terraform destroy module.hub_site]
+  C --> D[terraform destroy module.hub_site]
+  D --> E[DELETE Worker script via API]
   E --> F[Refresh platform manifest + redeploy admin]
 ```
 
@@ -310,8 +310,8 @@ flowchart TD
 
 | Resource | How |
 |----------|-----|
-| Worker script + secrets | Cloudflare API `DELETE /workers/scripts/{name}` |
 | D1, R2×2, Pages, Access×2, DNS | `terraform destroy -target=module.hub_site["{id}"]` |
+| Worker script + secrets | Cloudflare API `DELETE /workers/scripts/{name}` (after Terraform) |
 | Platform admin site card | `build-platform-manifest.mjs` + `deploy-platform-admin.sh` |
 | Local `hub.tfvars` (if present) | `prune-local-hub-tfvars.mjs` during deprovision |
 | `HUB_PROXY_SECRETS_JSON` GitHub secret | `prune-hub-proxy-secrets-github-secret.mjs` in CI (requires `PLATFORM_GITHUB_TOKEN` with repo secrets write) |
@@ -327,6 +327,17 @@ node scripts/deprovision-hub-site.mjs demo
 ```
 
 Use `--skip-platform-admin` to skip manifest rebuild and platform admin redeploy.
+
+### Recreating a site (e.g. demo)
+
+Use this checklist when tearing down a site and provisioning it again with the **same site id**.
+
+1. **Delete** — Platform admin wizard → Delete → merge the delete PR to `main`.
+2. **Wait for deprovision** — In GitHub Actions, confirm **Platform site deprovision** is green for that site. Do not start a create for the same id while deprovision is still running (Terraform state race).
+3. **Confirm manifest** — After deprovision, the site card should disappear from platform admin. If create fails with “already exists in the platform manifest”, deprovision has not finished or platform admin was not redeployed.
+4. **Create** — Wizard → Create with owner emails (sitter emails optional) → merge create PR.
+5. **Wait for provision** — **Platform site provision** runs automatically; merge any follow-up PR that sets `attach_hub_api_binding: true` and syncs D1 ids (same as the first demo provision).
+6. **Smoke test** — Open the hub hostname, complete setup wizard (including bin dates if you want home-screen reminders), and verify sitter Access login.
 
 ## Related
 
