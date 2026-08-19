@@ -3286,6 +3286,10 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   display: grid;
   gap: 16px;
 }
+.hub-setup-bin-date-editor {
+  display: grid;
+  gap: 12px;
+}
 .hub-setup-bin-entry-panel {
   margin: 0;
   padding: 16px;

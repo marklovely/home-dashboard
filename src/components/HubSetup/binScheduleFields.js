@@ -10,6 +10,11 @@ import {
   readBinScheduleFromProfile
 } from '../../lib/binScheduleProfile.js';
 import {
+  BIN_REPEAT_PRESETS,
+  buildBinScheduleEntriesFromRepeat,
+  defaultRepeatUntilDate
+} from '../../lib/binScheduleRepeat.js';
+import {
   getBinScheduleFieldHelp,
   getBinScheduleGuestCopy,
   HUB_SETUP_FIELD_HELP
@@ -32,6 +37,259 @@ const BIN_TYPE_OPTIONS = [
   { value: 'recycling', label: 'Recycling & glass' },
   { value: 'gardenWaste', label: 'Garden waste' }
 ];
+
+/** @typedef {{ id: string, date: string, type: 'rubbish' | 'recycling' | 'gardenWaste', bankHolidayChange: boolean }} BinScheduleDraftEntry */
+
+/**
+ * @param {import('../../lib/binScheduleProfile.js').BinScheduleProfile} schedule
+ * @returns {BinScheduleDraftEntry[]}
+ */
+function draftEntriesFromSchedule(schedule) {
+  /** @type {BinScheduleDraftEntry[]} */
+  const entries = [];
+  for (const entry of schedule.household) {
+    entries.push({
+      id: crypto.randomUUID(),
+      date: entry.date,
+      type: entry.type,
+      bankHolidayChange: Boolean(entry.bankHolidayChange)
+    });
+  }
+  for (const entry of schedule.gardenWaste) {
+    entries.push({
+      id: crypto.randomUUID(),
+      date: entry.date,
+      type: 'gardenWaste',
+      bankHolidayChange: false
+    });
+  }
+  entries.sort((a, b) => a.date.localeCompare(b.date));
+  return entries;
+}
+
+/**
+ * @param {BinScheduleDraftEntry[]} entries
+ */
+function splitDraftEntries(entries) {
+  /** @type {import('../../lib/binScheduleProfile.js').BinScheduleHouseholdEntry[]} */
+  const household = [];
+  /** @type {import('../../lib/binScheduleProfile.js').BinScheduleGardenEntry[]} */
+  const gardenWaste = [];
+
+  for (const entry of entries) {
+    if (entry.type === 'gardenWaste') {
+      gardenWaste.push({ date: entry.date });
+    } else {
+      household.push({
+        date: entry.date,
+        type: entry.type,
+        bankHolidayChange: entry.bankHolidayChange
+      });
+    }
+  }
+
+  return { household, gardenWaste };
+}
+
+/**
+ * @param {'rubbish' | 'recycling' | 'gardenWaste'} type
+ */
+function typeLabel(type) {
+  if (type === 'recycling') return 'Recycling & glass';
+  if (type === 'gardenWaste') return 'Garden waste';
+  return 'Rubbish / general waste';
+}
+
+/**
+ * @param {Object} [options]
+ * @param {import('../../lib/binScheduleProfile.js').BinScheduleProfile} [options.schedule]
+ * @param {() => string} [options.getRepeatUntilFallback] Called when repeat-until is blank on add.
+ */
+export function createBinScheduleDateEditor(options = {}) {
+  const schedule = options.schedule ?? normalizeBinSchedule({});
+  /** @type {BinScheduleDraftEntry[]} */
+  let entries = draftEntriesFromSchedule(schedule);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'hub-setup-bin-date-editor';
+
+  const entryPanel = document.createElement('fieldset');
+  entryPanel.className = 'hub-setup-bin-entry-panel';
+  entryPanel.innerHTML =
+    '<legend class="hub-setup-bin-entry-legend">Add collection dates</legend>';
+
+  const entryDate = createSetupField('First collection date', '', { type: 'date', required: true });
+  const entryType = createSetupSelect('Bin type', 'rubbish', BIN_TYPE_OPTIONS);
+  const entryRepeat = createSetupSelect('Repeat', 'none', BIN_REPEAT_PRESETS, {
+    hint: 'Generate future dates from your council pattern — you can still remove individual dates below.'
+  });
+
+  const customWeeksWrap = createSetupField('Every how many weeks?', String(3), {
+    type: 'number',
+    inputMode: 'numeric',
+    placeholder: '3',
+    hint: 'Used when repeat is set to Custom.'
+  });
+  customWeeksWrap.input.min = '1';
+  customWeeksWrap.input.max = '52';
+  customWeeksWrap.input.step = '1';
+  customWeeksWrap.wrap.hidden = true;
+  customWeeksWrap.wrap.classList.add('hub-setup-bin-custom-weeks');
+
+  const repeatUntil = createSetupField('Repeat until', schedule.validUntil || '', {
+    type: 'date',
+    hint: 'Defaults to one year after the first date if left blank.'
+  });
+  repeatUntil.wrap.hidden = true;
+  repeatUntil.wrap.classList.add('hub-setup-bin-repeat-until');
+
+  const bankHolidayWrap = document.createElement('label');
+  bankHolidayWrap.className = 'hub-setup-checkbox-field';
+  const bankHolidayInput = document.createElement('input');
+  bankHolidayInput.type = 'checkbox';
+  bankHolidayInput.className = 'hub-setup-checkbox';
+  const bankHolidayText = document.createElement('span');
+  bankHolidayText.textContent = 'Changed day (bank holiday schedule)';
+  bankHolidayWrap.append(bankHolidayInput, bankHolidayText);
+
+  const addButton = document.createElement('button');
+  addButton.type = 'button';
+  addButton.className = 'settings-action-button settings-action-button--secondary hub-setup-bin-add-button';
+  addButton.textContent = 'Add date';
+
+  entryPanel.append(
+    entryDate.wrap,
+    entryType.wrap,
+    entryRepeat.wrap,
+    customWeeksWrap.wrap,
+    repeatUntil.wrap,
+    bankHolidayWrap,
+    addButton
+  );
+
+  const listHost = document.createElement('div');
+  listHost.className = 'hub-setup-bin-entry-list';
+  listHost.setAttribute('aria-live', 'polite');
+
+  function syncRepeatFields() {
+    const repeating = entryRepeat.select.value !== 'none';
+    repeatUntil.wrap.hidden = !repeating;
+    customWeeksWrap.wrap.hidden = entryRepeat.select.value !== 'custom';
+    addButton.textContent = repeating ? 'Add dates' : 'Add date';
+    if (repeating && !repeatUntil.input.value.trim()) {
+      const start = entryDate.input.value.trim();
+      if (start) {
+        repeatUntil.input.value =
+          options.getRepeatUntilFallback?.() || schedule.validUntil || defaultRepeatUntilDate(start);
+      }
+    }
+  }
+
+  entryRepeat.select.addEventListener('change', syncRepeatFields);
+  entryDate.input.addEventListener('change', () => {
+    if (entryRepeat.select.value !== 'none' && !repeatUntil.input.value.trim()) {
+      const start = entryDate.input.value.trim();
+      if (start) {
+        repeatUntil.input.value =
+          options.getRepeatUntilFallback?.() || schedule.validUntil || defaultRepeatUntilDate(start);
+      }
+    }
+  });
+
+  function renderEntryList() {
+    listHost.replaceChildren();
+    if (!entries.length) {
+      const empty = document.createElement('p');
+      empty.className = 'subtle hub-setup-bin-empty';
+      empty.textContent =
+        'No dates added yet — pick a date and repeat pattern from your council calendar, or skip this step.';
+      listHost.append(empty);
+      return;
+    }
+
+    for (const entry of entries) {
+      const row = document.createElement('div');
+      row.className = 'hub-setup-bin-entry-row';
+
+      const text = document.createElement('span');
+      text.className = 'hub-setup-bin-entry-text';
+      const bankHolidayNote = entry.bankHolidayChange ? ' · changed day' : '';
+      text.textContent = `${entry.date} — ${typeLabel(entry.type)}${bankHolidayNote}`;
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'hub-setup-bin-remove-button';
+      remove.textContent = 'Remove';
+      remove.addEventListener('click', () => {
+        entries = entries.filter((item) => item.id !== entry.id);
+        renderEntryList();
+      });
+
+      row.append(text, remove);
+      listHost.append(row);
+    }
+  }
+
+  function entryKey(date, type) {
+    return `${date}:${type}`;
+  }
+
+  addButton.addEventListener('click', () => {
+    const startDate = entryDate.input.value.trim();
+    if (!startDate) return;
+
+    const type = /** @type {'rubbish' | 'recycling' | 'gardenWaste'} */ (entryType.select.value);
+    const repeatId = entryRepeat.select.value;
+    const customWeeks = Number(customWeeksWrap.input.value);
+    const untilDate =
+      repeatUntil.input.value.trim() ||
+      options.getRepeatUntilFallback?.() ||
+      schedule.validUntil ||
+      defaultRepeatUntilDate(startDate);
+
+    const generated = buildBinScheduleEntriesFromRepeat({
+      startDate,
+      type,
+      repeatId,
+      customWeeks,
+      untilDate,
+      bankHolidayChange: type !== 'gardenWaste' && bankHolidayInput.checked
+    });
+
+    const existingKeys = new Set(entries.map((entry) => entryKey(entry.date, entry.type)));
+    for (const generatedEntry of generated) {
+      const key = entryKey(generatedEntry.date, generatedEntry.type);
+      if (existingKeys.has(key)) continue;
+      entries.push({
+        id: crypto.randomUUID(),
+        date: generatedEntry.date,
+        type: generatedEntry.type,
+        bankHolidayChange: generatedEntry.bankHolidayChange
+      });
+      existingKeys.add(key);
+    }
+
+    entries.sort((a, b) => a.date.localeCompare(b.date));
+    entryDate.input.value = '';
+    bankHolidayInput.checked = false;
+    renderEntryList();
+  });
+
+  syncRepeatFields();
+  renderEntryList();
+
+  wrap.append(entryPanel, listHost);
+
+  return {
+    wrap,
+    readDraftEntries() {
+      return entries.map((entry) => ({ ...entry }));
+    },
+    readHouseholdAndGarden() {
+      return splitDraftEntries(entries);
+    }
+  };
+}
 
 /**
  * @param {Record<string, unknown>} [profile]
@@ -88,110 +346,10 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
     HUB_SETUP_FIELD_HELP.binAlertHours
   );
 
-  const entryPanel = document.createElement('fieldset');
-  entryPanel.className = 'hub-setup-bin-entry-panel';
-  entryPanel.innerHTML = '<legend class="hub-setup-bin-entry-legend">Add a collection date</legend>';
-
-  const entryDate = createSetupField('Date', '', { type: 'date', required: true });
-  const entryType = createSetupSelect('Bin type', 'rubbish', BIN_TYPE_OPTIONS);
-
-  const bankHolidayWrap = document.createElement('label');
-  bankHolidayWrap.className = 'hub-setup-checkbox-field';
-  const bankHolidayInput = document.createElement('input');
-  bankHolidayInput.type = 'checkbox';
-  bankHolidayInput.className = 'hub-setup-checkbox';
-  const bankHolidayText = document.createElement('span');
-  bankHolidayText.textContent = 'Changed day (bank holiday schedule)';
-  bankHolidayWrap.append(bankHolidayInput, bankHolidayText);
-
-  const addButton = document.createElement('button');
-  addButton.type = 'button';
-  addButton.className = 'settings-action-button settings-action-button--secondary hub-setup-bin-add-button';
-  addButton.textContent = 'Add date';
-
-  entryPanel.append(entryDate.wrap, entryType.wrap, bankHolidayWrap, addButton);
-
-  const listHost = document.createElement('div');
-  listHost.className = 'hub-setup-bin-entry-list';
-  listHost.setAttribute('aria-live', 'polite');
-
-  /** @type {{ id: string, date: string, type: 'rubbish' | 'recycling' | 'gardenWaste', bankHolidayChange: boolean }[]} */
-  let entries = [];
-
-  for (const entry of schedule.household) {
-    entries.push({
-      id: crypto.randomUUID(),
-      date: entry.date,
-      type: entry.type,
-      bankHolidayChange: Boolean(entry.bankHolidayChange)
-    });
-  }
-  for (const entry of schedule.gardenWaste) {
-    entries.push({
-      id: crypto.randomUUID(),
-      date: entry.date,
-      type: 'gardenWaste',
-      bankHolidayChange: false
-    });
-  }
-  entries.sort((a, b) => a.date.localeCompare(b.date));
-
-  function typeLabel(type) {
-    if (type === 'recycling') return 'Recycling & glass';
-    if (type === 'gardenWaste') return 'Garden waste';
-    return 'Rubbish / general waste';
-  }
-
-  function renderEntryList() {
-    listHost.replaceChildren();
-    if (!entries.length) {
-      const empty = document.createElement('p');
-      empty.className = 'subtle hub-setup-bin-empty';
-      empty.textContent = 'No dates added yet — add each collection from your council calendar, or skip this step.';
-      listHost.append(empty);
-      return;
-    }
-
-    for (const entry of entries) {
-      const row = document.createElement('div');
-      row.className = 'hub-setup-bin-entry-row';
-
-      const text = document.createElement('span');
-      text.className = 'hub-setup-bin-entry-text';
-      const bankHolidayNote = entry.bankHolidayChange ? ' · changed day' : '';
-      text.textContent = `${entry.date} — ${typeLabel(entry.type)}${bankHolidayNote}`;
-
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'hub-setup-bin-remove-button';
-      remove.textContent = 'Remove';
-      remove.addEventListener('click', () => {
-        entries = entries.filter((item) => item.id !== entry.id);
-        renderEntryList();
-      });
-
-      row.append(text, remove);
-      listHost.append(row);
-    }
-  }
-
-  addButton.addEventListener('click', () => {
-    const date = entryDate.input.value.trim();
-    if (!date) return;
-    const type = /** @type {'rubbish' | 'recycling' | 'gardenWaste'} */ (entryType.select.value);
-    entries.push({
-      id: crypto.randomUUID(),
-      date,
-      type,
-      bankHolidayChange: type !== 'gardenWaste' && bankHolidayInput.checked
-    });
-    entries.sort((a, b) => a.date.localeCompare(b.date));
-    entryDate.input.value = '';
-    bankHolidayInput.checked = false;
-    renderEntryList();
+  const dateEditor = createBinScheduleDateEditor({
+    schedule,
+    getRepeatUntilFallback: () => validUntil.input.value.trim()
   });
-
-  renderEntryList();
 
   wrap.append(
     location.wrap,
@@ -200,29 +358,13 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
     validFrom.wrap,
     validUntil.wrap,
     alertHours.wrap,
-    entryPanel,
-    listHost
+    dateEditor.wrap
   );
 
   return {
     wrap,
     readBinSchedule() {
-      /** @type {import('../../lib/binScheduleProfile.js').BinScheduleHouseholdEntry[]} */
-      const household = [];
-      /** @type {import('../../lib/binScheduleProfile.js').BinScheduleGardenEntry[]} */
-      const gardenWaste = [];
-
-      for (const entry of entries) {
-        if (entry.type === 'gardenWaste') {
-          gardenWaste.push({ date: entry.date });
-        } else {
-          household.push({
-            date: entry.date,
-            type: entry.type,
-            bankHolidayChange: entry.bankHolidayChange
-          });
-        }
-      }
+      const { household, gardenWaste } = dateEditor.readHouseholdAndGarden();
 
       return inferBinSchedulePeriod(
         normalizeBinSchedule({
