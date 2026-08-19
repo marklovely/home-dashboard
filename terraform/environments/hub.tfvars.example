@@ -20,6 +20,9 @@ platform_operator_emails = [
 # Optional — enables platform admin site wizard (GitHub Actions PR automation)
 # platform_github_token = "ghp_..."
 
+# Preview builds for non-main branches (platform admin + Terraform-managed hub Pages). Default true.
+# pages_preview_deployments_enabled = true
+
 platform_admin = {
   enabled    = true
   hostname   = "platform.lovely-home.co.uk"
