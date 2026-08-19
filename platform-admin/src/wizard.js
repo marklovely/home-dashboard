@@ -407,6 +407,13 @@ async function submitWizard(mode, form, panel, githubConfigured, onComplete, clo
     else if (mode === 'update') result = await updateSite(form.siteId, payload);
     else result = await deleteSite(form.siteId, { confirmHostname: form.confirmHostname });
 
+    const afterMergeMessage =
+      mode === 'delete'
+        ? 'After merge, <strong>Platform site deprovision</strong> tears down the Worker, destroys Terraform resources (D1, R2, Pages, Access, DNS), and refreshes the platform manifest. Wait for that workflow to finish before recreating the same site id.'
+        : mode === 'update'
+          ? 'After merge, update the site registry on <code>main</code>. Re-run <strong>Platform site provision</strong> from the site card if infrastructure or Worker settings changed.'
+          : 'After merge, <strong>Platform site provision</strong> provisions the hub automatically.';
+
     panel.querySelector('.wizard-body').innerHTML = `
       <div class="banner banner-ok">${escapeHtml(result.message ?? 'Automation started.')}</div>
       <p class="wizard-links">
@@ -415,7 +422,7 @@ async function submitWizard(mode, form, panel, githubConfigured, onComplete, clo
       </p>
       <p class="muted">The pull request is created at the <strong>end</strong> of the workflow (after Terraform validate + tests). If the run fails, there is no PR — check the run log.</p>
       <p class="muted">When the PR is created, auto-merge is enabled — it merges to <code>main</code> once CI passes; if checks fail, the PR stays open.</p>
-      <p class="muted">After merge, <strong>Platform site provision</strong> provisions the hub automatically.</p>
+      <p class="muted">${afterMergeMessage}</p>
     `;
     panel.querySelector('.wizard-foot').innerHTML =
       '<button type="button" class="btn" data-wizard-done>Done</button>';

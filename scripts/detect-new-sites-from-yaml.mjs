@@ -7,8 +7,8 @@ import { appendFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { detectAddedTerraformSites } from './lib/detect-site-yaml-changes.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
-import { validateSiteId } from './lib/site-registry.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const yamlPath = join(root, 'platform/sites.yaml');
@@ -35,14 +35,7 @@ try {
   process.exit(1);
 }
 
-/** @type {string[]} */
-const added = [];
-for (const siteId of Object.keys(after)) {
-  if (before[siteId]) continue;
-  if (after[siteId]?.terraform === false) continue;
-  if (validateSiteId(siteId)) continue;
-  added.push(siteId);
-}
+const added = detectAddedTerraformSites(before, after);
 
 const githubOutput = process.env.GITHUB_OUTPUT;
 if (githubOutput) {
