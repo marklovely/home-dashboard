@@ -274,7 +274,7 @@ export function createCalendarConnectionField(options = {}) {
   );
 
   const field = createSetupField('Private calendar link (ICS)', '', {
-    placeholder: 'https://… or webcal://…',
+    placeholder: 'https://… or webcal…',
     revealable: true,
     autocomplete: 'off',
     ...HUB_SETUP_FIELD_HELP.calendarIcsUrl
