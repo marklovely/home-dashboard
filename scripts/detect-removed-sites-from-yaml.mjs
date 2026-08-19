@@ -7,8 +7,8 @@ import { appendFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { detectRemovedTerraformSites } from './lib/detect-site-yaml-changes.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
-import { PROTECTED_SITE_IDS, validateSiteId } from './lib/site-registry.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const yamlPath = join(root, 'platform/sites.yaml');
@@ -35,15 +35,7 @@ try {
   process.exit(1);
 }
 
-/** @type {string[]} */
-const removed = [];
-for (const siteId of Object.keys(before)) {
-  if (after[siteId]) continue;
-  if (before[siteId]?.terraform === false) continue;
-  if (PROTECTED_SITE_IDS.has(siteId)) continue;
-  if (validateSiteId(siteId)) continue;
-  removed.push(siteId);
-}
+const removed = detectRemovedTerraformSites(before, after);
 
 const githubOutput = process.env.GITHUB_OUTPUT;
 if (githubOutput) {

@@ -101,7 +101,11 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
 
   if (action === 'create') {
     if (existing[siteId]) {
-      return { ok: false, error: 'VALIDATION_ERROR', message: `Site "${siteId}" already exists.` };
+      return {
+        ok: false,
+        error: 'VALIDATION_ERROR',
+        message: `Site "${siteId}" already exists in the platform manifest. If you deleted it recently, wait for Platform site deprovision to finish (green workflow on main) before recreating the same site id.`
+      };
     }
     Object.assign(payload, defaultSiteEntry(siteId, payload, zoneName));
     const hostError = validateHostname(String(payload.hostname), zoneName);
