@@ -133,7 +133,11 @@ The browser calls the Worker directly for weather, controls, Wi‑Fi, calendar, 
 
 ## Step 5 — (Optional) Protect Pages preview URLs
 
-If GitHub PRs deploy to `https://<something>.home-dashboard-a11.pages.dev`:
+If GitHub PRs deploy to `https://<hash>.home-dashboard-a11.pages.dev`:
+
+**Terraform-managed sites:** `terraform apply` adds `home-dashboard-a11.pages.dev` and `*.home-dashboard-a11.pages.dev` to the same Pages Access app as your custom domain (see [platform-terraform.md](./platform-terraform.md#pages-preview-access-invalid-redirect-url)). Remove any older manual Access app that only listed `home-dashboard-a11.pages.dev` to avoid duplicates.
+
+**Manual setup (legacy):**
 
 1. **Add an application** → **Self-hosted**.
 2. **Domain:** try `*.home-dashboard-a11.pages.dev` if Cloudflare accepts wildcards; otherwise add one app per preview hostname you care about, or restrict previews to **owners only** in a separate policy.
