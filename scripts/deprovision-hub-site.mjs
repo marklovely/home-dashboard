@@ -7,6 +7,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { applyLocalHubEnv, missingProvisionEnvKeys } from './lib/load-local-hub-env.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { suggestedWorkerName, validateDeprovisionSiteId } from './lib/site-registry.mjs';
 import { hubSiteModuleInState } from './lib/terraform-state.mjs';
@@ -29,6 +30,18 @@ if (deprovisionError) {
 }
 
 const tfDir = join(root, 'terraform');
+const hubTfvarsPath = join(tfDir, 'environments/hub.tfvars');
+if (applyLocalHubEnv(hubTfvarsPath)) {
+  console.log('Loaded missing provision env from terraform/environments/hub.tfvars');
+}
+
+const missingEnv = missingProvisionEnvKeys();
+if (missingEnv.length) {
+  console.error(
+    `Missing required env: ${missingEnv.join(', ')}. Export them or add the values to terraform/environments/hub.tfvars (see docs/platform-provision.md).`
+  );
+  process.exit(1);
+}
 const tfvarsPath = join(tfDir, 'environments/hub.generated.tfvars');
 const generatedTfvars = join(root, 'scripts/generate-hub-tfvars.mjs');
 const deleteWorkerScript = join(root, 'scripts/delete-worker-script.mjs');
