@@ -60,16 +60,19 @@ bucket_name = "lovely-home-guide-media"
 name = "lovely-home-hub-api-test"
 
 [env.test.vars]
-ACCESS_WORKER_APP_ID = "11c24664-381e-4a31-bc8c-92bb66ca3583"
+HUB_ENVIRONMENT = "test"
 
-ACCESS_PAGES_APP_ID = "543203c4-6d07-43e5-8557-36302437615c"
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://test.lovely-home.co.uk,https://home-dashboard-test.pages.dev,https://*.home-dashboard-test.pages.dev,https://*.pages.dev"
+
+HOME_LATITUDE = "51.5074"
+
+HOME_LONGITUDE = "-0.1278"
 
 CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
 
-HUB_ENVIRONMENT = "test"
-ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://test.lovely-home.co.uk,https://home-dashboard-test.pages.dev,https://*.home-dashboard-test.pages.dev,https://*.pages.dev"
-HOME_LATITUDE = "51.5074"
-HOME_LONGITUDE = "-0.1278"
+ACCESS_PAGES_APP_ID = "543203c4-6d07-43e5-8557-36302437615c"
+
+ACCESS_WORKER_APP_ID = "11c24664-381e-4a31-bc8c-92bb66ca3583"
 
 [[env.test.durable_objects.bindings]]
 name = "OWNER_AUTH_LIMITER"
