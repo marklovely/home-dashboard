@@ -14,7 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
-import { validateDeploySiteId } from './lib/site-registry.mjs';
+import { validateSiteId } from './lib/site-registry.mjs';
 
 const token = process.env.CLOUDFLARE_API_TOKEN?.trim();
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
@@ -38,9 +38,13 @@ const siteIds =
         .map(([siteId]) => siteId);
 
 for (const siteId of siteIds) {
-  const deployError = validateDeploySiteId(siteId);
-  if (deployError) {
-    console.error(deployError);
+  const siteError = validateSiteId(siteId);
+  if (siteError) {
+    console.error(siteError);
+    process.exit(1);
+  }
+  if (registry[siteId]?.terraform === false) {
+    console.error(`Site "${siteId}" is not terraform-managed.`);
     process.exit(1);
   }
 }
