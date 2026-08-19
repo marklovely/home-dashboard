@@ -1,16 +1,21 @@
 import { renderIcon } from '../../components/icons/renderIcon.js';
+import { dismissBinAlertForCollection } from '../../services/binAlertDismissalService.js';
 
 /**
  * @param {import('../../services/binCollectionService.js').BinCollectionAlert} alert
  * @param {(appId: string) => void} navigate
+ * @param {() => void} [onDismiss]
  */
-export function createBinAlertBanner(alert, navigate) {
-  const banner = document.createElement('button');
-  banner.type = 'button';
+export function createBinAlertBanner(alert, navigate, onDismiss) {
+  const banner = document.createElement('div');
   banner.className = 'bin-alert-banner';
   banner.setAttribute('role', 'status');
   banner.setAttribute('aria-live', 'polite');
-  banner.setAttribute(
+
+  const openButton = document.createElement('button');
+  openButton.type = 'button';
+  openButton.className = 'bin-alert-banner-main';
+  openButton.setAttribute(
     'aria-label',
     [alert.title, alert.detail, alert.putOutLine, alert.locationLine, 'Open Bins app.']
       .filter(Boolean)
@@ -42,7 +47,23 @@ export function createBinAlertBanner(alert, navigate) {
   location.textContent = alert.locationLine;
 
   copy.append(title, detail, putOut, location);
-  banner.append(icon, copy);
-  banner.addEventListener('click', () => navigate('bins'));
+  openButton.append(icon, copy);
+  openButton.addEventListener('click', () => navigate('bins'));
+
+  const dismissButton = document.createElement('button');
+  dismissButton.type = 'button';
+  dismissButton.className = 'bin-alert-banner-dismiss';
+  dismissButton.textContent = 'Bins are out';
+  dismissButton.setAttribute(
+    'aria-label',
+    'Mark bins as put out and hide this reminder until after collection day'
+  );
+  dismissButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    dismissBinAlertForCollection(alert.event.date);
+    onDismiss?.();
+  });
+
+  banner.append(openButton, dismissButton);
   return banner;
 }

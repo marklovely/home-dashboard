@@ -79,8 +79,10 @@ describe('house sitter home layout', () => {
     expect(banner?.querySelector('.bin-alert-banner-title')?.textContent).toMatch(/tomorrow/i);
     expect(banner?.querySelector('.bin-alert-banner-meta')?.textContent).toMatch(/Put bins out by 6am/i);
 
-    banner?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    banner?.querySelector('.bin-alert-banner-main')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(context.navigate).toHaveBeenCalledWith('bins');
+
+    expect(banner?.querySelector('.bin-alert-banner-dismiss')).toBeTruthy();
 
     const binsCard = viewport.querySelector('.sitter-info-card--alert');
     expect(binsCard).toBeTruthy();

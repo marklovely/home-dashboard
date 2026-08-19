@@ -299,8 +299,23 @@ export async function renderHouseSitterHome(viewport, apps, context) {
   helpActions.append(tabletGuideButton, helpButton);
   helpSection.append(helpCopy, helpActions);
 
+  const binsCardEntry = secondaryCards.find(({ app }) => app.id === 'bins');
+  let binAlertBanner = null;
   const binAlert = getBinCollectionAlert(new Date(), { houseSitter: true });
-  const binAlertBanner = binAlert ? createBinAlertBanner(binAlert, (id) => context.navigate(id)) : null;
+  if (binAlert) {
+    binAlertBanner = createBinAlertBanner(
+      binAlert,
+      (id) => context.navigate(id),
+      () => {
+        binAlertBanner?.remove();
+        if (binsCardEntry?.app.summary) {
+          void binsCardEntry.app.summary(context).then((summary) => {
+            applySecondaryBinsSummary(binsCardEntry.card, summary);
+          });
+        }
+      }
+    );
+  }
 
   page.append(
     welcome,
