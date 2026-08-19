@@ -34,6 +34,11 @@ import { createCalendarConnectionField, createBinAlertHoursField } from '../../c
 import { HUB_SETUP_FIELD_HELP, getBinScheduleFieldHelp } from '../../components/HubSetup/hubSetupHelpContent.js';
 import { readBinScheduleFromProfile } from '../../lib/binScheduleProfile.js';
 import {
+  clearBinAlertDismissal,
+  getDismissedBinCollectionDate
+} from '../../services/binAlertDismissalService.js';
+import { formatCollectionDateLabel } from '../../services/binCollectionService.js';
+import {
   getSettingsSections,
   getStoredSettingsPanel,
   normalizeSettingsPanel,
@@ -518,6 +523,26 @@ function createBinReminderFields(context, onRefresh) {
   });
 
   wrap.append(alertField.wrap, locationField.wrap, councilField.wrap, saveButton, wizardButton);
+
+  const dismissedCollectionDate = getDismissedBinCollectionDate();
+  if (dismissedCollectionDate) {
+    const dismissalStatus = document.createElement('p');
+    dismissalStatus.className = 'settings-current-value';
+    dismissalStatus.textContent = `Home reminder hidden for collection on ${formatCollectionDateLabel(dismissedCollectionDate)}.`;
+
+    const resetDismissalButton = document.createElement('button');
+    resetDismissalButton.type = 'button';
+    resetDismissalButton.className = 'settings-action-button settings-action-button--secondary';
+    resetDismissalButton.textContent = 'Show bin reminder again';
+    resetDismissalButton.addEventListener('click', () => {
+      clearBinAlertDismissal();
+      onRefresh({ panelId: 'bins' });
+      showToast(context.toast, 'Bin reminder restored.');
+    });
+
+    wrap.append(dismissalStatus, resetDismissalButton);
+  }
+
   return wrap;
 }
 
