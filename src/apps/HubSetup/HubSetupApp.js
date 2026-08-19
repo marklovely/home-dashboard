@@ -1,7 +1,6 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
-  applyGuestAccessDisplayValues,
   buildHomeDetailsFormProfile,
   createContactGroup,
   createGuestAccessFields,
