@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+## 2.2.0
+
+Minor release: bin collection reminders for sitters, Settings sidebar layout, and preview/provision reliability.
+
+### Bin collection reminders
+
+- **Configurable alert window** — remind sitters on the home screen before each collection (Settings → Bin reminders)
+- **Rich alert banners** — show which bins, put-out time (6am), and collection point on owner and sitter home screens
+- **Highlighted bins card** — sitter home card draws attention when a collection is due soon
+- **Collection location in Settings** — edit where bins are collected and council URL without opening the full wizard
+
+### Settings
+
+- **Chrome-style sidebar** — one category at a time (Appearance, House sitter mode, Home details, Bin reminders, Weather, Backup, Help, About)
+- **Prefilled home details** — hub name, contacts, address, Wi‑Fi name, and bin settings load from saved profile and hub secrets
+- **“Already saved” hints** — password, PIN, and lockbox fields indicate when values exist without revealing them
+- **Legacy address support** — structured address fields populated from older single-line home address secrets
+
+### Preview and provisioning
+
+- **Pages preview Access** — fix invalid redirect URL when signing in to `*.pages.dev` preview deployments
+- **Preview enable script** — `enable-hub-pages-previews.mjs` copies env vars and supports production site id
+- **Hub tfvars guard** — prevent stale local `hub.tfvars` from targeting the wrong site during provision
+- **Wrangler sync hardening** — D1 id sync, env var deduplication, and auto-load provision env from tfvars
+
+### Platform (operators)
+
+- **Per-site sitter Access emails** — configure sitter login emails from Settings and platform wizard
+- **Platform admin and Terraform** — site wizard, sandbox/test import tooling, automated hub provision workflows
+- **Terraform validate on PRs** — hub environment modules validated in CI
+
 ## 2.1.0
 
 Minor release: onboarding wizard, vanilla test environment, kiosk reliability, and appearance fixes for launch readiness.
