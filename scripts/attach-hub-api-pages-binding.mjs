@@ -6,10 +6,12 @@
  *
  * Usage: node scripts/attach-hub-api-pages-binding.mjs <site_id>
  */
+import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateDeploySiteId } from './lib/site-registry.mjs';
+import { extractEnvBlock } from '../worker/scripts/check-env-provisioned.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
@@ -32,19 +34,42 @@ if (!token || !accountId) {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-const contractRaw = execFileSync(
-  'node',
-  [join(root, 'scripts/lib/terraform-site-output.mjs'), 'site', siteId],
-  { cwd: root, encoding: 'utf8' }
-);
-const contract = JSON.parse(contractRaw);
-const pagesProject = String(contract.pages_project ?? '').trim();
-const workerName = String(contract.worker_name ?? '').trim();
+/**
+ * @param {string} siteId
+ * @returns {{ pagesProject: string, workerName: string }}
+ */
+function resolveSiteBindingTargets(siteId) {
+  try {
+    const contractRaw = execFileSync(
+      'node',
+      [join(root, 'scripts/lib/terraform-site-output.mjs'), 'site', siteId],
+      { cwd: root,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'] }
+    );
+    const contract = JSON.parse(contractRaw);
+    const pagesProject = String(contract.pages_project ?? '').trim();
+    const workerName = String(contract.worker_name ?? '').trim();
+    if (pagesProject && workerName) {
+      return { pagesProject, workerName };
+    }
+  } catch {
+    // Fall back to wrangler + naming convention when terraform state is unavailable locally.
+  }
 
-if (!pagesProject || !workerName) {
-  console.error(`Missing pages_project or worker_name in terraform output for ${siteId}.`);
-  process.exit(1);
+  const toml = readFileSync(join(root, 'worker/wrangler.toml'), 'utf8');
+  const block = extractEnvBlock(toml, siteId);
+  const nameMatch = block?.match(/^name\s*=\s*"([^"]+)"/m);
+  const workerName = nameMatch?.[1]?.trim() ?? '';
+  const pagesProject = `home-dashboard-${siteId}`;
+  if (!workerName) {
+    throw new Error(`Could not resolve worker name for ${siteId} (terraform output and wrangler.toml).`);
+  }
+  console.warn(`Using wrangler.toml fallback: ${pagesProject} → ${workerName}`);
+  return { pagesProject, workerName };
 }
+
+const { pagesProject, workerName } = resolveSiteBindingTargets(siteId);
 
 const baseUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${pagesProject}`;
 const headers = {
