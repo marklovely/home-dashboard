@@ -73,8 +73,15 @@ export async function renderHomeScreen(viewport, apps, context) {
     return { app, card };
   });
 
+  let binAlertBanner = null;
   const binAlert = getBinCollectionAlert(new Date(), { houseSitter: false });
-  const binAlertBanner = binAlert ? createBinAlertBanner(binAlert, (id) => context.navigate(id)) : null;
+  if (binAlert) {
+    binAlertBanner = createBinAlertBanner(
+      binAlert,
+      (id) => context.navigate(id),
+      () => binAlertBanner?.remove()
+    );
+  }
 
   page.append(
     ...(binAlertBanner ? [binAlertBanner] : []),
