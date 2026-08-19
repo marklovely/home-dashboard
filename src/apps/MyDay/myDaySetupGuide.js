@@ -11,7 +11,7 @@ export const MY_DAY_CALENDAR_SETUP_GUIDES = [
     steps: [
       'Open Calendar and choose a personal calendar (not a shared work calendar).',
       'Turn on Public Calendar or get the private subscribe link (Calendar → Settings → Share → Public Calendar).',
-      'Copy the webcal:// or https:// link Apple provides.',
+      'Copy the webcal or https link Apple provides.',
       'In Hub setup (Calendar step) or Settings → Home details, paste the link into Private calendar link.',
       'Unlock Owner access on the tablet if needed, then open My Day.'
     ],
@@ -31,7 +31,7 @@ export const MY_DAY_CALENDAR_SETUP_GUIDES = [
     title: 'Other providers (Outlook, Fastmail, etc.)',
     steps: [
       'Find the private ICS or webcal subscribe URL in your provider\'s calendar sharing settings.',
-      'Ensure the URL is HTTPS (or webcal:// — the hub normalises it).',
+      'Ensure the URL is HTTPS (or webcal — the hub normalises it).',
       'Paste the link in Hub setup or Settings → Home details.',
       'My Day shows today, tomorrow, and the rest of the week — owner-only, never visible in House Sitter Mode.'
     ]

@@ -220,7 +220,7 @@ export const HUB_SETUP_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Calendar app → your calendar → Share → Public Calendar (or private subscribe link). Copy the webcal:// or https:// URL.'
+        text: 'Calendar app → your calendar → Share → Public Calendar (or private subscribe link). Copy the webcal or https URL.'
       },
       {
         type: 'h4',
