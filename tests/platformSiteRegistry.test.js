@@ -118,4 +118,18 @@ describe('site registry validation', () => {
     expect(ok.ok).toBe(true);
     expect(ok.payload.owner_emails).toEqual(['owner@example.com']);
   });
+
+  it('blocks create when site id is still in the platform manifest', () => {
+    const manifest = {
+      platform: { zoneName: 'lovely-home.co.uk' },
+      sites: { demo: { siteId: 'demo', hostname: 'demo.lovely-home.co.uk' } }
+    };
+    const blocked = buildSiteManagePayload(manifest, 'create', 'demo', {
+      hostname: 'demo.lovely-home.co.uk',
+      ownerEmails: ['owner@example.com']
+    });
+    expect(blocked.ok).toBe(false);
+    expect(blocked.message).toMatch(/already exists in the platform manifest/i);
+    expect(blocked.message).toMatch(/deprovision/i);
+  });
 });

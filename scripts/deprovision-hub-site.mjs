@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Full hub site deprovisioning for CI (worker delete → terraform destroy → manifest).
+ * Full hub site deprovisioning for CI (terraform destroy → worker delete → manifest).
  *
  * Usage: node scripts/deprovision-hub-site.mjs <site_id> [--skip-platform-admin]
  */
