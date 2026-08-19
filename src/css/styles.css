@@ -796,7 +796,7 @@ body.is-bins-route .app-viewport > .bins-app {
 
 .hub-setup-nav-do {
   flex-shrink: 0;
-  padding: 3px 8px;
+  padding: 3px 7px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 22%, var(--surface));
   color: var(--text);
