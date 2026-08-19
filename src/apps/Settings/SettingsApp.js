@@ -72,6 +72,20 @@ import {
   saveSiteProfile
 } from '../../services/siteProfileService.js';
 
+/**
+ * @param {{ ok: boolean, code?: string, message?: string }} result
+ * @param {string} fallback
+ */
+function siteProfileSaveErrorMessage(result, fallback) {
+  if (result.code === 'DEVICE_MODE_REQUIRED') {
+    return 'Unlock owner mode first — press and hold the Lovely Home logo, enter your owner PIN, then try again.';
+  }
+  if (result.code === 'NETWORK_ERROR') {
+    return 'Could not reach the hub API. PR preview URLs need HUB_API on preview (run enable-hub-pages-previews.mjs) or save from production.';
+  }
+  return result.message || fallback;
+}
+
 /** @returns {string} */
 function deviceModeLabel() {
   return getDeviceMode() === 'sitter' ? 'House sitter' : 'Owner';
@@ -399,16 +413,21 @@ function createBinReminderFields(context, onRefresh) {
     saveButton.disabled = true;
     void saveSiteProfile({
       binSchedule: { alertHoursBefore: alertField.readAlertHoursBefore() }
-    }).then((result) => {
-      saveButton.disabled = false;
-      if (!result.ok) {
-        showToast(context.toast, result.message || 'Could not save bin reminders.');
-        return;
-      }
-      context.refreshShell?.();
-      onRefresh();
-      showToast(context.toast, 'Bin reminders saved.');
-    });
+    })
+      .then((result) => {
+        saveButton.disabled = false;
+        if (!result.ok) {
+          showToast(context.toast, siteProfileSaveErrorMessage(result, 'Could not save bin reminders.'));
+          return;
+        }
+        context.refreshShell?.();
+        onRefresh();
+        showToast(context.toast, 'Bin reminders saved.');
+      })
+      .catch(() => {
+        saveButton.disabled = false;
+        showToast(context.toast, 'Could not reach the hub API. Check your connection and try again.');
+      });
   });
 
   wrap.append(alertField.wrap, saveButton);
