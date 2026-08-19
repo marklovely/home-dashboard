@@ -13,11 +13,12 @@ describe('hubSetupNavigation', () => {
     expect(getWizardSteps('both')).toContain('pets');
   });
 
-  it('provides labels and descriptions for each wizard step', () => {
+  it('provides labels, icons, and descriptions for each wizard step', () => {
     for (const stepId of getWizardSteps('both')) {
       const meta = getHubSetupStepMeta(stepId);
       expect(meta?.label).toBeTruthy();
       expect(meta?.description).toBeTruthy();
+      expect(meta?.iconId).toBeTruthy();
     }
     expect(HUB_SETUP_STEPS.find((step) => step.id === 'pets')?.optional).toBe(true);
   });
