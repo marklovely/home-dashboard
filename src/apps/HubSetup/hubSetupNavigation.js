@@ -1,44 +1,51 @@
 /** @typedef {'hub' | 'contacts' | 'pets' | 'access' | 'bins' | 'calendar' | 'guide'} HubSetupStepId */
 
-/** @typedef {{ id: HubSetupStepId, label: string, description: string, optional?: boolean }} HubSetupStepMeta */
+/** @typedef {{ id: HubSetupStepId, label: string, description: string, iconId: string, optional?: boolean }} HubSetupStepMeta */
 
 /** @type {HubSetupStepMeta[]} */
 export const HUB_SETUP_STEPS = [
   {
     id: 'hub',
     label: 'Hub name',
-    description: 'Name your hub and choose how guests will use it.'
+    description: 'Name your hub and choose how guests will use it.',
+    iconId: 'home'
   },
   {
     id: 'contacts',
     label: 'Contacts',
-    description: 'Who guests should call in an emergency.'
+    description: 'Who guests should call in an emergency.',
+    iconId: 'phone'
   },
   {
     id: 'pets',
     label: 'Pet care',
     description: 'Details for sitters looking after pets.',
+    iconId: 'dog',
     optional: true
   },
   {
     id: 'access',
     label: 'Guest access',
-    description: 'Wi‑Fi, lockbox, PIN, and property address.'
+    description: 'Wi‑Fi, lockbox, PIN, and property address.',
+    iconId: 'key-round'
   },
   {
     id: 'bins',
     label: 'Bin collections',
-    description: 'Collection dates and reminder location.'
+    description: 'Collection dates and reminder location.',
+    iconId: 'trash-2'
   },
   {
     id: 'calendar',
     label: 'My Day calendar',
-    description: 'Optional personal calendar for My Day.'
+    description: 'Optional personal calendar for My Day.',
+    iconId: 'calendar'
   },
   {
     id: 'guide',
     label: 'House Guide',
-    description: 'Import a starter guide or skip for now.'
+    description: 'Import a starter guide or skip for now.',
+    iconId: 'book-open'
   }
 ];
 

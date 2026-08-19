@@ -1,4 +1,5 @@
 import { defineApp } from '../../components/App/defineApp.js';
+import { renderIcon } from '../../components/icons/renderIcon.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
   buildHomeDetailsFormProfile,
@@ -247,43 +248,56 @@ function mountHubSetupWizard(viewport, context) {
 
     steps.forEach((stepId, index) => {
       const meta = getHubSetupStepMeta(stepId);
+      const isActive = index === step;
+      const isComplete = index < step;
       const item = document.createElement('button');
       item.type = 'button';
       item.className = 'settings-nav-item hub-setup-nav-item';
       item.setAttribute('role', 'listitem');
-      if (index === step) {
+      if (isActive) {
         item.classList.add('is-active');
         item.setAttribute('aria-current', 'step');
-      } else if (index < step) {
+      } else if (isComplete) {
         item.classList.add('is-complete');
       } else {
         item.classList.add('is-upcoming');
         item.disabled = true;
       }
 
-      const stepBadge = document.createElement('span');
-      stepBadge.className = 'hub-setup-nav-step';
-      stepBadge.textContent = index < step ? '✓' : String(index + 1);
-      stepBadge.setAttribute('aria-hidden', 'true');
+      const iconWrap = document.createElement('span');
+      iconWrap.className = 'hub-setup-nav-icon';
+      iconWrap.setAttribute('aria-hidden', 'true');
+      iconWrap.append(renderIcon(meta?.iconId ?? 'settings', { size: 18, className: 'hub-setup-nav-svg' }));
 
       const copy = document.createElement('span');
       copy.className = 'hub-setup-nav-copy';
 
+      const stepLine = document.createElement('span');
+      stepLine.className = 'hub-setup-nav-step-line';
+      stepLine.textContent = `Step ${index + 1}`;
+
       const label = document.createElement('span');
       label.className = 'hub-setup-nav-label';
-      label.textContent = meta?.label ?? stepId;
+      label.textContent = meta?.optional ? `${meta?.label ?? stepId} · Optional` : (meta?.label ?? stepId);
 
-      copy.append(label);
-      if (meta?.optional) {
-        const optional = document.createElement('span');
-        optional.className = 'hub-setup-nav-optional subtle';
-        optional.textContent = 'Optional';
-        copy.append(optional);
+      copy.append(stepLine, label);
+
+      item.append(iconWrap, copy);
+
+      if (isActive) {
+        const doBadge = document.createElement('span');
+        doBadge.className = 'hub-setup-nav-do';
+        doBadge.textContent = 'Do';
+        item.append(doBadge);
+      } else if (isComplete) {
+        const doneBadge = document.createElement('span');
+        doneBadge.className = 'hub-setup-nav-done';
+        doneBadge.textContent = 'Done';
+        doneBadge.setAttribute('aria-hidden', 'true');
+        item.append(doneBadge);
       }
 
-      item.append(stepBadge, copy);
-
-      if (index < step) {
+      if (isComplete) {
         item.addEventListener('click', () => {
           step = index;
           renderStep();
