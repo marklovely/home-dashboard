@@ -104,16 +104,17 @@ Terraform creates the **Pages project** and env vars; it does **not** upload a b
 | Setting | Value | Effect |
 |---------|-------|--------|
 | `production_branch` | `main` | **`main`** gets Production deployments |
-| `preview_deployment_setting` | `all` (default) | Feature/PR branches get **Preview** builds with the same env vars as production |
-| `pages_preview_deployments_enabled` | `true` in root tfvars | Set `false` to disable preview builds (previous behaviour) |
+| Hub `preview_deployment_setting` | `none` in Terraform | Avoids Cloudflare **8000022** when PATCHing Pages with HUB_API bindings |
+| `pages_preview_deployments_enabled` | `true` (platform admin only) | Platform admin project gets preview builds via Terraform |
+| Hub branch previews | `node scripts/enable-hub-pages-previews.mjs` | Run after apply when you want hub site preview URLs |
 
-Preview URLs look like `https://<branch>.<project>.pages.dev` (exact pattern varies). They use **Preview** deployment env vars — Terraform mirrors production settings (except **HUB_API** service bindings, which are production-only; previews use `WORKER_API_ORIGIN` for API proxy).
+Preview URLs look like `https://<branch>.<project>.pages.dev`. **Platform admin** previews are Terraform-managed; **hub sites** (demo, test, sandbox) use the enable script because the Terraform provider cannot safely PATCH preview settings and HUB_API service bindings together.
 
 **Access:** Custom domains (`platform.lovely-home.co.uk`, `demo.lovely-home.co.uk`) have Terraform-managed Access apps. Preview `*.pages.dev` hostnames may need a separate Access application (wildcard or per-branch) — see [cloudflare-access-runbook.md](./cloudflare-access-runbook.md).
 
 If preview rows show **“No deployment available”**, either previews are disabled (`pages_preview_deployments_enabled = false`) or Terraform has not been applied since enabling them.
 
-If apply fails on existing sites with **`Invalid Service name ()` (8000022)** when updating Pages, ensure preview deployment configs do not include service bindings (see `terraform/modules/hub_environment/pages.tf`).
+If apply fails on existing sites with **`Invalid Service name ()` (8000022)** when updating Pages, hub site `pages.tf` keeps `preview_deployment_setting = "none"` in Terraform — use `node scripts/enable-hub-pages-previews.mjs` after apply instead.
 
 **First production deploy** (when the project has never built):
 
