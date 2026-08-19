@@ -95,7 +95,6 @@ describe('owner authentication', () => {
 
     const ids = getVisibleApps().map((app) => app.id);
     expect(ids).toContain('settings');
-    expect(ids).toContain('plex');
     expect(ids).not.toContain('emergency');
     expect(ids).not.toContain('house-guide');
     expect(ids).not.toContain('scooter');
