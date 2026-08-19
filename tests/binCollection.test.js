@@ -9,6 +9,8 @@ import {
   __buildAllCollectionEventsForTests,
   describeCollectionEvent,
   formatIsoFromDate,
+  formatBinAlertPutOutLine,
+  formatBinAlertLocationLine,
   getBinCollectionAlert,
   getBinCollectionHomeSummary,
   getDaysUntil,
@@ -189,10 +191,25 @@ describe('bin collection alerts', () => {
     const alert = getBinCollectionAlert(asOf, { houseSitter: true });
     expect(alert?.title).toMatch(/Bin collection tomorrow/i);
     expect(alert?.label).toMatch(/Recycling/i);
+    expect(alert?.putOutLine).toMatch(/Put bins out by 6am tomorrow/i);
+    expect(alert?.locationLine).toMatch(/Collection point:/i);
 
     const summary = getBinCollectionHomeSummary(asOf, { houseSitter: true });
     expect(summary.alert?.label).toBe(alert?.label);
     expect(summary.alert?.prominent).toBe(true);
+  });
+
+  it('formats put-out and location lines for collection day', () => {
+    const asOf = new Date('2026-07-31T08:00:00');
+    expect(formatBinAlertPutOutLine('2026-07-31', asOf)).toBe('Put bins out by 6am today');
+    expect(formatBinAlertLocationLine()).toMatch(/Collection point:/);
+  });
+
+  it('returns an owner alert with the same reminder details', () => {
+    const asOf = new Date('2026-07-30T12:00:00');
+    const alert = getBinCollectionAlert(asOf, { houseSitter: false });
+    expect(alert?.putOutLine).toMatch(/tomorrow/i);
+    expect(alert?.locationLine).toMatch(/Collection point:/);
   });
 
   it('respects disabled alerts when hours before is zero', () => {

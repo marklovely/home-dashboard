@@ -5,6 +5,7 @@ import { getAppDisplayTitle, getModeConfig } from '../../modes/modeConfig.js';
 import { getSiteProfileState } from '../../services/siteProfileService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 import { getBinCollectionAlert } from '../../services/binCollectionService.js';
+import { createBinAlertBanner } from './createBinAlertBanner.js';
 
 /** @type {Record<string, { headline: string, teaser?: string, teaserFromSummary?: 'title' | 'subtitle' }>} */
 const ESSENTIAL_CARD_COPY = {
@@ -167,40 +168,6 @@ function applySecondaryBinsSummary(card, summary) {
 
   card.classList.remove('sitter-info-card--alert');
   applyCardSummary(card, summary);
-}
-
-/**
- * @param {import('../../services/binCollectionService.js').BinCollectionAlert} alert
- * @param {(appId: string) => void} navigate
- */
-function createBinAlertBanner(alert, navigate) {
-  const banner = document.createElement('button');
-  banner.type = 'button';
-  banner.className = 'sitter-bin-alert';
-  banner.setAttribute('role', 'status');
-  banner.setAttribute('aria-live', 'polite');
-  banner.setAttribute('aria-label', `${alert.title}. ${alert.detail}. Open Bins app.`);
-
-  const icon = document.createElement('span');
-  icon.className = 'sitter-bin-alert-icon';
-  icon.setAttribute('aria-hidden', 'true');
-  icon.append(renderIcon('trash-2', { size: 28, className: 'sitter-bin-alert-svg' }));
-
-  const copy = document.createElement('span');
-  copy.className = 'sitter-bin-alert-copy';
-
-  const title = document.createElement('span');
-  title.className = 'sitter-bin-alert-title';
-  title.textContent = alert.title;
-
-  const detail = document.createElement('span');
-  detail.className = 'sitter-bin-alert-detail';
-  detail.textContent = alert.detail;
-
-  copy.append(title, detail);
-  banner.append(icon, copy);
-  banner.addEventListener('click', () => navigate('bins'));
-  return banner;
 }
 
 /**
