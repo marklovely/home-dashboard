@@ -17,7 +17,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day, Plex) stay hidden from sitters. The sitter tablet shows a simpler Lovely Home home screen with Scooter, House Guide, Controls, Emergency, Weather, and Bins.'
+        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day) stay hidden from sitters. The sitter tablet shows a simpler Lovely Home home screen with Scooter, House Guide, Controls, Emergency, Weather, and Bins.'
       },
       {
         type: 'ul',
@@ -107,7 +107,7 @@ export const OWNER_HELP_SECTIONS = [
   {
     id: 'apps',
     title: 'Apps at a glance',
-    keywords: ['controls', 'alexa', 'guide editor', 'manuals', 'my day', 'plex', 'settings', 'apps'],
+    keywords: ['controls', 'alexa', 'guide editor', 'manuals', 'my day', 'settings', 'apps'],
     blocks: [
       {
         type: 'p',
@@ -121,7 +121,6 @@ export const OWNER_HELP_SECTIONS = [
           ['Guide Editor', 'Write and publish House Guide topics', 'No'],
           ['Appliance Manuals', 'Upload PDF user guides for sitters', 'No — manuals open inside House Guide'],
           ['My Day', 'Your personal calendar for the week ahead', 'No'],
-          ['Plex', 'Media hub (coming soon)', 'No'],
           ['Settings', 'Theme, display, screensaver, House Sitter Mode', 'Yes — limited options']
         ]
       },
