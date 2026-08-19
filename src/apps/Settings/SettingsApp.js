@@ -30,7 +30,7 @@ import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { createHubSetupHelpButton } from '../../components/HubSetup/hubSetupHelp.js';
-import { createCalendarConnectionField } from '../../components/HubSetup/binScheduleFields.js';
+import { createCalendarConnectionField, createBinAlertHoursField } from '../../components/HubSetup/binScheduleFields.js';
 import { HUB_SETUP_FIELD_HELP } from '../../components/HubSetup/hubSetupHelpContent.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
@@ -123,7 +123,8 @@ function mountSettingsApp(viewport, context, onRefresh) {
   if (isOwnerUserMode()) {
     groups.splice(1, 0, createSettingsGroup('Backup & restore', createBackupRestoreFields(context)));
     groups.splice(1, 0, createSettingsGroup('Home details', createHomeDetailsFields(context)));
-    groups.splice(2, 0, createSettingsGroup('Weather location', createWeatherLocationField(context, onRefresh)));
+    groups.splice(2, 0, createSettingsGroup('Bin reminders', createBinReminderFields(context, onRefresh)));
+    groups.splice(3, 0, createSettingsGroup('Weather location', createWeatherLocationField(context, onRefresh)));
     groups.unshift(createSettingsGroup('House sitter mode', createHouseSitterModeFields(context, onRefresh)));
   }
 
@@ -371,6 +372,46 @@ function createHomeDetailsFields(context) {
   });
 
   wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, calendarFields.wrap, saveButton, wizardButton);
+  return wrap;
+}
+
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ * @param {() => void} onRefresh
+ */
+function createBinReminderFields(context, onRefresh) {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options settings-options--stacked';
+
+  wrap.append(
+    createSetupIntro(
+      'Sitters see a prominent reminder on the home screen before each bin collection. Reminders count down from 6am on collection day — the same time bins are normally put out.'
+    )
+  );
+
+  const alertField = createBinAlertHoursField(getSiteProfileState()?.profile ?? {});
+
+  const saveButton = document.createElement('button');
+  saveButton.type = 'button';
+  saveButton.className = 'settings-action-button';
+  saveButton.textContent = 'Save bin reminders';
+  saveButton.addEventListener('click', () => {
+    saveButton.disabled = true;
+    void saveSiteProfile({
+      binSchedule: { alertHoursBefore: alertField.readAlertHoursBefore() }
+    }).then((result) => {
+      saveButton.disabled = false;
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Could not save bin reminders.');
+        return;
+      }
+      context.refreshShell?.();
+      onRefresh();
+      showToast(context.toast, 'Bin reminders saved.');
+    });
+  });
+
+  wrap.append(alertField.wrap, saveButton);
   return wrap;
 }
 

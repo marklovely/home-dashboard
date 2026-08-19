@@ -346,6 +346,10 @@ export const HUB_SETUP_FIELD_HELP = {
   binValidUntil: {
     helpText: 'Last date in this calendar period. After this date the app asks for an updated schedule.'
   },
+  binAlertHours: {
+    helpText:
+      'How far ahead sitters see a prominent reminder on the home screen before each collection (from 6am on collection day). Default is 24 hours. Choose Off to hide reminders.'
+  },
   calendarIcsUrl: {
     hint: 'Private subscribe link — not your normal calendar login.',
     helpText:

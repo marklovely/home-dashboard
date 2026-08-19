@@ -9,8 +9,10 @@ import {
   __buildAllCollectionEventsForTests,
   describeCollectionEvent,
   formatIsoFromDate,
+  getBinCollectionAlert,
   getBinCollectionHomeSummary,
   getDaysUntil,
+  isBinCollectionInAlertWindow,
   getNextCollection,
   getNextGardenWasteCollection,
   getNextHouseholdCollection,
@@ -157,6 +159,47 @@ describe('schedule expiry', () => {
     expect(isScheduleExpired(parseLocalDate('2026-11-01'))).toBe(true);
     expect(getNextCollection(parseLocalDate('2026-11-05'))).toBeNull();
     expect(getUpcomingCollections(parseLocalDate('2026-11-05'), 3)).toEqual([]);
+  });
+});
+
+describe('bin collection alerts', () => {
+  it('opens the alert window 24 hours before 6am on collection day', () => {
+    const collectionDate = '2026-07-31';
+    expect(isBinCollectionInAlertWindow(collectionDate, new Date('2026-07-30T07:00:00'), 24)).toBe(
+      true
+    );
+    expect(isBinCollectionInAlertWindow(collectionDate, new Date('2026-07-30T05:00:00'), 24)).toBe(
+      false
+    );
+  });
+
+  it('keeps the alert visible throughout collection day', () => {
+    const collectionDate = '2026-07-31';
+    expect(isBinCollectionInAlertWindow(collectionDate, parseLocalDate('2026-07-31'), 24)).toBe(
+      true
+    );
+    expect(isBinCollectionInAlertWindow(collectionDate, new Date('2026-07-31T18:00:00'), 24)).toBe(
+      true
+    );
+    expect(isBinCollectionInAlertWindow(collectionDate, parseLocalDate('2026-08-01'), 24)).toBe(false);
+  });
+
+  it('returns a sitter alert and home summary flag when within the window', () => {
+    const asOf = new Date('2026-07-30T12:00:00');
+    const alert = getBinCollectionAlert(asOf, { houseSitter: true });
+    expect(alert?.title).toMatch(/Bin collection tomorrow/i);
+    expect(alert?.label).toMatch(/Recycling/i);
+
+    const summary = getBinCollectionHomeSummary(asOf, { houseSitter: true });
+    expect(summary.alert?.label).toBe(alert?.label);
+    expect(summary.alert?.prominent).toBe(true);
+  });
+
+  it('respects disabled alerts when hours before is zero', () => {
+    const asOf = new Date('2026-07-30T12:00:00');
+    expect(
+      isBinCollectionInAlertWindow('2026-07-31', asOf, 0)
+    ).toBe(false);
   });
 });
 

@@ -4,6 +4,7 @@ import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { getAppDisplayTitle, getModeConfig } from '../../modes/modeConfig.js';
 import { getSiteProfileState } from '../../services/siteProfileService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
+import { getBinCollectionAlert } from '../../services/binCollectionService.js';
 
 /** @type {Record<string, { headline: string, teaser?: string, teaserFromSummary?: 'title' | 'subtitle' }>} */
 const ESSENTIAL_CARD_COPY = {
@@ -148,6 +149,61 @@ function applySecondaryWeatherSummary(card, summary) {
 }
 
 /**
+ * @param {HTMLElement} card
+ * @param {import('../types/app.js').AppSummary} summary
+ */
+function applySecondaryBinsSummary(card, summary) {
+  if (summary.alert?.label) {
+    card.classList.add('sitter-info-card--alert');
+    const liveTitle = card.querySelector('.home-launcher-live-title');
+    const liveSubtitle = card.querySelector('.home-launcher-live-subtitle');
+    if (liveTitle) liveTitle.textContent = summary.alert.label;
+    if (liveSubtitle) {
+      liveSubtitle.textContent = summary.subtitle ?? '';
+      liveSubtitle.hidden = !summary.subtitle;
+    }
+    return;
+  }
+
+  card.classList.remove('sitter-info-card--alert');
+  applyCardSummary(card, summary);
+}
+
+/**
+ * @param {import('../../services/binCollectionService.js').BinCollectionAlert} alert
+ * @param {(appId: string) => void} navigate
+ */
+function createBinAlertBanner(alert, navigate) {
+  const banner = document.createElement('button');
+  banner.type = 'button';
+  banner.className = 'sitter-bin-alert';
+  banner.setAttribute('role', 'status');
+  banner.setAttribute('aria-live', 'polite');
+  banner.setAttribute('aria-label', `${alert.title}. ${alert.detail}. Open Bins app.`);
+
+  const icon = document.createElement('span');
+  icon.className = 'sitter-bin-alert-icon';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.append(renderIcon('trash-2', { size: 28, className: 'sitter-bin-alert-svg' }));
+
+  const copy = document.createElement('span');
+  copy.className = 'sitter-bin-alert-copy';
+
+  const title = document.createElement('span');
+  title.className = 'sitter-bin-alert-title';
+  title.textContent = alert.title;
+
+  const detail = document.createElement('span');
+  detail.className = 'sitter-bin-alert-detail';
+  detail.textContent = alert.detail;
+
+  copy.append(title, detail);
+  banner.append(icon, copy);
+  banner.addEventListener('click', () => navigate('bins'));
+  return banner;
+}
+
+/**
  * @param {string} title
  * @param {string} [subtext]
  */
@@ -276,7 +332,16 @@ export async function renderHouseSitterHome(viewport, apps, context) {
   helpActions.append(tabletGuideButton, helpButton);
   helpSection.append(helpCopy, helpActions);
 
-  page.append(welcome, essentialsSection, infoSection, helpSection);
+  const binAlert = getBinCollectionAlert(new Date(), { houseSitter: true });
+  const binAlertBanner = binAlert ? createBinAlertBanner(binAlert, (id) => context.navigate(id)) : null;
+
+  page.append(
+    welcome,
+    ...(binAlertBanner ? [binAlertBanner] : []),
+    essentialsSection,
+    infoSection,
+    helpSection
+  );
   viewport.append(page);
 
   await Promise.all([
@@ -295,6 +360,8 @@ export async function renderHouseSitterHome(viewport, apps, context) {
         const summary = await app.summary(context);
         if (app.id === 'weather') {
           applySecondaryWeatherSummary(card, summary);
+        } else if (app.id === 'bins') {
+          applySecondaryBinsSummary(card, summary);
         } else {
           applyCardSummary(card, summary);
         }
