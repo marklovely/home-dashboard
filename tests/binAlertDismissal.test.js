@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  clearBinAlertDismissal,
   dismissBinAlertForCollection,
   getDismissedBinCollectionDate,
   isBinAlertDismissed,
@@ -41,5 +42,18 @@ describe('binAlertDismissalService', () => {
 
     expect(getBinCollectionAlert(asOf, { houseSitter: true })).toBeNull();
     expect(getBinCollectionHomeSummary(asOf, { houseSitter: true }).alert).toBeNull();
+  });
+
+  it('clears dismissal when reset from settings', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-30T12:00:00'));
+    dismissBinAlertForCollection('2026-07-31');
+    expect(isBinAlertDismissed('2026-07-31')).toBe(true);
+
+    clearBinAlertDismissal();
+
+    expect(getDismissedBinCollectionDate()).toBeNull();
+    expect(isBinAlertDismissed('2026-07-31')).toBe(false);
+    expect(getBinCollectionAlert(new Date('2026-07-30T12:00:00'), { houseSitter: true })).not.toBeNull();
   });
 });

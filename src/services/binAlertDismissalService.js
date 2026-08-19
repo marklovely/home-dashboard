@@ -71,8 +71,14 @@ export function subscribeToBinAlertDismissal(listener) {
   return () => listeners.delete(listener);
 }
 
+/** Clears an active "Bins are out" dismissal so home reminders can show again. */
+export function clearBinAlertDismissal() {
+  localStorage.removeItem(STORAGE_KEY);
+  notify();
+}
+
 /** @internal */
 export function resetBinAlertDismissalForTests() {
-  localStorage.removeItem(STORAGE_KEY);
+  clearBinAlertDismissal();
   listeners.clear();
 }
