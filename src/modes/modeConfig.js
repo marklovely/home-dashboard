@@ -18,6 +18,7 @@ import { isHouseSitterExperience } from '../auth/userMode.js';
  * @property {boolean} showOwnerStatusStrip
  * @property {boolean} showControlsFooter
  * @property {boolean} showHomeWelcomeGreeting
+ * @property {boolean} showHomeDate
  * @property {boolean} showHelpCard
  * @property {boolean} showSitterHeaderWeather
  * @property {string[]} sitterEssentialAppIds
@@ -40,6 +41,7 @@ const ownerConfig = {
   showOwnerStatusStrip: true,
   showControlsFooter: true,
   showHomeWelcomeGreeting: true,
+  showHomeDate: true,
   showHelpCard: false,
   showSitterHeaderWeather: false,
   sitterEssentialAppIds: [],
@@ -77,7 +79,8 @@ const houseSitterConfig = {
   ],
   showOwnerStatusStrip: false,
   showControlsFooter: false,
-  showHomeWelcomeGreeting: false,
+  showHomeWelcomeGreeting: true,
+  showHomeDate: true,
   showHelpCard: true,
   showSitterHeaderWeather: true,
   controls: {

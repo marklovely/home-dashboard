@@ -38,9 +38,23 @@
           </div>
         </div>
 
-        <div id="shell-home-welcome" class="shell-home-welcome">
-          <h2 id="greeting" class="home-greeting">Good afternoon</h2>
-          <p id="date" class="subtle home-date"></p>
+        <div id="shell-home-hero" class="shell-home-hero" hidden>
+          <div id="shell-home-welcome" class="shell-home-welcome">
+            <h2 id="greeting" class="home-greeting">Good afternoon</h2>
+            <p id="date" class="home-date"></p>
+          </div>
+          <button
+            type="button"
+            id="shell-home-weather"
+            class="shell-home-weather"
+            aria-label="Open weather"
+          >
+            <span id="shell-hero-weather-icon" class="shell-home-weather-icon"></span>
+            <span class="shell-home-weather-copy">
+              <strong id="shell-hero-weather-temp" class="shell-home-weather-temp">—</strong>
+              <span id="shell-hero-weather-condition" class="shell-home-weather-condition">Locating…</span>
+            </span>
+          </button>
         </div>
 
         <section id="shell-status" class="status-strip" aria-label="Home status">

@@ -13,7 +13,8 @@ import { subscribeToDisplayPreferences } from '../services/displayPreferencesSer
 /**
  * @param {Object} options
  * @param {HTMLElement} options.viewport
- * @param {HTMLElement} options.homeWelcome
+ * @param {HTMLElement | null} [options.shellHomeHero]
+ * @param {HTMLElement | null} [options.homeGreeting]
  * @param {HTMLElement} options.shellEyebrow
  * @param {HTMLElement} options.shellChromeTitle
  * @param {HTMLElement} options.homeButton
@@ -26,7 +27,8 @@ import { subscribeToDisplayPreferences } from '../services/displayPreferencesSer
  */
 export function createAppShell({
   viewport,
-  homeWelcome,
+  shellHomeHero,
+  homeGreeting,
   shellEyebrow,
   shellChromeTitle,
   homeButton,
@@ -71,7 +73,11 @@ export function createAppShell({
 
     const mode = getModeConfig();
     const isHome = route === HOME_ROUTE;
-    homeWelcome.hidden = !isHome || !mode.showHomeWelcomeGreeting;
+    const showHomeHero = isHome && (mode.showHomeWelcomeGreeting || mode.showHomeDate);
+    if (shellHomeHero) shellHomeHero.hidden = !showHomeHero;
+    if (homeGreeting) {
+      homeGreeting.hidden = !isHome || !mode.showHomeWelcomeGreeting;
+    }
     statusStrip.hidden = !isHome || !mode.showOwnerStatusStrip;
     if (shellHeaderWeather) {
       shellHeaderWeather.hidden = !isHome || !mode.showSitterHeaderWeather;
