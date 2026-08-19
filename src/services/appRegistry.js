@@ -5,7 +5,6 @@ const APP_DISPLAY_ORDER = [
   'weather',
   'bins',
   'emergency',
-  'plex',
   'my-day',
   'appliance-manuals',
   'house-guide-editor',

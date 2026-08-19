@@ -19,7 +19,6 @@ App Shell
 ├── Scooter App (placeholder)
 ├── Weather App (forecast via Worker)
 ├── Bins App (static council calendars)
-├── Plex App (placeholder)
 ├── Calendar App (placeholder)
 └── Settings App (configuration)
 ```
