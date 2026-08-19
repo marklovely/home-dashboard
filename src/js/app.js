@@ -108,10 +108,7 @@ async function initialiseDashboard() {
       text: document.querySelector('#shell-weather-text')
     },
     heroElements: {
-      icon: document.querySelector('#shell-hero-weather-icon'),
-      temp: document.querySelector('#shell-hero-weather-temp'),
-      text: document.querySelector('#shell-hero-weather-condition'),
-      condition: document.querySelector('#shell-hero-weather-condition')
+      icon: document.querySelector('#shell-hero-weather-icon')
     }
   });
 
