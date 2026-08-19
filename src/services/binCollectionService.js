@@ -24,6 +24,9 @@ import {
   formatBinLabel,
   getCollectionType
 } from '../data/binCollections/collectionTypes.js';
+import {
+  getBinCollectionLocationPhrase
+} from '../apps/Bins/binCollectionCopy.js';
 
 /** @typedef {import('../data/binCollections/collectionTypes.js').CollectionTypeId} CollectionTypeId */
 
@@ -324,9 +327,34 @@ export const BIN_COLLECTION_PUT_OUT_HOUR = 6;
  * @property {string} label Short line for cards and banners
  * @property {string} title Banner heading
  * @property {string} detail Which bins to put out
+ * @property {string} putOutLine When to put bins out
+ * @property {string} locationLine Where bins are collected
  * @property {string} whenLabel today | tomorrow | weekday
  * @property {CollectionEvent} event
  */
+
+/**
+ * @param {string} collectionDateIso
+ * @param {Date} [asOfDate]
+ */
+export function formatBinAlertPutOutLine(collectionDateIso, asOfDate = new Date()) {
+  const timing = getDaysUntil(collectionDateIso, asOfDate);
+  const dateLabel = formatCollectionDateLabel(collectionDateIso);
+  const hour = BIN_COLLECTION_PUT_OUT_HOUR;
+
+  if (timing.days === 0) {
+    return `Put bins out by ${hour}am today`;
+  }
+  if (timing.days === 1) {
+    return `Put bins out by ${hour}am tomorrow (${dateLabel})`;
+  }
+  return `Put bins out by ${hour}am on ${dateLabel}`;
+}
+
+/** @returns {string} */
+export function formatBinAlertLocationLine() {
+  return `Collection point: ${getBinCollectionLocationPhrase()}`;
+}
 
 /**
  * @param {string} isoDate
@@ -396,6 +424,8 @@ export function getBinCollectionAlert(asOfDate = new Date(), options = {}) {
     label,
     title: `${typeDef.emoji} Bin collection ${whenPhrase}`,
     detail: typeDef.binDescription,
+    putOutLine: formatBinAlertPutOutLine(next.date, asOfDate),
+    locationLine: formatBinAlertLocationLine(),
     whenLabel:
       described.timing.days === 0
         ? 'today'

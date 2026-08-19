@@ -1769,6 +1769,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .sitter-welcome-title { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.02em; }
 .sitter-welcome-lead { margin: 0; font-size: 1.05rem; color: var(--text); line-height: 1.45; }
 .sitter-welcome-body { margin: 0; color: var(--muted); line-height: 1.45; }
+.bin-alert-banner,
 .sitter-bin-alert {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1790,10 +1791,15 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   font: inherit;
   box-shadow: 0 10px 28px color-mix(in srgb, #28d17c 12%, transparent);
 }
+.home-screen .bin-alert-banner {
+  margin-bottom: clamp(12px, 2vw, 18px);
+}
+.bin-alert-banner:focus-visible,
 .sitter-bin-alert:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
+.bin-alert-banner-icon,
 .sitter-bin-alert-icon {
   display: inline-flex;
   align-items: center;
@@ -1804,14 +1810,22 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   background: color-mix(in srgb, #28d17c 22%, var(--surface));
   color: #28d17c;
 }
+.bin-alert-banner-copy,
 .sitter-bin-alert-copy { display: grid; gap: 4px; }
+.bin-alert-banner-title,
 .sitter-bin-alert-title {
   font-size: clamp(1.05rem, 2vw, 1.25rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
+.bin-alert-banner-detail,
 .sitter-bin-alert-detail {
+  font-size: 0.92rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.bin-alert-banner-meta {
   font-size: 0.92rem;
   color: var(--muted);
   line-height: 1.35;
