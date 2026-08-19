@@ -43,10 +43,22 @@ resource "cloudflare_zero_trust_access_application" "pages" {
   domain           = var.hostname
   session_duration = var.access_session_duration
 
-  destinations = [{
-    type = "public"
-    uri  = var.hostname
-  }]
+  # Custom domain + default Pages hostname + PR preview hostnames share one AUD
+  # (CF_ACCESS_AUD_PAGES). Without *.pages.dev, preview builds show "invalid redirect URL".
+  destinations = [
+    {
+      type = "public"
+      uri  = var.hostname
+    },
+    {
+      type = "public"
+      uri  = local.pages_dev_host
+    },
+    {
+      type = "public"
+      uri  = "*.${local.pages_dev_host}"
+    }
+  ]
 
   policies = local.access_policies
 }
