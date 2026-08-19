@@ -99,16 +99,24 @@ bash ../scripts/deploy-cloudflare-pages-site.sh sandbox
 
 ## Pages not deploying (“No production deployment yet”)
 
-Terraform creates the **Pages project** and env vars; it does **not** upload a build. Git-connected sandbox projects are configured with:
+Terraform creates the **Pages project** and env vars; it does **not** upload a build. Git-connected projects use:
 
 | Setting | Value | Effect |
 |---------|-------|--------|
-| `production_branch` | `main` | Only **`main`** gets a Production deployment |
-| `preview_deployment_setting` | `none` | Feature/PR branches do **not** build |
+| `production_branch` | `main` | **`main`** gets Production deployments |
+| Hub `preview_deployment_setting` | `none` in Terraform | Avoids Cloudflare **8000022** when PATCHing Pages with HUB_API bindings |
+| `pages_preview_deployments_enabled` | `true` (platform admin only) | Platform admin project gets preview builds via Terraform |
+| Hub branch previews | `node scripts/enable-hub-pages-previews.mjs` | Run after apply when you want hub site preview URLs |
 
-So commits on `feature/platform-terraform-sandbox` appear in the dashboard as Preview rows with **“No deployment available”** — that is expected until something deploys from **`main`**.
+Preview URLs look like `https://<branch>.<project>.pages.dev`. **Platform admin** previews are Terraform-managed; **hub sites** (demo, test, sandbox) use the enable script because the Terraform provider cannot safely PATCH preview settings and HUB_API service bindings together.
 
-**Option A — deploy now (no merge):**
+**Access:** Custom domains (`platform.lovely-home.co.uk`, `demo.lovely-home.co.uk`) have Terraform-managed Access apps. Preview `*.pages.dev` hostnames may need a separate Access application (wildcard or per-branch) — see [cloudflare-access-runbook.md](./cloudflare-access-runbook.md).
+
+If preview rows show **“No deployment available”**, either previews are disabled (`pages_preview_deployments_enabled = false`) or Terraform has not been applied since enabling them.
+
+If apply fails on existing sites with **`Invalid Service name ()` (8000022)** when updating Pages, hub site `pages.tf` keeps `preview_deployment_setting = "none"` in Terraform — use `node scripts/enable-hub-pages-previews.mjs` after apply instead.
+
+**First production deploy** (when the project has never built):
 
 ```bash
 unset CLOUDFLARE_API_TOKEN
@@ -126,12 +134,20 @@ After the first Pages deploy, ensure the **Worker** is up (`npm run deploy:sandb
 
 ## HUB_API Pages binding
 
-Terraform manages the **HUB_API** service binding on Terraform-managed Pages projects (`HUB_API` → `lovely-home-hub-api-{site}`). This prevents `terraform apply` from clearing dashboard-only bindings.
+Terraform manages Pages **env vars** on create; **`lifecycle { ignore_changes = [deployment_configs] }`** stops later applies from PATCHing deployment configs (the provider returns **8000022** or **unknown environment** on service bindings).
 
-| Site block flag | When |
-|-----------------|------|
-| `attach_hub_api_binding = true` (default) | Worker is deployed — normal ops for test/sandbox |
-| `attach_hub_api_binding = false` | First `terraform apply` on a **new** site before the Worker exists; deploy Worker, set `true`, apply again |
+**HUB_API** is attached with:
+
+```bash
+node scripts/attach-hub-api-pages-binding.mjs <site_id>
+```
+
+CI runs this after Worker deploy, then `terraform apply -refresh-only` to sync state. Local full applies skip deployment config changes — run the attach script after Worker deploy if health checks show `HUB_API binding no`.
+
+| Site block flag | Meaning |
+|-----------------|--------|
+| `attach_hub_api_binding = true` in `sites.yaml` | Site is fully provisioned; health checks expect HUB_API |
+| `attach_hub_api_binding = false` | Pre-worker / first apply only in CI generated tfvars |
 
 **Production** (`home-dashboard`) is not in this Terraform stack — configure **HUB_API → `lovely-home-hub-api`** in the dashboard as today.
 
@@ -139,6 +155,11 @@ Terraform manages the **HUB_API** service binding on Terraform-managed Pages pro
 
 Use real values in `hub.tfvars` (never commit it):
 
+- **`hub.tfvars` must list every site with `terraform: true` in `platform/sites.yaml`.** If you add a site via the platform wizard but omit it from local `hub.tfvars`, the next `terraform apply -var-file=environments/hub.tfvars` **destroys** that site's Cloudflare resources. Before any local apply, run:
+  ```bash
+  node scripts/validate-local-hub-tfvars-sites.mjs
+  ```
+  Or generate tfvars from the registry (same as CI): `node scripts/generate-hub-tfvars.mjs` with the required env vars, then apply using `hub.generated.tfvars`.
 - **`owner_emails`** / **`sitter_emails`** — must match who should pass Access. Placeholder emails in tfvars will overwrite Access policies on apply.
 - **`hub_proxy_secret`** — required when importing a site; preserves existing Pages/Worker proxy secret.
 - **`access_team_domain`** — Zero Trust team slug (`lovely-home`), not the Workers subdomain.
@@ -266,7 +287,7 @@ Production uses **legacy Cloudflare names** (no `-production` suffix):
 
 5. **Apply when safe** — reconciles env vars, HUB_API binding, and platform health Access policy.
 
-   If apply fails on `cloudflare_pages_project` with **`Invalid Service name ()` (8000022)**, ensure `pages_hub_api_services` sets `entrypoint = "default"` on the HUB_API binding (see `terraform/modules/hub_environment/variables.tf`). Do **not** set `attach_hub_api_binding = false` on an imported site — Terraform will send an empty services map and **remove** the dashboard binding.
+   If apply fails on `cloudflare_pages_project` with **`Invalid Service name ()` (8000022)** or **unknown environment** on service bindings, hub Pages use `lifecycle { ignore_changes = [deployment_configs] }` — run `node scripts/attach-hub-api-pages-binding.mjs <site_id>` after Worker deploy instead.
 
    Optional guard before apply:
 

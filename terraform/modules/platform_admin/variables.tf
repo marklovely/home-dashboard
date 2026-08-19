@@ -54,6 +54,12 @@ variable "platform_github_token" {
   description = "GitHub PAT for site wizard (contents:write, actions:write). Omit to disable automation UI."
 }
 
+variable "pages_preview_deployments_enabled" {
+  type        = bool
+  default     = true
+  description = "When true, non-production branches get Cloudflare Pages preview builds with the same env vars as production."
+}
+
 locals {
   hostname_label = replace(var.hostname, ".${var.zone_name}", "")
   operator_policy_includes = [

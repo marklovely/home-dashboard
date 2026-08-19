@@ -1,3 +1,62 @@
+locals {
+  pages_preview_deployment_setting = var.pages_preview_deployments_enabled ? "all" : "none"
+
+  platform_production_env_vars = merge(
+    {
+      CF_ACCESS_TEAM_DOMAIN = {
+        type  = "plain_text"
+        value = var.access_team_domain
+      }
+      CF_ACCESS_AUD_PAGES = {
+        type  = "plain_text"
+        value = cloudflare_zero_trust_access_application.platform.aud
+      }
+      PLATFORM_OPERATOR_EMAILS = {
+        type  = "plain_text"
+        value = local.operator_emails_csv
+      }
+      PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID = {
+        type  = "plain_text"
+        value = cloudflare_zero_trust_access_service_token.platform_health.client_id
+      }
+      PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET = {
+        type  = "secret_text"
+        value = cloudflare_zero_trust_access_service_token.platform_health.client_secret
+      }
+      NODE_VERSION = {
+        type  = "plain_text"
+        value = "24.19.0"
+      }
+    },
+    var.platform_github_token != "" ? {
+      PLATFORM_GITHUB_TOKEN = {
+        type  = "secret_text"
+        value = var.platform_github_token
+      }
+      PLATFORM_GITHUB_REPO = {
+        type  = "plain_text"
+        value = local.github_repo_slug
+      }
+    } : {}
+  )
+
+  pages_runtime_base = {
+    fail_open           = true
+    compatibility_date  = "2024-12-01"
+    compatibility_flags = ["nodejs_compat"]
+  }
+
+  pages_production_config = merge(
+    local.pages_runtime_base,
+    { env_vars = local.platform_production_env_vars }
+  )
+
+  pages_preview_config = merge(
+    local.pages_runtime_base,
+    { env_vars = local.platform_production_env_vars }
+  )
+}
+
 resource "cloudflare_pages_project" "admin" {
   account_id        = var.account_id
   name              = var.pages_name
@@ -16,59 +75,13 @@ resource "cloudflare_pages_project" "admin" {
       repo_name                      = var.github_repo
       production_branch              = var.github_production_branch
       production_deployments_enabled = true
-      preview_deployment_setting     = "none"
+      preview_deployment_setting     = local.pages_preview_deployment_setting
     }
   }
 
   deployment_configs = {
-    production = {
-      fail_open           = true
-      compatibility_date  = "2024-12-01"
-      compatibility_flags = ["nodejs_compat"]
-      env_vars = merge(
-        {
-          CF_ACCESS_TEAM_DOMAIN = {
-            type  = "plain_text"
-            value = var.access_team_domain
-          }
-          CF_ACCESS_AUD_PAGES = {
-            type  = "plain_text"
-            value = cloudflare_zero_trust_access_application.platform.aud
-          }
-          PLATFORM_OPERATOR_EMAILS = {
-            type  = "plain_text"
-            value = local.operator_emails_csv
-          }
-          PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID = {
-            type  = "plain_text"
-            value = cloudflare_zero_trust_access_service_token.platform_health.client_id
-          }
-          PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET = {
-            type  = "secret_text"
-            value = cloudflare_zero_trust_access_service_token.platform_health.client_secret
-          }
-          NODE_VERSION = {
-            type  = "plain_text"
-            value = "24.19.0"
-          }
-        },
-        var.platform_github_token != "" ? {
-          PLATFORM_GITHUB_TOKEN = {
-            type  = "secret_text"
-            value = var.platform_github_token
-          }
-          PLATFORM_GITHUB_REPO = {
-            type  = "plain_text"
-            value = local.github_repo_slug
-          }
-        } : {}
-      )
-    }
-    preview = {
-      fail_open           = true
-      compatibility_date  = "2024-12-01"
-      compatibility_flags = ["nodejs_compat"]
-    }
+    production = local.pages_production_config
+    preview    = local.pages_preview_config
   }
 }
 

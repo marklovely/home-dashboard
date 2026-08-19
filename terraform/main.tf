@@ -33,15 +33,16 @@ module "platform_admin" {
   count  = var.platform_admin.enabled ? 1 : 0
   source = "./modules/platform_admin"
 
-  account_id               = var.cloudflare_account_id
-  zone_id                  = var.cloudflare_zone_id
-  zone_name                = var.zone_name
-  hostname                 = var.platform_admin.hostname
-  pages_name               = var.platform_admin.pages_name
-  access_team_domain       = var.access_team_domain
-  operator_emails          = var.platform_operator_emails
-  github_owner             = var.github_owner
-  github_repo              = var.github_repo
-  github_production_branch = var.github_production_branch
-  platform_github_token    = var.platform_github_token
+  account_id                        = var.cloudflare_account_id
+  zone_id                           = var.cloudflare_zone_id
+  zone_name                         = var.zone_name
+  hostname                          = var.platform_admin.hostname
+  pages_name                        = var.platform_admin.pages_name
+  access_team_domain                = var.access_team_domain
+  operator_emails                   = var.platform_operator_emails
+  github_owner                      = var.github_owner
+  github_repo                       = var.github_repo
+  github_production_branch          = var.github_production_branch
+  platform_github_token             = var.platform_github_token
+  pages_preview_deployments_enabled = var.pages_preview_deployments_enabled
 }

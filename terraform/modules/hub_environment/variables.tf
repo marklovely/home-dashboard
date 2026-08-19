@@ -81,7 +81,7 @@ variable "hub_proxy_secret" {
 variable "attach_hub_api_binding" {
   type        = bool
   default     = true
-  description = "Bind Pages HUB_API to the site Worker. Set false for the first apply before the Worker is deployed, then true and apply again."
+  description = "Recorded in platform/sites.yaml for health checks. HUB_API is attached via scripts/attach-hub-api-pages-binding.mjs, not Terraform (Cloudflare provider bugs on Pages service bindings)."
 }
 
 variable "platform_health_checks_enabled" {
@@ -101,14 +101,4 @@ locals {
   worker_hostname   = "${local.worker_name}.${var.workers_subdomain}.workers.dev"
   worker_api_origin = "https://${local.worker_hostname}"
   hostname_label    = replace(var.hostname, ".${var.zone_name}", "")
-  # New hub sites: service name only. Imported production keeps entrypoint = "default".
-  pages_hub_api_services = {
-    HUB_API = var.site_id == "production" ? {
-      service     = local.worker_name
-      environment = "production"
-      entrypoint  = "default"
-      } : {
-      service = local.worker_name
-    }
-  }
 }
