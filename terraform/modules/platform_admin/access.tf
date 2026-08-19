@@ -5,10 +5,22 @@ resource "cloudflare_zero_trust_access_application" "platform" {
   domain           = var.hostname
   session_duration = var.access_session_duration
 
-  destinations = [{
-    type = "public"
-    uri  = var.hostname
-  }]
+  destinations = concat(
+    [{
+      type = "public"
+      uri  = var.hostname
+    }],
+    var.pages_preview_deployments_enabled ? [
+      {
+        type = "public"
+        uri  = local.pages_dev_host
+      },
+      {
+        type = "public"
+        uri  = "*.${local.pages_dev_host}"
+      }
+    ] : []
+  )
 
   policies = length(var.operator_emails) > 0 ? [{
     name       = "Platform operators"
