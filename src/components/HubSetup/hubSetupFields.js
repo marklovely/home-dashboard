@@ -7,7 +7,9 @@ import { createFieldInfoHint, createFieldLabelBlock } from '../HelpGuide/fieldHe
 import { HUB_SETUP_FIELD_HELP } from './hubSetupHelpContent.js';
 import {
   formatPropertyAddress,
-  normalizePropertyAddress
+  hasPropertyAddress,
+  normalizePropertyAddress,
+  parsePropertyAddressFromString
 } from '../../lib/propertyAddress.js';
 import { getPrivateConfigValue } from '../../services/privateConfigService.js';
 
@@ -526,7 +528,15 @@ export function buildHomeDetailsFormProfile(profile = {}) {
     secondaryContact.email = String(getPrivateConfigValue('contacts.donna.email') ?? '');
   }
 
-  return { ...profile, primaryContact, secondaryContact };
+  let propertyAddress = normalizePropertyAddress(profile.propertyAddress);
+  if (!hasPropertyAddress(propertyAddress)) {
+    const legacyAddress = getPrivateConfigValue('address.full');
+    if (legacyAddress) {
+      propertyAddress = parsePropertyAddressFromString(String(legacyAddress));
+    }
+  }
+
+  return { ...profile, primaryContact, secondaryContact, propertyAddress };
 }
 
 /**
@@ -555,6 +565,13 @@ export function applyGuestAccessDisplayValues(fields, configured = {}) {
   }
 
   appendConfiguredSecretHint(fields.wifiPassword.wrap, configured.wifi_password);
+  if (configured.wifi_ssid && !fields.wifiSsid.input.value.trim()) {
+    appendConfiguredSecretHint(
+      fields.wifiSsid.wrap,
+      true,
+      'Wi‑Fi network name is saved on the hub but could not be loaded here. Enter it again to replace the saved value.'
+    );
+  }
   appendConfiguredSecretHint(fields.lockbox.wrap, configured.lockbox_code);
   appendConfiguredSecretHint(fields.ownerPin.wrap, configured.owner_pin);
 }

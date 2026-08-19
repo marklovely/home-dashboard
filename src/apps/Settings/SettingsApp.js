@@ -31,7 +31,17 @@ import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { createHubSetupHelpButton } from '../../components/HubSetup/hubSetupHelp.js';
 import { createCalendarConnectionField, createBinAlertHoursField } from '../../components/HubSetup/binScheduleFields.js';
-import { HUB_SETUP_FIELD_HELP } from '../../components/HubSetup/hubSetupHelpContent.js';
+import { HUB_SETUP_FIELD_HELP, getBinScheduleFieldHelp } from '../../components/HubSetup/hubSetupHelpContent.js';
+import { readBinScheduleFromProfile } from '../../lib/binScheduleProfile.js';
+import {
+  getSettingsSections,
+  getStoredSettingsPanel,
+  normalizeSettingsPanel,
+  storeSettingsPanel
+} from './settingsNavigation.js';
+import {
+  syncSitterAccessEmailsFromServer
+} from '../../services/sitterAccessEmailsService.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
   getSitterSecretsDisclosed,
@@ -124,44 +134,88 @@ function weatherLocationSummary() {
 
 /**
  * @param {import('../../types/app.js').ShellContext} context
- * @param {() => void} onRefresh
+ * @param {(options?: { soft?: boolean }) => void} onRefresh
+ * @param {string} [activePanelId]
  */
-function mountSettingsApp(viewport, context, onRefresh) {
+function mountSettingsApp(viewport, context, onRefresh, activePanelId) {
+  const isOwner = isOwnerUserMode();
+  const sections = getSettingsSections(isOwner);
+  const panelId = normalizeSettingsPanel(activePanelId ?? getStoredSettingsPanel(), isOwner);
+  storeSettingsPanel(panelId);
+  const activeSection = sections.find((section) => section.id === panelId) ?? sections[0];
+
   const page = document.createElement('section');
   page.className = 'app-page settings-app';
   page.setAttribute('aria-label', 'Settings');
 
-  /** @type {HTMLElement[]} */
-  const groups = [
-    createSettingsGroup('Help', createHelpFields()),
-    createSettingsGroup('Appearance', createAppearanceFields(onRefresh)),
-    createSettingsGroup('About', createAboutField())
-  ];
+  const nav = document.createElement('nav');
+  nav.className = 'settings-nav';
+  nav.setAttribute('aria-label', 'Settings categories');
 
-  if (isOwnerUserMode()) {
-    groups.splice(1, 0, createSettingsGroup('Backup & restore', createBackupRestoreFields(context)));
-    groups.splice(1, 0, createSettingsGroup('Home details', createHomeDetailsFields(context)));
-    groups.splice(2, 0, createSettingsGroup('Bin reminders', createBinReminderFields(context, onRefresh)));
-    groups.splice(3, 0, createSettingsGroup('Weather location', createWeatherLocationField(context, onRefresh)));
-    groups.unshift(createSettingsGroup('House sitter mode', createHouseSitterModeFields(context, onRefresh)));
+  const panelHost = document.createElement('div');
+  panelHost.className = 'settings-panel';
+
+  for (const section of sections) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'settings-nav-item';
+    button.dataset.settingsPanel = section.id;
+    button.textContent = section.label;
+    button.setAttribute('aria-current', section.id === panelId ? 'page' : 'false');
+    if (section.id === panelId) {
+      button.classList.add('is-active');
+    }
+    button.addEventListener('click', () => {
+      if (section.id === panelId) return;
+      mountSettingsApp(viewport, context, onRefresh, section.id);
+    });
+    nav.append(button);
   }
 
-  page.append(...groups);
+  const panelHeader = document.createElement('header');
+  panelHeader.className = 'settings-panel-header';
+  const panelTitle = document.createElement('h1');
+  panelTitle.className = 'settings-panel-title';
+  panelTitle.textContent = activeSection.label;
+  const panelDescription = document.createElement('p');
+  panelDescription.className = 'settings-panel-description subtle';
+  panelDescription.textContent = activeSection.description;
+  panelHeader.append(panelTitle, panelDescription);
+
+  const panelBody = document.createElement('div');
+  panelBody.className = 'settings-panel-body';
+  panelBody.append(renderSettingsPanelContent(panelId, context, onRefresh));
+
+  panelHost.append(panelHeader, panelBody);
+  page.append(nav, panelHost);
   viewport.replaceChildren(page);
 }
 
 /**
- * @param {string} legend
- * @param {HTMLElement} body
+ * @param {string} panelId
+ * @param {import('../../types/app.js').ShellContext} context
+ * @param {(options?: { soft?: boolean }) => void} onRefresh
  */
-function createSettingsGroup(legend, body) {
-  const fieldset = document.createElement('fieldset');
-  fieldset.className = 'settings-group';
-  const heading = document.createElement('legend');
-  heading.className = 'settings-group-title';
-  heading.textContent = legend;
-  fieldset.append(heading, body);
-  return fieldset;
+function renderSettingsPanelContent(panelId, context, onRefresh) {
+  switch (panelId) {
+    case 'appearance':
+      return createAppearanceFields(onRefresh);
+    case 'guest-mode':
+      return createHouseSitterModeFields(context, onRefresh);
+    case 'home-details':
+      return createHomeDetailsFields(context);
+    case 'bins':
+      return createBinReminderFields(context, onRefresh);
+    case 'weather':
+      return createWeatherLocationField(context, onRefresh);
+    case 'backup':
+      return createBackupRestoreFields(context);
+    case 'help':
+      return createHelpFields();
+    case 'about':
+    default:
+      return createAboutField();
+  }
 }
 
 /**
@@ -404,13 +458,35 @@ function createBinReminderFields(context, onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
 
+  const profile = buildHomeDetailsFormProfile(getSiteProfileState()?.profile ?? {});
+  const schedule = readBinScheduleFromProfile(profile);
+
   wrap.append(
     createSetupIntro(
       'Sitters see a prominent reminder on the home screen before each bin collection. Reminders count down from 6am on collection day — the same time bins are normally put out.'
     )
   );
 
-  const alertField = createBinAlertHoursField(getSiteProfileState()?.profile ?? {});
+  const alertField = createBinAlertHoursField(profile);
+  const locationField = createSetupField(
+    'Where are bins collected from?',
+    schedule.collectionLocation,
+    {
+      placeholder: 'End of the close, left-hand side',
+      ...getBinScheduleFieldHelp(String(profile.useCase ?? 'owner'))
+    }
+  );
+  const councilField = createSetupField('Council bins website (optional)', schedule.councilUrl, {
+    placeholder: 'https://www.example.gov.uk/bins',
+    type: 'url',
+    ...HUB_SETUP_FIELD_HELP.binCouncilUrl
+  });
+
+  const wizardButton = document.createElement('button');
+  wizardButton.type = 'button';
+  wizardButton.className = 'settings-action-button settings-action-button--secondary';
+  wizardButton.textContent = 'Edit full bin schedule';
+  wizardButton.addEventListener('click', () => context.navigate('hub-setup'));
 
   const saveButton = document.createElement('button');
   saveButton.type = 'button';
@@ -419,7 +495,11 @@ function createBinReminderFields(context, onRefresh) {
   saveButton.addEventListener('click', () => {
     saveButton.disabled = true;
     void saveSiteProfile({
-      binSchedule: { alertHoursBefore: alertField.readAlertHoursBefore() }
+      binSchedule: {
+        alertHoursBefore: alertField.readAlertHoursBefore(),
+        collectionLocation: locationField.input.value.trim(),
+        councilUrl: councilField.input.value.trim()
+      }
     })
       .then((result) => {
         saveButton.disabled = false;
@@ -428,7 +508,7 @@ function createBinReminderFields(context, onRefresh) {
           return;
         }
         context.refreshShell?.();
-        onRefresh();
+        onRefresh({ panelId: 'bins' });
         showToast(context.toast, 'Bin reminders saved.');
       })
       .catch(() => {
@@ -437,7 +517,7 @@ function createBinReminderFields(context, onRefresh) {
       });
   });
 
-  wrap.append(alertField.wrap, saveButton);
+  wrap.append(alertField.wrap, locationField.wrap, councilField.wrap, saveButton, wizardButton);
   return wrap;
 }
 
@@ -693,7 +773,7 @@ function createScreensaverField(onRefresh) {
     options.append(
       createRadioOption('screensaver', option.id, option.label, option.id === active, undefined, () => {
         setScreensaverSetting(/** @type {'off' | 'on'} */ (option.id));
-        onRefresh();
+        onRefresh({ soft: true });
       })
     );
   }
@@ -715,7 +795,7 @@ function createScreensaverField(onRefresh) {
         undefined,
         () => {
           setScreensaverTimeoutMinutes(option.minutes);
-          onRefresh();
+          onRefresh({ soft: true });
         }
       )
     );
@@ -747,7 +827,7 @@ function createThemeField(onRefresh) {
   for (const option of themeOptions) {
     options.append(createRadioOption('theme', option.id, option.label, option.id === active, option.hint, () => {
       setActiveTheme(option.id);
-      onRefresh();
+      onRefresh({ soft: true });
     }));
   }
 
@@ -776,7 +856,7 @@ function createHomeScaleField(onRefresh) {
     options.append(
       createRadioOption('home-scale', option.id, option.label, option.id === active, undefined, () => {
         setHomeScreenScale(option.id);
-        onRefresh();
+        onRefresh({ soft: true });
       })
     );
   }
@@ -804,7 +884,7 @@ function createClockFormatField(onRefresh) {
     options.append(
       createRadioOption('clock-format', option.id, option.label, option.id === active, undefined, () => {
         setClockFormat(/** @type {'12' | '24'} */ (option.id));
-        onRefresh();
+        onRefresh({ soft: true });
       })
     );
   }
@@ -902,7 +982,7 @@ function createWeatherLocationField(context, onRefresh) {
   resetButton.hidden = !getWeatherLocationOverride();
   resetButton.addEventListener('click', () => {
     clearWeatherLocationOverride();
-    onRefresh();
+    onRefresh({ panelId: 'weather' });
     resetButton.hidden = true;
     results.hidden = true;
     results.replaceChildren();
@@ -991,7 +1071,7 @@ function applyWeatherLocation(result, context, onRefresh, resetButton, results, 
   results.hidden = true;
   results.replaceChildren();
   resetButton.hidden = false;
-  onRefresh();
+  onRefresh({ panelId: 'weather' });
   showToast(context.toast, `Weather location set to ${result.label}`);
 }
 
@@ -1082,15 +1162,28 @@ export const settingsApp = defineApp({
   profiles: ['owner', 'housesitter'],
   summary: settingsSummary,
   mount(viewport, context) {
-    /** @type {() => void} */
+    /** @type {(options?: { soft?: boolean, panelId?: string }) => void} */
     let refreshSettings = () => {};
-    refreshSettings = () => {
+    refreshSettings = (options = {}) => {
       refreshAboutValues(viewport);
       context.refreshShell?.();
-      mountSettingsApp(viewport, context, refreshSettings);
+      if (options.soft) return;
+      const storedPanel = options.panelId ?? getStoredSettingsPanel();
+      mountSettingsApp(viewport, context, refreshSettings, storedPanel);
     };
 
-    void Promise.all([syncSiteProfileFromServer(), refreshPrivateConfig()]).finally(() => {
+    const loading = document.createElement('section');
+    loading.className = 'app-page settings-app settings-app--loading';
+    loading.setAttribute('aria-label', 'Settings');
+    loading.innerHTML = '<p class="subtle settings-loading-copy">Loading settings…</p>';
+    viewport.replaceChildren(loading);
+
+    void Promise.all([
+      syncSiteProfileFromServer(),
+      refreshPrivateConfig(),
+      syncSitterAccessEmailsFromServer(),
+      syncSitterSecretsFromServer()
+    ]).finally(() => {
       mountSettingsApp(viewport, context, refreshSettings);
     });
   }

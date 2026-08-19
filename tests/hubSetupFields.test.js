@@ -4,6 +4,7 @@ import {
   buildHomeDetailsFormProfile,
   createGuestAccessFields
 } from '../src/components/HubSetup/hubSetupFields.js';
+import { hasPropertyAddress } from '../src/lib/propertyAddress.js';
 import {
   resetPrivateConfigForTests,
   setPrivateConfigForTests
@@ -51,6 +52,17 @@ describe('buildHomeDetailsFormProfile', () => {
       phone: '07700900001',
       email: 'donna@example.com'
     });
+  });
+
+  it('fills property address from legacy home address secret', () => {
+    setPrivateConfigForTests({
+      address: { full: '1 Wagtail Road\nWaterlooville\nHampshire\nUnited Kingdom\nPO8 9XX' }
+    });
+
+    const profile = buildHomeDetailsFormProfile({ propertyAddress: {} });
+    expect(profile.propertyAddress.line1).toBe('1 Wagtail Road');
+    expect(profile.propertyAddress.line2).toBe('Waterlooville');
+    expect(hasPropertyAddress(profile.propertyAddress)).toBe(true);
   });
 });
 
