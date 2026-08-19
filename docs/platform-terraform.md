@@ -164,6 +164,24 @@ Use real values in `hub.tfvars` (never commit it):
 - **`hub_proxy_secret`** — required when importing a site; preserves existing Pages/Worker proxy secret.
 - **`access_team_domain`** — Zero Trust team slug (`lovely-home`), not the Workers subdomain.
 
+## Pages preview Access ("invalid redirect URL")
+
+PR preview URLs look like `https://<hash>.home-dashboard-a11.pages.dev`. Cloudflare Access must allow that hostname for OAuth to succeed.
+
+Terraform-managed hub and platform Pages Access apps include three destinations (same `CF_ACCESS_AUD_PAGES` everywhere):
+
+- Custom domain (e.g. `dashboard.lovely-home.co.uk`)
+- Default Pages hostname (e.g. `home-dashboard-a11.pages.dev`)
+- Preview wildcard (e.g. `*.home-dashboard-a11.pages.dev`)
+
+After enabling preview builds (PR #84), run **`terraform apply`** once so Access destinations update. Preview env vars already copy production `CF_ACCESS_AUD_PAGES` via `enable-hub-pages-previews.mjs` — the AUD stays the same; the app must cover preview hostnames.
+
+If login still fails:
+
+1. **Zero Trust → Access → Applications** — remove duplicate manual apps for the same `*.pages.dev` host (keep the Terraform app `Lovely Home — {site} Pages`).
+2. **Pages → project → Settings** — if "Enable access policy" created extra auto apps, follow [Cloudflare Pages known issues](https://developers.cloudflare.com/pages/platform/known-issues/#enable-access-on-your-pagesdev-domain) so only the Terraform apps apply.
+3. Redeploy the preview from the PR checks tab.
+
 ## Outputs contract
 
 ```bash
