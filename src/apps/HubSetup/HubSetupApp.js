@@ -1,6 +1,8 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
+  applyGuestAccessDisplayValues,
+  buildHomeDetailsFormProfile,
   createContactGroup,
   createGuestAccessFields,
   createPetDetailsFields,
@@ -128,7 +130,7 @@ function mountHubSetupWizard(viewport, context) {
   page.setAttribute('aria-label', 'Hub setup');
 
   const profileState = getSiteProfileState();
-  const profile = profileState?.profile ?? {};
+  const profile = buildHomeDetailsFormProfile(profileState?.profile ?? {});
 
   let step = getHubSetupWizardStep();
 

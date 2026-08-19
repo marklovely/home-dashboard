@@ -162,3 +162,9 @@ export function resetPrivateConfigForTests() {
   sessionCache = null;
   inflight = null;
 }
+
+/** @internal */
+export function setPrivateConfigForTests(payload) {
+  sessionCache = payload;
+  status = 'loaded';
+}

@@ -56,6 +56,8 @@ import { refreshGuideContent } from '../../services/guideContentService.js';
 import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
+  applyGuestAccessDisplayValues,
+  buildHomeDetailsFormProfile,
   createContactGroup,
   createGuestAccessFields,
   createSetupField,
@@ -69,8 +71,10 @@ import {
   fetchHubSecretsConfigured,
   getSiteProfileState,
   saveHubSecrets,
-  saveSiteProfile
+  saveSiteProfile,
+  syncSiteProfileFromServer
 } from '../../services/siteProfileService.js';
+import { refreshPrivateConfig } from '../../services/privateConfigService.js';
 
 /**
  * @param {{ ok: boolean, code?: string, message?: string }} result
@@ -279,7 +283,7 @@ function createHomeDetailsFields(context) {
   wrap.className = 'settings-options settings-options--stacked';
 
   const profileState = getSiteProfileState();
-  const profile = profileState?.profile ?? {};
+  const profile = buildHomeDetailsFormProfile(profileState?.profile ?? {});
 
   wrap.append(
     createSetupIntro(
@@ -303,7 +307,10 @@ function createHomeDetailsFields(context) {
   let calendarFields = createCalendarConnectionField();
 
   void fetchHubSecretsConfigured().then((result) => {
-    if (result.ok && result.data?.configured?.calendar_ics_url) {
+    const configured = result.ok ? result.data?.configured ?? {} : {};
+    applyGuestAccessDisplayValues(guestFields, configured);
+
+    if (configured.calendar_ics_url) {
       const existing = calendarFields;
       calendarFields = createCalendarConnectionField({ configured: true });
       if (existing.wrap.parentElement) {
@@ -1082,6 +1089,9 @@ export const settingsApp = defineApp({
       context.refreshShell?.();
       mountSettingsApp(viewport, context, refreshSettings);
     };
-    mountSettingsApp(viewport, context, refreshSettings);
+
+    void Promise.all([syncSiteProfileFromServer(), refreshPrivateConfig()]).finally(() => {
+      mountSettingsApp(viewport, context, refreshSettings);
+    });
   }
 });
