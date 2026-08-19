@@ -107,11 +107,13 @@ Terraform creates the **Pages project** and env vars; it does **not** upload a b
 | `preview_deployment_setting` | `all` (default) | Feature/PR branches get **Preview** builds with the same env vars as production |
 | `pages_preview_deployments_enabled` | `true` in root tfvars | Set `false` to disable preview builds (previous behaviour) |
 
-Preview URLs look like `https://<branch>.<project>.pages.dev` (exact pattern varies). They use **Preview** deployment env vars — Terraform mirrors production settings so operator UI and hub frontends work on branch builds.
+Preview URLs look like `https://<branch>.<project>.pages.dev` (exact pattern varies). They use **Preview** deployment env vars — Terraform mirrors production settings (except **HUB_API** service bindings, which are production-only; previews use `WORKER_API_ORIGIN` for API proxy).
 
 **Access:** Custom domains (`platform.lovely-home.co.uk`, `demo.lovely-home.co.uk`) have Terraform-managed Access apps. Preview `*.pages.dev` hostnames may need a separate Access application (wildcard or per-branch) — see [cloudflare-access-runbook.md](./cloudflare-access-runbook.md).
 
 If preview rows show **“No deployment available”**, either previews are disabled (`pages_preview_deployments_enabled = false`) or Terraform has not been applied since enabling them.
+
+If apply fails on existing sites with **`Invalid Service name ()` (8000022)** when updating Pages, ensure preview deployment configs do not include service bindings (see `terraform/modules/hub_environment/pages.tf`).
 
 **First production deploy** (when the project has never built):
 

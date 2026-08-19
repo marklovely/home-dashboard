@@ -48,8 +48,7 @@ locals {
 
   pages_preview_config = merge(
     local.pages_runtime_base,
-    { env_vars = local.pages_shared_env_vars },
-    local.pages_deployment_with_binding
+    { env_vars = local.pages_shared_env_vars }
   )
 }
 
