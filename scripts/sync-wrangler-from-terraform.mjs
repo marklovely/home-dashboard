@@ -7,6 +7,8 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dedupeEnvVarsBlock, upsertEnvVar } from './lib/wrangler-env-vars.mjs';
+import { patchEnvD1FromTerraform } from './lib/wrangler-env-block.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
@@ -16,8 +18,6 @@ if (!siteId) {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const wranglerPath = join(root, 'worker', 'wrangler.toml');
-const placeholderTerraform = 'REPLACE_AFTER_TERRAFORM_APPLY';
-const placeholderProvision = `REPLACE_AFTER_PROVISION_${siteId.toUpperCase()}`;
 
 let sites;
 try {
@@ -51,18 +51,23 @@ if (!toml.includes(envHeader)) {
   process.exit(1);
 }
 
-if (toml.includes(placeholderProvision)) {
-  toml = toml.replaceAll(placeholderProvision, d1Id);
-  console.log(`Patched ${placeholderProvision} → ${d1Id}`);
-} else if (toml.includes(placeholderTerraform)) {
-  toml = toml.replaceAll(placeholderTerraform, d1Id);
-  console.log(`Patched ${placeholderTerraform} → ${d1Id}`);
-} else if (toml.includes(d1Id)) {
-  console.log(`wrangler.toml already contains database_id ${d1Id} for ${siteId}`);
+const { toml: patchedToml, changed: d1Changed } = patchEnvD1FromTerraform(
+  toml,
+  siteId,
+  d1Id,
+  String(contract.d1_database_name ?? '')
+);
+toml = patchedToml;
+
+if (!toml.includes(`database_id = "${d1Id}"`)) {
+  console.error(`Failed to patch [env.${siteId}] database_id to ${d1Id}`);
+  process.exit(1);
+}
+
+if (d1Changed) {
+  console.log(`Patched [env.${siteId}] database_id → ${d1Id}`);
 } else {
-  console.warn(
-    `Placeholder not found (${placeholderProvision} or ${placeholderTerraform}). Update [env.${siteId}] database_id manually to ${d1Id}`
-  );
+  console.log(`wrangler.toml already has database_id ${d1Id} for ${siteId}`);
 }
 
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim() || '';
@@ -77,28 +82,7 @@ for (const [key, value] of Object.entries(accessVars)) {
   toml = upsertEnvVar(toml, siteId, key, value);
 }
 
+toml = dedupeEnvVarsBlock(toml, siteId);
+
 writeFileSync(wranglerPath, toml);
 console.log(JSON.stringify(contract, null, 2));
-
-/**
- * @param {string} toml
- * @param {string} siteId
- * @param {string} key
- * @param {string} value
- */
-function upsertEnvVar(toml, siteId, key, value) {
-  const assignment = `${key} = "${value.replace(/"/g, '\\"')}"`;
-  const varsBlockRe = new RegExp(
-    `(\\[env\\.${siteId}\\.vars\\][\\s\\S]*?)(?=\\n\\[|\\n\\[\\[|$)`,
-    'm'
-  );
-  const match = toml.match(varsBlockRe);
-  if (!match) return toml;
-
-  const block = match[1];
-  const keyRe = new RegExp(`^${key}\\s*=.*$`, 'm');
-  const nextBlock = keyRe.test(block)
-    ? block.replace(keyRe, assignment)
-    : `${block.trimEnd()}\n${assignment}\n`;
-  return toml.replace(block, nextBlock);
-}

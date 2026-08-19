@@ -257,18 +257,10 @@ bash scripts/verify-cloudflare-api-token.sh
 
 ## Local dry-run
 
-After R2 backend is configured and secrets exported:
+After R2 backend is configured, export `CLOUDFLARE_API_TOKEN` (not stored in `hub.tfvars`). Other provision inputs are read from `terraform/environments/hub.tfvars` automatically when env vars are unset:
 
 ```bash
 export CLOUDFLARE_API_TOKEN="..."
-export CLOUDFLARE_ACCOUNT_ID="..."
-export CLOUDFLARE_ZONE_ID="..."
-export WORKERS_SUBDOMAIN="..."
-export ACCESS_TEAM_DOMAIN="..."
-export PLATFORM_OPERATOR_EMAILS="you@example.com"
-# Optional fallbacks for sites without per-site owner_emails in platform/sites.yaml:
-# export OWNER_EMAILS="owner@example.com"
-# export SITTER_EMAILS="sitter@example.com"
 export AWS_ACCESS_KEY_ID="..."   # R2
 export AWS_SECRET_ACCESS_KEY="..."
 
@@ -276,6 +268,8 @@ cd terraform && terraform init -backend-config=environments/backend.hcl
 cd ..
 node scripts/provision-hub-site.mjs demo
 ```
+
+To override tfvars values, export the usual env vars (`WORKERS_SUBDOMAIN`, `CLOUDFLARE_ACCOUNT_ID`, etc.) before running provision. See [platform-terraform.md](platform-terraform.md) for the full list used by CI.
 
 ## Workflows
 
