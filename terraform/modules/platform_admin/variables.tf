@@ -60,8 +60,15 @@ variable "pages_preview_deployments_enabled" {
   description = "When true, non-production branches get Cloudflare Pages preview builds with the same env vars as production."
 }
 
+variable "pages_dev_hostname" {
+  type        = string
+  default     = null
+  description = "Override Cloudflare-assigned *.pages.dev hostname when it differs from the Pages project name."
+}
+
 locals {
   hostname_label = replace(var.hostname, ".${var.zone_name}", "")
+  pages_dev_host = coalesce(var.pages_dev_hostname, "${var.pages_name}.pages.dev")
   operator_policy_includes = [
     for email in var.operator_emails : {
       email = { email = email }
