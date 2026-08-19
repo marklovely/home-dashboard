@@ -156,6 +156,12 @@ bucket_name = "lovely-home-guide-media-sandbox"
 name = "lovely-home-hub-api-demo"
 
 [env.demo.vars]
+ACCESS_WORKER_APP_ID = "e43393d5-8d1c-4b60-be82-54fc58df4dca"
+
+ACCESS_PAGES_APP_ID = "3268eac4-5490-4c7c-b693-8f57c88f53cd"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
 HUB_ENVIRONMENT = "demo"
 ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://demo.lovely-home.co.uk,https://home-dashboard-demo.pages.dev,https://*.home-dashboard-demo.pages.dev,https://*.pages.dev"
 HOME_LATITUDE = "51.5074"
@@ -176,13 +182,13 @@ bucket_name = "lovely-home-appliance-guides-demo"
 [[env.demo.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-demo"
-database_id = "REPLACE_AFTER_PROVISION_DEMO"
+database_id = "8dde150d-daa1-443c-afa3-3a01cb908333"
 migrations_dir = "migrations"
 
 [[env.demo.d1_databases]]
 binding = "HOUSE_GUIDE_DB"
 database_name = "lovely-home-appliance-manuals-demo"
-database_id = "REPLACE_AFTER_PROVISION_DEMO"
+database_id = "8dde150d-daa1-443c-afa3-3a01cb908333"
 migrations_dir = "migrations"
 
 [[env.demo.r2_buckets]]
