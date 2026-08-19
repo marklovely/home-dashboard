@@ -319,14 +319,81 @@ button { font: inherit; }
 }
 .shell-home-button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .shell-home-button:active { transform: scale(0.98); }
-.shell-home-welcome { display: grid; gap: 4px; }
+.shell-home-welcome { display: grid; gap: 4px; position: relative; z-index: 1; }
 .home-greeting {
   margin: 0;
   font-size: clamp(1.8rem, 4vw, 3rem);
   line-height: 1.05;
   font-weight: 750;
 }
-.home-date { margin: 0; }
+.home-date {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+  font-weight: 650;
+  color: color-mix(in srgb, var(--text) 82%, var(--muted));
+  letter-spacing: 0.01em;
+}
+.shell-home-hero {
+  position: relative;
+  display: grid;
+  align-items: end;
+  min-height: clamp(88px, 12vw, 132px);
+  padding: clamp(4px, 1vw, 10px) 0;
+  overflow: hidden;
+}
+.shell-home-hero-backdrop {
+  position: absolute;
+  inset: -12px -8px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  pointer-events: none;
+  user-select: none;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.35) 72%, transparent 100%);
+}
+.shell-hero-weather-icon {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  opacity: 0.16;
+  color: #ffd27a;
+  transform: translate(8%, -6%);
+}
+.shell-hero-weather-icon .weather-status-icon {
+  width: clamp(5.5rem, 16vw, 9rem);
+  height: clamp(5.5rem, 16vw, 9rem);
+}
+.shell-hero-weather-temp {
+  grid-column: 1;
+  margin: 0;
+  align-self: end;
+  font-size: clamp(3.2rem, 11vw, 6.5rem);
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.06em;
+  color: color-mix(in srgb, var(--text) 14%, transparent);
+}
+.shell-hero-weather-condition {
+  grid-column: 1;
+  margin: 0;
+  max-width: min(100%, 28rem);
+  font-size: clamp(1rem, 2.4vw, 1.45rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--muted) 42%, transparent);
+}
+.shell-route-home .status-strip .weather-card { display: none; }
+.shell-route-home .status-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mode-house-sitter.shell-route-home .shell-header-weather { display: none; }
+.mode-house-sitter.shell-route-home .shell-home-welcome {
+  gap: 2px;
+}
+.mode-house-sitter.shell-route-home .home-date {
+  font-size: clamp(1.15rem, 2.6vw, 1.55rem);
+}
 .shell-home-button[aria-current="page"] {
   border-color: color-mix(in srgb, var(--accent-selection) 45%, transparent);
   background: color-mix(in srgb, var(--accent-selection) 16%, var(--surface-2));

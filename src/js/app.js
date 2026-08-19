@@ -106,6 +106,12 @@ async function initialiseDashboard() {
       icon: document.querySelector('#shell-weather-icon'),
       temp: document.querySelector('#shell-weather-temp'),
       text: document.querySelector('#shell-weather-text')
+    },
+    heroElements: {
+      icon: document.querySelector('#shell-hero-weather-icon'),
+      temp: document.querySelector('#shell-hero-weather-temp'),
+      text: document.querySelector('#shell-hero-weather-condition'),
+      condition: document.querySelector('#shell-hero-weather-condition')
     }
   });
 
@@ -117,6 +123,8 @@ async function initialiseDashboard() {
   createAppShell({
     viewport: document.querySelector('#app-viewport'),
     homeWelcome: document.querySelector('#shell-home-welcome'),
+    shellHomeHero: document.querySelector('#shell-home-hero'),
+    homeGreeting: document.querySelector('#greeting'),
     shellEyebrow: document.querySelector('#shell-eyebrow'),
     shellChromeTitle: document.querySelector('#shell-chrome-title'),
     shellTagline: document.querySelector('#shell-tagline'),
