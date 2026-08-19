@@ -90,12 +90,6 @@ variable "platform_health_checks_enabled" {
   description = "Allow Access service tokens on hub Pages/Worker (for platform admin health probes)."
 }
 
-variable "pages_preview_deployments_enabled" {
-  type        = bool
-  default     = true
-  description = "When true, non-production branches get Cloudflare Pages preview builds with the same env vars as production."
-}
-
 
 locals {
   # Production was provisioned before the {site_id} suffix convention.
@@ -107,12 +101,14 @@ locals {
   worker_hostname   = "${local.worker_name}.${var.workers_subdomain}.workers.dev"
   worker_api_origin = "https://${local.worker_hostname}"
   hostname_label    = replace(var.hostname, ".${var.zone_name}", "")
-  # entrypoint = "default" required for Cloudflare Pages API (8000022 if omitted on PATCH).
+  # Production uses entrypoint = "default" (legacy import). Other sites: service name only (matches attach-hub-api-pages-binding.mjs).
   pages_hub_api_services = {
-    HUB_API = {
+    HUB_API = var.site_id == "production" ? {
       service     = local.worker_name
       environment = "production"
       entrypoint  = "default"
+      } : {
+      service = local.worker_name
     }
   }
 }
