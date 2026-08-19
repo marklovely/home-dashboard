@@ -30,9 +30,9 @@ import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { createHubSetupHelpButton } from '../../components/HubSetup/hubSetupHelp.js';
-import { createCalendarConnectionField, createBinAlertHoursField } from '../../components/HubSetup/binScheduleFields.js';
+import { createCalendarConnectionField, createBinAlertHoursField, createBinScheduleDateEditor } from '../../components/HubSetup/binScheduleFields.js';
 import { HUB_SETUP_FIELD_HELP, getBinScheduleFieldHelp } from '../../components/HubSetup/hubSetupHelpContent.js';
-import { readBinScheduleFromProfile } from '../../lib/binScheduleProfile.js';
+import { inferBinSchedulePeriod, normalizeBinSchedule, readBinScheduleFromProfile, validateBinSchedule } from '../../lib/binScheduleProfile.js';
 import {
   clearBinAlertDismissal,
   getDismissedBinCollectionDate
@@ -487,10 +487,20 @@ function createBinReminderFields(context, onRefresh) {
     ...HUB_SETUP_FIELD_HELP.binCouncilUrl
   });
 
+  const validUntilField = createSetupField('Schedule valid until (optional)', schedule.validUntil, {
+    type: 'date',
+    ...HUB_SETUP_FIELD_HELP.binValidUntil
+  });
+
+  const dateEditor = createBinScheduleDateEditor({
+    schedule,
+    getRepeatUntilFallback: () => validUntilField.input.value.trim()
+  });
+
   const wizardButton = document.createElement('button');
   wizardButton.type = 'button';
   wizardButton.className = 'settings-action-button settings-action-button--secondary';
-  wizardButton.textContent = 'Edit full bin schedule';
+  wizardButton.textContent = 'Open hub setup wizard';
   wizardButton.addEventListener('click', () => context.navigate('hub-setup'));
 
   const saveButton = document.createElement('button');
@@ -499,13 +509,25 @@ function createBinReminderFields(context, onRefresh) {
   saveButton.textContent = 'Save bin reminders';
   saveButton.addEventListener('click', () => {
     saveButton.disabled = true;
-    void saveSiteProfile({
-      binSchedule: {
+    const { household, gardenWaste } = dateEditor.readHouseholdAndGarden();
+    const binSchedule = inferBinSchedulePeriod(
+      normalizeBinSchedule({
+        ...schedule,
         alertHoursBefore: alertField.readAlertHoursBefore(),
         collectionLocation: locationField.input.value.trim(),
-        councilUrl: councilField.input.value.trim()
-      }
-    })
+        councilUrl: councilField.input.value.trim(),
+        validUntil: validUntilField.input.value.trim(),
+        household,
+        gardenWaste
+      })
+    );
+    const validation = validateBinSchedule(binSchedule);
+    if (!validation.ok) {
+      saveButton.disabled = false;
+      showToast(context.toast, validation.message);
+      return;
+    }
+    void saveSiteProfile({ binSchedule })
       .then((result) => {
         saveButton.disabled = false;
         if (!result.ok) {
@@ -522,7 +544,15 @@ function createBinReminderFields(context, onRefresh) {
       });
   });
 
-  wrap.append(alertField.wrap, locationField.wrap, councilField.wrap, saveButton, wizardButton);
+  wrap.append(
+    alertField.wrap,
+    locationField.wrap,
+    councilField.wrap,
+    validUntilField.wrap,
+    dateEditor.wrap,
+    saveButton,
+    wizardButton
+  );
 
   const dismissedCollectionDate = getDismissedBinCollectionDate();
   if (dismissedCollectionDate) {
