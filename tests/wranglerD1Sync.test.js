@@ -9,6 +9,9 @@ const sample = `
 [env.demo]
 name = "lovely-home-hub-api-demo"
 
+[env.demo.vars]
+HUB_ENVIRONMENT = "demo"
+
 [[env.demo.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-demo"
@@ -54,5 +57,34 @@ describe('patchEnvD1FromTerraform', () => {
     );
     expect(toml).not.toContain('REPLACE_AFTER_PROVISION_DEMO');
     expect(toml).toContain('database_id = "99fd8a57-5e5a-4e0d-8c01-30533ea47f13"');
+  });
+
+  it('patches d1 blocks when [env.{site}.vars] follows the env header', () => {
+    const devBlock = `
+# ---------------------------------------------------------------------------
+# Dev environment — Terraform-managed
+# ---------------------------------------------------------------------------
+
+[env.dev]
+name = "lovely-home-hub-api-dev"
+
+[env.dev.vars]
+HUB_ENVIRONMENT = "dev"
+
+[[env.dev.d1_databases]]
+binding = "APPLIANCE_MANUALS_DB"
+database_name = "lovely-home-appliance-manuals-dev"
+database_id = "REPLACE_AFTER_PROVISION_DEV"
+
+[[env.dev.d1_databases]]
+binding = "HOUSE_GUIDE_DB"
+database_name = "lovely-home-appliance-manuals-dev"
+database_id = "REPLACE_AFTER_PROVISION_DEV"
+`;
+    const d1Id = 'b0d86465-993b-493d-8fa2-240d65159505';
+    const { toml, changed } = patchEnvD1FromTerraform(devBlock, 'dev', d1Id);
+    expect(changed).toBe(true);
+    expect(toml.match(new RegExp(d1Id, 'g'))).toHaveLength(2);
+    expect(toml).not.toContain('REPLACE_AFTER_PROVISION_DEV');
   });
 });
