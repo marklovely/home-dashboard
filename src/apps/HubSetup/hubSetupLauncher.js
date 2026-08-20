@@ -1,5 +1,6 @@
 import { setActiveProfileId } from '../../services/profileService.js';
 import { UserMode, isOwnerUserMode, setUserMode } from '../../auth/userMode.js';
+import { getCurrentRoute } from '../../shell/router.js';
 import {
   requestHubSetupWizardAfterReset,
   requestHubSetupWizardRerun
@@ -19,6 +20,18 @@ export function ensureOwnerModeForHubSetup() {
 }
 
 /**
+ * @param {import('../../types/app.js').ShellContext} context
+ * @param {{ forceRemount?: boolean }} [options]
+ */
+function navigateToHubSetup(context, options = {}) {
+  const alreadyOnRoute = getCurrentRoute() === 'hub-setup';
+  context.navigate('hub-setup');
+  if (options.forceRemount || alreadyOnRoute) {
+    context.refreshShell?.();
+  }
+}
+
+/**
  * Open the hub setup wizard from Settings or another owner screen.
  * Allows re-running after onboarding with saved profile data pre-filled.
  *
@@ -27,7 +40,7 @@ export function ensureOwnerModeForHubSetup() {
 export function openHubSetupWizard(context) {
   ensureOwnerModeForHubSetup();
   requestHubSetupWizardRerun();
-  context.navigate('hub-setup');
+  navigateToHubSetup(context);
 }
 
 /**
@@ -36,5 +49,5 @@ export function openHubSetupWizard(context) {
 export function openHubSetupWizardAfterReset(context) {
   ensureOwnerModeForHubSetup();
   requestHubSetupWizardAfterReset();
-  context.navigate('hub-setup');
+  navigateToHubSetup(context, { forceRemount: true });
 }

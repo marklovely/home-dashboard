@@ -630,6 +630,8 @@ function mountHubSetup(viewport, context) {
   mountHubSetupWizard(viewport, context);
 }
 
+let activeMountGeneration = 0;
+
 export const hubSetupApp = defineApp({
   id: 'hub-setup',
   title: 'Hub setup',
@@ -640,6 +642,15 @@ export const hubSetupApp = defineApp({
   profiles: ['owner'],
   mount(viewport, context) {
     ensureOwnerModeForHubSetup();
-    void syncSiteProfileFromServer().finally(() => mountHubSetup(viewport, context));
+    const mountGeneration = ++activeMountGeneration;
+    void syncSiteProfileFromServer().finally(() => {
+      if (mountGeneration !== activeMountGeneration) return;
+      mountHubSetup(viewport, context);
+    });
   }
 });
+
+/** @internal */
+export function resetHubSetupMountGenerationForTests() {
+  activeMountGeneration = 0;
+}
