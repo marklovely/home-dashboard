@@ -1,7 +1,7 @@
 import { requireOwnerForHubSetup } from '../lib/hubSetupAuth.js';
 import { clearHouseSettings } from '../lib/houseSettings.js';
 import { clearHubSecrets, getHubSecretsStatus, HUB_SECRET_KEYS, setHubSecrets } from '../lib/hubSecrets.js';
-import { getSiteProfile, hasSiteProfileRow, resetSiteProfile, updateSiteProfile } from '../lib/siteProfile.js';
+import { getSiteProfile, resetSiteProfile, updateSiteProfile } from '../lib/siteProfile.js';
 import { clearGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { jsonError, methodNotAllowed } from '../lib/errors.js';
 import { normalizeAppleCalendarFeedUrl } from '../calendar/feedUrl.js';
@@ -45,12 +45,10 @@ export async function handleSiteProfileGet(request, env, correlationId) {
 
   const profile = await getSiteProfile(env);
   const guideSeeded = env.HOUSE_GUIDE_DB ? await isHouseGuideSeeded(env.HOUSE_GUIDE_DB) : false;
-  const hasProfile = await hasSiteProfileRow(env);
   const skipOnboardingFromLegacyGuide =
     guideSeeded &&
     !isTestHubWorker(env) &&
-    profile.onboardingComplete !== true &&
-    (!hasProfile || Boolean(String(profile.hubName ?? '').trim()));
+    profile.onboardingComplete !== true;
   const effectiveProfile = skipOnboardingFromLegacyGuide
     ? { ...profile, onboardingComplete: true }
     : profile;

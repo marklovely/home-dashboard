@@ -54,6 +54,28 @@ describe('hubSetupRouting', () => {
     expect(shouldAutoOpenHubSetupWizard()).toBe(false);
   });
 
+  it('treats seeded non-test hubs without a hub name as onboarding complete', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'dev');
+    markSiteProfileReadyForTests();
+    setSiteProfileStateForTests({
+      profile: { onboardingComplete: false, hubName: '' },
+      guideSeeded: true
+    });
+
+    expect(shouldAllowHubSetupWizard()).toBe(false);
+  });
+
+  it('still requires setup on the test hub when the hub name is missing', () => {
+    vi.stubEnv('VITE_HUB_ENVIRONMENT', 'test');
+    markSiteProfileReadyForTests();
+    setSiteProfileStateForTests({
+      profile: { onboardingComplete: false, hubName: '' },
+      guideSeeded: true
+    });
+
+    expect(shouldAllowHubSetupWizard()).toBe(true);
+  });
+
   it('allows a forced wizard open after factory reset before sync settles', () => {
     requestHubSetupWizardAfterReset();
     expect(shouldAllowHubSetupWizard()).toBe(true);

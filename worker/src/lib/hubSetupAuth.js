@@ -1,6 +1,8 @@
 import { requireOwnerDeviceMode, requireOwnerIdentity } from './deviceSessionAuth.js';
-import { getSiteProfile, hasSiteProfileRow } from './siteProfile.js';
+import { getSiteProfile } from './siteProfile.js';
 import { isHouseGuideSeeded } from '../houseGuide/repository.js';
+
+import { isTestHubWorker } from '../lib/hubEnvironment.js';
 
 /**
  * @param {Record<string, string | undefined>} env
@@ -10,15 +12,11 @@ export async function isHubOnboardingComplete(env) {
   if (profile.onboardingComplete === true) return true;
 
   const guideSeeded = env.HOUSE_GUIDE_DB ? await isHouseGuideSeeded(env.HOUSE_GUIDE_DB) : false;
-  const hasProfile = await hasSiteProfileRow(env);
-  if (
-    guideSeeded &&
-    (!hasProfile || Boolean(String(profile.hubName ?? '').trim()))
-  ) {
-    return true;
+  if (!guideSeeded) return false;
+  if (isTestHubWorker(env)) {
+    return Boolean(String(profile.hubName ?? '').trim());
   }
-
-  return false;
+  return true;
 }
 
 /**
