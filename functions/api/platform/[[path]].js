@@ -25,6 +25,11 @@ import {
   fetchAccountStorageSummary,
   fetchSiteStorageUsage
 } from './platformCloudflareUsage.js';
+import {
+  cloudflarePagesApiConfigured,
+  fetchSitePagesPreviewStatus,
+  setSitePagesPreviewEnabled
+} from './platformPagesPreviews.js';
 
 /**
  * Platform operator API — /api/platform/*
@@ -62,6 +67,7 @@ export async function onRequest(context) {
       platform: manifest.platform ?? {},
       healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
       cloudflareUsageConfigured: cloudflareUsageApiConfigured(pagesEnv),
+      cloudflarePagesConfigured: cloudflarePagesApiConfigured(pagesEnv),
       githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
       sites: manifest.sites
     });
@@ -82,6 +88,7 @@ export async function onRequest(context) {
     return Response.json({
       healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
       cloudflareUsageConfigured: cloudflareUsageApiConfigured(pagesEnv),
+      cloudflarePagesConfigured: cloudflarePagesApiConfigured(pagesEnv),
       githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
       githubRepo: githubRepo(pagesEnv),
       hints: {
@@ -89,6 +96,8 @@ export async function onRequest(context) {
           'Set PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID and PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET on home-dashboard-platform (terraform apply). Hub sites need non_identity service-token Access policies.',
         cloudflareUsage:
           'Set PLATFORM_CF_API_TOKEN (Account → Workers R2 Storage → Read) and CLOUDFLARE_ACCOUNT_ID on the platform Pages project to show D1/R2 usage per hub.',
+        cloudflarePages:
+          'Set PLATFORM_CF_API_TOKEN (Account → Cloudflare Pages → Edit) and CLOUDFLARE_ACCOUNT_ID on the platform Pages project to toggle PR preview builds per hub.',
         githubAutomation:
           'Set PLATFORM_GITHUB_TOKEN (contents:write, actions:write) and PLATFORM_GITHUB_REPO on the platform Pages project to enable site wizard automation.'
       }
@@ -176,6 +185,19 @@ export async function onRequest(context) {
 
       if (action === 'usage') {
         return Response.json(await fetchSiteStorageUsage(site, manifest.platform ?? {}, pagesEnv));
+      }
+
+      if (action === 'previews') {
+        if (request.method === 'GET') {
+          return Response.json(await fetchSitePagesPreviewStatus(site, manifest.platform ?? {}, pagesEnv));
+        }
+        if (request.method === 'POST') {
+          const body = await readJsonBody(request);
+          const enabled = body.enabled === true;
+          return Response.json(
+            await setSitePagesPreviewEnabled(site, manifest.platform ?? {}, pagesEnv, enabled)
+          );
+        }
       }
     }
   }

@@ -68,7 +68,7 @@ resource "cloudflare_pages_project" "dashboard" {
   }
 
   lifecycle {
-    ignore_changes = [deployment_configs]
+    ignore_changes = [deployment_configs, source]
   }
 }
 

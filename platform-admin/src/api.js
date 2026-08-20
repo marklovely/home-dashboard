@@ -35,6 +35,33 @@ export async function fetchAutomationRuns() {
 /**
  * @param {string} siteId
  */
+export async function fetchSitePreviewStatus(siteId) {
+  const response = await fetch(`${API_BASE}/sites/${encodeURIComponent(siteId)}/previews`, {
+    cache: 'no-store'
+  });
+  return response.json();
+}
+
+/**
+ * @param {string} siteId
+ * @param {boolean} enabled
+ */
+export async function setSitePreviewEnabled(siteId, enabled) {
+  const response = await fetch(`${API_BASE}/sites/${encodeURIComponent(siteId)}/previews`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled })
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok && !body.ok) {
+    throw new Error(body.message ?? `Preview update failed (${response.status})`);
+  }
+  return body;
+}
+
+/**
+ * @param {string} siteId
+ */
 export async function fetchSiteUsage(siteId) {
   const response = await fetch(`${API_BASE}/sites/${encodeURIComponent(siteId)}/usage`, {
     cache: 'no-store'
