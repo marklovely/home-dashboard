@@ -69,6 +69,7 @@ import {
 } from '../../utils/backupJson.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
 import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
+import { openHubSetupWizard } from '../HubSetup/hubSetupLauncher.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
   applyGuestAccessDisplayValues,
@@ -213,8 +214,8 @@ function renderSettingsPanelContent(panelId, context, onRefresh) {
       return createBinReminderFields(context, onRefresh);
     case 'weather':
       return createWeatherLocationField(context, onRefresh);
-    case 'backup':
-      return createBackupRestoreFields(context);
+    case 'utilities':
+      return createUtilitiesFields(context);
     case 'help':
       return createHelpFields();
     case 'about':
@@ -226,9 +227,30 @@ function renderSettingsPanelContent(panelId, context, onRefresh) {
 /**
  * @param {import('../../types/app.js').ShellContext} context
  */
-function createBackupRestoreFields(context) {
+function createUtilitiesFields(context) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
+
+  const wizardHeading = document.createElement('h2');
+  wizardHeading.className = 'settings-utilities-heading';
+  wizardHeading.textContent = 'Hub setup wizard';
+
+  const wizardIntro = document.createElement('p');
+  wizardIntro.className = 'settings-help subtle';
+  wizardIntro.textContent =
+    'Re-run the first-time setup flow with your current hub details pre-filled. Use this to review or update settings step by step.';
+
+  const wizardButton = document.createElement('button');
+  wizardButton.type = 'button';
+  wizardButton.className = 'settings-action-button';
+  wizardButton.textContent = 'Open setup wizard';
+  wizardButton.addEventListener('click', () => openHubSetupWizard(context));
+
+  wrap.append(wizardHeading, wizardIntro, wizardButton);
+
+  const backupHeading = document.createElement('h2');
+  backupHeading.className = 'settings-utilities-heading';
+  backupHeading.textContent = 'Backup & restore';
 
   const intro = document.createElement('p');
   intro.className = 'subtle';
@@ -295,7 +317,11 @@ function createBackupRestoreFields(context) {
       }
     })();
   });
-  wrap.append(intro, exportButton, importButton, importInput);
+  wrap.append(backupHeading, intro, exportButton, importButton, importInput);
+
+  const resetHeading = document.createElement('h2');
+  resetHeading.className = 'settings-utilities-heading';
+  resetHeading.textContent = 'Factory reset';
 
   const resetIntro = document.createElement('p');
   resetIntro.className = 'settings-help subtle';
@@ -325,12 +351,12 @@ function createBackupRestoreFields(context) {
         shellEyebrow: document.querySelector('#shell-eyebrow'),
         shellTagline: document.querySelector('#shell-tagline')
       });
-      showToast(context.toast, 'Hub reset. Open Hub setup to configure again.');
+      showToast(context.toast, 'Hub reset. Opening setup wizard…');
       context.navigate('hub-setup');
     });
   });
 
-  wrap.append(resetIntro, resetButton);
+  wrap.append(resetHeading, resetIntro, resetButton);
   return wrap;
 }
 
@@ -377,12 +403,6 @@ function createHomeDetailsFields(context) {
       }
     }
   });
-
-  const wizardButton = document.createElement('button');
-  wizardButton.type = 'button';
-  wizardButton.className = 'settings-action-button settings-action-button--secondary';
-  wizardButton.textContent = 'Open setup wizard';
-  wizardButton.addEventListener('click', () => context.navigate('hub-setup'));
 
   const saveButton = document.createElement('button');
   saveButton.type = 'button';
@@ -451,7 +471,7 @@ function createHomeDetailsFields(context) {
     })();
   });
 
-  wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, calendarFields.wrap, saveButton, wizardButton);
+  wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, calendarFields.wrap, saveButton);
   return wrap;
 }
 
@@ -496,12 +516,6 @@ function createBinReminderFields(context, onRefresh) {
     schedule,
     getRepeatUntilFallback: () => validUntilField.input.value.trim()
   });
-
-  const wizardButton = document.createElement('button');
-  wizardButton.type = 'button';
-  wizardButton.className = 'settings-action-button settings-action-button--secondary';
-  wizardButton.textContent = 'Open hub setup wizard';
-  wizardButton.addEventListener('click', () => context.navigate('hub-setup'));
 
   const saveButton = document.createElement('button');
   saveButton.type = 'button';
@@ -550,8 +564,7 @@ function createBinReminderFields(context, onRefresh) {
     councilField.wrap,
     validUntilField.wrap,
     dateEditor.wrap,
-    saveButton,
-    wizardButton
+    saveButton
   );
 
   const dismissedCollectionDate = getDismissedBinCollectionDate();

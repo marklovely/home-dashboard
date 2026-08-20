@@ -31,6 +31,7 @@ import {
   subscribeToSiteProfile,
   syncSiteProfileFromServer
 } from '../services/siteProfileService.js';
+import { isHubSetupWizardRerunRequested } from '../apps/HubSetup/hubSetupLauncher.js';
 
 initTheme();
 initDisplayPreferences();
@@ -179,7 +180,7 @@ async function initialiseDashboard() {
     }
     if (!isOwnerUserMode()) return;
     if (isOnboardingComplete()) {
-      if (getCurrentRoute() === 'hub-setup') {
+      if (getCurrentRoute() === 'hub-setup' && !isHubSetupWizardRerunRequested()) {
         navigate('home');
       }
       return;

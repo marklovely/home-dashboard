@@ -26,6 +26,7 @@ import {
   subscribeToGuideContent
 } from '../../services/guideContentService.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
+import { openHubSetupWizard } from '../HubSetup/hubSetupLauncher.js';
 import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
 import { fetchHouseGuideExport, restoreSiteBackup } from '../../api/siteBackupApi.js';
 import {
@@ -196,7 +197,7 @@ function createOnboardingPanel(page, context) {
     : 'Copy current guide to cloud';
   button.addEventListener('click', () => {
     if (isTestHubEnvironment()) {
-      context.navigate('hub-setup');
+      openHubSetupWizard(context);
       return;
     }
     button.disabled = true;

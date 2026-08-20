@@ -836,6 +836,19 @@ body.is-bins-route .app-viewport > .bins-app {
   }
 }
 
+.settings-utilities-heading {
+  margin: clamp(20px, 3vw, 28px) 0 0;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.settings-utilities-heading:first-child {
+  margin-top: 0;
+}
+
 .hub-setup-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;

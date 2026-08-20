@@ -48,9 +48,9 @@ export const OWNER_SETTINGS_SECTIONS = [
     ownerOnly: true
   },
   {
-    id: 'backup',
-    label: 'Backup & restore',
-    description: 'Download or restore site settings and House Guide content.',
+    id: 'utilities',
+    label: 'Utilities',
+    description: 'Hub setup wizard, site backup, and factory reset.',
     ownerOnly: true
   }
 ];
@@ -93,6 +93,7 @@ export function storeSettingsPanel(panelId) {
  * @returns {string}
  */
 export function normalizeSettingsPanel(panelId, isOwner) {
+  const migratedPanelId = panelId === 'backup' ? 'utilities' : panelId;
   const allowed = new Set(getSettingsSections(isOwner).map((section) => section.id));
-  return allowed.has(panelId) ? panelId : 'appearance';
+  return allowed.has(migratedPanelId) ? migratedPanelId : 'appearance';
 }
