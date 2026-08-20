@@ -11,12 +11,13 @@ import {
   requestHubSetupWizardRerun,
   resetHubSetupWizardStateForTests
 } from '../src/apps/HubSetup/hubSetupWizardState.js';
-import { applyHubSetupRoutePolicy } from '../src/apps/HubSetup/hubSetupRoutePolicy.js';
+import { applyHubSetupRoutePolicy, resetHubSetupRoutePolicyForTests } from '../src/apps/HubSetup/hubSetupRoutePolicy.js';
 
 describe('hubSetupRoutePolicy', () => {
   afterEach(() => {
     resetHubSetupWizardStateForTests();
     resetSiteProfileStateForTests();
+    resetHubSetupRoutePolicyForTests();
     resetRouterForTests();
     resetUserModeForTests();
     vi.unstubAllEnvs();
@@ -67,5 +68,21 @@ describe('hubSetupRoutePolicy', () => {
     applyHubSetupRoutePolicy({ routeChange: true });
 
     expect(getCurrentRoute()).toBe('hub-setup');
+  });
+
+  it('auto-opens only once per page load', () => {
+    vi.stubEnv('VITE_DEPLOYMENT_MODE', 'home');
+    setUserMode(UserMode.Owner);
+    markSiteProfileReadyForTests();
+    markSiteSetupAvailableForTests();
+    setSiteProfileStateForTests({ profile: { onboardingComplete: false, hubName: '' } });
+    navigate('settings');
+
+    applyHubSetupRoutePolicy();
+    expect(getCurrentRoute()).toBe('hub-setup');
+
+    navigate('settings');
+    applyHubSetupRoutePolicy();
+    expect(getCurrentRoute()).toBe('settings');
   });
 });
