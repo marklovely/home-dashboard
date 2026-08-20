@@ -1,4 +1,4 @@
-import { getCurrentRoute, navigate } from '../../shell/router.js';
+import { getCurrentRoute, navigate, subscribeToRoute } from '../../shell/router.js';
 import { isOwnerUserMode } from '../../auth/userMode.js';
 import {
   shouldAutoOpenHubSetupWizard,
@@ -8,14 +8,16 @@ import { subscribeToSiteProfile } from '../../services/siteProfileService.js';
 
 /**
  * Keep hub-setup routing aligned with the latest profile sync and wizard flags.
+ *
+ * @param {{ routeChange?: boolean }} [options]
  */
-export function applyHubSetupRoutePolicy() {
+export function applyHubSetupRoutePolicy(options = {}) {
   if (shouldLeaveHubSetupWizard()) {
     navigate('home');
     return;
   }
 
-  if (shouldAutoOpenHubSetupWizard()) {
+  if (!options.routeChange && shouldAutoOpenHubSetupWizard()) {
     navigate('hub-setup');
   }
 }
@@ -24,13 +26,18 @@ export function applyHubSetupRoutePolicy() {
  * @param {() => void} [onInitialSync]
  */
 export function initHubSetupRoutePolicy(onInitialSync) {
-  const run = () => {
+  const runOnProfileSync = () => {
     if (!isOwnerUserMode()) return;
     applyHubSetupRoutePolicy();
   };
+  const runOnRouteChange = () => {
+    if (!isOwnerUserMode()) return;
+    applyHubSetupRoutePolicy({ routeChange: true });
+  };
 
-  subscribeToSiteProfile(run);
-  run();
+  subscribeToSiteProfile(runOnProfileSync);
+  subscribeToRoute(runOnRouteChange);
+  runOnProfileSync();
   onInitialSync?.();
 }
 

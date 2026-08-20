@@ -221,6 +221,11 @@ export function markSiteProfileReadyForTests() {
 }
 
 /** @internal */
+export function markSiteSetupAvailableForTests() {
+  setupAvailability = 'available';
+}
+
+/** @internal */
 export function setSiteProfileStateForTests(profileState) {
   state = profileState;
   notify();

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   clearHubSetupWizardForcedOpen,
   clearHubSetupWizardRerunRequest,
@@ -13,6 +13,10 @@ import {
 } from '../src/apps/HubSetup/hubSetupWizardState.js';
 
 describe('hubSetupWizardState', () => {
+  afterEach(() => {
+    resetHubSetupWizardStateForTests();
+  });
+
   it('tracks wizard step', () => {
     resetHubSetupWizardStateForTests();
     expect(getHubSetupWizardStep()).toBe(0);
