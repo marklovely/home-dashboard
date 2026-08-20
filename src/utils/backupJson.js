@@ -1,4 +1,8 @@
+import { decryptBackupDocument, encryptBackupDocument, isEncryptedBackupDocument } from './backupEncryption.js';
+
 export const SITE_BACKUP_FORMAT_VERSION = 1;
+
+/** @typedef {'full' | 'guide'} SiteBackupScope */
 
 /**
  * Strip runtime-only fields from an assembled guide catalog.
@@ -65,6 +69,7 @@ export function buildGuideExportDocument(guide) {
 
   return {
     formatVersion: SITE_BACKUP_FORMAT_VERSION,
+    backupScope: 'guide',
     exportedAt: new Date().toISOString(),
     catalog,
     uploadedMedia
@@ -73,18 +78,25 @@ export function buildGuideExportDocument(guide) {
 
 /**
  * @param {{ seeded?: boolean, catalog?: Record<string, unknown> | null, uploadedMedia?: { id: string, alt: string }[] }} guide
- * @param {{ sitterSecretsDisclosed?: boolean }} [siteSettings]
+ * @param {{ sitterSecretsDisclosed?: boolean, sitterAccessEmails?: string[] }} [siteSettings]
+ * @param {{ scope?: SiteBackupScope, siteProfile?: Record<string, unknown>, hubSecrets?: Record<string, string> }} [options]
  */
-export function buildSiteBackupDocument(guide, siteSettings = {}) {
+export function buildSiteBackupDocument(guide, siteSettings = {}, options = {}) {
+  const scope = options.scope === 'guide' ? 'guide' : 'full';
   const catalog = guide.catalog ? catalogToImportFormat(guide.catalog) : null;
   const uploadedMedia =
     guide.uploadedMedia?.length ? guide.uploadedMedia : uploadedMediaFromCatalog(guide.catalog);
 
-  return {
+  /** @type {Record<string, unknown>} */
+  const payload = {
     formatVersion: SITE_BACKUP_FORMAT_VERSION,
+    backupScope: scope,
     exportedAt: new Date().toISOString(),
     siteSettings: {
-      sitterSecretsDisclosed: Boolean(siteSettings.sitterSecretsDisclosed)
+      sitterSecretsDisclosed: Boolean(siteSettings.sitterSecretsDisclosed),
+      ...(Array.isArray(siteSettings.sitterAccessEmails)
+        ? { sitterAccessEmails: siteSettings.sitterAccessEmails }
+        : {})
     },
     guide: {
       seeded: Boolean(guide.seeded ?? catalog?.categories?.length),
@@ -92,6 +104,36 @@ export function buildSiteBackupDocument(guide, siteSettings = {}) {
       uploadedMedia
     }
   };
+
+  if (scope === 'full' && options.siteProfile) {
+    payload.siteProfile = options.siteProfile;
+  }
+  if (scope === 'full' && options.hubSecrets && Object.keys(options.hubSecrets).length > 0) {
+    payload.hubSecrets = options.hubSecrets;
+  }
+
+  return payload;
+}
+
+/**
+ * @param {Record<string, unknown>} backup
+ * @returns {SiteBackupScope}
+ */
+export function backupScopeOf(backup) {
+  if (backup.backupScope === 'guide') return 'guide';
+  if (backup.siteProfile || backup.hubSecrets) return 'full';
+  return 'guide';
+}
+
+/**
+ * @param {Record<string, unknown>} backup
+ */
+export function backupRestoreSummary(backup) {
+  const scope = backupScopeOf(backup);
+  if (scope === 'full') {
+    return 'This replaces House Guide content, home details, and saved secrets (Wi‑Fi, PIN, lockbox, etc.) on this hub.';
+  }
+  return 'This replaces House Guide content on this hub.';
 }
 
 /**
@@ -109,6 +151,18 @@ export function downloadJsonFile(filename, data) {
 }
 
 /**
+ * @param {string} filename
+ * @param {Record<string, unknown>} backup
+ * @param {string} password
+ */
+export async function downloadEncryptedBackupFile(filename, backup, password) {
+  const envelope = await encryptBackupDocument(backup, password);
+  downloadJsonFile(filename, envelope);
+}
+
+export { isEncryptedBackupDocument, decryptBackupDocument };
+
+/**
  * @param {File} file
  * @returns {Promise<Record<string, unknown>>}
  */
@@ -119,6 +173,21 @@ export async function readJsonFile(file) {
     throw new Error('File must contain a JSON object.');
   }
   return /** @type {Record<string, unknown>} */ (parsed);
+}
+
+/**
+ * @param {Record<string, unknown>} parsed
+ * @param {() => Promise<string | null>} promptPassword
+ */
+export async function resolveBackupDocument(parsed, promptPassword) {
+  if (!isEncryptedBackupDocument(parsed)) {
+    return parsed;
+  }
+  const password = await promptPassword();
+  if (!password) {
+    throw new Error('Restore cancelled.');
+  }
+  return decryptBackupDocument(parsed, password);
 }
 
 /**

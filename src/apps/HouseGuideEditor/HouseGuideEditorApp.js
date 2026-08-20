@@ -2,6 +2,7 @@ import { defineApp } from '../../components/App/defineApp.js';
 import { getDeviceSessionStatus } from '../../auth/deviceSessionStore.js';
 import { isOwnerUserMode } from '../../auth/userMode.js';
 import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
+import { showPasswordDialog } from '../../components/PasswordDialog/passwordDialog.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
   getGuideCategory,
@@ -31,9 +32,11 @@ import { openHubSetupWizard } from '../HubSetup/hubSetupLauncher.js';
 import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
 import { fetchHouseGuideExport, restoreSiteBackup } from '../../api/siteBackupApi.js';
 import {
-  downloadJsonFile,
+  backupRestoreSummary,
+  downloadEncryptedBackupFile,
   normalizeBackupForRestore,
   readJsonFile,
+  resolveBackupDocument,
   uploadedMediaRestoreHint
 } from '../../utils/backupJson.js';
 import { listCatalogMediaIds } from '../../content/houseguide/guideMedia.js';
@@ -293,15 +296,29 @@ function createEditorShell(context) {
   exportButton.textContent = 'Export JSON';
   exportButton.addEventListener('click', () => {
     exportButton.disabled = true;
-    void fetchHouseGuideExport().then((result) => {
-      exportButton.disabled = false;
-      if (!result.ok || !result.data) {
-        showToast(context.toast, result.message || 'Could not export guide.');
-        return;
+    void (async () => {
+      try {
+        const result = await fetchHouseGuideExport();
+        if (!result.ok || !result.data) {
+          showToast(context.toast, result.message || 'Could not export guide.');
+          return;
+        }
+        const password = await showPasswordDialog({
+          title: 'Encrypt guide export',
+          message:
+            'Choose a password for this export file. You will need the same password to import it later.',
+          confirmLabel: 'Download',
+          requireConfirmation: true
+        });
+        if (!password) return;
+        await downloadEncryptedBackupFile('house-guide-export.json', result.data, password);
+        showToast(context.toast, 'Encrypted guide export downloaded.');
+      } catch (error) {
+        showToast(context.toast, error instanceof Error ? error.message : 'Could not export guide.');
+      } finally {
+        exportButton.disabled = false;
       }
-      downloadJsonFile('house-guide-export.json', result.data);
-      showToast(context.toast, 'Guide export downloaded.');
-    });
+    })();
   });
 
   const importLabel = document.createElement('label');
@@ -320,13 +337,20 @@ function createEditorShell(context) {
     void (async () => {
       try {
         const raw = await readJsonFile(file);
-        const backup = normalizeBackupForRestore(raw);
+        const decrypted = await resolveBackupDocument(raw, () =>
+          showPasswordDialog({
+            title: 'Decrypt guide export',
+            message: 'Enter the password used when this file was exported.',
+            confirmLabel: 'Continue'
+          })
+        );
+        const backup = normalizeBackupForRestore(decrypted);
         const uploaded = /** @type {{ id: string, alt: string }[]} */ (
           backup.guide?.uploadedMedia ?? []
         );
         const confirmed = await showConfirmDialog({
           title: 'Import House Guide?',
-          message: `This replaces all guide content on this hub.${uploadedMediaRestoreHint(uploaded)}`,
+          message: `${backupRestoreSummary(backup)}${uploadedMediaRestoreHint(uploaded)}`,
           confirmLabel: 'Import',
           danger: true
         });

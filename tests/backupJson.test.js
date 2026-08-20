@@ -6,7 +6,9 @@ import {
   catalogToImportFormat,
   normalizeBackupForRestore,
   uploadedMediaFromCatalog,
-  uploadedMediaRestoreHint
+  uploadedMediaRestoreHint,
+  backupRestoreSummary,
+  backupScopeOf
 } from '../src/utils/backupJson.js';
 
 describe('hubEnvironment', () => {
@@ -107,9 +109,18 @@ describe('backupJson', () => {
       }
     });
     expect(payload.formatVersion).toBe(1);
+    expect(payload.backupScope).toBe('guide');
     expect(payload.catalog?.categories).toEqual([]);
     expect(payload.uploadedMedia).toEqual([{ id: 'a', alt: 'A' }]);
     expect(payload).not.toHaveProperty('siteSettings');
+  });
+
+  it('describes full vs guide restore scope', () => {
+    expect(backupScopeOf({ backupScope: 'full', siteProfile: { hubName: 'X' } })).toBe('full');
+    expect(backupRestoreSummary({ backupScope: 'guide' })).toMatch(/House Guide/i);
+    expect(backupRestoreSummary({ backupScope: 'full', hubSecrets: { wifi_password: 'x' } })).toMatch(
+      /secrets/i
+    );
   });
 });
 
