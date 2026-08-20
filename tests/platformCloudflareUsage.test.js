@@ -6,6 +6,7 @@ import {
 } from '../functions/api/platform/platformCloudflareUsage.js';
 import {
   formatBytes,
+  formatUsageLine,
   FREE_TIER_LIMITS,
   usagePercent,
   usageTone
@@ -14,9 +15,17 @@ import {
 describe('platform usage formatting', () => {
   it('formats byte sizes for display', () => {
     expect(formatBytes(0)).toBe('0 B');
-    expect(formatBytes(1536)).toBe('1.50 KB');
+    expect(formatBytes(512)).toBe('512 B');
+    expect(formatBytes(1536)).toBe('1.5 KB');
     expect(formatBytes(2048)).toBe('2 KB');
+    expect(formatBytes(10 * 1024 ** 2)).toBe('10 MB');
     expect(formatBytes(5 * 1024 ** 3)).toBe('5 GB');
+  });
+
+  it('formats usage lines with free-tier limits', () => {
+    expect(formatUsageLine(0, FREE_TIER_LIMITS.r2StorageBytes)).toBe(
+      '0 B / 10 GB (0%)'
+    );
   });
 
   it('calculates usage tone against free-tier limits', () => {
