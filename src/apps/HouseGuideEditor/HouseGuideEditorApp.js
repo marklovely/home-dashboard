@@ -331,6 +331,7 @@ function createEditorShell(context) {
         });
         if (!confirmed) return;
 
+        showToast(context.toast, 'Importing guide…', 120000);
         const result = await restoreSiteBackup(backup);
         if (!result.ok) {
           showToast(context.toast, result.message || 'Import failed.');
