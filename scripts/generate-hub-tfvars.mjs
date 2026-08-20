@@ -15,7 +15,8 @@ import {
   deprovisionSiteMissingError,
   escapeHcl,
   hubProxySecretForGeneratedTfvars,
-  resolveAttachHubApiBinding
+  resolveAttachHubApiBinding,
+  resolveIncludePagesDevAccessDestinations
 } from './lib/hub-tfvars.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
@@ -117,6 +118,10 @@ function appendSiteBlock(siteId, meta) {
     provisionSiteId,
     provisionPhase
   });
+  const includePagesDevAccess = resolveIncludePagesDevAccessDestinations(siteId, meta, terraformSiteIds, {
+    provisionSiteId,
+    provisionPhase
+  });
 
   let proxySecret;
   try {
@@ -142,6 +147,7 @@ function appendSiteBlock(siteId, meta) {
   lines.push(`    vanilla         = ${vanilla ? 'true' : 'false'}`);
   lines.push(`    terraform       = true`);
   lines.push(`    attach_hub_api_binding = ${attach ? 'true' : 'false'}`);
+  lines.push(`    include_pages_dev_access_destinations = ${includePagesDevAccess ? 'true' : 'false'}`);
 
   const siteOwnerEmails = parseEmailList(meta.owner_emails);
   const siteSitterEmails = parseEmailList(meta.sitter_emails);

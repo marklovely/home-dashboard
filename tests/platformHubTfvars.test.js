@@ -3,7 +3,8 @@ import {
   deprovisionSiteMissingError,
   hubProxySecretForGeneratedTfvars,
   resolveAttachHubApiBinding,
-  resolveHubProxySecret
+  resolveHubProxySecret,
+  resolveIncludePagesDevAccessDestinations
 } from '../scripts/lib/hub-tfvars.mjs';
 
 describe('hub tfvars helpers', () => {
@@ -22,6 +23,23 @@ describe('hub tfvars helpers', () => {
         provisionPhase: 'pre-worker'
       })
     ).toBe(false);
+  });
+
+  it('defers pages.dev Access destinations until post-worker provision', () => {
+    const inState = new Set(['dev']);
+    expect(
+      resolveIncludePagesDevAccessDestinations('dev', {}, inState, {
+        provisionSiteId: 'dev',
+        provisionPhase: 'pre-worker'
+      })
+    ).toBe(false);
+    expect(
+      resolveIncludePagesDevAccessDestinations('dev', {}, inState, {
+        provisionSiteId: 'dev',
+        provisionPhase: 'post-worker'
+      })
+    ).toBe(true);
+    expect(resolveIncludePagesDevAccessDestinations('demo', {}, inState)).toBe(true);
   });
 
   it('preserves existing in-state attach when not provisioning that site', () => {

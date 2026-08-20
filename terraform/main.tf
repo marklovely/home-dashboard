@@ -25,8 +25,9 @@ module "hub_site" {
   github_production_branch = var.github_production_branch
   # null → module generates random_password (sandbox). Explicit value for imports (production/test).
   hub_proxy_secret               = lookup(var.hub_proxy_secrets, each.key, try(each.value.hub_proxy_secret, null))
-  attach_hub_api_binding         = each.value.attach_hub_api_binding
-  platform_health_checks_enabled = var.platform_admin.enabled
+  attach_hub_api_binding                 = each.value.attach_hub_api_binding
+  include_pages_dev_access_destinations  = lookup(each.value, "include_pages_dev_access_destinations", true)
+  platform_health_checks_enabled         = var.platform_admin.enabled
 }
 
 module "platform_admin" {

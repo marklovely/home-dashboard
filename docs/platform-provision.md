@@ -242,6 +242,8 @@ bash scripts/verify-cloudflare-api-token.sh
 
 **Post-worker apply fails with `Invalid Service name ()` (8000022):** CI runs `scripts/attach-hub-api-pages-binding.mjs` (direct Cloudflare API) then `terraform apply -refresh-only` to sync state. Local: `node scripts/attach-hub-api-pages-binding.mjs demo` after Worker deploy.
 
+**Terraform apply fails with Access `400 Bad Request` / `domain does not belong to zone` on a new site:** The Pages Access app includes `*.pages.dev` destinations, which Cloudflare rejects until the Pages project exists. CI now omits those destinations during the pre-worker apply and adds them on the post-worker apply. Merge the fix and re-run **Platform site provision** (workflow dispatch with the site id). Partial applies resume safely on retry.
+
 ## What runs in CI
 
 [`scripts/provision-hub-site.mjs`](../scripts/provision-hub-site.mjs):
