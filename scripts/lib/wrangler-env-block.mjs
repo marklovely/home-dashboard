@@ -60,7 +60,10 @@ export function findWranglerEnvBlockSlice(text, siteId) {
   if (start === -1) return null;
 
   const slice = text.slice(start);
-  const nextMatch = slice.slice(header.length).search(/\n\[env\.|\n# ---/);
+  // Stop at the next site section or top-level [env.{otherSite}] header — not [env.{site}.vars] subsections.
+  const nextMatch = slice.slice(header.length).search(
+    /\n# ---------------------------------------------------------------------------\n|\n\[env\.[a-z0-9_-]+\]\s*\n/
+  );
   const end = nextMatch === -1 ? text.length : start + header.length + nextMatch;
 
   return {
