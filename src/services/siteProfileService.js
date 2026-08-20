@@ -7,6 +7,7 @@ import {
 } from '../api/siteSetupApi.js';
 import { refreshPrivateConfig } from './privateConfigService.js';
 import { clearLocalSetup } from './siteSetupLocalStorage.js';
+import { getHubEnvironmentSync } from '../auth/hubEnvironment.js';
 import { resetHubSetupWizardStep, requestHubSetupWizardAfterReset } from '../apps/HubSetup/hubSetupWizardState.js';
 
 /** @typedef {{ profile: Record<string, unknown>, guideSeeded?: boolean }} SiteProfileState */
@@ -103,11 +104,12 @@ export function getSiteProfileState() {
  */
 export function isOnboardingComplete() {
   if (state?.profile?.onboardingComplete === true) return true;
-  // Legacy hubs already had a seeded guide and hub name before onboardingComplete existed.
-  if (state?.guideSeeded === true && String(state?.profile?.hubName ?? '').trim()) {
-    return true;
+  if (state?.guideSeeded !== true) return false;
+  // Test hub still expects explicit setup (hub name) before skipping the wizard.
+  if (getHubEnvironmentSync() === 'test') {
+    return Boolean(String(state?.profile?.hubName ?? '').trim());
   }
-  return false;
+  return true;
 }
 
 /**

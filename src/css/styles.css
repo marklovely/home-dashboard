@@ -2165,6 +2165,30 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   margin-top: 4px;
 }
 
+.password-dialog-field {
+  display: grid;
+  gap: 6px;
+}
+.password-dialog-label {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+.password-dialog-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2, var(--surface));
+  color: inherit;
+  font: inherit;
+}
+.password-dialog-error {
+  margin: 0;
+  color: var(--danger, #e05252);
+  font-size: 0.92rem;
+}
+
 .shell-tagline { margin: 4px 0 0; font-size: 0.92rem; }
 .mode-house-sitter .hub-shell {
   padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px) + 80px);
