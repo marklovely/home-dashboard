@@ -25,6 +25,7 @@ import {
   saveHouseGuideTopic,
   subscribeToGuideContent
 } from '../../services/guideContentService.js';
+import { saveSiteProfile, syncSiteProfileFromServer } from '../../services/siteProfileService.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { openHubSetupWizard } from '../HubSetup/hubSetupLauncher.js';
 import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
@@ -338,6 +339,8 @@ function createEditorShell(context) {
           return;
         }
         await refreshGuideContent(fetch, { draft: true, force: true });
+        await saveSiteProfile({ onboardingComplete: true });
+        await syncSiteProfileFromServer();
         showToast(context.toast, 'House Guide imported.');
         view = 'categories';
         activeCategoryId = null;

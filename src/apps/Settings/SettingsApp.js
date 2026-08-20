@@ -68,6 +68,7 @@ import {
   uploadedMediaRestoreHint
 } from '../../utils/backupJson.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
+import { saveSiteProfile, syncSiteProfileFromServer } from '../../services/siteProfileService.js';
 import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
 import { openHubSetupWizard, openHubSetupWizardAfterReset } from '../HubSetup/hubSetupLauncher.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
@@ -323,6 +324,8 @@ function createUtilitiesFields(context) {
 
         await syncSitterSecretsFromServer();
         await refreshGuideContent(fetch, { draft: true, force: true });
+        await saveSiteProfile({ onboardingComplete: true });
+        await syncSiteProfileFromServer();
         restoreStatus.textContent = 'Site backup restored.';
         showToast(context.toast, 'Site backup restored.');
       } catch (error) {
