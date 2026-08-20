@@ -43,6 +43,17 @@ describe('hubSetupRouting', () => {
     expect(shouldAllowHubSetupWizard()).toBe(false);
   });
 
+  it('treats legacy seeded hubs with a hub name as onboarding complete', () => {
+    markSiteProfileReadyForTests();
+    setSiteProfileStateForTests({
+      profile: { onboardingComplete: false, hubName: 'Lovely Home' },
+      guideSeeded: true
+    });
+
+    expect(shouldAllowHubSetupWizard()).toBe(false);
+    expect(shouldAutoOpenHubSetupWizard()).toBe(false);
+  });
+
   it('allows a forced wizard open after factory reset before sync settles', () => {
     requestHubSetupWizardAfterReset();
     expect(shouldAllowHubSetupWizard()).toBe(true);
