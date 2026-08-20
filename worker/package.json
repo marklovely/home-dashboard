@@ -22,7 +22,10 @@
     "check": "vitest run",
     "deploy:demo": "node scripts/check-env-provisioned.mjs demo && wrangler deploy --env demo",
     "d1:migrate:demo": "node scripts/check-env-provisioned.mjs demo && wrangler d1 migrations apply lovely-home-appliance-manuals-demo --remote --env demo",
-    "secrets:demo": "bash scripts/print-env-secrets-checklist.sh demo"
+    "secrets:demo": "bash scripts/print-env-secrets-checklist.sh demo",
+    "deploy:dev": "node scripts/check-env-provisioned.mjs dev && wrangler deploy --env dev",
+    "d1:migrate:dev": "node scripts/check-env-provisioned.mjs dev && wrangler d1 migrations apply lovely-home-appliance-manuals-dev --remote --env dev",
+    "secrets:dev": "bash scripts/print-env-secrets-checklist.sh dev"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.19.0",
