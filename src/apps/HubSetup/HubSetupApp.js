@@ -43,6 +43,7 @@ import {
 } from '../../services/siteProfileService.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
 import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
+import { getModeConfig } from '../../modes/modeConfig.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
   getHubSetupWizardStep,
@@ -60,6 +61,12 @@ const USE_CASE_OPTIONS = [
   { value: 'airbnb', label: 'Airbnb / short lets' },
   { value: 'both', label: 'Both sitters and short lets' }
 ];
+
+const HUB_SETUP_WELCOME = {
+  title: 'Welcome to Lovely Home setup',
+  lead:
+    'A few short steps to name your hub, add contacts, and get guests started. Each step saves as you go — you can change everything later in Settings.'
+};
 
 /**
  * @param {HTMLElement} viewport
@@ -151,6 +158,26 @@ function mountHubSetupWizard(viewport, context) {
   const panelHeader = document.createElement('header');
   panelHeader.className = 'settings-panel-header hub-setup-panel-header';
 
+  const welcomeBlock = document.createElement('div');
+  welcomeBlock.className = 'hub-setup-welcome';
+
+  const welcomeEyebrow = document.createElement('p');
+  welcomeEyebrow.className = 'hub-setup-welcome-eyebrow';
+  welcomeEyebrow.textContent = getModeConfig().branding.eyebrow;
+
+  const welcomeTitle = document.createElement('h2');
+  welcomeTitle.className = 'hub-setup-welcome-title';
+  welcomeTitle.textContent = HUB_SETUP_WELCOME.title;
+
+  const welcomeLead = document.createElement('p');
+  welcomeLead.className = 'hub-setup-welcome-lead subtle';
+  welcomeLead.textContent = HUB_SETUP_WELCOME.lead;
+
+  welcomeBlock.append(welcomeEyebrow, welcomeTitle, welcomeLead);
+
+  const stepHeader = document.createElement('div');
+  stepHeader.className = 'hub-setup-step-header';
+
   const panelTitle = document.createElement('h1');
   panelTitle.className = 'settings-panel-title';
 
@@ -160,7 +187,8 @@ function mountHubSetupWizard(viewport, context) {
   const stepHelpHost = document.createElement('div');
   stepHelpHost.className = 'hub-setup-step-help-host';
 
-  panelHeader.append(panelTitle, panelDescription, stepHelpHost);
+  stepHeader.append(panelTitle, panelDescription, stepHelpHost);
+  panelHeader.append(welcomeBlock, stepHeader);
 
   const body = document.createElement('div');
   body.className = 'settings-panel-body hub-setup-body';
