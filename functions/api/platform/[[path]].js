@@ -20,6 +20,11 @@ import {
   validateSiteProvision
 } from './platformSiteMutations.js';
 import { platformHealthAuthConfigured } from './platformHealthFetch.js';
+import {
+  cloudflareUsageApiConfigured,
+  fetchAccountStorageSummary,
+  fetchSiteStorageUsage
+} from './platformCloudflareUsage.js';
 
 /**
  * Platform operator API — /api/platform/*
@@ -56,6 +61,7 @@ export async function onRequest(context) {
       operator: auth.email,
       platform: manifest.platform ?? {},
       healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
+      cloudflareUsageConfigured: cloudflareUsageApiConfigured(pagesEnv),
       githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
       sites: manifest.sites
     });
@@ -75,15 +81,22 @@ export async function onRequest(context) {
   if (suffix === 'config' && request.method === 'GET') {
     return Response.json({
       healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
+      cloudflareUsageConfigured: cloudflareUsageApiConfigured(pagesEnv),
       githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
       githubRepo: githubRepo(pagesEnv),
       hints: {
         healthServiceAuth:
           'Set PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID and PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET on home-dashboard-platform (terraform apply). Hub sites need non_identity service-token Access policies.',
+        cloudflareUsage:
+          'Set PLATFORM_CF_API_TOKEN (Account → Workers R2 Storage → Read) and CLOUDFLARE_ACCOUNT_ID on the platform Pages project to show D1/R2 usage per hub.',
         githubAutomation:
           'Set PLATFORM_GITHUB_TOKEN (contents:write, actions:write) and PLATFORM_GITHUB_REPO on the platform Pages project to enable site wizard automation.'
       }
     });
+  }
+
+  if (suffix === 'usage/summary' && request.method === 'GET') {
+    return Response.json(await fetchAccountStorageSummary(manifest, pagesEnv));
   }
 
   if (suffix === 'wizard/schema' && request.method === 'GET') {
@@ -159,6 +172,10 @@ export async function onRequest(context) {
 
       if (action === 'access-probe') {
         return Response.json(await fetchSiteAccessProbe(site, pagesEnv));
+      }
+
+      if (action === 'usage') {
+        return Response.json(await fetchSiteStorageUsage(site, manifest.platform ?? {}, pagesEnv));
       }
     }
   }

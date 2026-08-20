@@ -44,5 +44,6 @@ module "platform_admin" {
   github_repo                       = var.github_repo
   github_production_branch          = var.github_production_branch
   platform_github_token             = var.platform_github_token
+  platform_cf_api_token             = var.platform_cf_api_token
   pages_preview_deployments_enabled = var.pages_preview_deployments_enabled
 }
