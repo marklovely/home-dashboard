@@ -129,7 +129,6 @@ async function initialiseDashboard() {
     shellEyebrow: document.querySelector('#shell-eyebrow'),
     shellChromeTitle: document.querySelector('#shell-chrome-title'),
     shellTagline: document.querySelector('#shell-tagline'),
-    homeButton: document.querySelector('#shell-home-button'),
     statusStrip: document.querySelector('#shell-status'),
     shellHeaderWeather: document.querySelector('#shell-header-weather'),
     shellFooter: document.querySelector('#shell-footer'),
@@ -150,8 +149,7 @@ async function initialiseDashboard() {
 
   attachOwnerAccessGesture({
     logoElements: [
-      document.querySelector('#shell-logo'),
-      document.querySelector('#shell-eyebrow'),
+      document.querySelector('#shell-logo-button'),
       document.querySelector('#shell-chrome-title'),
       document.querySelector('.shell-chrome-title-block')
     ],
@@ -168,7 +166,9 @@ async function initialiseDashboard() {
 
   registerServiceWorker();
   initScreensaverOverlay();
-  initShellBrandLogo();
+  initShellBrandLogo({
+    onNavigateHome: () => shellContext.navigate(HOME_ROUTE)
+  });
 
   subscribeToSiteProfile(() => {
     applyShellBranding({
