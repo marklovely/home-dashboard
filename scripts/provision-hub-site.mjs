@@ -162,14 +162,7 @@ run('npm', ['run', `deploy:${siteId}`, '--prefix', 'worker'], {
 });
 
 generateTfvars('post-worker');
-run('node', [join(root, 'scripts/attach-hub-api-pages-binding.mjs'), siteId]);
 runTerraformRefreshOnly();
-
-if (siteId !== 'production') {
-  run('node', [join(root, 'scripts/enable-hub-pages-previews.mjs'), siteId]);
-}
-
-run('node', [join(root, 'scripts/mark-site-provisioned.mjs'), siteId]);
 
 if (!skipPages) {
   run('bash', [join(root, 'scripts/deploy-cloudflare-pages-site.sh'), siteId], {
@@ -179,7 +172,13 @@ if (!skipPages) {
       CLOUDFLARE_ACCOUNT_ID: process.env.CLOUDFLARE_ACCOUNT_ID ?? ''
     }
   });
+
+  if (siteId !== 'production') {
+    run('node', [join(root, 'scripts/enable-hub-pages-previews.mjs'), siteId]);
+  }
 }
+
+run('node', [join(root, 'scripts/mark-site-provisioned.mjs'), siteId]);
 
 run('node', [join(root, 'scripts/build-platform-manifest.mjs')]);
 

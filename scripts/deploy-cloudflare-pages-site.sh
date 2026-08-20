@@ -32,20 +32,28 @@ npm ci
 VITE_HUB_ENVIRONMENT="$HUB_ENV" VITE_DEPLOYMENT_MODE=home npm run build
 
 echo "==> Deploying dist/ to Cloudflare Pages (branch=$BRANCH)"
-npx wrangler pages deploy dist \
-  --project-name="$PAGES_PROJECT" \
-  --branch="$BRANCH" \
-  --commit-dirty=true
+pages_deploy() {
+  npx wrangler pages deploy dist \
+    --project-name="$PAGES_PROJECT" \
+    --branch="$BRANCH" \
+    --commit-dirty=true
+}
+
+pages_deploy
 
 if [[ -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
   echo ""
   echo "==> Attaching HUB_API Pages binding (required for /api on this site)"
   node "$ROOT/scripts/attach-hub-api-pages-binding.mjs" "$SITE_ID"
+  echo ""
+  echo "==> Redeploying Pages so the active deployment picks up HUB_API"
+  pages_deploy
 else
   echo ""
   echo "NOTE: HUB_API binding was NOT attached (set CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID)."
   echo "      Without it, /api/* on the hub will not reach the Worker. Run:"
   echo "        node scripts/attach-hub-api-pages-binding.mjs $SITE_ID"
+  echo "        bash scripts/deploy-cloudflare-pages-site.sh $SITE_ID"
 fi
 
 echo ""
