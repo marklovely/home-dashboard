@@ -14,7 +14,8 @@ import {
 describe('platform usage formatting', () => {
   it('formats byte sizes for display', () => {
     expect(formatBytes(0)).toBe('0 B');
-    expect(formatBytes(1536)).toBe('2 KB');
+    expect(formatBytes(1536)).toBe('1.50 KB');
+    expect(formatBytes(2048)).toBe('2 KB');
     expect(formatBytes(5 * 1024 ** 3)).toBe('5 GB');
   });
 
