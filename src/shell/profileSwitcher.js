@@ -4,11 +4,9 @@ import { canReturnToHouseSitterMode } from '../auth/ownerSession.js';
 import { UserMode, isHouseSitterExperience, setUserMode, subscribeToUserMode } from '../auth/userMode.js';
 import { setActiveProfileId } from '../services/profileService.js';
 import { subscribeToDeviceSession } from '../auth/deviceSessionStore.js';
-import { getCurrentRoute, subscribeToRoute } from './router.js';
 
 export function shouldShowProfileSwitcher() {
   if (!isHomeDeployment()) return false;
-  if (getCurrentRoute() === 'hub-setup') return false;
   return getDeviceMode() === 'owner' || canReturnToHouseSitterMode();
 }
 
@@ -48,7 +46,6 @@ export function initProfileSwitcher(host, options = {}) {
   render();
   subscribeToUserMode(render);
   subscribeToDeviceSession(render);
-  subscribeToRoute(render);
 }
 
 /**
