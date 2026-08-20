@@ -196,7 +196,7 @@ export const HUB_SETUP_HELP_SECTIONS = [
           'Open your council bin calendar (PDF or website) and add every date — do not guess from an alternating-week pattern.',
           'Choose rubbish, recycling, or garden waste for each date.',
           'Tick changed day for bank-holiday weeks when collection moves off the usual weekday.',
-          'You can skip this step and return via Settings → Open setup wizard.'
+          'You can skip this step and return via Settings → Utilities → Open setup wizard.'
         ]
       },
       {
@@ -371,7 +371,7 @@ export function getBinScheduleGuestCopy(useCase = 'owner') {
     case 'airbnb':
       return {
         intro:
-          'Add collection dates from your council calendar. Short-stay guests see the next collection on the home screen — useful when a stay crosses bin day. You can skip and add dates later via Settings → Open setup wizard.',
+          'Add collection dates from your council calendar. Short-stay guests see the next collection on the home screen — useful when a stay crosses bin day. You can skip and add dates later via Settings → Utilities.',
         locationHint: 'Where guests should put bins on collection day.',
         locationHelpText: `${baseLocationHelp} Mention this in your checkout or House Guide if guests need to take rubbish out.`,
         normalDayHelp:
@@ -380,7 +380,7 @@ export function getBinScheduleGuestCopy(useCase = 'owner') {
     case 'housesitter':
       return {
         intro:
-          'Add collection dates from your council calendar. Sitters see the next collection on the home screen before bin day. You can skip and add dates later via Settings → Open setup wizard.',
+          'Add collection dates from your council calendar. Sitters see the next collection on the home screen before bin day. You can skip and add dates later via Settings → Utilities.',
         locationHint: 'Where sitters should leave bins on collection day.',
         locationHelpText: baseLocationHelp,
         normalDayHelp:
@@ -389,7 +389,7 @@ export function getBinScheduleGuestCopy(useCase = 'owner') {
     case 'both':
       return {
         intro:
-          'Add collection dates from your council calendar. Guests and sitters see the next collection on the home screen. You can skip and add dates later via Settings → Open setup wizard.',
+          'Add collection dates from your council calendar. Guests and sitters see the next collection on the home screen. You can skip and add dates later via Settings → Utilities.',
         locationHint: 'Where guests and sitters should leave bins on collection day.',
         locationHelpText: baseLocationHelp,
         normalDayHelp:
@@ -398,7 +398,7 @@ export function getBinScheduleGuestCopy(useCase = 'owner') {
     default:
       return {
         intro:
-          'Add collection dates from your council calendar. You can skip and add them later in Settings → Open setup wizard. Each date drives the home screen bin reminder.',
+          'Add collection dates from your council calendar. You can skip and add them later in Settings → Utilities. Each date drives the home screen bin reminder.',
         locationHint: 'Where bins are collected from on collection day.',
         locationHelpText: baseLocationHelp,
         normalDayHelp: HUB_SETUP_FIELD_HELP.binNormalDay.helpText ?? ''
