@@ -7,11 +7,18 @@ import { isHouseGuideSeeded } from '../houseGuide/repository.js';
  */
 export async function isHubOnboardingComplete(env) {
   const profile = await getSiteProfile(env);
+  if (profile.onboardingComplete === true) return true;
+
+  const guideSeeded = env.HOUSE_GUIDE_DB ? await isHouseGuideSeeded(env.HOUSE_GUIDE_DB) : false;
   const hasProfile = await hasSiteProfileRow(env);
-  if (!hasProfile && env.HOUSE_GUIDE_DB && (await isHouseGuideSeeded(env.HOUSE_GUIDE_DB))) {
+  if (
+    guideSeeded &&
+    (!hasProfile || Boolean(String(profile.hubName ?? '').trim()))
+  ) {
     return true;
   }
-  return profile.onboardingComplete === true;
+
+  return false;
 }
 
 /**

@@ -6,6 +6,9 @@ import {
 } from './hubSetupRouting.js';
 import { subscribeToSiteProfile } from '../../services/siteProfileService.js';
 
+/** @type {boolean} */
+let hasAttemptedInitialHubSetupOpen = false;
+
 /**
  * Keep hub-setup routing aligned with the latest profile sync and wizard flags.
  *
@@ -18,6 +21,8 @@ export function applyHubSetupRoutePolicy(options = {}) {
   }
 
   if (!options.routeChange && shouldAutoOpenHubSetupWizard()) {
+    if (hasAttemptedInitialHubSetupOpen) return;
+    hasAttemptedInitialHubSetupOpen = true;
     navigate('hub-setup');
   }
 }
@@ -43,5 +48,6 @@ export function initHubSetupRoutePolicy(onInitialSync) {
 
 /** @internal */
 export function resetHubSetupRoutePolicyForTests() {
+  hasAttemptedInitialHubSetupOpen = false;
   void getCurrentRoute;
 }

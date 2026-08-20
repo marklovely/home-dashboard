@@ -47,7 +47,10 @@ export async function handleSiteProfileGet(request, env, correlationId) {
   const guideSeeded = env.HOUSE_GUIDE_DB ? await isHouseGuideSeeded(env.HOUSE_GUIDE_DB) : false;
   const hasProfile = await hasSiteProfileRow(env);
   const skipOnboardingFromLegacyGuide =
-    !hasProfile && guideSeeded && !isTestHubWorker(env);
+    guideSeeded &&
+    !isTestHubWorker(env) &&
+    profile.onboardingComplete !== true &&
+    (!hasProfile || Boolean(String(profile.hubName ?? '').trim()));
   const effectiveProfile = skipOnboardingFromLegacyGuide
     ? { ...profile, onboardingComplete: true }
     : profile;

@@ -102,7 +102,12 @@ export function getSiteProfileState() {
  * @returns {boolean}
  */
 export function isOnboardingComplete() {
-  return state?.profile?.onboardingComplete === true;
+  if (state?.profile?.onboardingComplete === true) return true;
+  // Legacy hubs already had a seeded guide and hub name before onboardingComplete existed.
+  if (state?.guideSeeded === true && String(state?.profile?.hubName ?? '').trim()) {
+    return true;
+  }
+  return false;
 }
 
 /**
