@@ -59,14 +59,15 @@ variable "hub_proxy_secrets" {
 
 variable "sites" {
   type = map(object({
-    hostname               = string
-    hub_environment        = string
-    vanilla                = bool
-    terraform              = bool
-    hub_proxy_secret       = optional(string)
-    attach_hub_api_binding = optional(bool, true)
-    owner_emails           = optional(list(string))
-    sitter_emails          = optional(list(string))
+    hostname                              = string
+    hub_environment                       = string
+    vanilla                               = bool
+    terraform                             = bool
+    hub_proxy_secret                      = optional(string)
+    attach_hub_api_binding                = optional(bool, true)
+    include_pages_dev_access_destinations = optional(bool, true)
+    owner_emails                          = optional(list(string))
+    sitter_emails                         = optional(list(string))
   }))
   description = "Site registry; only sites with terraform=true are managed by this stack."
 }
