@@ -166,6 +166,22 @@ export async function onRequest(context) {
       return Response.json(result, { status: result.ok ? 202 : 503 });
     }
 
+    if (action === 'previews') {
+      if (!site) {
+        return Response.json({ error: 'NOT_FOUND', message: `Unknown site: ${siteId}` }, { status: 404 });
+      }
+      if (request.method === 'GET') {
+        return Response.json(await fetchSitePagesPreviewStatus(site, manifest.platform ?? {}, pagesEnv));
+      }
+      if (request.method === 'POST') {
+        const body = await readJsonBody(request);
+        const enabled = body.enabled === true;
+        return Response.json(
+          await setSitePagesPreviewEnabled(site, manifest.platform ?? {}, pagesEnv, enabled)
+        );
+      }
+    }
+
     if (request.method === 'GET') {
       if (!site) {
         return Response.json({ error: 'NOT_FOUND', message: `Unknown site: ${siteId}` }, { status: 404 });
@@ -185,19 +201,6 @@ export async function onRequest(context) {
 
       if (action === 'usage') {
         return Response.json(await fetchSiteStorageUsage(site, manifest.platform ?? {}, pagesEnv));
-      }
-
-      if (action === 'previews') {
-        if (request.method === 'GET') {
-          return Response.json(await fetchSitePagesPreviewStatus(site, manifest.platform ?? {}, pagesEnv));
-        }
-        if (request.method === 'POST') {
-          const body = await readJsonBody(request);
-          const enabled = body.enabled === true;
-          return Response.json(
-            await setSitePagesPreviewEnabled(site, manifest.platform ?? {}, pagesEnv, enabled)
-          );
-        }
       }
     }
   }

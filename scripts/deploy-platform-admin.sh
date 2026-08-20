@@ -27,10 +27,7 @@ cp functions/api/middlewareAccess.js dist-platform/functions/api/
 cp functions/api/accessIdentity.js dist-platform/functions/api/
 cp functions/api/accessJwtExtract.js dist-platform/functions/api/
 cp functions/api/platform/[[path]].js dist-platform/functions/api/platform/
-cp functions/api/platform/platformApi.js dist-platform/functions/api/platform/
-cp functions/api/platform/platformHealthFetch.js dist-platform/functions/api/platform/
-cp functions/api/platform/platformGitHub.js dist-platform/functions/api/platform/
-cp functions/api/platform/platformSiteMutations.js dist-platform/functions/api/platform/
+cp functions/api/platform/*.js dist-platform/functions/api/platform/
 
 echo "==> Deploying dist-platform/ to $PAGES_PROJECT (branch=$BRANCH)"
 npx wrangler pages deploy dist-platform \
