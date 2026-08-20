@@ -69,7 +69,7 @@ import {
 } from '../../utils/backupJson.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
 import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
-import { openHubSetupWizard } from '../HubSetup/hubSetupLauncher.js';
+import { openHubSetupWizard, openHubSetupWizardAfterReset } from '../HubSetup/hubSetupLauncher.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
   applyGuestAccessDisplayValues,
@@ -352,7 +352,7 @@ function createUtilitiesFields(context) {
         shellTagline: document.querySelector('#shell-tagline')
       });
       showToast(context.toast, 'Hub reset. Opening setup wizard…');
-      context.navigate('hub-setup');
+      openHubSetupWizardAfterReset(context);
     });
   });
 
