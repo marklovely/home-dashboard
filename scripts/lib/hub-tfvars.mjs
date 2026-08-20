@@ -25,6 +25,28 @@ export function resolveAttachHubApiBinding(siteId, meta, terraformSiteIds, optio
 
 /**
  * @param {string} siteId
+ * @param {Record<string, string | boolean>} meta
+ * @param {Set<string>} terraformSiteIds
+ * @param {{ provisionSiteId?: string, provisionPhase?: string }} [options]
+ */
+export function resolveIncludePagesDevAccessDestinations(siteId, meta, terraformSiteIds, options = {}) {
+  void terraformSiteIds;
+  const provisionSiteId = options.provisionSiteId?.trim() || '';
+  const provisionPhase = options.provisionPhase?.trim() || '';
+
+  if (siteId === provisionSiteId) {
+    if (provisionPhase === 'pre-worker') return false;
+    if (provisionPhase === 'post-worker') return true;
+  }
+
+  if (meta.include_pages_dev_access_destinations === false) return false;
+  if (meta.include_pages_dev_access_destinations === true) return true;
+
+  return true;
+}
+
+/**
+ * @param {string} siteId
  * @param {Set<string>} terraformSiteIds
  * @param {Record<string, string>} envSecrets
  * @param {Record<string, string>} stateSecrets
