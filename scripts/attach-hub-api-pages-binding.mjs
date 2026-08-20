@@ -120,3 +120,4 @@ if (attachedService !== workerName) {
 }
 
 console.log(`HUB_API binding attached for ${siteId} (${pagesProject} → ${workerName}).`);
+console.log('Redeploy Pages after attach if usesHubApiBinding is still false (deploy-cloudflare-pages-site.sh does this automatically).');
