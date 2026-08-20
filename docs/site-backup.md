@@ -32,7 +32,26 @@ All routes require Cloudflare Access **owner** identity and **owner** device mod
 
 Guide-only exports from **Guide Editor → Export JSON** wrap the catalog the same way on restore.
 
-### Uploaded photos
+### What is included
+
+| Included in backup | Notes |
+|--------------------|--------|
+| House Guide (categories, topics, text, draft content) | Imported as published |
+| `uploadedMedia` list | Photo IDs and alt text only — not R2 files |
+| Sitter secrets disclosed flag | Whether home details are shown to sitters |
+| Sitter login emails | When exported via `/api/site/backup` |
+
+### What is not included
+
+| Not included | Where it lives |
+|--------------|----------------|
+| Hub name, contacts, address, bin schedule, pets | **Site profile** (D1) — use Settings → Home details, or complete setup wizard |
+| `onboardingComplete` | Site profile — restore now marks setup complete when guide content is restored |
+| Wi‑Fi, owner PIN, lockbox, calendar URL | **Worker secrets** — Settings → Home details, or `wrangler secret put` |
+| Uploaded photo files | **R2** — re-upload in Guide Editor → Photo library |
+| Appliance manual PDFs | Separate D1/R2 stack |
+
+After restore, open **Settings → Home details** to re-enter secrets and profile fields that are not in the JSON file.
 
 CMS images stored in **R2** are listed in `uploadedMedia` but **binary files are not embedded**. After restore, re-upload those images in **Guide Editor → Photo library**. Bundled assets referenced by `media.*.file` round-trip without re-upload.
 
