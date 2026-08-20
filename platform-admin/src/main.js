@@ -1,10 +1,14 @@
-import { fetchSiteAccessProbe, fetchSiteHealth, fetchSites } from './api.js';
+import { fetchSiteAccessProbe, fetchSiteHealth, fetchSites, fetchSiteUsage, fetchUsageSummary } from './api.js';
 import {
   evaluateSiteHealth,
   mergeProvisioningWithHealth,
   renderHealthSummary,
   statusLabel
 } from './health.js';
+import {
+  renderAccountUsageSummary,
+  renderSiteUsageSummary
+} from './usage.js';
 import {
   renderCopyCommand,
   renderLinkChip,
@@ -16,19 +20,32 @@ import { confirmDeployWorker, confirmProvisionSite, openSiteWizard } from './wiz
 const main = document.getElementById('main');
 const refreshBtn = document.getElementById('refresh-btn');
 const checkAllBtn = document.getElementById('check-all-btn');
+const checkAllUsageBtn = document.getElementById('check-all-usage-btn');
 const addSiteBtn = document.getElementById('add-site-btn');
 const summaryEl = document.getElementById('summary');
 
 /** @type {Map<string, { status: string, result: ReturnType<typeof evaluateSiteHealth> }>} */
 const healthBySite = new Map();
 
+/** @type {Map<string, Record<string, unknown>>} */
+const usageBySite = new Map();
+
+/** @type {Record<string, unknown> | null} */
+let accountUsageSummary = null;
+
 refreshBtn?.addEventListener('click', () => {
   healthBySite.clear();
+  usageBySite.clear();
+  accountUsageSummary = null;
   render().catch(showError);
 });
 
 checkAllBtn?.addEventListener('click', () => {
   runAllHealthChecks().catch(showError);
+});
+
+checkAllUsageBtn?.addEventListener('click', () => {
+  runAllUsageChecks().catch(showError);
 });
 
 addSiteBtn?.addEventListener('click', () => {
@@ -50,7 +67,7 @@ async function render() {
     String(a.siteId).localeCompare(String(b.siteId))
   );
 
-  updateSummary(sites, data.healthServiceAuthConfigured);
+  updateSummary(sites, data.healthServiceAuthConfigured, data.cloudflareUsageConfigured);
   addSiteBtn?.setAttribute(
     'data-github-configured',
     data.githubAutomationConfigured === true ? 'true' : 'false'
@@ -58,6 +75,7 @@ async function render() {
 
   main.innerHTML = `
     ${data.healthServiceAuthConfigured === false ? '<div class="banner banner-warn">Health checks need <code>PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID</code> and <code>PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET</code> on the platform Pages project. Run <code>terraform apply -var-file=environments/hub.tfvars</code>.</div>' : ''}
+    ${data.cloudflareUsageConfigured === false ? '<div class="banner banner-warn">Storage usage needs <code>PLATFORM_CF_API_TOKEN</code> (Account → Workers R2 Storage → Read) and <code>CLOUDFLARE_ACCOUNT_ID</code> on the platform Pages project.</div>' : ''}
     ${data.githubAutomationConfigured === false ? '<div class="banner banner-warn">Site wizard needs <code>PLATFORM_GITHUB_TOKEN</code> (contents:write, actions:write) and <code>PLATFORM_GITHUB_REPO</code> on the platform Pages project.</div>' : ''}
     <p class="meta">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
     <section class="grid">
@@ -81,8 +99,9 @@ async function render() {
 /**
  * @param {Record<string, unknown>[]} sites
  * @param {boolean | undefined} healthConfigured
+ * @param {boolean | undefined} usageConfigured
  */
-function updateSummary(sites, healthConfigured) {
+function updateSummary(sites, healthConfigured, usageConfigured) {
   if (!summaryEl) return;
   const terraformCount = sites.filter((s) => s.terraform).length;
   const checked = [...healthBySite.values()];
@@ -93,6 +112,7 @@ function updateSummary(sites, healthConfigured) {
     <span class="summary-item"><strong>${sites.length}</strong> sites</span>
     <span class="summary-item"><strong>${terraformCount}</strong> in Terraform</span>
     <span class="summary-item">${healthConfigured ? `<strong>${healthyCount}</strong> healthy${degradedCount ? ` · <strong>${degradedCount}</strong> degraded` : ''}` : 'Health auth not configured'}</span>
+    ${usageConfigured ? renderAccountUsageSummary(accountUsageSummary ?? { ok: false, message: 'Click Check all usage' }) : '<span class="summary-item usage-muted">Storage usage not configured</span>'}
   `;
 }
 
@@ -106,6 +126,14 @@ function wireSiteActions(sites, githubConfigured) {
       const siteId = button.getAttribute('data-check-site');
       if (!siteId) return;
       await checkSiteHealth(siteId);
+    });
+  });
+
+  main.querySelectorAll('[data-check-usage]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const siteId = button.getAttribute('data-check-usage');
+      if (!siteId) return;
+      await checkSiteUsage(siteId);
     });
   });
 
@@ -214,7 +242,50 @@ async function checkSiteHealth(siteId) {
 
   const data = await fetchSites().catch(() => null);
   if (data) {
-    updateSummary(Object.values(data.sites ?? {}), data.healthServiceAuthConfigured);
+    updateSummary(Object.values(data.sites ?? {}), data.healthServiceAuthConfigured, data.cloudflareUsageConfigured);
+  }
+}
+
+async function runAllUsageChecks() {
+  checkAllUsageBtn?.setAttribute('disabled', 'true');
+  try {
+    accountUsageSummary = await fetchUsageSummary();
+    const buttons = main.querySelectorAll('[data-check-usage]');
+    await Promise.all(
+      [...buttons].map(async (button) => {
+        const siteId = button.getAttribute('data-check-usage');
+        if (!siteId) return;
+        await checkSiteUsage(siteId, { skipSummaryRefresh: true });
+      })
+    );
+    const data = await fetchSites().catch(() => null);
+    if (data) {
+      updateSummary(Object.values(data.sites ?? {}), data.healthServiceAuthConfigured, data.cloudflareUsageConfigured);
+    }
+  } finally {
+    checkAllUsageBtn?.removeAttribute('disabled');
+  }
+}
+
+/**
+ * @param {string} siteId
+ * @param {{ skipSummaryRefresh?: boolean }} [options]
+ */
+async function checkSiteUsage(siteId, options = {}) {
+  const row = main.querySelector(`[data-usage-row="${siteId}"]`);
+  if (row) row.textContent = 'Checking storage…';
+
+  const usage = await fetchSiteUsage(siteId);
+  usageBySite.set(siteId, usage);
+
+  if (row) row.innerHTML = renderSiteUsageSummary(usage);
+
+  if (!options.skipSummaryRefresh) {
+    accountUsageSummary = await fetchUsageSummary().catch(() => accountUsageSummary);
+    const data = await fetchSites().catch(() => null);
+    if (data) {
+      updateSummary(Object.values(data.sites ?? {}), data.healthServiceAuthConfigured, data.cloudflareUsageConfigured);
+    }
   }
 }
 
@@ -227,6 +298,7 @@ function renderSiteCard(site, platform, githubConfigured) {
   const siteId = String(site.siteId);
   const isProduction = siteId === 'production';
   const stored = healthBySite.get(siteId);
+  const storedUsage = usageBySite.get(siteId);
   const tfBadge = site.terraform
     ? '<span class="badge badge-ok">terraform</span>'
     : '<span class="badge badge-warn">manual</span>';
@@ -265,6 +337,7 @@ function renderSiteCard(site, platform, githubConfigured) {
       </div>
       <div class="actions">
         <button type="button" class="btn btn-small" data-check-site="${escapeHtml(siteId)}">Check health</button>
+        <button type="button" class="btn btn-small btn-ghost" data-check-usage="${escapeHtml(siteId)}">Check usage</button>
         ${githubConfigured ? `<button type="button" class="btn btn-small btn-ghost" data-edit-site="${escapeHtml(siteId)}">Edit</button>` : ''}
         ${githubConfigured && !isProduction ? `<button type="button" class="btn btn-small btn-ghost" data-delete-site="${escapeHtml(siteId)}">Delete</button>` : ''}
         ${githubConfigured && needsProvision ? `<button type="button" class="btn btn-small" data-provision-site="${escapeHtml(siteId)}">Provision</button>` : ''}
@@ -273,6 +346,7 @@ function renderSiteCard(site, platform, githubConfigured) {
         <a class="btn btn-small btn-ghost" href="${escapeHtml(String(site.pagesUrl))}" target="_blank" rel="noopener">Open site</a>
       </div>
       <div class="health" data-health-row="${escapeHtml(siteId)}">${stored ? renderHealthSummary(stored.result) : ''}</div>
+      <div class="usage" data-usage-row="${escapeHtml(siteId)}">${storedUsage ? renderSiteUsageSummary(storedUsage) : ''}</div>
       <ul class="checklist" data-checklist="${escapeHtml(siteId)}" data-steps="${escapeAttr(JSON.stringify(steps))}">
         ${renderProvisioningList(steps)}
       </ul>

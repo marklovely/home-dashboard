@@ -11,6 +11,30 @@ alwaysApply: true
 - For new features, fixes, or experiments: create a branch named `feature/<short-topic>` (or `fix/<topic>` for bugs).
 - Push the feature branch and offer a PR — do not push to `main` to "deploy for testing".
 
+## Before every push
+
+Run the same checks CI runs **locally before `git push`**. Do not push and wait for GitHub to catch failures.
+
+Required (must pass):
+
+```bash
+npm run lint
+npm run test
+```
+
+- Run the **full** test suite (`npm run test`), not only the file you changed.
+- If you added or changed tests, run them as part of the full suite — do not patch one assertion at a time against CI.
+- If local `npm test` fails with a Rollup optional-dependency error, install the missing native package or run `npm ci` before pushing — do not skip verification.
+
+Recommended before push (also run in CI):
+
+```bash
+npm run build
+npm run check --prefix worker
+```
+
+Only push after lint and test pass. If either fails, fix locally, re-run both, then push.
+
 ## Commits and pushes
 
 - Only create commits when the user asks, or when finishing agreed work on a feature branch.

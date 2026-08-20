@@ -54,6 +54,13 @@ variable "platform_github_token" {
   description = "GitHub PAT for site wizard (contents:write, actions:write). Omit to disable automation UI."
 }
 
+variable "platform_cf_api_token" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Cloudflare API token with Account Read, D1 Read, and R2 Read for platform storage usage checks."
+}
+
 variable "pages_preview_deployments_enabled" {
   type        = bool
   default     = true
