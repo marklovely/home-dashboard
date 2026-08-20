@@ -440,6 +440,57 @@ a {
   color: var(--muted);
 }
 
+.usage {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.usage-grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.usage-metric {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.usage-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.usage-value {
+  font-size: 0.92rem;
+}
+
+.usage-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.usage-muted {
+  color: var(--muted);
+}
+
+.usage-ok .usage-value,
+.summary-item.usage-ok strong {
+  color: var(--ok);
+}
+
+.usage-warn .usage-value,
+.summary-item.usage-warn strong {
+  color: var(--warn);
+}
+
+.usage-bad .usage-value,
+.summary-item.usage-bad strong {
+  color: var(--bad);
+}
+
 @media (max-width: 640px) {
   .topbar {
     flex-direction: column;

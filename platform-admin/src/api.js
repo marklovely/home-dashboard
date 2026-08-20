@@ -35,6 +35,24 @@ export async function fetchAutomationRuns() {
 /**
  * @param {string} siteId
  */
+export async function fetchSiteUsage(siteId) {
+  const response = await fetch(`${API_BASE}/sites/${encodeURIComponent(siteId)}/usage`, {
+    cache: 'no-store'
+  });
+  return response.json();
+}
+
+/**
+ * @returns {Promise<object>}
+ */
+export async function fetchUsageSummary() {
+  const response = await fetch(`${API_BASE}/usage/summary`, { cache: 'no-store' });
+  return response.json();
+}
+
+/**
+ * @param {string} siteId
+ */
 export async function fetchSiteHealth(siteId) {
   const response = await fetch(`${API_BASE}/sites/${encodeURIComponent(siteId)}/health`, {
     cache: 'no-store'
