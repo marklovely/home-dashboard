@@ -7,7 +7,7 @@ import {
 } from '../api/siteSetupApi.js';
 import { refreshPrivateConfig } from './privateConfigService.js';
 import { clearLocalSetup } from './siteSetupLocalStorage.js';
-import { resetHubSetupWizardStep } from '../apps/HubSetup/hubSetupWizardState.js';
+import { resetHubSetupWizardStep, requestHubSetupWizardAfterReset } from '../apps/HubSetup/hubSetupWizardState.js';
 
 /** @typedef {{ profile: Record<string, unknown>, guideSeeded?: boolean }} SiteProfileState */
 /** @typedef {'unknown' | 'available' | 'offline' | 'not_deployed'} SiteSetupAvailability */
@@ -17,6 +17,9 @@ let state = null;
 
 /** @type {SiteSetupAvailability} */
 let setupAvailability = 'unknown';
+
+/** @type {boolean} */
+let siteProfileReady = false;
 
 /** @type {string} */
 let setupUnavailableCode = '';
@@ -60,6 +63,13 @@ function applySetupAvailability(result) {
  */
 export function isSiteSetupAvailable() {
   return setupAvailability === 'available';
+}
+
+/**
+ * @returns {boolean}
+ */
+export function isSiteProfileReady() {
+  return siteProfileReady;
 }
 
 /**
@@ -125,6 +135,7 @@ export function subscribeToSiteProfile(listener) {
 export async function syncSiteProfileFromServer(fetchImpl = fetch) {
   const result = await fetchSiteProfile({ fetchImpl });
   applySetupAvailability(result);
+  siteProfileReady = true;
 
   if (result.ok && result.data) {
     state = result.data;
@@ -186,6 +197,7 @@ export async function fetchHubSecretsConfigured(fetchImpl = fetch) {
  */
 export async function factoryResetHub(fetchImpl = fetch) {
   resetHubSetupWizardStep();
+  requestHubSetupWizardAfterReset();
   const result = await resetHubSite({ fetchImpl });
   applySetupAvailability(result);
 
@@ -204,6 +216,16 @@ export async function factoryResetHub(fetchImpl = fetch) {
 }
 
 /** @internal */
+export function markSiteProfileReadyForTests() {
+  siteProfileReady = true;
+}
+
+/** @internal */
+export function markSiteSetupAvailableForTests() {
+  setupAvailability = 'available';
+}
+
+/** @internal */
 export function setSiteProfileStateForTests(profileState) {
   state = profileState;
   notify();
@@ -214,4 +236,5 @@ export function resetSiteProfileStateForTests() {
   state = null;
   setupAvailability = 'unknown';
   setupUnavailableCode = '';
+  siteProfileReady = false;
 }
