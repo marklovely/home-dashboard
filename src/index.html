@@ -18,30 +18,48 @@
     <main class="hub-shell hub-shell--session-loading">
       <header class="shell-header">
         <div class="shell-chrome">
-          <button type="button" id="shell-home-button" class="shell-home-button">Home</button>
-          <div class="shell-chrome-title-block">
-            <p id="shell-eyebrow" class="eyebrow">LOVELY HOME HUB</p>
-            <h1 id="shell-chrome-title" class="shell-chrome-title">Home Hub</h1>
-            <p id="shell-tagline" class="shell-tagline subtle" hidden></p>
-          </div>
-          <div id="shell-profile-switcher" class="shell-profile-switcher" hidden></div>
-          <section class="clock-block" aria-label="Current time">
-            <div id="clock" class="clock">--:--</div>
-            <div id="seconds" class="seconds">--</div>
-          </section>
-          <div id="shell-header-weather" class="shell-header-weather" hidden aria-label="Weather summary">
-            <span id="shell-weather-icon" class="shell-weather-icon"></span>
-            <div class="shell-weather-copy">
-              <strong id="shell-weather-temp">—</strong>
-              <span id="shell-weather-text" class="subtle">Locating…</span>
+          <div class="shell-chrome-toolbar">
+            <div class="shell-chrome-title-block">
+              <div class="shell-chrome-brand-row">
+                <button type="button" id="shell-logo-button" class="shell-logo-button" aria-label="Home">
+                  <img
+                    id="shell-logo"
+                    class="shell-logo"
+                    src="/api/branding/logo"
+                    alt=""
+                    decoding="async"
+                  />
+                  <span id="shell-eyebrow" class="eyebrow shell-eyebrow-text">LOVELY HOME HUB</span>
+                </button>
+              </div>
+              <h1 id="shell-chrome-title" class="shell-chrome-title">Home Hub</h1>
+              <p id="shell-tagline" class="shell-tagline subtle" hidden></p>
+            </div>
+            <div class="shell-chrome-actions">
+              <div id="shell-profile-switcher" class="shell-profile-switcher" hidden></div>
+              <div class="shell-chrome-trailing">
+                <section class="clock-block" aria-label="Current time">
+                  <div id="clock" class="clock">--:--</div>
+                  <div id="seconds" class="seconds">--</div>
+                </section>
+                <div id="shell-header-weather" class="shell-header-weather" hidden aria-label="Weather summary">
+                  <span id="shell-weather-icon" class="shell-weather-icon"></span>
+                  <div class="shell-weather-copy">
+                    <strong id="shell-weather-temp">—</strong>
+                    <span id="shell-weather-text" class="subtle">Locating…</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <div id="shell-home-hero" class="shell-home-hero" hidden>
-          <div id="shell-home-welcome" class="shell-home-welcome">
-            <h2 id="greeting" class="home-greeting">Good afternoon</h2>
-            <p id="date" class="home-date"></p>
+          <div class="shell-home-intro">
+            <div id="shell-home-welcome" class="shell-home-welcome">
+              <h2 id="greeting" class="home-greeting">Good afternoon</h2>
+              <p id="date" class="home-date"></p>
+            </div>
           </div>
           <button
             type="button"

@@ -9,6 +9,7 @@ const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon
 function isGuideReadRequest(url) {
   return (
     url.pathname === '/api/house-guide/catalog' ||
+    /^\/api\/branding\/logo$/.test(url.pathname) ||
     /^\/api\/house-guide\/media\/[^/]+\/file$/.test(url.pathname)
   );
 }
