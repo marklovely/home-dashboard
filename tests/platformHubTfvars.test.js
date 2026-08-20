@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   deprovisionSiteMissingError,
@@ -75,5 +77,13 @@ describe('hub tfvars helpers', () => {
     expect(deprovisionSiteMissingError('', new Set())).toBeNull();
     expect(deprovisionSiteMissingError('demo', new Set(['demo']))).toBeNull();
     expect(deprovisionSiteMissingError('demo', new Set())).toMatch(/must appear in generated tfvars/i);
+  });
+
+  it('declares generate-hub-tfvars site keys in terraform variables.tf sites schema', () => {
+    const variablesTf = readFileSync(join(process.cwd(), 'terraform/variables.tf'), 'utf8');
+    const sitesBlock = variablesTf.match(/variable "sites"[\s\S]*?^\}/m)?.[0] ?? '';
+    for (const key of ['attach_hub_api_binding', 'include_pages_dev_access_destinations']) {
+      expect(sitesBlock, `terraform/variables.tf sites object must declare ${key}`).toContain(key);
+    }
   });
 });
