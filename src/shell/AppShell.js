@@ -10,6 +10,7 @@ import { subscribeToProfileChange } from '../services/profileService.js';
 import { subscribeToUserMode } from '../auth/userMode.js';
 import { subscribeToDisplayPreferences } from '../services/displayPreferencesService.js';
 import { syncShellClockPlacement } from './shellClockPlacement.js';
+import { syncShellBrandLogoRoute } from './shellBrandLogo.js';
 
 /**
  * @param {Object} options
@@ -18,7 +19,6 @@ import { syncShellClockPlacement } from './shellClockPlacement.js';
  * @param {HTMLElement | null} [options.homeGreeting]
  * @param {HTMLElement} options.shellEyebrow
  * @param {HTMLElement} options.shellChromeTitle
- * @param {HTMLElement} options.homeButton
  * @param {HTMLElement} options.statusStrip
  * @param {HTMLElement | null} [options.shellHeaderWeather]
  * @param {HTMLElement} options.shellFooter
@@ -32,7 +32,6 @@ export function createAppShell({
   homeGreeting,
   shellEyebrow,
   shellChromeTitle,
-  homeButton,
   statusStrip,
   shellHeaderWeather,
   shellFooter,
@@ -95,11 +94,8 @@ export function createAppShell({
       shellTagline.hidden = !(isHome && branding.homeTagline);
       if (!shellTagline.hidden) shellTagline.textContent = branding.homeTagline ?? '';
     }
-    homeButton.hidden = Boolean(mode.bottomNav?.length && isHome);
-    homeButton.textContent = isHome ? 'Home' : '← Home';
-    homeButton.setAttribute('aria-current', isHome ? 'page' : 'false');
-
     syncShellClockPlacement(route, mode);
+    syncShellBrandLogoRoute(isHome);
 
     mountShellBottomNav(bottomNav, (target) => shellContext.navigate(target));
     syncShellBottomNav(bottomNav);
@@ -144,8 +140,6 @@ export function createAppShell({
   shellContext.refreshShell = () => {
     renderRoute(getCurrentRoute(), { forceRemount: true });
   };
-
-  homeButton.addEventListener('click', () => shellContext.navigate(HOME_ROUTE));
 
   subscribeToRoute(renderRoute);
   subscribeToProfileChange(() => {
