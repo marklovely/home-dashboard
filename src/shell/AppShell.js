@@ -9,6 +9,7 @@ import { initProfileSwitcher } from './profileSwitcher.js';
 import { subscribeToProfileChange } from '../services/profileService.js';
 import { subscribeToUserMode } from '../auth/userMode.js';
 import { subscribeToDisplayPreferences } from '../services/displayPreferencesService.js';
+import { syncShellClockPlacement } from './shellClockPlacement.js';
 
 /**
  * @param {Object} options
@@ -97,6 +98,8 @@ export function createAppShell({
     homeButton.hidden = Boolean(mode.bottomNav?.length && isHome);
     homeButton.textContent = isHome ? 'Home' : '← Home';
     homeButton.setAttribute('aria-current', isHome ? 'page' : 'false');
+
+    syncShellClockPlacement(route, mode);
 
     mountShellBottomNav(bottomNav, (target) => shellContext.navigate(target));
     syncShellBottomNav(bottomNav);
