@@ -12,6 +12,19 @@ import { jsonError, methodNotAllowed } from '../lib/errors.js';
 export const SITE_BACKUP_FORMAT_VERSION = 1;
 
 /**
+ * @param {{ ok: boolean, status?: number, code?: string }} ownerGate
+ * @param {string} correlationId
+ */
+function ownerGateJsonError(ownerGate, correlationId) {
+  if (ownerGate.code === 'DEVICE_MODE_REQUIRED') {
+    return jsonError(403, 'DEVICE_MODE_REQUIRED', 'Unlock owner mode on this tablet and try again.', {
+      correlationId
+    });
+  }
+  return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+}
+
+/**
  * @param {Record<string, unknown>} env
  */
 export async function buildSiteBackupPayload(env) {
@@ -78,7 +91,7 @@ export async function handleSiteBackupGet(request, env, correlationId) {
 
   const ownerGate = await requireOwnerDeviceMode(request, env);
   if (!ownerGate.ok) {
-    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+    return ownerGateJsonError(ownerGate, correlationId);
   }
 
   const payload = await buildSiteBackupPayload(env);
@@ -104,7 +117,7 @@ export async function handleSiteBackupRestore(request, env, correlationId) {
 
   const ownerGate = await requireOwnerDeviceMode(request, env);
   if (!ownerGate.ok) {
-    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+    return ownerGateJsonError(ownerGate, correlationId);
   }
 
   let body;
@@ -146,7 +159,7 @@ export async function handleGuideExportGet(request, env, correlationId) {
 
   const ownerGate = await requireOwnerDeviceMode(request, env);
   if (!ownerGate.ok) {
-    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+    return ownerGateJsonError(ownerGate, correlationId);
   }
 
   const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);

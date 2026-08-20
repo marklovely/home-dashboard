@@ -43,25 +43,6 @@ const listeners = new Set();
 let inFlightAbort = null;
 
 /**
- * Fingerprints of the bundled Rose Cottage guide — must never appear on the test hub.
- */
-const PRODUCTION_GUIDE_MARKERS = [
-  'Scooter',
-  'Vets 4 Pets',
-  'Contacting Mark and Donna',
-  'Waterlooville',
-  'Rose Cottage'
-];
-
-/**
- * @param {import('../types/guideContent.js').GuideCatalog | null | undefined} catalog
- */
-function looksLikeProductionGuideCatalog(catalog) {
-  const blob = JSON.stringify(catalog ?? {});
-  return PRODUCTION_GUIDE_MARKERS.some((marker) => blob.includes(marker));
-}
-
-/**
  * Local guide shown when cloud CMS is not seeded. Test hubs never use Rose Cottage bundled JSON.
  */
 function getLocalGuideCatalogFallback() {
@@ -166,19 +147,6 @@ export async function refreshGuideContent(fetchImpl = fetch, options = {}) {
       draftCount: 0,
       catalog: getLocalGuideCatalogFallback(),
       message: ''
-    };
-    notify();
-    return state;
-  }
-
-  if (isTestHubEnvironment() && looksLikeProductionGuideCatalog(payload.catalog)) {
-    state = {
-      source: 'json',
-      seeded: false,
-      draftCount: 0,
-      catalog: getFallbackGuideCatalog(),
-      message:
-        'Production guide content was blocked on the test hub. Finish hub setup and import a starter guide, or use Settings → Factory reset.'
     };
     notify();
     return state;
