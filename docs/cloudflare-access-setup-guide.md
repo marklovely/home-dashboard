@@ -77,11 +77,12 @@ Use the light-background asset from the public **`lovely-home-media`** bucket in
 **Logo URL:** `https://<your-public-r2-domain>/lovely-home-access-logo.png`  
 (source file: [`assets/lovely-home-access-logo.png`](../assets/lovely-home-access-logo.png))
 
-1. Zero Trust → **Settings** → **Custom pages** → **Login page** (or **Identity landing page**).
-2. Set **Logo** to the public R2 URL above.
-3. Optional hub-matched colours: background `#10131a`, text `#f4f6fb`, button `#191e28`.
+The Access asset is a **wide horizontal wordmark** (960×180) with dark text for the white login card. Do not use the stacked/square variant — Cloudflare renders logos in a short wide slot and vertical artwork shrinks unreadably.
 
-Replace the logo in R2 any time; Access picks up the URL on next load (allow for CDN cache).
+1. Zero Trust → **Settings** → **Custom pages** → **Login page** (or **Identity landing page**).
+2. Set **Logo** to the public R2 URL above (append `?v=2` if the old image is cached).
+3. Optional hub-matched colours: page background `#10131a`, text `#f4f6fb`, button `#191e28`.
+4. In each Access application, leave **Application name** as the short name only — Cloudflare shows it beside the logo, so avoid repeating “Lovely Home” in both places if it looks cluttered.
 
 ---
 
