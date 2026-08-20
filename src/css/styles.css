@@ -266,11 +266,14 @@ button { font: inherit; }
   min-width: 0;
 }
 .shell-logo {
-  width: 40px;
-  height: 40px;
+  display: block;
+  height: clamp(22px, 3.2vw, 34px);
+  width: auto;
+  max-width: min(240px, 55vw);
   object-fit: contain;
-  flex-shrink: 0;
-  border-radius: 10px;
+  object-position: left center;
+  flex-shrink: 1;
+  min-width: 0;
 }
 .shell-chrome-title-block.has-shell-logo .shell-eyebrow-text {
   position: absolute;
