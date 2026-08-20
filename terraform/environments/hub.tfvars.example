@@ -70,4 +70,13 @@ sites = {
     owner_emails = ["marklovely67@gmail.com"]
   }
 
+  dev = {
+    hostname        = "dev.lovely-home.co.uk"
+    hub_environment = "dev"
+    vanilla         = true
+    terraform       = true
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+    owner_emails = ["marklovely67@gmail.com"]
+  }
+
 }

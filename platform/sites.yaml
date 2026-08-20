@@ -30,3 +30,11 @@ sites:
     terraform: true
     owner_emails: marklovely67@gmail.com
     attach_hub_api_binding: true
+
+  dev:
+    hostname: dev.lovely-home.co.uk
+    hub_environment: dev
+    vanilla: true
+    terraform: true
+    owner_emails: marklovely67@gmail.com
+    attach_hub_api_binding: false
