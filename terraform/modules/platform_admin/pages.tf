@@ -23,6 +23,10 @@ locals {
         type  = "secret_text"
         value = cloudflare_zero_trust_access_service_token.platform_health.client_secret
       }
+      CLOUDFLARE_ACCOUNT_ID = {
+        type  = "plain_text"
+        value = var.account_id
+      }
       NODE_VERSION = {
         type  = "plain_text"
         value = "24.19.0"
@@ -36,6 +40,12 @@ locals {
       PLATFORM_GITHUB_REPO = {
         type  = "plain_text"
         value = local.github_repo_slug
+      }
+    } : {},
+    var.platform_cf_api_token != "" ? {
+      PLATFORM_CF_API_TOKEN = {
+        type  = "secret_text"
+        value = var.platform_cf_api_token
       }
     } : {}
   )

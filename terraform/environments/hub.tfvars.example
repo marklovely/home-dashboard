@@ -20,6 +20,9 @@ platform_operator_emails = [
 # Optional — enables platform admin site wizard (GitHub Actions PR automation)
 # platform_github_token = "ghp_..."
 
+# Optional — enables D1/R2 storage usage checks in platform admin
+# platform_cf_api_token = "..." # Account Read, D1 Read, R2 Read
+
 # Preview builds for non-main branches (platform admin + Terraform-managed hub Pages). Default true.
 # pages_preview_deployments_enabled = true
 

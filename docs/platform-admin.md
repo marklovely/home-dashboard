@@ -63,6 +63,8 @@ Git-connected Production builds run `npm run build:platform`; use the deploy scr
 | `PLATFORM_OPERATOR_EMAILS` | Comma-separated operator emails |
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID` | Access service token client ID (Terraform) |
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET` | Access service token secret (Terraform) |
+| `PLATFORM_CF_API_TOKEN` | Optional — Cloudflare API token for D1/R2 usage (Terraform `platform_cf_api_token`) |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID (Terraform) |
 
 Health probes call each hub site's `/api/health` and `/api/access-probe`. Those URLs are Access-protected, so Terraform creates a **service token** on the platform Pages project and adds an `any_valid_service_token` allow policy on each Terraform-managed hub site's Pages + Worker Access apps.
 
@@ -91,6 +93,9 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 - Copy-to-clipboard operator commands (Wrangler deploy, sync script)
 - Live provisioning checklist updates from health probe results
 - Direct **Access probe** link per site
+- **Check all usage** / per-site **Check usage** — D1 database size and R2 bucket usage vs Cloudflare free-tier limits (10 GB R2, 5 GB D1 per account)
+
+Set `PLATFORM_CF_API_TOKEN` (Account Read, D1 Read, R2 Read) and `CLOUDFLARE_ACCOUNT_ID` on the platform Pages project (`platform_cf_api_token` in Terraform). Usage is fetched server-side via the Cloudflare API when you click Check usage.
 
 ## v3 — site wizard
 
