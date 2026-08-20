@@ -139,10 +139,12 @@ Terraform manages Pages **env vars** on create; **`lifecycle { ignore_changes = 
 **HUB_API** is attached with:
 
 ```bash
-node scripts/attach-hub-api-pages-binding.mjs <site_id>
+bash scripts/deploy-cloudflare-pages-site.sh <site_id>
 ```
 
-CI runs this after Worker deploy, then `terraform apply -refresh-only` to sync state. Local full applies skip deployment config changes — run the attach script after Worker deploy if health checks show `HUB_API binding no`.
+(or `node scripts/attach-hub-api-pages-binding.mjs <site_id>` then redeploy Pages — the deploy script does both).
+
+CI runs this after Worker deploy. Local full applies skip deployment config changes — run the deploy script after Worker deploy if health checks show `HUB_API binding no`.
 
 | Site block flag | Meaning |
 |-----------------|--------|
