@@ -282,6 +282,11 @@ function createUtilitiesFields(context) {
   importInput.type = 'file';
   importInput.accept = 'application/json,.json';
   importInput.hidden = true;
+  const restoreStatus = document.createElement('p');
+  restoreStatus.className = 'subtle settings-restore-status';
+  restoreStatus.hidden = true;
+  restoreStatus.setAttribute('role', 'status');
+  restoreStatus.setAttribute('aria-live', 'polite');
   importButton.addEventListener('click', () => importInput.click());
   importInput.addEventListener('change', () => {
     const file = importInput.files?.[0];
@@ -303,21 +308,35 @@ function createUtilitiesFields(context) {
         });
         if (!confirmed) return;
 
+        restoreStatus.hidden = false;
+        restoreStatus.textContent = 'Restoring backup…';
+        importButton.disabled = true;
+        exportButton.disabled = true;
+        showToast(context.toast, 'Restoring backup…', 120000);
+
         const result = await restoreSiteBackup(backup);
         if (!result.ok) {
+          restoreStatus.textContent = result.message || 'Restore failed.';
           showToast(context.toast, result.message || 'Restore failed.');
           return;
         }
 
         await syncSitterSecretsFromServer();
         await refreshGuideContent(fetch, { draft: true, force: true });
+        restoreStatus.textContent = 'Site backup restored.';
         showToast(context.toast, 'Site backup restored.');
       } catch (error) {
-        showToast(context.toast, error instanceof Error ? error.message : 'Invalid backup file.');
+        const message = error instanceof Error ? error.message : 'Invalid backup file.';
+        restoreStatus.hidden = false;
+        restoreStatus.textContent = message;
+        showToast(context.toast, message);
+      } finally {
+        importButton.disabled = false;
+        exportButton.disabled = false;
       }
     })();
   });
-  wrap.append(backupHeading, intro, exportButton, importButton, importInput);
+  wrap.append(backupHeading, intro, exportButton, importButton, importInput, restoreStatus);
 
   const resetHeading = document.createElement('h2');
   resetHeading.className = 'settings-utilities-heading';

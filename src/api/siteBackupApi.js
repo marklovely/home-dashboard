@@ -5,14 +5,27 @@ import { fetchHouseSettings, postSitterSecretsDisclosed } from './houseSettingsA
 import { buildSiteBackupDocument, buildGuideExportDocument } from '../utils/backupJson.js';
 
 /**
+ * @param {Record<string, unknown> | null | undefined} body
+ * @param {string} [fallback]
+ */
+export function siteBackupErrorMessage(body, fallback = 'Request failed') {
+  const code = typeof body?.error === 'object' && body?.error ? body.error.code : body?.code;
+  if (code === 'DEVICE_MODE_REQUIRED') {
+    return 'Unlock owner mode first — press and hold the Lovely Home logo, enter your owner PIN, then try again.';
+  }
+  if (typeof body?.error?.message === 'string') return body.error.message;
+  if (typeof body?.message === 'string') return body.message;
+  if (typeof body?.error === 'string') return body.error;
+  return fallback;
+}
+
+/**
  * @param {Response} response
  */
 async function readErrorMessage(response) {
   try {
     const body = await response.json();
-    if (typeof body?.error?.message === 'string') return body.error.message;
-    if (typeof body?.message === 'string') return body.message;
-    if (typeof body?.error === 'string') return body.error;
+    return siteBackupErrorMessage(body);
   } catch {
     /* ignore */
   }

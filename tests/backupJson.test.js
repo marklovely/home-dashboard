@@ -112,3 +112,14 @@ describe('backupJson', () => {
     expect(payload).not.toHaveProperty('siteSettings');
   });
 });
+
+describe('siteBackupApi', () => {
+  it('maps device mode errors to an actionable restore message', async () => {
+    const { siteBackupErrorMessage } = await import('../src/api/siteBackupApi.js');
+    expect(
+      siteBackupErrorMessage({
+        error: { code: 'DEVICE_MODE_REQUIRED', message: 'Unlock owner mode on this tablet and try again.' }
+      })
+    ).toMatch(/Unlock owner mode/i);
+  });
+});
