@@ -21,15 +21,18 @@ import { startMyDayCalendarService } from '../services/myDayCalendarService.js';
 import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSessionStore.js';
 import { startDeviceSessionKeepalive } from '../auth/deviceSessionKeepalive.js';
 import { initAccessSessionBanner } from '../shell/accessSessionBanner.js';
+import { isOwnerUserMode } from '../auth/userMode.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
 import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
 import { initShellBrandLogo } from '../shell/shellBrandLogo.js';
 import { applyShellBranding } from '../shell/shellBranding.js';
 import {
+  isOnboardingComplete,
+  isSiteSetupAvailable,
   subscribeToSiteProfile,
   syncSiteProfileFromServer
 } from '../services/siteProfileService.js';
-import { initHubSetupRoutePolicy } from '../apps/HubSetup/hubSetupRoutePolicy.js';
+import { isHubSetupWizardRerunRequested } from '../apps/HubSetup/hubSetupLauncher.js';
 
 initTheme();
 initDisplayPreferences();
@@ -178,7 +181,17 @@ async function initialiseDashboard() {
     if (!getWeatherLocationOverride() && state?.profile?.propertyAddress) {
       void syncWeatherLocationFromPropertyAddress(state.profile.propertyAddress);
     }
-    initHubSetupRoutePolicy();
+    if (!isOwnerUserMode()) return;
+    if (isOnboardingComplete()) {
+      if (getCurrentRoute() === 'hub-setup' && !isHubSetupWizardRerunRequested()) {
+        navigate('home');
+      }
+      return;
+    }
+    if (!isSiteSetupAvailable()) return;
+    if (getCurrentRoute() !== 'hub-setup') {
+      navigate('hub-setup');
+    }
   });
 }
 
