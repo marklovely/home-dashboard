@@ -13,6 +13,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
+import { setPagesPreviewEnabled } from './lib/pages-preview.mjs';
 import { validateSiteId } from './lib/site-registry.mjs';
 
 const token = process.env.CLOUDFLARE_API_TOKEN?.trim();
@@ -48,25 +49,6 @@ for (const siteId of siteIds) {
   }
 }
 
-const headers = {
-  Authorization: `Bearer ${token}`,
-  'Content-Type': 'application/json'
-};
-
-/**
- * @param {string} url
- * @param {RequestInit} [options]
- */
-async function cfJson(url, options = {}) {
-  const response = await fetch(url, { ...options, headers: { ...headers, ...(options.headers ?? {}) } });
-  const body = await response.json();
-  if (!body.success) {
-    const msg = body.errors?.map((error) => error.message).join('; ') ?? JSON.stringify(body.errors);
-    throw new Error(`${options.method ?? 'GET'} ${url} failed: ${msg}`);
-  }
-  return body.result;
-}
-
 for (const siteId of siteIds) {
   const contractRaw = execFileSync(
     'node',
@@ -80,35 +62,8 @@ for (const siteId of siteIds) {
     process.exit(1);
   }
 
-  const baseUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${pagesProject}`;
-  const project = await cfJson(baseUrl);
-  const deploymentConfigs = structuredClone(project.deployment_configs ?? {});
-  deploymentConfigs.production ??= {};
-  deploymentConfigs.preview ??= {
-    fail_open: true,
-    compatibility_date: '2024-12-01',
-    compatibility_flags: ['nodejs_compat']
-  };
-
-  if (deploymentConfigs.production.env_vars) {
-    deploymentConfigs.preview.env_vars = structuredClone(deploymentConfigs.production.env_vars);
-  }
-  if (deploymentConfigs.production.services) {
-    deploymentConfigs.preview.services = structuredClone(deploymentConfigs.production.services);
-  }
-
-  const source = structuredClone(project.source ?? { type: 'github', config: {} });
-  source.config ??= {};
-  source.config.preview_deployment_setting = 'all';
-
   console.log(`Enabling preview deployments on ${pagesProject} (${siteId})`);
-  await cfJson(baseUrl, {
-    method: 'PATCH',
-    body: JSON.stringify({
-      source,
-      deployment_configs: deploymentConfigs
-    })
-  });
+  await setPagesPreviewEnabled(accountId, token, pagesProject, true);
 }
 
 console.log(`Preview deployments enabled for: ${siteIds.join(', ')}`);

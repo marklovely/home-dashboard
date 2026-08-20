@@ -165,6 +165,10 @@ generateTfvars('post-worker');
 run('node', [join(root, 'scripts/attach-hub-api-pages-binding.mjs'), siteId]);
 runTerraformRefreshOnly();
 
+if (siteId !== 'production') {
+  run('node', [join(root, 'scripts/enable-hub-pages-previews.mjs'), siteId]);
+}
+
 run('node', [join(root, 'scripts/mark-site-provisioned.mjs'), siteId]);
 
 if (!skipPages) {

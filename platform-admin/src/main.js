@@ -1,4 +1,4 @@
-import { fetchSiteAccessProbe, fetchSiteHealth, fetchSites, fetchSiteUsage, fetchUsageSummary } from './api.js';
+import { fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled } from './api.js';
 import {
   evaluateSiteHealth,
   mergeProvisioningWithHealth,
@@ -30,12 +30,16 @@ const healthBySite = new Map();
 /** @type {Map<string, Record<string, unknown>>} */
 const usageBySite = new Map();
 
+/** @type {Map<string, Record<string, unknown>>} */
+const previewsBySite = new Map();
+
 /** @type {Record<string, unknown> | null} */
 let accountUsageSummary = null;
 
 refreshBtn?.addEventListener('click', () => {
   healthBySite.clear();
   usageBySite.clear();
+  previewsBySite.clear();
   accountUsageSummary = null;
   render().catch(showError);
 });
@@ -72,14 +76,16 @@ async function render() {
     'data-github-configured',
     data.githubAutomationConfigured === true ? 'true' : 'false'
   );
+  main.setAttribute('data-cloudflare-pages-configured', data.cloudflarePagesConfigured === true ? 'true' : 'false');
 
   main.innerHTML = `
     ${data.healthServiceAuthConfigured === false ? '<div class="banner banner-warn">Health checks need <code>PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID</code> and <code>PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET</code> on the platform Pages project. Run <code>terraform apply -var-file=environments/hub.tfvars</code>.</div>' : ''}
     ${data.cloudflareUsageConfigured === false ? '<div class="banner banner-warn">Storage usage needs <code>PLATFORM_CF_API_TOKEN</code> (Account → Workers R2 Storage → Read) and <code>CLOUDFLARE_ACCOUNT_ID</code> on the platform Pages project.</div>' : ''}
+    ${data.cloudflarePagesConfigured === false ? '<div class="banner banner-warn">PR preview toggles need <code>PLATFORM_CF_API_TOKEN</code> (Account → Cloudflare Pages → Edit) and <code>CLOUDFLARE_ACCOUNT_ID</code> on the platform Pages project.</div>' : ''}
     ${data.githubAutomationConfigured === false ? '<div class="banner banner-warn">Site wizard needs <code>PLATFORM_GITHUB_TOKEN</code> (contents:write, actions:write) and <code>PLATFORM_GITHUB_REPO</code> on the platform Pages project.</div>' : ''}
     <p class="meta">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
     <section class="grid">
-      ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true)).join('')}
+      ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true)).join('')}
     </section>
     <section class="panel new-site">
       <h2>Site automation</h2>
@@ -89,10 +95,14 @@ async function render() {
   `;
 
   main.setAttribute('data-platform', JSON.stringify(platform));
-  wireSiteActions(sites, data.githubAutomationConfigured === true);
+  wireSiteActions(sites, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true);
 
   if (data.healthServiceAuthConfigured && healthBySite.size === 0) {
     runAllHealthChecks().catch(showError);
+  }
+
+  if (data.cloudflarePagesConfigured) {
+    runAllPreviewChecks(sites).catch(showError);
   }
 }
 
@@ -119,8 +129,9 @@ function updateSummary(sites, healthConfigured, usageConfigured) {
 /**
  * @param {Record<string, unknown>[]} sites
  * @param {boolean} githubConfigured
+ * @param {boolean} pagesConfigured
  */
-function wireSiteActions(sites, githubConfigured) {
+function wireSiteActions(sites, githubConfigured, pagesConfigured) {
   main.querySelectorAll('[data-check-site]').forEach((button) => {
     button.addEventListener('click', async () => {
       const siteId = button.getAttribute('data-check-site');
@@ -181,6 +192,26 @@ function wireSiteActions(sites, githubConfigured) {
     });
   });
 
+  main.querySelectorAll('[data-preview-toggle]').forEach((input) => {
+    input.addEventListener('change', async () => {
+      const siteId = input.getAttribute('data-preview-toggle');
+      if (!siteId || !pagesConfigured) return;
+      const checkbox = /** @type {HTMLInputElement} */ (input);
+      const enabled = checkbox.checked;
+      checkbox.disabled = true;
+      try {
+        const result = await setSitePreviewEnabled(siteId, enabled);
+        previewsBySite.set(siteId, result);
+        updatePreviewRow(siteId, result);
+      } catch (error) {
+        checkbox.checked = !enabled;
+        showError(error);
+      } finally {
+        checkbox.disabled = false;
+      }
+    });
+  });
+
   main.querySelectorAll('[data-copy]').forEach((button) => {
     button.addEventListener('click', async () => {
       const value = button.getAttribute('data-copy');
@@ -197,6 +228,53 @@ function wireSiteActions(sites, githubConfigured) {
       }
     });
   });
+}
+
+async function runAllPreviewChecks(sites) {
+  await Promise.all(
+    sites.map(async (site) => {
+      const siteId = String(site.siteId);
+      await checkSitePreview(siteId);
+    })
+  );
+}
+
+/**
+ * @param {string} siteId
+ */
+async function checkSitePreview(siteId) {
+  const row = main.querySelector(`[data-preview-row="${siteId}"]`);
+  const checkbox = main.querySelector(`[data-preview-toggle="${siteId}"]`);
+  if (row) row.textContent = 'Checking previews…';
+
+  const status = await fetchSitePreviewStatus(siteId);
+  previewsBySite.set(siteId, status);
+  updatePreviewRow(siteId, status);
+
+  if (checkbox && status.ok) {
+    /** @type {HTMLInputElement} */ (checkbox).checked = status.enabled === true;
+  }
+}
+
+/**
+ * @param {string} siteId
+ * @param {Record<string, unknown>} status
+ */
+function updatePreviewRow(siteId, status) {
+  const row = main.querySelector(`[data-preview-row="${siteId}"]`);
+  const checkbox = main.querySelector(`[data-preview-toggle="${siteId}"]`);
+  if (!row) return;
+
+  if (!status.ok) {
+    row.innerHTML = `<span class="preview-muted">${escapeHtml(String(status.message ?? 'Preview status unavailable'))}</span>`;
+    if (checkbox) /** @type {HTMLInputElement} */ (checkbox).disabled = true;
+    return;
+  }
+
+  row.innerHTML = status.enabled
+    ? '<span class="preview-on">PR previews enabled</span>'
+    : '<span class="preview-off">PR previews disabled</span>';
+  if (checkbox) /** @type {HTMLInputElement} */ (checkbox).disabled = false;
 }
 
 async function runAllHealthChecks() {
@@ -293,12 +371,14 @@ async function checkSiteUsage(siteId, options = {}) {
  * @param {Record<string, unknown>} site
  * @param {Record<string, unknown>} platform
  * @param {boolean} githubConfigured
+ * @param {boolean} pagesConfigured
  */
-function renderSiteCard(site, platform, githubConfigured) {
+function renderSiteCard(site, platform, githubConfigured, pagesConfigured) {
   const siteId = String(site.siteId);
   const isProduction = siteId === 'production';
   const stored = healthBySite.get(siteId);
   const storedUsage = usageBySite.get(siteId);
+  const storedPreview = previewsBySite.get(siteId);
   const tfBadge = site.terraform
     ? '<span class="badge badge-ok">terraform</span>'
     : '<span class="badge badge-warn">manual</span>';
@@ -335,6 +415,15 @@ function renderSiteCard(site, platform, githubConfigured) {
         ${renderCopyCommand('Copy deploy', commands.workerDeploy)}
         ${renderCopyCommand('Copy sync', commands.syncWrangler)}
       </div>
+      <div class="preview-row">
+        ${pagesConfigured && site.terraform && !isProduction
+          ? `<label class="preview-toggle">
+              <input type="checkbox" data-preview-toggle="${escapeHtml(siteId)}" ${storedPreview?.enabled ? 'checked' : ''} />
+              <span>PR preview builds</span>
+            </label>`
+          : ''}
+        <span class="preview-status" data-preview-row="${escapeHtml(siteId)}">${storedPreview ? renderPreviewSummary(storedPreview) : ''}</span>
+      </div>
       <div class="actions">
         <button type="button" class="btn btn-small" data-check-site="${escapeHtml(siteId)}">Check health</button>
         <button type="button" class="btn btn-small btn-ghost" data-check-usage="${escapeHtml(siteId)}">Check usage</button>
@@ -352,6 +441,15 @@ function renderSiteCard(site, platform, githubConfigured) {
       </ul>
     </article>
   `;
+}
+
+function renderPreviewSummary(status) {
+  if (!status.ok) {
+    return `<span class="preview-muted">${escapeHtml(String(status.message ?? 'Preview status unavailable'))}</span>`;
+  }
+  return status.enabled
+    ? '<span class="preview-on">PR previews enabled</span>'
+    : '<span class="preview-off">PR previews disabled</span>';
 }
 
 /**
