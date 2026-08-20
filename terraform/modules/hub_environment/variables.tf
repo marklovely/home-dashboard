@@ -90,6 +90,12 @@ variable "platform_health_checks_enabled" {
   description = "Allow Access service tokens on hub Pages/Worker (for platform admin health probes)."
 }
 
+variable "include_pages_dev_access_destinations" {
+  type        = bool
+  default     = true
+  description = "Include default and preview *.pages.dev URIs on the Pages Access app. False during pre-worker provision so the Pages project can be created first."
+}
+
 variable "pages_dev_hostname" {
   type        = string
   default     = null
