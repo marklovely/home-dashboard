@@ -2,6 +2,7 @@ import { defineApp } from '../../components/App/defineApp.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
+  applyGuestAccessDisplayValues,
   buildHomeDetailsFormProfile,
   createContactGroup,
   createGuestAccessFields,
@@ -14,6 +15,7 @@ import {
   readGuestAccessSecrets,
   readPropertyAddressProfilePatch
 } from '../../components/HubSetup/hubSetupFields.js';
+import { isHubSetupWizardRerunRequested } from './hubSetupLauncher.js';
 import { HUB_SETUP_FIELD_HELP } from '../../components/HubSetup/hubSetupHelpContent.js';
 import {
   createHubSetupHelpButton,
@@ -46,6 +48,7 @@ import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLo
 import { getModeConfig } from '../../modes/modeConfig.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
+  clearHubSetupWizardRerunRequest,
   getHubSetupWizardStep,
   resetHubSetupWizardStep,
   setHubSetupWizardStep
@@ -66,6 +69,12 @@ const HUB_SETUP_WELCOME = {
   title: 'Welcome to Lovely Home setup',
   lead:
     'A few short steps to name your hub, add contacts, and get guests started. Each step saves as you go — you can change everything later in Settings.'
+};
+
+const HUB_SETUP_RERUN_WELCOME = {
+  title: 'Hub setup wizard',
+  lead:
+    'Step through your hub settings with your current details pre-filled. Leave secret fields blank to keep saved values.'
 };
 
 /**
@@ -165,13 +174,15 @@ function mountHubSetupWizard(viewport, context) {
   welcomeEyebrow.className = 'hub-setup-welcome-eyebrow';
   welcomeEyebrow.textContent = getModeConfig().branding.eyebrow;
 
+  const welcomeCopy = isHubSetupWizardRerunRequested() ? HUB_SETUP_RERUN_WELCOME : HUB_SETUP_WELCOME;
+
   const welcomeTitle = document.createElement('h2');
   welcomeTitle.className = 'hub-setup-welcome-title';
-  welcomeTitle.textContent = HUB_SETUP_WELCOME.title;
+  welcomeTitle.textContent = welcomeCopy.title;
 
   const welcomeLead = document.createElement('p');
   welcomeLead.className = 'hub-setup-welcome-lead subtle';
-  welcomeLead.textContent = HUB_SETUP_WELCOME.lead;
+  welcomeLead.textContent = welcomeCopy.lead;
 
   welcomeBlock.append(welcomeEyebrow, welcomeTitle, welcomeLead);
 
@@ -235,7 +246,10 @@ function mountHubSetupWizard(viewport, context) {
   let calendarFields = createCalendarConnectionField();
 
   void fetchHubSecretsConfigured().then((result) => {
-    if (result.ok && result.data?.configured?.calendar_ics_url) {
+    if (!result.ok) return;
+    const configured = result.data?.configured ?? {};
+    applyGuestAccessDisplayValues(guestFields, configured);
+    if (configured.calendar_ics_url) {
       calendarFields = createCalendarConnectionField({ configured: true });
       if (currentStepId() === 'calendar') {
         renderStep();
@@ -346,7 +360,11 @@ function mountHubSetupWizard(viewport, context) {
     renderNav();
     body.replaceChildren();
     backButton.hidden = step === 0;
-    nextButton.textContent = isLastWizardStep() ? 'Finish setup' : 'Continue';
+    nextButton.textContent = isLastWizardStep()
+      ? isHubSetupWizardRerunRequested()
+        ? 'Done'
+        : 'Finish setup'
+      : 'Continue';
 
     const stepId = currentStepId();
     const meta = getHubSetupStepMeta(stepId);
@@ -568,15 +586,17 @@ function mountHubSetupWizard(viewport, context) {
         }
 
         if (stepId === 'guide') {
+          const wasRerun = isHubSetupWizardRerunRequested();
           const result = await saveSiteProfile({ onboardingComplete: true });
           if (!handleSaveResult(result, 'Could not finish setup.')) return;
           resetHubSetupWizardStep();
+          clearHubSetupWizardRerunRequest();
           await syncSiteProfileFromServer();
           applyShellBranding({
             shellEyebrow: document.querySelector('#shell-eyebrow'),
             shellTagline: document.querySelector('#shell-tagline')
           });
-          showToast(context.toast, 'Hub setup complete.');
+          showToast(context.toast, wasRerun ? 'Hub setup updated.' : 'Hub setup complete.');
           context.navigate('home');
           return;
         }
@@ -602,7 +622,7 @@ function mountHubSetup(viewport, context) {
     mountHubSetupUnavailable(viewport, context);
     return;
   }
-  if (isOnboardingComplete()) {
+  if (isOnboardingComplete() && !isHubSetupWizardRerunRequested()) {
     context.navigate('home');
     return;
   }
