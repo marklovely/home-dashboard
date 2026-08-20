@@ -20,7 +20,8 @@ export function formatBytes(bytes) {
   }
 
   const digits = size >= 100 || unitIndex === 0 ? 0 : size >= 10 ? 1 : 2;
-  return `${size.toFixed(digits)} ${units[unitIndex]}`;
+  const text = Number(size.toFixed(digits)).toString();
+  return `${text} ${units[unitIndex]}`;
 }
 
 /**
