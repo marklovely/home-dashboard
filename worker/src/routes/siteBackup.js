@@ -1,15 +1,15 @@
 import { requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
-import { resolveSitterAccessEmails } from '../routes/houseSettingsRoute.js';
-import {
-  getSitterSecretsDisclosed,
-  setSitterAccessEmails,
-  setSitterSecretsDisclosed
-} from '../lib/houseSettings.js';
-import { importGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
+import { isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { loadImportableGuideCatalog } from '../houseGuide/exportCatalog.js';
 import { jsonError, methodNotAllowed } from '../lib/errors.js';
+import {
+  SITE_BACKUP_FORMAT_VERSION,
+  buildSiteBackupPayload,
+  parseSiteBackupScope,
+  restoreSiteBackupPayload
+} from '../lib/siteBackupPayload.js';
 
-export const SITE_BACKUP_FORMAT_VERSION = 1;
+export { SITE_BACKUP_FORMAT_VERSION };
 
 /**
  * @param {{ ok: boolean, status?: number, code?: string }} ownerGate
@@ -24,60 +24,7 @@ function ownerGateJsonError(ownerGate, correlationId) {
   return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
 }
 
-/**
- * @param {Record<string, unknown>} env
- */
-export async function buildSiteBackupPayload(env) {
-  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
-  const seeded = await isHouseGuideSeeded(db);
-  const sitterSecretsDisclosed = await getSitterSecretsDisclosed(env);
-  const sitterAccessEmails = await resolveSitterAccessEmails(env);
-
-  /** @type {{ seeded: boolean, catalog: object | null, uploadedMedia: { id: string, alt: string }[] }} */
-  let guide = { seeded: false, catalog: null, uploadedMedia: [] };
-
-  if (seeded) {
-    const exported = await loadImportableGuideCatalog(db);
-    guide = {
-      seeded: true,
-      catalog: exported?.catalog ?? null,
-      uploadedMedia: exported?.uploadedMedia ?? []
-    };
-  }
-
-  return {
-    formatVersion: SITE_BACKUP_FORMAT_VERSION,
-    exportedAt: new Date().toISOString(),
-    siteSettings: {
-      sitterSecretsDisclosed,
-      sitterAccessEmails
-    },
-    guide
-  };
-}
-
-/**
- * @param {Record<string, unknown>} env
- * @param {Record<string, unknown>} payload
- */
-export async function restoreSiteBackupPayload(env, payload) {
-  if (payload.siteSettings?.sitterSecretsDisclosed !== undefined) {
-    await setSitterSecretsDisclosed(env, Boolean(payload.siteSettings.sitterSecretsDisclosed));
-  }
-  if (Array.isArray(payload.siteSettings?.sitterAccessEmails)) {
-    await setSitterAccessEmails(
-      env,
-      payload.siteSettings.sitterAccessEmails.map((email) => String(email))
-    );
-  }
-
-  if (payload.guide?.catalog && Array.isArray(payload.guide.catalog.categories)) {
-    const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
-    await importGuideCatalog(db, payload.guide.catalog);
-  }
-
-  return buildSiteBackupPayload(env);
-}
+export { buildSiteBackupPayload, restoreSiteBackupPayload };
 
 /**
  * @param {Request} request
@@ -94,13 +41,18 @@ export async function handleSiteBackupGet(request, env, correlationId) {
     return ownerGateJsonError(ownerGate, correlationId);
   }
 
-  const payload = await buildSiteBackupPayload(env);
+  const url = new URL(request.url);
+  const scope = parseSiteBackupScope(url.searchParams.get('scope'));
+  const payload = await buildSiteBackupPayload(env, { scope });
+  const filename =
+    scope === 'guide' ? 'lovely-home-guide-backup.json' : 'lovely-home-hub-backup.json';
+
   return Response.json(payload, {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'no-store',
-      'Content-Disposition': 'attachment; filename="lovely-home-hub-backup.json"'
+      'Content-Disposition': `attachment; filename="${filename}"`
     }
   });
 }
@@ -176,6 +128,7 @@ export async function handleGuideExportGet(request, env, correlationId) {
   return Response.json(
     {
       formatVersion: SITE_BACKUP_FORMAT_VERSION,
+      backupScope: 'guide',
       exportedAt: new Date().toISOString(),
       catalog: exported.catalog,
       uploadedMedia: exported.uploadedMedia

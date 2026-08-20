@@ -27,6 +27,7 @@ import {
 } from '../../services/weatherLocationService.js';
 import { geocodeWeatherLocation } from '../../api/weatherApi.js';
 import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
+import { showPasswordDialog } from '../../components/PasswordDialog/passwordDialog.js';
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { createHubSetupHelpButton } from '../../components/HubSetup/hubSetupHelp.js';
@@ -62,9 +63,11 @@ import {
 import { createSetupTextarea } from '../../components/HubSetup/hubSetupFields.js';
 import { fetchSiteBackup, restoreSiteBackup } from '../../api/siteBackupApi.js';
 import {
-  downloadJsonFile,
+  backupRestoreSummary,
+  downloadEncryptedBackupFile,
   normalizeBackupForRestore,
   readJsonFile,
+  resolveBackupDocument,
   uploadedMediaRestoreHint
 } from '../../utils/backupJson.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
@@ -255,23 +258,72 @@ function createUtilitiesFields(context) {
   const intro = document.createElement('p');
   intro.className = 'subtle';
   intro.textContent =
-    'Download a JSON backup of your House Guide and site settings (not Wi-Fi, PINs, or other Worker secrets). Restore replaces guide content on this hub only.';
+    'Backups are encrypted with a password you choose before download. Full backup includes House Guide, home details, Wi‑Fi, PIN, lockbox, calendar link, and sitter settings. Guide-only backup is smaller and omits secrets. Uploaded photo files are never embedded — re-upload after restore.';
 
-  const exportButton = document.createElement('button');
-  exportButton.type = 'button';
-  exportButton.className = 'settings-action-button';
-  exportButton.textContent = 'Download site backup';
-  exportButton.addEventListener('click', () => {
-    exportButton.disabled = true;
-    void fetchSiteBackup().then((result) => {
-      exportButton.disabled = false;
-      if (!result.ok || !result.data) {
-        showToast(context.toast, result.message || 'Could not export backup.');
-        return;
+  const exportFullButton = document.createElement('button');
+  exportFullButton.type = 'button';
+  exportFullButton.className = 'settings-action-button';
+  exportFullButton.textContent = 'Download full site backup';
+  exportFullButton.addEventListener('click', () => {
+    exportFullButton.disabled = true;
+    exportGuideButton.disabled = true;
+    void (async () => {
+      try {
+        const result = await fetchSiteBackup({ scope: 'full' });
+        if (!result.ok || !result.data) {
+          showToast(context.toast, result.message || 'Could not export backup.');
+          return;
+        }
+        const password = await showPasswordDialog({
+          title: 'Encrypt full backup',
+          message:
+            'Choose a password for this backup file. You will need the same password to restore it. Lovely Home cannot recover a forgotten password.',
+          confirmLabel: 'Download',
+          requireConfirmation: true
+        });
+        if (!password) return;
+        await downloadEncryptedBackupFile('lovely-home-hub-backup.json', result.data, password);
+        showToast(context.toast, 'Encrypted full site backup downloaded.');
+      } catch (error) {
+        showToast(context.toast, error instanceof Error ? error.message : 'Could not export backup.');
+      } finally {
+        exportFullButton.disabled = false;
+        exportGuideButton.disabled = false;
       }
-      downloadJsonFile('lovely-home-hub-backup.json', result.data);
-      showToast(context.toast, 'Site backup downloaded.');
-    });
+    })();
+  });
+
+  const exportGuideButton = document.createElement('button');
+  exportGuideButton.type = 'button';
+  exportGuideButton.className = 'settings-action-button settings-action-button--secondary';
+  exportGuideButton.textContent = 'Download guide only';
+  exportGuideButton.addEventListener('click', () => {
+    exportGuideButton.disabled = true;
+    exportFullButton.disabled = true;
+    void (async () => {
+      try {
+        const result = await fetchSiteBackup({ scope: 'guide' });
+        if (!result.ok || !result.data) {
+          showToast(context.toast, result.message || 'Could not export backup.');
+          return;
+        }
+        const password = await showPasswordDialog({
+          title: 'Encrypt guide backup',
+          message:
+            'Choose a password for this backup file. You will need the same password to restore it. Lovely Home cannot recover a forgotten password.',
+          confirmLabel: 'Download',
+          requireConfirmation: true
+        });
+        if (!password) return;
+        await downloadEncryptedBackupFile('lovely-home-guide-backup.json', result.data, password);
+        showToast(context.toast, 'Encrypted guide backup downloaded.');
+      } catch (error) {
+        showToast(context.toast, error instanceof Error ? error.message : 'Could not export backup.');
+      } finally {
+        exportGuideButton.disabled = false;
+        exportFullButton.disabled = false;
+      }
+    })();
   });
 
   const importButton = document.createElement('button');
@@ -296,13 +348,20 @@ function createUtilitiesFields(context) {
     void (async () => {
       try {
         const raw = await readJsonFile(file);
-        const backup = normalizeBackupForRestore(raw);
+        const decrypted = await resolveBackupDocument(raw, () =>
+          showPasswordDialog({
+            title: 'Decrypt backup',
+            message: 'Enter the password used when this backup was downloaded.',
+            confirmLabel: 'Continue'
+          })
+        );
+        const backup = normalizeBackupForRestore(decrypted);
         const uploaded = /** @type {{ id: string, alt: string }[]} */ (
           backup.guide?.uploadedMedia ?? []
         );
         const confirmed = await showConfirmDialog({
           title: 'Restore site backup?',
-          message: `This replaces House Guide content on this hub.${uploadedMediaRestoreHint(uploaded)}`,
+          message: `${backupRestoreSummary(backup)}${uploadedMediaRestoreHint(uploaded)}`,
           confirmLabel: 'Restore',
           danger: true
         });
@@ -311,7 +370,8 @@ function createUtilitiesFields(context) {
         restoreStatus.hidden = false;
         restoreStatus.textContent = 'Restoring backup…';
         importButton.disabled = true;
-        exportButton.disabled = true;
+        exportFullButton.disabled = true;
+        exportGuideButton.disabled = true;
         showToast(context.toast, 'Restoring backup…', 120000);
 
         const result = await restoreSiteBackup(backup);
@@ -323,6 +383,12 @@ function createUtilitiesFields(context) {
 
         await syncSitterSecretsFromServer();
         await refreshGuideContent(fetch, { draft: true, force: true });
+        await syncSiteProfileFromServer();
+        await refreshPrivateConfig();
+        applyShellBranding({
+          shellEyebrow: document.querySelector('#shell-eyebrow'),
+          shellTagline: document.querySelector('#shell-tagline')
+        });
         restoreStatus.textContent = 'Site backup restored.';
         showToast(context.toast, 'Site backup restored.');
       } catch (error) {
@@ -332,11 +398,12 @@ function createUtilitiesFields(context) {
         showToast(context.toast, message);
       } finally {
         importButton.disabled = false;
-        exportButton.disabled = false;
+        exportFullButton.disabled = false;
+        exportGuideButton.disabled = false;
       }
     })();
   });
-  wrap.append(backupHeading, intro, exportButton, importButton, importInput, restoreStatus);
+  wrap.append(backupHeading, intro, exportFullButton, exportGuideButton, importButton, importInput, restoreStatus);
 
   const resetHeading = document.createElement('h2');
   resetHeading.className = 'settings-utilities-heading';
