@@ -137,17 +137,19 @@ async function fetchHouseGuideExportFromLegacyApis(fetchImpl) {
 }
 
 /**
- * @param {{ fetchImpl?: typeof fetch }} [options]
+ * @param {{ fetchImpl?: typeof fetch, scope?: 'full' | 'guide' }} [options]
  */
-export async function fetchSiteBackup({ fetchImpl = fetch } = {}) {
+export async function fetchSiteBackup({ fetchImpl = fetch, scope = 'full' } = {}) {
   await ensureApiBaseUrl();
   if (!isApiConfigured()) {
     return { ok: false, status: 503, message: 'Backup is temporarily unavailable.', data: null };
   }
 
+  const query = scope === 'guide' ? '?scope=guide' : '';
+
   try {
     const response = await fetchImpl(
-      buildApiUrl('/api/site/backup'),
+      buildApiUrl(`/api/site/backup${query}`),
       withApiCredentials({
         headers: { Accept: 'application/json' },
         cache: 'no-store'
