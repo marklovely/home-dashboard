@@ -259,7 +259,11 @@ migrations_dir = "migrations"
 
 [[env.${siteId}.r2_buckets]]
 binding = "GUIDE_MEDIA"
-bucket_name = "lovely-home-guide-media-${siteId}"`;
+bucket_name = "lovely-home-guide-media-${siteId}"
+
+[[env.${siteId}.r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"`;
 }
 
 /**

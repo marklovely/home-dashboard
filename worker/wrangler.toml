@@ -49,6 +49,11 @@ migrations_dir = "migrations"
 binding = "GUIDE_MEDIA"
 bucket_name = "lovely-home-guide-media"
 
+# Shared hub branding assets (logo for header and ops).
+[[r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"
+
 # ---------------------------------------------------------------------------
 # Test environment — isolated Worker, D1, and R2 (never shares production data).
 # Provision once: cd worker && npm run provision:test
@@ -102,6 +107,10 @@ migrations_dir = "migrations"
 binding = "GUIDE_MEDIA"
 bucket_name = "lovely-home-guide-media-test"
 
+[[env.test.r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"
+
 # ---------------------------------------------------------------------------
 # Sandbox environment — Terraform-managed (see docs/platform-terraform.md)
 # Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs sandbox
@@ -153,6 +162,10 @@ migrations_dir = "migrations"
 binding = "GUIDE_MEDIA"
 bucket_name = "lovely-home-guide-media-sandbox"
 
+[[env.sandbox.r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"
+
 # ---------------------------------------------------------------------------
 # Demo environment — Terraform-managed (see docs/platform-terraform.md)
 # Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs demo
@@ -203,3 +216,7 @@ migrations_dir = "migrations"
 [[env.demo.r2_buckets]]
 binding = "GUIDE_MEDIA"
 bucket_name = "lovely-home-guide-media-demo"
+
+[[env.demo.r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"

@@ -18,6 +18,8 @@ describe("wrangler.toml environments", () => {
     expect(wranglerToml).toMatch(/lovely-home-appliance-manuals-test/);
     expect(wranglerToml).toMatch(/lovely-home-appliance-guides-test/);
     expect(wranglerToml).toMatch(/lovely-home-guide-media-test/);
+    expect(wranglerToml).toMatch(/binding = "BRAND_MEDIA"/);
+    expect(wranglerToml).toMatch(/bucket_name = "lovely-home-media"/);
   });
 
   it("keeps production D1 id separate from test placeholder or uuid", () => {

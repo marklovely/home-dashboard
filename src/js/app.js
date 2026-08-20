@@ -24,6 +24,7 @@ import { initAccessSessionBanner } from '../shell/accessSessionBanner.js';
 import { isOwnerUserMode } from '../auth/userMode.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
 import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
+import { initShellBrandLogo } from '../shell/shellBrandLogo.js';
 import { applyShellBranding } from '../shell/shellBranding.js';
 import {
   isOnboardingComplete,
@@ -149,6 +150,7 @@ async function initialiseDashboard() {
 
   attachOwnerAccessGesture({
     logoElements: [
+      document.querySelector('#shell-logo'),
       document.querySelector('#shell-eyebrow'),
       document.querySelector('#shell-chrome-title'),
       document.querySelector('.shell-chrome-title-block')
@@ -166,6 +168,7 @@ async function initialiseDashboard() {
 
   registerServiceWorker();
   initScreensaverOverlay();
+  initShellBrandLogo();
 
   subscribeToSiteProfile(() => {
     applyShellBranding({
