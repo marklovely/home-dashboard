@@ -1,7 +1,8 @@
 /**
+ * @param {{ guideSeeded?: boolean }} [options]
  * @returns {D1Database}
  */
-export function createInMemoryHubSetupDb() {
+export function createInMemoryHubSetupDb(options = {}) {
   /** @type {Record<string, string>} */
   const secrets = {};
   /** @type {Record<string, string>} */
@@ -9,7 +10,7 @@ export function createInMemoryHubSetupDb() {
   /** @type {string | null} */
   let profilePayload = null;
   /** @type {boolean} */
-  let guideSeeded = false;
+  let guideSeeded = options.guideSeeded === true;
 
   return /** @type {D1Database} */ ({
     prepare(sql) {

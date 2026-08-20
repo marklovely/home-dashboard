@@ -81,4 +81,31 @@ describe('hub setup routes', () => {
 
     expect(response.status).toBe(200);
   });
+
+  it('treats legacy seeded hubs with a profile row as onboarding complete', async () => {
+    const db = createInMemoryHubSetupDb({ guideSeeded: true });
+    const env = withTestLimiters({
+      ...createAccessTestEnv(),
+      HOUSE_GUIDE_DB: db
+    });
+
+    await db
+      .prepare(
+        `INSERT INTO site_profile (id, payload, updated_at) VALUES (?, ?, ?)`
+      )
+      .bind('default', JSON.stringify({ onboardingComplete: false, hubName: 'Lovely Home' }), 1)
+      .run();
+
+    const jwt = await signTestAccessJwt('owner@example.com', env);
+    const response = await handleSiteProfileGet(
+      new Request('https://worker.test/api/site/profile', withAccessJwt(jwt)),
+      env,
+      'cid'
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.profile.onboardingComplete).toBe(true);
+    expect(body.guideSeeded).toBe(true);
+  });
 });
