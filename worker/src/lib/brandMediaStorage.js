@@ -1,6 +1,8 @@
 /** @typedef {import('@cloudflare/workers-types').R2Bucket} R2Bucket */
 
 export const BRAND_LOGO_OBJECT_KEY = 'lovely-home-logo.png';
+export const BRAND_ACCESS_LOGO_OBJECT_KEY = 'lovely-home-access-logo.png';
+export const BRAND_MEDIA_BUCKET_NAME = 'lovely-home-media';
 
 /**
  * @param {R2Bucket | undefined} bucket

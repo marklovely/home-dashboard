@@ -63,6 +63,26 @@ Keep these three hostnames on a sticky note:
    `https://<TEAM_NAME>.cloudflareaccess.com`  
    Example: team name `mark-lovely67` → you will set Worker secret `CF_ACCESS_TEAM_DOMAIN` to `mark-lovely67` (the subdomain only, no `https://`).
 
+### Custom login page logo (Lovely Home)
+
+The hub header logo (`lovely-home-logo.png`) is dark-themed and served behind Access — do **not** use it on the Access login page.
+
+Use the light-background asset from the public **`lovely-home-media`** bucket instead:
+
+| Asset | R2 object key | Use |
+|-------|---------------|-----|
+| Hub header | `lovely-home-logo.png` | Authenticated hub shell only |
+| Access login | `lovely-home-access-logo.png` | Zero Trust custom login page |
+
+**Logo URL:** `https://<your-public-r2-domain>/lovely-home-access-logo.png`  
+(source file: [`assets/lovely-home-access-logo.png`](../assets/lovely-home-access-logo.png))
+
+1. Zero Trust → **Settings** → **Custom pages** → **Login page** (or **Identity landing page**).
+2. Set **Logo** to the public R2 URL above.
+3. Optional hub-matched colours: background `#10131a`, text `#f4f6fb`, button `#191e28`.
+
+Replace the logo in R2 any time; Access picks up the URL on next load (allow for CDN cache).
+
 ---
 
 ## Step 3 — Create Access app for the dashboard (Pages)
