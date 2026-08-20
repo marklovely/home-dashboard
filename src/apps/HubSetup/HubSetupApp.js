@@ -15,7 +15,7 @@ import {
   readGuestAccessSecrets,
   readPropertyAddressProfilePatch
 } from '../../components/HubSetup/hubSetupFields.js';
-import { isHubSetupWizardRerunRequested } from './hubSetupLauncher.js';
+import { isHubSetupWizardRerunRequested, shouldAllowHubSetupWizard, ensureOwnerModeForHubSetup } from './hubSetupLauncher.js';
 import { HUB_SETUP_FIELD_HELP } from '../../components/HubSetup/hubSetupHelpContent.js';
 import {
   createHubSetupHelpButton,
@@ -37,7 +37,6 @@ import {
   fetchHubSecretsConfigured,
   getSiteProfileState,
   getSiteSetupUnavailableMessage,
-  isOnboardingComplete,
   isSiteSetupAvailable,
   saveHubSecrets,
   saveSiteProfile,
@@ -48,6 +47,7 @@ import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLo
 import { getModeConfig } from '../../modes/modeConfig.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
+  clearHubSetupWizardForcedOpen,
   clearHubSetupWizardRerunRequest,
   getHubSetupWizardStep,
   resetHubSetupWizardStep,
@@ -591,6 +591,7 @@ function mountHubSetupWizard(viewport, context) {
           if (!handleSaveResult(result, 'Could not finish setup.')) return;
           resetHubSetupWizardStep();
           clearHubSetupWizardRerunRequest();
+          clearHubSetupWizardForcedOpen();
           await syncSiteProfileFromServer();
           applyShellBranding({
             shellEyebrow: document.querySelector('#shell-eyebrow'),
@@ -622,12 +623,14 @@ function mountHubSetup(viewport, context) {
     mountHubSetupUnavailable(viewport, context);
     return;
   }
-  if (isOnboardingComplete() && !isHubSetupWizardRerunRequested()) {
+  if (!shouldAllowHubSetupWizard()) {
     context.navigate('home');
     return;
   }
   mountHubSetupWizard(viewport, context);
 }
+
+let activeMountGeneration = 0;
 
 export const hubSetupApp = defineApp({
   id: 'hub-setup',
@@ -638,6 +641,16 @@ export const hubSetupApp = defineApp({
   accent: '#7b66ff',
   profiles: ['owner'],
   mount(viewport, context) {
-    void syncSiteProfileFromServer().finally(() => mountHubSetup(viewport, context));
+    ensureOwnerModeForHubSetup();
+    const mountGeneration = ++activeMountGeneration;
+    void syncSiteProfileFromServer().finally(() => {
+      if (mountGeneration !== activeMountGeneration) return;
+      mountHubSetup(viewport, context);
+    });
   }
 });
+
+/** @internal */
+export function resetHubSetupMountGenerationForTests() {
+  activeMountGeneration = 0;
+}

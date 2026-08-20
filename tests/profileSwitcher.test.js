@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetDeviceSessionStoreForTests } from '../src/auth/deviceSessionStore.js';
 import { markOwnerUnlockedByPin, resetOwnerSessionForTests } from '../src/auth/ownerSession.js';
 import { UserMode, resetUserModeForTests, setUserMode } from '../src/auth/userMode.js';
+import { navigate, resetRouterForTests } from '../src/shell/router.js';
 import { shouldShowProfileSwitcher } from '../src/shell/profileSwitcher.js';
 
 describe('profileSwitcher', () => {
@@ -10,12 +11,20 @@ describe('profileSwitcher', () => {
     resetUserModeForTests();
     resetOwnerSessionForTests();
     resetDeviceSessionStoreForTests();
+    resetRouterForTests();
   });
 
   it('shows on home deployment when the device is in owner mode', () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'home');
     resetUserModeForTests();
     expect(shouldShowProfileSwitcher()).toBe(true);
+  });
+
+  it('hides during the hub setup wizard', () => {
+    vi.stubEnv('VITE_DEPLOYMENT_MODE', 'home');
+    resetUserModeForTests();
+    navigate('hub-setup');
+    expect(shouldShowProfileSwitcher()).toBe(false);
   });
 
   it('hides on dedicated house sitter deployment', () => {
