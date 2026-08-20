@@ -1,10 +1,10 @@
-import { getCurrentRoute, navigate } from './router.js';
-import { isOwnerUserMode } from '../auth/userMode.js';
+import { getCurrentRoute, navigate } from '../../shell/router.js';
+import { isOwnerUserMode } from '../../auth/userMode.js';
 import {
   shouldAutoOpenHubSetupWizard,
   shouldLeaveHubSetupWizard
 } from './hubSetupRouting.js';
-import { subscribeToSiteProfile } from '../services/siteProfileService.js';
+import { subscribeToSiteProfile } from '../../services/siteProfileService.js';
 
 /**
  * Keep hub-setup routing aligned with the latest profile sync and wizard flags.
