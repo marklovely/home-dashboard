@@ -240,7 +240,9 @@ bash scripts/verify-cloudflare-api-token.sh
 
 **Deploy fails with `Authentication error [code: 10000]` on `/workers/subdomain`:** Add **Workers Routes → Edit** on zone `lovely-home.co.uk` (included in Cloudflare’s “Edit Cloudflare Workers” template). Re-run verify — it checks the subdomain endpoint before terraform apply.
 
-**Post-worker apply fails with `Invalid Service name ()` (8000022):** CI runs `scripts/attach-hub-api-pages-binding.mjs` (direct Cloudflare API) then `terraform apply -refresh-only` to sync state. Local: `node scripts/attach-hub-api-pages-binding.mjs demo` after Worker deploy.
+**Post-worker apply fails with `Invalid Service name ()` (8000022):** CI runs `scripts/attach-hub-api-pages-binding.mjs` (direct Cloudflare API) then redeploys Pages so the binding is active. Local: `bash scripts/deploy-cloudflare-pages-site.sh <site_id>` after Worker deploy.
+
+**Platform admin shows `HUB_API binding no` after provision:** The binding is project-level; the **active** Pages deployment must be created after attach. `deploy-cloudflare-pages-site.sh` attaches then redeploys automatically. Re-run that script or **Platform site deploy** for the site.
 
 **Terraform apply fails with Access `400 Bad Request` / `domain does not belong to zone` on a new site:** The Pages Access app includes `*.pages.dev` destinations, which Cloudflare rejects until the Pages project exists. CI now omits those destinations during the pre-worker apply and adds them on the post-worker apply. Merge the fix and re-run **Platform site provision** (workflow dispatch with the site id). Partial applies resume safely on retry.
 
@@ -253,9 +255,10 @@ bash scripts/verify-cloudflare-api-token.sh
 3. `sync-wrangler-from-terraform.mjs`
 4. `set-worker-secrets-from-terraform.mjs` — HUB_PROXY_SECRET, Access AUD, vanilla dummy secrets
 5. `npm run d1:migrate:<site>` + `npm run deploy:<site>`
-6. Second `terraform apply` (attach_hub_api_binding=true)
-7. `deploy-cloudflare-pages-site.sh`
-8. `build-platform-manifest.mjs` + `deploy-platform-admin.sh`
+6. `terraform apply -refresh-only` (post-worker tfvars)
+7. `deploy-cloudflare-pages-site.sh` — deploy, attach HUB_API, **redeploy** so binding is live
+8. `enable-hub-pages-previews.mjs` (non-production sites)
+9. `build-platform-manifest.mjs` + `deploy-platform-admin.sh`
 
 ## Local dry-run
 
