@@ -16,6 +16,7 @@ import {
 } from './routes/houseSettingsRoute.js';
 import { handleSiteBackup } from './routes/siteBackup.js';
 import { handleSiteSetup } from './routes/siteSetupRoute.js';
+import { handleBrandingLogo } from './routes/brandingRoute.js';
 import { handleDeviceSession } from './routes/deviceSessionRoute.js';
 import { handleDeviceMode, handleAuthLock } from './routes/deviceModeRoute.js';
 import { handleSession } from './routes/session.js';
@@ -78,6 +79,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
         { error: 'AUTH_NOT_CONFIGURED', message: 'Access authentication is not configured.' },
         { status: 503 }
       );
+    } else if (url.pathname === '/api/branding/logo' && request.method === 'GET') {
+      response = await handleBrandingLogo(request, env, fetchBound, correlationId);
     } else if (url.pathname === '/api/device-session' && request.method === 'GET') {
       response = await handleDeviceSession(request, env, fetchBound);
     } else if (url.pathname === '/api/device-mode' && request.method === 'POST') {
