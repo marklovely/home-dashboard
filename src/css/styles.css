@@ -841,6 +841,41 @@ body.is-bins-route .app-viewport > .bins-app {
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
+.hub-setup-welcome {
+  display: grid;
+  gap: 8px;
+  margin-bottom: clamp(16px, 2.5vw, 22px);
+  padding-bottom: clamp(16px, 2.5vw, 22px);
+  border-bottom: 1px solid var(--border);
+}
+
+.hub-setup-welcome-eyebrow {
+  margin: 0;
+  color: #8e9aab;
+  letter-spacing: 0.2em;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.hub-setup-welcome-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.hub-setup-welcome-lead {
+  margin: 0;
+  max-width: 42rem;
+  line-height: 1.45;
+}
+
+.hub-setup-step-header {
+  display: grid;
+  gap: 0;
+}
+
 .hub-setup-panel-header .hub-setup-step-help-host {
   margin-top: 10px;
 }
