@@ -37,4 +37,4 @@ sites:
     vanilla: true
     terraform: true
     owner_emails: marklovely67@gmail.com
-    attach_hub_api_binding: false
+    attach_hub_api_binding: true
