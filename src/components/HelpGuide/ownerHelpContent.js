@@ -230,7 +230,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'You can reopen the wizard from Settings → Home details → Open setup wizard, or edit the same fields directly on that page.'
+        text: 'You can reopen the wizard from Settings → Utilities → Open setup wizard, or edit the same fields directly on Home details.'
       }
     ]
   },
