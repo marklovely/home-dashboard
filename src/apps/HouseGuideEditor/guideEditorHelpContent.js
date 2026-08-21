@@ -61,14 +61,11 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
       {
         type: 'ul',
         items: [
-          'Title and subtitle — short; sitters see these in lists and search.',
-          'Summary — one or two sentences for cards and search.',
-          'Audience — House sitters and guests (default) or Owner notes only.',
-          'Blocks — main instructions (see Block types).',
-          'Search keywords — extra words sitters might type.',
-          'Appliance manual links — names matching published manuals.',
-          'Quick actions — buttons at the bottom of the sitter page.',
-          'Save draft, then Publish topic.'
+          'Title — sitters see this in lists and search.',
+          'Topic details — subtitle, summary, and audience (expand when needed).',
+          'Blocks — main instructions (see Block types). Drag the handle to reorder.',
+          'Search & links and Quick actions — optional; collapsed until you need them.',
+          'Save draft, then Publish topic. Use Preview in guide to check the live page.'
         ]
       },
       {
@@ -77,7 +74,7 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'When creating a topic, pick a short id with letters, numbers, and hyphens (e.g. bin-day, scooter-bedtime). IDs appear in links and cannot be changed easily later.'
+        text: 'When creating a topic, the id is generated from the title automatically. Open Advanced to edit it before creating. Use letters, numbers, and hyphens (e.g. bin-day, scooter-bedtime). IDs appear in links and cannot be changed easily later.'
       }
     ]
   },

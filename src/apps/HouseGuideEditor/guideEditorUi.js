@@ -5,6 +5,7 @@ import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
 import { createGuideRichTextEditor } from './createGuideRichTextEditor.js';
 import { createGuideEmojiPicker } from './createGuideEmojiPicker.js';
 import { createEmptyGuideBlock } from './guideEditorBlockDefaults.js';
+import { mediaIdFromFileName } from './guideEditorTopicUtils.js';
 
 export { createEmptyGuideBlock };
 
@@ -166,7 +167,7 @@ function renderHeroImageBlock(block, onChange, mediaIds, options) {
   pickerSummary.textContent = block.mediaId ? 'Choose a different existing photo' : 'Or choose an existing photo';
   existingPicker.append(
     pickerSummary,
-    createMediaSelect('Photo library', block.mediaId ?? '', mediaIds, (value) => onChange({ ...block, mediaId: value }))
+    createMediaPickerGrid(block.mediaId ?? '', mediaIds, (value) => onChange({ ...block, mediaId: value }))
   );
   wrap.append(
     existingPicker,
@@ -247,6 +248,16 @@ function createImageUploadPanel(block, onChange, options) {
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.accept = 'image/jpeg,image/png,image/webp,image/gif';
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (!idInput.value.trim()) {
+      idInput.value = mediaIdFromFileName(file.name);
+    }
+    if (!altInput.value.trim()) {
+      altInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
+    }
+  });
   fileLabel.append(fileSpan, fileInput);
 
   const status = document.createElement('p');
@@ -367,30 +378,51 @@ function createRichTextArea(label, value, onChange) {
 }
 
 /**
- * @param {string} label
  * @param {string} value
  * @param {string[]} options
  * @param {(value: string) => void} onChange
  */
-function createMediaSelect(label, value, options, onChange) {
-  const wrap = document.createElement('label');
-  wrap.className = 'guide-editor-field';
-  const span = document.createElement('span');
-  span.textContent = label;
-  const select = document.createElement('select');
-  const empty = document.createElement('option');
-  empty.value = '';
-  empty.textContent = 'Choose a photo…';
-  select.append(empty);
-  for (const mediaId of options) {
-    const option = document.createElement('option');
-    option.value = mediaId;
-    option.textContent = mediaId;
-    option.selected = mediaId === value;
-    select.append(option);
+function createMediaPickerGrid(value, options, onChange) {
+  const wrap = document.createElement('div');
+  wrap.className = 'guide-editor-photo-grid';
+
+  if (!options.length) {
+    const empty = document.createElement('p');
+    empty.className = 'subtle';
+    empty.textContent = 'No photos in the library yet. Upload one above or in Photo library.';
+    wrap.append(empty);
+    return wrap;
   }
-  select.addEventListener('change', () => onChange(select.value));
-  wrap.append(span, select);
+
+  for (const mediaId of options) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'guide-editor-photo-grid-item';
+    if (mediaId === value) {
+      button.classList.add('is-selected');
+      button.setAttribute('aria-pressed', 'true');
+    } else {
+      button.setAttribute('aria-pressed', 'false');
+    }
+    button.setAttribute('aria-label', `Use photo ${mediaId}`);
+
+    const frame = document.createElement('span');
+    frame.className = 'guide-editor-photo-grid-thumb';
+    const resolved = resolveGuideMedia(mediaId);
+    const img = document.createElement('img');
+    img.alt = resolved.ok ? resolved.alt : mediaId;
+    img.src = resolved.ok ? resolved.url : buildHouseGuideMediaUrl(mediaId);
+    frame.append(img);
+
+    const label = document.createElement('span');
+    label.className = 'guide-editor-photo-grid-id';
+    label.textContent = mediaId;
+
+    button.append(frame, label);
+    button.addEventListener('click', () => onChange(mediaId));
+    wrap.append(button);
+  }
+
   return wrap;
 }
 
