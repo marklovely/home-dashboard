@@ -77,8 +77,10 @@ export function wakeScreensaver() {
   recordScreensaverActivity();
 }
 
-/** @param {ScreensaverSetting} setting */
-export function setScreensaverSetting(setting) {
+/** @param {ScreensaverSetting} setting
+ *  @param {{ source?: 'user' | 'sync' }} [options]
+ */
+export function setScreensaverSetting(setting, options = {}) {
   if (setting !== 'off' && setting !== 'on') return;
   screensaverSetting = setting;
   if (setting === 'on') {
@@ -90,10 +92,15 @@ export function setScreensaverSetting(setting) {
     /* ignore */
   }
   notify();
+  if (options.source !== 'sync') {
+    document.dispatchEvent(new Event('home-hub-tablet-preference-change'));
+  }
 }
 
-/** @param {number} minutes */
-export function setScreensaverTimeoutMinutes(minutes) {
+/** @param {number} minutes
+ *  @param {{ source?: 'user' | 'sync' }} [options]
+ */
+export function setScreensaverTimeoutMinutes(minutes, options = {}) {
   timeoutMinutes = normalizeTimeoutMinutes(minutes);
   try {
     localStorage.setItem(TIMEOUT_STORAGE_KEY, String(timeoutMinutes));
@@ -101,6 +108,9 @@ export function setScreensaverTimeoutMinutes(minutes) {
     /* ignore */
   }
   notify();
+  if (options.source !== 'sync') {
+    document.dispatchEvent(new Event('home-hub-tablet-preference-change'));
+  }
 }
 
 /** @param {() => void} listener */

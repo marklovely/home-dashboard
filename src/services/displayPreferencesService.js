@@ -43,8 +43,10 @@ export function getHomeScreenScale() {
   return homeScreenScale;
 }
 
-/** @param {ClockFormat} format */
-export function setClockFormat(format) {
+/** @param {ClockFormat} format
+ *  @param {{ source?: 'user' | 'sync' }} [options]
+ */
+export function setClockFormat(format, options = {}) {
   if (format !== '12' && format !== '24') return;
   clockFormat = format;
   try {
@@ -53,10 +55,15 @@ export function setClockFormat(format) {
     /* ignore */
   }
   notify();
+  if (options.source !== 'sync') {
+    document.dispatchEvent(new Event('home-hub-tablet-preference-change'));
+  }
 }
 
-/** @param {HomeScreenScale} scale */
-export function setHomeScreenScale(scale) {
+/** @param {HomeScreenScale} scale
+ *  @param {{ source?: 'user' | 'sync' }} [options]
+ */
+export function setHomeScreenScale(scale, options = {}) {
   if (!HOME_SCREEN_SCALE_OPTIONS.some((option) => option.id === scale)) return;
   homeScreenScale = scale;
   applyHomeScreenScale();
@@ -66,6 +73,9 @@ export function setHomeScreenScale(scale) {
     /* ignore */
   }
   notify();
+  if (options.source !== 'sync') {
+    document.dispatchEvent(new Event('home-hub-tablet-preference-change'));
+  }
 }
 
 /** @param {() => void} listener */
