@@ -45,6 +45,7 @@ import {
   normalizeSettingsPanel,
   storeSettingsPanel
 } from './settingsNavigation.js';
+import { createCameraSettingsFields } from './createCameraSettingsFields.js';
 import {
   syncSitterAccessEmailsFromServer
 } from '../../services/sitterAccessEmailsService.js';
@@ -218,6 +219,8 @@ function renderSettingsPanelContent(panelId, context, onRefresh) {
       return createBinReminderFields(context, onRefresh);
     case 'weather':
       return createWeatherLocationField(context, onRefresh);
+    case 'cameras':
+      return createCameraSettingsFields(context, onRefresh);
     case 'utilities':
       return createUtilitiesFields(context);
     case 'help':

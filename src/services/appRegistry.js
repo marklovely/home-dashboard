@@ -1,5 +1,6 @@
 const APP_DISPLAY_ORDER = [
   'controls',
+  'cameras',
   'house-guide',
   'scooter',
   'weather',

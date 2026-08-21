@@ -22,6 +22,7 @@ import {
   Siren,
   Trash2,
   Trees,
+  Video,
   Wifi,
   Zap,
   createElement
@@ -47,6 +48,7 @@ const ICON_NODES = {
   'key-round': KeyRound,
   'shower-head': ShowerHead,
   trees: Trees,
+  video: Video,
   shield: Shield,
   home: Home,
   phone: Phone,

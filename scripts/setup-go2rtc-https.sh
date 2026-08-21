@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# Generate LAN-trusted TLS certs for go2rtc (mkcert binary — no Homebrew).
+#
+# Usage (on the Mac running go2rtc):
+#   export LAN_IP=192.168.4.138   # optional; auto-detected from en0/en1
+#   bash setup-go2rtc-https.sh
+#
+# Then add tls_listen / tls_cert / tls_key to ~/go2rtc/go2rtc.yaml (see scripts/go2rtc.example.yaml),
+# restart go2rtc, and open https://<LAN_IP>:8443 on the wall tablet.
+#
+# Trust the mkcert root CA on the iPad (once): AirDrop rootCA.pem from the path printed below.
+set -euo pipefail
+
+GO2RTC_DIR="${GO2RTC_DIR:-$HOME/go2rtc}"
+CERT_DIR="$GO2RTC_DIR/certs"
+ARCH="$(uname -m)"
+case "$ARCH" in
+  x86_64) MKCERT_FOR=darwin/amd64 ;;
+  arm64) MKCERT_FOR=darwin/arm64 ;;
+  *)
+    echo "Unsupported arch: $ARCH" >&2
+    exit 1
+    ;;
+esac
+
+LAN_IP="${LAN_IP:-}"
+if [[ -z "$LAN_IP" ]]; then
+  LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || true)"
+fi
+if [[ -z "$LAN_IP" ]]; then
+  LAN_IP="$(ipconfig getifaddr en1 2>/dev/null || true)"
+fi
+if [[ -z "$LAN_IP" ]]; then
+  echo "Could not detect LAN IP. Export LAN_IP=192.168.x.x and re-run." >&2
+  exit 1
+fi
+
+mkdir -p "$CERT_DIR"
+MKCERT_BIN="$GO2RTC_DIR/mkcert"
+
+if [[ ! -x "$MKCERT_BIN" ]]; then
+  echo "==> Downloading mkcert for $MKCERT_FOR"
+  TMP_ZIP="$(mktemp -t mkcert.XXXXXX.zip)"
+  curl -fsSL -o "$TMP_ZIP" "https://dl.filippo.io/mkcert/latest?for=${MKCERT_FOR}"
+  unzip -o -j "$TMP_ZIP" -d "$GO2RTC_DIR"
+  rm -f "$TMP_ZIP"
+  # dl.filippo.io names the binary mkcert-v*-darwin-*
+  FOUND="$(find "$GO2RTC_DIR" -maxdepth 1 -type f -name 'mkcert-*' | head -1)"
+  if [[ -n "$FOUND" ]]; then
+    mv "$FOUND" "$MKCERT_BIN"
+  elif [[ -f "$GO2RTC_DIR/mkcert" ]]; then
+    mv "$GO2RTC_DIR/mkcert" "$MKCERT_BIN"
+  else
+    echo "mkcert download failed — check $GO2RTC_DIR" >&2
+    exit 1
+  fi
+  chmod +x "$MKCERT_BIN"
+fi
+
+echo "==> Installing mkcert local CA (Mac browsers trust this automatically)"
+"$MKCERT_BIN" -install
+
+echo "==> Generating cert for $LAN_IP localhost 127.0.0.1"
+"$MKCERT_BIN" -cert-file "$CERT_DIR/cert.pem" -key-file "$CERT_DIR/key.pem" \
+  "$LAN_IP" localhost 127.0.0.1
+
+CAROOT="$("$MKCERT_BIN" -CAROOT)"
+
+cat <<EOF
+
+Done.
+
+Certs:
+  $CERT_DIR/cert.pem
+  $CERT_DIR/key.pem
+
+Add to ~/go2rtc/go2rtc.yaml under api::
+
+  tls_listen: ":8443"
+  tls_cert: "$CERT_DIR/cert.pem"
+  tls_key: "$CERT_DIR/key.pem"
+
+Restart go2rtc, then test:
+  https://${LAN_IP}:8443
+
+Hub Settings → Cameras gateway URL:
+  https://${LAN_IP}:8443
+
+Trust mkcert on the wall tablet (once):
+  1. AirDrop this file to the iPad: ${CAROOT}/rootCA.pem
+  2. Settings → General → VPN & Device Management → install profile
+  3. Settings → General → About → Certificate Trust Settings → enable full trust
+
+EOF

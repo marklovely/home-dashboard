@@ -5,11 +5,12 @@ import {
 } from '../src/apps/Settings/settingsNavigation.js';
 
 describe('settingsNavigation', () => {
-  it('returns owner sections including home details, utilities, and bins', () => {
+  it('returns owner sections including home details, utilities, bins, and cameras', () => {
     const sections = getSettingsSections(true).map((section) => section.id);
     expect(sections).toContain('home-details');
     expect(sections).toContain('utilities');
     expect(sections).toContain('bins');
+    expect(sections).toContain('cameras');
     expect(sections).toContain('appearance');
     expect(sections).not.toContain('backup');
   });

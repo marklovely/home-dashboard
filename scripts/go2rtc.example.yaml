@@ -1,0 +1,25 @@
+# go2rtc config for Lovely Home Hub Cameras app.
+# Run: ./go2rtc -config go2rtc.yaml
+# Old Intel Mac (macOS 11): use go2rtc v1.9.4 binary, not latest.
+# HTTPS: bash scripts/setup-go2rtc-https.sh (from repo) then enable tls_* below.
+
+streams:
+  front_door: rtsp://192.168.4.59:554/EPNKEE
+  dining_room: rtsp://192.168.4.59:554/QDQKPT
+  kitchen: rtsp://192.168.4.59:554/NCVCKE
+  living_room: rtsp://192.168.4.59:554/DBVBLP
+
+api:
+  listen: ":1984"
+  origin: "*"
+  # HTTPS for wall tablet (hub is https://dashboard… — mixed content blocks http:// LAN URLs)
+  # tls_listen: ":8443"
+  # tls_cert: "/Users/Mark/go2rtc/certs/cert.pem"
+  # tls_key: "/Users/Mark/go2rtc/certs/key.pem"
+  # Optional basic auth on LAN HTTPS (recommended if tls_listen is enabled):
+  # username: "owner"
+  # password: "choose-a-strong-password"
+  # local_auth: true
+
+webrtc:
+  listen: ":8555"
