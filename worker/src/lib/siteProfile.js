@@ -39,6 +39,14 @@ export const DEFAULT_SITE_PROFILE = {
     enabled: false,
     gatewayUrl: '',
     streams: []
+  },
+  tabletPreferences: {
+    theme: 'dark',
+    clockFormat: '24',
+    homeScreenScale: '1',
+    screensaver: 'on',
+    screensaverTimeoutMinutes: 15,
+    dismissedBinCollectionDate: null
   }
 };
 
@@ -65,6 +73,12 @@ function parseProfilePayload(value) {
         ...DEFAULT_SITE_PROFILE.cameras,
         ...(parsed.cameras && typeof parsed.cameras === 'object' ? parsed.cameras : {}),
         streams: Array.isArray(parsed.cameras?.streams) ? parsed.cameras.streams : []
+      },
+      tabletPreferences: {
+        ...DEFAULT_SITE_PROFILE.tabletPreferences,
+        ...(parsed.tabletPreferences && typeof parsed.tabletPreferences === 'object'
+          ? parsed.tabletPreferences
+          : {})
       }
     };
   } catch {
@@ -134,7 +148,10 @@ export async function updateSiteProfile(env, patch) {
             ? patch.cameras.streams
             : current.cameras.streams
         }
-      : current.cameras
+      : current.cameras,
+    tabletPreferences: patch.tabletPreferences
+      ? { ...current.tabletPreferences, ...patch.tabletPreferences }
+      : current.tabletPreferences
   };
 
   const now = Math.floor(Date.now() / 1000);

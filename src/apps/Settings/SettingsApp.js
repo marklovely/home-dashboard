@@ -1011,7 +1011,7 @@ function createHomeScaleField(onRefresh) {
 
   const hint = document.createElement('p');
   hint.className = 'settings-help subtle';
-  hint.textContent = 'Make the home screen easier to read on the wall tablet. Your choice is remembered after refresh.';
+  hint.textContent = 'Make the home screen easier to read on the wall tablet. Synced across all hub tablets.';
 
   const options = document.createElement('div');
   options.className = 'settings-options';

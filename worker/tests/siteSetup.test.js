@@ -44,4 +44,20 @@ describe('hub setup storage', () => {
     expect(profile.hubName).toBe('');
     expect(profile.onboardingComplete).toBe(false);
   });
+
+  it('merges nested tablet preferences', async () => {
+    const env = { HOUSE_GUIDE_DB: createInMemoryHubSetupDb() };
+    await updateSiteProfile(env, {
+      tabletPreferences: {
+        theme: 'light',
+        clockFormat: '12',
+        screensaver: 'off'
+      }
+    });
+    const profile = await getSiteProfile(env);
+    expect(profile.tabletPreferences.theme).toBe('light');
+    expect(profile.tabletPreferences.clockFormat).toBe('12');
+    expect(profile.tabletPreferences.screensaver).toBe('off');
+    expect(profile.tabletPreferences.homeScreenScale).toBe('1');
+  });
 });
