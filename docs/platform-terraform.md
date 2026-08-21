@@ -166,6 +166,17 @@ Use real values in `hub.tfvars` (never commit it):
 - **`hub_proxy_secret`** — required when importing a site; preserves existing Pages/Worker proxy secret.
 - **`access_team_domain`** — Zero Trust team slug (`lovely-home`), not the Workers subdomain.
 
+### Add a tester (sandbox / test only)
+
+Terraform manages Access policies — **do not** add tester emails in the Cloudflare dashboard; the next apply will overwrite manual edits.
+
+1. Add the email under `sites.<site_id>.tester_emails` in local `hub.tfvars` (not global `owner_emails`, or they will get production too).
+2. Validate site list: `node scripts/validate-local-hub-tfvars-sites.mjs`
+3. Apply: `cd terraform && terraform apply -var-file=environments/hub.tfvars`
+4. Sync Worker owner list: `node scripts/set-worker-secrets-from-terraform.mjs <site_id>` (e.g. `sandbox`, `test`)
+
+The tester must sign in with that **exact** email address for OTP. Without step 4 they may pass Access but get 403 on owner API routes (calendar, backup, …).
+
 ## Pages preview Access ("invalid redirect URL")
 
 PR preview URLs look like `https://<hash>.home-dashboard-a11.pages.dev`. Cloudflare Access must allow that hostname for OAuth to succeed.

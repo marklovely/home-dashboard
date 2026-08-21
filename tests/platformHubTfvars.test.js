@@ -82,7 +82,11 @@ describe('hub tfvars helpers', () => {
   it('declares generate-hub-tfvars site keys in terraform variables.tf sites schema', () => {
     const variablesTf = readFileSync(join(process.cwd(), 'terraform/variables.tf'), 'utf8');
     const sitesBlock = variablesTf.match(/variable "sites"[\s\S]*?^\}/m)?.[0] ?? '';
-    for (const key of ['attach_hub_api_binding', 'include_pages_dev_access_destinations']) {
+    for (const key of [
+      'attach_hub_api_binding',
+      'include_pages_dev_access_destinations',
+      'tester_emails'
+    ]) {
       expect(sitesBlock, `terraform/variables.tf sites object must declare ${key}`).toContain(key);
     }
   });
