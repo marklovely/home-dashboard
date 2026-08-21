@@ -55,6 +55,24 @@ describe('siteBackupPayload', () => {
     expect(secretsAfter.device_session_secret).toBe('do-not-export');
   });
 
+  it('exports hub secrets from wrangler env when D1 is empty', async () => {
+    const { getHubSecretsForBackup } = await import('../src/lib/hubSecrets.js');
+    const secrets = await getHubSecretsForBackup({
+      HOUSE_GUIDE_DB: createInMemoryHubSetupDb({ guideSeeded: false }),
+      HUB_ENVIRONMENT: 'production',
+      OWNER_PIN: '1234',
+      PRIVATE_WIFI_SSID: 'Guest',
+      PRIVATE_WIFI_PASSWORD: 'from-env',
+      PRIVATE_LOCKBOX_CODE: '9999'
+    });
+    expect(secrets).toEqual({
+      owner_pin: '1234',
+      wifi_ssid: 'Guest',
+      wifi_password: 'from-env',
+      lockbox_code: '9999'
+    });
+  });
+
   it('builds guide-only backups without profile or secrets', async () => {
     const db = createInMemoryHubSetupDb({ guideSeeded: false });
     const env = withTestLimiters({
