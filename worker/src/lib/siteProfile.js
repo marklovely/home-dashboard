@@ -34,6 +34,11 @@ export const DEFAULT_SITE_PROFILE = {
     household: [],
     gardenWaste: [],
     alertHoursBefore: 24
+  },
+  cameras: {
+    enabled: false,
+    gatewayUrl: '',
+    streams: []
   }
 };
 
@@ -55,6 +60,11 @@ function parseProfilePayload(value) {
       binSchedule: {
         ...DEFAULT_SITE_PROFILE.binSchedule,
         ...(parsed.binSchedule && typeof parsed.binSchedule === 'object' ? parsed.binSchedule : {})
+      },
+      cameras: {
+        ...DEFAULT_SITE_PROFILE.cameras,
+        ...(parsed.cameras && typeof parsed.cameras === 'object' ? parsed.cameras : {}),
+        streams: Array.isArray(parsed.cameras?.streams) ? parsed.cameras.streams : []
       }
     };
   } catch {
@@ -115,7 +125,16 @@ export async function updateSiteProfile(env, patch) {
       : current.propertyAddress,
     binSchedule: patch.binSchedule
       ? { ...current.binSchedule, ...patch.binSchedule }
-      : current.binSchedule
+      : current.binSchedule,
+    cameras: patch.cameras
+      ? {
+          ...current.cameras,
+          ...patch.cameras,
+          streams: Array.isArray(patch.cameras.streams)
+            ? patch.cameras.streams
+            : current.cameras.streams
+        }
+      : current.cameras
   };
 
   const now = Math.floor(Date.now() / 1000);

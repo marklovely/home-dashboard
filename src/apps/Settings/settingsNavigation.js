@@ -48,6 +48,12 @@ export const OWNER_SETTINGS_SECTIONS = [
     ownerOnly: true
   },
   {
+    id: 'cameras',
+    label: 'Cameras',
+    description: 'Owner-only live view via go2rtc on your home network.',
+    ownerOnly: true
+  },
+  {
     id: 'utilities',
     label: 'Utilities',
     description: 'Hub setup wizard, site backup, and factory reset.',
