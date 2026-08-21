@@ -495,6 +495,11 @@ function createEditorShell(context) {
           onPublished: (nextSnapshot) => {
             savedTopicSnapshot = nextSnapshot;
             syncDraftBadge();
+            view = 'topics';
+            activeTopicId = null;
+            draftTopic = null;
+            savedTopicSnapshot = '';
+            renderMain();
             showToast(context.toast, 'Topic published.');
           },
           onDeleted: () => {
