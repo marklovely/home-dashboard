@@ -40,21 +40,13 @@ MKCERT_BIN="$GO2RTC_DIR/mkcert"
 
 if [[ ! -x "$MKCERT_BIN" ]]; then
   echo "==> Downloading mkcert for $MKCERT_FOR"
-  TMP_ZIP="$(mktemp -t mkcert.XXXXXX.zip)"
-  curl -fsSL -o "$TMP_ZIP" "https://dl.filippo.io/mkcert/latest?for=${MKCERT_FOR}"
-  unzip -o -j "$TMP_ZIP" -d "$GO2RTC_DIR"
-  rm -f "$TMP_ZIP"
-  # dl.filippo.io names the binary mkcert-v*-darwin-*
-  FOUND="$(find "$GO2RTC_DIR" -maxdepth 1 -type f -name 'mkcert-*' | head -1)"
-  if [[ -n "$FOUND" ]]; then
-    mv "$FOUND" "$MKCERT_BIN"
-  elif [[ -f "$GO2RTC_DIR/mkcert" ]]; then
-    mv "$GO2RTC_DIR/mkcert" "$MKCERT_BIN"
-  else
-    echo "mkcert download failed — check $GO2RTC_DIR" >&2
+  # dl.filippo.io serves the raw binary (not a zip).
+  curl -fsSL -o "$MKCERT_BIN" "https://dl.filippo.io/mkcert/latest?for=${MKCERT_FOR}"
+  chmod +x "$MKCERT_BIN"
+  if ! "$MKCERT_BIN" -help >/dev/null 2>&1; then
+    echo "mkcert download failed or binary not executable — check $MKCERT_BIN" >&2
     exit 1
   fi
-  chmod +x "$MKCERT_BIN"
 fi
 
 echo "==> Installing mkcert local CA (Mac browsers trust this automatically)"
