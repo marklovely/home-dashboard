@@ -142,12 +142,22 @@ Keep **`http://…:1984`** for local debugging on the Mac if you want; the hub/t
 
 ### Step C — trust mkcert on the wall tablet (once)
 
-The script prints the path to `rootCA.pem`. AirDrop it to the iPad:
+The script prints the path to `rootCA.pem`. The tablet must trust this CA or the browser will block the go2rtc iframe.
 
-1. Install the configuration profile (Settings → General → VPN & Device Management)
-2. Settings → General → About → **Certificate Trust Settings** → enable full trust for the mkcert root
+**Android (Chrome on wall tablet)**
 
-Without this, Safari on the tablet will block the go2rtc iframe with a certificate warning.
+1. Copy `rootCA.pem` to the tablet (Google Drive, email, USB, or `adb push`).
+2. **Settings → Security & privacy** (wording varies by OEM) → **Encryption & credentials** → **Install a certificate** → **CA certificate**.
+3. Confirm the warning, pick `rootCA.pem`, install.
+4. Re-open Chrome and test `https://192.168.4.138:8443`.
+
+**iPad / iPhone (Safari)**
+
+1. AirDrop or email `rootCA.pem` to the device.
+2. **Settings → General → VPN & Device Management** → install profile.
+3. **Settings → General → About → Certificate Trust Settings** → enable full trust for the mkcert root.
+
+Without this step, the Cameras app tiles stay blank on an HTTPS dashboard even when go2rtc works on your Mac.
 
 ### Optional — basic auth
 

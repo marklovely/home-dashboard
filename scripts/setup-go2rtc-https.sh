@@ -8,7 +8,7 @@
 # Then add tls_listen / tls_cert / tls_key to ~/go2rtc/go2rtc.yaml (see scripts/go2rtc.example.yaml),
 # restart go2rtc, and open https://<LAN_IP>:8443 on the wall tablet.
 #
-# Trust the mkcert root CA on the iPad (once): AirDrop rootCA.pem from the path printed below.
+# Trust the mkcert root CA on the wall tablet (once) — see docs/cameras-go2rtc.md.
 set -euo pipefail
 
 GO2RTC_DIR="${GO2RTC_DIR:-$HOME/go2rtc}"
@@ -79,8 +79,11 @@ Hub Settings → Cameras gateway URL:
   https://${LAN_IP}:8443
 
 Trust mkcert on the wall tablet (once):
-  1. AirDrop this file to the iPad: ${CAROOT}/rootCA.pem
-  2. Settings → General → VPN & Device Management → install profile
-  3. Settings → General → About → Certificate Trust Settings → enable full trust
+  File: ${CAROOT}/rootCA.pem
+
+  Android: copy to tablet → Settings → Security → Install certificate → CA certificate
+  iPad: AirDrop → install profile → Certificate Trust Settings → enable trust
+
+  See docs/cameras-go2rtc.md for OEM-specific paths.
 
 EOF
