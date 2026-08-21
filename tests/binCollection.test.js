@@ -175,13 +175,13 @@ describe('bin collection alerts', () => {
     );
   });
 
-  it('keeps the alert visible throughout collection day', () => {
+  it('stops the alert on collection day two hours after put-out time', () => {
     const collectionDate = '2026-07-31';
-    expect(isBinCollectionInAlertWindow(collectionDate, parseLocalDate('2026-07-31'), 24)).toBe(
+    expect(isBinCollectionInAlertWindow(collectionDate, new Date('2026-07-31T07:30:00'), 24)).toBe(
       true
     );
-    expect(isBinCollectionInAlertWindow(collectionDate, new Date('2026-07-31T18:00:00'), 24)).toBe(
-      true
+    expect(isBinCollectionInAlertWindow(collectionDate, new Date('2026-07-31T08:00:00'), 24)).toBe(
+      false
     );
     expect(isBinCollectionInAlertWindow(collectionDate, parseLocalDate('2026-08-01'), 24)).toBe(false);
   });

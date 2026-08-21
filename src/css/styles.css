@@ -2331,6 +2331,12 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .home-screen .bin-alert-banner {
   margin-bottom: clamp(12px, 2vw, 18px);
 }
+.home-bin-alert-host:not(:empty) {
+  width: 100%;
+}
+.home-bin-alert-host[hidden] {
+  display: none;
+}
 .bin-alert-banner:focus-visible,
 .sitter-bin-alert:focus-visible {
   outline: none;
@@ -3624,6 +3630,18 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 }
 .screensaver-panel.screensaver-panel--shift-instant {
   transition: none;
+}
+.screensaver-bin-alert-host {
+  width: min(100%, 640px);
+  pointer-events: auto;
+  cursor: default;
+}
+.screensaver-bin-alert-host[hidden] {
+  display: none;
+}
+.bin-alert-banner--screensaver {
+  cursor: default;
+  text-align: left;
 }
 .screensaver-clock {
   font-size: clamp(4rem, 18vw, 8rem);
