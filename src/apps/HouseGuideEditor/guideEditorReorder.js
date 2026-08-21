@@ -1,21 +1,63 @@
+/** @typedef {{ row: HTMLElement, originIndex: number, pointerId: number, ghost: HTMLElement, placeholder: HTMLElement, offsetX: number, offsetY: number, scrollRoot: HTMLElement | null, pointerY: number }} ReorderDragState */
+
+const SCROLL_EDGE_PX = 80;
+const MAX_SCROLL_STEP_PX = 22;
+
+/**
+ * @param {HTMLElement} element
+ * @returns {HTMLElement | null}
+ */
+export function findScrollContainer(element) {
+  let node = element.parentElement;
+  while (node) {
+    const style = getComputedStyle(node);
+    const overflowY = style.overflowY;
+    if (
+      (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
+      node.scrollHeight > node.clientHeight + 1
+    ) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return null;
+}
+
+/**
+ * @param {HTMLElement | null} scrollRoot
+ * @param {number} clientY
+ */
+function autoScrollDuringDrag(scrollRoot, clientY) {
+  if (!scrollRoot) return;
+  const rect = scrollRoot.getBoundingClientRect();
+  const distanceAbove = clientY - rect.top;
+  const distanceBelow = rect.bottom - clientY;
+
+  if (distanceAbove < SCROLL_EDGE_PX) {
+    const intensity = (SCROLL_EDGE_PX - distanceAbove) / SCROLL_EDGE_PX;
+    scrollRoot.scrollTop -= MAX_SCROLL_STEP_PX * intensity;
+    return;
+  }
+
+  if (distanceBelow < SCROLL_EDGE_PX) {
+    const intensity = (SCROLL_EDGE_PX - distanceBelow) / SCROLL_EDGE_PX;
+    scrollRoot.scrollTop += MAX_SCROLL_STEP_PX * intensity;
+  }
+}
+
 /**
  * Pointer-based drag reordering for lists (works on tablet and desktop).
  * Shows a floating ghost under the pointer and a dashed placeholder at the drop slot.
  *
  * @param {HTMLElement} container
  * @param {(fromIndex: number, toIndex: number) => void} onReorder
+ * @param {{ scrollRoot?: HTMLElement | null }} [options]
  */
-export function wirePointerReorder(container, onReorder) {
-  /** @type {{
-   *   row: HTMLElement,
-   *   originIndex: number,
-   *   pointerId: number,
-   *   ghost: HTMLElement,
-   *   placeholder: HTMLElement,
-   *   offsetX: number,
-   *   offsetY: number
-   * } | null} */
+export function wirePointerReorder(container, onReorder, options = {}) {
+  /** @type {ReorderDragState | null} */
   let active = null;
+  /** @type {number | null} */
+  let scrollFrame = null;
 
   function rows() {
     return [...container.querySelectorAll('[data-reorder-row]:not(.is-reorder-placeholder)')];
@@ -79,10 +121,34 @@ export function wirePointerReorder(container, onReorder) {
     return ordered.indexOf(active.placeholder);
   }
 
+  function stopAutoScrollLoop() {
+    if (scrollFrame != null) {
+      cancelAnimationFrame(scrollFrame);
+      scrollFrame = null;
+    }
+  }
+
+  function autoScrollLoop() {
+    if (!active) {
+      stopAutoScrollLoop();
+      return;
+    }
+    autoScrollDuringDrag(active.scrollRoot, active.pointerY);
+    movePlaceholderToPointer(active.pointerY);
+    scrollFrame = requestAnimationFrame(autoScrollLoop);
+  }
+
+  function ensureAutoScrollLoop() {
+    if (scrollFrame == null) {
+      scrollFrame = requestAnimationFrame(autoScrollLoop);
+    }
+  }
+
   function finishDrag(pointerId, commit) {
     if (!active || active.pointerId !== pointerId) return;
     const { row, originIndex, ghost, placeholder } = active;
 
+    stopAutoScrollLoop();
     container.classList.remove('is-reordering');
     document.body.classList.remove('guide-editor-is-reordering');
     row.classList.remove('is-dragging');
@@ -105,6 +171,17 @@ export function wirePointerReorder(container, onReorder) {
     if (originIndex !== finalIndex && finalIndex >= 0) {
       onReorder(originIndex, finalIndex);
     }
+  }
+
+  /**
+   * @param {PointerEvent} event
+   */
+  function handlePointerMove(event) {
+    if (!active || event.pointerId !== active.pointerId) return;
+    active.pointerY = event.clientY;
+    moveGhost(event.clientX, event.clientY);
+    movePlaceholderToPointer(event.clientY);
+    ensureAutoScrollLoop();
   }
 
   container.addEventListener('pointerdown', (event) => {
@@ -144,20 +221,19 @@ export function wirePointerReorder(container, onReorder) {
       ghost,
       placeholder,
       offsetX: event.clientX - rect.left,
-      offsetY: event.clientY - rect.top
+      offsetY: event.clientY - rect.top,
+      scrollRoot: options.scrollRoot ?? findScrollContainer(container),
+      pointerY: event.clientY
     };
 
     container.classList.add('is-reordering');
     document.body.classList.add('guide-editor-is-reordering');
     moveGhost(event.clientX, event.clientY);
     movePlaceholderToPointer(event.clientY);
+    ensureAutoScrollLoop();
   });
 
-  container.addEventListener('pointermove', (event) => {
-    if (!active || event.pointerId !== active.pointerId) return;
-    moveGhost(event.clientX, event.clientY);
-    movePlaceholderToPointer(event.clientY);
-  });
+  container.addEventListener('pointermove', handlePointerMove);
 
   container.addEventListener('pointerup', (event) => {
     finishDrag(event.pointerId, true);
