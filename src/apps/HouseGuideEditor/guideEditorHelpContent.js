@@ -65,7 +65,7 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
           'Topic details — subtitle, summary, and audience (expand when needed).',
           'Blocks — main instructions (see Block types). Drag the handle to reorder.',
           'Search & links and Quick actions — optional; collapsed until you need them.',
-          'Save draft, then Publish topic. Use Preview in guide to check the live page.'
+          'Save draft, then Publish topic. Use Preview to check how the page looks without leaving the editor.'
         ]
       },
       {
