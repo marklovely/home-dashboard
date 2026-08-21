@@ -1,8 +1,7 @@
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
-import { getBinCollectionAlert } from '../../services/binCollectionService.js';
-import { createBinAlertBanner } from './createBinAlertBanner.js';
+import { mountBinAlertBannerHost } from '../../services/binAlertBannerSync.js';
 
 /**
  * @param {import('../types/app.js').App} app
@@ -73,18 +72,12 @@ export async function renderHomeScreen(viewport, apps, context) {
     return { app, card };
   });
 
-  let binAlertBanner = null;
-  const binAlert = getBinCollectionAlert(new Date(), { houseSitter: false });
-  if (binAlert) {
-    binAlertBanner = createBinAlertBanner(
-      binAlert,
-      (id) => context.navigate(id),
-      () => binAlertBanner?.remove()
-    );
-  }
+  const binAlertHost = document.createElement('div');
+  binAlertHost.className = 'home-bin-alert-host';
+  mountBinAlertBannerHost(binAlertHost, (id) => context.navigate(id), { houseSitter: false });
 
   page.append(
-    ...(binAlertBanner ? [binAlertBanner] : []),
+    binAlertHost,
     grid
   );
 
