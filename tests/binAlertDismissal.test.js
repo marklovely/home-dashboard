@@ -15,6 +15,7 @@ describe('binAlertDismissalService', () => {
   afterEach(() => {
     resetBinAlertDismissalForTests();
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('stores dismissal for the current collection date', () => {
@@ -42,6 +43,26 @@ describe('binAlertDismissalService', () => {
 
     expect(getBinCollectionAlert(asOf, { houseSitter: true })).toBeNull();
     expect(getBinCollectionHomeSummary(asOf, { houseSitter: true }).alert).toBeNull();
+  });
+
+  it('keeps dismissal in memory when localStorage is unavailable', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-30T12:00:00'));
+    vi.stubGlobal('localStorage', {
+      getItem: () => {
+        throw new Error('blocked');
+      },
+      setItem: () => {
+        throw new Error('blocked');
+      },
+      removeItem: () => {
+        throw new Error('blocked');
+      }
+    });
+
+    dismissBinAlertForCollection('2026-07-31');
+    expect(getDismissedBinCollectionDate()).toBe('2026-07-31');
+    expect(getBinCollectionAlert(new Date('2026-07-30T12:00:00'), { houseSitter: true })).toBeNull();
   });
 
   it('clears dismissal when reset from settings', () => {

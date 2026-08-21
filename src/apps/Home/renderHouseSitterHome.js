@@ -4,8 +4,7 @@ import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { getAppDisplayTitle, getModeConfig } from '../../modes/modeConfig.js';
 import { getSiteProfileState } from '../../services/siteProfileService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
-import { getBinCollectionAlert } from '../../services/binCollectionService.js';
-import { createBinAlertBanner } from './createBinAlertBanner.js';
+import { mountBinAlertBannerHost } from '../../services/binAlertBannerSync.js';
 
 /** @type {Record<string, { headline: string, teaser?: string, teaserFromSummary?: 'title' | 'subtitle' }>} */
 const ESSENTIAL_CARD_COPY = {
@@ -300,26 +299,26 @@ export async function renderHouseSitterHome(viewport, apps, context) {
   helpSection.append(helpCopy, helpActions);
 
   const binsCardEntry = secondaryCards.find(({ app }) => app.id === 'bins');
-  let binAlertBanner = null;
-  const binAlert = getBinCollectionAlert(new Date(), { houseSitter: true });
-  if (binAlert) {
-    binAlertBanner = createBinAlertBanner(
-      binAlert,
-      (id) => context.navigate(id),
-      () => {
-        binAlertBanner?.remove();
+  const binAlertHost = document.createElement('div');
+  binAlertHost.className = 'home-bin-alert-host';
+  mountBinAlertBannerHost(
+    binAlertHost,
+    (id) => context.navigate(id),
+    {
+      houseSitter: true,
+      onDismiss: () => {
         if (binsCardEntry?.app.summary) {
           void binsCardEntry.app.summary(context).then((summary) => {
             applySecondaryBinsSummary(binsCardEntry.card, summary);
           });
         }
       }
-    );
-  }
+    }
+  );
 
   page.append(
     welcome,
-    ...(binAlertBanner ? [binAlertBanner] : []),
+    binAlertHost,
     essentialsSection,
     infoSection,
     helpSection

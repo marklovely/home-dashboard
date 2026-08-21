@@ -3,6 +3,9 @@ const STORAGE_KEY = 'home-dashboard-bin-alert-dismissed';
 /** @type {Set<() => void>} */
 const listeners = new Set();
 
+/** @type {string | null} */
+let memoryDismissedCollectionDate = null;
+
 /**
  * @param {string} isoDate
  * @returns {Date}
@@ -27,34 +30,56 @@ function notify() {
   }
 }
 
+/**
+ * @param {string | null} collectionDate
+ */
+function writeDismissedCollectionDate(collectionDate) {
+  memoryDismissedCollectionDate = collectionDate;
+  try {
+    if (!collectionDate) {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ collectionDate }));
+  } catch {
+    // Keep in-memory fallback when storage is unavailable (kiosk / private mode).
+  }
+}
+
 /** @returns {string | null} */
 export function getDismissedBinCollectionDate() {
+  /** @type {string | null} */
+  let collectionDate = memoryDismissedCollectionDate;
+
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    const collectionDate = typeof parsed?.collectionDate === 'string' ? parsed.collectionDate : null;
-    if (!collectionDate) return null;
-
-    const dismissedDay = startOfLocalDay(parseLocalDate(collectionDate));
-    const today = startOfLocalDay(new Date());
-    if (dismissedDay.getTime() < today.getTime()) {
-      localStorage.removeItem(STORAGE_KEY);
-      return null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      collectionDate =
+        typeof parsed?.collectionDate === 'string' ? parsed.collectionDate : collectionDate;
     }
-
-    return collectionDate;
   } catch {
+    // Fall back to memory only.
+  }
+
+  if (!collectionDate) return null;
+
+  const collectionDay = startOfLocalDay(parseLocalDate(collectionDate));
+  const today = startOfLocalDay(new Date());
+  if (today.getTime() > collectionDay.getTime()) {
+    writeDismissedCollectionDate(null);
     return null;
   }
+
+  memoryDismissedCollectionDate = collectionDate;
+  return collectionDate;
 }
 
 /**
  * @param {string} collectionDateIso
  */
 export function dismissBinAlertForCollection(collectionDateIso) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ collectionDate: collectionDateIso }));
+  writeDismissedCollectionDate(collectionDateIso);
   notify();
 }
 
@@ -73,7 +98,7 @@ export function subscribeToBinAlertDismissal(listener) {
 
 /** Clears an active "Bins are out" dismissal so home reminders can show again. */
 export function clearBinAlertDismissal() {
-  localStorage.removeItem(STORAGE_KEY);
+  writeDismissedCollectionDate(null);
   notify();
 }
 

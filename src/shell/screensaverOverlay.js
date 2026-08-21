@@ -1,6 +1,10 @@
 import { formatDate, formatTime } from '../js/utils/format.js';
 import { subscribeToDisplayPreferences } from '../services/displayPreferencesService.js';
 import {
+  clearBinAlertBannerHost,
+  mountBinAlertBannerHost
+} from '../services/binAlertBannerSync.js';
+import {
   recordScreensaverActivity,
   shouldShowScreensaver,
   subscribeToScreensaver,
@@ -9,6 +13,25 @@ import {
 import { subscribeToUserMode } from '../auth/userMode.js';
 import { navigate, HOME_ROUTE } from './router.js';
 import { startBurnInProtection, stopBurnInProtection } from './screensaverBurnIn.js';
+
+/**
+ * @param {{
+ *   overlay: HTMLElement,
+ *   clock: HTMLElement,
+ *   date: HTMLElement,
+ *   panel: HTMLElement,
+ *   binAlertHost: HTMLElement
+ * }} elements
+ * @param {{ sync: () => void }} binAlertController
+ * @param {boolean} active
+ */
+function syncScreensaverBinAlert(elements, binAlertController, active) {
+  if (!active) {
+    clearBinAlertBannerHost(elements.binAlertHost);
+    return;
+  }
+  binAlertController.sync();
+}
 
 /**
  * @param {{
@@ -29,15 +52,18 @@ function updateScreensaverClock(elements) {
  *   overlay: HTMLElement,
  *   clock: HTMLElement,
  *   date: HTMLElement,
- *   panel: HTMLElement
+ *   panel: HTMLElement,
+ *   binAlertHost: HTMLElement
  * }} elements
+ * @param {{ sync: () => void }} binAlertController
  */
-function syncScreensaverVisibility(elements) {
+function syncScreensaverVisibility(elements, binAlertController) {
   const active = shouldShowScreensaver();
   const wasActive = !elements.overlay.hidden;
   elements.overlay.hidden = !active;
   elements.overlay.setAttribute('aria-hidden', active ? 'false' : 'true');
   document.body.classList.toggle('screensaver-active', active);
+  syncScreensaverBinAlert(elements, binAlertController, active);
   if (active) {
     updateScreensaverClock(elements);
     if (!wasActive) {
@@ -55,21 +81,36 @@ export function initScreensaverOverlay() {
   const panel = overlay?.querySelector('.screensaver-panel');
   const clock = document.querySelector('#screensaver-clock');
   const date = document.querySelector('#screensaver-date');
+  const binAlertHost = document.querySelector('#screensaver-bin-alert-host');
 
   if (
     !(overlay instanceof HTMLElement) ||
     !(panel instanceof HTMLElement) ||
     !(clock instanceof HTMLElement) ||
-    !(date instanceof HTMLElement)
+    !(date instanceof HTMLElement) ||
+    !(binAlertHost instanceof HTMLElement)
   ) {
     return;
   }
 
-  const elements = { overlay, panel, clock, date };
+  const elements = { overlay, panel, clock, date, binAlertHost };
 
-  const refresh = () => syncScreensaverVisibility(elements);
+  const binAlertController = mountBinAlertBannerHost(
+    binAlertHost,
+    (appId) => {
+      wakeScreensaver();
+      syncScreensaverVisibility(elements, binAlertController);
+      navigate(appId);
+    },
+    { houseSitter: true, className: 'bin-alert-banner--screensaver' }
+  );
 
-  overlay.addEventListener('click', () => {
+  const refresh = () => syncScreensaverVisibility(elements, binAlertController);
+
+  overlay.addEventListener('click', (event) => {
+    if (event.target instanceof Element && event.target.closest('.bin-alert-banner')) {
+      return;
+    }
     if (!shouldShowScreensaver()) return;
     wakeScreensaver();
     refresh();

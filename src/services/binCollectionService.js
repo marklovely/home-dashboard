@@ -323,6 +323,9 @@ export function describeCollectionEvent(event, asOfDate = new Date()) {
 /** Hour bins are normally put out (matches collection information copy). */
 export const BIN_COLLECTION_PUT_OUT_HOUR = 6;
 
+/** Hours after put-out time when reminders automatically stop (unless dismissed earlier). */
+export const BIN_COLLECTION_ALERT_GRACE_HOURS = 2;
+
 /**
  * @typedef {Object} BinCollectionAlert
  * @property {string} label Short line for cards and banners
@@ -368,6 +371,16 @@ export function getCollectionPutOutTime(isoDate) {
 }
 
 /**
+ * @param {string} isoDate
+ * @returns {Date}
+ */
+export function getCollectionAlertEndTime(isoDate) {
+  const end = getCollectionPutOutTime(isoDate);
+  end.setHours(end.getHours() + BIN_COLLECTION_ALERT_GRACE_HOURS);
+  return end;
+}
+
+/**
  * @param {string} collectionDateIso
  * @param {Date} asOfDate
  * @param {number} alertHoursBefore
@@ -380,7 +393,7 @@ export function isBinCollectionInAlertWindow(collectionDateIso, asOfDate, alertH
   if (asOfDay.getTime() > collectionDay.getTime()) return false;
 
   if (asOfDay.getTime() === collectionDay.getTime()) {
-    return true;
+    return asOfDate.getTime() < getCollectionAlertEndTime(collectionDateIso).getTime();
   }
 
   const putOutTime = getCollectionPutOutTime(collectionDateIso);
