@@ -1,4 +1,4 @@
-/** @typedef {'owner_pin' | 'wifi_ssid' | 'wifi_password' | 'primary_phone' | 'primary_email' | 'secondary_phone' | 'secondary_email' | 'home_address' | 'lockbox_code' | 'calendar_ics_url'} HubSecretKey */
+import { isTestHubWorker } from './hubEnvironment.js';
 
 export const HUB_SECRET_KEYS = /** @type {const} */ ([
   'owner_pin',
@@ -12,6 +12,20 @@ export const HUB_SECRET_KEYS = /** @type {const} */ ([
   'lockbox_code',
   'calendar_ics_url'
 ]);
+
+/** @type {Record<(typeof HUB_SECRET_KEYS)[number], string>} */
+const HUB_SECRET_ENV_KEYS = {
+  owner_pin: 'OWNER_PIN',
+  wifi_ssid: 'PRIVATE_WIFI_SSID',
+  wifi_password: 'PRIVATE_WIFI_PASSWORD',
+  primary_phone: 'PRIVATE_MARK_PHONE',
+  primary_email: 'PRIVATE_MARK_EMAIL',
+  secondary_phone: 'PRIVATE_DONNA_PHONE',
+  secondary_email: 'PRIVATE_DONNA_EMAIL',
+  home_address: 'PRIVATE_HOME_ADDRESS',
+  lockbox_code: 'PRIVATE_LOCKBOX_CODE',
+  calendar_ics_url: 'APPLE_CALENDAR_ICS_URL'
+};
 
 /** @internal Persisted when OWNER_SESSION_SECRET is not configured via wrangler. */
 export const DEVICE_SESSION_SECRET_KEY = 'device_session_secret';
@@ -41,6 +55,29 @@ export async function getHubSecretsMap(env) {
     map[String(row.key)] = String(row.value);
   }
   return map;
+}
+
+/**
+ * Resolved secret values for backup export — D1 first, then wrangler env on production hubs.
+ *
+ * @param {Record<string, string | undefined>} env
+ */
+export async function getHubSecretsForBackup(env) {
+  const fromDb = await getHubSecretsMap(env);
+  /** @type {Record<string, string>} */
+  const out = {};
+  for (const key of HUB_SECRET_KEYS) {
+    const dbValue = fromDb[key]?.trim();
+    if (dbValue) {
+      out[key] = dbValue;
+      continue;
+    }
+    if (isTestHubWorker(env)) continue;
+    const envKey = HUB_SECRET_ENV_KEYS[key];
+    const envValue = envKey ? String(env[envKey] ?? '').trim() : '';
+    if (envValue) out[key] = envValue;
+  }
+  return out;
 }
 
 /**
