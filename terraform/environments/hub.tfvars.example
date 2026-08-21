@@ -8,10 +8,10 @@ access_team_domain    = "lovely-home"
 zone_name             = "lovely-home.co.uk"
 
 owner_emails = [
-  "owner@example.com", # real owner emails — placeholders overwrite Access on apply
+  "owner@example.com", # household owners — Access on every hub (production, test, sandbox, …)
 ]
 
-sitter_emails = []
+sitter_emails = [] # optional — house sitters on every hub unless a site overrides sitter_emails
 
 platform_operator_emails = [
   "you@example.com", # Mark-only — not household owner_emails
@@ -46,6 +46,9 @@ sites = {
     hub_environment = "sandbox"
     vanilla         = true
     terraform       = true
+    tester_emails = [
+      "trial-user@example.com", # sandbox/test only — not production
+    ]
   }
 
   test = {
@@ -54,6 +57,9 @@ sites = {
     vanilla          = true
     terraform        = true
     hub_proxy_secret = "PASTE_EXISTING_HUB_PROXY_SECRET"
+    tester_emails = [
+      "trial-user@example.com",
+    ]
   }
 
 
@@ -62,21 +68,19 @@ sites = {
 
 
   demo = {
-    hostname        = "demo.lovely-home.co.uk"
-    hub_environment = "demo"
-    vanilla         = true
-    terraform       = true
+    hostname               = "demo.lovely-home.co.uk"
+    hub_environment        = "demo"
+    vanilla                = true
+    terraform              = true
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
-    owner_emails = ["marklovely67@gmail.com"]
   }
 
   dev = {
-    hostname        = "dev.lovely-home.co.uk"
-    hub_environment = "dev"
-    vanilla         = true
-    terraform       = true
+    hostname               = "dev.lovely-home.co.uk"
+    hub_environment        = "dev"
+    vanilla                = true
+    terraform              = true
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
-    owner_emails = ["marklovely67@gmail.com"]
   }
 
 }

@@ -51,7 +51,19 @@ Create **separate** self-hosted (or SaaS) Access applications for each public en
 - **Include:** Emails — **exact address per sitter**  
 - Do **not** use unrestricted “Login method = One-time PIN” without an email allow-list  
 
-Revoking access = remove the email from the policy.
+Revoking access = remove the email from the policy (Terraform `owner_emails`, site `tester_emails`, or `sitter_emails`, then `terraform apply`).
+
+### Owner vs tester vs sitter (Terraform-managed hubs)
+
+| List | Scope | Access policy | Worker `OWNER_EMAILS` |
+|------|--------|---------------|------------------------|
+| `owner_emails` (global) | Every hub | Owners — Allow | Merged on each site |
+| `tester_emails` (per site) | That hub only (e.g. sandbox, test) | Owners — Allow | Merged on that site |
+| `sitter_emails` (global or per site) | Where listed | House sitters — Allow | Sitters are **not** owners for calendar/backup APIs |
+
+Example: household owners on production + sandbox; Airbnb trial guest on sandbox/test only — set `tester_emails` under `sites.sandbox` and `sites.test`, not in global `owner_emails`.
+
+**Do not** add testers manually in Zero Trust → Access → Applications; Terraform owns those policies. Edit `hub.tfvars`, run `terraform apply`, then `node scripts/set-worker-secrets-from-terraform.mjs <site_id>`. See [platform-terraform.md — Add a tester](./platform-terraform.md#add-a-tester-sandbox--test-only).
 
 On Terraform-managed hubs, owners can also edit the **House sitters** allow-list from **Settings → House sitter mode → Sitter login emails**. The hub Worker stores the list in D1 and updates Cloudflare Access via API (requires `CF_ACCESS_MANAGEMENT_TOKEN`, `ACCESS_PAGES_APP_ID`, and `ACCESS_WORKER_APP_ID` on the Worker — set automatically during platform provision).
 

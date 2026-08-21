@@ -26,7 +26,7 @@ variable "access_team_domain" {
 
 variable "owner_emails" {
   type        = list(string)
-  description = "Owner emails allowed through Cloudflare Access."
+  description = "Household owner emails — merged into the Owners Access policy on every managed hub."
 }
 
 variable "sitter_emails" {
@@ -68,6 +68,7 @@ variable "sites" {
     include_pages_dev_access_destinations = optional(bool, true)
     owner_emails                          = optional(list(string))
     sitter_emails                         = optional(list(string))
+    tester_emails                         = optional(list(string))
   }))
   description = "Site registry; only sites with terraform=true are managed by this stack."
 }

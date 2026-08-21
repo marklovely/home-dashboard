@@ -2,6 +2,15 @@ locals {
   managed_sites = {
     for site_id, site in var.sites : site_id => site if site.terraform
   }
+
+  # Global owners on every hub; tester_emails (and legacy site owner_emails) add site-only access.
+  site_owner_emails = {
+    for site_id, site in local.managed_sites : site_id => distinct(concat(
+      var.owner_emails,
+      coalesce(site.tester_emails, []),
+      coalesce(site.owner_emails, []),
+    ))
+  }
 }
 
 module "hub_site" {
@@ -18,7 +27,7 @@ module "hub_site" {
   zone_name                = var.zone_name
   workers_subdomain        = var.workers_subdomain
   access_team_domain       = var.access_team_domain
-  owner_emails             = coalesce(try(each.value.owner_emails, null), var.owner_emails)
+  owner_emails             = local.site_owner_emails[each.key]
   sitter_emails            = coalesce(try(each.value.sitter_emails, null), var.sitter_emails)
   github_owner             = var.github_owner
   github_repo              = var.github_repo
