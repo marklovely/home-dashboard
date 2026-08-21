@@ -1,4 +1,4 @@
-import { getHubSecretsMap, HUB_SECRET_KEYS, setHubSecrets } from './hubSecrets.js';
+import { getHubSecretsForBackup, HUB_SECRET_KEYS, setHubSecrets } from './hubSecrets.js';
 import { getSiteProfile, updateSiteProfile } from './siteProfile.js';
 import { resolveSitterAccessEmails } from '../routes/houseSettingsRoute.js';
 import {
@@ -76,9 +76,8 @@ export async function buildSiteBackupPayload(env, options = {}) {
   };
 
   if (scope === 'full') {
-    const secretsMap = await getHubSecretsMap(env);
     payload.siteProfile = await getSiteProfile(env);
-    payload.hubSecrets = exportHubSecretsForBackup(secretsMap);
+    payload.hubSecrets = exportHubSecretsForBackup(await getHubSecretsForBackup(env));
   }
 
   return payload;

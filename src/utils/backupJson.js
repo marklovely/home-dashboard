@@ -128,6 +128,36 @@ export function backupScopeOf(backup) {
 /**
  * @param {Record<string, unknown>} backup
  */
+export function hasFullBackupContent(backup) {
+  const hasProfile = backup.siteProfile && typeof backup.siteProfile === 'object';
+  const hasSecrets =
+    backup.hubSecrets &&
+    typeof backup.hubSecrets === 'object' &&
+    Object.keys(backup.hubSecrets).length > 0;
+  return Boolean(hasProfile || hasSecrets);
+}
+
+/**
+ * @param {import('../api/privateConfigApi.js').WorkerPrivateConfig | null | undefined} config
+ */
+export function hubSecretsFromPrivateConfig(config) {
+  /** @type {Record<string, string>} */
+  const secrets = {};
+  if (!config) return secrets;
+  if (config.wifi?.ssid) secrets.wifi_ssid = config.wifi.ssid;
+  if (config.wifi?.password) secrets.wifi_password = config.wifi.password;
+  if (config.contacts?.mark?.phone) secrets.primary_phone = config.contacts.mark.phone;
+  if (config.contacts?.mark?.email) secrets.primary_email = config.contacts.mark.email;
+  if (config.contacts?.donna?.phone) secrets.secondary_phone = config.contacts.donna.phone;
+  if (config.contacts?.donna?.email) secrets.secondary_email = config.contacts.donna.email;
+  if (config.home?.address) secrets.home_address = config.home.address;
+  if (config.lockbox?.code) secrets.lockbox_code = config.lockbox.code;
+  return secrets;
+}
+
+/**
+ * @param {Record<string, unknown>} backup
+ */
 export function backupRestoreSummary(backup) {
   const scope = backupScopeOf(backup);
   if (scope === 'full') {
