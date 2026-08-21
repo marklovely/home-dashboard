@@ -65,6 +65,7 @@ import { fetchSiteBackup, restoreSiteBackup } from '../../api/siteBackupApi.js';
 import {
   backupRestoreSummary,
   downloadEncryptedBackupFile,
+  hasFullBackupContent,
   normalizeBackupForRestore,
   readJsonFile,
   resolveBackupDocument,
@@ -282,6 +283,13 @@ function createUtilitiesFields(context) {
           requireConfirmation: true
         });
         if (!password) return;
+        if (!hasFullBackupContent(result.data)) {
+          showToast(
+            context.toast,
+            'Warning: this backup may only include House Guide content. Update the hub worker, then download again for home details and secrets.',
+            15000
+          );
+        }
         await downloadEncryptedBackupFile('lovely-home-hub-backup.json', result.data, password);
         showToast(context.toast, 'Encrypted full site backup downloaded.');
       } catch (error) {

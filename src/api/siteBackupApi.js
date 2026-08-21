@@ -2,7 +2,9 @@ import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
 import { fetchHouseGuideCatalog, importHouseGuideCatalog } from './houseGuideApi.js';
 import { fetchHouseSettings, postSitterSecretsDisclosed } from './houseSettingsApi.js';
-import { buildSiteBackupDocument, buildGuideExportDocument } from '../utils/backupJson.js';
+import { buildSiteBackupDocument, buildGuideExportDocument, hasFullBackupContent, hubSecretsFromPrivateConfig } from '../utils/backupJson.js';
+import { fetchSiteProfile, patchHubSecrets, patchSiteProfile } from './siteSetupApi.js';
+import { fetchPrivateConfigFromApi } from './privateConfigApi.js';
 
 /**
  * @param {Record<string, unknown> | null | undefined} body
@@ -42,8 +44,9 @@ async function readSiteSettings(fetchImpl) {
 
 /**
  * @param {typeof fetch} fetchImpl
+ * @param {'full' | 'guide'} scope
  */
-async function fetchSiteBackupFromLegacyApis(fetchImpl) {
+async function fetchSiteBackupFromLegacyApis(fetchImpl, scope = 'full') {
   const [catalogResult, siteSettings] = await Promise.all([
     fetchHouseGuideCatalog({ fetchImpl, draft: true }),
     readSiteSettings(fetchImpl)
@@ -59,18 +62,66 @@ async function fetchSiteBackupFromLegacyApis(fetchImpl) {
   }
 
   const payload = catalogResult.data;
+  const data = buildSiteBackupDocument(
+    {
+      seeded: payload?.seeded,
+      catalog: payload?.catalog ?? null
+    },
+    siteSettings,
+    { scope }
+  );
   return {
     ok: true,
     status: 200,
     message: '',
-    data: buildSiteBackupDocument(
-      {
-        seeded: payload?.seeded,
-        catalog: payload?.catalog ?? null
-      },
-      siteSettings
-    )
+    data: scope === 'full' ? await enrichFullSiteBackupPayload(data, fetchImpl) : data
   };
+}
+
+/**
+ * @param {Record<string, unknown>} data
+ */
+function isFullBackupPayloadComplete(data) {
+  return hasFullBackupContent(data);
+}
+
+/**
+ * Fill profile/secrets when an older worker backup response only included guide content.
+ *
+ * @param {Record<string, unknown>} data
+ * @param {typeof fetch} fetchImpl
+ */
+async function enrichFullSiteBackupPayload(data, fetchImpl) {
+  if (isFullBackupPayloadComplete(data)) {
+    return { ...data, backupScope: data.backupScope ?? 'full' };
+  }
+
+  const [profileResult, privateConfig] = await Promise.all([
+    data.siteProfile ? Promise.resolve(null) : fetchSiteProfile({ fetchImpl }),
+    fetchPrivateConfigFromApi(fetchImpl)
+  ]);
+
+  const siteProfile =
+    data.siteProfile ??
+    (profileResult?.ok ? profileResult.data?.profile : undefined);
+  const hubSecrets = {
+    ...hubSecretsFromPrivateConfig(privateConfig),
+    ...(/** @type {Record<string, string>} */ (data.hubSecrets ?? {}))
+  };
+
+  return buildSiteBackupDocument(
+    /** @type {{ seeded?: boolean, catalog?: Record<string, unknown> | null, uploadedMedia?: { id: string, alt: string }[] }} */ (
+      data.guide ?? { seeded: false, catalog: null, uploadedMedia: [] }
+    ),
+    /** @type {{ sitterSecretsDisclosed?: boolean, sitterAccessEmails?: string[] }} */ (
+      data.siteSettings ?? {}
+    ),
+    {
+      scope: 'full',
+      siteProfile: /** @type {Record<string, unknown>} */ (siteProfile),
+      hubSecrets: Object.keys(hubSecrets).length > 0 ? hubSecrets : undefined
+    }
+  );
 }
 
 /**
@@ -90,6 +141,40 @@ async function restoreSiteBackupLegacy(backup, fetchImpl) {
         message: settingsResult.message || 'Could not restore site settings.',
         data: null
       };
+    }
+  }
+
+  if (backup.siteProfile && typeof backup.siteProfile === 'object') {
+    const profileResult = await patchSiteProfile(
+      /** @type {Record<string, unknown>} */ (backup.siteProfile),
+      { fetchImpl }
+    );
+    if (!profileResult.ok) {
+      return {
+        ok: false,
+        status: profileResult.status,
+        message: profileResult.message || 'Could not restore home details.',
+        data: null
+      };
+    }
+  }
+
+  if (backup.hubSecrets && typeof backup.hubSecrets === 'object') {
+    /** @type {Record<string, string>} */
+    const secretsPatch = {};
+    for (const [key, value] of Object.entries(backup.hubSecrets)) {
+      secretsPatch[key] = String(value ?? '');
+    }
+    if (Object.keys(secretsPatch).length > 0) {
+      const secretsResult = await patchHubSecrets(secretsPatch, { fetchImpl });
+      if (!secretsResult.ok) {
+        return {
+          ok: false,
+          status: secretsResult.status,
+          message: secretsResult.message || 'Could not restore saved secrets.',
+          data: null
+        };
+      }
     }
   }
 
@@ -157,7 +242,9 @@ export async function fetchSiteBackup({ fetchImpl = fetch, scope = 'full' } = {}
     );
 
     if (response.ok) {
-      const data = await response.json();
+      const raw = await response.json();
+      const data =
+        scope === 'full' ? await enrichFullSiteBackupPayload(raw, fetchImpl) : raw;
       return { ok: true, status: 200, message: '', data };
     }
 
@@ -176,18 +263,20 @@ export async function fetchSiteBackup({ fetchImpl = fetch, scope = 'full' } = {}
     if (exportResponse.ok) {
       const exportData = await exportResponse.json();
       const siteSettings = await readSiteSettings(fetchImpl);
+      const data = buildSiteBackupDocument(
+        {
+          seeded: true,
+          catalog: exportData.catalog ?? null,
+          uploadedMedia: exportData.uploadedMedia
+        },
+        siteSettings,
+        { scope }
+      );
       return {
         ok: true,
         status: 200,
         message: '',
-        data: buildSiteBackupDocument(
-          {
-            seeded: true,
-            catalog: exportData.catalog ?? null,
-            uploadedMedia: exportData.uploadedMedia
-          },
-          siteSettings
-        )
+        data: scope === 'full' ? await enrichFullSiteBackupPayload(data, fetchImpl) : data
       };
     }
 
@@ -200,7 +289,7 @@ export async function fetchSiteBackup({ fetchImpl = fetch, scope = 'full' } = {}
       };
     }
 
-    return fetchSiteBackupFromLegacyApis(fetchImpl);
+    return fetchSiteBackupFromLegacyApis(fetchImpl, scope);
   } catch {
     return { ok: false, status: 503, message: 'Backup is temporarily unavailable.', data: null };
   }

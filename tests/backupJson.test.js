@@ -8,7 +8,9 @@ import {
   uploadedMediaFromCatalog,
   uploadedMediaRestoreHint,
   backupRestoreSummary,
-  backupScopeOf
+  backupScopeOf,
+  hasFullBackupContent,
+  hubSecretsFromPrivateConfig
 } from '../src/utils/backupJson.js';
 
 describe('hubEnvironment', () => {
@@ -117,10 +119,28 @@ describe('backupJson', () => {
 
   it('describes full vs guide restore scope', () => {
     expect(backupScopeOf({ backupScope: 'full', siteProfile: { hubName: 'X' } })).toBe('full');
+    expect(hasFullBackupContent({ siteProfile: { hubName: 'X' } })).toBe(true);
+    expect(hasFullBackupContent({ hubSecrets: { wifi_password: 'x' } })).toBe(true);
+    expect(hasFullBackupContent({ backupScope: 'full', guide: {} })).toBe(false);
     expect(backupRestoreSummary({ backupScope: 'guide' })).toMatch(/House Guide/i);
     expect(backupRestoreSummary({ backupScope: 'full', hubSecrets: { wifi_password: 'x' } })).toMatch(
       /secrets/i
     );
+  });
+
+  it('maps private config into hub secret keys', () => {
+    expect(
+      hubSecretsFromPrivateConfig({
+        wifi: { ssid: 'Guest', password: 'pass' },
+        home: { address: '1 High St' },
+        lockbox: { code: '1234' }
+      })
+    ).toEqual({
+      wifi_ssid: 'Guest',
+      wifi_password: 'pass',
+      home_address: '1 High St',
+      lockbox_code: '1234'
+    });
   });
 });
 
