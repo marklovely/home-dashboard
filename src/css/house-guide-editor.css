@@ -834,6 +834,57 @@
   white-space: nowrap;
 }
 
+.guide-editor-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 10, 16, 0.72);
+  backdrop-filter: blur(6px);
+}
+body.guide-editor-preview-open {
+  overflow: hidden;
+}
+.guide-editor-preview-panel {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 12px;
+  width: min(920px, 100%);
+  max-height: min(92vh, 980px);
+  padding: 18px 20px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(24, 27, 36, 0.98), rgba(16, 18, 26, 0.98));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.guide-editor-preview-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.guide-editor-preview-title {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.guide-editor-preview-banner {
+  margin: 0;
+  line-height: 1.45;
+  font-size: 0.88rem;
+}
+.guide-editor-preview-scroll {
+  overflow: auto;
+  min-height: 0;
+  padding-right: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.guide-editor-preview-scroll .guide-topic-page {
+  padding-bottom: 8px;
+}
+
 @media (max-width: 620px) {
   .house-guide-editor-header,
   .house-guide-editor-picker,

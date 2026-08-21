@@ -29,7 +29,6 @@ import {
 import { saveSiteProfile, syncSiteProfileFromServer } from '../../services/siteProfileService.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { openHubSetupWizard } from '../HubSetup/hubSetupLauncher.js';
-import { openHouseGuideTopic } from '../../services/guideNavigation.js';
 import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
 import { fetchHouseGuideExport, restoreSiteBackup } from '../../api/siteBackupApi.js';
 import {
@@ -65,6 +64,7 @@ import {
   serializeTopicForCompare,
   slugFromTitle
 } from './guideEditorTopicUtils.js';
+import { openGuideEditorTopicPreview } from './guideEditorPreview.js';
 
 /**
  * @param {HTMLElement} viewport
@@ -996,9 +996,11 @@ function renderTopicEditor(topic, context, handlers) {
   const previewButton = document.createElement('button');
   previewButton.type = 'button';
   previewButton.className = 'button-secondary';
-  previewButton.textContent = 'Preview in guide';
+  previewButton.textContent = 'Preview';
   previewButton.addEventListener('click', () => {
-    openHouseGuideTopic(context, topic.id);
+    openGuideEditorTopicPreview(context, topic, {
+      hasUnsavedEdits: isTopicDirty(topic, savedSnapshot)
+    });
   });
 
   const saveButton = document.createElement('button');
