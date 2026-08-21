@@ -45,7 +45,7 @@ import {
   validateGuideActions
 } from './guideEditorActions.js';
 import { renderMediaLibrary } from './guideEditorMedia.js';
-import { moveItem, wirePointerReorder } from './guideEditorReorder.js';
+import { moveItem, syncReorderRowIndices, wirePointerReorder } from './guideEditorReorder.js';
 import {
   createGuideEditorContextHelpLink,
   createGuideEditorHelpButton,
@@ -867,6 +867,7 @@ function renderTopicEditor(topic, context, handlers) {
       const row = document.createElement('div');
       row.className = 'house-guide-editor-block-row-wrap';
       row.dataset.reorderRow = 'true';
+      row.dataset.blockIndex = String(index);
 
       const handle = document.createElement('button');
       handle.type = 'button';
@@ -881,7 +882,9 @@ function renderTopicEditor(topic, context, handlers) {
       const card = renderGuideBlockEditor(
         block,
         (next) => {
-          topic.blocks[index] = next;
+          const blockIndex = Number(row.dataset.blockIndex);
+          if (!Number.isFinite(blockIndex)) return;
+          topic.blocks[blockIndex] = next;
           notifyTopicChange();
         },
         mediaIds,
@@ -896,7 +899,9 @@ function renderTopicEditor(topic, context, handlers) {
       remove.className = 'button-secondary button-danger';
       remove.textContent = 'Remove';
       remove.addEventListener('click', () => {
-        topic.blocks = topic.blocks.filter((_, i) => i !== index);
+        const blockIndex = Number(row.dataset.blockIndex);
+        if (!Number.isFinite(blockIndex)) return;
+        topic.blocks = topic.blocks.filter((_, i) => i !== blockIndex);
         notifyTopicChange();
         renderBlocks();
       });
@@ -910,8 +915,8 @@ function renderTopicEditor(topic, context, handlers) {
     if (!blockReorderWired) {
       wirePointerReorder(blocksHost, (fromIndex, toIndex) => {
         topic.blocks = moveItem(topic.blocks, fromIndex, toIndex);
+        syncReorderRowIndices(blocksHost);
         notifyTopicChange();
-        renderBlocks();
       });
       blockReorderWired = true;
     }

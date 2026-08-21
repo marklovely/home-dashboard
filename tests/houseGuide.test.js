@@ -11,6 +11,21 @@ describe('guideHaystackMatches and reorder helpers', () => {
     const { moveItem } = await import('../src/apps/HouseGuideEditor/guideEditorReorder.js');
     expect(moveItem(['a', 'b', 'c'], 0, 2)).toEqual(['b', 'c', 'a']);
   });
+
+  it('syncReorderRowIndices updates data attributes from DOM order', async () => {
+    const { syncReorderRowIndices } = await import('../src/apps/HouseGuideEditor/guideEditorReorder.js');
+    const container = document.createElement('div');
+    container.innerHTML = `
+      <div data-reorder-row data-block-index="0">A</div>
+      <div data-reorder-row data-block-index="1">B</div>
+    `;
+    container.insertBefore(container.lastElementChild, container.firstElementChild);
+    syncReorderRowIndices(container);
+    const rows = [...container.querySelectorAll('[data-reorder-row]')];
+    expect(rows[0]?.textContent).toBe('B');
+    expect(rows[0]?.dataset.blockIndex).toBe('0');
+    expect(rows[1]?.dataset.blockIndex).toBe('1');
+  });
 });
 
 describe('guide service', () => {
