@@ -685,6 +685,155 @@
   line-height: 1.5;
 }
 
+.house-guide-editor-backup-details {
+  position: relative;
+}
+.house-guide-editor-backup-details summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+.house-guide-editor-backup-details summary::-webkit-details-marker {
+  display: none;
+}
+.house-guide-editor-backup-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  min-width: min(100%, 240px);
+}
+.house-guide-editor-unsaved-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 95, 109, 0.12);
+  border: 1px solid rgba(255, 95, 109, 0.35);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffb8c0;
+}
+.house-guide-editor-topic-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.house-guide-editor-topic-title-row .guide-section-heading {
+  margin: 0;
+}
+.house-guide-editor-topic-details summary,
+.house-guide-editor-collapsible-section summary {
+  cursor: pointer;
+  font-weight: 650;
+  color: var(--muted);
+  padding: 6px 0;
+}
+.house-guide-editor-collapsible-section summary .guide-editor-section-heading-row {
+  display: inline-flex;
+}
+.house-guide-editor-collapsible-body {
+  display: grid;
+  gap: 14px;
+  padding-top: 8px;
+}
+.house-guide-editor-collapsible-section {
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.house-guide-editor-block-row-wrap {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: start;
+}
+.house-guide-editor-blocks.is-reordering .house-guide-editor-block-row-wrap {
+  transition: transform 0.15s ease;
+}
+.house-guide-editor-block-row-wrap.is-dragging {
+  opacity: 1;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+.guide-editor-block-drag-handle {
+  margin-top: 6px;
+  min-height: 44px;
+}
+.house-guide-editor-footer-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin: 8px -24px -22px;
+  padding: 16px 24px 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(18, 20, 28, 0.72), rgba(18, 20, 28, 0.96));
+  backdrop-filter: blur(10px);
+  display: grid;
+  gap: 12px;
+}
+.house-guide-editor-publish-hint {
+  margin: 0;
+  max-width: 52ch;
+  line-height: 1.45;
+  font-size: 0.88rem;
+}
+.guide-editor-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 10px;
+}
+.guide-editor-photo-grid-item {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.guide-editor-photo-grid-item.is-selected {
+  border-color: color-mix(in srgb, #28d17c 55%, var(--border));
+  background: rgba(40, 209, 124, 0.1);
+}
+.guide-editor-photo-grid-thumb {
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+}
+.guide-editor-photo-grid-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.guide-editor-photo-grid-id {
+  font-size: 0.78rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 620px) {
   .house-guide-editor-header,
   .house-guide-editor-picker,
@@ -700,8 +849,12 @@
   .house-guide-editor-topic-row-wrap {
     grid-template-columns: 1fr;
   }
-  .guide-editor-drag-handle {
-    min-height: 44px;
+  .house-guide-editor-block-row-wrap {
+    grid-template-columns: 1fr;
+  }
+  .house-guide-editor-footer-sticky {
+    margin-inline: -16px;
+    padding-inline: 16px;
   }
 }
 
