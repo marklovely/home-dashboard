@@ -41,12 +41,11 @@ import {
 } from '../../utils/backupJson.js';
 import { listCatalogMediaIds } from '../../content/houseguide/guideMedia.js';
 import {
-  normalizeGuideActionsForSave,
   renderGuideActionsEditor,
   validateGuideActions
 } from './guideEditorActions.js';
 import { renderMediaLibrary } from './guideEditorMedia.js';
-import { moveItem, wirePointerReorder } from './guideEditorReorder.js';
+import { moveItem, syncReorderRowIndices, wirePointerReorder } from './guideEditorReorder.js';
 import {
   createGuideEditorContextHelpLink,
   createGuideEditorHelpButton,
@@ -59,6 +58,13 @@ import {
   GUIDE_BLOCK_TYPE_LABELS,
   renderGuideBlockEditor
 } from './guideEditorUi.js';
+import {
+  buildTopicPatch,
+  isTopicDirty,
+  serializeTopicForCompare,
+  slugFromTitle
+} from './guideEditorTopicUtils.js';
+import { openGuideEditorTopicPreview } from './guideEditorPreview.js';
 
 /**
  * @param {HTMLElement} viewport
@@ -246,6 +252,8 @@ function createEditorShell(context) {
 
   /** @type {import('../../types/guideContent.js').GuideTopic | null} */
   let draftTopic = null;
+  /** @type {string} */
+  let savedTopicSnapshot = '';
 
   const header = document.createElement('header');
   header.className = 'house-guide-editor-header';
@@ -286,9 +294,16 @@ function createEditorShell(context) {
   photosButton.className = 'button-secondary';
   photosButton.textContent = 'Photo library';
   photosButton.addEventListener('click', () => {
-    view = 'media';
-    renderMain();
+    void leaveTopicEditor(() => {
+      view = 'media';
+      renderMain();
+    });
   });
+
+  const backupDetails = document.createElement('details');
+  backupDetails.className = 'house-guide-editor-backup-details';
+  const backupSummary = document.createElement('summary');
+  backupSummary.textContent = 'Backup';
 
   const exportButton = document.createElement('button');
   exportButton.type = 'button';
@@ -377,8 +392,13 @@ function createEditorShell(context) {
     })();
   });
 
+  const backupActions = document.createElement('div');
+  backupActions.className = 'house-guide-editor-backup-actions';
+  backupActions.append(exportButton, importLabel);
+  backupDetails.append(backupSummary, backupActions);
+
   const helpButton = createGuideEditorHelpButton();
-  toolbar.append(helpButton, draftBadge, exportButton, importLabel, photosButton, publishAllButton);
+  toolbar.append(helpButton, draftBadge, backupDetails, photosButton, publishAllButton);
   header.append(title, intro, renderGuideIntroSettings(context), toolbar);
 
   const main = document.createElement('div');
@@ -391,6 +411,26 @@ function createEditorShell(context) {
     draftBadge.hidden = count === 0;
     draftBadge.textContent = count === 1 ? '1 unpublished change' : `${count} unpublished changes`;
     publishAllButton.hidden = count === 0;
+  }
+
+  /**
+   * @param {() => void} onLeave
+   */
+  async function leaveTopicEditor(onLeave) {
+    if (view === 'topic' && draftTopic && isTopicDirty(draftTopic, savedTopicSnapshot)) {
+      const confirmed = await showConfirmDialog({
+        title: 'Unsaved changes',
+        message: 'You have unsaved edits on this topic. Leave without saving?',
+        confirmLabel: 'Leave without saving',
+        cancelLabel: 'Keep editing',
+        danger: true
+      });
+      if (!confirmed) return;
+    }
+    activeTopicId = null;
+    draftTopic = null;
+    savedTopicSnapshot = '';
+    onLeave();
   }
 
   function renderMain() {
@@ -416,6 +456,7 @@ function createEditorShell(context) {
           activeTopicId = topicId;
           const topic = getGuideTopic(topicId);
           draftTopic = topic ? structuredClone(topic) : null;
+          savedTopicSnapshot = topic ? serializeTopicForCompare(topic) : '';
           view = 'topic';
           renderMain();
         }, () => renderMain())
@@ -436,27 +477,36 @@ function createEditorShell(context) {
     if (view === 'topic' && activeTopicId && draftTopic) {
       main.append(
         renderTopicEditor(draftTopic, context, {
+          savedSnapshot: savedTopicSnapshot,
           onBack: () => {
-            view = 'topics';
-            activeTopicId = null;
-            draftTopic = null;
-            renderMain();
+            void leaveTopicEditor(() => {
+              view = 'topics';
+              renderMain();
+            });
           },
           onTopicChange: (next) => {
             draftTopic = next;
           },
-          onSaved: () => {
+          onSaved: (nextSnapshot) => {
+            savedTopicSnapshot = nextSnapshot;
             syncDraftBadge();
             showToast(context.toast, 'Draft saved.');
           },
-          onPublished: () => {
+          onPublished: (nextSnapshot) => {
+            savedTopicSnapshot = nextSnapshot;
             syncDraftBadge();
+            view = 'topics';
+            activeTopicId = null;
+            draftTopic = null;
+            savedTopicSnapshot = '';
+            renderMain();
             showToast(context.toast, 'Topic published.');
           },
           onDeleted: () => {
             view = 'topics';
             activeTopicId = null;
             draftTopic = null;
+            savedTopicSnapshot = '';
             renderMain();
             showToast(context.toast, 'Topic deleted.');
           }
@@ -466,10 +516,15 @@ function createEditorShell(context) {
   }
 
   const unsubscribe = subscribeToGuideContent(() => {
-    if (view !== 'topic' || !draftTopic) {
-      if (activeTopicId) {
-        const refreshed = getGuideTopic(activeTopicId);
-        if (refreshed) draftTopic = structuredClone(refreshed);
+    syncDraftBadge();
+    if (view === 'topic' && draftTopic) {
+      return;
+    }
+    if (activeTopicId) {
+      const refreshed = getGuideTopic(activeTopicId);
+      if (refreshed) {
+        draftTopic = structuredClone(refreshed);
+        savedTopicSnapshot = serializeTopicForCompare(refreshed);
       }
     }
     renderMain();
@@ -617,36 +672,60 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRevert) {
   let newTitle = '';
   let newSubtitle = '';
   let newSummary = '';
+  let idManuallyEdited = false;
+
+  const titleField = createEditorField('Title', '', (value) => {
+    newTitle = value;
+    if (!idManuallyEdited) {
+      newTopicId = slugFromTitle(value);
+      idInput.value = newTopicId;
+    }
+  });
+
+  const advancedDetails = document.createElement('details');
+  advancedDetails.className = 'house-guide-editor-meta-advanced';
+  const advancedSummary = document.createElement('summary');
+  advancedSummary.textContent = 'Advanced';
+
+  const idField = createEditorField('Topic id', '', (value) => {
+    newTopicId = value;
+    idManuallyEdited = true;
+  });
+  const idInput = /** @type {HTMLInputElement} */ (idField.querySelector('input'));
+  idInput.placeholder = 'e.g. bin-day';
+
+  const idHint = document.createElement('p');
+  idHint.className = 'subtle house-guide-editor-manual-hint';
+  idHint.textContent =
+    'Generated from the title unless you edit it here. Use letters, numbers, and hyphens only. New topics stay hidden from guests until you publish them.';
+
+  advancedDetails.append(advancedSummary, idField, idHint);
 
   addSection.append(
     addHeading,
-    createEditorField('Topic id', '', (value) => {
-      newTopicId = value;
-    }),
-    createEditorField('Title', '', (value) => {
-      newTitle = value;
-    }),
+    titleField,
     createEditorField('Subtitle', '', (value) => {
       newSubtitle = value;
     }),
     createEditorField('Summary', '', (value) => {
       newSummary = value;
-    })
+    }),
+    advancedDetails
   );
-
-  const idHint = document.createElement('p');
-  idHint.className = 'subtle house-guide-editor-manual-hint';
-  idHint.textContent = 'Use a short id with letters, numbers, and hyphens (e.g. bin-day). New topics start unpublished until you publish them.';
-  addSection.append(idHint);
 
   const createButton = document.createElement('button');
   createButton.type = 'button';
   createButton.className = 'button-primary';
   createButton.textContent = 'Create topic';
   createButton.addEventListener('click', () => {
+    const topicId = (newTopicId || slugFromTitle(newTitle)).trim();
+    if (!topicId || !newTitle.trim()) {
+      showToast(context.toast, 'Title and topic id are required.');
+      return;
+    }
     createButton.disabled = true;
     void createNewHouseGuideTopic({
-      id: newTopicId.trim(),
+      id: topicId,
       categoryId,
       title: newTitle.trim(),
       subtitle: newSubtitle.trim(),
@@ -659,7 +738,7 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRevert) {
         return;
       }
       showToast(context.toast, 'Topic created.');
-      onOpen(newTopicId.trim());
+      onOpen(topicId);
     });
   });
   addSection.append(createButton);
@@ -671,7 +750,7 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRevert) {
 /**
  * @param {import('../../types/guideContent.js').GuideTopic} topic
  * @param {import('../../types/app.js').ShellContext} context
- * @param {Object} handlers
+ * @param {{ savedSnapshot: string, onBack: () => void, onTopicChange: (topic: import('../../types/guideContent.js').GuideTopic) => void, onSaved: (snapshot: string) => void, onPublished: (snapshot: string) => void, onDeleted: () => void }} handlers
  */
 function renderTopicEditor(topic, context, handlers) {
   if (!topic.audience) topic.audience = 'guest';
@@ -689,9 +768,32 @@ function renderTopicEditor(topic, context, handlers) {
   heading.className = 'guide-section-heading';
   heading.textContent = topic.title;
 
-  const metaForm = document.createElement('div');
-  metaForm.className = 'house-guide-editor-meta';
-  metaForm.append(
+  const unsavedBadge = document.createElement('span');
+  unsavedBadge.className = 'house-guide-editor-unsaved-badge';
+  unsavedBadge.hidden = true;
+  unsavedBadge.textContent = 'Unsaved changes';
+
+  function syncDirtyState() {
+    const dirty = isTopicDirty(topic, savedSnapshot);
+    unsavedBadge.hidden = !dirty;
+    panel.classList.toggle('has-unsaved-changes', dirty);
+  }
+
+  let savedSnapshot = handlers.savedSnapshot;
+
+  function notifyTopicChange() {
+    heading.textContent = topic.title || 'Untitled topic';
+    handlers.onTopicChange(topic);
+    syncDirtyState();
+  }
+
+  const metaDetails = document.createElement('details');
+  metaDetails.className = 'house-guide-editor-topic-details';
+  const metaSummary = document.createElement('summary');
+  metaSummary.textContent = 'Topic details';
+  const metaInner = document.createElement('div');
+  metaInner.className = 'house-guide-editor-meta';
+  metaInner.append(
     createEditorSelect(
       'Who can see this topic',
       topic.audience === 'owner' ? 'owner' : 'guest',
@@ -701,29 +803,40 @@ function renderTopicEditor(topic, context, handlers) {
       ],
       (value) => {
         topic.audience = /** @type {'guest' | 'owner'} */ (value);
-        handlers.onTopicChange(topic);
+        notifyTopicChange();
       }
     ),
-    createEditorField('Title', topic.title, (value) => {
-      topic.title = value;
-      handlers.onTopicChange(topic);
-    }),
     createEditorField('Subtitle', topic.subtitle, (value) => {
       topic.subtitle = value;
-      handlers.onTopicChange(topic);
+      notifyTopicChange();
     }),
     createEditorField('Summary', topic.summary, (value) => {
       topic.summary = value;
-      handlers.onTopicChange(topic);
+      notifyTopicChange();
     })
+  );
+  metaDetails.append(metaSummary, metaInner);
+
+  const metaForm = document.createElement('div');
+  metaForm.className = 'house-guide-editor-meta';
+  metaForm.append(
+    createEditorField('Title', topic.title, (value) => {
+      topic.title = value;
+      notifyTopicChange();
+    }),
+    metaDetails
   );
 
   if (!topic.searchTerms) topic.searchTerms = [];
   if (!topic.applianceManualTerms) topic.applianceManualTerms = [];
-
   if (!topic.actions) topic.actions = [];
 
-  const actionsHeading = createGuideEditorSectionHeading('Quick actions', 'quick-actions');
+  const actionsDetails = document.createElement('details');
+  actionsDetails.className = 'house-guide-editor-collapsible-section';
+  const actionsSummary = document.createElement('summary');
+  actionsSummary.append(createGuideEditorSectionHeading('Quick actions', 'quick-actions'));
+  const actionsBody = document.createElement('div');
+  actionsBody.className = 'house-guide-editor-collapsible-body';
   const actionsHint = document.createElement('p');
   actionsHint.className = 'subtle house-guide-editor-manual-hint';
   actionsHint.textContent = 'Optional buttons at the bottom of a guide page (Alexa routines, links to other topics).';
@@ -731,15 +844,19 @@ function renderTopicEditor(topic, context, handlers) {
     topic.actions,
     (next) => {
       topic.actions = next;
-      handlers.onTopicChange(topic);
+      notifyTopicChange();
     },
     listGuideTopics().map((hit) => ({ id: hit.id, title: hit.title }))
   );
+  actionsBody.append(actionsHint, actionsEditor);
+  actionsDetails.append(actionsSummary, actionsBody);
 
   const blocksHeading = createGuideEditorSectionHeading('Content blocks', 'blocks');
 
   const blocksHost = document.createElement('div');
   blocksHost.className = 'house-guide-editor-blocks';
+
+  let blockReorderWired = false;
 
   function renderBlocks() {
     const mediaIds = listCatalogMediaIds();
@@ -752,11 +869,28 @@ function renderTopicEditor(topic, context, handlers) {
     };
     blocksHost.replaceChildren();
     topic.blocks.forEach((block, index) => {
+      const row = document.createElement('div');
+      row.className = 'house-guide-editor-block-row-wrap';
+      row.dataset.reorderRow = 'true';
+      row.dataset.blockIndex = String(index);
+
+      const handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'guide-editor-drag-handle guide-editor-block-drag-handle';
+      handle.dataset.reorderHandle = 'true';
+      handle.setAttribute(
+        'aria-label',
+        `Drag to reorder ${GUIDE_BLOCK_TYPE_LABELS[block.type] ?? block.type} block`
+      );
+      handle.innerHTML = '<span aria-hidden="true">⠿</span>';
+
       const card = renderGuideBlockEditor(
         block,
         (next) => {
-          topic.blocks[index] = next;
-          handlers.onTopicChange(topic);
+          const blockIndex = Number(row.dataset.blockIndex);
+          if (!Number.isFinite(blockIndex)) return;
+          topic.blocks[blockIndex] = next;
+          notifyTopicChange();
         },
         mediaIds,
         blockEditorOptions
@@ -765,50 +899,32 @@ function renderTopicEditor(topic, context, handlers) {
       const actions = document.createElement('div');
       actions.className = 'guide-editor-block-actions';
 
-      if (index > 0) {
-        const up = document.createElement('button');
-        up.type = 'button';
-        up.className = 'button-secondary';
-        up.textContent = 'Move up';
-        up.addEventListener('click', () => {
-          const blocks = [...topic.blocks];
-          [blocks[index - 1], blocks[index]] = [blocks[index], blocks[index - 1]];
-          topic.blocks = blocks;
-          handlers.onTopicChange(topic);
-          renderBlocks();
-        });
-        actions.append(up);
-      }
-
-      if (index < topic.blocks.length - 1) {
-        const down = document.createElement('button');
-        down.type = 'button';
-        down.className = 'button-secondary';
-        down.textContent = 'Move down';
-        down.addEventListener('click', () => {
-          const blocks = [...topic.blocks];
-          [blocks[index + 1], blocks[index]] = [blocks[index], blocks[index + 1]];
-          topic.blocks = blocks;
-          handlers.onTopicChange(topic);
-          renderBlocks();
-        });
-        actions.append(down);
-      }
-
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'button-secondary button-danger';
       remove.textContent = 'Remove';
       remove.addEventListener('click', () => {
-        topic.blocks = topic.blocks.filter((_, i) => i !== index);
-        handlers.onTopicChange(topic);
+        const blockIndex = Number(row.dataset.blockIndex);
+        if (!Number.isFinite(blockIndex)) return;
+        topic.blocks = topic.blocks.filter((_, i) => i !== blockIndex);
+        notifyTopicChange();
         renderBlocks();
       });
       actions.append(remove);
 
       card.append(actions);
-      blocksHost.append(card);
+      row.append(handle, card);
+      blocksHost.append(row);
     });
+
+    if (!blockReorderWired) {
+      wirePointerReorder(blocksHost, (fromIndex, toIndex) => {
+        topic.blocks = moveItem(topic.blocks, fromIndex, toIndex);
+        syncReorderRowIndices(blocksHost);
+        notifyTopicChange();
+      });
+      blockReorderWired = true;
+    }
   }
 
   renderBlocks();
@@ -836,22 +952,25 @@ function renderTopicEditor(topic, context, handlers) {
     const type = /** @type {import('../../types/guideContent.js').GuideBlock['type']} */ (addSelect.value);
     if (!type) return;
     topic.blocks.push(createEmptyGuideBlock(type));
-    handlers.onTopicChange(topic);
+    notifyTopicChange();
     addSelect.value = '';
     renderBlocks();
   });
   addRow.append(addSelect, addButton);
 
-  const discovery = document.createElement('div');
-  discovery.className = 'house-guide-editor-discovery';
-  discovery.append(
-    createGuideEditorSectionHeading('Search & links', 'search-keywords'),
+  const discoveryDetails = document.createElement('details');
+  discoveryDetails.className = 'house-guide-editor-collapsible-section house-guide-editor-discovery';
+  const discoverySummary = document.createElement('summary');
+  discoverySummary.append(createGuideEditorSectionHeading('Search & links', 'search-keywords'));
+  const discoveryBody = document.createElement('div');
+  discoveryBody.className = 'house-guide-editor-collapsible-body';
+  discoveryBody.append(
     createCommaSeparatedField(
       'Search keywords',
       topic.searchTerms,
       (terms) => {
         topic.searchTerms = terms;
-        handlers.onTopicChange(topic);
+        notifyTopicChange();
       },
       {
         placeholder: 'e.g. netflix, wifi, kettle, bbq, charger',
@@ -863,7 +982,7 @@ function renderTopicEditor(topic, context, handlers) {
       topic.applianceManualTerms ?? [],
       (terms) => {
         topic.applianceManualTerms = terms;
-        handlers.onTopicChange(topic);
+        notifyTopicChange();
       },
       {
         placeholder: 'e.g. Washing machine, Weber BBQ',
@@ -871,12 +990,28 @@ function renderTopicEditor(topic, context, handlers) {
       }
     )
   );
+  discoveryDetails.append(discoverySummary, discoveryBody);
 
   const footer = document.createElement('div');
-  footer.className = 'house-guide-editor-footer';
+  footer.className = 'house-guide-editor-footer house-guide-editor-footer-sticky';
+
+  const publishHint = document.createElement('p');
+  publishHint.className = 'house-guide-editor-publish-hint subtle';
+  publishHint.textContent =
+    'Guests and sitters only see published topics. Save draft keeps your work private until you publish.';
 
   const footerPrimary = document.createElement('div');
   footerPrimary.className = 'house-guide-editor-footer-primary';
+
+  const previewButton = document.createElement('button');
+  previewButton.type = 'button';
+  previewButton.className = 'button-secondary';
+  previewButton.textContent = 'Preview';
+  previewButton.addEventListener('click', () => {
+    openGuideEditorTopicPreview(context, topic, {
+      hasUnsavedEdits: isTopicDirty(topic, savedSnapshot)
+    });
+  });
 
   const saveButton = document.createElement('button');
   saveButton.type = 'button';
@@ -895,7 +1030,9 @@ function renderTopicEditor(topic, context, handlers) {
         showToast(context.toast, result.message || 'Could not save.');
         return;
       }
-      handlers.onSaved();
+      handlers.onSaved(serializeTopicForCompare(topic));
+      savedSnapshot = serializeTopicForCompare(topic);
+      syncDirtyState();
     });
   });
 
@@ -921,7 +1058,9 @@ function renderTopicEditor(topic, context, handlers) {
           showToast(context.toast, result?.message || 'Could not publish.');
           return;
         }
-        handlers.onPublished();
+        handlers.onPublished(serializeTopicForCompare(topic));
+        savedSnapshot = serializeTopicForCompare(topic);
+        syncDirtyState();
       });
   });
 
@@ -950,21 +1089,25 @@ function renderTopicEditor(topic, context, handlers) {
     });
   });
 
-  footerPrimary.append(saveButton, publishButton);
-  footer.append(footerPrimary, deleteButton);
+  footerPrimary.append(unsavedBadge, previewButton, saveButton, publishButton);
+  footer.append(publishHint, footerPrimary, deleteButton);
+
+  const titleRow = document.createElement('div');
+  titleRow.className = 'house-guide-editor-topic-title-row';
+  titleRow.append(heading);
+
   panel.append(
     back,
-    heading,
+    titleRow,
     metaForm,
-    actionsHeading,
-    actionsHint,
-    actionsEditor,
     blocksHeading,
     blocksHost,
     addRow,
-    discovery,
+    actionsDetails,
+    discoveryDetails,
     footer
   );
+  syncDirtyState();
   return panel;
 }
 
@@ -1020,19 +1163,6 @@ function renderGuideIntroSettings(context) {
   form.append(hint, saveButton);
   details.append(summary, form);
   return details;
-}
-
-function buildTopicPatch(topic) {
-  return {
-    title: topic.title,
-    subtitle: topic.subtitle,
-    summary: topic.summary,
-    audience: topic.audience === 'owner' ? 'owner' : 'guest',
-    searchTerms: (topic.searchTerms ?? []).map((term) => term.trim()).filter(Boolean),
-    applianceManualTerms: (topic.applianceManualTerms ?? []).map((term) => term.trim()).filter(Boolean),
-    actions: normalizeGuideActionsForSave(topic.actions),
-    blocks: topic.blocks
-  };
 }
 
 /**

@@ -11,6 +11,34 @@ describe('guideHaystackMatches and reorder helpers', () => {
     const { moveItem } = await import('../src/apps/HouseGuideEditor/guideEditorReorder.js');
     expect(moveItem(['a', 'b', 'c'], 0, 2)).toEqual(['b', 'c', 'a']);
   });
+
+  it('syncReorderRowIndices updates data attributes from DOM order', async () => {
+    const { syncReorderRowIndices } = await import('../src/apps/HouseGuideEditor/guideEditorReorder.js');
+    const container = document.createElement('div');
+    container.innerHTML = `
+      <div data-reorder-row data-block-index="0">A</div>
+      <div data-reorder-row data-block-index="1">B</div>
+    `;
+    container.insertBefore(container.lastElementChild, container.firstElementChild);
+    syncReorderRowIndices(container);
+    const rows = [...container.querySelectorAll('[data-reorder-row]')];
+    expect(rows[0]?.textContent).toBe('B');
+    expect(rows[0]?.dataset.blockIndex).toBe('0');
+    expect(rows[1]?.dataset.blockIndex).toBe('1');
+  });
+
+  it('findScrollContainer returns the nearest scrollable ancestor', async () => {
+    const { findScrollContainer } = await import('../src/apps/HouseGuideEditor/guideEditorReorder.js');
+    const scrollRoot = document.createElement('div');
+    scrollRoot.style.overflowY = 'auto';
+    Object.defineProperty(scrollRoot, 'scrollHeight', { configurable: true, value: 400 });
+    Object.defineProperty(scrollRoot, 'clientHeight', { configurable: true, value: 120 });
+    const target = document.createElement('div');
+    scrollRoot.append(target);
+    document.body.append(scrollRoot);
+    expect(findScrollContainer(target)).toBe(scrollRoot);
+    scrollRoot.remove();
+  });
 });
 
 describe('guide service', () => {
