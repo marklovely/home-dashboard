@@ -32,17 +32,22 @@ function notify() {
 
 /**
  * @param {string | null} collectionDate
+ * @param {{ source?: 'user' | 'sync' }} [options]
  */
-function writeDismissedCollectionDate(collectionDate) {
+function writeDismissedCollectionDate(collectionDate, options = {}) {
   memoryDismissedCollectionDate = collectionDate;
   try {
     if (!collectionDate) {
       localStorage.removeItem(STORAGE_KEY);
-      return;
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ collectionDate }));
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ collectionDate }));
   } catch {
     // Keep in-memory fallback when storage is unavailable (kiosk / private mode).
+  }
+
+  if (options.source !== 'sync') {
+    document.dispatchEvent(new Event('home-hub-tablet-preference-change'));
   }
 }
 
@@ -67,7 +72,7 @@ export function getDismissedBinCollectionDate() {
   const collectionDay = startOfLocalDay(parseLocalDate(collectionDate));
   const today = startOfLocalDay(new Date());
   if (today.getTime() > collectionDay.getTime()) {
-    writeDismissedCollectionDate(null);
+    writeDismissedCollectionDate(null, { source: 'sync' });
     return null;
   }
 
@@ -77,9 +82,10 @@ export function getDismissedBinCollectionDate() {
 
 /**
  * @param {string} collectionDateIso
+ * @param {{ source?: 'user' | 'sync' }} [options]
  */
-export function dismissBinAlertForCollection(collectionDateIso) {
-  writeDismissedCollectionDate(collectionDateIso);
+export function dismissBinAlertForCollection(collectionDateIso, options = {}) {
+  writeDismissedCollectionDate(collectionDateIso, options);
   notify();
 }
 
@@ -97,13 +103,14 @@ export function subscribeToBinAlertDismissal(listener) {
 }
 
 /** Clears an active "Bins are out" dismissal so home reminders can show again. */
-export function clearBinAlertDismissal() {
-  writeDismissedCollectionDate(null);
+/** @param {{ source?: 'user' | 'sync' }} [options] */
+export function clearBinAlertDismissal(options = {}) {
+  writeDismissedCollectionDate(null, options);
   notify();
 }
 
 /** @internal */
 export function resetBinAlertDismissalForTests() {
-  clearBinAlertDismissal();
+  clearBinAlertDismissal({ source: 'sync' });
   listeners.clear();
 }

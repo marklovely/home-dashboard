@@ -25,15 +25,17 @@ import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
 import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
 import { initShellBrandLogo } from '../shell/shellBrandLogo.js';
 import { applyShellBranding } from '../shell/shellBranding.js';
+import { subscribeToSiteProfile } from '../services/siteProfileService.js';
 import {
-  subscribeToSiteProfile,
-  syncSiteProfileFromServer
-} from '../services/siteProfileService.js';
+  initTabletPreferencesSync,
+  syncTabletPreferencesFromSiteProfile
+} from '../services/tabletPreferencesSyncService.js';
 import { initHubSetupRoutePolicy } from '../apps/HubSetup/hubSetupRoutePolicy.js';
 
 initTheme();
 initDisplayPreferences();
 initScreensaverService();
+initTabletPreferencesSync();
 initWeatherLocationPreference();
 
 const loadingOverlay = document.querySelector('#device-session-loading');
@@ -174,7 +176,7 @@ async function initialiseDashboard() {
     });
   });
 
-  void syncSiteProfileFromServer().then((state) => {
+  void syncTabletPreferencesFromSiteProfile().then((state) => {
     if (!getWeatherLocationOverride() && state?.profile?.propertyAddress) {
       void syncWeatherLocationFromPropertyAddress(state.profile.propertyAddress);
     }

@@ -31,8 +31,10 @@ export function getEffectiveTheme() {
   return activeTheme;
 }
 
-/** @param {ThemeId} themeId */
-export function setActiveTheme(themeId) {
+/** @param {ThemeId} themeId
+ *  @param {{ source?: 'user' | 'sync' }} [options]
+ */
+export function setActiveTheme(themeId, options = {}) {
   if (themeId !== 'dark' && themeId !== 'light' && themeId !== 'auto') return;
   activeTheme = themeId;
   applyTheme();
@@ -42,6 +44,9 @@ export function setActiveTheme(themeId) {
     /* ignore */
   }
   notifyThemeChange();
+  if (options.source !== 'sync') {
+    document.dispatchEvent(new Event('home-hub-tablet-preference-change'));
+  }
 }
 
 export function initTheme() {
