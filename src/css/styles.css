@@ -3635,6 +3635,12 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   width: min(100%, 640px);
   pointer-events: auto;
   cursor: default;
+  transform: translate(var(--screensaver-bin-shift-x, 0), var(--screensaver-bin-shift-y, 0));
+  transition: transform 60s ease-in-out;
+  will-change: transform;
+}
+.screensaver-bin-alert-host.screensaver-bin-alert-host--shift-instant {
+  transition: none;
 }
 .screensaver-bin-alert-host[hidden] {
   display: none;
@@ -3670,6 +3676,9 @@ body.screensaver-active {
 }
 @media (prefers-reduced-motion: reduce) {
   .screensaver-panel {
+    transition: none;
+  }
+  .screensaver-bin-alert-host {
     transition: none;
   }
 }

@@ -1,11 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  BIN_ALERT_MAX_SHIFT_X_VW,
+  BIN_ALERT_MAX_SHIFT_Y_VH,
   MAX_SHIFT_X_VW,
   MAX_SHIFT_Y_VH,
+  applyBinAlertShift,
   applyPanelShift,
+  randomBinAlertShift,
   randomPanelShift,
   resetBurnInProtectionForTests,
+  startBinAlertBurnInProtection,
   startBurnInProtection,
+  stopBinAlertBurnInProtection,
   stopBurnInProtection
 } from '../src/shell/screensaverBurnIn.js';
 
@@ -15,11 +21,19 @@ describe('screensaverBurnIn', () => {
     resetBurnInProtectionForTests();
   });
 
-  it('generates shifts within the configured bounds', () => {
+  it('generates panel shifts within the configured bounds', () => {
     for (let index = 0; index < 20; index += 1) {
       const shift = randomPanelShift();
       expect(Math.abs(shift.x)).toBeLessThanOrEqual(MAX_SHIFT_X_VW);
       expect(Math.abs(shift.y)).toBeLessThanOrEqual(MAX_SHIFT_Y_VH);
+    }
+  });
+
+  it('generates bin alert shifts within the configured bounds', () => {
+    for (let index = 0; index < 20; index += 1) {
+      const shift = randomBinAlertShift();
+      expect(Math.abs(shift.x)).toBeLessThanOrEqual(BIN_ALERT_MAX_SHIFT_X_VW);
+      expect(Math.abs(shift.y)).toBeLessThanOrEqual(BIN_ALERT_MAX_SHIFT_Y_VH);
     }
   });
 
@@ -41,7 +55,21 @@ describe('screensaverBurnIn', () => {
     expect(panel.classList.contains('screensaver-panel--shift-instant')).toBe(false);
   });
 
-  it('starts and stops reposition timers', () => {
+  it('applies and clears bin alert shift styles', () => {
+    const host = document.createElement('div');
+    host.className = 'screensaver-bin-alert-host';
+
+    applyBinAlertShift(host, { x: 4, y: -3 }, true);
+    expect(host.style.getPropertyValue('--screensaver-bin-shift-x')).toBe('4vw');
+    expect(host.style.getPropertyValue('--screensaver-bin-shift-y')).toBe('-3vh');
+    expect(host.classList.contains('screensaver-bin-alert-host--shift-instant')).toBe(false);
+
+    stopBinAlertBurnInProtection(host);
+    expect(host.style.getPropertyValue('--screensaver-bin-shift-x')).toBe('');
+    expect(host.style.getPropertyValue('--screensaver-bin-shift-y')).toBe('');
+  });
+
+  it('starts and stops panel reposition timers', () => {
     vi.spyOn(window, 'setInterval').mockReturnValue(42);
     vi.spyOn(window, 'clearInterval');
 
@@ -51,5 +79,17 @@ describe('screensaverBurnIn', () => {
 
     stopBurnInProtection(panel);
     expect(window.clearInterval).toHaveBeenCalledWith(42);
+  });
+
+  it('starts and stops bin alert reposition timers', () => {
+    vi.spyOn(window, 'setInterval').mockReturnValue(84);
+    vi.spyOn(window, 'clearInterval');
+
+    const host = document.createElement('div');
+    startBinAlertBurnInProtection(host);
+    expect(window.setInterval).toHaveBeenCalledTimes(1);
+
+    stopBinAlertBurnInProtection(host);
+    expect(window.clearInterval).toHaveBeenCalledWith(84);
   });
 });
