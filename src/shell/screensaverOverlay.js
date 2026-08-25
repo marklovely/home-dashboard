@@ -12,7 +12,10 @@ import {
 } from '../services/screensaverService.js';
 import { subscribeToUserMode } from '../auth/userMode.js';
 import { navigate, HOME_ROUTE } from './router.js';
-import { startBurnInProtection, stopBurnInProtection } from './screensaverBurnIn.js';
+import { startBurnInProtection, stopBurnInProtection, startBinAlertBurnInProtection, stopBinAlertBurnInProtection } from './screensaverBurnIn.js';
+
+/** @type {boolean} */
+let binAlertBurnInActive = false;
 
 /**
  * @param {{
@@ -27,10 +30,25 @@ import { startBurnInProtection, stopBurnInProtection } from './screensaverBurnIn
  */
 function syncScreensaverBinAlert(elements, binAlertController, active) {
   if (!active) {
+    if (binAlertBurnInActive) {
+      stopBinAlertBurnInProtection(elements.binAlertHost);
+      binAlertBurnInActive = false;
+    }
     clearBinAlertBannerHost(elements.binAlertHost);
     return;
   }
+
   binAlertController.sync();
+  const showingBinAlert = !elements.binAlertHost.hidden;
+  if (showingBinAlert && !binAlertBurnInActive) {
+    startBinAlertBurnInProtection(elements.binAlertHost);
+    binAlertBurnInActive = true;
+    return;
+  }
+  if (!showingBinAlert && binAlertBurnInActive) {
+    stopBinAlertBurnInProtection(elements.binAlertHost);
+    binAlertBurnInActive = false;
+  }
 }
 
 /**
