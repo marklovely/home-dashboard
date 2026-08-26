@@ -3,7 +3,7 @@
  * before serving the hub shell (Cloudflare Access is disabled for this site).
  */
 
-/** Canonical login URL (no .html — avoids Pages pretty-URL redirect loops). */
+/** Canonical demo login path (served by functions/demo-login.js). */
 export const DEMO_LOGIN_PATH = '/demo-login';
 
 /**
