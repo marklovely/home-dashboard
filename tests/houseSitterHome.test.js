@@ -3,17 +3,26 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderHouseSitterHome } from '../src/apps/Home/renderHouseSitterHome.js';
 import { getVisibleApps } from '../src/services/appVisibility.js';
 import { resetUserModeForTests } from '../src/auth/userMode.js';
+import {
+  resetSiteProfileStateForTests,
+  setSiteProfileStateForTests
+} from '../src/services/siteProfileService.js';
 
 describe('house sitter home layout', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.useRealTimers();
     resetUserModeForTests();
+    resetSiteProfileStateForTests();
   });
 
   it('structures the guest home with essentials, useful information, and help', async () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
     resetUserModeForTests();
+    setSiteProfileStateForTests({
+      profile: { petCare: { hasPets: true, name: 'Bailey' } },
+      loaded: true
+    });
 
     const viewport = document.createElement('div');
     const context = {
@@ -38,7 +47,7 @@ describe('house sitter home layout', () => {
     const essentialCards = page?.querySelectorAll('.home-launcher-card--essential') ?? [];
     expect(essentialCards).toHaveLength(4);
     expect([...essentialCards].map((card) => card.querySelector('.home-launcher-title')?.textContent)).toEqual([
-      'Scooter',
+      'Bailey',
       'House Guide',
       'Home Controls',
       'Emergency'

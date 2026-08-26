@@ -1,4 +1,5 @@
 import { defineApp } from '../../components/App/defineApp.js';
+import { getPetDisplayName } from '../../lib/petDisplayName.js';
 import { getGuideTopic } from '../../services/guideService.js';
 import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
 import { renderGuideTopicPage } from '../../widgets/HouseGuide/guidePageRenderer.js';
@@ -75,17 +76,24 @@ function createSectionButton(section, onOpen) {
 export function mountScooterApp(viewport, context) {
   viewport.replaceChildren();
 
+  const petName = getPetDisplayName('Pet care');
+
   const page = document.createElement('section');
   page.className = 'app-page scooter-app';
-  page.setAttribute('aria-label', 'Scooter');
+  page.setAttribute('aria-label', petName);
 
   const landing = document.createElement('div');
   landing.className = 'scooter-landing';
 
   const header = document.createElement('header');
   header.className = 'scooter-header';
-  header.innerHTML =
-    '<h2 class="scooter-title">🐶 Scooter</h2><p class="scooter-lead">Tap a topic for step-by-step care during your stay.</p>';
+  const title = document.createElement('h2');
+  title.className = 'scooter-title';
+  title.textContent = `🐶 ${petName}`;
+  const lead = document.createElement('p');
+  lead.className = 'scooter-lead';
+  lead.textContent = 'Tap a topic for step-by-step care during your stay.';
+  header.append(title, lead);
 
   const grid = document.createElement('div');
   grid.className = 'scooter-section-grid';
@@ -141,7 +149,7 @@ export function mountScooterApp(viewport, context) {
 
 export const scooterApp = defineApp({
   id: 'scooter',
-  title: 'Scooter',
+  title: 'Pet care',
   iconId: 'dog',
   description: 'Dog care schedule and notes',
   capabilities: ['pets', 'schedule'],

@@ -1,4 +1,5 @@
 import { isHouseSitterExperience } from '../auth/userMode.js';
+import { getPetDisplayName } from '../lib/petDisplayName.js';
 
 /** @typedef {{ id: string, route: string, label: string, iconId: string }} ShellNavItem */
 
@@ -111,6 +112,9 @@ export { isHouseSitterExperience as isHouseSitterMode };
  * @param {import('../types/app.js').App} app
  */
 export function getAppDisplayTitle(app) {
+  if (app.id === 'scooter') {
+    return getPetDisplayName(app.title);
+  }
   const override = getModeConfig().appTitleOverrides[app.id];
   return override ?? app.title;
 }
