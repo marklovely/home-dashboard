@@ -31,6 +31,24 @@ Override `DEMO_USERNAME` / `DEMO_PASSWORD` when running `scripts/set-worker-secr
 2. **Worker** — `DEMO_AUTH_ENABLED=true` on the `demo` Wrangler env; `/api/demo/login` issues an HttpOnly cookie and a sitter device session.
 3. **Reseed** — hourly cron (`0 * * * *`) calls `reseedDemoHubIfNeeded()`; reseeds once per London calendar day.
 4. **Terraform** — demo site sets `access_enabled = false` and omits Access AUD env vars on Pages.
+5. **Demo login rate limit** — five failed sign-in attempts per client IP per ten minutes (same durable-object limiter as owner PIN).
+6. **Service worker** — cache name tracks `package.json` version; new deployments activate the updated worker and reload open tabs.
+
+## Manual reseed
+
+After changing demo seed data, force a fresh reset without waiting for the nightly cron or editing D1:
+
+```bash
+node scripts/reseed-demo-hub.mjs demo
+```
+
+Uses `HUB_PROXY_SECRET` (from env or terraform output) to call `POST /api/demo/reseed` on the demo hostname. Deploy the Worker first if you added or changed the reseed route.
+
+Alternatively, clear `demoLastReseedDate` on the demo D1 `site_profile` row and reload the hub (the next request triggers `ensureDemoHubSeeded`).
+
+## Rotate demo credentials
+
+Set `DEMO_USERNAME` and `DEMO_PASSWORD` in the environment when running `scripts/set-worker-secrets-from-terraform.mjs demo`, then redeploy Worker secrets.
 
 ## Deploy checklist
 
