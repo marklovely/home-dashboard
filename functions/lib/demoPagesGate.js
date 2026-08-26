@@ -3,10 +3,14 @@
  * before serving the hub shell (Cloudflare Access is disabled for this site).
  */
 
+/** Canonical login URL (no .html — avoids Pages pretty-URL redirect loops). */
+export const DEMO_LOGIN_PATH = '/demo-login';
+
 /**
  * @param {string} pathname
  */
 function isPublicDemoAsset(pathname) {
+  if (pathname === DEMO_LOGIN_PATH || pathname === `${DEMO_LOGIN_PATH}/`) return true;
   if (pathname === '/demo-login.html') return true;
   if (pathname.startsWith('/api/demo/')) return true;
   if (pathname === '/api/health') return true;
@@ -55,7 +59,7 @@ export async function demoPagesGate(context) {
     pathname === '/' || pathname === '/index.html' || (!pathname.includes('.') && acceptsHtml);
 
   if (isAppShellRoute) {
-    return Response.redirect(new URL('/demo-login.html', url.origin).toString(), 302);
+    return Response.redirect(new URL(DEMO_LOGIN_PATH, url.origin).toString(), 302);
   }
 
   return context.next();
