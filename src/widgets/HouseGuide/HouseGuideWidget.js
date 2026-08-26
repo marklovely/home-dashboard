@@ -20,7 +20,7 @@ import {
 } from './guidePageRenderer.js';
 import { APPLIANCE_MANUALS_CATEGORY_ID } from '../../services/applianceManualsConstants.js';
 import { refreshApplianceManuals } from '../../services/applianceManualsService.js';
-import { refreshGuideContent } from '../../services/guideContentService.js';
+import { refreshGuideContent, subscribeToGuideContent } from '../../services/guideContentService.js';
 import { renderApplianceManualsSitterView } from './applianceManualsSitterView.js';
 import { renderApplianceManualViewer } from './applianceManualsViewer.js';
 
@@ -331,6 +331,21 @@ function createInteractiveHouseGuide(context) {
     openTopic(initialTopic);
   }
 
+  const unsubscribeGuide = subscribeToGuideContent((guideState) => {
+    if (guideState.source === 'loading' || guideState.source === 'idle') return;
+    if (viewMode === 'explore') {
+      rebuildCategoryGrid(searchInput.value);
+      return;
+    }
+    if (viewMode === 'category' && activeCategoryId) {
+      openCategory(activeCategoryId);
+      return;
+    }
+    if (viewMode === 'topic' && activeTopicId) {
+      openTopic(activeTopicId);
+    }
+  });
+
   const unsubscribeRoute = subscribeToRoute((route) => {
     if (route !== 'house-guide') return;
     const routedTopic = getGuideTopicFromRoute();
@@ -344,7 +359,10 @@ function createInteractiveHouseGuide(context) {
     else showExplore();
   });
 
-  root.houseGuideDispose = () => unsubscribeRoute();
+  root.houseGuideDispose = () => {
+    unsubscribeRoute();
+    unsubscribeGuide();
+  };
 
   return root;
 }

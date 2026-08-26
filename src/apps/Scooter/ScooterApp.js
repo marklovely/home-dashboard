@@ -1,6 +1,7 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { getPetDisplayName } from '../../lib/petDisplayName.js';
 import { getGuideTopic } from '../../services/guideService.js';
+import { subscribeToGuideContent } from '../../services/guideContentService.js';
 import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
 import { renderGuideTopicPage } from '../../widgets/HouseGuide/guidePageRenderer.js';
 
@@ -74,6 +75,7 @@ function createSectionButton(section, onOpen) {
  * @param {import('../../types/app.js').ShellContext} context
  */
 export function mountScooterApp(viewport, context) {
+  /** @type {HTMLElement & { scooterGuideDispose?: () => void }} */ (viewport).scooterGuideDispose?.();
   viewport.replaceChildren();
 
   const petName = getPetDisplayName('Pet care');
@@ -103,15 +105,28 @@ export function mountScooterApp(viewport, context) {
   detailHost.className = 'scooter-detail-host';
   detailHost.hidden = true;
 
+  /** @type {ScooterSection | null} */
+  let pendingSection = null;
+
   function showLanding() {
     detailHost.hidden = true;
     detailHost.replaceChildren();
     landing.hidden = false;
+    pendingSection = null;
+  }
+
+  function openTopic(topicId) {
+    const section = SCOOTER_SECTIONS.find((entry) => entry.topicId === topicId);
+    if (section) openSection(section);
   }
 
   function openSection(section) {
     const topic = getGuideTopic(section.topicId);
-    if (!topic) return;
+    if (!topic) {
+      pendingSection = section;
+      return;
+    }
+    pendingSection = null;
     landing.hidden = true;
     detailHost.hidden = false;
     detailHost.replaceChildren(
@@ -119,7 +134,7 @@ export function mountScooterApp(viewport, context) {
         topic,
         context,
         showLanding,
-        () => {}
+        openTopic
       )
     );
 
@@ -141,6 +156,13 @@ export function mountScooterApp(viewport, context) {
     button.setAttribute('role', 'listitem');
     grid.append(button);
   }
+
+  const unsubscribeGuide = subscribeToGuideContent((guideState) => {
+    if (guideState.source === 'loading' || guideState.source === 'idle') return;
+    if (pendingSection) openSection(pendingSection);
+  });
+  /** @type {HTMLElement & { scooterGuideDispose?: () => void }} */ (viewport).scooterGuideDispose =
+    unsubscribeGuide;
 
   landing.append(header, grid);
   page.append(landing, detailHost);
