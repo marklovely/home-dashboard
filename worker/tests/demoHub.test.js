@@ -3,8 +3,10 @@ import {
   createDemoAuthCookie,
   demoAuthSetCookieHeader,
   demoCredentialsMatch,
+  DEMO_AUTH_PROXY_COOKIE_FIELD,
   verifyDemoAuthCookie
 } from '../src/lib/demoAuth.js';
+import { DEVICE_SESSION_PROXY_COOKIE_FIELD } from '../src/lib/deviceSession.js';
 import { buildDemoSeedPayload } from '../src/lib/demoSeed.js';
 import { getLondonDateKey, isDemoAuthEnabled, isDemoHubWorker } from '../src/lib/demoHub.js';
 import { handleDemoLogin, handleDemoSession } from '../src/routes/demoAuthRoute.js';
@@ -70,7 +72,7 @@ describe('demo login route', () => {
     expect(response.status).toBe(401);
   });
 
-  it('sets cookies on successful login', async () => {
+  it('embeds proxy cookie fields on successful login', async () => {
     const response = await handleDemoLogin(
       new Request('https://demo.test/api/demo/login', {
         method: 'POST',
@@ -81,7 +83,12 @@ describe('demo login route', () => {
       'cid'
     );
     expect(response.status).toBe(200);
-    expect(response.headers.get('Set-Cookie')).toContain('lovely_home_demo_auth=');
+    const json = await response.json();
+    expect(json.ok).toBe(true);
+    expect(String(json[DEMO_AUTH_PROXY_COOKIE_FIELD] ?? '')).toContain('lovely_home_demo_auth=');
+    expect(String(json[DEVICE_SESSION_PROXY_COOKIE_FIELD] ?? '')).toContain(
+      'lovely_home_device_session='
+    );
   });
 
   it('reports session state', async () => {
@@ -94,9 +101,13 @@ describe('demo login route', () => {
       demoEnv,
       'cid'
     );
-    const cookie = login.headers.get('Set-Cookie') ?? '';
+    const loginJson = await login.json();
+    const cookieMatch = String(loginJson[DEMO_AUTH_PROXY_COOKIE_FIELD] ?? '').match(/^[^;]+/);
+    const cookiePair = cookieMatch?.[0] ?? '';
     const session = await handleDemoSession(
-      new Request('https://demo.test/api/demo/session', { headers: { Cookie: cookie } }),
+      new Request('https://demo.test/api/demo/session', {
+        headers: { Cookie: cookiePair }
+      }),
       demoEnv,
       'cid'
     );
