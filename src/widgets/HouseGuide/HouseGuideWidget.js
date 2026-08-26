@@ -20,6 +20,7 @@ import {
 } from './guidePageRenderer.js';
 import { APPLIANCE_MANUALS_CATEGORY_ID } from '../../services/applianceManualsConstants.js';
 import { refreshApplianceManuals } from '../../services/applianceManualsService.js';
+import { getPetDisplayName } from '../../lib/petDisplayName.js';
 import { refreshGuideContent, subscribeToGuideContent } from '../../services/guideContentService.js';
 import { renderApplianceManualsSitterView } from './applianceManualsSitterView.js';
 import { renderApplianceManualViewer } from './applianceManualsViewer.js';
@@ -287,7 +288,7 @@ function createInteractiveHouseGuide(context) {
 
     const topics = searchGuideTopics(query);
     if (topics.length === 0) {
-      searchStatus.textContent = 'Nothing matched — try heating, Wi-Fi, or Scooter feeding.';
+      searchStatus.textContent = `Nothing matched — try heating, Wi-Fi, or ${getPetDisplayName('pet')} feeding.`;
       return;
     }
 
