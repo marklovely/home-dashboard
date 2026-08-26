@@ -86,9 +86,7 @@ describe('demo login route', () => {
     const json = await response.json();
     expect(json.ok).toBe(true);
     expect(String(json[DEMO_AUTH_PROXY_COOKIE_FIELD] ?? '')).toContain('lovely_home_demo_auth=');
-    expect(String(json[DEVICE_SESSION_PROXY_COOKIE_FIELD] ?? '')).toContain(
-      'lovely_home_device_session='
-    );
+    expect(json[DEVICE_SESSION_PROXY_COOKIE_FIELD]).toBeUndefined();
   });
 
   it('reports session state', async () => {
