@@ -1,4 +1,9 @@
+import { isDemoHubEnvironment } from '../../auth/hubEnvironment.js';
+
 /** @typedef {{ id: string, label: string, description: string, ownerOnly?: boolean }} SettingsSection */
+
+/** Owner panels hidden on the public demo hub. */
+const DEMO_HIDDEN_OWNER_PANEL_IDS = new Set(['guest-mode', 'cameras', 'utilities']);
 
 export const SETTINGS_PANEL_STORAGE_KEY = 'home-dashboard-settings-panel';
 
@@ -67,9 +72,12 @@ export const OWNER_SETTINGS_SECTIONS = [
  */
 export function getSettingsSections(isOwner) {
   if (!isOwner) return [...SHARED_SETTINGS_SECTIONS];
+  const ownerSections = isDemoHubEnvironment()
+    ? OWNER_SETTINGS_SECTIONS.filter((section) => !DEMO_HIDDEN_OWNER_PANEL_IDS.has(section.id))
+    : OWNER_SETTINGS_SECTIONS;
   return [
     SHARED_SETTINGS_SECTIONS[0],
-    ...OWNER_SETTINGS_SECTIONS,
+    ...ownerSections,
     SHARED_SETTINGS_SECTIONS[1],
     SHARED_SETTINGS_SECTIONS[2]
   ];

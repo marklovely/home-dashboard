@@ -36,6 +36,7 @@ module "hub_site" {
   hub_proxy_secret                      = lookup(var.hub_proxy_secrets, each.key, try(each.value.hub_proxy_secret, null))
   attach_hub_api_binding                = each.value.attach_hub_api_binding
   include_pages_dev_access_destinations = lookup(each.value, "include_pages_dev_access_destinations", true)
+  access_enabled                        = lookup(each.value, "access_enabled", true)
   platform_health_checks_enabled        = var.platform_admin.enabled
 }
 

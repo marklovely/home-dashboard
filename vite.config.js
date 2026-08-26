@@ -1,4 +1,4 @@
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import pkg from './package.json' with { type: 'json' };
@@ -15,7 +15,13 @@ export default defineConfig({
   },
   build: {
     outDir: '../dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(projectRoot, 'src/index.html'),
+        demoLogin: resolve(projectRoot, 'src/demo-login.html')
+      }
+    }
   }
 });
 
