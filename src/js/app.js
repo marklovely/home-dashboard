@@ -31,6 +31,8 @@ import {
   syncTabletPreferencesFromSiteProfile
 } from '../services/tabletPreferencesSyncService.js';
 import { initHubSetupRoutePolicy } from '../apps/HubSetup/hubSetupRoutePolicy.js';
+import { refreshGuideContent } from '../services/guideContentService.js';
+import { refreshApplianceManuals } from '../services/applianceManualsService.js';
 
 initTheme();
 initDisplayPreferences();
@@ -182,6 +184,10 @@ async function initialiseDashboard() {
     }
     initHubSetupRoutePolicy();
   });
+
+  // Prefetch published guide content so sitter apps are not empty while the catalog loads.
+  void refreshGuideContent(fetch, { draft: false });
+  void refreshApplianceManuals(fetch, { owner: false });
 }
 
 setStartupLoading(true);
