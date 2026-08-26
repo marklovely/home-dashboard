@@ -10,89 +10,154 @@
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
-  <div class="landing-wrap">
-    <div class="landing-bg" aria-hidden="true"></div>
-
-    <header class="site-header site-header--minimal">
-      <nav>
-        <a href="/">Home</a>
-        <a href="app.html">See the hub</a>
-        <a href="support.html">Support</a>
-      </nav>
-    </header>
-
-    <main class="page">
-      <h1>Privacy Policy</h1>
-      <p class="tagline">Lovely Home — home hub for your wall tablet.</p>
-      <p class="updated">Last updated: 26 August 2026</p>
-
-      <section>
-        <h2>Overview</h2>
-        <p>
-          Lovely Home is a progressive web app operated for private household use. Each installation is
-          set up and hosted for that household by its administrator.
-        </p>
-        <p>
-          This policy describes how the product handles information in general.
-        </p>
-        <p>
-          This marketing site at <strong>lovely-home.co.uk</strong> is static — it does not collect analytics
-          or account data. If you email support, we use your message only to respond.
-        </p>
-      </section>
-
-      <section>
-        <h2>Household hub data</h2>
-        <p>On a running hub, typical data includes:</p>
-        <ul>
-          <li><strong>House guide content</strong> — Topics, photos, and setup details you enter as the owner.</li>
-          <li><strong>Hub profile</strong> — Contacts, bin schedule, pet care notes, and display preferences you configure.</li>
-          <li><strong>Secrets</strong> — Wi‑Fi details, integration tokens, and similar values stored encrypted server-side.</li>
-          <li><strong>Session information</strong> — Device mode (owner vs sitter) and access cookies to keep sitter mode working between visits.</li>
-        </ul>
-        <p>
-          That data is stored on servers run for your household and is not shared with other Lovely Home
-          installations.
-        </p>
-      </section>
-
-      <section>
-        <h2>Third-party services</h2>
-        <p>A household hub may call external services configured by the owner, such as:</p>
-        <ul>
-          <li>Weather providers for forecast display</li>
-          <li>Alexa Virtual Buttons (or similar) for routine triggers</li>
-          <li>Calendar feeds for “My Day” (owner mode)</li>
-          <li>Secure sign-in for invited household members and guests</li>
-        </ul>
-        <p>Those services receive only what is needed for the feature the owner enabled.</p>
-      </section>
-
-      <section>
-        <h2>Local storage</h2>
-        <p>
-          The hub may cache guide content and preferences in the browser for speed and offline resilience.
-          Display preferences are also synced to the household profile so multiple tablets stay consistent.
-        </p>
-      </section>
-
-      <section>
-        <h2>Contact</h2>
-        <p>
-          Questions about this policy:
-          <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
-        </p>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <p>© 2026 Mark Lovely. All rights reserved.</p>
-      <p>
-        <a href="/">Home</a>
-        · <a href="support.html">Support</a>
-        · <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
-      </p>
-    </footer>
+  <div class="site-banner">
+    <div class="site-banner-inner">
+      <span>Lovely Home — home hub for wall tablets &amp; browsers</span>
+    </div>
   </div>
+
+  <header class="site-header">
+    <a class="brand-lockup brand-lockup--header" href="/">
+      <img class="brand-mark" src="favicon.png" width="52" height="52" alt="">
+      <span class="brand-text">
+        <span class="brand-name">Lovely Home</span>
+        <span class="brand-tagline">Everything guests need in one place</span>
+      </span>
+    </a>
+    <nav>
+      <a href="/">Home</a>
+      <a href="app.html">See the hub</a>
+      <a href="support.html">Support</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Lovely Home · Last updated: 26 August 2026</p>
+
+    <section>
+      <h2>Summary</h2>
+      <p>
+        Lovely Home is a private household hub — each installation is set up for one home and is not
+        a public sign-up service. Data you enter on a hub is stored on servers run for that household
+        and is not shared with other Lovely Home installations.
+      </p>
+      <p>
+        This marketing site at <strong>lovely-home.co.uk</strong> is static — it does not collect analytics
+        or account data. If you email support, we use your message only to respond.
+      </p>
+    </section>
+
+    <section>
+      <h2>Data stored on your household hub</h2>
+      <p>On a running hub, typical data includes information you enter or generate, such as:</p>
+      <ul>
+        <li>House guide topics, photos, and setup details you add as the owner</li>
+        <li>Hub profile — contacts, bin schedule, pet care notes, and display preferences</li>
+        <li>Secrets — Wi‑Fi details, integration tokens, and similar values stored encrypted server-side</li>
+        <li>Session information — device mode (owner vs sitter) and access cookies to keep sitter mode working between visits</li>
+        <li>Backup files you export from the hub (saved where you choose)</li>
+      </ul>
+      <p>
+        That data is stored on servers run for your household. We do not operate a central database
+        that mixes data from different homes.
+      </p>
+    </section>
+
+    <section>
+      <h2>Access and sign-in</h2>
+      <p>
+        Household members and guests sign in through secure access configured for that hub.
+        Sign-in is managed by the household administrator — there is no open public registration.
+      </p>
+      <p>
+        Owner mode may be protected by a PIN you set on the hub. That PIN is used to unlock owner
+        tools on the device; we do not use it to identify you across services.
+      </p>
+    </section>
+
+    <section>
+      <h2>Third-party services</h2>
+      <p>These apply only when the household owner enables them:</p>
+      <ul>
+        <li>
+          <strong>Weather providers</strong> — Forecast display may request location or postcode
+          information you configure in the hub profile.
+        </li>
+        <li>
+          <strong>Alexa Virtual Buttons</strong> (or similar) — Routine triggers send requests to
+          the integration the owner configured. We do not receive Alexa account passwords.
+        </li>
+        <li>
+          <strong>Calendar feeds</strong> — “My Day” in owner mode may read calendar URLs you provide.
+        </li>
+        <li>
+          <strong>Secure sign-in</strong> — Invited users may authenticate through an identity provider
+          configured for the hub (for example Cloudflare Access).
+        </li>
+      </ul>
+      <p>Those services receive only what is needed for the feature the owner enabled.</p>
+    </section>
+
+    <section>
+      <h2>Local storage</h2>
+      <p>
+        The hub may cache guide content and preferences in the browser for speed and offline resilience.
+        Display preferences are also synced to the household profile so multiple tablets stay consistent.
+      </p>
+    </section>
+
+    <section>
+      <h2>Reminders on the hub</h2>
+      <p>
+        Bin reminders and similar alerts are derived from schedule data already stored on your hub.
+        They are shown on the tablet or in the browser — we do not send marketing push notifications
+        from our own servers.
+      </p>
+    </section>
+
+    <section>
+      <h2>Analytics and tracking</h2>
+      <p>
+        We do not sell personal information. This marketing site does not use third-party advertising
+        or cross-site tracking. A household hub is a private installation — it is not used to build
+        advertising profiles.
+      </p>
+    </section>
+
+    <section>
+      <h2>Children</h2>
+      <p>
+        Lovely Home is not directed at children under 13. We do not knowingly collect personal
+        information from children.
+      </p>
+    </section>
+
+    <section>
+      <h2>Changes</h2>
+      <p>
+        We may update this policy from time to time. The “Last updated” date at the top will change
+        when we do. Continued use of the hub or this site after changes constitutes acceptance of
+        the updated policy.
+      </p>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>
+        Questions about privacy or this policy:
+        <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 Mark Lovely. All rights reserved.</p>
+    <p>
+      <a href="/">Home</a>
+      · <a href="support.html">Support</a>
+      · <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
+    </p>
+  </footer>
 </body>
 </html>

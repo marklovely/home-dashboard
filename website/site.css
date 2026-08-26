@@ -99,6 +99,24 @@ a { color: var(--accent); }
   font-weight: 500;
 }
 
+.brand-lockup--header {
+  gap: 0.75rem;
+}
+
+.brand-lockup--header .brand-mark {
+  width: 52px;
+  height: 52px;
+  box-shadow: 0 6px 20px rgba(107, 82, 232, 0.2);
+}
+
+.brand-lockup--header .brand-name {
+  font-size: 1.08rem;
+}
+
+.brand-lockup--header .brand-tagline {
+  font-size: 0.78rem;
+}
+
 .site-header nav {
   display: flex;
   gap: 1.15rem;
@@ -568,6 +586,10 @@ a { color: var(--accent); }
 @media (max-width: 900px) {
   .feature-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .brand-lockup--header .brand-tagline {
+    display: none;
   }
 }
 
