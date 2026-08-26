@@ -23,6 +23,9 @@ import { handleSession } from './routes/session.js';
 import { jsonError, methodNotAllowed, notFound } from './lib/errors.js';
 import { bindFetch } from './lib/boundFetch.js';
 import { isAccessConfigured } from './lib/accessJwt.js';
+import { isDemoAuthEnabled, demoMutationsBlockedResponse, isDemoHubWorker } from './lib/demoHub.js';
+import { handleDemoLogin, handleDemoLogout, handleDemoSession } from './routes/demoAuthRoute.js';
+import { ensureDemoHubSeeded, reseedDemoHubIfNeeded } from './lib/demoSeed.js';
 
 /**
  * @param {string} [headerValue]
@@ -71,10 +74,31 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
   const url = new URL(request.url);
   let response;
 
+  const demoMutationBlocked =
+    isDemoHubWorker(env) &&
+    (url.pathname === '/api/site/reset' ||
+      url.pathname === '/api/site/restore' ||
+      url.pathname === '/api/site/backup' ||
+      url.pathname === '/api/house-settings/sitter-emails' ||
+      (url.pathname.startsWith('/api/button/') && request.method === 'POST'));
+
   try {
     if (url.pathname === '/api/health' && request.method === 'GET') {
       response = handleHealth();
-    } else if (!isAccessConfigured(env) && url.pathname.startsWith('/api/') && url.pathname !== '/api/health') {
+    } else if (url.pathname === '/api/demo/login') {
+      response = await handleDemoLogin(request, env, correlationId);
+    } else if (url.pathname === '/api/demo/logout') {
+      response = await handleDemoLogout(request, env, correlationId);
+    } else if (url.pathname === '/api/demo/session') {
+      response = await handleDemoSession(request, env, correlationId);
+    } else if (demoMutationBlocked) {
+      response = demoMutationsBlockedResponse(correlationId);
+    } else if (
+      !isAccessConfigured(env) &&
+      !isDemoAuthEnabled(env) &&
+      url.pathname.startsWith('/api/') &&
+      url.pathname !== '/api/health'
+    ) {
       response = Response.json(
         { error: 'AUTH_NOT_CONFIGURED', message: 'Access authentication is not configured.' },
         { status: 503 }
@@ -166,6 +190,32 @@ export { ControlActionLimiter } from './durable/ControlActionLimiter.js';
 
 export default {
   async fetch(request, env, _ctx) {
+    if (isDemoHubWorker(env)) {
+      try {
+        await ensureDemoHubSeeded(env);
+      } catch (error) {
+        console.error(
+          JSON.stringify({
+            event: 'demo_seed_failed',
+            detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+          })
+        );
+      }
+    }
     return handleRequest(request, env, fetch);
+  },
+  async scheduled(event, env, _ctx) {
+    if (!isDemoHubWorker(env)) return;
+    try {
+      const reseeded = await reseedDemoHubIfNeeded(env);
+      console.log(JSON.stringify({ event: 'demo_scheduled_reseed', reseeded }));
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: 'demo_scheduled_reseed_failed',
+          detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+        })
+      );
+    }
   }
 };

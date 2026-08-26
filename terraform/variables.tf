@@ -66,6 +66,8 @@ variable "sites" {
     hub_proxy_secret                      = optional(string)
     attach_hub_api_binding                = optional(bool, true)
     include_pages_dev_access_destinations = optional(bool, true)
+    access_enabled                        = optional(bool, true)
+    demo_public                           = optional(bool, false)
     owner_emails                          = optional(list(string))
     sitter_emails                         = optional(list(string))
     tester_emails                         = optional(list(string))

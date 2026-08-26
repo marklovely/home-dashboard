@@ -148,6 +148,9 @@ function appendSiteBlock(siteId, meta) {
   lines.push(`    terraform       = true`);
   lines.push(`    attach_hub_api_binding = ${attach ? 'true' : 'false'}`);
   lines.push(`    include_pages_dev_access_destinations = ${includePagesDevAccess ? 'true' : 'false'}`);
+  if (meta.access_enabled === false) {
+    lines.push('    access_enabled = false');
+  }
 
   const siteOwnerEmails = parseEmailList(meta.owner_emails);
   const siteSitterEmails = parseEmailList(meta.sitter_emails);

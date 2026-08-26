@@ -1,14 +1,20 @@
-import { isTestHubEnvironment } from '../auth/hubEnvironment.js';
+import { isDemoHubEnvironment, isTestHubEnvironment } from '../auth/hubEnvironment.js';
 
-/** Apps hidden in test until site-specific setup exists. */
-const TEST_HIDDEN_APP_IDS = ['controls', 'scooter'];
+/** Apps hidden on vanilla hubs until site-specific setup exists. */
+const VANILLA_HIDDEN_APP_IDS = ['controls', 'scooter'];
+
+/** Apps excluded from the public demo (paid add-ons or not applicable). */
+const DEMO_HIDDEN_APP_IDS = ['controls', 'cameras'];
 
 /**
  * @param {import('../types/app.js').App} app
  */
 export function isAppEnabledForEnvironment(app) {
+  if (isDemoHubEnvironment()) {
+    return !DEMO_HIDDEN_APP_IDS.includes(app.id);
+  }
   if (!isTestHubEnvironment()) return true;
-  return !TEST_HIDDEN_APP_IDS.includes(app.id);
+  return !VANILLA_HIDDEN_APP_IDS.includes(app.id);
 }
 
 /**

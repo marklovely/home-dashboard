@@ -117,6 +117,11 @@ export function isVanillaHubEnvironment() {
   return getHubEnvironmentSync() !== 'production';
 }
 
+/** Public demo hub at demo.lovely-home.co.uk. */
+export function isDemoHubEnvironment() {
+  return getHubEnvironmentSync() === 'demo';
+}
+
 /** @deprecated Prefer isVanillaHubEnvironment */
 export function isTestHubEnvironment() {
   return isVanillaHubEnvironment();

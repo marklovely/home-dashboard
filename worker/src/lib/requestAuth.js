@@ -2,6 +2,8 @@ import { verifyAccessJwt, isAccessConfigured } from './accessJwt.js';
 import { readAccessJwtFromRequest } from './accessJwtFromRequest.js';
 import { verifyHubProxyAccessEmail } from './hubProxyAuth.js';
 import { resolveRoleFromEmail } from './accessRoles.js';
+import { isDemoAuthEnabled } from './demoHub.js';
+import { verifyDemoAuthCookie } from './demoAuth.js';
 
 /** @typedef {'owner' | 'house-sitter'} LovelyHomeRole */
 
@@ -26,6 +28,14 @@ import { resolveRoleFromEmail } from './accessRoles.js';
  * @returns {Promise<AuthSuccess | AuthFailure>}
  */
 export async function authenticateRequest(request, env, fetchImpl = fetch) {
+  if (isDemoAuthEnabled(env)) {
+    const demo = await verifyDemoAuthCookie(request, env);
+    if (demo.ok) {
+      return { ok: true, email: demo.email, role: demo.role };
+    }
+    return { ok: false, status: 401, code: 'UNAUTHENTICATED' };
+  }
+
   if (!isAccessConfigured(env)) {
     return { ok: false, status: 503, code: 'AUTH_NOT_CONFIGURED' };
   }
