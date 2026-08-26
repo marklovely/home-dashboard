@@ -24,7 +24,7 @@ import { jsonError, methodNotAllowed, notFound } from './lib/errors.js';
 import { bindFetch } from './lib/boundFetch.js';
 import { isAccessConfigured } from './lib/accessJwt.js';
 import { isDemoAuthEnabled, demoMutationsBlockedResponse, isDemoHubWorker } from './lib/demoHub.js';
-import { handleDemoLogin, handleDemoLogout, handleDemoSession } from './routes/demoAuthRoute.js';
+import { handleDemoLogin, handleDemoLogout, handleDemoReseed, handleDemoSession } from './routes/demoAuthRoute.js';
 import { ensureDemoHubSeeded, reseedDemoHubIfNeeded } from './lib/demoSeed.js';
 
 /**
@@ -91,6 +91,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleDemoLogout(request, env, correlationId);
     } else if (url.pathname === '/api/demo/session') {
       response = await handleDemoSession(request, env, correlationId);
+    } else if (url.pathname === '/api/demo/reseed') {
+      response = await handleDemoReseed(request, env, correlationId);
     } else if (demoMutationBlocked) {
       response = demoMutationsBlockedResponse(correlationId);
     } else if (
