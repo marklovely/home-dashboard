@@ -27,7 +27,7 @@ Override `DEMO_USERNAME` / `DEMO_PASSWORD` when running `scripts/set-worker-secr
 
 ## Architecture
 
-1. **Pages** — `DEMO_PUBLIC=true` enables `functions/lib/demoPagesGate.js`, which redirects unauthenticated visitors to `/demo-login` (served by `functions/demo-login.js` from `demo-login.html`).
+1. **Pages** — `DEMO_PUBLIC=true` enables `functions/lib/demoPagesGate.js`, which redirects unauthenticated visitors to `/sign-in` (built from `sign-in.html`). Do not add `_redirects` rules for the login path — they conflict with Cloudflare pretty URLs and cause redirect loops.
 2. **Worker** — `DEMO_AUTH_ENABLED=true` on the `demo` Wrangler env; `/api/demo/login` issues an HttpOnly cookie and a sitter device session.
 3. **Reseed** — hourly cron (`0 * * * *`) calls `reseedDemoHubIfNeeded()`; reseeds once per London calendar day.
 4. **Terraform** — demo site sets `access_enabled = false` and omits Access AUD env vars on Pages.
@@ -43,4 +43,16 @@ Override `DEMO_USERNAME` / `DEMO_PASSWORD` when running `scripts/set-worker-secr
 
 ## Local development
 
-Demo auth routes are only active when `HUB_ENVIRONMENT=demo` and `DEMO_AUTH_ENABLED=true` on the Worker. The login page is built as `dist/demo-login.html` via Vite multi-page input.
+Demo auth routes are only active when `HUB_ENVIRONMENT=demo` and `DEMO_AUTH_ENABLED=true` on the Worker. The login page is built as `dist/sign-in.html` (URL `/sign-in`) via Vite multi-page input.
+
+## Troubleshooting redirect loops
+
+If the browser shows `ERR_TOO_MANY_REDIRECTS` on the demo hostname:
+
+1. Confirm the latest Pages deploy includes `sign-in.html` and **no** `_redirects` file in `dist/`.
+2. In Cloudflare Pages → `home-dashboard-demo` → **Environment variables**: `DEMO_PUBLIC=true`, and remove `CF_ACCESS_*` vars if present.
+3. Purge cache for `demo.lovely-home.co.uk` (Caching → Configuration → Purge Everything) — stale `_redirects` rules can persist at the edge.
+4. Test with curl (expect **200** on `/sign-in`, not **308** looping):
+   ```bash
+   curl -sI https://demo.lovely-home.co.uk/sign-in | grep -i '^HTTP\|^location'
+   ```

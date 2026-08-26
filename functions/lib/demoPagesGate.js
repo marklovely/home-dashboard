@@ -1,17 +1,21 @@
 /**
  * When DEMO_PUBLIC is set on the Pages project, require demo username/password
  * before serving the hub shell (Cloudflare Access is disabled for this site).
+ *
+ * Login is served as dist/sign-in.html → /sign-in via Cloudflare Pages pretty URLs.
+ * Do not add _redirects rules for the login path — they conflict with pretty URLs
+ * and cause ERR_TOO_MANY_REDIRECTS (308 loops on /demo-login).
  */
 
-/** Canonical demo login path (served by functions/demo-login.js). */
-export const DEMO_LOGIN_PATH = '/demo-login';
+/** @type {readonly string[]} */
+export const DEMO_PUBLIC_PATHS = ['/sign-in', '/sign-in/'];
 
 /**
  * @param {string} pathname
  */
-function isPublicDemoAsset(pathname) {
-  if (pathname === DEMO_LOGIN_PATH || pathname === `${DEMO_LOGIN_PATH}/`) return true;
-  if (pathname === '/demo-login.html') return true;
+export function isDemoPublicPath(pathname) {
+  if (DEMO_PUBLIC_PATHS.includes(pathname)) return true;
+  if (pathname === '/sign-in.html') return true;
   if (pathname.startsWith('/api/demo/')) return true;
   if (pathname === '/api/health') return true;
   if (pathname.startsWith('/assets/')) return true;
@@ -33,15 +37,17 @@ export async function demoPagesGate(context) {
   const url = new URL(context.request.url);
   const { pathname } = url;
 
-  if (isPublicDemoAsset(pathname)) {
+  if (isDemoPublicPath(pathname)) {
     return context.next();
   }
 
   const sessionUrl = new URL('/api/demo/session', url.origin);
   try {
     const sessionResponse = await fetch(sessionUrl.toString(), {
+      method: 'GET',
       headers: {
-        Cookie: context.request.headers.get('Cookie') ?? ''
+        Cookie: context.request.headers.get('Cookie') ?? '',
+        Accept: 'application/json'
       }
     });
     if (sessionResponse.ok) {
@@ -59,7 +65,7 @@ export async function demoPagesGate(context) {
     pathname === '/' || pathname === '/index.html' || (!pathname.includes('.') && acceptsHtml);
 
   if (isAppShellRoute) {
-    return Response.redirect(new URL(DEMO_LOGIN_PATH, url.origin).toString(), 302);
+    return Response.redirect(new URL('/sign-in', url.origin).toString(), 302);
   }
 
   return context.next();
