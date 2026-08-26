@@ -12,7 +12,7 @@ copyFileSync(join(srcDir, 'service-worker.js'), join(distDir, 'service-worker.js
 copyFileSync(join(srcDir, 'manifest.webmanifest'), join(distDir, 'manifest.webmanifest'));
 cpSync(join(srcDir, 'icons'), join(distDir, 'icons'), { recursive: true });
 
-// Serve demo-login.html at /demo-login without a 302 (prevents .html ↔ pretty-URL loops).
-writeFileSync(join(distDir, '_redirects'), '/demo-login /demo-login.html 200\n');
+// Keep .html URLs stable — Pages otherwise 308-strips to /demo-login and loops with _redirects.
+writeFileSync(join(distDir, '_redirects'), '/demo-login.html /demo-login.html 200\n');
 
 console.log('Copied PWA shell assets to dist/');

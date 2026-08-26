@@ -9,6 +9,10 @@ import { demoPagesGate } from './lib/demoPagesGate.js';
  * @type {import('@cloudflare/workers-types').PagesFunction}
  */
 async function accessMiddleware(context) {
+  if (context.env.DEMO_PUBLIC === 'true') {
+    return context.next();
+  }
+
   const domain = accessTeamOrigin(context.env.CF_ACCESS_TEAM_DOMAIN);
   const aud = context.env.CF_ACCESS_AUD_PAGES?.trim();
   if (!domain || !aud) {

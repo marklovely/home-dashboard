@@ -27,7 +27,7 @@ Override `DEMO_USERNAME` / `DEMO_PASSWORD` when running `scripts/set-worker-secr
 
 ## Architecture
 
-1. **Pages** — `DEMO_PUBLIC=true` enables `functions/lib/demoPagesGate.js`, which redirects unauthenticated visitors to `/demo-login` (rewritten to `demo-login.html` via `_redirects`).
+1. **Pages** — `DEMO_PUBLIC=true` enables `functions/lib/demoPagesGate.js`, which redirects unauthenticated visitors to `/demo-login` (served by `functions/demo-login.js` from `demo-login.html`).
 2. **Worker** — `DEMO_AUTH_ENABLED=true` on the `demo` Wrangler env; `/api/demo/login` issues an HttpOnly cookie and a sitter device session.
 3. **Reseed** — hourly cron (`0 * * * *`) calls `reseedDemoHubIfNeeded()`; reseeds once per London calendar day.
 4. **Terraform** — demo site sets `access_enabled = false` and omits Access AUD env vars on Pages.
