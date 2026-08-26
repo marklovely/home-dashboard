@@ -31,21 +31,47 @@
         padding: 1.5rem;
       }
       main {
-        width: min(420px, 100%);
+        width: min(440px, 100%);
         background: var(--panel);
         border: 1px solid var(--border);
         border-radius: 1rem;
         padding: 2rem;
         box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
       }
+      .eyebrow {
+        margin: 0 0 0.35rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 600;
+      }
       h1 {
         margin: 0 0 0.35rem;
         font-size: 1.5rem;
       }
       p {
-        margin: 0 0 1.5rem;
+        margin: 0 0 1rem;
         color: var(--muted);
         line-height: 1.5;
+      }
+      .included {
+        margin: 0 0 1.25rem;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.875rem;
+        color: var(--muted);
+      }
+      .included li::before {
+        content: '✓ ';
+        color: #86efac;
+      }
+      .excluded {
+        margin: 0 0 1.5rem;
+        font-size: 0.8125rem;
+        color: var(--muted);
       }
       label {
         display: block;
@@ -96,19 +122,26 @@
   </head>
   <body>
     <main>
-      <h1>Lovely Home Demo</h1>
-      <p>Explore a sample hub with guest home, house guide, pet care, bins, and emergency info. Data resets overnight.</p>
+      <p class="eyebrow">Lovely Home</p>
+      <h1>Public demo hub</h1>
+      <p>Explore a sample guest tablet experience with fictional data that resets overnight.</p>
+      <ul class="included">
+        <li>Guest home, house guide, and pet care (Bailey)</li>
+        <li>Bins, emergency, appliance manuals, and weather</li>
+        <li>Owner explore with PIN <strong>1234</strong> after sign-in</li>
+      </ul>
+      <p class="excluded">Cameras and home controls are not included in this demo.</p>
       <form id="demo-login-form">
         <div class="error" id="demo-login-error" aria-live="polite"></div>
         <label for="demo-username">Username</label>
-        <input id="demo-username" name="username" autocomplete="username" required />
+        <input id="demo-username" name="username" autocomplete="username" value="demo" required />
         <label for="demo-password">Password</label>
         <input id="demo-password" name="password" type="password" autocomplete="current-password" required />
         <button type="submit" id="demo-login-submit">Open demo</button>
       </form>
       <p class="hint">
-        Owner explore PIN after login: <strong>1234</strong>. Cameras and home controls are not included in this demo.
-        <a href="https://lovely-home.co.uk/">Learn more at lovely-home.co.uk</a>
+        Shared demo credentials are fine for trials. Learn more at
+        <a href="https://lovely-home.co.uk/">lovely-home.co.uk</a>.
       </p>
     </main>
     <script type="module">

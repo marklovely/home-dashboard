@@ -17,7 +17,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day) stay hidden from sitters. The sitter tablet shows a simpler Lovely Home home screen with Scooter, House Guide, Controls, Emergency, Weather, and Bins.'
+        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day) stay hidden from sitters. The sitter tablet shows a simpler Lovely Home home screen with pet care (when configured), House Guide, Controls (when configured), Emergency, Weather, and Bins.'
       },
       {
         type: 'ul',
