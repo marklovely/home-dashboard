@@ -10,7 +10,16 @@ else
   WRANGLER=(npx wrangler)
 fi
 
-"${WRANGLER[@]}" pages deploy ./website --project-name lovely-home --branch main --commit-dirty=true
+PROJECT_NAME="lovely-home"
+PRODUCTION_BRANCH="main"
+
+if ! "${WRANGLER[@]}" pages project list 2>/dev/null | grep -qE "│ ${PROJECT_NAME}[[:space:]]"; then
+  echo "==> Creating Pages project: ${PROJECT_NAME} (production branch: ${PRODUCTION_BRANCH})"
+  "${WRANGLER[@]}" pages project create "${PROJECT_NAME}" --production-branch "${PRODUCTION_BRANCH}"
+fi
+
+echo "==> Deploying ./website to ${PROJECT_NAME} (branch=${PRODUCTION_BRANCH})"
+"${WRANGLER[@]}" pages deploy ./website --project-name "${PROJECT_NAME}" --branch "${PRODUCTION_BRANCH}" --commit-dirty=true
 
 echo
 echo "Home:     https://lovely-home.co.uk/"
