@@ -121,5 +121,8 @@ describe('demo seed payload', () => {
     expect(payload.siteProfile?.cameras?.enabled).toBe(false);
     expect(payload.hubSecrets?.owner_pin).toBe('1234');
     expect(payload.guide?.catalog?.categories?.some((category) => category.id === 'pets')).toBe(true);
+    const pets = payload.guide?.catalog?.categories?.find((category) => category.id === 'pets');
+    expect(pets?.title).toBe('Bailey');
+    expect(pets?.topics?.some((topic) => topic.id === 'at-a-glance')).toBe(true);
   });
 });
