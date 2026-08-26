@@ -29,3 +29,9 @@ bash scripts/deploy-lovely-home-website.sh
 Attach the custom domain **lovely-home.co.uk** (and optionally **www**) in the Cloudflare dashboard after the first deploy. Point DNS at Cloudflare when the domain transfer from Hostinger is complete.
 
 Screenshots live in `website/screenshots/` (copied from `docs/screenshots/`). Re-copy after updating hub UI captures.
+
+Brand assets:
+
+- `lovely-home-logo-dark.png` — wordmark for the light marketing pages
+- `lovely-home-logo.png` — light wordmark for dark backgrounds (hub shell / R2)
+- `favicon.png` — square hub icon for browser tabs
