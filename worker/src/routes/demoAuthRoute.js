@@ -45,26 +45,23 @@ export async function handleDemoLogin(request, env, correlationId) {
   }
 
   const sitterSession = await issueSitterSessionResponse(env);
-  if (!sitterSession.ok) {
-    return jsonError(503, 'UNAVAILABLE', 'Demo login is not configured.', { correlationId });
-  }
-
-  /** @type {Record<string, unknown>} */
-  let sitterPayload = {};
-  try {
-    sitterPayload = await sitterSession.json();
-  } catch {
-    return jsonError(503, 'UNAVAILABLE', 'Demo login is not configured.', { correlationId });
-  }
 
   /** @type {Record<string, unknown>} */
   const responseBody = {
     ok: true,
     [DEMO_AUTH_PROXY_COOKIE_FIELD]: demoAuthSetCookieHeader(cookieValue)
   };
-  const deviceCookie = sitterPayload[DEVICE_SESSION_PROXY_COOKIE_FIELD];
-  if (typeof deviceCookie === 'string') {
-    responseBody[DEVICE_SESSION_PROXY_COOKIE_FIELD] = deviceCookie;
+
+  if (sitterSession.ok) {
+    try {
+      const sitterPayload = await sitterSession.json();
+      const deviceCookie = sitterPayload[DEVICE_SESSION_PROXY_COOKIE_FIELD];
+      if (typeof deviceCookie === 'string') {
+        responseBody[DEVICE_SESSION_PROXY_COOKIE_FIELD] = deviceCookie;
+      }
+    } catch {
+      /* device session is optional for demo login */
+    }
   }
 
   return Response.json(responseBody, {
