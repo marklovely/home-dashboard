@@ -122,7 +122,7 @@
           if (!response.ok) return;
           const json = await response.json();
           if (json?.authenticated) {
-            window.location.replace('./');
+            window.location.replace('/');
           }
         } catch {
           /* offline */
@@ -149,7 +149,7 @@
               response.status === 401 ? 'Invalid username or password.' : 'Could not sign in. Try again shortly.';
             return;
           }
-          window.location.replace('./');
+          window.location.replace('/');
         } catch {
           errorEl.textContent = 'Network error. Check your connection and try again.';
         } finally {

@@ -19,7 +19,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(projectRoot, 'src/index.html'),
-        demoLogin: resolve(projectRoot, 'src/demo-login.html')
+        signIn: resolve(projectRoot, 'src/sign-in.html')
       }
     }
   }
