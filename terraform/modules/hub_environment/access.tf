@@ -37,6 +37,8 @@ locals {
 }
 
 resource "cloudflare_zero_trust_access_application" "pages" {
+  count = var.access_enabled ? 1 : 0
+
   account_id       = var.account_id
   name             = "Lovely Home — ${var.site_id} Pages"
   type             = "self_hosted"
@@ -67,6 +69,8 @@ resource "cloudflare_zero_trust_access_application" "pages" {
 }
 
 resource "cloudflare_zero_trust_access_application" "worker" {
+  count = var.access_enabled ? 1 : 0
+
   account_id       = var.account_id
   name             = "Lovely Home — ${var.site_id} Worker"
   type             = "self_hosted"

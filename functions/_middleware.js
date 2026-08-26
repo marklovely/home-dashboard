@@ -1,5 +1,6 @@
 import cloudflareAccessPlugin from '@cloudflare/pages-plugin-cloudflare-access';
 import { accessTeamOrigin } from './lib/accessTeamDomain.js';
+import { demoPagesGate } from './lib/demoPagesGate.js';
 
 /**
  * Validates Cloudflare Access on Pages Functions (including /api/*).
@@ -21,4 +22,4 @@ async function accessMiddleware(context) {
   return handler(context);
 }
 
-export const onRequest = [accessMiddleware];
+export const onRequest = [demoPagesGate, accessMiddleware];
