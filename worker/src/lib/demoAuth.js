@@ -3,6 +3,8 @@ import { DEMO_AUTH_EMAIL, isDemoAuthEnabled } from './demoHub.js';
 import { resolveRoleFromEmail } from './accessRoles.js';
 
 export const DEMO_AUTH_COOKIE = 'lovely_home_demo_auth';
+/** Pages proxy field when service bindings drop Set-Cookie on JSON responses. */
+export const DEMO_AUTH_PROXY_COOKIE_FIELD = '_demoAuthCookie';
 const DEMO_AUTH_TTL_SEC = 60 * 60 * 12;
 
 /**
