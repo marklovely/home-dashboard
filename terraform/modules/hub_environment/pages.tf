@@ -59,7 +59,7 @@ resource "cloudflare_pages_project" "dashboard" {
             type  = "plain_text"
             value = cloudflare_zero_trust_access_application.pages[0].aud
           }
-        } : {
+          } : {
           DEMO_PUBLIC = {
             type  = "plain_text"
             value = "true"
