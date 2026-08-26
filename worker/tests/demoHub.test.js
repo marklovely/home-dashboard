@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createDemoAuthCookie,
   demoAuthSetCookieHeader,
@@ -8,8 +8,10 @@ import {
 } from '../src/lib/demoAuth.js';
 import { DEVICE_SESSION_PROXY_COOKIE_FIELD } from '../src/lib/deviceSession.js';
 import { buildDemoSeedPayload } from '../src/lib/demoSeed.js';
+import * as demoSeed from '../src/lib/demoSeed.js';
 import { getLondonDateKey, isDemoAuthEnabled, isDemoHubWorker } from '../src/lib/demoHub.js';
-import { handleDemoLogin, handleDemoSession } from '../src/routes/demoAuthRoute.js';
+import { handleDemoLogin, handleDemoReseed, handleDemoSession } from '../src/routes/demoAuthRoute.js';
+import { createTestOwnerAuthLimiter } from './testOwnerAuthLimiter.js';
 
 const demoEnv = {
   HUB_ENVIRONMENT: 'demo',
@@ -17,7 +19,8 @@ const demoEnv = {
   DEMO_USERNAME: 'demo',
   DEMO_PASSWORD: 'lovely-demo',
   HUB_PROXY_SECRET: 'test-demo-secret-at-least-32-chars-long',
-  OWNER_EMAILS: 'demo@lovely-home.co.uk'
+  OWNER_EMAILS: 'demo@lovely-home.co.uk',
+  OWNER_AUTH_LIMITER: createTestOwnerAuthLimiter()
 };
 
 describe('demoHub helpers', () => {
@@ -72,6 +75,28 @@ describe('demo login route', () => {
     expect(response.status).toBe(401);
   });
 
+  it('rate limits repeated failed logins', async () => {
+    const requestInit = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.55' },
+      body: JSON.stringify({ username: 'demo', password: 'bad' })
+    };
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await handleDemoLogin(
+        new Request('https://demo.test/api/demo/login', requestInit),
+        demoEnv,
+        'cid'
+      );
+      expect(response.status).toBe(401);
+    }
+    const blocked = await handleDemoLogin(
+      new Request('https://demo.test/api/demo/login', requestInit),
+      demoEnv,
+      'cid'
+    );
+    expect(blocked.status).toBe(429);
+  });
+
   it('embeds proxy cookie fields on successful login', async () => {
     const response = await handleDemoLogin(
       new Request('https://demo.test/api/demo/login', {
@@ -111,6 +136,32 @@ describe('demo login route', () => {
     );
     expect(session.status).toBe(200);
     expect(await session.json()).toEqual({ authenticated: true });
+  });
+});
+
+describe('demo reseed route', () => {
+  it('requires admin bearer auth', async () => {
+    const unauthorized = await handleDemoReseed(
+      new Request('https://demo.test/api/demo/reseed', { method: 'POST' }),
+      demoEnv,
+      'cid'
+    );
+    expect(unauthorized.status).toBe(401);
+
+    const reseed = vi.spyOn(demoSeed, 'reseedDemoHub').mockResolvedValue(undefined);
+
+    const authorized = await handleDemoReseed(
+      new Request('https://demo.test/api/demo/reseed', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-demo-secret-at-least-32-chars-long' }
+      }),
+      demoEnv,
+      'cid'
+    );
+    expect(authorized.status).toBe(200);
+    expect(await authorized.json()).toEqual({ ok: true, reseeded: true });
+    expect(reseed).toHaveBeenCalledOnce();
+    reseed.mockRestore();
   });
 });
 
