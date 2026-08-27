@@ -4,6 +4,8 @@ import { existsSync, readFileSync } from 'node:fs';
 const STRING_FIELD_TO_ENV = {
   cloudflare_account_id: 'CLOUDFLARE_ACCOUNT_ID',
   cloudflare_zone_id: 'CLOUDFLARE_ZONE_ID',
+  customer_cloudflare_zone_id: 'CUSTOMER_CLOUDFLARE_ZONE_ID',
+  customer_zone_name: 'CUSTOMER_ZONE_NAME',
   workers_subdomain: 'WORKERS_SUBDOMAIN',
   access_team_domain: 'ACCESS_TEAM_DOMAIN',
   zone_name: 'ZONE_NAME',

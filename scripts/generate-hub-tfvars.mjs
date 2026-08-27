@@ -36,6 +36,8 @@ const zoneId = requiredEnv('CLOUDFLARE_ZONE_ID');
 const workersSubdomain = requiredEnv('WORKERS_SUBDOMAIN');
 const accessTeamDomain = requiredEnv('ACCESS_TEAM_DOMAIN');
 const zoneName = process.env.ZONE_NAME?.trim() || 'lovely-home.co.uk';
+const customerZoneName = process.env.CUSTOMER_ZONE_NAME?.trim() || 'lovely-hub.com';
+const customerZoneId = process.env.CUSTOMER_CLOUDFLARE_ZONE_ID?.trim() || '';
 const ownerEmails = splitCsv(process.env.OWNER_EMAILS);
 const sitterEmails = splitCsv(process.env.SITTER_EMAILS);
 const operatorEmails = splitCsv(process.env.PLATFORM_OPERATOR_EMAILS);
@@ -72,7 +74,18 @@ const lines = [
   `workers_subdomain     = "${escapeHcl(workersSubdomain)}"`,
   `access_team_domain    = "${escapeHcl(accessTeamDomain)}"`,
   `zone_name             = "${escapeHcl(zoneName)}"`,
-  '',
+  ''
+];
+
+if (customerZoneId) {
+  lines.push(
+    `customer_cloudflare_zone_id = "${escapeHcl(customerZoneId)}"`,
+    `customer_zone_name          = "${escapeHcl(customerZoneName)}"`,
+    ''
+  );
+}
+
+lines.push(
   'owner_emails = [',
   ...ownerEmails.map((email) => `  "${escapeHcl(email)}",`),
   ']',
@@ -85,7 +98,7 @@ const lines = [
   ...operatorEmails.map((email) => `  "${escapeHcl(email)}",`),
   ']',
   ''
-];
+);
 
 if (platformGithubToken) {
   lines.push(`platform_github_token = "${escapeHcl(platformGithubToken)}"`, '');
@@ -146,6 +159,10 @@ function appendSiteBlock(siteId, meta) {
   lines.push(`    hub_environment = "${escapeHcl(hubEnvironment)}"`);
   lines.push(`    vanilla         = ${vanilla ? 'true' : 'false'}`);
   lines.push(`    terraform       = true`);
+  const siteZone = String(meta.zone_name ?? '').trim();
+  if (siteZone && siteZone !== zoneName) {
+    lines.push(`    zone_name       = "${escapeHcl(siteZone)}"`);
+  }
   lines.push(`    attach_hub_api_binding = ${attach ? 'true' : 'false'}`);
   lines.push(`    include_pages_dev_access_destinations = ${includePagesDevAccess ? 'true' : 'false'}`);
   if (meta.access_enabled === false) {

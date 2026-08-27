@@ -2,6 +2,9 @@ import { parseEmailList, validateEmailList } from '../../lib/emailLists.js';
 
 const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
 const HOSTNAME_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+const PLATFORM_ZONE_NAME = 'lovely-home.co.uk';
+const CUSTOMER_HUB_ZONE_NAME = 'lovely-hub.com';
+const ALLOWED_HUB_ZONES = [PLATFORM_ZONE_NAME, CUSTOMER_HUB_ZONE_NAME];
 const PROTECTED_SITE_IDS = new Set(['production']);
 
 /**
@@ -18,14 +21,13 @@ function validateSiteId(siteId) {
 
 /**
  * @param {string} hostname
- * @param {string} zoneName
  */
-function validateHostname(hostname, zoneName) {
+function validateHostname(hostname) {
   const host = String(hostname ?? '').trim().toLowerCase();
   if (!host) return 'Hostname is required.';
   if (!HOSTNAME_RE.test(host)) return 'Hostname must be a valid DNS name.';
-  if (!host.endsWith(`.${zoneName}`) && host !== zoneName) {
-    return `Hostname must be under ${zoneName}.`;
+  if (!ALLOWED_HUB_ZONES.some((zone) => host === zone || host.endsWith(`.${zone}`))) {
+    return `Hostname must be under ${ALLOWED_HUB_ZONES.join(' or ')}.`;
   }
   return null;
 }
@@ -36,15 +38,21 @@ function validateHostname(hostname, zoneName) {
  * @param {string} zoneName
  */
 function defaultSiteEntry(siteId, payload, zoneName) {
+  const resolvedZone =
+    (payload.zone_name ? String(payload.zone_name) : '') ||
+    (siteId === 'production' || siteId === 'demo' ? PLATFORM_ZONE_NAME : zoneName);
   const hostname =
     (payload.hostname ? String(payload.hostname) : '') ||
-    (siteId === 'production' ? `dashboard.${zoneName}` : `${siteId}.${zoneName}`);
+    (siteId === 'production'
+      ? `dashboard.${PLATFORM_ZONE_NAME}`
+      : `${siteId}.${resolvedZone}`);
   return {
     hostname,
     hub_environment: (payload.hub_environment ? String(payload.hub_environment) : '') || siteId,
     vanilla: payload.vanilla !== false,
     terraform: payload.terraform !== false,
-    attach_hub_api_binding: payload.attach_hub_api_binding === true
+    attach_hub_api_binding: payload.attach_hub_api_binding === true,
+    ...(resolvedZone !== PLATFORM_ZONE_NAME ? { zone_name: resolvedZone } : {})
   };
 }
 
@@ -55,7 +63,7 @@ function defaultSiteEntry(siteId, payload, zoneName) {
  * @param {Record<string, unknown>} body
  */
 export function buildSiteManagePayload(manifest, action, siteId, body) {
-  const zoneName = manifest.platform?.zoneName ?? 'lovely-home.co.uk';
+  const zoneName = manifest.platform?.customerZoneName ?? CUSTOMER_HUB_ZONE_NAME;
   /** @type {Record<string, Record<string, string | boolean>>} */
   const existing = {};
 
@@ -96,6 +104,9 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
       : {}),
     ...(body.sitterEmails !== undefined || body.sitter_emails !== undefined
       ? { sitter_emails: parseEmailList(body.sitterEmails ?? body.sitter_emails) }
+      : {}),
+    ...(body.zoneName !== undefined || body.zone_name !== undefined
+      ? { zone_name: String(body.zoneName ?? body.zone_name) }
       : {})
   };
 
@@ -108,7 +119,7 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
       };
     }
     Object.assign(payload, defaultSiteEntry(siteId, payload, zoneName));
-    const hostError = validateHostname(String(payload.hostname), zoneName);
+    const hostError = validateHostname(String(payload.hostname));
     if (hostError) return { ok: false, error: 'VALIDATION_ERROR', message: hostError };
     const ownerError = validateEmailList(payload.owner_emails, { required: true });
     if (ownerError) return { ok: false, error: 'VALIDATION_ERROR', message: ownerError };
@@ -119,7 +130,7 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
       return { ok: false, error: 'VALIDATION_ERROR', message: `Site "${siteId}" is not in the registry.` };
     }
     if (payload.hostname !== undefined) {
-      const hostError = validateHostname(String(payload.hostname), zoneName);
+      const hostError = validateHostname(String(payload.hostname));
       if (hostError) return { ok: false, error: 'VALIDATION_ERROR', message: hostError };
     }
     if (payload.owner_emails !== undefined) {
@@ -210,15 +221,18 @@ export function validateSiteDeploy(siteId, manifest) {
  * @param {object} manifest
  */
 export function siteWizardSchema(manifest) {
-  const zoneName = manifest.platform?.zoneName ?? 'lovely-home.co.uk';
+  const zoneName = manifest.platform?.zoneName ?? PLATFORM_ZONE_NAME;
+  const customerZoneName = manifest.platform?.customerZoneName ?? CUSTOMER_HUB_ZONE_NAME;
   return {
     zoneName,
+    customerZoneName,
     protectedSiteIds: [...PROTECTED_SITE_IDS],
     existingSiteIds: Object.keys(manifest.sites ?? {}),
     defaults: {
       vanilla: true,
       terraform: true,
-      attachHubApiBinding: false
+      attachHubApiBinding: false,
+      zoneName: customerZoneName
     }
   };
 }
