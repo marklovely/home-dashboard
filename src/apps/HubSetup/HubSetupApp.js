@@ -57,6 +57,9 @@ import {
   getHubSetupStepMeta,
   getWizardSteps
 } from './hubSetupNavigation.js';
+import { HUB_COUNTRY_OPTIONS, normalizeHubCountryCode } from '../../lib/hubCountries.js';
+import { isValidPostcode, validateHubContacts } from '../../lib/contactValidation.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 
 const USE_CASE_OPTIONS = [
   { value: 'owner', label: 'Owner only' },
@@ -107,9 +110,8 @@ function mountHubSetupUnavailable(viewport, context) {
   retryButton.className = 'settings-action-button';
   retryButton.textContent = 'Try again';
   retryButton.addEventListener('click', () => {
-    retryButton.disabled = true;
-    void syncSiteProfileFromServer().finally(() => {
-      retryButton.disabled = false;
+    void withAsyncButtonFeedback(retryButton, 'Retrying…', async () => {
+      await syncSiteProfileFromServer();
       mountHubSetup(viewport, context);
     });
   });
@@ -222,6 +224,16 @@ function mountHubSetupWizard(viewport, context) {
   page.append(nav, panel);
   viewport.replaceChildren(page);
 
+  const hubCountry = createSetupSelect(
+    'Where is this property?',
+    normalizeHubCountryCode(profile.hubCountryCode),
+    HUB_COUNTRY_OPTIONS,
+    {
+      helpText:
+        'We use this for phone, email, and address validation. United Kingdom hubs can search addresses by postcode.',
+      helpLabel: 'Why country first?'
+    }
+  );
   const hubName = createSetupField('Hub name', String(profile.hubName ?? ''), {
     placeholder: 'Rose Cottage Hub',
     required: true,
@@ -241,7 +253,12 @@ function mountHubSetupWizard(viewport, context) {
     variant: 'secondary'
   });
 
-  const guestFields = createGuestAccessFields(profile);
+  const guestFields = createGuestAccessFields(profile, {
+    hubCountryCode: normalizeHubCountryCode(profile.hubCountryCode)
+  });
+  hubCountry.select.addEventListener('change', () => {
+    guestFields.setHubCountryCode(hubCountry.select.value);
+  });
   let binFields = createBinScheduleFields(profile, String(profile.useCase ?? 'owner'));
   let calendarFields = createCalendarConnectionField();
 
@@ -374,7 +391,10 @@ function mountHubSetupWizard(viewport, context) {
 
     if (stepId === 'hub') {
       body.append(
-        createSetupIntro('Give your hub a name and choose how guests will use it. You can change these later in Settings.'),
+        createSetupIntro(
+          'Start with the country so we can validate contacts and addresses correctly. Then name your hub and choose how guests will use it.'
+        ),
+        hubCountry.wrap,
         hubName.wrap,
         useCase.wrap
       );
@@ -427,10 +447,9 @@ function mountHubSetupWizard(viewport, context) {
       starterButton.className = 'settings-action-button hub-setup-action-button';
       starterButton.textContent = 'Import starter guide';
       starterButton.addEventListener('click', () => {
-        starterButton.disabled = true;
-        const catalog = buildStarterGuideCatalog(selectedUseCase, liveProfile);
-        void importHouseGuideCatalog(catalog).then(async (result) => {
-          starterButton.disabled = false;
+        void withAsyncButtonFeedback(starterButton, 'Importing…', async () => {
+          const catalog = buildStarterGuideCatalog(selectedUseCase, liveProfile);
+          const result = await importHouseGuideCatalog(catalog);
           if (!result.ok) {
             showToast(context.toast, result.message || 'Could not import starter guide.');
             return;
@@ -482,10 +501,12 @@ function mountHubSetupWizard(viewport, context) {
   }
 
   nextButton.addEventListener('click', () => {
-    void (async () => {
-      nextButton.disabled = true;
-      try {
+    void withAsyncButtonFeedback(
+      nextButton,
+      isLastWizardStep() ? 'Finishing…' : 'Saving…',
+      async () => {
         const stepId = currentStepId();
+        const countryCode = hubCountry.select.value;
 
         if (stepId === 'hub') {
           const name = hubName.input.value.trim();
@@ -495,9 +516,15 @@ function mountHubSetupWizard(viewport, context) {
           }
           const result = await saveSiteProfile({
             hubName: name,
-            useCase: useCase.select.value
+            hubCountryCode: normalizeHubCountryCode(countryCode),
+            useCase: useCase.select.value,
+            propertyAddress: {
+              ...(getSiteProfileState()?.profile?.propertyAddress ?? {}),
+              country: HUB_COUNTRY_OPTIONS.find((option) => option.value === countryCode)?.label ?? ''
+            }
           });
           if (!handleSaveResult(result, 'Could not save.')) return;
+          guestFields.setHubCountryCode(countryCode);
           applyShellBranding({
             shellEyebrow: document.querySelector('#shell-eyebrow'),
             shellTagline: document.querySelector('#shell-tagline')
@@ -523,8 +550,9 @@ function mountHubSetupWizard(viewport, context) {
               email: secondaryInputs[2]?.value.trim() ?? ''
             }
           };
-          if (!contacts.primaryContact.name) {
-            showToast(context.toast, 'Enter a primary contact name.');
+          const contactError = validateHubContacts(contacts, countryCode);
+          if (contactError) {
+            showToast(context.toast, contactError);
             return;
           }
           const profileResult = await saveSiteProfile(contacts);
@@ -549,9 +577,14 @@ function mountHubSetupWizard(viewport, context) {
             showToast(context.toast, 'Owner PIN must be exactly 4 digits.');
             return;
           }
+          const addressPatch = readPropertyAddressProfilePatch(guestFields);
+          const postcode = addressPatch.propertyAddress?.postcode ?? '';
+          if (postcode && !isValidPostcode(postcode, countryCode)) {
+            showToast(context.toast, 'Postcode looks invalid for the selected country.');
+            return;
+          }
           const secretsResult = await saveHubSecrets(readGuestAccessSecrets(guestFields));
           if (!handleSaveResult(secretsResult, 'Could not save guest access details.')) return;
-          const addressPatch = readPropertyAddressProfilePatch(guestFields);
           const addressResult = await saveSiteProfile(addressPatch);
           if (!handleSaveResult(addressResult, 'Could not save property address.')) return;
           const weatherResult = await syncWeatherLocationFromPropertyAddress(
@@ -605,10 +638,8 @@ function mountHubSetupWizard(viewport, context) {
         step += 1;
         setHubSetupWizardStep(step);
         renderStep();
-      } finally {
-        nextButton.disabled = false;
       }
-    })();
+    );
   });
 
   renderStep();

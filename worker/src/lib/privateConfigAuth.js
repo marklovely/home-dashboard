@@ -1,5 +1,5 @@
 import { authenticateRequest, hasRequiredRole } from './requestAuth.js';
-import { resolveDeviceSession } from './deviceSession.js';
+import { resolveAuthenticatedDeviceSession } from './deviceSession.js';
 import { getSitterSecretsDisclosed } from './houseSettings.js';
 
 /**
@@ -15,7 +15,7 @@ export async function requirePrivateConfigAccess(request, env, fetchImpl = fetch
     return { ok: false, status: access.status, code: access.code };
   }
 
-  const session = await resolveDeviceSession(request, env);
+  const session = await resolveAuthenticatedDeviceSession(request, env, access);
   if (session.mode !== 'sitter') {
     if (!hasRequiredRole(access, 'owner')) {
       return { ok: false, status: 403, code: 'FORBIDDEN' };
