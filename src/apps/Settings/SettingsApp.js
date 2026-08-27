@@ -97,7 +97,8 @@ import {
 } from '../../services/siteProfileService.js';
 import { refreshPrivateConfig } from '../../services/privateConfigService.js';
 import { normalizeHubCountryCode } from '../../lib/hubCountries.js';
-import { isValidPostcode, validateEmailAddresses, validateHubContacts } from '../../lib/contactValidation.js';
+import { validateEmailAddresses, validateHubContacts, validatePropertyAddress } from '../../lib/contactValidation.js';
+import { attachContactGroupValidation, attachPropertyAddressValidation } from '../../lib/contactFieldValidationUi.js';
 import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 
 /**
@@ -487,6 +488,10 @@ function createHomeDetailsFields(context) {
   const guestFields = createGuestAccessFields(profile, {
     hubCountryCode: normalizeHubCountryCode(profile.hubCountryCode)
   });
+  const getCountryCode = () => normalizeHubCountryCode(profile.hubCountryCode);
+  attachContactGroupValidation(primaryGroup, getCountryCode);
+  attachContactGroupValidation(secondaryGroup, getCountryCode);
+  const addressValidation = attachPropertyAddressValidation(guestFields.propertyAddress, getCountryCode);
   let calendarFields = createCalendarConnectionField();
 
   void fetchHubSecretsConfigured().then((result) => {
@@ -529,9 +534,10 @@ function createHomeDetailsFields(context) {
         return;
       }
       const addressPatch = readPropertyAddressProfilePatch(guestFields);
-      const postcode = addressPatch.propertyAddress?.postcode ?? '';
-      if (postcode && !isValidPostcode(postcode, countryCode)) {
-        showToast(context.toast, 'Postcode looks invalid for this hub country.');
+      const addressError = validatePropertyAddress(addressPatch.propertyAddress, countryCode);
+      if (addressError) {
+        addressValidation?.validateAll();
+        showToast(context.toast, addressError);
         return;
       }
 

@@ -119,3 +119,21 @@ export function validateEmailAddresses(emails) {
   }
   return null;
 }
+
+/**
+ * @param {import('./propertyAddress.js').PropertyAddress | Record<string, unknown>} address
+ * @param {string} [countryCode]
+ * @returns {string | null}
+ */
+export function validatePropertyAddress(address, countryCode = 'GB') {
+  const line1 = String(address?.line1 ?? '').trim();
+  const city = String(address?.city ?? '').trim();
+  const postcode = String(address?.postcode ?? '').trim();
+  if (!line1) return 'Enter address line 1.';
+  if (!city) return 'Enter city or town.';
+  if (!postcode) return 'Enter postcode.';
+  if (!isValidPostcode(postcode, countryCode)) {
+    return 'Postcode looks invalid for the selected country.';
+  }
+  return null;
+}

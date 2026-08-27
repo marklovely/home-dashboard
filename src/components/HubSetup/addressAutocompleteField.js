@@ -70,12 +70,12 @@ export function createAddressAutocompleteField(options) {
     const result = await fetchAddressSuggestions(term, countryCode, (url, init) =>
       fetch(url, { ...init, signal: activeRequest?.signal })
     );
-    if (!result.ok || !result.configured) {
+    if (!result.ok) {
       hideResults();
       setStatus(
         result.configured === false
           ? 'Address lookup is not configured on this hub yet — enter the address manually below.'
-          : 'Could not search addresses right now.',
+          : result.message || 'Could not search addresses right now.',
         true
       );
       return;

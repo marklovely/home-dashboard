@@ -22,11 +22,20 @@ export async function fetchAddressSuggestions(term, countryCode = 'GB', fetchImp
   );
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
+    const configured =
+      typeof data?.configured === 'boolean'
+        ? data.configured
+        : response.status === 503
+          ? false
+          : null;
     return {
       ok: false,
-      configured: false,
+      configured,
       suggestions: [],
-      message: data?.error || 'Address lookup failed.'
+      message:
+        data?.message ||
+        data?.error ||
+        (response.status === 404 ? 'Address lookup is not available on this hub yet.' : 'Address lookup failed.')
     };
   }
   return {
