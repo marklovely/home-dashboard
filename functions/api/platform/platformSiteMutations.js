@@ -226,6 +226,7 @@ export function siteWizardSchema(manifest) {
   return {
     zoneName,
     customerZoneName,
+    allowedZones: ALLOWED_HUB_ZONES,
     protectedSiteIds: [...PROTECTED_SITE_IDS],
     existingSiteIds: Object.keys(manifest.sites ?? {}),
     defaults: {

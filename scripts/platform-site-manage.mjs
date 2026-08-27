@@ -21,7 +21,7 @@ import {
 } from './lib/site-registry.mjs';
 import { formatSitesYaml } from './lib/write-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
-import { PLATFORM_ZONE_NAME } from './lib/hub-zones.mjs';
+import { PLATFORM_ZONE_NAME, CUSTOMER_HUB_ZONE_NAME } from './lib/hub-zones.mjs';
 import { removeHubTfvarsSiteBlock } from './lib/prune-hub-site-config.mjs';
 import { removeWranglerEnvBlock, replaceWranglerEnvBlock } from './lib/wrangler-env-block.mjs';
 
@@ -33,8 +33,12 @@ const hubExamplePath = join(root, 'terraform/environments/hub.tfvars.example');
 
 /** @type {Record<string, string | boolean | undefined>} */
 const args = parseArgs(process.argv.slice(2));
-const zoneName = args['zone-name'] ? String(args['zone-name']) : PLATFORM_ZONE_NAME;
 const action = String(args._[0] ?? '');
+const zoneName = args['zone-name']
+  ? String(args['zone-name'])
+  : action === 'create'
+    ? CUSTOMER_HUB_ZONE_NAME
+    : PLATFORM_ZONE_NAME;
 const dryRun = args['dry-run'] === true || args['dry-run'] === 'true';
 const siteId = String(args['site-id'] ?? '');
 const confirmHostname = String(args['confirm-hostname'] ?? '');
