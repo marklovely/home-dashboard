@@ -73,4 +73,47 @@ describe('address autocomplete', () => {
     expect(body.error).toBe('INVALID_API_KEY');
     expect(body.message).toMatch(/API key/i);
   });
+
+  it('sends User-Agent when calling getAddress', async () => {
+    const env = withTestLimiters(
+      createAccessTestEnv({
+        GETADDRESS_API_KEY: 'test-key'
+      })
+    );
+    const jwt = await signTestAccessJwt('owner@example.com', env);
+    const fetchImpl = vi.fn(async (_url, init) => {
+      expect(init?.headers?.['User-Agent']).toMatch(/LovelyHomeHub/);
+      return Response.json({ suggestions: [] });
+    });
+    await handleAddressAutocomplete(
+      new Request(
+        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB',
+        withAccessJwt(jwt)
+      ),
+      env,
+      fetchImpl
+    );
+  });
+
+  it('includes upstream status when getAddress responds with 403', async () => {
+    const env = withTestLimiters(
+      createAccessTestEnv({
+        GETADDRESS_API_KEY: 'test-key'
+      })
+    );
+    const jwt = await signTestAccessJwt('owner@example.com', env);
+    const fetchImpl = vi.fn(async () => new Response('Forbidden', { status: 403 }));
+    const response = await handleAddressAutocomplete(
+      new Request(
+        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB',
+        withAccessJwt(jwt)
+      ),
+      env,
+      fetchImpl
+    );
+    expect(response.status).toBe(502);
+    const body = await response.json();
+    expect(body.upstreamStatus).toBe(403);
+    expect(body.message).toMatch(/blocked/i);
+  });
 });
