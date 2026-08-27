@@ -57,12 +57,25 @@ variable "hub_proxy_secrets" {
   description = "Per-site HUB_PROXY_SECRET overrides (CI). Prefer over sites.*.hub_proxy_secret in generated tfvars."
 }
 
+variable "customer_cloudflare_zone_id" {
+  type        = string
+  default     = ""
+  description = "Cloudflare zone ID for customer hub hostnames (lovely-hub.com). Required when any site uses zone_name = customer_zone_name."
+}
+
+variable "customer_zone_name" {
+  type        = string
+  default     = "lovely-hub.com"
+  description = "DNS zone for per-household hubs ({site-id}.lovely-hub.com)."
+}
+
 variable "sites" {
   type = map(object({
     hostname                              = string
     hub_environment                       = string
     vanilla                               = bool
     terraform                             = bool
+    zone_name                             = optional(string)
     hub_proxy_secret                      = optional(string)
     attach_hub_api_binding                = optional(bool, true)
     include_pages_dev_access_destinations = optional(bool, true)

@@ -2,7 +2,9 @@
 
 The wall tablet runs **Fully Kiosk Browser** in fullscreen. The dashboard is a PWA — there is no separate in-app “kiosk mode” on the Lovely Home site itself.
 
-Production URL: **`https://dashboard.lovely-home.co.uk`**
+**Hub URL:** use your household hub everywhere this doc says **`YOUR_HUB_URL`** — e.g. `https://smith.lovely-hub.com` for a customer hub, or `https://dashboard.lovely-home.co.uk` for the original production home.
+
+See [customer-hub-playbook.md](./customer-hub-playbook.md) for provisioning a new customer hub before tablet setup.
 
 ---
 
@@ -16,7 +18,7 @@ Configure Fully **before** locking the device. If Kiosk Mode is enabled with no 
    - Set a strong **Remote Admin password**
    - Note the tablet IP (router client list, or Fully **Device info**)
 3. From a Mac/PC on the same Wi‑Fi, confirm: `http://<tablet-ip>:2323` opens and accepts the password.
-4. Set **Start URL** to `https://dashboard.lovely-home.co.uk`.
+4. Set **Start URL** to `YOUR_HUB_URL` (e.g. `https://smith.lovely-hub.com`).
 5. Apply the [settings checklist](#fully-kiosk-settings-checklist) below (especially cookie and Web Automation).
 6. Set **Kiosk Exit Gesture** and **Kiosk Mode PIN** — write both down.
 7. **Only then** enable **Kiosk Mode**.
@@ -41,7 +43,7 @@ Optional: **Fully Cloud** at [fully-kiosk.com/cloud](https://www.fully-kiosk.com
 
 | Setting | Location | Value |
 |---------|----------|--------|
-| **Start URL** | Web content | `https://dashboard.lovely-home.co.uk` |
+| **Start URL** | Web content | `YOUR_HUB_URL` |
 | **Remote Admin from Local Network** | Remote Administration | ON + password |
 | **Enable JavaScript** | Web content | ON |
 | **Enable Third Party Cookies** | Web content | ON (first-party cookies still work if OFF) |
@@ -66,9 +68,9 @@ There is **no** single setting named “clear cookies on restart” — Fully us
 
 ### Cloudflare Access (Zero Trust)
 
-Set **Session duration** to **30 days** on **every** Access application that protects production:
+Set **Session duration** to **30 days** on **every** Access application that protects the hub:
 
-- `dashboard.lovely-home.co.uk`
+- Hub hostname (e.g. `smith.lovely-hub.com`)
 - Pages hostname (if used)
 - Worker API application
 
@@ -93,7 +95,7 @@ The app pings `/api/device-session` every 6 hours (and when the screen wakes) to
 
 There is no logout button in the dashboard. To force a fresh Access session:
 
-- `https://dashboard.lovely-home.co.uk/cdn-cgi/access/logout`
+- `YOUR_HUB_URL/cdn-cgi/access/logout` (e.g. `https://smith.lovely-hub.com/cdn-cgi/access/logout`)
 - Or `https://<team>.cloudflareaccess.com/cdn-cgi/access/logout`
 
 Then open the dashboard again and complete OTP once.
@@ -128,7 +130,7 @@ Fully has no built-in cookie viewer. Use **Chrome DevTools** from a Mac:
 
 1. On tablet: **Settings → Web Content → Enable Webview Contents Debugging** → ON.
 2. Connect tablet by USB (USB debugging enabled if prompted).
-3. On Mac: Chrome → `chrome://inspect/#devices` → **inspect** the Fully WebView for `dashboard.lovely-home.co.uk`.
+3. On Mac: Chrome → `chrome://inspect/#devices` → **inspect** the Fully WebView for your hub hostname.
 4. **Application → Cookies** → expect:
    - `CF_Authorization` — Access session
    - `lovely_home_device_session` — House Sitter Mode (when enabled)
@@ -193,7 +195,7 @@ You will reinstall Fully from scratch; use the [safe setup order](#safe-setup-or
 If Fully is uninstalled or broken:
 
 1. Open **Chrome** on the tablet.
-2. Go to `https://dashboard.lovely-home.co.uk`.
+2. Go to `YOUR_HUB_URL`.
 3. Complete Cloudflare OTP once.
 4. Optional: Chrome menu → **Install app** / **Add to Home screen**.
 5. Re-enable **House Sitter Mode** in dashboard Settings if needed.
@@ -228,5 +230,6 @@ Ensure sitter-allowed button IDs in `controlPermissions.js` match what you expec
 
 ## Related docs
 
+- [Customer hub playbook](./customer-hub-playbook.md) — provision `{site-id}.lovely-hub.com` and owner onboarding
 - [Cloudflare Access setup](./cloudflare-access-setup-guide.md) — session duration, applications for Pages, Worker, and custom domain
 - [Cloudflare Pages configuration](./cloudflare-pages-configuration.md) — same-origin `/api` proxy

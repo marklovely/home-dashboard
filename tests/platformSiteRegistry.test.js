@@ -27,6 +27,13 @@ describe('site registry validation', () => {
     expect(entry.vanilla).toBe(true);
   });
 
+  it('defaults new customer sites to lovely-hub.com', () => {
+    const entry = defaultSiteEntry('smith', { owner_emails: ['owner@example.com'] });
+    expect(entry.hostname).toBe('smith.lovely-hub.com');
+    expect(entry.zone_name).toBe('lovely-hub.com');
+    expect(entry.hub_environment).toBe('smith');
+  });
+
   it('requires owner emails on create', () => {
     const existing = {};
     expect(
