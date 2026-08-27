@@ -105,6 +105,8 @@ Multi-step wizard (**Add site**, **Edit**, **Delete** on each card) dispatches G
 2. Runs `terraform validate` and registry tests
 3. Opens a pull request
 
+**New customer hubs** default to `{site-id}.lovely-hub.com` with `zone_name: lovely-hub.com` in the registry. Internal stacks (demo, sandbox, test) can use **Internal platform site** in step 1 to target `*.lovely-home.co.uk` instead.
+
 After the PR merges:
 
 1. **Automated:** [`platform-site-provision.yml`](../.github/workflows/platform-site-provision.yml) runs on push to `main` (Terraform, Worker, Pages, manifest). See [platform-provision.md](./platform-provision.md) for one-time R2 + secrets setup.

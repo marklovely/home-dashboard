@@ -6,6 +6,15 @@ import {
   provisionSite,
   updateSite
 } from './api.js';
+import {
+  ALLOWED_HUB_ZONE_NAMES,
+  defaultCustomerZoneName,
+  defaultPlatformZoneName,
+  hostnameForSite,
+  hostnameUsesAllowedZone,
+  validateWizardHostname,
+  zoneNameForHostname
+} from './wizardZones.js';
 
 /** @typedef {'create' | 'update' | 'delete'} WizardMode */
 
@@ -15,6 +24,7 @@ import {
  * @property {string} hubEnvironment
  * @property {boolean} vanilla
  * @property {boolean} attachHubApiBinding
+ * @property {boolean} internalPlatformSite
  * @property {string} ownerEmailsText
  * @property {string} sitterEmailsText
  * @property {string} confirmHostname
@@ -30,7 +40,8 @@ import {
 export async function openSiteWizard({ mode, site = null, githubConfigured = false, onComplete }) {
   const schemaResponse = await fetchWizardSchema().catch(() => ({ schema: {} }));
   const schema = schemaResponse.schema ?? {};
-  const zoneName = String(schema.zoneName ?? 'lovely-home.co.uk');
+  const platformZoneName = defaultPlatformZoneName(schema);
+  const customerZoneName = defaultCustomerZoneName(schema);
   const protectedIds = new Set(schema.protectedSiteIds ?? ['production']);
 
   /** @type {WizardForm} */
@@ -40,6 +51,9 @@ export async function openSiteWizard({ mode, site = null, githubConfigured = fal
     hubEnvironment: site ? String(site.hubEnvironment ?? site.siteId) : '',
     vanilla: site ? Boolean(site.vanilla) : schema.defaults?.vanilla !== false,
     attachHubApiBinding: Boolean(site?.attachHubApiBinding ?? schema.defaults?.attachHubApiBinding),
+    internalPlatformSite: site
+      ? zoneNameForHostname(String(site.hostname ?? '')) === platformZoneName
+      : false,
     ownerEmailsText: Array.isArray(site?.ownerEmails) ? site.ownerEmails.join(', ') : '',
     sitterEmailsText: Array.isArray(site?.sitterEmails) ? site.sitterEmails.join(', ') : '',
     confirmHostname: ''
@@ -64,14 +78,16 @@ export async function openSiteWizard({ mode, site = null, githubConfigured = fal
 
   const render = () => {
     panel.innerHTML = renderWizardStep(mode, step, form, {
-      zoneName,
+      platformZoneName,
+      customerZoneName,
       protectedIds,
       githubConfigured,
       site,
       hubEnvironmentCustom
     });
     wireWizardStep(panel, form, mode, step, {
-      zoneName,
+      platformZoneName,
+      customerZoneName,
       protectedIds,
       hubEnvironmentCustom,
       setHubEnvironmentCustom: (value) => {
@@ -82,7 +98,11 @@ export async function openSiteWizard({ mode, site = null, githubConfigured = fal
         render();
       },
       onNext: () => {
-        const error = validateStep(mode, step, form, { zoneName, protectedIds });
+        const error = validateStep(mode, step, form, {
+          platformZoneName,
+          customerZoneName,
+          protectedIds
+        });
         if (error) {
           showWizardError(panel, error);
           return;
@@ -98,7 +118,11 @@ export async function openSiteWizard({ mode, site = null, githubConfigured = fal
         render();
       },
       onSubmit: async () => {
-        const error = validateStep(mode, step, form, { zoneName, protectedIds });
+        const error = validateStep(mode, step, form, {
+          platformZoneName,
+          customerZoneName,
+          protectedIds
+        });
         if (error) {
           showWizardError(panel, error);
           return;
@@ -144,16 +168,30 @@ function renderWizardStep(mode, step, form, ctx) {
   }
 
   if (step === 1 && mode !== 'delete') {
+    const defaultZone =
+      mode === 'create' && !form.internalPlatformSite ? ctx.customerZoneName : ctx.platformZoneName;
+    const createPlaceholder = hostnameForSite('rose-cottage', ctx.customerZoneName);
     body += `
+      <p class="muted">Customer households live on <code>${escapeHtml(ctx.customerZoneName)}</code>. Platform stacks (demo, sandbox, test) stay on <code>${escapeHtml(ctx.platformZoneName)}</code>.</p>
       <label class="field">
         <span>Site id</span>
-        <input type="text" name="siteId" value="${escapeAttr(form.siteId)}" ${mode === 'update' ? 'readonly' : ''} placeholder="demo" autocomplete="off" />
+        <input type="text" name="siteId" value="${escapeAttr(form.siteId)}" ${mode === 'update' ? 'readonly' : ''} placeholder="rose-cottage" autocomplete="off" />
         <small class="muted">Lowercase letters, numbers, hyphens. Used for Wrangler env and Terraform module key.</small>
       </label>
       <label class="field">
         <span>Hostname</span>
-        <input type="text" name="hostname" value="${escapeAttr(form.hostname)}" placeholder="demo.${escapeAttr(ctx.zoneName)}" />
+        <input type="text" name="hostname" value="${escapeAttr(form.hostname)}" placeholder="${escapeAttr(mode === 'create' ? createPlaceholder : `${form.siteId || 'demo'}.${defaultZone}`)}" />
       </label>
+      ${
+        mode === 'create'
+          ? `
+      <label class="field checkbox">
+        <input type="checkbox" name="internalPlatformSite" ${form.internalPlatformSite ? 'checked' : ''} />
+        <span>Internal platform site on ${escapeHtml(ctx.platformZoneName)}</span>
+        <small class="muted">Leave unchecked for paying customer hubs on ${escapeHtml(ctx.customerZoneName)}.</small>
+      </label>`
+          : ''
+      }
     `;
   }
 
@@ -239,9 +277,11 @@ function renderReview(mode, form) {
       <div><dt>Confirm</dt><dd><code>${escapeHtml(form.confirmHostname)}</code></dd></div>
     `;
   }
+  const dnsZone = zoneNameForHostname(form.hostname) ?? '—';
   return `
     <div><dt>Site id</dt><dd><code>${escapeHtml(form.siteId)}</code></dd></div>
     <div><dt>Hostname</dt><dd><code>${escapeHtml(form.hostname)}</code></dd></div>
+    <div><dt>DNS zone</dt><dd><code>${escapeHtml(dnsZone)}</code></dd></div>
     <div><dt>Wrangler env</dt><dd><code>${escapeHtml(form.hubEnvironment || form.siteId)}</code></dd></div>
     <div><dt>Vanilla</dt><dd>${form.vanilla ? 'yes' : 'no'}</dd></div>
     <div><dt>HUB_API on first apply</dt><dd>${form.attachHubApiBinding ? 'yes' : 'no'}</dd></div>
@@ -260,12 +300,15 @@ function renderReview(mode, form) {
 function wireWizardStep(panel, form, mode, step, handlers) {
   panel.querySelector('[name="siteId"]')?.addEventListener('input', (event) => {
     form.siteId = /** @type {HTMLInputElement} */ (event.target).value.trim().toLowerCase();
-    if (!form.hostname || form.hostname.endsWith(`.${handlers.zoneName}`)) {
-      form.hostname = form.siteId ? `${form.siteId}.${handlers.zoneName}` : '';
-    }
+    syncCreateHostname(form, mode, handlers.platformZoneName, handlers.customerZoneName);
   });
   panel.querySelector('[name="hostname"]')?.addEventListener('input', (event) => {
     form.hostname = /** @type {HTMLInputElement} */ (event.target).value.trim().toLowerCase();
+  });
+  panel.querySelector('[name="internalPlatformSite"]')?.addEventListener('change', (event) => {
+    form.internalPlatformSite = /** @type {HTMLInputElement} */ (event.target).checked;
+    syncCreateHostname(form, mode, handlers.platformZoneName, handlers.customerZoneName, true);
+    handlers.onRerender?.();
   });
   panel.querySelector('[name="hubEnvironment"]')?.addEventListener('input', (event) => {
     form.hubEnvironment = /** @type {HTMLInputElement} */ (event.target).value.trim();
@@ -319,8 +362,14 @@ function validateStep(mode, step, form, ctx) {
   if (step === 1) {
     if (!form.siteId) return 'Site id is required.';
     if (!/^[a-z][a-z0-9_-]{0,31}$/.test(form.siteId)) return 'Invalid site id format.';
-    if (!form.hostname) return 'Hostname is required.';
-    if (!form.hostname.endsWith(`.${ctx.zoneName}`)) return `Hostname must be under ${ctx.zoneName}.`;
+    const hostError = validateWizardHostname(form.hostname, ALLOWED_HUB_ZONE_NAMES);
+    if (hostError) return hostError;
+    if (mode === 'create' && form.internalPlatformSite && !form.hostname.endsWith(`.${ctx.platformZoneName}`)) {
+      return `Internal platform sites must use ${ctx.platformZoneName}.`;
+    }
+    if (mode === 'create' && !form.internalPlatformSite && !form.hostname.endsWith(`.${ctx.customerZoneName}`)) {
+      return `Customer hubs must use ${ctx.customerZoneName}, or enable internal platform site.`;
+    }
   }
 
   if (step === 2 && mode !== 'delete') {
@@ -376,6 +425,29 @@ function showWizardError(panel, message) {
 }
 
 /**
+ * @param {WizardForm} form
+ * @param {WizardMode} mode
+ * @param {string} platformZoneName
+ * @param {string} customerZoneName
+ * @param {boolean} [forceZoneSwitch]
+ */
+function syncCreateHostname(form, mode, platformZoneName, customerZoneName, forceZoneSwitch = false) {
+  if (mode !== 'create') return;
+  const createZone = form.internalPlatformSite ? platformZoneName : customerZoneName;
+  const autoHostnames = [platformZoneName, customerZoneName].map((zone) =>
+    hostnameForSite(form.siteId, zone)
+  );
+  if (
+    forceZoneSwitch ||
+    !form.hostname ||
+    !hostnameUsesAllowedZone(form.hostname) ||
+    autoHostnames.includes(form.hostname)
+  ) {
+    form.hostname = hostnameForSite(form.siteId, createZone);
+  }
+}
+
+/**
  * @param {WizardMode} mode
  * @param {WizardForm} form
  * @param {HTMLElement} panel
@@ -392,9 +464,11 @@ async function submitWizard(mode, form, panel, githubConfigured, onComplete, clo
   }
 
   try {
+    const dnsZone = zoneNameForHostname(form.hostname);
     const payload = {
       siteId: form.siteId,
       hostname: form.hostname,
+      ...(dnsZone ? { zoneName: dnsZone } : {}),
       hubEnvironment: form.hubEnvironment || form.siteId,
       vanilla: form.vanilla,
       attachHubApiBinding: form.attachHubApiBinding,
