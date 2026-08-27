@@ -2,6 +2,7 @@ import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
 import {
   GETADDRESS_AUTOCOMPLETE_URL,
   GETADDRESS_GET_URL,
+  buildGetAddressFetchHeaders,
   fetchGetAddress,
   readGetAddressFailure,
   resolveGetAddressConfig
@@ -20,24 +21,13 @@ export async function handleAddressConfig(request, env) {
   const config = resolveGetAddressConfig(env);
   if (!config.configured) {
     return Response.json(
-      { configured: false, lookupVia: 'none' },
-      { headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
-
-  if (config.lookupVia === 'browser') {
-    return Response.json(
-      {
-        configured: true,
-        lookupVia: 'browser',
-        domainToken: config.domainToken
-      },
+      { configured: false },
       { headers: { 'Cache-Control': 'private, no-store' } }
     );
   }
 
   return Response.json(
-    { configured: true, lookupVia: 'worker' },
+    { configured: true },
     { headers: { 'Cache-Control': 'private, no-store' } }
   );
 }
@@ -60,17 +50,6 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
       { headers: { 'Cache-Control': 'private, no-store' } }
     );
   }
-  if (config.lookupVia === 'browser') {
-    return Response.json(
-      {
-        configured: true,
-        suggestions: [],
-        error: 'USE_BROWSER_LOOKUP',
-        message: 'Address lookup uses a browser Domain Token on this hub.'
-      },
-      { status: 400, headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
 
   const url = new URL(request.url);
   const term = url.searchParams.get('term')?.trim() ?? '';
@@ -88,8 +67,9 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
     );
   }
 
-  const endpoint = `${GETADDRESS_AUTOCOMPLETE_URL}/${encodeURIComponent(term)}?api-key=${encodeURIComponent(config.apiKey)}&all=true`;
-  const upstream = await fetchGetAddress(endpoint, fetchImpl);
+  const fetchHeaders = buildGetAddressFetchHeaders(request, env, config.authMode);
+  const endpoint = `${GETADDRESS_AUTOCOMPLETE_URL}/${encodeURIComponent(term)}?api-key=${encodeURIComponent(config.authKey)}&all=true`;
+  const upstream = await fetchGetAddress(endpoint, fetchImpl, fetchHeaders);
   if (!upstream.ok) {
     return Response.json(
       {
@@ -104,11 +84,12 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
 
   const response = upstream.response;
   if (!response.ok) {
-    const failure = await readGetAddressFailure(response);
+    const failure = await readGetAddressFailure(response, config.authMode);
     console.error(
       JSON.stringify({
         event: 'address_lookup_upstream',
         status: response.status,
+        authMode: config.authMode,
         termLength: term.length
       })
     );
@@ -155,23 +136,15 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
   if (!config.configured) {
     return Response.json({ configured: false }, { status: 503 });
   }
-  if (config.lookupVia === 'browser') {
-    return Response.json(
-      {
-        error: 'USE_BROWSER_LOOKUP',
-        message: 'Address lookup uses a browser Domain Token on this hub.'
-      },
-      { status: 400, headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
 
   const id = new URL(request.url).searchParams.get('id')?.trim() ?? '';
   if (!id) {
     return Response.json({ error: 'MISSING_ID' }, { status: 400 });
   }
 
-  const endpoint = `${GETADDRESS_GET_URL}/${encodeURIComponent(id)}?api-key=${encodeURIComponent(config.apiKey)}`;
-  const upstream = await fetchGetAddress(endpoint, fetchImpl);
+  const fetchHeaders = buildGetAddressFetchHeaders(request, env, config.authMode);
+  const endpoint = `${GETADDRESS_GET_URL}/${encodeURIComponent(id)}?api-key=${encodeURIComponent(config.authKey)}`;
+  const upstream = await fetchGetAddress(endpoint, fetchImpl, fetchHeaders);
   if (!upstream.ok) {
     return Response.json(
       { error: upstream.failure.code, message: upstream.failure.message },
@@ -181,7 +154,7 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
 
   const response = upstream.response;
   if (!response.ok) {
-    const failure = await readGetAddressFailure(response);
+    const failure = await readGetAddressFailure(response, config.authMode);
     return Response.json(
       { error: failure.code, message: failure.message, upstreamStatus: response.status },
       { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
