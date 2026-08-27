@@ -4,7 +4,11 @@ import {
   handleAddressConfig,
   handleAddressLookup
 } from '../src/routes/addressAutocomplete.js';
-import { normalizeGetAddressSecret } from '../src/lib/getAddress.js';
+import {
+  GOOGLE_PLACES_AUTOCOMPLETE_URL,
+  mapGooglePlaceToPropertyAddress,
+  normalizePlacesApiKey
+} from '../src/lib/googlePlaces.js';
 import {
   createAccessTestEnv,
   signTestAccessJwt,
@@ -12,15 +16,32 @@ import {
 } from './accessTestHelpers.js';
 import { withTestLimiters } from './testEnv.js';
 
-describe('getAddress secrets', () => {
-  it('strips surrounding quotes from pasted secrets', () => {
-    expect(normalizeGetAddressSecret('"dtoken_abc"')).toBe('dtoken_abc');
-    expect(normalizeGetAddressSecret("'dtoken_abc'")).toBe('dtoken_abc');
+describe('googlePlaces helpers', () => {
+  it('strips surrounding quotes from pasted API keys', () => {
+    expect(normalizePlacesApiKey('"AIza_test"')).toBe('AIza_test');
+  });
+
+  it('maps Google place details to hub address fields', () => {
+    const address = mapGooglePlaceToPropertyAddress(
+      {
+        postalAddress: {
+          regionCode: 'GB',
+          postalCode: 'PO16 8AB',
+          locality: 'Fareham',
+          administrativeArea: 'Hampshire',
+          addressLines: ['41 Wagtail Way']
+        }
+      },
+      'GB'
+    );
+    expect(address.line1).toBe('41 Wagtail Way');
+    expect(address.postcode).toBe('PO16 8AB');
+    expect(address.country).toBe('United Kingdom');
   });
 });
 
 describe('address autocomplete', () => {
-  it('returns configured false when no getAddress secrets are set', async () => {
+  it('returns configured false when no Google Places API key is set', async () => {
     const env = withTestLimiters(createAccessTestEnv());
     const jwt = await signTestAccessJwt('owner@example.com', env);
     const response = await handleAddressAutocomplete(
@@ -35,10 +56,10 @@ describe('address autocomplete', () => {
     expect(body.configured).toBe(false);
   });
 
-  it('returns domain token to authenticated config clients', async () => {
+  it('returns worker lookup mode to authenticated config clients', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
-        GETADDRESS_DOMAIN_TOKEN: 'dtoken_test'
+        GOOGLE_PLACES_API_KEY: 'AIza_test'
       })
     );
     const jwt = await signTestAccessJwt('owner@example.com', env);
@@ -47,44 +68,33 @@ describe('address autocomplete', () => {
       env
     );
     const body = await response.json();
-    expect(body.lookupVia).toBe('browser');
-    expect(body.domainToken).toBe('dtoken_test');
+    expect(body.lookupVia).toBe('worker');
   });
 
-  it('returns USE_BROWSER_LOOKUP for worker autocomplete when domain token configured', async () => {
+  it('returns suggestions when Google Places succeeds', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
-        GETADDRESS_DOMAIN_TOKEN: 'dtoken_test'
+        GOOGLE_PLACES_API_KEY: 'AIza_test'
       })
     );
     const jwt = await signTestAccessJwt('owner@example.com', env);
+    const fetchImpl = vi.fn(async (url, init) => {
+      expect(url).toBe(GOOGLE_PLACES_AUTOCOMPLETE_URL);
+      expect(init?.method).toBe('POST');
+      return Response.json({
+        suggestions: [
+          {
+            placePrediction: {
+              placeId: 'ChIJ_test',
+              text: { text: '41 Wagtail Way, Fareham' }
+            }
+          }
+        ]
+      });
+    });
     const response = await handleAddressAutocomplete(
       new Request(
-        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB',
-        withAccessJwt(jwt)
-      ),
-      env
-    );
-    expect(response.status).toBe(400);
-    const body = await response.json();
-    expect(body.error).toBe('USE_BROWSER_LOOKUP');
-  });
-
-  it('returns suggestions when API key proxy succeeds', async () => {
-    const env = withTestLimiters(
-      createAccessTestEnv({
-        GETADDRESS_API_KEY: 'test-key'
-      })
-    );
-    const jwt = await signTestAccessJwt('owner@example.com', env);
-    const fetchImpl = vi.fn(async () =>
-      Response.json({
-        suggestions: [{ id: 'abc', address: '41 Wagtail Way, Fareham' }]
-      })
-    );
-    const response = await handleAddressAutocomplete(
-      new Request(
-        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB',
+        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB&sessionToken=abc',
         withAccessJwt(jwt)
       ),
       env,
@@ -92,25 +102,33 @@ describe('address autocomplete', () => {
     );
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.suggestions).toEqual([{ id: 'abc', label: '41 Wagtail Way, Fareham' }]);
+    expect(body.suggestions).toEqual([{ id: 'ChIJ_test', label: '41 Wagtail Way, Fareham' }]);
   });
 
-  it('resolves full address on worker API key path', async () => {
+  it('resolves full address on lookup', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
-        GETADDRESS_API_KEY: 'test-key'
+        GOOGLE_PLACES_API_KEY: 'AIza_test'
       })
     );
     const jwt = await signTestAccessJwt('owner@example.com', env);
-    const fetchImpl = vi.fn(async () =>
-      Response.json({
-        line_1: '41 Wagtail Way',
-        town_or_city: 'Fareham',
-        postcode: 'PO16 8AB'
-      })
-    );
+    const fetchImpl = vi.fn(async (url) => {
+      expect(String(url)).toContain('https://places.googleapis.com/v1/places/ChIJ_test');
+      return Response.json({
+        postalAddress: {
+          regionCode: 'GB',
+          postalCode: 'PO16 8AB',
+          locality: 'Fareham',
+          administrativeArea: 'Hampshire',
+          addressLines: ['41 Wagtail Way']
+        }
+      });
+    });
     const response = await handleAddressLookup(
-      new Request('https://worker.test/api/address/lookup?id=abc', withAccessJwt(jwt)),
+      new Request(
+        'https://worker.test/api/address/lookup?id=ChIJ_test&country=GB&sessionToken=abc',
+        withAccessJwt(jwt)
+      ),
       env,
       fetchImpl
     );

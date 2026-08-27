@@ -51,6 +51,19 @@ export function createAddressAutocompleteField(options) {
   let debounceTimer = null;
   /** @type {AbortController | null} */
   let activeRequest = null;
+  /** @type {string} */
+  let sessionToken = '';
+
+  function ensureSessionToken() {
+    if (!sessionToken) {
+      sessionToken = globalThis.crypto?.randomUUID?.() ?? `session-${Date.now()}`;
+    }
+    return sessionToken;
+  }
+
+  function resetSessionToken() {
+    sessionToken = '';
+  }
 
   function hideResults() {
     list.hidden = true;
@@ -67,8 +80,11 @@ export function createAddressAutocompleteField(options) {
     activeRequest?.abort();
     activeRequest = new AbortController();
     setStatus('Searching…');
-    const result = await fetchAddressSuggestions(term, countryCode, (url, init) =>
-      fetch(url, { ...init, signal: activeRequest?.signal })
+    const result = await fetchAddressSuggestions(
+      term,
+      countryCode,
+      (url, init) => fetch(url, { ...init, signal: activeRequest?.signal }),
+      ensureSessionToken()
     );
     if (!result.ok) {
       hideResults();
@@ -110,7 +126,8 @@ export function createAddressAutocompleteField(options) {
     input.value = labelText;
     setStatus('Loading address…');
     input.disabled = true;
-    const result = await fetchAddressById(id);
+    const result = await fetchAddressById(id, fetch, countryCode, sessionToken);
+    resetSessionToken();
     input.disabled = false;
     if (!result.ok || !result.address) {
       setStatus('Could not load that address — enter it manually below.');
@@ -127,6 +144,7 @@ export function createAddressAutocompleteField(options) {
     hideResults();
     if (debounceTimer) clearTimeout(debounceTimer);
     if (term.length < 3) {
+      resetSessionToken();
       setStatus('', false);
       return;
     }
@@ -148,6 +166,7 @@ export function createAddressAutocompleteField(options) {
       wrap.hidden = !supportsUkAddressAutocomplete(code);
       hideResults();
       input.value = '';
+      resetSessionToken();
       setStatus('', false);
     }
   };
