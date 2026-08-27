@@ -1,10 +1,9 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
 import {
-  fetchGetAddress,
-  readGetAddressFailure,
-  resolveAddressLookupOrigin,
-  resolveGetAddressConfig
-} from '../lib/getAddress.js';
+  googlePlacesAutocomplete,
+  googlePlacesLookup,
+  resolveGooglePlacesConfig
+} from '../lib/googlePlaces.js';
 
 /**
  * @param {Request} request
@@ -16,7 +15,7 @@ export async function handleAddressConfig(request, env) {
     return Response.json({ error: gate.code }, { status: gate.status });
   }
 
-  const config = resolveGetAddressConfig(env);
+  const config = resolveGooglePlacesConfig(env);
   if (!config.configured) {
     return Response.json(
       { configured: false, lookupVia: 'none' },
@@ -41,8 +40,7 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
     return Response.json({ error: gate.code }, { status: gate.status });
   }
 
-  const config = resolveGetAddressConfig(env);
-  const apiOrigin = resolveAddressLookupOrigin(env);
+  const config = resolveGooglePlacesConfig(env);
   if (!config.configured) {
     return Response.json(
       { configured: false, suggestions: [] },
@@ -53,6 +51,8 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
   const url = new URL(request.url);
   const term = url.searchParams.get('term')?.trim() ?? '';
   const country = url.searchParams.get('country')?.trim().toUpperCase() ?? 'GB';
+  const sessionToken = url.searchParams.get('sessionToken')?.trim() ?? '';
+
   if (country !== 'GB') {
     return Response.json(
       { configured: true, suggestions: [], unsupportedCountry: true },
@@ -66,47 +66,27 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
     );
   }
 
-  const endpoint = `${config.autocomplete}/${encodeURIComponent(term)}?api-key=${encodeURIComponent(config.apiKey)}&all=true`;
-  const upstream = await fetchGetAddress(endpoint, fetchImpl);
+  const upstream = await googlePlacesAutocomplete(
+    term,
+    country,
+    config.apiKey,
+    sessionToken,
+    fetchImpl
+  );
   if (!upstream.ok) {
     return Response.json(
       {
         configured: true,
         suggestions: [],
-        error: upstream.failure.code,
-        message: upstream.failure.message
+        error: upstream.failure?.code ?? 'LOOKUP_FAILED',
+        message: upstream.failure?.message ?? 'Address lookup failed.'
       },
       { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
     );
   }
-
-  const response = upstream.response;
-  if (!response.ok) {
-    const failure = await readGetAddressFailure(response, apiOrigin);
-    return Response.json(
-      {
-        configured: true,
-        suggestions: [],
-        error: failure.code,
-        message: failure.message,
-        upstreamStatus: response.status
-      },
-      { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
-
-  const payload = await response.json();
-  const suggestions = Array.isArray(payload?.suggestions)
-    ? payload.suggestions
-        .map((entry) => ({
-          id: String(entry?.id ?? ''),
-          label: String(entry?.address ?? '')
-        }))
-        .filter((entry) => entry.id && entry.label)
-    : [];
 
   return Response.json(
-    { configured: true, suggestions },
+    { configured: true, suggestions: upstream.suggestions ?? [] },
     { headers: { 'Cache-Control': 'private, no-store' } }
   );
 }
@@ -122,48 +102,34 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
     return Response.json({ error: gate.code }, { status: gate.status });
   }
 
-  const config = resolveGetAddressConfig(env);
-  const apiOrigin = resolveAddressLookupOrigin(env);
+  const config = resolveGooglePlacesConfig(env);
   if (!config.configured) {
     return Response.json({ configured: false }, { status: 503 });
   }
 
-  const id = new URL(request.url).searchParams.get('id')?.trim() ?? '';
+  const url = new URL(request.url);
+  const id = url.searchParams.get('id')?.trim() ?? '';
+  const country = url.searchParams.get('country')?.trim().toUpperCase() ?? 'GB';
+  const sessionToken = url.searchParams.get('sessionToken')?.trim() ?? '';
   if (!id) {
     return Response.json({ error: 'MISSING_ID' }, { status: 400 });
   }
 
-  const endpoint = `${config.get}/${encodeURIComponent(id)}?api-key=${encodeURIComponent(config.apiKey)}`;
-  const upstream = await fetchGetAddress(endpoint, fetchImpl);
+  const upstream = await googlePlacesLookup(id, config.apiKey, country, sessionToken, fetchImpl);
   if (!upstream.ok) {
     return Response.json(
-      { error: upstream.failure.code, message: upstream.failure.message },
+      {
+        error: upstream.failure?.code ?? 'LOOKUP_FAILED',
+        message: upstream.failure?.message ?? 'Address lookup failed.'
+      },
       { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
     );
   }
 
-  const response = upstream.response;
-  if (!response.ok) {
-    const failure = await readGetAddressFailure(response, apiOrigin);
-    return Response.json(
-      { error: failure.code, message: failure.message, upstreamStatus: response.status },
-      { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
-
-  const payload = await response.json();
   return Response.json(
     {
       configured: true,
-      address: {
-        line1: String(payload?.line_1 ?? payload?.line1 ?? '').trim(),
-        line2: String(payload?.line_2 ?? payload?.line2 ?? '').trim(),
-        line3: String(payload?.line_3 ?? payload?.line3 ?? '').trim(),
-        city: String(payload?.town_or_city ?? payload?.city ?? '').trim(),
-        county: String(payload?.county ?? payload?.district ?? '').trim(),
-        country: 'United Kingdom',
-        postcode: String(payload?.postcode ?? '').trim()
-      }
+      address: upstream.address
     },
     { headers: { 'Cache-Control': 'private, no-store' } }
   );

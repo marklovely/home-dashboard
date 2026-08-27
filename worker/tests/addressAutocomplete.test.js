@@ -5,11 +5,10 @@ import {
   handleAddressLookup
 } from '../src/routes/addressAutocomplete.js';
 import {
-  DEFAULT_ADDRESS_LOOKUP_ORIGIN,
-  normalizeGetAddressSecret,
-  resolveAddressLookupOrigin,
-  resolveAddressLookupUrls
-} from '../src/lib/getAddress.js';
+  GOOGLE_PLACES_AUTOCOMPLETE_URL,
+  mapGooglePlaceToPropertyAddress,
+  normalizePlacesApiKey
+} from '../src/lib/googlePlaces.js';
 import {
   createAccessTestEnv,
   signTestAccessJwt,
@@ -17,26 +16,32 @@ import {
 } from './accessTestHelpers.js';
 import { withTestLimiters } from './testEnv.js';
 
-describe('address lookup config', () => {
-  it('strips surrounding quotes from pasted secrets', () => {
-    expect(normalizeGetAddressSecret('"ak_test"')).toBe('ak_test');
+describe('googlePlaces helpers', () => {
+  it('strips surrounding quotes from pasted API keys', () => {
+    expect(normalizePlacesApiKey('"AIza_test"')).toBe('AIza_test');
   });
 
-  it('defaults to Ideal Postcodes compatibility API', () => {
-    expect(resolveAddressLookupOrigin({})).toBe(DEFAULT_ADDRESS_LOOKUP_ORIGIN);
-    const urls = resolveAddressLookupUrls({});
-    expect(urls.autocomplete).toBe(`${DEFAULT_ADDRESS_LOOKUP_ORIGIN}/autocomplete`);
-  });
-
-  it('allows overriding the lookup API origin', () => {
-    expect(
-      resolveAddressLookupOrigin({ ADDRESS_LOOKUP_API_ORIGIN: 'https://api.example.test/' })
-    ).toBe('https://api.example.test');
+  it('maps Google place details to hub address fields', () => {
+    const address = mapGooglePlaceToPropertyAddress(
+      {
+        postalAddress: {
+          regionCode: 'GB',
+          postalCode: 'PO16 8AB',
+          locality: 'Fareham',
+          administrativeArea: 'Hampshire',
+          addressLines: ['41 Wagtail Way']
+        }
+      },
+      'GB'
+    );
+    expect(address.line1).toBe('41 Wagtail Way');
+    expect(address.postcode).toBe('PO16 8AB');
+    expect(address.country).toBe('United Kingdom');
   });
 });
 
 describe('address autocomplete', () => {
-  it('returns configured false when no API key is set', async () => {
+  it('returns configured false when no Google Places API key is set', async () => {
     const env = withTestLimiters(createAccessTestEnv());
     const jwt = await signTestAccessJwt('owner@example.com', env);
     const response = await handleAddressAutocomplete(
@@ -54,7 +59,7 @@ describe('address autocomplete', () => {
   it('returns worker lookup mode to authenticated config clients', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
-        GETADDRESS_API_KEY: 'ak_test'
+        GOOGLE_PLACES_API_KEY: 'AIza_test'
       })
     );
     const jwt = await signTestAccessJwt('owner@example.com', env);
@@ -64,25 +69,32 @@ describe('address autocomplete', () => {
     );
     const body = await response.json();
     expect(body.lookupVia).toBe('worker');
-    expect(body.domainToken).toBeUndefined();
   });
 
-  it('returns suggestions when upstream succeeds', async () => {
+  it('returns suggestions when Google Places succeeds', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
-        GETADDRESS_API_KEY: 'ak_test'
+        GOOGLE_PLACES_API_KEY: 'AIza_test'
       })
     );
     const jwt = await signTestAccessJwt('owner@example.com', env);
-    const fetchImpl = vi.fn(async (url) => {
-      expect(String(url)).toContain(`${DEFAULT_ADDRESS_LOOKUP_ORIGIN}/autocomplete/`);
+    const fetchImpl = vi.fn(async (url, init) => {
+      expect(url).toBe(GOOGLE_PLACES_AUTOCOMPLETE_URL);
+      expect(init?.method).toBe('POST');
       return Response.json({
-        suggestions: [{ id: 'abc', address: '41 Wagtail Way, Fareham' }]
+        suggestions: [
+          {
+            placePrediction: {
+              placeId: 'ChIJ_test',
+              text: { text: '41 Wagtail Way, Fareham' }
+            }
+          }
+        ]
       });
     });
     const response = await handleAddressAutocomplete(
       new Request(
-        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB',
+        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB&sessionToken=abc',
         withAccessJwt(jwt)
       ),
       env,
@@ -90,26 +102,33 @@ describe('address autocomplete', () => {
     );
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.suggestions).toEqual([{ id: 'abc', label: '41 Wagtail Way, Fareham' }]);
+    expect(body.suggestions).toEqual([{ id: 'ChIJ_test', label: '41 Wagtail Way, Fareham' }]);
   });
 
   it('resolves full address on lookup', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
-        GETADDRESS_API_KEY: 'ak_test'
+        GOOGLE_PLACES_API_KEY: 'AIza_test'
       })
     );
     const jwt = await signTestAccessJwt('owner@example.com', env);
     const fetchImpl = vi.fn(async (url) => {
-      expect(String(url)).toContain(`${DEFAULT_ADDRESS_LOOKUP_ORIGIN}/get/`);
+      expect(String(url)).toContain('https://places.googleapis.com/v1/places/ChIJ_test');
       return Response.json({
-        line_1: '41 Wagtail Way',
-        town_or_city: 'Fareham',
-        postcode: 'PO16 8AB'
+        postalAddress: {
+          regionCode: 'GB',
+          postalCode: 'PO16 8AB',
+          locality: 'Fareham',
+          administrativeArea: 'Hampshire',
+          addressLines: ['41 Wagtail Way']
+        }
       });
     });
     const response = await handleAddressLookup(
-      new Request('https://worker.test/api/address/lookup?id=abc', withAccessJwt(jwt)),
+      new Request(
+        'https://worker.test/api/address/lookup?id=ChIJ_test&country=GB&sessionToken=abc',
+        withAccessJwt(jwt)
+      ),
       env,
       fetchImpl
     );

@@ -3,10 +3,10 @@ import { withApiCredentials } from './accessFetch.js';
 
 /** @type {Record<string, string>} */
 const ADDRESS_LOOKUP_MESSAGES = {
-  INVALID_API_KEY: 'Address lookup rejected the API key.',
+  INVALID_API_KEY: 'Address lookup rejected the Google Places API key.',
   RATE_LIMITED: 'Address lookup is temporarily rate-limited. Try again shortly.',
   LOOKUP_FAILED: 'Address lookup failed.',
-  FETCH_FAILED: 'Could not reach the address lookup service from the hub Worker.'
+  FETCH_FAILED: 'Could not reach Google Places from the hub Worker.'
 };
 
 /**
@@ -31,14 +31,22 @@ function addressLookupErrorMessage(data, status) {
  * @param {string} term
  * @param {string} [countryCode]
  * @param {typeof fetch} [fetchImpl]
+ * @param {string} [sessionToken]
  */
-export async function fetchAddressSuggestions(term, countryCode = 'GB', fetchImpl = fetch) {
+export async function fetchAddressSuggestions(
+  term,
+  countryCode = 'GB',
+  fetchImpl = fetch,
+  sessionToken = ''
+) {
   await ensureApiBaseUrl();
   if (!isApiConfigured()) {
     return { ok: false, configured: false, suggestions: [], message: 'API not configured' };
   }
 
   const params = new URLSearchParams({ term, country: countryCode });
+  if (sessionToken) params.set('sessionToken', sessionToken);
+
   const response = await fetchImpl(
     buildApiUrl(`/api/address/autocomplete?${params.toString()}`),
     withApiCredentials({ cache: 'no-store' })
@@ -68,14 +76,18 @@ export async function fetchAddressSuggestions(term, countryCode = 'GB', fetchImp
 /**
  * @param {string} id
  * @param {typeof fetch} [fetchImpl]
+ * @param {string} [countryCode]
+ * @param {string} [sessionToken]
  */
-export async function fetchAddressById(id, fetchImpl = fetch) {
+export async function fetchAddressById(id, fetchImpl = fetch, countryCode = 'GB', sessionToken = '') {
   await ensureApiBaseUrl();
   if (!isApiConfigured()) {
     return { ok: false, message: 'API not configured' };
   }
 
-  const params = new URLSearchParams({ id });
+  const params = new URLSearchParams({ id, country: countryCode });
+  if (sessionToken) params.set('sessionToken', sessionToken);
+
   const response = await fetchImpl(
     buildApiUrl(`/api/address/lookup?${params.toString()}`),
     withApiCredentials({ cache: 'no-store' })
