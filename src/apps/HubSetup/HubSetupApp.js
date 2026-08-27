@@ -321,6 +321,14 @@ function mountHubSetupWizard(viewport, context) {
     return step >= wizardSteps().length - 1;
   }
 
+  function syncNextButtonLabel() {
+    return isLastWizardStep()
+      ? isHubSetupWizardRerunRequested()
+        ? 'Done'
+        : 'Finish'
+      : 'Continue';
+  }
+
   function scrollWizardToTop() {
     requestAnimationFrame(() => {
       panel.scrollTop = 0;
@@ -408,11 +416,7 @@ function mountHubSetupWizard(viewport, context) {
     const welcomeCopy = getHubSetupWelcomeCopy();
     welcomeTitle.textContent = welcomeCopy.title;
     welcomeLead.textContent = welcomeCopy.lead;
-    nextButton.textContent = isLastWizardStep()
-      ? isHubSetupWizardRerunRequested()
-        ? 'Done'
-        : 'Finish'
-      : 'Continue';
+    nextButton.textContent = syncNextButtonLabel();
 
     const stepId = currentStepId();
     const meta = getHubSetupStepMeta(stepId);
@@ -670,7 +674,8 @@ function mountHubSetupWizard(viewport, context) {
         step += 1;
         setHubSetupWizardStep(step);
         renderStep();
-      }
+      },
+      syncNextButtonLabel
     );
   });
 
