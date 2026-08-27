@@ -93,7 +93,9 @@ Fix red CI before continuing.
 node scripts/verify-hub-health.mjs https://smith.lovely-hub.com
 ```
 
-Expect: hub URL responds, `/api/health` OK, `runtime-config.json` shows `hubEnvironment: "smith"`.
+Expect: hub URL responds, Cloudflare Access gate active (or `/api/health` OK if using a service token), runtime config reachable after sign-in.
+
+Without `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET`, a **302 to Cloudflare Access** on `/api/health` is normal — open the hub in a browser and sign in as an owner to confirm the dashboard loads.
 
 ### 5. Set Worker secrets (if not fully automated)
 
