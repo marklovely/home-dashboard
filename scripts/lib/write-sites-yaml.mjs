@@ -2,6 +2,8 @@
  * Write platform/sites.yaml from a sites map (preserves file header comments).
  * @param {Record<string, Record<string, string | boolean | string[]>>} sites
  */
+import { PLATFORM_ZONE_NAME } from './hub-zones.mjs';
+
 export function formatSitesYaml(sites) {
   const lines = [
     '# Hub platform site registry.',
@@ -20,6 +22,9 @@ export function formatSitesYaml(sites) {
       lines.push(`    terraform: false`);
     } else {
       lines.push(`    terraform: true`);
+    }
+    if (meta.zone_name && meta.zone_name !== PLATFORM_ZONE_NAME) {
+      lines.push(`    zone_name: ${meta.zone_name}`);
     }
     if (Array.isArray(meta.owner_emails) && meta.owner_emails.length > 0) {
       lines.push(`    owner_emails: ${meta.owner_emails.join(',')}`);

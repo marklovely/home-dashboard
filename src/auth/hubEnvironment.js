@@ -50,6 +50,11 @@ function hubEnvironmentFromHostname(host) {
     const sub = hostname.slice(0, -zoneSuffix.length);
     if (sub && SITE_ID_RE.test(sub)) return sub;
   }
+  const customerZoneSuffix = '.lovely-hub.com';
+  if (hostname.endsWith(customerZoneSuffix)) {
+    const sub = hostname.slice(0, -customerZoneSuffix.length);
+    if (sub && SITE_ID_RE.test(sub)) return sub;
+  }
   if (hostname.includes('home-dashboard-test')) return 'test';
   if (hostname.includes('home-dashboard-sandbox')) return 'sandbox';
   const pagesMatch = hostname.match(/home-dashboard-([a-z][a-z0-9_-]{0,31})/);

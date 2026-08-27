@@ -3,6 +3,14 @@
  */
 
 import { validateEmailList } from './email-lists.mjs';
+import {
+  ALLOWED_HUB_ZONE_NAMES,
+  CUSTOMER_HUB_ZONE_NAME,
+  defaultHostnameForSite,
+  PLATFORM_ZONE_NAME,
+  resolveSiteZoneName,
+  validateHubHostname
+} from './hub-zones.mjs';
 
 /** @typedef {'create' | 'update' | 'delete'} SiteAction */
 
@@ -12,12 +20,15 @@ import { validateEmailList } from './email-lists.mjs';
  * @property {boolean} vanilla
  * @property {boolean} [terraform]
  * @property {boolean} [attach_hub_api_binding]
+ * @property {string} [zone_name]
  * @property {string[]} [owner_emails]
  * @property {string[]} [sitter_emails]
  */
 
 const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
-const HOSTNAME_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+
+/** Default DNS zone when creating platform sites via CLI. */
+export { PLATFORM_ZONE_NAME, CUSTOMER_HUB_ZONE_NAME, ALLOWED_HUB_ZONE_NAMES };
 
 /** Sites that cannot be removed from the platform UI. */
 export const PROTECTED_SITE_IDS = new Set(['production']);
@@ -36,16 +47,11 @@ export function validateSiteId(siteId) {
 
 /**
  * @param {string} hostname
- * @param {string} [zoneName]
+ * @param {string} [zoneName] @deprecated Pass allowed zones via validateHubHostname instead.
  */
-export function validateHostname(hostname, zoneName = 'lovely-home.co.uk') {
-  const host = String(hostname ?? '').trim().toLowerCase();
-  if (!host) return 'Hostname is required.';
-  if (!HOSTNAME_RE.test(host)) return 'Hostname must be a valid DNS name.';
-  if (!host.endsWith(`.${zoneName}`) && host !== zoneName) {
-    return `Hostname must be under ${zoneName}.`;
-  }
-  return null;
+export function validateHostname(hostname, zoneName = PLATFORM_ZONE_NAME) {
+  void zoneName;
+  return validateHubHostname(hostname, ALLOWED_HUB_ZONE_NAMES);
 }
 
 /**
@@ -56,13 +62,15 @@ export function validateHostname(hostname, zoneName = 'lovely-home.co.uk') {
  * @param {{ zoneName?: string }} [options]
  */
 export function validateSiteMutation(action, siteId, payload, existing, options = {}) {
-  const zoneName = options.zoneName ?? 'lovely-home.co.uk';
+  const defaultZone = options.zoneName ?? PLATFORM_ZONE_NAME;
+  void defaultZone;
+
   const idError = validateSiteId(siteId);
   if (idError) return idError;
 
   if (action === 'create') {
     if (existing[siteId]) return `Site "${siteId}" already exists in the registry.`;
-    const hostError = validateHostname(payload.hostname, zoneName);
+    const hostError = validateHubHostname(payload.hostname);
     if (hostError) return hostError;
     const ownerError = validateEmailList(payload.owner_emails, { required: true });
     if (ownerError) return ownerError;
@@ -74,7 +82,7 @@ export function validateSiteMutation(action, siteId, payload, existing, options 
   if (action === 'update') {
     if (!existing[siteId]) return `Site "${siteId}" is not in the registry.`;
     if (payload.hostname !== undefined) {
-      const hostError = validateHostname(payload.hostname, zoneName);
+      const hostError = validateHubHostname(payload.hostname);
       if (hostError) return hostError;
     }
     if (payload.owner_emails !== undefined) {
@@ -102,16 +110,16 @@ export function validateSiteMutation(action, siteId, payload, existing, options 
  * @param {Partial<SiteRegistryEntry>} payload
  * @param {string} [zoneName]
  */
-export function defaultSiteEntry(siteId, payload, zoneName = 'lovely-home.co.uk') {
-  const hostname =
-    payload.hostname?.trim() ||
-    (siteId === 'production' ? `dashboard.${zoneName}` : `${siteId}.${zoneName}`);
+export function defaultSiteEntry(siteId, payload, zoneName = CUSTOMER_HUB_ZONE_NAME) {
+  const resolvedZone = resolveSiteZoneName(siteId, payload, zoneName);
+  const hostname = payload.hostname?.trim() || defaultHostnameForSite(siteId, resolvedZone);
   return {
     hostname,
     hub_environment: payload.hub_environment?.trim() || siteId,
     vanilla: payload.vanilla !== false,
     terraform: payload.terraform !== false,
-    attach_hub_api_binding: payload.attach_hub_api_binding === true
+    attach_hub_api_binding: payload.attach_hub_api_binding === true,
+    ...(resolvedZone !== PLATFORM_ZONE_NAME ? { zone_name: resolvedZone } : {})
   };
 }
 
