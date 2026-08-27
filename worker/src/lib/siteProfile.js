@@ -119,6 +119,17 @@ export async function getSiteProfile(env) {
 }
 
 /**
+ * Public hub branding safe for any authenticated device session (owner or sitter).
+ *
+ * @param {Record<string, string | undefined>} env
+ */
+export async function getPublicHubBranding(env) {
+  const profile = await getSiteProfile(env);
+  const hubName = String(profile.hubName ?? '').trim();
+  return hubName ? { hubName } : {};
+}
+
+/**
  * @param {Record<string, string | undefined>} env
  * @param {Record<string, unknown>} patch
  */

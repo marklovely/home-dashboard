@@ -4,6 +4,7 @@ import {
   resolveAuthenticatedDeviceSession
 } from '../lib/deviceSession.js';
 import { getSitterSecretsDisclosed } from '../lib/houseSettings.js';
+import { getPublicHubBranding } from '../lib/siteProfile.js';
 
 /**
  * @param {Request} request
@@ -24,6 +25,12 @@ export async function handleDeviceSession(request, env, fetchImpl = fetch) {
   }
 
   const session = await resolveAuthenticatedDeviceSession(request, env, access);
-  const sitterSecretsDisclosed = await getSitterSecretsDisclosed(env);
-  return finalizeDeviceSessionJsonResponse(session, 200, { sitterSecretsDisclosed });
+  const [sitterSecretsDisclosed, hubBranding] = await Promise.all([
+    getSitterSecretsDisclosed(env),
+    getPublicHubBranding(env)
+  ]);
+  return finalizeDeviceSessionJsonResponse(session, 200, {
+    sitterSecretsDisclosed,
+    ...hubBranding
+  });
 }
