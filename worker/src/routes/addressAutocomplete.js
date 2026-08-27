@@ -1,11 +1,10 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
-import {
-  googlePlacesAutocomplete,
-  googlePlacesLookup,
-  resolveGooglePlacesConfig
-} from '../lib/googlePlaces.js';
+import { resolveGooglePlacesConfig } from '../lib/googlePlaces.js';
 
 /**
+ * Google Places keys restricted to HTTP referrers must run in the browser.
+ * Only authenticated hub sessions receive the key.
+ *
  * @param {Request} request
  * @param {Record<string, string | undefined>} env
  */
@@ -24,7 +23,11 @@ export async function handleAddressConfig(request, env) {
   }
 
   return Response.json(
-    { configured: true, lookupVia: 'worker' },
+    {
+      configured: true,
+      lookupVia: 'browser',
+      placesApiKey: config.apiKey
+    },
     { headers: { 'Cache-Control': 'private, no-store' } }
   );
 }
@@ -32,9 +35,8 @@ export async function handleAddressConfig(request, env) {
 /**
  * @param {Request} request
  * @param {Record<string, string | undefined>} env
- * @param {typeof fetch} fetchImpl
  */
-export async function handleAddressAutocomplete(request, env, fetchImpl = fetch) {
+export async function handleAddressAutocomplete(request, env) {
   const gate = await requireAnyDeviceSession(request, env);
   if (!gate.ok) {
     return Response.json({ error: gate.code }, { status: gate.status });
@@ -48,55 +50,23 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
     );
   }
 
-  const url = new URL(request.url);
-  const term = url.searchParams.get('term')?.trim() ?? '';
-  const country = url.searchParams.get('country')?.trim().toUpperCase() ?? 'GB';
-  const sessionToken = url.searchParams.get('sessionToken')?.trim() ?? '';
-
-  if (country !== 'GB') {
-    return Response.json(
-      { configured: true, suggestions: [], unsupportedCountry: true },
-      { headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
-  if (term.length < 3) {
-    return Response.json(
-      { configured: true, suggestions: [] },
-      { headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
-
-  const upstream = await googlePlacesAutocomplete(
-    term,
-    country,
-    config.apiKey,
-    sessionToken,
-    fetchImpl
-  );
-  if (!upstream.ok) {
-    return Response.json(
-      {
-        configured: true,
-        suggestions: [],
-        error: upstream.failure?.code ?? 'LOOKUP_FAILED',
-        message: upstream.failure?.message ?? 'Address lookup failed.'
-      },
-      { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
-
   return Response.json(
-    { configured: true, suggestions: upstream.suggestions ?? [] },
-    { headers: { 'Cache-Control': 'private, no-store' } }
+    {
+      configured: true,
+      suggestions: [],
+      error: 'USE_BROWSER_LOOKUP',
+      message:
+        'Address lookup runs in the browser so Google HTTP referrer restrictions apply. Fetch /api/address/config first.'
+    },
+    { status: 400, headers: { 'Cache-Control': 'private, no-store' } }
   );
 }
 
 /**
  * @param {Request} request
  * @param {Record<string, string | undefined>} env
- * @param {typeof fetch} fetchImpl
  */
-export async function handleAddressLookup(request, env, fetchImpl = fetch) {
+export async function handleAddressLookup(request, env) {
   const gate = await requireAnyDeviceSession(request, env);
   if (!gate.ok) {
     return Response.json({ error: gate.code }, { status: gate.status });
@@ -107,30 +77,11 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
     return Response.json({ configured: false }, { status: 503 });
   }
 
-  const url = new URL(request.url);
-  const id = url.searchParams.get('id')?.trim() ?? '';
-  const country = url.searchParams.get('country')?.trim().toUpperCase() ?? 'GB';
-  const sessionToken = url.searchParams.get('sessionToken')?.trim() ?? '';
-  if (!id) {
-    return Response.json({ error: 'MISSING_ID' }, { status: 400 });
-  }
-
-  const upstream = await googlePlacesLookup(id, config.apiKey, country, sessionToken, fetchImpl);
-  if (!upstream.ok) {
-    return Response.json(
-      {
-        error: upstream.failure?.code ?? 'LOOKUP_FAILED',
-        message: upstream.failure?.message ?? 'Address lookup failed.'
-      },
-      { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
-
   return Response.json(
     {
-      configured: true,
-      address: upstream.address
+      error: 'USE_BROWSER_LOOKUP',
+      message: 'Address lookup runs in the browser so Google HTTP referrer restrictions apply.'
     },
-    { headers: { 'Cache-Control': 'private, no-store' } }
+    { status: 400, headers: { 'Cache-Control': 'private, no-store' } }
   );
 }
