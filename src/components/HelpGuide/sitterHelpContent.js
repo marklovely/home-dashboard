@@ -31,7 +31,7 @@ export function buildSitterHelpSections() {
   const sections = [
     {
       id: 'welcome',
-      title: 'Welcome to Lovely Home',
+      title: `Welcome to ${stayPlace}`,
       keywords: ['welcome', 'tablet', 'lovely home', 'start', 'sitter', 'guest'],
       blocks: [
         {
