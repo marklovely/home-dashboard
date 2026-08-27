@@ -118,6 +118,34 @@
       .hint a {
         color: var(--accent);
       }
+      .credentials {
+        margin: 0 0 1.25rem;
+        padding: 0.85rem 1rem;
+        border-radius: 0.65rem;
+        border: 1px solid rgba(124, 156, 255, 0.25);
+        background: rgba(124, 156, 255, 0.08);
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+      .credentials strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .credentials dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.35rem 0.75rem;
+        margin: 0.5rem 0 0;
+      }
+      .credentials dt {
+        margin: 0;
+        color: var(--muted);
+      }
+      .credentials dd {
+        margin: 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        color: var(--text);
+      }
     </style>
   </head>
   <body>
@@ -131,16 +159,32 @@
         <li>Owner explore with PIN <strong>1234</strong> after sign-in</li>
       </ul>
       <p class="excluded">Cameras and home controls are not included in this demo.</p>
+      <div class="credentials" aria-label="Demo login details">
+        <strong>Demo login</strong> — use these shared credentials:
+        <dl>
+          <dt>Username</dt>
+          <dd>demo</dd>
+          <dt>Password</dt>
+          <dd>lovely-demo</dd>
+        </dl>
+      </div>
       <form id="demo-login-form">
         <div class="error" id="demo-login-error" aria-live="polite"></div>
         <label for="demo-username">Username</label>
         <input id="demo-username" name="username" autocomplete="username" value="demo" required />
         <label for="demo-password">Password</label>
-        <input id="demo-password" name="password" type="password" autocomplete="current-password" required />
+        <input
+          id="demo-password"
+          name="password"
+          type="text"
+          autocomplete="current-password"
+          value="lovely-demo"
+          required
+        />
         <button type="submit" id="demo-login-submit">Open demo</button>
       </form>
       <p class="hint">
-        Shared demo credentials are fine for trials. Learn more at
+        Data resets overnight (London time). Learn more at
         <a href="https://lovely-home.co.uk/">lovely-home.co.uk</a>.
       </p>
     </main>
