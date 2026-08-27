@@ -48,10 +48,12 @@ export async function readGooglePlacesFailure(response) {
   }
 
   if (response.status === 403 || response.status === 401) {
+    const referrerBlocked = /referer|referrer/i.test(upstreamMessage);
     return {
       code: 'INVALID_API_KEY',
-      message:
-        'Address lookup rejected the Google Places API key. Set GOOGLE_PLACES_API_KEY on the hub Worker and enable Places API (New) in Google Cloud Console.'
+      message: referrerBlocked
+        ? 'Google Places API key is HTTP-referrer restricted. Address lookup must run in the browser from your hub hostname, not via the Worker proxy.'
+        : 'Address lookup rejected the Google Places API key. Set GOOGLE_PLACES_API_KEY on the hub Worker and enable Places API (New) in Google Cloud Console.'
     };
   }
   if (response.status === 429) {
