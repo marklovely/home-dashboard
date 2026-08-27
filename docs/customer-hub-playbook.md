@@ -31,7 +31,8 @@ Before the first customer hub:
    customer_zone_name          = "lovely-hub.com"
    ```
 3. **CI secrets** — set `CUSTOMER_CLOUDFLARE_ZONE_ID` (and optionally `CUSTOMER_ZONE_NAME`) for `generate-hub-tfvars.mjs` in GitHub Actions.
-4. **Access** — household owner emails go on each site’s `owner_emails`; sitter emails optional per site. Global `owner_emails` in tfvars still merge into every hub.
+4. **API token** — extend `CLOUDFLARE_API_TOKEN` (GitHub secret) with **Zone → DNS → Edit** on **`lovely-hub.com`**, not only `lovely-home.co.uk`. Without this, Terraform creates D1/Pages/Access then fails on the `smith` DNS record with `403 Forbidden`.
+5. **Access** — household owner emails go on each site’s `owner_emails`; sitter emails optional per site. Global `owner_emails` in tfvars still merge into every hub.
 
 Run `terraform apply` once after adding the customer zone variables so DNS records for new customer sites can be created in the right zone.
 
