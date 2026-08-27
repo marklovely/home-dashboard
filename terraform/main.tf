@@ -3,6 +3,11 @@ locals {
     for site_id, site in var.sites : site_id => site if site.terraform
   }
 
+  hub_zone_ids = merge(
+    { (var.zone_name) = var.cloudflare_zone_id },
+    var.customer_cloudflare_zone_id != "" ? { (var.customer_zone_name) = var.customer_cloudflare_zone_id } : {}
+  )
+
   # Global owners on every hub; tester_emails (and legacy site owner_emails) add site-only access.
   site_owner_emails = {
     for site_id, site in local.managed_sites : site_id => distinct(concat(
@@ -23,8 +28,8 @@ module "hub_site" {
   hostname                 = each.value.hostname
   vanilla                  = each.value.vanilla
   account_id               = var.cloudflare_account_id
-  zone_id                  = var.cloudflare_zone_id
-  zone_name                = var.zone_name
+  zone_id                  = local.hub_zone_ids[lookup(each.value, "zone_name", var.zone_name)]
+  zone_name                = lookup(each.value, "zone_name", var.zone_name)
   workers_subdomain        = var.workers_subdomain
   access_team_domain       = var.access_team_domain
   owner_emails             = local.site_owner_emails[each.key]
