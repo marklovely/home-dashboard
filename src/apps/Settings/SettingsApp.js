@@ -96,6 +96,9 @@ import {
   syncSiteProfileFromServer
 } from '../../services/siteProfileService.js';
 import { refreshPrivateConfig } from '../../services/privateConfigService.js';
+import { normalizeHubCountryCode } from '../../lib/hubCountries.js';
+import { isValidPostcode, validateEmailAddresses, validateHubContacts } from '../../lib/contactValidation.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 
 /**
  * @param {{ ok: boolean, code?: string, message?: string }} result
@@ -269,9 +272,8 @@ function createUtilitiesFields(context) {
   exportFullButton.className = 'settings-action-button';
   exportFullButton.textContent = 'Download full site backup';
   exportFullButton.addEventListener('click', () => {
-    exportFullButton.disabled = true;
-    exportGuideButton.disabled = true;
-    void (async () => {
+    void withAsyncButtonFeedback(exportFullButton, 'Preparing…', async () => {
+      exportGuideButton.disabled = true;
       try {
         const result = await fetchSiteBackup({ scope: 'full' });
         if (!result.ok || !result.data) {
@@ -298,10 +300,9 @@ function createUtilitiesFields(context) {
       } catch (error) {
         showToast(context.toast, error instanceof Error ? error.message : 'Could not export backup.');
       } finally {
-        exportFullButton.disabled = false;
         exportGuideButton.disabled = false;
       }
-    })();
+    });
   });
 
   const exportGuideButton = document.createElement('button');
@@ -309,9 +310,8 @@ function createUtilitiesFields(context) {
   exportGuideButton.className = 'settings-action-button settings-action-button--secondary';
   exportGuideButton.textContent = 'Download guide only';
   exportGuideButton.addEventListener('click', () => {
-    exportGuideButton.disabled = true;
-    exportFullButton.disabled = true;
-    void (async () => {
+    void withAsyncButtonFeedback(exportGuideButton, 'Preparing…', async () => {
+      exportFullButton.disabled = true;
       try {
         const result = await fetchSiteBackup({ scope: 'guide' });
         if (!result.ok || !result.data) {
@@ -331,10 +331,9 @@ function createUtilitiesFields(context) {
       } catch (error) {
         showToast(context.toast, error instanceof Error ? error.message : 'Could not export backup.');
       } finally {
-        exportGuideButton.disabled = false;
         exportFullButton.disabled = false;
       }
-    })();
+    });
   });
 
   const importButton = document.createElement('button');
@@ -485,7 +484,9 @@ function createHomeDetailsFields(context) {
   const secondaryGroup = createContactGroup('Secondary contact (optional)', profile.secondaryContact ?? {}, {
     variant: 'secondary'
   });
-  const guestFields = createGuestAccessFields(profile);
+  const guestFields = createGuestAccessFields(profile, {
+    hubCountryCode: normalizeHubCountryCode(profile.hubCountryCode)
+  });
   let calendarFields = createCalendarConnectionField();
 
   void fetchHubSecretsConfigured().then((result) => {
@@ -506,66 +507,71 @@ function createHomeDetailsFields(context) {
   saveButton.className = 'settings-action-button';
   saveButton.textContent = 'Save home details';
   saveButton.addEventListener('click', () => {
-    saveButton.disabled = true;
-    void (async () => {
-      try {
-        const primaryInputs = /** @type {HTMLInputElement[]} */ (primaryGroup.querySelectorAll('input'));
-        const secondaryInputs = /** @type {HTMLInputElement[]} */ (secondaryGroup.querySelectorAll('input'));
-        const contacts = {
-          primaryContact: {
-            name: primaryInputs[0]?.value.trim() ?? '',
-            phone: primaryInputs[1]?.value.trim() ?? '',
-            email: primaryInputs[2]?.value.trim() ?? ''
-          },
-          secondaryContact: {
-            name: secondaryInputs[0]?.value.trim() ?? '',
-            phone: secondaryInputs[1]?.value.trim() ?? '',
-            email: secondaryInputs[2]?.value.trim() ?? ''
-          }
-        };
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const primaryInputs = /** @type {HTMLInputElement[]} */ (primaryGroup.querySelectorAll('input'));
+      const secondaryInputs = /** @type {HTMLInputElement[]} */ (secondaryGroup.querySelectorAll('input'));
+      const contacts = {
+        primaryContact: {
+          name: primaryInputs[0]?.value.trim() ?? '',
+          phone: primaryInputs[1]?.value.trim() ?? '',
+          email: primaryInputs[2]?.value.trim() ?? ''
+        },
+        secondaryContact: {
+          name: secondaryInputs[0]?.value.trim() ?? '',
+          phone: secondaryInputs[1]?.value.trim() ?? '',
+          email: secondaryInputs[2]?.value.trim() ?? ''
+        }
+      };
+      const countryCode = normalizeHubCountryCode(profile.hubCountryCode);
+      const contactError = validateHubContacts(contacts, countryCode);
+      if (contactError) {
+        showToast(context.toast, contactError);
+        return;
+      }
+      const addressPatch = readPropertyAddressProfilePatch(guestFields);
+      const postcode = addressPatch.propertyAddress?.postcode ?? '';
+      if (postcode && !isValidPostcode(postcode, countryCode)) {
+        showToast(context.toast, 'Postcode looks invalid for this hub country.');
+        return;
+      }
 
-        const profileResult = await saveSiteProfile({
-          hubName: hubName.input.value.trim(),
-          ...contacts,
-          ...readPropertyAddressProfilePatch(guestFields)
-        });
-        if (!profileResult.ok) {
-          showToast(context.toast, profileResult.message || 'Could not save profile.');
+      const profileResult = await saveSiteProfile({
+        hubName: hubName.input.value.trim(),
+        ...contacts,
+        ...addressPatch
+      });
+      if (!profileResult.ok) {
+        showToast(context.toast, profileResult.message || 'Could not save profile.');
+        return;
+      }
+
+      void syncWeatherLocationFromPropertyAddress(addressPatch.propertyAddress);
+
+      const secretsPatch = {
+        ...contactSecretsPatch(contacts),
+        ...readGuestAccessSecrets(guestFields),
+        ...calendarFields.readCalendarPatch()
+      };
+      if (Object.keys(secretsPatch).length) {
+        const pin = secretsPatch.owner_pin;
+        if (pin && !/^\d{4}$/.test(pin)) {
+          showToast(context.toast, 'Owner PIN must be exactly 4 digits.');
           return;
         }
-
-        void syncWeatherLocationFromPropertyAddress(
-          readPropertyAddressProfilePatch(guestFields).propertyAddress
-        );
-
-        const secretsPatch = {
-          ...contactSecretsPatch(contacts),
-          ...readGuestAccessSecrets(guestFields),
-          ...calendarFields.readCalendarPatch()
-        };
-        if (Object.keys(secretsPatch).length) {
-          const pin = secretsPatch.owner_pin;
-          if (pin && !/^\d{4}$/.test(pin)) {
-            showToast(context.toast, 'Owner PIN must be exactly 4 digits.');
-            return;
-          }
-          const secretsResult = await saveHubSecrets(secretsPatch);
-          if (!secretsResult.ok) {
-            showToast(context.toast, secretsResult.message || 'Could not save secrets.');
-            return;
-          }
+        const secretsResult = await saveHubSecrets(secretsPatch);
+        if (!secretsResult.ok) {
+          showToast(context.toast, secretsResult.message || 'Could not save secrets.');
+          return;
         }
-
-        guestFields.ownerPin.input.value = '';
-        guestFields.wifiPassword.input.value = '';
-        guestFields.lockbox.input.value = '';
-        calendarFields.input.value = '';
-        context.refreshShell?.();
-        showToast(context.toast, 'Home details saved.');
-      } finally {
-        saveButton.disabled = false;
       }
-    })();
+
+      guestFields.ownerPin.input.value = '';
+      guestFields.wifiPassword.input.value = '';
+      guestFields.lockbox.input.value = '';
+      calendarFields.input.value = '';
+      context.refreshShell?.();
+      showToast(context.toast, 'Home details saved.');
+    });
   });
 
   wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, calendarFields.wrap, saveButton);
@@ -619,40 +625,33 @@ function createBinReminderFields(context, onRefresh) {
   saveButton.className = 'settings-action-button';
   saveButton.textContent = 'Save bin reminders';
   saveButton.addEventListener('click', () => {
-    saveButton.disabled = true;
-    const { household, gardenWaste } = dateEditor.readHouseholdAndGarden();
-    const binSchedule = inferBinSchedulePeriod(
-      normalizeBinSchedule({
-        ...schedule,
-        alertHoursBefore: alertField.readAlertHoursBefore(),
-        collectionLocation: locationField.input.value.trim(),
-        councilUrl: councilField.input.value.trim(),
-        validUntil: validUntilField.input.value.trim(),
-        household,
-        gardenWaste
-      })
-    );
-    const validation = validateBinSchedule(binSchedule);
-    if (!validation.ok) {
-      saveButton.disabled = false;
-      showToast(context.toast, validation.message);
-      return;
-    }
-    void saveSiteProfile({ binSchedule })
-      .then((result) => {
-        saveButton.disabled = false;
-        if (!result.ok) {
-          showToast(context.toast, siteProfileSaveErrorMessage(result, 'Could not save bin reminders.'));
-          return;
-        }
-        context.refreshShell?.();
-        onRefresh({ panelId: 'bins' });
-        showToast(context.toast, 'Bin reminders saved.');
-      })
-      .catch(() => {
-        saveButton.disabled = false;
-        showToast(context.toast, 'Could not reach the hub API. Check your connection and try again.');
-      });
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const { household, gardenWaste } = dateEditor.readHouseholdAndGarden();
+      const binSchedule = inferBinSchedulePeriod(
+        normalizeBinSchedule({
+          ...schedule,
+          alertHoursBefore: alertField.readAlertHoursBefore(),
+          collectionLocation: locationField.input.value.trim(),
+          councilUrl: councilField.input.value.trim(),
+          validUntil: validUntilField.input.value.trim(),
+          household,
+          gardenWaste
+        })
+      );
+      const validation = validateBinSchedule(binSchedule);
+      if (!validation.ok) {
+        showToast(context.toast, validation.message);
+        return;
+      }
+      const result = await saveSiteProfile({ binSchedule });
+      if (!result.ok) {
+        showToast(context.toast, siteProfileSaveErrorMessage(result, 'Could not save bin reminders.'));
+        return;
+      }
+      context.refreshShell?.();
+      onRefresh({ panelId: 'bins' });
+      showToast(context.toast, 'Bin reminders saved.');
+    });
   });
 
   wrap.append(
@@ -822,9 +821,13 @@ function createSitterAccessEmailsField(context) {
       .split(/[,;\n]+/)
       .map((part) => part.trim().toLowerCase())
       .filter(Boolean);
-    saveButton.disabled = true;
-    void saveSitterAccessEmails(emails).then((result) => {
-      saveButton.disabled = false;
+    const emailError = validateEmailAddresses(emails);
+    if (emailError) {
+      showToast(context.toast, emailError);
+      return;
+    }
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const result = await saveSitterAccessEmails(emails);
       if (!result.ok) {
         showToast(context.toast, result.message || 'Could not save sitter login emails.');
         return;

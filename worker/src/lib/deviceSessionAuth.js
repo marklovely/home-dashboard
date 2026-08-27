@@ -2,7 +2,7 @@ import { authenticateRequest, hasRequiredRole } from './requestAuth.js';
 import {
   createSitterClaims,
   finalizeDeviceSessionJsonResponse,
-  resolveDeviceSession,
+  resolveAuthenticatedDeviceSession,
   signDeviceSession
 } from './deviceSession.js';
 
@@ -36,7 +36,7 @@ export async function requireOwnerDeviceMode(request, env, nowMs = Date.now()) {
     return { ok: false, status: 403, code: 'FORBIDDEN' };
   }
 
-  const session = await resolveDeviceSession(request, env, nowMs);
+  const session = await resolveAuthenticatedDeviceSession(request, env, access, nowMs);
   if (session.mode === 'sitter') {
     return { ok: false, status: 403, code: 'DEVICE_MODE_REQUIRED' };
   }
@@ -53,7 +53,7 @@ export async function requireAnyDeviceSession(request, env) {
   if (!access.ok) {
     return { ok: false, status: access.status, code: access.code };
   }
-  const session = await resolveDeviceSession(request, env);
+  const session = await resolveAuthenticatedDeviceSession(request, env, access);
   return { ok: true, access, session };
 }
 

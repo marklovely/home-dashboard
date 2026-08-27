@@ -6,6 +6,7 @@ import { handleButtonPress } from './routes/buttons.js';
 import { handleOwnerAuth } from './routes/ownerAuth.js';
 import { handleWeather } from './routes/weather.js';
 import { handleWeatherGeocode } from './routes/weatherGeocode.js';
+import { handleAddressAutocomplete, handleAddressLookup } from './routes/addressAutocomplete.js';
 import { handleCalendar } from './routes/calendar.js';
 import { handleApplianceManuals } from './routes/applianceManuals.js';
 import { handleHouseGuide } from './routes/houseGuide.js';
@@ -119,6 +120,10 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handlePrivateConfigRequest(request, env, fetchBound);
     } else if (url.pathname === '/api/weather/geocode' && request.method === 'GET') {
       response = await handleWeatherGeocode(request, env, fetchBound);
+    } else if (url.pathname === '/api/address/autocomplete' && request.method === 'GET') {
+      response = await handleAddressAutocomplete(request, env, fetchBound);
+    } else if (url.pathname === '/api/address/lookup' && request.method === 'GET') {
+      response = await handleAddressLookup(request, env, fetchBound);
     } else if (url.pathname === '/api/weather' && request.method === 'GET') {
       response = await handleWeather(request, env, fetchBound);
     } else if (url.pathname === '/api/auth/owner') {

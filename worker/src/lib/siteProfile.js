@@ -1,6 +1,7 @@
 export const DEFAULT_SITE_PROFILE = {
   onboardingComplete: false,
   hubName: '',
+  hubCountryCode: 'GB',
   useCase: 'owner',
   primaryContact: { name: '', phone: '', email: '' },
   secondaryContact: { name: '', phone: '', email: '' },

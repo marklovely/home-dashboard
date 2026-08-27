@@ -5,6 +5,8 @@
 import { Eye, EyeOff, createElement } from 'lucide';
 import { createFieldInfoHint, createFieldLabelBlock } from '../HelpGuide/fieldHelp.js';
 import { HUB_SETUP_FIELD_HELP } from './hubSetupHelpContent.js';
+import { createAddressAutocompleteField } from './addressAutocompleteField.js';
+import { hubCountryLabel, normalizeHubCountryCode } from '../../lib/hubCountries.js';
 import {
   formatPropertyAddress,
   hasPropertyAddress,
@@ -313,9 +315,13 @@ export function createContactGroup(titleText, contact, options = {}) {
 
 /**
  * @param {Record<string, unknown>} profile
+ * @param {{ hubCountryCode?: string }} [options]
  */
-export function createPropertyAddressFields(profile) {
+export function createPropertyAddressFields(profile, options = {}) {
   const address = normalizePropertyAddress(profile?.propertyAddress);
+  const hubCountryCode = normalizeHubCountryCode(
+    options.hubCountryCode ?? profile?.hubCountryCode ?? address.country
+  );
   const group = document.createElement('fieldset');
   group.className = 'hub-setup-property-address';
 
@@ -352,25 +358,51 @@ export function createPropertyAddressFields(profile) {
   const county = createSetupField('County (optional)', address.county, {
     autocomplete: 'address-level1'
   });
-  const country = createSetupField('Country', address.country, {
-    autocomplete: 'country-name',
-    placeholder: 'United Kingdom'
-  });
+
+  const countryNote = document.createElement('p');
+  countryNote.className = 'subtle hub-setup-country-note';
+  countryNote.textContent = `Country: ${hubCountryLabel(hubCountryCode) || 'Other country'}`;
+
+  const countryField =
+    hubCountryCode === 'OTHER'
+      ? createSetupField('Country', address.country, {
+          autocomplete: 'country-name',
+          placeholder: 'Country name'
+        })
+      : null;
+
   const postcode = createSetupField('Postcode', address.postcode, {
     autocomplete: 'postal-code'
   });
 
+  const addressSearch = createAddressAutocompleteField({
+    countryCode: hubCountryCode,
+    onSelect(selected) {
+      line1.input.value = selected.line1 ?? '';
+      line2.input.value = selected.line2 ?? '';
+      line3.input.value = selected.line3 ?? '';
+      city.input.value = selected.city ?? '';
+      county.input.value = selected.county ?? '';
+      postcode.input.value = selected.postcode ?? '';
+      if (countryField) {
+        countryField.input.value = selected.country ?? '';
+      }
+    }
+  });
+
   group.append(
-    addressHelpRow,
-    addressHelp.panel,
+    addressSearch.wrap,
     line1.wrap,
     line2.wrap,
     line3.wrap,
     city.wrap,
     county.wrap,
-    country.wrap,
-    postcode.wrap
+    countryNote
   );
+  if (countryField) {
+    group.append(countryField.wrap);
+  }
+  group.append(postcode.wrap);
 
   function readPropertyAddress() {
     return normalizePropertyAddress({
@@ -379,18 +411,29 @@ export function createPropertyAddressFields(profile) {
       line3: line3.input.value,
       city: city.input.value,
       county: county.input.value,
-      country: country.input.value,
+      country:
+        hubCountryCode === 'OTHER'
+          ? countryField?.input.value ?? ''
+          : hubCountryLabel(hubCountryCode),
       postcode: postcode.input.value
     });
   }
 
-  return { group, readPropertyAddress };
+  return {
+    group,
+    readPropertyAddress,
+    setHubCountryCode(code) {
+      addressSearch.setCountryCode(normalizeHubCountryCode(code));
+      countryNote.textContent = `Country: ${hubCountryLabel(normalizeHubCountryCode(code)) || 'Other country'}`;
+    }
+  };
 }
 
 /**
  * @param {Record<string, unknown>} profile
+ * @param {{ hubCountryCode?: string }} [options]
  */
-export function createGuestAccessFields(profile) {
+export function createGuestAccessFields(profile, options = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
 
@@ -404,7 +447,9 @@ export function createGuestAccessFields(profile) {
     revealable: true,
     ...HUB_SETUP_FIELD_HELP.wifiPassword
   });
-  const propertyAddress = createPropertyAddressFields(profile);
+  const propertyAddress = createPropertyAddressFields(profile, {
+    hubCountryCode: options.hubCountryCode ?? profile?.hubCountryCode
+  });
   const lockbox = createSetupField('Lockbox / door code (optional)', '', {
     type: 'password',
     autocomplete: 'off',
@@ -433,7 +478,17 @@ export function createGuestAccessFields(profile) {
     ownerPin.wrap
   );
 
-  return { wrap, wifiSsid, wifiPassword, propertyAddress, lockbox, ownerPin };
+  return {
+    wrap,
+    wifiSsid,
+    wifiPassword,
+    propertyAddress,
+    lockbox,
+    ownerPin,
+    setHubCountryCode(code) {
+      propertyAddress.setHubCountryCode(code);
+    }
+  };
 }
 
 /**
