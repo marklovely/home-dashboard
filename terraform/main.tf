@@ -8,6 +8,11 @@ locals {
     var.customer_cloudflare_zone_id != "" ? { (var.customer_zone_name) = var.customer_cloudflare_zone_id } : {}
   )
 
+  # optional(string) zone_name is null when unset — lookup() would return null instead of the default.
+  site_zone_names = {
+    for site_id, site in local.managed_sites : site_id => coalesce(site.zone_name, var.zone_name)
+  }
+
   # Global owners on every hub; tester_emails (and legacy site owner_emails) add site-only access.
   site_owner_emails = {
     for site_id, site in local.managed_sites : site_id => distinct(concat(
@@ -28,8 +33,8 @@ module "hub_site" {
   hostname                 = each.value.hostname
   vanilla                  = each.value.vanilla
   account_id               = var.cloudflare_account_id
-  zone_id                  = local.hub_zone_ids[lookup(each.value, "zone_name", var.zone_name)]
-  zone_name                = lookup(each.value, "zone_name", var.zone_name)
+  zone_id                  = local.hub_zone_ids[local.site_zone_names[each.key]]
+  zone_name                = local.site_zone_names[each.key]
   workers_subdomain        = var.workers_subdomain
   access_team_domain       = var.access_team_domain
   owner_emails             = local.site_owner_emails[each.key]
