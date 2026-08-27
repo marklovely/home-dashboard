@@ -1,64 +1,45 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
-
-const GETADDRESS_AUTOCOMPLETE_URL = 'https://api.getAddress.io/autocomplete';
-const GETADDRESS_GET_URL = 'https://api.getAddress.io/get';
-const GETADDRESS_FETCH_HEADERS = {
-  Accept: 'application/json',
-  'User-Agent': 'LovelyHomeHub/1.0 (Cloudflare Worker; +https://lovely-home.co.uk)'
-};
-
-/**
- * @param {string | undefined} raw
- */
-function normalizeGetAddressApiKey(raw) {
-  return String(raw ?? '')
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    .trim();
-}
+import {
+  GETADDRESS_AUTOCOMPLETE_URL,
+  GETADDRESS_GET_URL,
+  fetchGetAddress,
+  readGetAddressFailure,
+  resolveGetAddressConfig
+} from '../lib/getAddress.js';
 
 /**
- * @param {Response} response
+ * @param {Request} request
+ * @param {Record<string, string | undefined>} env
  */
-async function readGetAddressFailure(response) {
-  let upstreamMessage = '';
-  const contentType = response.headers.get('content-type') ?? '';
-  try {
-    if (contentType.includes('json')) {
-      const body = await response.json();
-      upstreamMessage = String(body?.Message ?? body?.message ?? '').trim();
-    } else {
-      upstreamMessage = (await response.text()).replace(/\s+/g, ' ').trim().slice(0, 200);
-    }
-  } catch {
-    /* ignore */
+export async function handleAddressConfig(request, env) {
+  const gate = await requireAnyDeviceSession(request, env);
+  if (!gate.ok) {
+    return Response.json({ error: gate.code }, { status: gate.status });
   }
 
-  const statusHint = upstreamMessage || `getAddress.io returned HTTP ${response.status}`;
-
-  if (response.status === 401) {
-    return {
-      code: 'INVALID_API_KEY',
-      message:
-        'Address lookup rejected the API key. Copy the API Key from getAddress.io (not the Administration Key or a Domain Token) and set it on the hub Worker with wrangler secret put GETADDRESS_API_KEY --env <site>.'
-    };
-  }
-  if (response.status === 429) {
-    return {
-      code: 'RATE_LIMITED',
-      message: 'Address lookup is temporarily rate-limited. Try again shortly.'
-    };
-  }
-  if (response.status === 403) {
-    return {
-      code: 'LOOKUP_FAILED',
-      message: `Address lookup was blocked (${statusHint}). Confirm your getAddress.io subscription is active.`
-    };
+  const config = resolveGetAddressConfig(env);
+  if (!config.configured) {
+    return Response.json(
+      { configured: false, lookupVia: 'none' },
+      { headers: { 'Cache-Control': 'private, no-store' } }
+    );
   }
 
-  return {
-    code: 'LOOKUP_FAILED',
-    message: `Address lookup failed (${statusHint}). Check your getAddress.io account and GETADDRESS_API_KEY on the hub Worker.`
-  };
+  if (config.lookupVia === 'browser') {
+    return Response.json(
+      {
+        configured: true,
+        lookupVia: 'browser',
+        domainToken: config.domainToken
+      },
+      { headers: { 'Cache-Control': 'private, no-store' } }
+    );
+  }
+
+  return Response.json(
+    { configured: true, lookupVia: 'worker' },
+    { headers: { 'Cache-Control': 'private, no-store' } }
+  );
 }
 
 /**
@@ -72,11 +53,22 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
     return Response.json({ error: gate.code }, { status: gate.status });
   }
 
-  const apiKey = normalizeGetAddressApiKey(env.GETADDRESS_API_KEY);
-  if (!apiKey) {
+  const config = resolveGetAddressConfig(env);
+  if (!config.configured) {
     return Response.json(
       { configured: false, suggestions: [] },
       { headers: { 'Cache-Control': 'private, no-store' } }
+    );
+  }
+  if (config.lookupVia === 'browser') {
+    return Response.json(
+      {
+        configured: true,
+        suggestions: [],
+        error: 'USE_BROWSER_LOOKUP',
+        message: 'Address lookup uses a browser Domain Token on this hub.'
+      },
+      { status: 400, headers: { 'Cache-Control': 'private, no-store' } }
     );
   }
 
@@ -96,10 +88,30 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
     );
   }
 
-  const endpoint = `${GETADDRESS_AUTOCOMPLETE_URL}/${encodeURIComponent(term)}?api-key=${encodeURIComponent(apiKey)}&all=true`;
-  const response = await fetchImpl(endpoint, { headers: GETADDRESS_FETCH_HEADERS });
+  const endpoint = `${GETADDRESS_AUTOCOMPLETE_URL}/${encodeURIComponent(term)}?api-key=${encodeURIComponent(config.apiKey)}&all=true`;
+  const upstream = await fetchGetAddress(endpoint, fetchImpl);
+  if (!upstream.ok) {
+    return Response.json(
+      {
+        configured: true,
+        suggestions: [],
+        error: upstream.failure.code,
+        message: upstream.failure.message
+      },
+      { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
+    );
+  }
+
+  const response = upstream.response;
   if (!response.ok) {
     const failure = await readGetAddressFailure(response);
+    console.error(
+      JSON.stringify({
+        event: 'address_lookup_upstream',
+        status: response.status,
+        termLength: term.length
+      })
+    );
     return Response.json(
       {
         configured: true,
@@ -114,10 +126,12 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
 
   const payload = await response.json();
   const suggestions = Array.isArray(payload?.suggestions)
-    ? payload.suggestions.map((entry) => ({
-        id: String(entry?.id ?? ''),
-        label: String(entry?.address ?? '')
-      })).filter((entry) => entry.id && entry.label)
+    ? payload.suggestions
+        .map((entry) => ({
+          id: String(entry?.id ?? ''),
+          label: String(entry?.address ?? '')
+        }))
+        .filter((entry) => entry.id && entry.label)
     : [];
 
   return Response.json(
@@ -137,9 +151,18 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
     return Response.json({ error: gate.code }, { status: gate.status });
   }
 
-  const apiKey = normalizeGetAddressApiKey(env.GETADDRESS_API_KEY);
-  if (!apiKey) {
+  const config = resolveGetAddressConfig(env);
+  if (!config.configured) {
     return Response.json({ configured: false }, { status: 503 });
+  }
+  if (config.lookupVia === 'browser') {
+    return Response.json(
+      {
+        error: 'USE_BROWSER_LOOKUP',
+        message: 'Address lookup uses a browser Domain Token on this hub.'
+      },
+      { status: 400, headers: { 'Cache-Control': 'private, no-store' } }
+    );
   }
 
   const id = new URL(request.url).searchParams.get('id')?.trim() ?? '';
@@ -147,8 +170,16 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
     return Response.json({ error: 'MISSING_ID' }, { status: 400 });
   }
 
-  const endpoint = `${GETADDRESS_GET_URL}/${encodeURIComponent(id)}?api-key=${encodeURIComponent(apiKey)}`;
-  const response = await fetchImpl(endpoint, { headers: GETADDRESS_FETCH_HEADERS });
+  const endpoint = `${GETADDRESS_GET_URL}/${encodeURIComponent(id)}?api-key=${encodeURIComponent(config.apiKey)}`;
+  const upstream = await fetchGetAddress(endpoint, fetchImpl);
+  if (!upstream.ok) {
+    return Response.json(
+      { error: upstream.failure.code, message: upstream.failure.message },
+      { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
+    );
+  }
+
+  const response = upstream.response;
   if (!response.ok) {
     const failure = await readGetAddressFailure(response);
     return Response.json(
