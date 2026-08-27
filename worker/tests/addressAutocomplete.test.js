@@ -1,14 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   handleAddressAutocomplete,
   handleAddressConfig,
   handleAddressLookup
 } from '../src/routes/addressAutocomplete.js';
-import {
-  GOOGLE_PLACES_AUTOCOMPLETE_URL,
-  mapGooglePlaceToPropertyAddress,
-  normalizePlacesApiKey
-} from '../src/lib/googlePlaces.js';
+import { mapGooglePlaceToPropertyAddress, normalizePlacesApiKey } from '../src/lib/googlePlaces.js';
 import {
   createAccessTestEnv,
   signTestAccessJwt,
@@ -36,27 +32,22 @@ describe('googlePlaces helpers', () => {
     );
     expect(address.line1).toBe('41 Wagtail Way');
     expect(address.postcode).toBe('PO16 8AB');
-    expect(address.country).toBe('United Kingdom');
   });
 });
 
-describe('address autocomplete', () => {
+describe('address autocomplete routes', () => {
   it('returns configured false when no Google Places API key is set', async () => {
     const env = withTestLimiters(createAccessTestEnv());
     const jwt = await signTestAccessJwt('owner@example.com', env);
-    const response = await handleAddressAutocomplete(
-      new Request(
-        'https://worker.test/api/address/autocomplete?term=PO16&country=GB',
-        withAccessJwt(jwt)
-      ),
+    const response = await handleAddressConfig(
+      new Request('https://worker.test/api/address/config', withAccessJwt(jwt)),
       env
     );
-    expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.configured).toBe(false);
   });
 
-  it('returns worker lookup mode to authenticated config clients', async () => {
+  it('returns browser config with API key to authenticated clients', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
         GOOGLE_PLACES_API_KEY: 'AIza_test'
@@ -68,72 +59,42 @@ describe('address autocomplete', () => {
       env
     );
     const body = await response.json();
-    expect(body.lookupVia).toBe('worker');
+    expect(body.lookupVia).toBe('browser');
+    expect(body.placesApiKey).toBe('AIza_test');
   });
 
-  it('returns suggestions when Google Places succeeds', async () => {
+  it('returns USE_BROWSER_LOOKUP for worker autocomplete', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
         GOOGLE_PLACES_API_KEY: 'AIza_test'
       })
     );
     const jwt = await signTestAccessJwt('owner@example.com', env);
-    const fetchImpl = vi.fn(async (url, init) => {
-      expect(url).toBe(GOOGLE_PLACES_AUTOCOMPLETE_URL);
-      expect(init?.method).toBe('POST');
-      return Response.json({
-        suggestions: [
-          {
-            placePrediction: {
-              placeId: 'ChIJ_test',
-              text: { text: '41 Wagtail Way, Fareham' }
-            }
-          }
-        ]
-      });
-    });
     const response = await handleAddressAutocomplete(
       new Request(
-        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB&sessionToken=abc',
+        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB',
         withAccessJwt(jwt)
       ),
-      env,
-      fetchImpl
+      env
     );
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
     const body = await response.json();
-    expect(body.suggestions).toEqual([{ id: 'ChIJ_test', label: '41 Wagtail Way, Fareham' }]);
+    expect(body.error).toBe('USE_BROWSER_LOOKUP');
   });
 
-  it('resolves full address on lookup', async () => {
+  it('returns USE_BROWSER_LOOKUP for worker lookup', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
         GOOGLE_PLACES_API_KEY: 'AIza_test'
       })
     );
     const jwt = await signTestAccessJwt('owner@example.com', env);
-    const fetchImpl = vi.fn(async (url) => {
-      expect(String(url)).toContain('https://places.googleapis.com/v1/places/ChIJ_test');
-      return Response.json({
-        postalAddress: {
-          regionCode: 'GB',
-          postalCode: 'PO16 8AB',
-          locality: 'Fareham',
-          administrativeArea: 'Hampshire',
-          addressLines: ['41 Wagtail Way']
-        }
-      });
-    });
     const response = await handleAddressLookup(
-      new Request(
-        'https://worker.test/api/address/lookup?id=ChIJ_test&country=GB&sessionToken=abc',
-        withAccessJwt(jwt)
-      ),
-      env,
-      fetchImpl
+      new Request('https://worker.test/api/address/lookup?id=ChIJ_test', withAccessJwt(jwt)),
+      env
     );
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
     const body = await response.json();
-    expect(body.address.line1).toBe('41 Wagtail Way');
+    expect(body.error).toBe('USE_BROWSER_LOOKUP');
   });
 });

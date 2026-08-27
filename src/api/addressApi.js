@@ -1,30 +1,45 @@
 import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
+import { browserPlacesAutocomplete, browserPlacesLookup } from '../lib/googlePlacesBrowser.js';
 
-/** @type {Record<string, string>} */
-const ADDRESS_LOOKUP_MESSAGES = {
-  INVALID_API_KEY: 'Address lookup rejected the Google Places API key.',
-  RATE_LIMITED: 'Address lookup is temporarily rate-limited. Try again shortly.',
-  LOOKUP_FAILED: 'Address lookup failed.',
-  FETCH_FAILED: 'Could not reach Google Places from the hub Worker.'
-};
+/** @typedef {{ configured: boolean, lookupVia: 'none' | 'browser', placesApiKey?: string }} AddressLookupConfig */
+
+/** @type {AddressLookupConfig | null} */
+let cachedConfig = null;
 
 /**
- * @param {unknown} data
- * @param {number} status
+ * @param {typeof fetch} [fetchImpl]
  */
-function addressLookupErrorMessage(data, status) {
-  if (typeof data?.message === 'string' && data.message.trim()) {
-    return data.message.trim();
+export async function fetchAddressLookupConfig(fetchImpl = fetch) {
+  if (cachedConfig) return cachedConfig;
+
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    cachedConfig = { configured: false, lookupVia: 'none' };
+    return cachedConfig;
   }
-  const code = typeof data?.error === 'string' ? data.error : '';
-  if (code && ADDRESS_LOOKUP_MESSAGES[code]) {
-    return ADDRESS_LOOKUP_MESSAGES[code];
+
+  const response = await fetchImpl(
+    buildApiUrl('/api/address/config'),
+    withApiCredentials({ cache: 'no-store' })
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.configured !== true) {
+    cachedConfig = { configured: false, lookupVia: 'none' };
+    return cachedConfig;
   }
-  if (status === 404) {
-    return 'Address lookup is not available on this hub yet.';
-  }
-  return ADDRESS_LOOKUP_MESSAGES.LOOKUP_FAILED;
+
+  cachedConfig = {
+    configured: true,
+    lookupVia: data.lookupVia === 'browser' ? 'browser' : 'none',
+    placesApiKey: typeof data.placesApiKey === 'string' ? data.placesApiKey : undefined
+  };
+  return cachedConfig;
+}
+
+/** Reset cached lookup mode (tests). */
+export function resetAddressLookupConfigCache() {
+  cachedConfig = null;
 }
 
 /**
@@ -44,33 +59,22 @@ export async function fetchAddressSuggestions(
     return { ok: false, configured: false, suggestions: [], message: 'API not configured' };
   }
 
-  const params = new URLSearchParams({ term, country: countryCode });
-  if (sessionToken) params.set('sessionToken', sessionToken);
-
-  const response = await fetchImpl(
-    buildApiUrl(`/api/address/autocomplete?${params.toString()}`),
-    withApiCredentials({ cache: 'no-store' })
-  );
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const configured =
-      typeof data?.configured === 'boolean'
-        ? data.configured
-        : response.status === 503
-          ? false
-          : null;
-    return {
-      ok: false,
-      configured,
-      suggestions: [],
-      message: addressLookupErrorMessage(data, response.status)
-    };
+  const config = await fetchAddressLookupConfig(fetchImpl);
+  if (!config.configured || !config.placesApiKey) {
+    return { ok: false, configured: false, suggestions: [], message: 'API not configured' };
   }
-  return {
-    ok: true,
-    configured: data?.configured !== false,
-    suggestions: Array.isArray(data?.suggestions) ? data.suggestions : []
-  };
+
+  const direct = await browserPlacesAutocomplete(
+    term,
+    countryCode,
+    config.placesApiKey,
+    sessionToken,
+    fetchImpl
+  );
+  if (!direct.ok) {
+    return { ok: false, configured: true, suggestions: [], message: direct.message };
+  }
+  return { ok: true, configured: true, suggestions: direct.suggestions };
 }
 
 /**
@@ -85,22 +89,10 @@ export async function fetchAddressById(id, fetchImpl = fetch, countryCode = 'GB'
     return { ok: false, message: 'API not configured' };
   }
 
-  const params = new URLSearchParams({ id, country: countryCode });
-  if (sessionToken) params.set('sessionToken', sessionToken);
-
-  const response = await fetchImpl(
-    buildApiUrl(`/api/address/lookup?${params.toString()}`),
-    withApiCredentials({ cache: 'no-store' })
-  );
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    return {
-      ok: false,
-      message: addressLookupErrorMessage(data, response.status)
-    };
+  const config = await fetchAddressLookupConfig(fetchImpl);
+  if (!config.placesApiKey) {
+    return { ok: false, message: 'API not configured' };
   }
-  return {
-    ok: true,
-    address: data?.address ?? null
-  };
+
+  return browserPlacesLookup(id, countryCode, config.placesApiKey, sessionToken, fetchImpl);
 }
