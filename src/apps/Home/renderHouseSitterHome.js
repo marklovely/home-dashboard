@@ -2,7 +2,7 @@ import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { getAppDisplayTitle, getModeConfig } from '../../modes/modeConfig.js';
-import { getHubDisplayName, getSiteProfileState } from '../../services/siteProfileService.js';
+import { getHubDisplayName, getSiteProfileState, subscribeToSiteProfile } from '../../services/siteProfileService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 import { mountBinAlertBannerHost } from '../../services/binAlertBannerSync.js';
 
@@ -16,6 +16,9 @@ const ESSENTIAL_CARD_COPY = {
   controls: { headline: 'Lighting, heating, and scenes', teaserFromSummary: 'title' },
   emergency: { headline: 'Help is here', teaser: 'Owners, vet, utilities and more' }
 };
+
+/** @type {(() => void) | null} */
+let sitterWelcomeProfileUnsubscribe = null;
 
 function getSitterWelcomeTitle() {
   return `Welcome to ${getHubDisplayName()}`;
@@ -205,6 +208,8 @@ function pickAppsInOrder(apps, ids) {
  * @param {import('../types/app.js').ShellContext} context
  */
 export async function renderHouseSitterHome(viewport, apps, context) {
+  sitterWelcomeProfileUnsubscribe?.();
+  sitterWelcomeProfileUnsubscribe = null;
   viewport.replaceChildren();
 
   const mode = getModeConfig();
@@ -217,12 +222,30 @@ export async function renderHouseSitterHome(viewport, apps, context) {
 
   const welcome = document.createElement('article');
   welcome.className = 'sitter-welcome-card';
-  welcome.innerHTML = `
-    <p class="sitter-welcome-emoji" aria-hidden="true">🏡</p>
-    <h2 class="sitter-welcome-title">${getSitterWelcomeTitle()}</h2>
-    <p class="sitter-welcome-lead">${getSitterWelcomeLead()}</p>
-    <p class="sitter-welcome-body">Everything you'll need during your stay is below.</p>
-  `;
+
+  const welcomeEmoji = document.createElement('p');
+  welcomeEmoji.className = 'sitter-welcome-emoji';
+  welcomeEmoji.setAttribute('aria-hidden', 'true');
+  welcomeEmoji.textContent = '🏡';
+
+  const welcomeTitle = document.createElement('h2');
+  welcomeTitle.className = 'sitter-welcome-title';
+  welcomeTitle.textContent = getSitterWelcomeTitle();
+
+  const welcomeLead = document.createElement('p');
+  welcomeLead.className = 'sitter-welcome-lead';
+  welcomeLead.textContent = getSitterWelcomeLead();
+
+  const welcomeBody = document.createElement('p');
+  welcomeBody.className = 'sitter-welcome-body';
+  welcomeBody.textContent = "Everything you'll need during your stay is below.";
+
+  welcome.append(welcomeEmoji, welcomeTitle, welcomeLead, welcomeBody);
+
+  sitterWelcomeProfileUnsubscribe = subscribeToSiteProfile(() => {
+    welcomeTitle.textContent = getSitterWelcomeTitle();
+    welcomeLead.textContent = getSitterWelcomeLead();
+  });
 
   const essentialsSection = document.createElement('section');
   essentialsSection.className = 'sitter-section';

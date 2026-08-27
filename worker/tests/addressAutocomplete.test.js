@@ -49,4 +49,28 @@ describe('address autocomplete', () => {
     expect(body.configured).toBe(true);
     expect(body.suggestions).toEqual([{ id: 'abc', label: '41 Wagtail Way, Fareham' }]);
   });
+
+  it('returns INVALID_API_KEY when getAddress responds with 401', async () => {
+    const env = withTestLimiters(
+      createAccessTestEnv({
+        GETADDRESS_API_KEY: 'bad-key'
+      })
+    );
+    const jwt = await signTestAccessJwt('owner@example.com', env);
+    const fetchImpl = vi.fn(async () =>
+      Response.json({ Message: 'Unauthorized' }, { status: 401 })
+    );
+    const response = await handleAddressAutocomplete(
+      new Request(
+        'https://worker.test/api/address/autocomplete?term=wagtail&country=GB',
+        withAccessJwt(jwt)
+      ),
+      env,
+      fetchImpl
+    );
+    expect(response.status).toBe(502);
+    const body = await response.json();
+    expect(body.error).toBe('INVALID_API_KEY');
+    expect(body.message).toMatch(/API key/i);
+  });
 });

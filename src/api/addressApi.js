@@ -1,6 +1,32 @@
 import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
 
+/** @type {Record<string, string>} */
+const ADDRESS_LOOKUP_MESSAGES = {
+  INVALID_API_KEY:
+    'Address lookup rejected the API key. Set GETADDRESS_API_KEY on the hub Worker (not Pages).',
+  RATE_LIMITED: 'Address lookup is temporarily rate-limited. Try again shortly.',
+  LOOKUP_FAILED: 'Address lookup failed. Check the getAddress.io account and hub Worker secret.'
+};
+
+/**
+ * @param {unknown} data
+ * @param {number} status
+ */
+function addressLookupErrorMessage(data, status) {
+  const code = typeof data?.error === 'string' ? data.error : '';
+  if (code && ADDRESS_LOOKUP_MESSAGES[code]) {
+    return ADDRESS_LOOKUP_MESSAGES[code];
+  }
+  if (typeof data?.message === 'string' && data.message.trim()) {
+    return data.message.trim();
+  }
+  if (status === 404) {
+    return 'Address lookup is not available on this hub yet.';
+  }
+  return ADDRESS_LOOKUP_MESSAGES.LOOKUP_FAILED;
+}
+
 /**
  * @param {string} term
  * @param {string} [countryCode]
@@ -32,10 +58,7 @@ export async function fetchAddressSuggestions(term, countryCode = 'GB', fetchImp
       ok: false,
       configured,
       suggestions: [],
-      message:
-        data?.message ||
-        data?.error ||
-        (response.status === 404 ? 'Address lookup is not available on this hub yet.' : 'Address lookup failed.')
+      message: addressLookupErrorMessage(data, response.status)
     };
   }
   return {
@@ -64,7 +87,7 @@ export async function fetchAddressById(id, fetchImpl = fetch) {
   if (!response.ok) {
     return {
       ok: false,
-      message: data?.error || 'Could not load that address.'
+      message: addressLookupErrorMessage(data, response.status)
     };
   }
   return {

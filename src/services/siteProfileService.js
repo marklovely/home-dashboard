@@ -129,6 +129,24 @@ export function getHubEyebrow() {
 }
 
 /**
+ * @param {string} [hubName]
+ */
+export function applyPublicHubBranding(hubName) {
+  const trimmed = String(hubName ?? '').trim();
+  if (!trimmed) return;
+
+  if (!state) {
+    state = { profile: { hubName: trimmed }, guideSeeded: false };
+  } else {
+    state = {
+      ...state,
+      profile: { ...state.profile, hubName: trimmed }
+    };
+  }
+  notify();
+}
+
+/**
  * @param {() => void} listener
  */
 export function subscribeToSiteProfile(listener) {

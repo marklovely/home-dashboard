@@ -35,6 +35,7 @@ import {
 } from '../../lib/binScheduleProfile.js';
 import {
   fetchHubSecretsConfigured,
+  getHubDisplayName,
   getSiteProfileState,
   getSiteSetupUnavailableMessage,
   isSiteSetupAvailable,
@@ -74,6 +75,28 @@ const HUB_SETUP_WELCOME = {
   lead:
     'A few short steps to name your hub, add contacts, and get guests started. Each step saves as you go — you can change everything later in Settings.'
 };
+
+function getHubSetupWelcomeCopy() {
+  if (isHubSetupWizardRerunRequested()) {
+    const hubName = getHubDisplayName();
+    if (hubName && hubName !== 'Home Hub') {
+      return {
+        title: `Welcome to ${hubName}`,
+        lead: HUB_SETUP_RERUN_WELCOME.lead
+      };
+    }
+    return HUB_SETUP_RERUN_WELCOME;
+  }
+
+  const hubName = getHubDisplayName();
+  if (hubName && hubName !== 'Home Hub') {
+    return {
+      title: `Welcome to ${hubName}`,
+      lead: HUB_SETUP_WELCOME.lead
+    };
+  }
+  return HUB_SETUP_WELCOME;
+}
 
 const HUB_SETUP_RERUN_WELCOME = {
   title: 'Hub setup wizard',
@@ -177,7 +200,7 @@ function mountHubSetupWizard(viewport, context) {
   welcomeEyebrow.className = 'hub-setup-welcome-eyebrow';
   welcomeEyebrow.textContent = getModeConfig().branding.eyebrow;
 
-  const welcomeCopy = isHubSetupWizardRerunRequested() ? HUB_SETUP_RERUN_WELCOME : HUB_SETUP_WELCOME;
+  const welcomeCopy = getHubSetupWelcomeCopy();
 
   const welcomeTitle = document.createElement('h2');
   welcomeTitle.className = 'hub-setup-welcome-title';
@@ -382,10 +405,13 @@ function mountHubSetupWizard(viewport, context) {
     renderNav();
     body.replaceChildren();
     backButton.hidden = step === 0;
+    const welcomeCopy = getHubSetupWelcomeCopy();
+    welcomeTitle.textContent = welcomeCopy.title;
+    welcomeLead.textContent = welcomeCopy.lead;
     nextButton.textContent = isLastWizardStep()
       ? isHubSetupWizardRerunRequested()
         ? 'Done'
-        : 'Finish setup'
+        : 'Finish'
       : 'Continue';
 
     const stepId = currentStepId();
@@ -462,7 +488,7 @@ function mountHubSetupWizard(viewport, context) {
           await refreshGuideContent(fetch, { draft: true, force: true });
           showToast(
             context.toast,
-            'Starter guide imported. Tap Finish setup when you are ready, or Back to keep editing.',
+            'Starter guide imported. Tap Finish when you are ready, or Back to keep editing.',
             4500
           );
         });
