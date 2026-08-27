@@ -100,6 +100,18 @@ describe('device session HTTP routes', () => {
     expect(response.headers.get('Set-Cookie')).toBeNull();
   });
 
+  it('GET /api/device-session returns sitter mode for Access house-sitter without cookie', async () => {
+    const jwt = await signTestAccessJwt('sitter@example.com', env);
+    const response = await handleDeviceSession(
+      new Request('https://worker.test/api/device-session', withAccessJwt(jwt)),
+      env
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.mode).toBe('sitter');
+    expect(response.headers.get('Set-Cookie')).toBeNull();
+  });
+
   it('owner PIN clears sitter lock and returns owner mode', async () => {
     const jwt = await signTestAccessJwt('owner@example.com', env);
     const response = await handleOwnerAuth(

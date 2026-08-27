@@ -936,6 +936,7 @@ body.is-bins-route .app-viewport > .bins-app {
 .hub-setup-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
 }
 
 .hub-setup-welcome {
@@ -3459,6 +3460,55 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .hub-setup-bin-entry-list {
   display: grid;
   gap: 8px;
+}
+.hub-setup-bin-entry-list-scroll {
+  max-height: min(42vh, 340px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.hub-setup-bin-list-summary {
+  margin: 0;
+  font-weight: 650;
+}
+.hub-setup-bin-entry-intro {
+  margin: 0;
+}
+.hub-setup-address-search {
+  display: grid;
+  gap: 8px;
+}
+.hub-setup-address-search-input-wrap {
+  position: relative;
+}
+.hub-setup-address-search-results {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  background: var(--surface);
+}
+.hub-setup-address-search-option {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+}
+.hub-setup-address-search-option:hover,
+.hub-setup-address-search-option:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+.hub-setup-country-note {
+  margin: 0;
 }
 .hub-setup-bin-entry-row {
   display: flex;
