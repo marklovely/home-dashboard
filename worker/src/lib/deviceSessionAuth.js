@@ -5,6 +5,7 @@ import {
   resolveAuthenticatedDeviceSession,
   signDeviceSession
 } from './deviceSession.js';
+import { getPublicHubBranding } from './siteProfile.js';
 
 /**
  * @param {Request} request
@@ -67,13 +68,18 @@ export async function issueSitterSessionResponse(env, nowSec = Math.floor(Date.n
   if (!cookieValue) {
     return Response.json({ error: 'SESSION_UNAVAILABLE' }, { status: 503 });
   }
-  return finalizeDeviceSessionJsonResponse({
-    mode: 'sitter',
-    ownerSessionExpiresAtMs: null,
-    cookieValue,
-    claims,
-    clearCookie: false
-  });
+  const hubBranding = await getPublicHubBranding(env);
+  return finalizeDeviceSessionJsonResponse(
+    {
+      mode: 'sitter',
+      ownerSessionExpiresAtMs: null,
+      cookieValue,
+      claims,
+      clearCookie: false
+    },
+    200,
+    hubBranding
+  );
 }
 
 /**

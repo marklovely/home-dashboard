@@ -1,7 +1,7 @@
 import { ensureApiBaseUrl, buildApiUrl } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
 
-/** @typedef {{ authenticated: boolean, mode: 'owner' | 'sitter', ownerSessionExpiresAt: string | null, sitterSecretsDisclosed?: boolean }} DeviceSessionPayload */
+/** @typedef {{ authenticated: boolean, mode: 'owner' | 'sitter', ownerSessionExpiresAt: string | null, sitterSecretsDisclosed?: boolean, hubName?: string }} DeviceSessionPayload */
 
 const DEVICE_SESSION_FETCH_TIMEOUT_MS = 12_000;
 
