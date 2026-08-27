@@ -57,8 +57,9 @@ import {
   getHubSetupStepMeta,
   getWizardSteps
 } from './hubSetupNavigation.js';
-import { HUB_COUNTRY_OPTIONS, normalizeHubCountryCode } from '../../lib/hubCountries.js';
-import { isValidPostcode, validateHubContacts } from '../../lib/contactValidation.js';
+import { HUB_COUNTRY_OPTIONS, hubCountrySelectOptions, normalizeHubCountryCode } from '../../lib/hubCountries.js';
+import { validateHubContacts, validatePropertyAddress } from '../../lib/contactValidation.js';
+import { attachContactGroupValidation, attachPropertyAddressValidation } from '../../lib/contactFieldValidationUi.js';
 import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 
 const USE_CASE_OPTIONS = [
@@ -227,7 +228,7 @@ function mountHubSetupWizard(viewport, context) {
   const hubCountry = createSetupSelect(
     'Where is this property?',
     normalizeHubCountryCode(profile.hubCountryCode),
-    HUB_COUNTRY_OPTIONS,
+    hubCountrySelectOptions(),
     {
       helpText:
         'We use this for phone, email, and address validation. United Kingdom hubs can search addresses by postcode.',
@@ -256,6 +257,10 @@ function mountHubSetupWizard(viewport, context) {
   const guestFields = createGuestAccessFields(profile, {
     hubCountryCode: normalizeHubCountryCode(profile.hubCountryCode)
   });
+  const getCountryCode = () => hubCountry.select.value;
+  attachContactGroupValidation(primaryGroup, getCountryCode);
+  attachContactGroupValidation(secondaryGroup, getCountryCode);
+  const addressValidation = attachPropertyAddressValidation(guestFields.propertyAddress, getCountryCode);
   hubCountry.select.addEventListener('change', () => {
     guestFields.setHubCountryCode(hubCountry.select.value);
   });
@@ -578,9 +583,10 @@ function mountHubSetupWizard(viewport, context) {
             return;
           }
           const addressPatch = readPropertyAddressProfilePatch(guestFields);
-          const postcode = addressPatch.propertyAddress?.postcode ?? '';
-          if (postcode && !isValidPostcode(postcode, countryCode)) {
-            showToast(context.toast, 'Postcode looks invalid for the selected country.');
+          const addressError = validatePropertyAddress(addressPatch.propertyAddress, countryCode);
+          if (addressError) {
+            addressValidation?.validateAll();
+            showToast(context.toast, addressError);
             return;
           }
           const secretsResult = await saveHubSecrets(readGuestAccessSecrets(guestFields));
