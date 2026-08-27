@@ -1,21 +1,16 @@
 import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
-import { browserAutocomplete, browserGetAddress } from '../lib/getAddressBrowser.js';
 
 /** @type {Record<string, string>} */
 const ADDRESS_LOOKUP_MESSAGES = {
   INVALID_API_KEY:
     'Address lookup rejected the API key. Set GETADDRESS_API_KEY on the hub Worker (not Pages).',
+  INVALID_DOMAIN_TOKEN:
+    'Address lookup rejected the Domain Token. Register it on getAddress.io for this hub hostname.',
   RATE_LIMITED: 'Address lookup is temporarily rate-limited. Try again shortly.',
-  LOOKUP_FAILED: 'Address lookup failed. Check the getAddress.io account and hub Worker secret.',
-  FETCH_FAILED:
-    'Could not reach getAddress.io from the hub Worker. Set GETADDRESS_DOMAIN_TOKEN on the Worker instead.'
+  LOOKUP_FAILED: 'Address lookup failed.',
+  FETCH_FAILED: 'Could not reach getAddress.io from the hub Worker.'
 };
-
-/** @typedef {{ configured: boolean, lookupVia: 'none' | 'worker' | 'browser', domainToken?: string }} AddressLookupConfig */
-
-/** @type {AddressLookupConfig | null} */
-let cachedConfig = null;
 
 /**
  * @param {unknown} data
@@ -36,41 +31,6 @@ function addressLookupErrorMessage(data, status) {
 }
 
 /**
- * @param {typeof fetch} [fetchImpl]
- */
-export async function fetchAddressLookupConfig(fetchImpl = fetch) {
-  if (cachedConfig) return cachedConfig;
-
-  await ensureApiBaseUrl();
-  if (!isApiConfigured()) {
-    cachedConfig = { configured: false, lookupVia: 'none' };
-    return cachedConfig;
-  }
-
-  const response = await fetchImpl(
-    buildApiUrl('/api/address/config'),
-    withApiCredentials({ cache: 'no-store' })
-  );
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || data?.configured !== true) {
-    cachedConfig = { configured: false, lookupVia: 'none' };
-    return cachedConfig;
-  }
-
-  cachedConfig = {
-    configured: true,
-    lookupVia: data.lookupVia === 'browser' ? 'browser' : 'worker',
-    domainToken: typeof data.domainToken === 'string' ? data.domainToken : undefined
-  };
-  return cachedConfig;
-}
-
-/** Reset cached lookup mode (tests). */
-export function resetAddressLookupConfigCache() {
-  cachedConfig = null;
-}
-
-/**
  * @param {string} term
  * @param {string} [countryCode]
  * @param {typeof fetch} [fetchImpl]
@@ -79,19 +39,6 @@ export async function fetchAddressSuggestions(term, countryCode = 'GB', fetchImp
   await ensureApiBaseUrl();
   if (!isApiConfigured()) {
     return { ok: false, configured: false, suggestions: [], message: 'API not configured' };
-  }
-
-  const config = await fetchAddressLookupConfig(fetchImpl);
-  if (!config.configured) {
-    return { ok: false, configured: false, suggestions: [], message: 'API not configured' };
-  }
-
-  if (config.lookupVia === 'browser' && config.domainToken) {
-    const direct = await browserAutocomplete(term, config.domainToken, fetchImpl);
-    if (!direct.ok) {
-      return { ok: false, configured: true, suggestions: [], message: direct.message };
-    }
-    return { ok: true, configured: true, suggestions: direct.suggestions };
   }
 
   const params = new URLSearchParams({
@@ -132,11 +79,6 @@ export async function fetchAddressById(id, fetchImpl = fetch) {
   await ensureApiBaseUrl();
   if (!isApiConfigured()) {
     return { ok: false, message: 'API not configured' };
-  }
-
-  const config = await fetchAddressLookupConfig(fetchImpl);
-  if (config.lookupVia === 'browser' && config.domainToken) {
-    return browserGetAddress(config.domainToken, id, fetchImpl);
   }
 
   const params = new URLSearchParams({ id });

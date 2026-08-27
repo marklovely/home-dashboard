@@ -21,18 +21,86 @@ export function resolveGetAddressConfig(env) {
   const domainToken = normalizeGetAddressSecret(env.GETADDRESS_DOMAIN_TOKEN);
   const apiKey = normalizeGetAddressSecret(env.GETADDRESS_API_KEY);
   if (domainToken) {
-    return { configured: true, lookupVia: 'browser', domainToken, apiKey: '' };
+    return {
+      configured: true,
+      authMode: 'domain_token',
+      authKey: domainToken
+    };
   }
   if (apiKey) {
-    return { configured: true, lookupVia: 'worker', domainToken: '', apiKey };
+    return {
+      configured: true,
+      authMode: 'api_key',
+      authKey: apiKey
+    };
   }
-  return { configured: false, lookupVia: 'none', domainToken: '', apiKey: '' };
+  return { configured: false, authMode: 'none', authKey: '' };
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, string | undefined>} env
+ */
+export function resolveGetAddressOrigin(request, env) {
+  const originHeader = request.headers.get('Origin')?.trim();
+  if (originHeader) {
+    try {
+      return new URL(originHeader).origin;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const configuredHost = env.GETADDRESS_DOMAIN_HOST?.trim();
+  if (configuredHost) {
+    const host = configuredHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `https://${host}`;
+  }
+
+  for (const entry of String(env.ALLOWED_ORIGINS ?? '').split(',')) {
+    const trimmed = entry.trim();
+    if (
+      !trimmed.startsWith('https://') ||
+      trimmed.includes('localhost') ||
+      trimmed.includes('127.0.0.1') ||
+      trimmed.includes('pages.dev')
+    ) {
+      continue;
+    }
+    try {
+      return new URL(trimmed).origin;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return '';
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, string | undefined>} env
+ * @param {'domain_token' | 'api_key'} authMode
+ */
+export function buildGetAddressFetchHeaders(request, env, authMode) {
+  const headers = { ...GETADDRESS_FETCH_HEADERS };
+  if (authMode !== 'domain_token') {
+    return headers;
+  }
+
+  const origin = resolveGetAddressOrigin(request, env);
+  if (origin) {
+    headers.Origin = origin;
+    headers.Referer = `${origin}/`;
+  }
+  return headers;
 }
 
 /**
  * @param {Response} response
+ * @param {'domain_token' | 'api_key'} [authMode]
  */
-export async function readGetAddressFailure(response) {
+export async function readGetAddressFailure(response, authMode = 'api_key') {
   let upstreamMessage = '';
   const contentType = response.headers.get('content-type') ?? '';
   try {
@@ -49,10 +117,17 @@ export async function readGetAddressFailure(response) {
   const statusHint = upstreamMessage || `getAddress.io returned HTTP ${response.status}`;
 
   if (response.status === 401) {
+    if (authMode === 'domain_token') {
+      return {
+        code: 'INVALID_DOMAIN_TOKEN',
+        message:
+          'Address lookup rejected the Domain Token. On getAddress.io, register the token for this hub hostname (e.g. smith.lovely-hub.com) and set GETADDRESS_DOMAIN_HOST on the Worker if needed.'
+      };
+    }
     return {
       code: 'INVALID_API_KEY',
       message:
-        'Address lookup rejected the API key. Use the API Key from getAddress.io, or create a Domain Token for this hub hostname and set GETADDRESS_DOMAIN_TOKEN on the Worker.'
+        'Address lookup rejected the API key. Use the API Key from getAddress.io, or set GETADDRESS_DOMAIN_TOKEN on the Worker instead.'
     };
   }
   if (response.status === 429) {
@@ -64,23 +139,26 @@ export async function readGetAddressFailure(response) {
   if (response.status === 403) {
     return {
       code: 'LOOKUP_FAILED',
-      message: `Address lookup was blocked (${statusHint}). Server-side calls from Cloudflare Workers are often blocked — create a Domain Token on getAddress.io for your hub hostname and set GETADDRESS_DOMAIN_TOKEN on the Worker.`
+      message: `Address lookup was blocked (${statusHint}). Check your getAddress.io Domain Token host matches this hub.`
     };
   }
 
   return {
     code: 'LOOKUP_FAILED',
-    message: `Address lookup failed (${statusHint}). If getAddress.io shows no usage, set GETADDRESS_DOMAIN_TOKEN (Domain Token) on the Worker instead of the API key.`
+    message: `Address lookup failed (${statusHint}).`
   };
 }
 
 /**
  * @param {string} endpoint
  * @param {typeof fetch} fetchImpl
+ * @param {Record<string, string>} [extraHeaders]
  */
-export async function fetchGetAddress(endpoint, fetchImpl = fetch) {
+export async function fetchGetAddress(endpoint, fetchImpl = fetch, extraHeaders = {}) {
   try {
-    const response = await fetchImpl(endpoint, { headers: GETADDRESS_FETCH_HEADERS });
+    const response = await fetchImpl(endpoint, {
+      headers: { ...GETADDRESS_FETCH_HEADERS, ...extraHeaders }
+    });
     return { ok: true, response, failure: null };
   } catch (error) {
     const detail = error instanceof Error ? error.message.slice(0, 200) : 'unknown';
@@ -90,8 +168,7 @@ export async function fetchGetAddress(endpoint, fetchImpl = fetch) {
       response: null,
       failure: {
         code: 'FETCH_FAILED',
-        message:
-          'Could not reach getAddress.io from the hub Worker. Create a Domain Token on getAddress.io for this hub hostname and set GETADDRESS_DOMAIN_TOKEN on the Worker (wrangler secret put --env <site>).'
+        message: 'Could not reach getAddress.io from the hub Worker. Try again shortly.'
       }
     };
   }
