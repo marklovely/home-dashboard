@@ -1,16 +1,12 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
 import {
-  GETADDRESS_AUTOCOMPLETE_URL,
-  GETADDRESS_GET_URL,
   fetchGetAddress,
   readGetAddressFailure,
+  resolveAddressLookupOrigin,
   resolveGetAddressConfig
 } from '../lib/getAddress.js';
 
 /**
- * Domain tokens are validated by getAddress against the browser hostname, so they
- * must be used from the client. Only authenticated hub sessions receive the token.
- *
  * @param {Request} request
  * @param {Record<string, string | undefined>} env
  */
@@ -24,17 +20,6 @@ export async function handleAddressConfig(request, env) {
   if (!config.configured) {
     return Response.json(
       { configured: false, lookupVia: 'none' },
-      { headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
-
-  if (config.lookupVia === 'browser') {
-    return Response.json(
-      {
-        configured: true,
-        lookupVia: 'browser',
-        domainToken: config.domainToken
-      },
       { headers: { 'Cache-Control': 'private, no-store' } }
     );
   }
@@ -57,21 +42,11 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
   }
 
   const config = resolveGetAddressConfig(env);
+  const apiOrigin = resolveAddressLookupOrigin(env);
   if (!config.configured) {
     return Response.json(
       { configured: false, suggestions: [] },
       { headers: { 'Cache-Control': 'private, no-store' } }
-    );
-  }
-  if (config.lookupVia === 'browser') {
-    return Response.json(
-      {
-        configured: true,
-        suggestions: [],
-        error: 'USE_BROWSER_LOOKUP',
-        message: 'Address lookup runs in the browser when a Domain Token is configured.'
-      },
-      { status: 400, headers: { 'Cache-Control': 'private, no-store' } }
     );
   }
 
@@ -91,7 +66,7 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
     );
   }
 
-  const endpoint = `${GETADDRESS_AUTOCOMPLETE_URL}/${encodeURIComponent(term)}?api-key=${encodeURIComponent(config.apiKey)}&all=true`;
+  const endpoint = `${config.autocomplete}/${encodeURIComponent(term)}?api-key=${encodeURIComponent(config.apiKey)}&all=true`;
   const upstream = await fetchGetAddress(endpoint, fetchImpl);
   if (!upstream.ok) {
     return Response.json(
@@ -107,7 +82,7 @@ export async function handleAddressAutocomplete(request, env, fetchImpl = fetch)
 
   const response = upstream.response;
   if (!response.ok) {
-    const failure = await readGetAddressFailure(response);
+    const failure = await readGetAddressFailure(response, apiOrigin);
     return Response.json(
       {
         configured: true,
@@ -148,17 +123,9 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
   }
 
   const config = resolveGetAddressConfig(env);
+  const apiOrigin = resolveAddressLookupOrigin(env);
   if (!config.configured) {
     return Response.json({ configured: false }, { status: 503 });
-  }
-  if (config.lookupVia === 'browser') {
-    return Response.json(
-      {
-        error: 'USE_BROWSER_LOOKUP',
-        message: 'Address lookup runs in the browser when a Domain Token is configured.'
-      },
-      { status: 400, headers: { 'Cache-Control': 'private, no-store' } }
-    );
   }
 
   const id = new URL(request.url).searchParams.get('id')?.trim() ?? '';
@@ -166,7 +133,7 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
     return Response.json({ error: 'MISSING_ID' }, { status: 400 });
   }
 
-  const endpoint = `${GETADDRESS_GET_URL}/${encodeURIComponent(id)}?api-key=${encodeURIComponent(config.apiKey)}`;
+  const endpoint = `${config.get}/${encodeURIComponent(id)}?api-key=${encodeURIComponent(config.apiKey)}`;
   const upstream = await fetchGetAddress(endpoint, fetchImpl);
   if (!upstream.ok) {
     return Response.json(
@@ -177,7 +144,7 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
 
   const response = upstream.response;
   if (!response.ok) {
-    const failure = await readGetAddressFailure(response);
+    const failure = await readGetAddressFailure(response, apiOrigin);
     return Response.json(
       { error: failure.code, message: failure.message, upstreamStatus: response.status },
       { status: 502, headers: { 'Cache-Control': 'private, no-store' } }
@@ -192,7 +159,7 @@ export async function handleAddressLookup(request, env, fetchImpl = fetch) {
         line1: String(payload?.line_1 ?? payload?.line1 ?? '').trim(),
         line2: String(payload?.line_2 ?? payload?.line2 ?? '').trim(),
         line3: String(payload?.line_3 ?? payload?.line3 ?? '').trim(),
-        city: String(payload?.town_or_city ?? payload?.town_or_city ?? payload?.city ?? '').trim(),
+        city: String(payload?.town_or_city ?? payload?.city ?? '').trim(),
         county: String(payload?.county ?? payload?.district ?? '').trim(),
         country: 'United Kingdom',
         postcode: String(payload?.postcode ?? '').trim()

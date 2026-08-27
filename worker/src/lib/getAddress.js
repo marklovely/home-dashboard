@@ -1,5 +1,6 @@
-export const GETADDRESS_AUTOCOMPLETE_URL = 'https://api.getAddress.io/autocomplete';
-export const GETADDRESS_GET_URL = 'https://api.getAddress.io/get';
+/** @deprecated getAddress.io ceased API operations in Feb 2026; default is Ideal Postcodes compatibility API. */
+export const DEFAULT_ADDRESS_LOOKUP_ORIGIN = 'https://ga.ideal-postcodes.co.uk';
+
 export const GETADDRESS_FETCH_HEADERS = {
   Accept: 'application/json',
   'User-Agent': 'LovelyHomeHub/1.0 (Cloudflare Worker; +https://lovely-home.co.uk)'
@@ -18,32 +19,47 @@ export function normalizeGetAddressSecret(raw) {
 /**
  * @param {Record<string, string | undefined>} env
  */
+export function resolveAddressLookupOrigin(env) {
+  const configured = normalizeGetAddressSecret(env.ADDRESS_LOOKUP_API_ORIGIN);
+  if (!configured) return DEFAULT_ADDRESS_LOOKUP_ORIGIN;
+  return configured.replace(/\/+$/, '');
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ */
+export function resolveAddressLookupUrls(env) {
+  const origin = resolveAddressLookupOrigin(env);
+  return {
+    autocomplete: `${origin}/autocomplete`,
+    get: `${origin}/get`
+  };
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ */
 export function resolveGetAddressConfig(env) {
-  const domainToken = normalizeGetAddressSecret(env.GETADDRESS_DOMAIN_TOKEN);
   const apiKey = normalizeGetAddressSecret(env.GETADDRESS_API_KEY);
-  if (domainToken) {
-    return {
-      configured: true,
-      lookupVia: 'browser',
-      domainToken,
-      apiKey: ''
-    };
-  }
   if (apiKey) {
     return {
       configured: true,
-      lookupVia: 'worker',
-      domainToken: '',
-      apiKey
+      apiKey,
+      ...resolveAddressLookupUrls(env)
     };
   }
-  return { configured: false, lookupVia: 'none', domainToken: '', apiKey: '' };
+  return {
+    configured: false,
+    apiKey: '',
+    ...resolveAddressLookupUrls(env)
+  };
 }
 
 /**
  * @param {Response} response
+ * @param {string} [apiOrigin]
  */
-export async function readGetAddressFailure(response) {
+export async function readGetAddressFailure(response, apiOrigin = DEFAULT_ADDRESS_LOOKUP_ORIGIN) {
   let upstreamMessage = '';
   const contentType = response.headers.get('content-type') ?? '';
   try {
@@ -57,13 +73,15 @@ export async function readGetAddressFailure(response) {
     /* ignore */
   }
 
-  const statusHint = upstreamMessage || `getAddress.io returned HTTP ${response.status}`;
+  const statusHint = upstreamMessage || `address lookup API returned HTTP ${response.status}`;
 
   if (response.status === 401) {
+    const legacyGetAddress = apiOrigin.includes('getAddress.io');
     return {
       code: 'INVALID_API_KEY',
-      message:
-        'Address lookup rejected the API key. Set GETADDRESS_API_KEY on the hub Worker, or use a Domain Token instead.'
+      message: legacyGetAddress
+        ? 'getAddress.io no longer accepts API requests (service closed Feb 2026). Set GETADDRESS_API_KEY on the hub Worker to an Ideal Postcodes API key — see docs.ideal-postcodes.co.uk/migrate/getaddressio.'
+        : 'Address lookup rejected the API key. Set GETADDRESS_API_KEY on the hub Worker to a valid Ideal Postcodes API key.'
     };
   }
   if (response.status === 429) {
@@ -95,7 +113,7 @@ export async function fetchGetAddress(endpoint, fetchImpl = fetch) {
       response: null,
       failure: {
         code: 'FETCH_FAILED',
-        message: 'Could not reach getAddress.io from the hub Worker. Try again shortly.'
+        message: 'Could not reach the address lookup service from the hub Worker. Try again shortly.'
       }
     };
   }
