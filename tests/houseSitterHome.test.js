@@ -20,7 +20,7 @@ describe('house sitter home layout', () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
     resetUserModeForTests();
     setSiteProfileStateForTests({
-      profile: { petCare: { hasPets: true, name: 'Bailey' } },
+      profile: { hubName: 'Smith Home', petCare: { hasPets: true, name: 'Bailey' } },
       loaded: true
     });
 
@@ -37,6 +37,8 @@ describe('house sitter home layout', () => {
     const page = viewport.querySelector('.home-screen--sitter');
     expect(page).toBeTruthy();
     expect(page?.querySelector('.sitter-welcome-card')).toBeTruthy();
+    expect(page?.querySelector('.sitter-welcome-title')?.textContent).toBe('Welcome to Smith Home');
+    expect(page?.querySelector('.sitter-welcome-lead')?.textContent).toMatch(/Bailey/);
     expect(page?.querySelector('.sitter-welcome-body')?.textContent).not.toMatch(/House Guide/i);
 
     const sectionTitles = [...(page?.querySelectorAll('.sitter-section-title') ?? [])].map(

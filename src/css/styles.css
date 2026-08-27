@@ -1043,6 +1043,13 @@ body.is-bins-route .app-viewport > .bins-app {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
+.hub-setup-input--invalid {
+  border-color: #ff7b7b;
+}
+.hub-setup-field-error {
+  margin: 6px 0 0;
+  color: #ff9a9a;
+}
 
 .hub-setup-input-wrap {
   position: relative;

@@ -1,7 +1,22 @@
-/** @typedef {{ value: string, label: string }} HubCountryOption */
+/** @typedef {{ value: string, label: string, flag: string }} HubCountryOption */
 
-/** @type {HubCountryOption[]} */
-export const HUB_COUNTRY_OPTIONS = [
+/**
+ * @param {string} code
+ * @returns {string}
+ */
+export function countryFlagEmoji(code) {
+  if (code === 'OTHER') return '🌍';
+  const normalized = String(code ?? '')
+    .trim()
+    .toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) return '';
+  return String.fromCodePoint(
+    ...normalized.split('').map((char) => 0x1f1e6 + char.charCodeAt(0) - 65)
+  );
+}
+
+/** @type {Omit<HubCountryOption, 'flag'>[]} */
+const HUB_COUNTRY_DEFINITIONS = [
   { value: 'GB', label: 'United Kingdom' },
   { value: 'IE', label: 'Ireland' },
   { value: 'US', label: 'United States' },
@@ -23,6 +38,30 @@ export const HUB_COUNTRY_OPTIONS = [
   { value: 'PL', label: 'Poland' },
   { value: 'OTHER', label: 'Other country' }
 ];
+
+/** @type {HubCountryOption[]} */
+export const HUB_COUNTRY_OPTIONS = HUB_COUNTRY_DEFINITIONS.map((entry) => ({
+  ...entry,
+  flag: countryFlagEmoji(entry.value)
+}));
+
+/**
+ * @param {HubCountryOption} option
+ * @returns {string}
+ */
+export function hubCountrySelectLabel(option) {
+  return option.flag ? `${option.flag} ${option.label}` : option.label;
+}
+
+/**
+ * @returns {{ value: string, label: string }[]}
+ */
+export function hubCountrySelectOptions() {
+  return HUB_COUNTRY_OPTIONS.map((option) => ({
+    value: option.value,
+    label: hubCountrySelectLabel(option)
+  }));
+}
 
 /**
  * @param {string | undefined | null} code

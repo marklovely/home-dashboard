@@ -3,7 +3,8 @@ import {
   isValidEmail,
   isValidPhone,
   isValidPostcode,
-  validateHubContacts
+  validateHubContacts,
+  validatePropertyAddress
 } from '../src/lib/contactValidation.js';
 
 describe('contactValidation', () => {
@@ -47,5 +48,12 @@ describe('contactValidation', () => {
   it('validates UK postcodes', () => {
     expect(isValidPostcode('SW1A 1AA', 'GB')).toBe(true);
     expect(isValidPostcode('NOT A POSTCODE', 'GB')).toBe(false);
+  });
+
+  it('requires core property address fields', () => {
+    expect(validatePropertyAddress({ line1: '41 Wagtail Way', city: 'Fareham', postcode: 'PO16 8AB' })).toBeNull();
+    expect(validatePropertyAddress({ line1: '', city: 'Fareham', postcode: 'PO16 8AB' })).toMatch(/line 1/i);
+    expect(validatePropertyAddress({ line1: '41 Wagtail Way', city: '', postcode: 'PO16 8AB' })).toMatch(/city/i);
+    expect(validatePropertyAddress({ line1: '41 Wagtail Way', city: 'Fareham', postcode: '' })).toMatch(/postcode/i);
   });
 });

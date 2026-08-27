@@ -2,7 +2,7 @@ import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { getAppDisplayTitle, getModeConfig } from '../../modes/modeConfig.js';
-import { getSiteProfileState } from '../../services/siteProfileService.js';
+import { getHubDisplayName, getSiteProfileState } from '../../services/siteProfileService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 import { mountBinAlertBannerHost } from '../../services/binAlertBannerSync.js';
 
@@ -17,10 +17,11 @@ const ESSENTIAL_CARD_COPY = {
   emergency: { headline: 'Help is here', teaser: 'Owners, vet, utilities and more' }
 };
 
+function getSitterWelcomeTitle() {
+  return `Welcome to ${getHubDisplayName()}`;
+}
+
 function getSitterWelcomeLead() {
-  if (isTestHubEnvironment()) {
-    return 'Everything for this stay is configured during hub setup — not copied from another home.';
-  }
   const petCare = getSiteProfileState()?.profile?.petCare;
   if (
     petCare &&
@@ -28,9 +29,9 @@ function getSitterWelcomeLead() {
     petCare.hasPets &&
     String(petCare.name ?? '').trim()
   ) {
-    return `We're delighted you're looking after our home and ${String(petCare.name).trim()}.`;
+    return `Thank you for looking after our home and ${String(petCare.name).trim()}.`;
   }
-  return "We're delighted you're looking after our home.";
+  return 'Thank you for looking after our home.';
 }
 
 /**
@@ -218,9 +219,9 @@ export async function renderHouseSitterHome(viewport, apps, context) {
   welcome.className = 'sitter-welcome-card';
   welcome.innerHTML = `
     <p class="sitter-welcome-emoji" aria-hidden="true">🏡</p>
-    <h2 class="sitter-welcome-title">Welcome to Lovely Home</h2>
+    <h2 class="sitter-welcome-title">${getSitterWelcomeTitle()}</h2>
     <p class="sitter-welcome-lead">${getSitterWelcomeLead()}</p>
-    <p class="sitter-welcome-body">Everything you'll need during your stay is available below.</p>
+    <p class="sitter-welcome-body">Everything you'll need during your stay is below.</p>
   `;
 
   const essentialsSection = document.createElement('section');
