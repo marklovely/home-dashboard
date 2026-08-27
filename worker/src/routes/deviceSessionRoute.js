@@ -1,7 +1,7 @@
 import { authenticateRequest } from '../lib/requestAuth.js';
 import {
   finalizeDeviceSessionJsonResponse,
-  resolveDeviceSession
+  resolveAuthenticatedDeviceSession
 } from '../lib/deviceSession.js';
 import { getSitterSecretsDisclosed } from '../lib/houseSettings.js';
 
@@ -23,7 +23,7 @@ export async function handleDeviceSession(request, env, fetchImpl = fetch) {
     );
   }
 
-  const session = await resolveDeviceSession(request, env);
+  const session = await resolveAuthenticatedDeviceSession(request, env, access);
   const sitterSecretsDisclosed = await getSitterSecretsDisclosed(env);
   return finalizeDeviceSessionJsonResponse(session, 200, { sitterSecretsDisclosed });
 }

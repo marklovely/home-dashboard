@@ -6,8 +6,8 @@
 export const HUB_SETUP_STEPS = [
   {
     id: 'hub',
-    label: 'Hub name',
-    description: 'Name your hub and choose how guests will use it.',
+    label: 'Country & hub name',
+    description: 'Choose the property country, name your hub, and pick how guests will use it.',
     iconId: 'home'
   },
   {

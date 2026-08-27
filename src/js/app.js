@@ -31,6 +31,7 @@ import {
   syncTabletPreferencesFromSiteProfile
 } from '../services/tabletPreferencesSyncService.js';
 import { initHubSetupRoutePolicy } from '../apps/HubSetup/hubSetupRoutePolicy.js';
+import { isControlsConfigured } from '../services/environmentAppPolicy.js';
 import { refreshGuideContent } from '../services/guideContentService.js';
 import { refreshApplianceManuals } from '../services/applianceManualsService.js';
 
@@ -59,9 +60,15 @@ async function initialiseDashboard() {
     startMyDayCalendarService();
   }
 
-  const networkHint = document.querySelector('#shell-status .status-card:last-child span:last-child');
-  if (networkHint && isHouseSitterExperience()) {
-    networkHint.textContent = 'Connected';
+  const networkHint = document.querySelector('#network-hint');
+  if (networkHint) {
+    if (isHouseSitterExperience()) {
+      networkHint.textContent = 'Connected';
+    } else if (isControlsConfigured(CONFIG)) {
+      networkHint.textContent = 'Home controls ready';
+    } else {
+      networkHint.textContent = 'Hub online';
+    }
   }
 
   const elements = {
