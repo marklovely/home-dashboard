@@ -11,6 +11,7 @@ export const GETADDRESS_FETCH_HEADERS = {
 export function normalizeGetAddressSecret(raw) {
   return String(raw ?? '')
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/^["']+|["']+$/g, '')
     .trim();
 }
 
@@ -23,84 +24,26 @@ export function resolveGetAddressConfig(env) {
   if (domainToken) {
     return {
       configured: true,
-      authMode: 'domain_token',
-      authKey: domainToken
+      lookupVia: 'browser',
+      domainToken,
+      apiKey: ''
     };
   }
   if (apiKey) {
     return {
       configured: true,
-      authMode: 'api_key',
-      authKey: apiKey
+      lookupVia: 'worker',
+      domainToken: '',
+      apiKey
     };
   }
-  return { configured: false, authMode: 'none', authKey: '' };
-}
-
-/**
- * @param {Request} request
- * @param {Record<string, string | undefined>} env
- */
-export function resolveGetAddressOrigin(request, env) {
-  const originHeader = request.headers.get('Origin')?.trim();
-  if (originHeader) {
-    try {
-      return new URL(originHeader).origin;
-    } catch {
-      /* ignore */
-    }
-  }
-
-  const configuredHost = env.GETADDRESS_DOMAIN_HOST?.trim();
-  if (configuredHost) {
-    const host = configuredHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    return `https://${host}`;
-  }
-
-  for (const entry of String(env.ALLOWED_ORIGINS ?? '').split(',')) {
-    const trimmed = entry.trim();
-    if (
-      !trimmed.startsWith('https://') ||
-      trimmed.includes('localhost') ||
-      trimmed.includes('127.0.0.1') ||
-      trimmed.includes('pages.dev')
-    ) {
-      continue;
-    }
-    try {
-      return new URL(trimmed).origin;
-    } catch {
-      /* ignore */
-    }
-  }
-
-  return '';
-}
-
-/**
- * @param {Request} request
- * @param {Record<string, string | undefined>} env
- * @param {'domain_token' | 'api_key'} authMode
- */
-export function buildGetAddressFetchHeaders(request, env, authMode) {
-  const headers = { ...GETADDRESS_FETCH_HEADERS };
-  if (authMode !== 'domain_token') {
-    return headers;
-  }
-
-  const origin = resolveGetAddressOrigin(request, env);
-  if (origin) {
-    headers.Origin = origin;
-    headers.Referer = `${origin}/`;
-  }
-  return headers;
+  return { configured: false, lookupVia: 'none', domainToken: '', apiKey: '' };
 }
 
 /**
  * @param {Response} response
- * @param {'domain_token' | 'api_key'} [authMode]
  */
-export async function readGetAddressFailure(response, authMode = 'api_key') {
+export async function readGetAddressFailure(response) {
   let upstreamMessage = '';
   const contentType = response.headers.get('content-type') ?? '';
   try {
@@ -117,29 +60,16 @@ export async function readGetAddressFailure(response, authMode = 'api_key') {
   const statusHint = upstreamMessage || `getAddress.io returned HTTP ${response.status}`;
 
   if (response.status === 401) {
-    if (authMode === 'domain_token') {
-      return {
-        code: 'INVALID_DOMAIN_TOKEN',
-        message:
-          'Address lookup rejected the Domain Token. On getAddress.io, register the token for this hub hostname (e.g. smith.lovely-hub.com) and set GETADDRESS_DOMAIN_HOST on the Worker if needed.'
-      };
-    }
     return {
       code: 'INVALID_API_KEY',
       message:
-        'Address lookup rejected the API key. Use the API Key from getAddress.io, or set GETADDRESS_DOMAIN_TOKEN on the Worker instead.'
+        'Address lookup rejected the API key. Set GETADDRESS_API_KEY on the hub Worker, or use a Domain Token instead.'
     };
   }
   if (response.status === 429) {
     return {
       code: 'RATE_LIMITED',
       message: 'Address lookup is temporarily rate-limited. Try again shortly.'
-    };
-  }
-  if (response.status === 403) {
-    return {
-      code: 'LOOKUP_FAILED',
-      message: `Address lookup was blocked (${statusHint}). Check your getAddress.io Domain Token host matches this hub.`
     };
   }
 
@@ -152,13 +82,10 @@ export async function readGetAddressFailure(response, authMode = 'api_key') {
 /**
  * @param {string} endpoint
  * @param {typeof fetch} fetchImpl
- * @param {Record<string, string>} [extraHeaders]
  */
-export async function fetchGetAddress(endpoint, fetchImpl = fetch, extraHeaders = {}) {
+export async function fetchGetAddress(endpoint, fetchImpl = fetch) {
   try {
-    const response = await fetchImpl(endpoint, {
-      headers: { ...GETADDRESS_FETCH_HEADERS, ...extraHeaders }
-    });
+    const response = await fetchImpl(endpoint, { headers: GETADDRESS_FETCH_HEADERS });
     return { ok: true, response, failure: null };
   } catch (error) {
     const detail = error instanceof Error ? error.message.slice(0, 200) : 'unknown';
