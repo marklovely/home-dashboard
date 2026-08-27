@@ -46,4 +46,4 @@ sites:
     terraform: true
     zone_name: lovely-hub.com
     owner_emails: marklovely67@gmail.com
-    attach_hub_api_binding: false
+    attach_hub_api_binding: true
