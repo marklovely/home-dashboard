@@ -1,4 +1,5 @@
 import { fetchApplianceManualPdfBlob } from '../../api/applianceManualsApi.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 import {
   renderPdfBlobToContainer,
   triggerBlobDownload
@@ -134,10 +135,7 @@ function createRetryPanel(onRetry) {
   retryButton.className = 'button-primary';
   retryButton.textContent = 'Try again';
   retryButton.addEventListener('click', () => {
-    retryButton.disabled = true;
-    void Promise.resolve(onRetry()).finally(() => {
-      retryButton.disabled = false;
-    });
+    void withAsyncButtonFeedback(retryButton, 'Retrying…', () => Promise.resolve(onRetry()));
   });
 
   fallback.append(copy, retryButton);

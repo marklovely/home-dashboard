@@ -1,6 +1,7 @@
 /** @typedef {import('../../types/guideContent.js').GuideBlock} GuideBlock */
 
 import { buildHouseGuideMediaUrl } from '../../api/houseGuideApi.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 import { resolveGuideMedia } from '../../content/houseguide/guideMedia.js';
 import { createGuideRichTextEditor } from './createGuideRichTextEditor.js';
 import { createGuideEmojiPicker } from './createGuideEmojiPicker.js';
@@ -286,36 +287,31 @@ function createImageUploadPanel(block, onChange, options) {
       return;
     }
 
-    uploadButton.disabled = true;
-    status.hidden = false;
-    status.textContent = 'Uploading…';
+    void withAsyncButtonFeedback(uploadButton, 'Uploading…', async () => {
+      status.hidden = false;
+      status.textContent = 'Uploading…';
 
-    const formData = new FormData();
-    formData.set('id', mediaId);
-    formData.set('alt', alt);
-    formData.set('file', file);
+      const formData = new FormData();
+      formData.set('id', mediaId);
+      formData.set('alt', alt);
+      formData.set('file', file);
 
-    void options
-      .onUploadImage(formData)
-      .then(async (result) => {
-        if (!result.ok) {
-          status.textContent = result.message || 'Upload failed.';
-          return;
-        }
+      const result = await options.onUploadImage(formData);
+      if (!result.ok) {
+        status.textContent = result.message || 'Upload failed.';
+        return;
+      }
 
-        const uploadedId = result.data?.id ?? mediaId;
-        onChange({ ...block, mediaId: uploadedId });
-        options.onRegisterMedia?.(uploadedId, alt, file.name);
-        options.onAfterUpload?.();
-        await options.onMediaRefresh?.();
-        status.textContent = 'Photo uploaded and attached to this block.';
-        options.onUploadStatus?.('Photo uploaded and attached to this block.');
-        fileInput.value = '';
-        altInput.value = '';
-      })
-      .finally(() => {
-        uploadButton.disabled = false;
-      });
+      const uploadedId = result.data?.id ?? mediaId;
+      onChange({ ...block, mediaId: uploadedId });
+      options.onRegisterMedia?.(uploadedId, alt, file.name);
+      options.onAfterUpload?.();
+      await options.onMediaRefresh?.();
+      status.textContent = 'Photo uploaded and attached to this block.';
+      options.onUploadStatus?.('Photo uploaded and attached to this block.');
+      fileInput.value = '';
+      altInput.value = '';
+    });
   });
 
   wrap.append(heading, hint, idField, altField, fileLabel, uploadButton, status);

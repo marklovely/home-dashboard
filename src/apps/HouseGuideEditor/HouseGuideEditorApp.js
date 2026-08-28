@@ -28,6 +28,7 @@ import {
 } from '../../services/guideContentService.js';
 import { saveSiteProfile, syncSiteProfileFromServer } from '../../services/siteProfileService.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 import { openHubSetupWizard } from '../HubSetup/hubSetupLauncher.js';
 import { uploadHouseGuideMedia } from '../../api/houseGuideApi.js';
 import { fetchHouseGuideExport, restoreSiteBackup } from '../../api/siteBackupApi.js';
@@ -210,11 +211,8 @@ function createOnboardingPanel(page, context) {
       openHubSetupWizard(context);
       return;
     }
-    button.disabled = true;
-    button.textContent = 'Copying…';
-    void importBundledGuideToCloud().then((result) => {
-      button.disabled = false;
-      button.textContent = 'Copy current guide to cloud';
+    void withAsyncButtonFeedback(button, 'Copying…', async () => {
+      const result = await importBundledGuideToCloud();
       if (!result.ok) {
         showToast(context.toast, result.message || 'Could not copy guide.');
         return;
@@ -277,9 +275,8 @@ function createEditorShell(context) {
   publishAllButton.className = 'button-primary';
   publishAllButton.textContent = 'Publish all changes';
   publishAllButton.addEventListener('click', () => {
-    publishAllButton.disabled = true;
-    void publishAllHouseGuideChanges().then((result) => {
-      publishAllButton.disabled = false;
+    void withAsyncButtonFeedback(publishAllButton, 'Publishing…', async () => {
+      const result = await publishAllHouseGuideChanges();
       if (!result.ok) {
         showToast(context.toast, result.message || 'Could not publish.');
         return;
@@ -310,40 +307,36 @@ function createEditorShell(context) {
   exportButton.className = 'button-secondary';
   exportButton.textContent = 'Export JSON';
   exportButton.addEventListener('click', () => {
-    exportButton.disabled = true;
-    void (async () => {
-      try {
-        const result = await fetchHouseGuideExport();
-        if (!result.ok || !result.data) {
-          showToast(context.toast, result.message || 'Could not export guide.');
-          return;
-        }
-        const password = await showPasswordDialog({
-          title: 'Encrypt guide export',
-          message:
-            'Choose a password for this export file. You will need the same password to import it later.',
-          confirmLabel: 'Download',
-          requireConfirmation: true
-        });
-        if (!password) return;
-        await downloadEncryptedBackupFile('house-guide-export.json', result.data, password);
-        showToast(context.toast, 'Encrypted guide export downloaded.');
-      } catch (error) {
-        showToast(context.toast, error instanceof Error ? error.message : 'Could not export guide.');
-      } finally {
-        exportButton.disabled = false;
+    void withAsyncButtonFeedback(exportButton, 'Exporting…', async () => {
+      const result = await fetchHouseGuideExport();
+      if (!result.ok || !result.data) {
+        showToast(context.toast, result.message || 'Could not export guide.');
+        return;
       }
-    })();
+      const password = await showPasswordDialog({
+        title: 'Encrypt guide export',
+        message:
+          'Choose a password for this export file. You will need the same password to import it later.',
+        confirmLabel: 'Download',
+        requireConfirmation: true
+      });
+      if (!password) return;
+      await downloadEncryptedBackupFile('house-guide-export.json', result.data, password);
+      showToast(context.toast, 'Encrypted guide export downloaded.');
+    }).catch((error) => {
+      showToast(context.toast, error instanceof Error ? error.message : 'Could not export guide.');
+    });
   });
 
-  const importLabel = document.createElement('label');
-  importLabel.className = 'house-guide-editor-file-input button-secondary';
-  importLabel.textContent = 'Import JSON';
+  const importButton = document.createElement('button');
+  importButton.type = 'button';
+  importButton.className = 'button-secondary';
+  importButton.textContent = 'Import JSON';
   const importInput = document.createElement('input');
   importInput.type = 'file';
   importInput.accept = 'application/json,.json';
   importInput.hidden = true;
-  importLabel.append(importInput);
+  importButton.addEventListener('click', () => importInput.click());
   importInput.addEventListener('change', () => {
     const file = importInput.files?.[0];
     importInput.value = '';
@@ -371,21 +364,23 @@ function createEditorShell(context) {
         });
         if (!confirmed) return;
 
-        showToast(context.toast, 'Importing guide…', 120000);
-        const result = await restoreSiteBackup(backup);
-        if (!result.ok) {
-          showToast(context.toast, result.message || 'Import failed.');
-          return;
-        }
-        await refreshGuideContent(fetch, { draft: true, force: true });
-        await saveSiteProfile({ onboardingComplete: true });
-        await syncSiteProfileFromServer();
-        showToast(context.toast, 'House Guide imported.');
-        view = 'categories';
-        activeCategoryId = null;
-        activeTopicId = null;
-        renderMain();
-        syncDraftBadge();
+        await withAsyncButtonFeedback(importButton, 'Importing…', async () => {
+          showToast(context.toast, 'Importing guide…', 120000);
+          const result = await restoreSiteBackup(backup);
+          if (!result.ok) {
+            showToast(context.toast, result.message || 'Import failed.');
+            return;
+          }
+          await refreshGuideContent(fetch, { draft: true, force: true });
+          await saveSiteProfile({ onboardingComplete: true });
+          await syncSiteProfileFromServer();
+          showToast(context.toast, 'House Guide imported.');
+          view = 'categories';
+          activeCategoryId = null;
+          activeTopicId = null;
+          renderMain();
+          syncDraftBadge();
+        });
       } catch (error) {
         showToast(context.toast, error instanceof Error ? error.message : 'Invalid guide file.');
       }
@@ -394,7 +389,7 @@ function createEditorShell(context) {
 
   const backupActions = document.createElement('div');
   backupActions.className = 'house-guide-editor-backup-actions';
-  backupActions.append(exportButton, importLabel);
+  backupActions.append(exportButton, importButton, importInput);
   backupDetails.append(backupSummary, backupActions);
 
   const helpButton = createGuideEditorHelpButton();
@@ -723,16 +718,15 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRevert) {
       showToast(context.toast, 'Title and topic id are required.');
       return;
     }
-    createButton.disabled = true;
-    void createNewHouseGuideTopic({
-      id: topicId,
-      categoryId,
-      title: newTitle.trim(),
-      subtitle: newSubtitle.trim(),
-      summary: newSummary.trim(),
-      audience: 'guest'
-    }).then((result) => {
-      createButton.disabled = false;
+    void withAsyncButtonFeedback(createButton, 'Creating…', async () => {
+      const result = await createNewHouseGuideTopic({
+        id: topicId,
+        categoryId,
+        title: newTitle.trim(),
+        subtitle: newSubtitle.trim(),
+        summary: newSummary.trim(),
+        audience: 'guest'
+      });
       if (!result.ok) {
         showToast(context.toast, result.message || 'Could not create topic.');
         return;
@@ -1023,9 +1017,8 @@ function renderTopicEditor(topic, context, handlers) {
       showToast(context.toast, actionsError);
       return;
     }
-    saveButton.disabled = true;
-    void saveHouseGuideTopic(topic.id, buildTopicPatch(topic)).then((result) => {
-      saveButton.disabled = false;
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const result = await saveHouseGuideTopic(topic.id, buildTopicPatch(topic));
       if (!result.ok) {
         showToast(context.toast, result.message || 'Could not save.');
         return;
@@ -1046,22 +1039,21 @@ function renderTopicEditor(topic, context, handlers) {
       showToast(context.toast, actionsError);
       return;
     }
-    publishButton.disabled = true;
-    void saveHouseGuideTopic(topic.id, buildTopicPatch(topic))
-      .then((saveResult) => {
-        if (!saveResult.ok) return saveResult;
-        return publishHouseGuideTopicContent(topic.id);
-      })
-      .then((result) => {
-        publishButton.disabled = false;
-        if (!result?.ok) {
-          showToast(context.toast, result?.message || 'Could not publish.');
-          return;
-        }
-        handlers.onPublished(serializeTopicForCompare(topic));
-        savedSnapshot = serializeTopicForCompare(topic);
-        syncDirtyState();
-      });
+    void withAsyncButtonFeedback(publishButton, 'Publishing…', async () => {
+      const saveResult = await saveHouseGuideTopic(topic.id, buildTopicPatch(topic));
+      if (!saveResult.ok) {
+        showToast(context.toast, saveResult.message || 'Could not publish.');
+        return;
+      }
+      const result = await publishHouseGuideTopicContent(topic.id);
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Could not publish.');
+        return;
+      }
+      handlers.onPublished(serializeTopicForCompare(topic));
+      savedSnapshot = serializeTopicForCompare(topic);
+      syncDirtyState();
+    });
   });
 
   const deleteButton = document.createElement('button');
@@ -1075,11 +1067,10 @@ function renderTopicEditor(topic, context, handlers) {
       confirmLabel: 'Delete topic',
       cancelLabel: 'Cancel',
       danger: true
-    }).then((confirmed) => {
+    }).then(async (confirmed) => {
       if (!confirmed) return;
-      deleteButton.disabled = true;
-      void removeHouseGuideTopic(topic.id).then((result) => {
-        deleteButton.disabled = false;
+      await withAsyncButtonFeedback(deleteButton, 'Deleting…', async () => {
+        const result = await removeHouseGuideTopic(topic.id);
         if (!result.ok) {
           showToast(context.toast, result.message || 'Could not delete topic.');
           return;
@@ -1146,12 +1137,11 @@ function renderGuideIntroSettings(context) {
   saveButton.className = 'button-secondary';
   saveButton.textContent = 'Save intro';
   saveButton.addEventListener('click', () => {
-    saveButton.disabled = true;
-    void saveHouseGuideSettings({
-      homeSummaryTitle: homeSummaryTitle.trim(),
-      homeSummarySubtitle: homeSummarySubtitle.trim()
-    }).then((result) => {
-      saveButton.disabled = false;
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const result = await saveHouseGuideSettings({
+        homeSummaryTitle: homeSummaryTitle.trim(),
+        homeSummarySubtitle: homeSummarySubtitle.trim()
+      });
       if (!result.ok) {
         showToast(context.toast, result.message || 'Could not save intro.');
         return;

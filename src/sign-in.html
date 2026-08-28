@@ -209,7 +209,10 @@
       form?.addEventListener('submit', async (event) => {
         event.preventDefault();
         errorEl.textContent = '';
+        const originalLabel = submitButton.textContent ?? 'Sign in';
         submitButton.disabled = true;
+        submitButton.textContent = 'Signing in…';
+        submitButton.setAttribute('aria-busy', 'true');
 
         const username = /** @type {HTMLInputElement} */ (document.getElementById('demo-username')).value;
         const password = /** @type {HTMLInputElement} */ (document.getElementById('demo-password')).value;
@@ -231,6 +234,8 @@
           errorEl.textContent = 'Network error. Check your connection and try again.';
         } finally {
           submitButton.disabled = false;
+          submitButton.textContent = originalLabel;
+          submitButton.removeAttribute('aria-busy');
         }
       });
 
