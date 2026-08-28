@@ -4,6 +4,8 @@ import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
   SITTER_STAY_FORM_SUMMARY_ERROR,
+  prepareSitterStayEndDatePicker,
+  syncSitterStayEndDateWithStart,
   validateSitterStayForm
 } from '../../lib/sitterStayFormValidation.js';
 import { getSitterSecretsManual, subscribeToSitterSecrets } from '../../services/sitterSecretsService.js';
@@ -296,12 +298,26 @@ function createSitterStayForm(context, staysList, onCreated) {
   datesRow.className = 'sitter-stay-form__dates';
 
   const startField = createSetupField('Sit starts', '', { type: 'date' });
-  const endField = createSetupField('Sit ends', '', { type: 'date' });
+  const endField = createSetupField('Sit ends', '', {
+    type: 'date',
+    helpText: 'Defaults to the start date — change if the sit runs longer.'
+  });
   datesRow.append(startField.wrap, endField.wrap);
 
   const emailsError = ensureFieldError(emailsField.wrap);
   const startError = ensureFieldError(startField.wrap);
   const endError = ensureFieldError(endField.wrap);
+
+  startField.input.addEventListener('change', () => {
+    syncSitterStayEndDateWithStart(startField.input, endField.input);
+    if (endField.input.classList.contains('hub-setup-input--invalid')) {
+      setFieldValidationState(endField.input, endField.wrap, endError, null);
+    }
+  });
+
+  endField.input.addEventListener('focus', () => {
+    prepareSitterStayEndDatePicker(startField.input, endField.input);
+  });
 
   /** @type {Record<string, { input: HTMLInputElement | HTMLTextAreaElement, wrap: HTMLElement, error: HTMLElement }>} */
   const validatedFields = {

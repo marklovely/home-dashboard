@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { parseSitterStayEmails, validateSitterStayForm } from '../src/lib/sitterStayFormValidation.js';
+import {
+  parseSitterStayEmails,
+  prepareSitterStayEndDatePicker,
+  syncSitterStayEndDateWithStart,
+  validateSitterStayForm
+} from '../src/lib/sitterStayFormValidation.js';
 
 describe('sitterStayFormValidation', () => {
   it('parses comma and newline separated emails', () => {
@@ -39,5 +44,30 @@ describe('sitterStayFormValidation', () => {
         sitEnd: '2026-03-19'
       }).ok
     ).toBe(true);
+  });
+
+  it('syncs end date to start when end is empty or earlier', () => {
+    const startInput = document.createElement('input');
+    const endInput = document.createElement('input');
+    startInput.value = '2027-05-04';
+    endInput.value = '';
+
+    syncSitterStayEndDateWithStart(startInput, endInput);
+    expect(endInput.min).toBe('2027-05-04');
+    expect(endInput.value).toBe('2027-05-04');
+
+    endInput.value = '2027-04-01';
+    syncSitterStayEndDateWithStart(startInput, endInput);
+    expect(endInput.value).toBe('2027-05-04');
+  });
+
+  it('prepares end picker from start when end is empty', () => {
+    const startInput = document.createElement('input');
+    const endInput = document.createElement('input');
+    startInput.value = '2027-05-04';
+
+    prepareSitterStayEndDatePicker(startInput, endInput);
+    expect(endInput.value).toBe('2027-05-04');
+    expect(endInput.min).toBe('2027-05-04');
   });
 });

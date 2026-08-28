@@ -56,3 +56,39 @@ export function validateSitterStayForm(values) {
 }
 
 export const SITTER_STAY_FORM_SUMMARY_ERROR = 'Missing entries — check the fields highlighted above.';
+
+/**
+ * Align end-date picker with start date: set min and default value so native
+ * calendars open in the same month (e.g. start 4 May 2027 → end picker in May 2027).
+ *
+ * @param {HTMLInputElement} startInput
+ * @param {HTMLInputElement} endInput
+ */
+export function syncSitterStayEndDateWithStart(startInput, endInput) {
+  const start = startInput.value.trim();
+  if (!start) {
+    endInput.removeAttribute('min');
+    return;
+  }
+
+  endInput.min = start;
+  const end = endInput.value.trim();
+  if (!end || end < start) {
+    endInput.value = start;
+  }
+}
+
+/**
+ * When end is empty but start is set, seed end so the picker opens on the start month.
+ *
+ * @param {HTMLInputElement} startInput
+ * @param {HTMLInputElement} endInput
+ */
+export function prepareSitterStayEndDatePicker(startInput, endInput) {
+  const start = startInput.value.trim();
+  if (start && !endInput.value.trim()) {
+    endInput.min = start;
+    endInput.value = start;
+  }
+}
+
