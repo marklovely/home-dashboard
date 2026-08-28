@@ -3221,6 +3221,9 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   font-weight: 700;
   text-align: left;
 }
+.bins-empty-message {
+  margin: 0;
+}
 .settings-bin-color-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
