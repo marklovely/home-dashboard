@@ -393,39 +393,40 @@ function createUtilitiesFields(context) {
         });
         if (!confirmed) return;
 
-        restoreStatus.hidden = false;
-        restoreStatus.textContent = 'Restoring backup…';
-        importButton.disabled = true;
-        exportFullButton.disabled = true;
-        exportGuideButton.disabled = true;
-        showToast(context.toast, 'Restoring backup…', 120000);
+        await withAsyncButtonFeedback(importButton, 'Restoring…', async () => {
+          restoreStatus.hidden = false;
+          restoreStatus.textContent = 'Restoring backup…';
+          exportFullButton.disabled = true;
+          exportGuideButton.disabled = true;
+          showToast(context.toast, 'Restoring backup…', 120000);
+          try {
+            const result = await restoreSiteBackup(backup);
+            if (!result.ok) {
+              restoreStatus.textContent = result.message || 'Restore failed.';
+              showToast(context.toast, result.message || 'Restore failed.');
+              return;
+            }
 
-        const result = await restoreSiteBackup(backup);
-        if (!result.ok) {
-          restoreStatus.textContent = result.message || 'Restore failed.';
-          showToast(context.toast, result.message || 'Restore failed.');
-          return;
-        }
-
-        await syncSitterSecretsFromServer();
-        await refreshGuideContent(fetch, { draft: true, force: true });
-        await syncSiteProfileFromServer();
-        await refreshPrivateConfig();
-        applyShellBranding({
-          shellEyebrow: document.querySelector('#shell-eyebrow'),
-          shellTagline: document.querySelector('#shell-tagline')
+            await syncSitterSecretsFromServer();
+            await refreshGuideContent(fetch, { draft: true, force: true });
+            await syncSiteProfileFromServer();
+            await refreshPrivateConfig();
+            applyShellBranding({
+              shellEyebrow: document.querySelector('#shell-eyebrow'),
+              shellTagline: document.querySelector('#shell-tagline')
+            });
+            restoreStatus.textContent = 'Site backup restored.';
+            showToast(context.toast, 'Site backup restored.');
+          } finally {
+            exportFullButton.disabled = false;
+            exportGuideButton.disabled = false;
+          }
         });
-        restoreStatus.textContent = 'Site backup restored.';
-        showToast(context.toast, 'Site backup restored.');
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Invalid backup file.';
         restoreStatus.hidden = false;
         restoreStatus.textContent = message;
         showToast(context.toast, message);
-      } finally {
-        importButton.disabled = false;
-        exportFullButton.disabled = false;
-        exportGuideButton.disabled = false;
       }
     })();
   });
@@ -453,18 +454,21 @@ function createUtilitiesFields(context) {
       danger: true
     }).then(async (confirmed) => {
       if (!confirmed) return;
-      const result = await factoryResetHub();
-      if (!result.ok) {
-        showToast(context.toast, result.message || 'Reset failed.');
-        return;
-      }
-      await refreshGuideContent(fetch, { draft: true, force: true });
-      applyShellBranding({
-        shellEyebrow: document.querySelector('#shell-eyebrow'),
-        shellTagline: document.querySelector('#shell-tagline')
+      await withAsyncButtonFeedback(resetButton, 'Resetting…', async () => {
+        showToast(context.toast, 'Resetting hub…');
+        const result = await factoryResetHub();
+        if (!result.ok) {
+          showToast(context.toast, result.message || 'Reset failed.');
+          return;
+        }
+        await refreshGuideContent(fetch, { draft: true, force: true });
+        applyShellBranding({
+          shellEyebrow: document.querySelector('#shell-eyebrow'),
+          shellTagline: document.querySelector('#shell-tagline')
+        });
+        showToast(context.toast, 'Hub reset. Opening setup wizard…');
+        openHubSetupWizardAfterReset(context);
       });
-      showToast(context.toast, 'Hub reset. Opening setup wizard…');
-      openHubSetupWizardAfterReset(context);
     });
   });
 
@@ -1022,14 +1026,15 @@ function createHouseSitterModeFields(context, onRefresh) {
         'Owner-only apps and personal information will be hidden. The dashboard will remain in House Sitter Mode after refreshes and tablet restarts.',
       confirmLabel: 'Enable',
       cancelLabel: 'Cancel'
-    }).then((confirmed) => {
+    }).then(async (confirmed) => {
       if (!confirmed) return;
-      void enterSitterMode(() => {
-        context.navigate('home');
-        onRefresh();
-        context.refreshShell?.();
-        showToast(context.toast, 'House Sitter Mode enabled');
-      }).then((result) => {
+      await withAsyncButtonFeedback(enableButton, 'Enabling…', async () => {
+        const result = await enterSitterMode(() => {
+          context.navigate('home');
+          onRefresh();
+          context.refreshShell?.();
+          showToast(context.toast, 'House Sitter Mode enabled');
+        });
         if (!result.ok) showToast(context.toast, houseSitterModeErrorMessage(result.code));
       });
     });
@@ -1050,11 +1055,12 @@ function createHouseSitterModeFields(context, onRefresh) {
     lockButton.className = 'settings-action-button settings-action-button--secondary';
     lockButton.textContent = 'Return to House Sitter Mode';
     lockButton.addEventListener('click', () => {
-      void lockOwner(() => {
-        context.navigate('home');
-        onRefresh();
-        context.refreshShell?.();
-      }).then((result) => {
+      void withAsyncButtonFeedback(lockButton, 'Locking…', async () => {
+        const result = await lockOwner(() => {
+          context.navigate('home');
+          onRefresh();
+          context.refreshShell?.();
+        });
         if (!result.ok) showToast(context.toast, houseSitterModeErrorMessage(result.code));
       });
     });
@@ -1348,14 +1354,12 @@ async function performWeatherLookup(input, lookupButton, results, context, onRef
     return;
   }
 
-  lookupButton.disabled = true;
-  lookupButton.textContent = 'Looking up…';
   results.hidden = true;
   results.replaceChildren();
 
-  const response = await geocodeWeatherLocation(query);
-  lookupButton.disabled = false;
-  lookupButton.textContent = 'Look up';
+  const response = await withAsyncButtonFeedback(lookupButton, 'Looking up…', () =>
+    geocodeWeatherLocation(query)
+  );
 
   if (!response.ok) {
     showToast(context.toast, response.message);

@@ -6,6 +6,7 @@ import {
 } from '../../services/guideContentService.js';
 import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
 import { showToast } from '../../js/modules/toast.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 
 /**
  * @param {import('../../types/app.js').ShellContext} context
@@ -113,22 +114,20 @@ function renderMediaRow(item, context, onChange) {
     replaceInput.addEventListener('change', () => {
       const file = replaceInput.files?.[0];
       if (!file) return;
-      replaceButton.disabled = true;
-      const formData = new FormData();
-      formData.set('id', item.id);
-      formData.set('alt', item.alt);
-      formData.set('file', file);
-      void uploadHouseGuideMedia(formData)
-        .then(async (uploadResult) => {
-          replaceButton.disabled = false;
-          if (!uploadResult.ok) {
-            showToast(context.toast, uploadResult.message || 'Could not replace photo.');
-            return;
-          }
-          await refreshGuideContent(fetch, { draft: true, force: true });
-          showToast(context.toast, 'Photo replaced.');
-          onChange();
-        });
+      void withAsyncButtonFeedback(replaceButton, 'Uploading…', async () => {
+        const formData = new FormData();
+        formData.set('id', item.id);
+        formData.set('alt', item.alt);
+        formData.set('file', file);
+        const uploadResult = await uploadHouseGuideMedia(formData);
+        if (!uploadResult.ok) {
+          showToast(context.toast, uploadResult.message || 'Could not replace photo.');
+          return;
+        }
+        await refreshGuideContent(fetch, { draft: true, force: true });
+        showToast(context.toast, 'Photo replaced.');
+        onChange();
+      });
     });
 
     const deleteButton = document.createElement('button');
@@ -142,11 +141,10 @@ function renderMediaRow(item, context, onChange) {
         confirmLabel: 'Delete photo',
         cancelLabel: 'Cancel',
         danger: true
-      }).then((confirmed) => {
+      }).then(async (confirmed) => {
         if (!confirmed) return;
-        deleteButton.disabled = true;
-        void removeHouseGuideMediaItem(item.id).then((deleteResult) => {
-          deleteButton.disabled = false;
+        await withAsyncButtonFeedback(deleteButton, 'Deleting…', async () => {
+          const deleteResult = await removeHouseGuideMediaItem(item.id);
           if (!deleteResult.ok) {
             showToast(context.toast, deleteResult.message || 'Could not delete photo.');
             return;
