@@ -73,8 +73,9 @@ Clears:
 - `hub_secrets`
 - `site_profile` (back to defaults)
 - `house_settings` (including sitter-secrets toggle)
+- `sitter_stays` (scheduled stays) and re-syncs Cloudflare Access sitter emails when configured
 
-Does **not** remove Wrangler CLI secrets or R2 uploaded photos. Download a backup first if needed.
+Does **not** remove Wrangler CLI secrets or R2 uploaded photos. Download a backup first if needed. After reset, the setup wizard may show **deployment default** hints for Wi‑Fi, PIN, and lockbox when those values still exist as Worker secrets — enter new values to save them on the hub.
 
 After reset, the setup wizard opens so you can configure the hub again.
 

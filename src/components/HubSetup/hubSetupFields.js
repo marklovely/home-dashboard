@@ -594,6 +594,18 @@ export function buildHomeDetailsFormProfile(profile = {}) {
   return { ...profile, primaryContact, secondaryContact, propertyAddress };
 }
 
+export const HUB_SETUP_STORED_SECRET_HINT =
+  'A value is saved on your hub. Enter a new one to replace it, or leave blank to keep the current value.';
+
+export const HUB_SETUP_DEPLOYMENT_SECRET_HINT =
+  'This hub still has deployment defaults (not shown here). Enter your own values to save them on the hub, or leave blank to keep the defaults.';
+
+export const HUB_SETUP_STORED_WIFI_SSID_HINT =
+  'Wi‑Fi network name is saved on your hub but could not be loaded here. Enter it again to update the saved value.';
+
+export const HUB_SETUP_DEPLOYMENT_WIFI_SSID_HINT =
+  'Wi‑Fi network name is set as a deployment default (not shown here). Enter it to save on your hub, or leave blank to keep the default.';
+
 /**
  * @param {HTMLElement} fieldWrap
  * @param {boolean | undefined} isConfigured
@@ -603,30 +615,72 @@ function appendConfiguredSecretHint(fieldWrap, isConfigured, message) {
   if (!isConfigured || fieldWrap.querySelector('.hub-setup-configured-hint')) return;
   const hint = document.createElement('p');
   hint.className = 'subtle hub-setup-configured-hint';
-  hint.textContent =
-    message ??
-    'A value is already saved. Enter a new one to replace it, or leave blank to keep the current value.';
+  hint.textContent = message ?? HUB_SETUP_STORED_SECRET_HINT;
   fieldWrap.append(hint);
+}
+
+/**
+ * @param {boolean | undefined} stored
+ * @param {boolean | undefined} configured
+ * @param {string} storedHint
+ * @param {string} deploymentHint
+ */
+function secretHintFor(stored, configured, storedHint, deploymentHint) {
+  if (stored) return storedHint;
+  if (configured) return deploymentHint;
+  return null;
 }
 
 /**
  * @param {ReturnType<typeof createGuestAccessFields>} fields
  * @param {Partial<Record<string, boolean>>} [configured]
+ * @param {Partial<Record<string, boolean>>} [stored]
  */
-export function applyGuestAccessDisplayValues(fields, configured = {}) {
+export function applyGuestAccessDisplayValues(fields, configured = {}, stored = configured) {
   const wifiSsid = getPrivateConfigValue('wifi.ssid');
   if (wifiSsid && !fields.wifiSsid.input.value.trim()) {
     fields.wifiSsid.input.value = String(wifiSsid);
   }
 
-  appendConfiguredSecretHint(fields.wifiPassword.wrap, configured.wifi_password);
-  if (configured.wifi_ssid && !fields.wifiSsid.input.value.trim()) {
-    appendConfiguredSecretHint(
-      fields.wifiSsid.wrap,
-      true,
-      'Wi‑Fi network name is saved on the hub but could not be loaded here. Enter it again to replace the saved value.'
-    );
+  const wifiPasswordHint = secretHintFor(
+    stored.wifi_password,
+    configured.wifi_password,
+    HUB_SETUP_STORED_SECRET_HINT,
+    HUB_SETUP_DEPLOYMENT_SECRET_HINT
+  );
+  if (wifiPasswordHint) {
+    appendConfiguredSecretHint(fields.wifiPassword.wrap, true, wifiPasswordHint);
   }
-  appendConfiguredSecretHint(fields.lockbox.wrap, configured.lockbox_code);
-  appendConfiguredSecretHint(fields.ownerPin.wrap, configured.owner_pin);
+
+  if (!fields.wifiSsid.input.value.trim()) {
+    const wifiSsidHint = secretHintFor(
+      stored.wifi_ssid,
+      configured.wifi_ssid,
+      HUB_SETUP_STORED_WIFI_SSID_HINT,
+      HUB_SETUP_DEPLOYMENT_WIFI_SSID_HINT
+    );
+    if (wifiSsidHint) {
+      appendConfiguredSecretHint(fields.wifiSsid.wrap, true, wifiSsidHint);
+    }
+  }
+
+  const lockboxHint = secretHintFor(
+    stored.lockbox_code,
+    configured.lockbox_code,
+    HUB_SETUP_STORED_SECRET_HINT,
+    HUB_SETUP_DEPLOYMENT_SECRET_HINT
+  );
+  if (lockboxHint) {
+    appendConfiguredSecretHint(fields.lockbox.wrap, true, lockboxHint);
+  }
+
+  const ownerPinHint = secretHintFor(
+    stored.owner_pin,
+    configured.owner_pin,
+    HUB_SETUP_STORED_SECRET_HINT,
+    HUB_SETUP_DEPLOYMENT_SECRET_HINT
+  );
+  if (ownerPinHint) {
+    appendConfiguredSecretHint(fields.ownerPin.wrap, true, ownerPinHint);
+  }
 }
