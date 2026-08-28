@@ -293,7 +293,8 @@ function mountHubSetupWizard(viewport, context) {
   void fetchHubSecretsConfigured().then((result) => {
     if (!result.ok) return;
     const configured = result.data?.configured ?? {};
-    applyGuestAccessDisplayValues(guestFields, configured);
+    const stored = result.data?.stored ?? configured;
+    applyGuestAccessDisplayValues(guestFields, configured, stored);
     if (configured.calendar_ics_url) {
       calendarFields = createCalendarConnectionField({ configured: true });
       if (currentStepId() === 'calendar') {
