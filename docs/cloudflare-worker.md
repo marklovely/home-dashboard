@@ -70,13 +70,14 @@ After pulling CMS or house-settings changes, apply D1 migrations once:
 ```bash
 # All hub sites (prod, test, sandbox, demo, dev, smith, …)
 npm run d1:migrate:all
+npm run deploy:all
 
 # Or one site
 npm run d1:migrate:prod --prefix worker
-npm run d1:migrate:test --prefix worker
+npm run deploy:test --prefix worker
 ```
 
-`d1:migrate:all` runs `node scripts/apply-d1-migrations-all.mjs`, which discovers every `d1:migrate:<site>` script in `worker/package.json`. Use `--dry-run`, `--site test`, or `--exclude prod` as needed. Requires `CLOUDFLARE_API_TOKEN` in the environment.
+`d1:migrate:all` and `deploy:all` discover scripts from `worker/package.json`. Use `--dry-run`, `--site test`, or `--exclude prod` as needed. Requires `CLOUDFLARE_API_TOKEN` in the environment. Run migrations before deploy when schema changed.
 
 For the **isolated test stack** (separate D1/R2/Worker), see [cloudflare-test-environment.md](./cloudflare-test-environment.md) and use `npm run d1:migrate:test` / `npm run deploy:test`.
 
