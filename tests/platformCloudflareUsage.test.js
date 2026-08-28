@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  manifestContractMissingUsageResponse,
+  siteMissingManifestContract
+} from '../functions/api/platform/manifestContractCopy.js';
+import {
   extractAccountR2PayloadBytes,
+  fetchSiteStorageUsage,
   normalizeD1DatabaseUsage,
   normalizeR2BucketUsage
 } from '../functions/api/platform/platformCloudflareUsage.js';
+import { renderSiteUsageSummary } from '../platform-admin/src/usage.js';
 import {
   formatBytes,
   formatUsageLine,
@@ -32,6 +38,35 @@ describe('platform usage formatting', () => {
     expect(usagePercent(7 * 1024 ** 3, FREE_TIER_LIMITS.r2StorageBytes)).toBe(70);
     expect(usageTone(7 * 1024 ** 3, FREE_TIER_LIMITS.r2StorageBytes)).toBe('warn');
     expect(usageTone(9.5 * 1024 ** 3, FREE_TIER_LIMITS.r2StorageBytes)).toBe('bad');
+  });
+});
+
+describe('manifest contract copy', () => {
+  it('detects terraform sites missing manifest contract data', () => {
+    expect(siteMissingManifestContract({ terraform: true, contract: null })).toBe(true);
+    expect(siteMissingManifestContract({ terraform: true, contract: {} })).toBe(true);
+    expect(
+      siteMissingManifestContract({ terraform: true, contract: { d1_database_id: 'abc' } })
+    ).toBe(false);
+    expect(siteMissingManifestContract({ terraform: false, contract: null })).toBe(false);
+  });
+
+  it('returns rebuild guidance when usage has no D1 id in manifest', async () => {
+    const result = await fetchSiteStorageUsage(
+      { siteId: 'demo', terraform: true, contract: null },
+      {},
+      {
+        CLOUDFLARE_ACCOUNT_ID: 'acc',
+        PLATFORM_CF_API_TOKEN: 'token'
+      }
+    );
+    expect(result).toEqual(manifestContractMissingUsageResponse());
+  });
+
+  it('renders usage hint in the platform admin UI', () => {
+    const html = renderSiteUsageSummary(manifestContractMissingUsageResponse());
+    expect(html).toMatch(/Platform manifest is missing/);
+    expect(html).toMatch(/npm run platform:manifest/);
   });
 });
 

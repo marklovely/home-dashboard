@@ -6,6 +6,11 @@ import {
   statusLabel
 } from './health.js';
 import {
+  MANIFEST_CONTRACT_MISSING_HINT,
+  MANIFEST_CONTRACT_MISSING_MESSAGE,
+  siteMissingManifestContract
+} from '../../functions/api/platform/manifestContractCopy.js';
+import {
   renderAccountUsageSummary,
   renderSiteUsageSummary
 } from './usage.js';
@@ -389,6 +394,7 @@ function renderSiteCard(site, platform, githubConfigured, pagesConfigured) {
   const steps = Array.isArray(site.provisioning) ? site.provisioning : [];
   const attachPending = site.attachHubApiBinding !== true;
   const needsProvision = site.terraform && !isProduction && (!site.contract || attachPending);
+  const manifestContractMissing = siteMissingManifestContract(site);
 
   return `
     <article class="card">
@@ -404,6 +410,11 @@ function renderSiteCard(site, platform, githubConfigured, pagesConfigured) {
         <div><dt>Pages</dt><dd><code>${escapeHtml(String(site.pagesProject))}</code></dd></div>
         <div><dt>Worker</dt><dd><code>${escapeHtml(String(site.workerName))}</code></dd></div>
       </dl>
+      ${
+        manifestContractMissing
+          ? `<div class="banner banner-warn site-manifest-banner">${escapeHtml(MANIFEST_CONTRACT_MISSING_MESSAGE)} ${escapeHtml(MANIFEST_CONTRACT_MISSING_HINT)}</div>`
+          : ''
+      }
       <div class="link-row">
         ${renderLinkChip('Cloudflare Pages', links.pages)}
         ${renderLinkChip('Worker', links.worker)}
