@@ -2,6 +2,43 @@
  * Owner-configured bin collection schedule (stored in site_profile.binSchedule).
  */
 
+const VALID_BIN_COLOR_IDS = new Set([
+  'green',
+  'black',
+  'brown',
+  'blue',
+  'grey',
+  'red',
+  'purple',
+  'yellow'
+]);
+
+/** @type {Record<'rubbish' | 'recycling' | 'gardenWaste', string>} */
+const DEFAULT_BIN_COLOR_IDS = {
+  rubbish: 'green',
+  recycling: 'black',
+  gardenWaste: 'brown'
+};
+
+/**
+ * @param {unknown} value
+ * @returns {Record<'rubbish' | 'recycling' | 'gardenWaste', string>}
+ */
+function normalizeBinColors(value) {
+  const raw = value && typeof value === 'object' ? /** @type {Record<string, unknown>} */ (value) : {};
+  return {
+    rubbish: VALID_BIN_COLOR_IDS.has(String(raw.rubbish ?? '').toLowerCase())
+      ? String(raw.rubbish).toLowerCase()
+      : DEFAULT_BIN_COLOR_IDS.rubbish,
+    recycling: VALID_BIN_COLOR_IDS.has(String(raw.recycling ?? '').toLowerCase())
+      ? String(raw.recycling).toLowerCase()
+      : DEFAULT_BIN_COLOR_IDS.recycling,
+    gardenWaste: VALID_BIN_COLOR_IDS.has(String(raw.gardenWaste ?? '').toLowerCase())
+      ? String(raw.gardenWaste).toLowerCase()
+      : DEFAULT_BIN_COLOR_IDS.gardenWaste
+  };
+}
+
 /** @typedef {'rubbish' | 'recycling'} HouseholdBinType */
 
 /**
@@ -25,7 +62,9 @@
  * @property {string} normalCollectionDay e.g. Friday
  * @property {BinScheduleHouseholdEntry[]} household
  * @property {BinScheduleGardenEntry[]} gardenWaste
+ * @property {BinScheduleGardenEntry[]} gardenWaste
  * @property {number} alertHoursBefore Hours before collection day (from 6am) to show sitter reminders; 0 disables
+ * @property {Record<'rubbish' | 'recycling' | 'gardenWaste', string>} [binColors] Preset colour ids for wheelie bins
  */
 
 export const DEFAULT_BIN_ALERT_HOURS_BEFORE = 24;
@@ -48,7 +87,8 @@ export const DEFAULT_BIN_SCHEDULE = /** @type {BinScheduleProfile} */ ({
   normalCollectionDay: '',
   household: [],
   gardenWaste: [],
-  alertHoursBefore: DEFAULT_BIN_ALERT_HOURS_BEFORE
+  alertHoursBefore: DEFAULT_BIN_ALERT_HOURS_BEFORE,
+  binColors: normalizeBinColors(undefined)
 });
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -113,7 +153,8 @@ export function normalizeBinSchedule(value) {
     normalCollectionDay: String(raw.normalCollectionDay ?? '').trim(),
     household,
     gardenWaste,
-    alertHoursBefore: Number.isFinite(alertParsed) ? alertHoursBefore : DEFAULT_BIN_ALERT_HOURS_BEFORE
+    alertHoursBefore: Number.isFinite(alertParsed) ? alertHoursBefore : DEFAULT_BIN_ALERT_HOURS_BEFORE,
+    binColors: normalizeBinColors(raw.binColors)
   };
 }
 
