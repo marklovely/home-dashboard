@@ -2,9 +2,10 @@ import { authenticateRequest, hasRequiredRole } from './requestAuth.js';
 import {
   createSitterClaims,
   finalizeDeviceSessionJsonResponse,
-  resolveDeviceSession,
+  resolveAuthenticatedDeviceSession,
   signDeviceSession
 } from './deviceSession.js';
+import { getPublicHubBranding } from './siteProfile.js';
 
 /**
  * @param {Request} request
@@ -36,7 +37,7 @@ export async function requireOwnerDeviceMode(request, env, nowMs = Date.now()) {
     return { ok: false, status: 403, code: 'FORBIDDEN' };
   }
 
-  const session = await resolveDeviceSession(request, env, nowMs);
+  const session = await resolveAuthenticatedDeviceSession(request, env, access, nowMs);
   if (session.mode === 'sitter') {
     return { ok: false, status: 403, code: 'DEVICE_MODE_REQUIRED' };
   }
@@ -53,7 +54,7 @@ export async function requireAnyDeviceSession(request, env) {
   if (!access.ok) {
     return { ok: false, status: access.status, code: access.code };
   }
-  const session = await resolveDeviceSession(request, env);
+  const session = await resolveAuthenticatedDeviceSession(request, env, access);
   return { ok: true, access, session };
 }
 
@@ -67,13 +68,18 @@ export async function issueSitterSessionResponse(env, nowSec = Math.floor(Date.n
   if (!cookieValue) {
     return Response.json({ error: 'SESSION_UNAVAILABLE' }, { status: 503 });
   }
-  return finalizeDeviceSessionJsonResponse({
-    mode: 'sitter',
-    ownerSessionExpiresAtMs: null,
-    cookieValue,
-    claims,
-    clearCookie: false
-  });
+  const hubBranding = await getPublicHubBranding(env);
+  return finalizeDeviceSessionJsonResponse(
+    {
+      mode: 'sitter',
+      ownerSessionExpiresAtMs: null,
+      cookieValue,
+      claims,
+      clearCookie: false
+    },
+    200,
+    hubBranding
+  );
 }
 
 /**

@@ -6,10 +6,12 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 
 | Path | Purpose |
 |------|---------|
-| `/` | Product landing (no link to private dashboard) |
+| `/` | Product landing with link to public demo |
 | `/app.html` | Screenshot gallery |
 | `/support.html` | Support & FAQ |
 | `/privacy.html` | Privacy policy |
+
+Public demo hub: [demo.lovely-home.co.uk/sign-in](https://demo.lovely-home.co.uk/sign-in) — username `demo`, password `lovely-demo`.
 
 ## Local preview
 

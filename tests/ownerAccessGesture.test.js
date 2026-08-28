@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isHomeDeployment } from '../src/auth/deploymentMode.js';
 import { attachOwnerAccessGesture } from '../src/auth/ownerAccessGesture.js';
+import {
+  resetDeviceSessionStoreForTests,
+  setDeviceModeForTests
+} from '../src/auth/deviceSessionStore.js';
 import { resetOwnerSessionForTests } from '../src/auth/ownerSession.js';
 import {
   UserMode,
@@ -14,6 +18,7 @@ describe('owner access gesture', () => {
     vi.unstubAllEnvs();
     resetUserModeForTests();
     resetOwnerSessionForTests();
+    resetDeviceSessionStoreForTests();
     vi.useRealTimers();
   });
 
@@ -35,6 +40,7 @@ describe('owner access gesture', () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'home');
     resetUserModeForTests();
     setUserMode(UserMode.HouseSitter);
+    setDeviceModeForTests('sitter');
     expect(isHomeDeployment()).toBe(true);
     expect(isHouseSitterExperience()).toBe(true);
 

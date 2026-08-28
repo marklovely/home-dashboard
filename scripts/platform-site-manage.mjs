@@ -21,6 +21,7 @@ import {
 } from './lib/site-registry.mjs';
 import { formatSitesYaml } from './lib/write-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
+import { PLATFORM_ZONE_NAME, CUSTOMER_HUB_ZONE_NAME } from './lib/hub-zones.mjs';
 import { removeHubTfvarsSiteBlock } from './lib/prune-hub-site-config.mjs';
 import { removeWranglerEnvBlock, replaceWranglerEnvBlock } from './lib/wrangler-env-block.mjs';
 
@@ -29,11 +30,15 @@ const sitesYamlPath = join(root, 'platform/sites.yaml');
 const wranglerPath = join(root, 'worker/wrangler.toml');
 const workerPackagePath = join(root, 'worker/package.json');
 const hubExamplePath = join(root, 'terraform/environments/hub.tfvars.example');
-const zoneName = 'lovely-home.co.uk';
 
 /** @type {Record<string, string | boolean | undefined>} */
 const args = parseArgs(process.argv.slice(2));
 const action = String(args._[0] ?? '');
+const zoneName = args['zone-name']
+  ? String(args['zone-name'])
+  : action === 'create'
+    ? CUSTOMER_HUB_ZONE_NAME
+    : PLATFORM_ZONE_NAME;
 const dryRun = args['dry-run'] === true || args['dry-run'] === 'true';
 const siteId = String(args['site-id'] ?? '');
 const confirmHostname = String(args['confirm-hostname'] ?? '');
@@ -43,6 +48,7 @@ const payload = {
   hostname: args.hostname ? String(args.hostname) : undefined,
   hub_environment: args['hub-environment'] ? String(args['hub-environment']) : undefined,
   vanilla: parseOptionalBool(args.vanilla),
+  zone_name: args['zone-name'] ? String(args['zone-name']) : undefined,
   terraform: parseOptionalBool(args.terraform),
   attach_hub_api_binding: parseOptionalBool(args['attach-hub-api-binding']),
   owner_emails: args['owner-emails'] !== undefined ? parseEmailList(String(args['owner-emails'])) : undefined,
@@ -89,6 +95,7 @@ if (action === 'create') {
     ...existing[siteId],
     ...(payload.hostname !== undefined ? { hostname: payload.hostname } : {}),
     ...(payload.hub_environment !== undefined ? { hub_environment: payload.hub_environment } : {}),
+    ...(payload.zone_name !== undefined ? { zone_name: payload.zone_name } : {}),
     ...(payload.vanilla !== undefined ? { vanilla: payload.vanilla } : {}),
     ...(payload.terraform !== undefined ? { terraform: payload.terraform } : {}),
     ...(payload.attach_hub_api_binding !== undefined
@@ -289,12 +296,17 @@ function patchHubTfvarsExample(text, action, siteId, entry) {
     sitterEmails.length > 0
       ? `\n    sitter_emails = [${sitterEmails.map((email) => `"${email}"`).join(', ')}]`
       : '';
+  const siteZoneName = String(entry?.zone_name ?? '').trim();
+  const zoneBlock =
+    siteZoneName && siteZoneName !== PLATFORM_ZONE_NAME
+      ? `\n    zone_name       = "${siteZoneName}"`
+      : '';
   const block = `
   ${siteId} = {
     hostname        = "${entry?.hostname ?? `${siteId}.${zoneName}`}"
     hub_environment = "${entry?.hub_environment ?? siteId}"
     vanilla         = ${vanilla ? 'true' : 'false'}
-    terraform       = true${attachBinding ? '' : '\n    attach_hub_api_binding = false # first apply only; set true after Worker deploy'}${ownerBlock}${sitterBlock}
+    terraform       = true${zoneBlock}${attachBinding ? '' : '\n    attach_hub_api_binding = false # first apply only; set true after Worker deploy'}${ownerBlock}${sitterBlock}
   }`;
 
   const blockRe = new RegExp(`\\n  ${siteId} = \\{[\\s\\S]*?\\n  \\}`, 'm');

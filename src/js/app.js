@@ -31,6 +31,9 @@ import {
   syncTabletPreferencesFromSiteProfile
 } from '../services/tabletPreferencesSyncService.js';
 import { initHubSetupRoutePolicy } from '../apps/HubSetup/hubSetupRoutePolicy.js';
+import { isControlsConfigured } from '../services/environmentAppPolicy.js';
+import { refreshGuideContent } from '../services/guideContentService.js';
+import { refreshApplianceManuals } from '../services/applianceManualsService.js';
 
 initTheme();
 initDisplayPreferences();
@@ -57,9 +60,15 @@ async function initialiseDashboard() {
     startMyDayCalendarService();
   }
 
-  const networkHint = document.querySelector('#shell-status .status-card:last-child span:last-child');
-  if (networkHint && isHouseSitterExperience()) {
-    networkHint.textContent = 'Connected';
+  const networkHint = document.querySelector('#network-hint');
+  if (networkHint) {
+    if (isHouseSitterExperience()) {
+      networkHint.textContent = 'Connected';
+    } else if (isControlsConfigured(CONFIG)) {
+      networkHint.textContent = 'Home controls ready';
+    } else {
+      networkHint.textContent = 'Hub online';
+    }
   }
 
   const elements = {
@@ -85,9 +94,33 @@ async function initialiseDashboard() {
   };
 
   function registerServiceWorker() {
-    if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js').catch(console.error);
-    }
+    if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+
+    navigator.serviceWorker
+      .register('./service-worker.js')
+      .then((registration) => {
+        registration.addEventListener('updatefound', () => {
+          const installing = registration.installing;
+          if (!installing) return;
+          installing.addEventListener('statechange', () => {
+            if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+              installing.postMessage({ type: 'skip-waiting' });
+            }
+          });
+        });
+
+        if (registration.waiting && navigator.serviceWorker.controller) {
+          registration.waiting.postMessage({ type: 'skip-waiting' });
+        }
+      })
+      .catch(console.error);
   }
 
   const shellContext = {
@@ -182,6 +215,10 @@ async function initialiseDashboard() {
     }
     initHubSetupRoutePolicy();
   });
+
+  // Prefetch published guide content so sitter apps are not empty while the catalog loads.
+  void refreshGuideContent(fetch, { draft: false });
+  void refreshApplianceManuals(fetch, { owner: false });
 }
 
 setStartupLoading(true);

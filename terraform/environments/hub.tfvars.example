@@ -2,10 +2,15 @@
 # Use for terraform apply / import across sandbox + test.
 
 cloudflare_account_id = "YOUR_ACCOUNT_ID"
-cloudflare_zone_id    = "YOUR_ZONE_ID"
+cloudflare_zone_id    = "YOUR_ZONE_ID" # lovely-home.co.uk — platform + internal hubs
 workers_subdomain     = "mark-lovely67"
 access_team_domain    = "lovely-home"
 zone_name             = "lovely-home.co.uk"
+
+# Customer household hubs live on a separate zone (register lovely-hub.com in Cloudflare first).
+# Required when any site in `sites` has zone_name = "lovely-hub.com".
+# customer_cloudflare_zone_id = "YOUR_LOVELY_HUB_COM_ZONE_ID"
+# customer_zone_name          = "lovely-hub.com"
 
 owner_emails = [
   "owner@example.com", # household owners — Access on every hub (production, test, sandbox, …)
@@ -72,6 +77,7 @@ sites = {
     hub_environment        = "demo"
     vanilla                = true
     terraform              = true
+    access_enabled         = false
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
   }
 
@@ -81,6 +87,28 @@ sites = {
     vanilla                = true
     terraform              = true
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
+  }
+
+  # Example customer hub (uncomment after customer_cloudflare_zone_id is set):
+  # smith = {
+  #   hostname        = "smith.lovely-hub.com"
+  #   zone_name       = "lovely-hub.com"
+  #   hub_environment = "smith"
+  #   vanilla         = false
+  #   terraform       = true
+  #   owner_emails = [
+  #     "smith@example.com",
+  #   ]
+  # }
+
+  smith = {
+    hostname        = "smith.lovely-hub.com"
+    hub_environment = "smith"
+    vanilla         = false
+    terraform       = true
+    zone_name       = "lovely-hub.com"
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+    owner_emails = ["marklovely67@gmail.com"]
   }
 
 }

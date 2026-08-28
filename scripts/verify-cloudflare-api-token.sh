@@ -11,6 +11,7 @@ set -euo pipefail
 TOKEN="${CLOUDFLARE_API_TOKEN:-}"
 ACCOUNT_ID="${ACCOUNT_ID:-${CLOUDFLARE_ACCOUNT_ID:-}}"
 ZONE_ID="${ZONE_ID:-${CLOUDFLARE_ZONE_ID:-}}"
+CUSTOMER_ZONE_ID="${CUSTOMER_ZONE_ID:-${CUSTOMER_CLOUDFLARE_ZONE_ID:-}}"
 
 if [[ -z "$TOKEN" ]]; then
   echo "Set CLOUDFLARE_API_TOKEN first." >&2
@@ -75,27 +76,42 @@ check_json "R2 buckets" "$(curl -sS -H "$auth_header" "https://api.cloudflare.co
 check_json "Workers scripts" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts")"
 check_json "Workers account subdomain" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/subdomain")"
 
-if [[ -n "$ZONE_ID" ]]; then
+check_zone_access() {
+  local label="$1"
+  local zone_id="$2"
+  if [[ -z "$zone_id" ]]; then
+    return 0
+  fi
+
   echo ""
-  echo "==> Zone access (GET /zones/$ZONE_ID)"
-  ZONE="$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}")"
+  echo "==> Zone access ($label — GET /zones/$zone_id)"
+  ZONE="$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/zones/${zone_id}")"
   echo "$ZONE" | node -e "
     const j = JSON.parse(require('fs').readFileSync(0,'utf8'));
+    const label = process.argv[1];
     if (!j.success) {
-      console.error('Zone check failed:', JSON.stringify(j.errors));
+      console.error(label + ' zone check failed:', JSON.stringify(j.errors));
+      console.error('Add this zone to CLOUDFLARE_API_TOKEN permissions (Zone → DNS → Edit).');
       process.exit(1);
     }
     console.log('  zone:', j.result?.name);
-  "
-  check_json "Workers routes" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/workers/routes?per_page=1")"
-else
+  " "$label"
+  check_json "$label Workers routes" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/zones/${zone_id}/workers/routes?per_page=1")"
+  check_json "$label DNS records" "$(curl -sS -H "$auth_header" "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records?per_page=1")"
+}
+
+check_zone_access "platform" "$ZONE_ID"
+check_zone_access "customer hub" "$CUSTOMER_ZONE_ID"
+
+if [[ -z "$ZONE_ID" && -z "$CUSTOMER_ZONE_ID" ]]; then
   echo ""
-  echo "(Skip zone check — set CLOUDFLARE_ZONE_ID)"
+  echo "(Skip zone checks — set CLOUDFLARE_ZONE_ID and/or CUSTOMER_CLOUDFLARE_ZONE_ID)"
 fi
 
 echo ""
 echo "Token can reach Terraform + Wrangler provision APIs for account ${ACCOUNT_ID}."
 echo "Required permissions: D1 Edit, R2 Edit, Pages Edit, Access Apps/Policies Edit,"
 echo "Access Service Tokens Edit, Workers Scripts Edit, Zone Workers Routes Edit, Zone DNS Edit."
+echo "Customer hubs need Zone DNS Edit on BOTH lovely-home.co.uk and lovely-hub.com (or All zones)."
 echo "Optional (quieter wrangler whoami): User Memberships Read, User Details Read."
 echo "Create at: https://dash.cloudflare.com/profile/api-tokens"

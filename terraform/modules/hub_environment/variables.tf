@@ -96,6 +96,12 @@ variable "include_pages_dev_access_destinations" {
   description = "Include default and preview *.pages.dev URIs on the Pages Access app. False during pre-worker provision so the Pages project can be created first."
 }
 
+variable "access_enabled" {
+  type        = bool
+  default     = true
+  description = "When false, Cloudflare Access is not applied (public demo hubs use username/password auth instead)."
+}
+
 variable "pages_dev_hostname" {
   type        = string
   default     = null

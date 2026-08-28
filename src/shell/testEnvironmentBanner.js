@@ -4,6 +4,7 @@ const BANNER_ID = 'hub-environment-banner';
 
 /** @type {Record<string, string>} */
 const BANNER_LABELS = {
+  demo: 'PUBLIC DEMO — sample data resets overnight · owner explore PIN 1234',
   test: 'TEST ENVIRONMENT — changes here do not affect production',
   staging: 'STAGING — changes here do not affect production',
   sandbox: 'SANDBOX — isolated trial environment'

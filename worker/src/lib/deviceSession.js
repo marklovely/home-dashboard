@@ -26,6 +26,10 @@ export const OWNER_ABSOLUTE_TTL_SEC = 4 * 60 * 60;
  */
 
 /**
+ * @typedef {{ role?: 'owner' | 'house-sitter' }} AccessIdentity
+ */
+
+/**
  * @typedef {Object} DeviceSessionClaims
  * @property {DeviceMode} mode
  * @property {number} issuedAt
@@ -230,6 +234,48 @@ export function defaultOwnerDeviceSession() {
     cookieValue: null,
     clearCookie: false
   };
+}
+
+/**
+ * Physical sitter lock cookie wins on a shared tablet. Otherwise Cloudflare Access
+ * house-sitter identity forces sitter mode for remote sitter logins.
+ *
+ * @param {{ mode: DeviceMode }} session
+ * @param {AccessIdentity | null | undefined} auth
+ * @returns {DeviceMode}
+ */
+export function effectiveDeviceMode(session, auth) {
+  if (session.mode === 'sitter') return 'sitter';
+  if (auth?.role === 'house-sitter') return 'sitter';
+  return 'owner';
+}
+
+/**
+ * @param {{
+ *   mode: DeviceMode,
+ *   ownerSessionExpiresAtMs: number | null,
+ *   claims?: DeviceSessionClaims | null,
+ *   cookieValue?: string | null,
+ *   clearCookie?: boolean
+ * }} session
+ * @param {AccessIdentity | null | undefined} auth
+ */
+export function withEffectiveDeviceMode(session, auth) {
+  return {
+    ...session,
+    mode: effectiveDeviceMode(session, auth)
+  };
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, string | undefined>} env
+ * @param {AccessIdentity | null | undefined} auth
+ * @param {number} [nowMs]
+ */
+export async function resolveAuthenticatedDeviceSession(request, env, auth, nowMs = Date.now()) {
+  const session = await resolveDeviceSession(request, env, nowMs);
+  return withEffectiveDeviceMode(session, auth);
 }
 
 /**

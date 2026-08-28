@@ -133,6 +133,9 @@ export function createAppShell({
     if (route === 'weather') document.body.classList.add('is-weather-route');
     if (route === 'bins') document.body.classList.add('is-bins-route');
     disposeMountedHouseGuide(viewport);
+    /** @type {HTMLElement & { scooterGuideDispose?: () => void }} */ (viewport).scooterGuideDispose?.();
+    /** @type {HTMLElement & { scooterGuideDispose?: () => void }} */ (viewport).scooterGuideDispose =
+      undefined;
     app.mount(viewport, shellContext);
     lastMountedAppRoute = route;
   };

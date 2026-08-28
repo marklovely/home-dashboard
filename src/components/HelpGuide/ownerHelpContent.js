@@ -17,7 +17,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day) stay hidden from sitters. The sitter tablet shows a simpler Lovely Home home screen with Scooter, House Guide, Controls, Emergency, Weather, and Bins.'
+        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day) stay hidden from sitters. The sitter tablet shows a simpler Lovely Home home screen with pet care (when configured), House Guide, Controls (when configured), Emergency, Weather, and Bins.'
       },
       {
         type: 'ul',
@@ -96,11 +96,11 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Press and hold the Lovely Home logo in the header for five seconds. Enter your owner PIN to restore full access. You can also use Settings → Return to House Sitter Mode when you want to lock it again after a visit.'
+        text: 'When the tablet is locked in House Sitter Mode, owners need their PIN to restore full access. In Settings → House sitter mode you can choose how to unlock: press and hold the Lovely Home logo for five seconds, tap Unlock owner mode at the top of Settings, or use both. Fully Kiosk admin exits are separate — configure those in Fully Kiosk if you use kiosk lock.'
       },
       {
         type: 'p',
-        text: 'After unlocking, owner mode may lock again automatically after a period of inactivity — enter your PIN again if prompted.'
+        text: 'After unlocking, use Settings → Return to House Sitter Mode when you want to lock the tablet again. Owner mode may also lock again automatically after a period of inactivity.'
       }
     ]
   },
@@ -271,7 +271,7 @@ export const OWNER_HELP_SECTIONS = [
         rows: [
           ['Sitters see old guide text', 'Publish in Guide Editor, then refresh the tablet'],
           ['Owner apps visible to sitter', 'Enable House Sitter Mode in Settings — Guest view alone is not enough'],
-          ['Cannot unlock tablet', 'Hold the header logo for five seconds, then enter your PIN'],
+          ['Cannot unlock tablet', 'Use your configured unlock method in Settings → House sitter mode, then enter your PIN'],
           ['My Day empty or error', 'Check calendar feed configuration on the Worker'],
           ['Manual missing in House Guide', 'Publish the manual and check the topic link name matches'],
           ['Alexa routine fails', 'Confirm button number in Controls matches your Alexa setup'],
