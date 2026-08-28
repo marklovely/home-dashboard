@@ -32,7 +32,7 @@ import { showPasswordDialog } from '../../components/PasswordDialog/passwordDial
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { createHubSetupHelpButton } from '../../components/HubSetup/hubSetupHelp.js';
-import { createCalendarConnectionField, createBinAlertHoursField, createBinScheduleDateEditor } from '../../components/HubSetup/binScheduleFields.js';
+import { createCalendarConnectionField, createBinAlertHoursField, createBinColorFields, createBinScheduleDateEditor } from '../../components/HubSetup/binScheduleFields.js';
 import { HUB_SETUP_FIELD_HELP, getBinScheduleFieldHelp } from '../../components/HubSetup/hubSetupHelpContent.js';
 import { inferBinSchedulePeriod, normalizeBinSchedule, readBinScheduleFromProfile, validateBinSchedule } from '../../lib/binScheduleProfile.js';
 import {
@@ -639,6 +639,8 @@ function createBinReminderFields(context, onRefresh) {
     getRepeatUntilFallback: () => validUntilField.input.value.trim()
   });
 
+  const colorFields = createBinColorFields(schedule);
+
   const saveButton = document.createElement('button');
   saveButton.type = 'button';
   saveButton.className = 'settings-action-button';
@@ -653,6 +655,7 @@ function createBinReminderFields(context, onRefresh) {
           collectionLocation: locationField.input.value.trim(),
           councilUrl: councilField.input.value.trim(),
           validUntil: validUntilField.input.value.trim(),
+          binColors: colorFields.readBinColors(),
           household,
           gardenWaste
         })
@@ -678,6 +681,7 @@ function createBinReminderFields(context, onRefresh) {
     locationField.wrap,
     councilField.wrap,
     validUntilField.wrap,
+    colorFields.wrap,
     dateEditor.wrap,
     saveButton
   );

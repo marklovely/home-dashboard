@@ -19,9 +19,9 @@ import {
   readBinScheduleFromProfile
 } from '../lib/binScheduleProfile.js';
 import { getSiteProfileState } from './siteProfileService.js';
+import { getBinAppearance } from '../lib/binAppearanceProfile.js';
 import {
   COLLECTION_TYPES,
-  formatBinLabel,
   getCollectionType
 } from '../data/binCollections/collectionTypes.js';
 import {
@@ -307,13 +307,18 @@ export function getUpcomingCollections(asOfDate = new Date(), count = 6) {
  */
 export function describeCollectionEvent(event, asOfDate = new Date()) {
   const typeDef = getCollectionType(event.type);
+  const schedule = readBinScheduleFromProfile(getSiteProfileState()?.profile);
+  const appearance = getBinAppearance(event.type, schedule);
   const timing = getDaysUntil(event.date, asOfDate);
   return {
     ...event,
     displayName: typeDef.displayName,
     emoji: typeDef.emoji,
-    binDescription: typeDef.binDescription,
-    binLabel: formatBinLabel(typeDef),
+    binDescription: appearance.description,
+    binLabel: appearance.label,
+    colorId: appearance.colorId,
+    colorLabel: appearance.colorLabel,
+    colorHex: appearance.hex,
     iconId: typeDef.iconId,
     cssModifier: typeDef.cssModifier,
     timing
@@ -334,6 +339,8 @@ export const BIN_COLLECTION_ALERT_GRACE_HOURS = 2;
  * @property {string} putOutLine When to put bins out
  * @property {string} locationLine Where bins are collected
  * @property {string} whenLabel today | tomorrow | weekday
+ * @property {string} colorLabel Human-readable bin colour
+ * @property {string} colorHex Hex colour for icons and accents
  * @property {CollectionEvent} event
  */
 
@@ -426,6 +433,7 @@ export function getBinCollectionAlert(asOfDate = new Date(), options = {}) {
 
   const described = describeCollectionEvent(next, asOfDate);
   const typeDef = getCollectionType(next.type);
+  const appearance = getBinAppearance(next.type, schedule);
   const whenPhrase =
     described.timing.days === 0
       ? 'today'
@@ -433,17 +441,19 @@ export function getBinCollectionAlert(asOfDate = new Date(), options = {}) {
         ? 'tomorrow'
         : `on ${described.timing.weekdayLabel}`;
 
-  let label = `${typeDef.displayName} ${whenPhrase} — ${typeDef.binDescription}`;
+  let label = `${typeDef.displayName} ${whenPhrase} — ${appearance.description}`;
   if (next.bankHolidayChange && houseSitter) {
-    label = `${typeDef.displayName} ${whenPhrase} (changed day) — ${typeDef.binDescription}`;
+    label = `${typeDef.displayName} ${whenPhrase} (changed day) — ${appearance.description}`;
   }
 
   return {
     label,
-    title: `${typeDef.emoji} Bin collection ${whenPhrase}`,
-    detail: typeDef.binDescription,
+    title: `${appearance.colorLabel} bin collection ${whenPhrase}`,
+    detail: appearance.description,
     putOutLine: formatBinAlertPutOutLine(next.date, asOfDate),
     locationLine: formatBinAlertLocationLine(),
+    colorLabel: appearance.colorLabel,
+    colorHex: appearance.hex,
     whenLabel:
       described.timing.days === 0
         ? 'today'
@@ -478,6 +488,7 @@ export function getBinCollectionHomeSummary(asOfDate = new Date(), options = {})
 
   const described = describeCollectionEvent(next, asOfDate);
   const typeDef = getCollectionType(next.type);
+  const appearance = getBinAppearance(next.type);
 
   let subtitle = described.timing.relative;
   if (next.bankHolidayChange) {
@@ -486,8 +497,8 @@ export function getBinCollectionHomeSummary(asOfDate = new Date(), options = {})
       : `${described.timing.weekdayLabel} · changed from normal schedule`;
   }
 
-  const binLine = formatBinLabel(typeDef);
-  const lines = [`${typeDef.emoji} ${typeDef.displayName}`, subtitle, binLine];
+  const binLine = appearance.label;
+  const lines = [typeDef.displayName, subtitle, binLine];
 
   const gardenSoon = getNextGardenWasteCollection(asOfDate);
   if (
@@ -508,7 +519,7 @@ export function getBinCollectionHomeSummary(asOfDate = new Date(), options = {})
   const alert = getBinCollectionAlert(asOfDate, options);
 
   return {
-    title: `${typeDef.emoji} ${typeDef.displayName}`,
+    title: typeDef.displayName,
     subtitle: lines.slice(1).join(' · '),
     alert: alert ? { label: alert.label, prominent: true } : null
   };
