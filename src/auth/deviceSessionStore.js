@@ -3,7 +3,7 @@ import {
   postEnterSitterMode,
   postLockOwner
 } from '../api/deviceSessionApi.js';
-import { applyDeviceSessionMode } from './userMode.js';
+import { applyDeviceSessionMode, isOwnerUserMode } from './userMode.js';
 import { setActiveProfileId } from '../services/profileService.js';
 import { ownerAuthProvider } from './OwnerAuthProvider.js';
 import { completeOwnerUnlock, lockToHouseSitterMode } from './ownerLock.js';
@@ -77,7 +77,7 @@ function applyServerSession(payload) {
   applySitterSecretsDisclosed(payload.sitterSecretsDisclosed);
   applyPublicHubBranding(payload.hubName);
   applyDeviceSessionMode(mode);
-  setActiveProfileId(mode === 'sitter' ? 'housesitter' : 'owner');
+  setActiveProfileId(isOwnerUserMode() ? 'owner' : 'housesitter');
   status = 'ready';
   persistLastKnownMode();
   notify();

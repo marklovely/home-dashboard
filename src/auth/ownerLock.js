@@ -1,5 +1,6 @@
 import { setActiveProfileId } from '../services/profileService.js';
 import { setUserMode, UserMode } from './userMode.js';
+import { clearPersistedUiViewingMode } from './uiViewingModePreference.js';
 import {
   clearOwnerPinSession,
   markOwnerUnlockedByPin,
@@ -28,7 +29,8 @@ export function lockToHouseSitterMode(navigateHome = navigateHomeHandler ?? unde
   stopOwnerInactivityWatch();
   clearOwnerPinSession();
   clearOwnerAccessToken();
-  setUserMode(UserMode.HouseSitter);
+  clearPersistedUiViewingMode();
+  setUserMode(UserMode.HouseSitter, { skipPersist: true });
   setActiveProfileId('housesitter');
   navigateHome?.();
 }
