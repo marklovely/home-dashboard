@@ -74,3 +74,22 @@ If the browser shows `ERR_TOO_MANY_REDIRECTS` on the demo hostname:
    ```bash
    curl -sI https://demo.lovely-home.co.uk/sign-in | grep -i '^HTTP\|^location'
    ```
+
+## HTTP 403 / “Access was denied” in Chrome
+
+The demo must **not** use Cloudflare Access (only the in-app username/password gate). A 403 on `/sign-in` usually means Access env vars leaked onto the demo Pages project, or a stale Zero Trust / WARP session is interfering.
+
+**Fix (operator):**
+
+```bash
+CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... node scripts/ensure-demo-pages-env.mjs
+bash scripts/deploy-cloudflare-pages-site.sh demo
+```
+
+Also in **Zero Trust → Access → Applications**, delete any application still protecting `demo.lovely-home.co.uk`.
+
+**Try (visitor):**
+
+1. Open an **Incognito** window (or clear site data for `demo.lovely-home.co.uk` and `cloudflareaccess.com`).
+2. Temporarily **disconnect Cloudflare WARP** if you use the Lovely Home Zero Trust team on that machine.
+3. Retry https://demo.lovely-home.co.uk/sign-in
