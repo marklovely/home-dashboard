@@ -48,6 +48,10 @@ export const DEFAULT_SITE_PROFILE = {
     screensaver: 'on',
     screensaverTimeoutMinutes: 15,
     dismissedBinCollectionDate: null
+  },
+  sitterUnlock: {
+    logoHold: true,
+    settingsButton: true
   }
 };
 
@@ -80,6 +84,10 @@ function parseProfilePayload(value) {
         ...(parsed.tabletPreferences && typeof parsed.tabletPreferences === 'object'
           ? parsed.tabletPreferences
           : {})
+      },
+      sitterUnlock: {
+        ...DEFAULT_SITE_PROFILE.sitterUnlock,
+        ...(parsed.sitterUnlock && typeof parsed.sitterUnlock === 'object' ? parsed.sitterUnlock : {})
       }
     };
   } catch {
@@ -163,7 +171,13 @@ export async function updateSiteProfile(env, patch) {
       : current.cameras,
     tabletPreferences: patch.tabletPreferences
       ? { ...current.tabletPreferences, ...patch.tabletPreferences }
-      : current.tabletPreferences
+      : current.tabletPreferences,
+    sitterUnlock: patch.sitterUnlock
+      ? {
+          ...current.sitterUnlock,
+          ...(patch.sitterUnlock && typeof patch.sitterUnlock === 'object' ? patch.sitterUnlock : {})
+        }
+      : current.sitterUnlock
   };
 
   const now = Math.floor(Date.now() / 1000);
