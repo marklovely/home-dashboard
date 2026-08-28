@@ -1,3 +1,5 @@
+import { manifestContractMissingUsageResponse } from './manifestContractCopy.js';
+
 /** @typedef {Record<string, string | undefined>} PlatformEnv */
 
 export const FREE_TIER_LIMITS = {
@@ -178,11 +180,7 @@ export async function fetchSiteStorageUsage(site, platform, env) {
   /** @type {Record<string, unknown> | null | undefined} */
   const contract = site.contract;
   if (!contract?.d1_database_id) {
-    return {
-      ok: false,
-      error: 'NO_CONTRACT',
-      message: 'Site has no Terraform contract yet — provision the hub first.'
-    };
+    return manifestContractMissingUsageResponse();
   }
 
   try {

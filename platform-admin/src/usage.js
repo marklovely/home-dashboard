@@ -5,7 +5,9 @@ import { formatUsageLine, usageTone } from './usageFormat.js';
  */
 export function renderSiteUsageSummary(usage) {
   if (!usage?.ok) {
-    return `<span class="usage-line usage-muted">${escapeHtml(String(usage?.message ?? 'Usage unavailable'))}</span>`;
+    const message = escapeHtml(String(usage?.message ?? 'Usage unavailable'));
+    const hint = usage?.hint ? `<span class="usage-hint">${escapeHtml(String(usage.hint))}</span>` : '';
+    return `<div class="usage-line usage-muted usage-line--error">${message}${hint}</div>`;
   }
 
   const d1Bytes = Number(usage.d1?.fileSizeBytes ?? 0);
