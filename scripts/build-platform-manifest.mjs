@@ -125,7 +125,9 @@ function buildProvisioningChecklist(siteId, meta, contract) {
   }
   steps.push({
     id: 'terraform',
-    label: 'Terraform module in state',
+    label: contract
+      ? 'Terraform contract in platform manifest'
+      : 'Terraform contract in platform manifest (rebuild after apply)',
     done: Boolean(contract)
   });
   steps.push({
