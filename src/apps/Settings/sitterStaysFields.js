@@ -10,6 +10,7 @@ import {
 } from '../../lib/sitterStayFormValidation.js';
 import { getSitterSecretsManual, subscribeToSitterSecrets } from '../../services/sitterSecretsService.js';
 import { showExtendStayDialog } from './sitterStayExtendDialog.js';
+import { showEditStayDialog } from './sitterStayEditDialog.js';
 import {
   cancelSitterStay,
   createSitterStay,
@@ -18,7 +19,8 @@ import {
   formatStayDate,
   formatStayStatusLabel,
   getSitterStays,
-  subscribeToSitterStays
+  subscribeToSitterStays,
+  updateSitterStay
 } from '../../services/sitterStaysService.js';
 
 const STAY_ACTION_TOAST_MS = 4000;
@@ -117,6 +119,15 @@ function createStayCard(stay, context) {
   actions.className = 'sitter-stay-card__actions';
 
   if (stay.status === 'scheduled' || stay.status === 'active') {
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.className = 'settings-action-button settings-action-button--secondary';
+    editButton.textContent = 'Edit';
+    editButton.addEventListener('click', () => {
+      void handleEditStay(stay, context, editButton);
+    });
+    actions.append(editButton);
+
     const extendButton = document.createElement('button');
     extendButton.type = 'button';
     extendButton.className = 'settings-action-button settings-action-button--secondary';
@@ -138,6 +149,26 @@ function createStayCard(stay, context) {
 
   card.append(head, dates, emails, actions);
   return card;
+}
+
+/**
+ * @param {import('../../api/sitterStaysApi.js').SitterStayPayload} stay
+ * @param {import('../../types/app.js').ShellContext} context
+ * @param {HTMLButtonElement} button
+ */
+async function handleEditStay(stay, context, button) {
+  const updates = await showEditStayDialog({ stay, formatDate: formatStayDate });
+  if (!updates) return;
+
+  await withAsyncButtonFeedback(button, 'Saving…', async () => {
+    const result = await updateSitterStay(stay.id, updates);
+    if (!result.ok) {
+      showToast(context.toast, result.message || 'Could not update stay.', STAY_ACTION_TOAST_MS);
+      return;
+    }
+    const label = result.stay?.label?.trim() || result.stay?.emails?.join(', ') || stayDisplayLabel(stay);
+    showToast(context.toast, `${label} updated.`, STAY_ACTION_TOAST_MS);
+  });
 }
 
 /**
