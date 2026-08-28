@@ -65,16 +65,15 @@ import {
   subscribeToSitterAccessEmails
 } from '../../services/sitterAccessEmailsService.js';
 import { createSetupTextarea } from '../../components/HubSetup/hubSetupFields.js';
-import { fetchSiteBackup, restoreSiteBackup } from '../../api/siteBackupApi.js';
+import { fetchSiteBackup } from '../../api/siteBackupApi.js';
 import {
-  backupRestoreSummary,
   downloadEncryptedBackupFile,
-  hasFullBackupContent,
-  normalizeBackupForRestore,
-  readJsonFile,
-  resolveBackupDocument,
-  uploadedMediaRestoreHint
+  hasFullBackupContent
 } from '../../utils/backupJson.js';
+import {
+  readAndConfirmSiteBackupRestore,
+  runSiteBackupRestore
+} from '../../services/siteBackupRestoreFlow.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
 import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
 import { openHubSetupWizard, openHubSetupWizardAfterReset } from '../HubSetup/hubSetupLauncher.js';
@@ -373,25 +372,8 @@ function createUtilitiesFields(context) {
 
     void (async () => {
       try {
-        const raw = await readJsonFile(file);
-        const decrypted = await resolveBackupDocument(raw, () =>
-          showPasswordDialog({
-            title: 'Decrypt backup',
-            message: 'Enter the password used when this backup was downloaded.',
-            confirmLabel: 'Continue'
-          })
-        );
-        const backup = normalizeBackupForRestore(decrypted);
-        const uploaded = /** @type {{ id: string, alt: string }[]} */ (
-          backup.guide?.uploadedMedia ?? []
-        );
-        const confirmed = await showConfirmDialog({
-          title: 'Restore site backup?',
-          message: `${backupRestoreSummary(backup)}${uploadedMediaRestoreHint(uploaded)}`,
-          confirmLabel: 'Restore',
-          danger: true
-        });
-        if (!confirmed) return;
+        const backup = await readAndConfirmSiteBackupRestore(file);
+        if (!backup) return;
 
         await withAsyncButtonFeedback(importButton, 'Restoring…', async () => {
           restoreStatus.hidden = false;
@@ -400,21 +382,12 @@ function createUtilitiesFields(context) {
           exportGuideButton.disabled = true;
           showToast(context.toast, 'Restoring backup…', 120000);
           try {
-            const result = await restoreSiteBackup(backup);
+            const result = await runSiteBackupRestore(backup);
             if (!result.ok) {
               restoreStatus.textContent = result.message || 'Restore failed.';
               showToast(context.toast, result.message || 'Restore failed.');
               return;
             }
-
-            await syncSitterSecretsFromServer();
-            await refreshGuideContent(fetch, { draft: true, force: true });
-            await syncSiteProfileFromServer();
-            await refreshPrivateConfig();
-            applyShellBranding({
-              shellEyebrow: document.querySelector('#shell-eyebrow'),
-              shellTagline: document.querySelector('#shell-tagline')
-            });
             restoreStatus.textContent = 'Site backup restored.';
             showToast(context.toast, 'Site backup restored.');
           } finally {
