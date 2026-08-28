@@ -7,6 +7,10 @@ import {
   resetSiteProfileStateForTests,
   setSiteProfileStateForTests
 } from '../src/services/siteProfileService.js';
+import {
+  resetDeviceSessionStoreForTests,
+  setMyStayForTests
+} from '../src/auth/deviceSessionStore.js';
 
 describe('house sitter home layout', () => {
   afterEach(() => {
@@ -14,6 +18,7 @@ describe('house sitter home layout', () => {
     vi.useRealTimers();
     resetUserModeForTests();
     resetSiteProfileStateForTests();
+    resetDeviceSessionStoreForTests();
   });
 
   it('structures the guest home with essentials, useful information, and help', async () => {
@@ -67,6 +72,34 @@ describe('house sitter home layout', () => {
     const houseGuideButton = helpButtons.find((button) => /Open House Guide/.test(button.textContent ?? ''));
     houseGuideButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(context.navigate).toHaveBeenCalledWith('house-guide');
+  });
+
+  it('shows upcoming sit dates before the sit start day', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2027-05-01T12:00:00'));
+    vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
+    resetUserModeForTests();
+    setSiteProfileStateForTests({
+      profile: { hubName: 'The Smith Home' },
+      loaded: true
+    });
+    setMyStayForTests({ sitStart: '2027-05-04', sitEnd: '2027-05-11' });
+
+    const viewport = document.createElement('div');
+    const context = {
+      config: { buttons: [{ id: 1 }, { id: 2 }] },
+      toast: document.createElement('div'),
+      lastCommand: document.createElement('span'),
+      navigate: vi.fn()
+    };
+
+    await renderHouseSitterHome(viewport, getVisibleApps(), context);
+
+    expect(viewport.querySelector('.sitter-welcome-title')?.textContent).toBe('Welcome to The Smith Home');
+    expect(viewport.querySelector('.sitter-welcome-lead')?.textContent).toMatch(/begins on 4 May 2027/);
+    expect(viewport.querySelector('.sitter-welcome-lead')?.textContent).toMatch(/ends on 11 May 2027/);
+    expect(viewport.querySelector('.sitter-welcome-lead')?.textContent).toMatch(/looking forward to welcoming you/i);
+    expect(viewport.querySelector('.sitter-welcome-body')?.hidden).toBe(true);
   });
 
   it('shows a bin alert banner when the next collection is within the reminder window', async () => {

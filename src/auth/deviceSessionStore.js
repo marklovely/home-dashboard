@@ -27,6 +27,9 @@ let mode = 'owner';
 /** @type {string | null} */
 let ownerSessionExpiresAt = null;
 
+/** @type {{ sitStart: string, sitEnd: string } | null} */
+let myStay = null;
+
 /** @type {Set<() => void>} */
 const listeners = new Set();
 
@@ -68,12 +71,17 @@ export function getOwnerSessionExpiresAt() {
   return ownerSessionExpiresAt;
 }
 
+export function getMyStay() {
+  return myStay;
+}
+
 /**
- * @param {{ mode: DeviceMode, ownerSessionExpiresAt?: string | null, hubName?: string }} payload
+ * @param {{ mode: DeviceMode, ownerSessionExpiresAt?: string | null, hubName?: string, myStay?: { sitStart: string, sitEnd: string } | null }} payload
  */
 function applyServerSession(payload) {
   mode = payload.mode === 'owner' ? 'owner' : 'sitter';
   ownerSessionExpiresAt = payload.ownerSessionExpiresAt ?? null;
+  myStay = payload.myStay ?? null;
   applySitterSecretsEffective(payload.sitterSecretsDisclosed);
   applyPublicHubBranding(payload.hubName);
   applyDeviceSessionMode(mode);
@@ -200,7 +208,14 @@ export function resetDeviceSessionStoreForTests() {
   status = 'loading';
   mode = 'owner';
   ownerSessionExpiresAt = null;
+  myStay = null;
   listeners.clear();
+}
+
+/** @internal */
+export function setMyStayForTests(stay) {
+  myStay = stay;
+  notify();
 }
 
 /** @internal */

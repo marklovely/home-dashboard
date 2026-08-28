@@ -1,8 +1,11 @@
 import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
+import { subscribeToDeviceSession, getMyStay } from '../../auth/deviceSessionStore.js';
+import { buildSitterWelcomeCopy } from '../../lib/sitterWelcomeCopy.js';
 import { getAppDisplayTitle, getModeConfig } from '../../modes/modeConfig.js';
 import { getHubDisplayName, getSiteProfileState, subscribeToSiteProfile } from '../../services/siteProfileService.js';
+import { formatStayDate } from '../../services/sitterStaysService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 import { mountBinAlertBannerHost } from '../../services/binAlertBannerSync.js';
 
@@ -20,21 +23,29 @@ const ESSENTIAL_CARD_COPY = {
 /** @type {(() => void) | null} */
 let sitterWelcomeProfileUnsubscribe = null;
 
+/** @type {(() => void) | null} */
+let sitterWelcomeSessionUnsubscribe = null;
+
 function getSitterWelcomeTitle() {
   return `Welcome to ${getHubDisplayName()}`;
 }
 
-function getSitterWelcomeLead() {
-  const petCare = getSiteProfileState()?.profile?.petCare;
-  if (
-    petCare &&
-    typeof petCare === 'object' &&
-    petCare.hasPets &&
-    String(petCare.name ?? '').trim()
-  ) {
-    return `Thank you for looking after our home and ${String(petCare.name).trim()}.`;
+function refreshSitterWelcomeCard(welcomeTitle, welcomeLead, welcomeBody) {
+  welcomeTitle.textContent = getSitterWelcomeTitle();
+
+  const copy = buildSitterWelcomeCopy(
+    getMyStay(),
+    getSiteProfileState()?.profile?.petCare,
+    formatStayDate
+  );
+  welcomeLead.textContent = copy.lead;
+  if (copy.body) {
+    welcomeBody.textContent = copy.body;
+    welcomeBody.hidden = false;
+  } else {
+    welcomeBody.textContent = '';
+    welcomeBody.hidden = true;
   }
-  return 'Thank you for looking after our home.';
 }
 
 /**
@@ -210,6 +221,8 @@ function pickAppsInOrder(apps, ids) {
 export async function renderHouseSitterHome(viewport, apps, context) {
   sitterWelcomeProfileUnsubscribe?.();
   sitterWelcomeProfileUnsubscribe = null;
+  sitterWelcomeSessionUnsubscribe?.();
+  sitterWelcomeSessionUnsubscribe = null;
   viewport.replaceChildren();
 
   const mode = getModeConfig();
@@ -230,21 +243,22 @@ export async function renderHouseSitterHome(viewport, apps, context) {
 
   const welcomeTitle = document.createElement('h2');
   welcomeTitle.className = 'sitter-welcome-title';
-  welcomeTitle.textContent = getSitterWelcomeTitle();
 
   const welcomeLead = document.createElement('p');
   welcomeLead.className = 'sitter-welcome-lead';
-  welcomeLead.textContent = getSitterWelcomeLead();
 
   const welcomeBody = document.createElement('p');
   welcomeBody.className = 'sitter-welcome-body';
-  welcomeBody.textContent = "Everything you'll need during your stay is below.";
 
   welcome.append(welcomeEmoji, welcomeTitle, welcomeLead, welcomeBody);
+  refreshSitterWelcomeCard(welcomeTitle, welcomeLead, welcomeBody);
 
   sitterWelcomeProfileUnsubscribe = subscribeToSiteProfile(() => {
-    welcomeTitle.textContent = getSitterWelcomeTitle();
-    welcomeLead.textContent = getSitterWelcomeLead();
+    refreshSitterWelcomeCard(welcomeTitle, welcomeLead, welcomeBody);
+  });
+
+  sitterWelcomeSessionUnsubscribe = subscribeToDeviceSession(() => {
+    refreshSitterWelcomeCard(welcomeTitle, welcomeLead, welcomeBody);
   });
 
   const essentialsSection = document.createElement('section');
