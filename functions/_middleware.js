@@ -1,6 +1,7 @@
 import cloudflareAccessPlugin from '@cloudflare/pages-plugin-cloudflare-access';
 import { accessTeamOrigin } from './lib/accessTeamDomain.js';
 import { demoPagesGate } from './lib/demoPagesGate.js';
+import { isPublicDemoHub } from './lib/publicDemoHub.js';
 
 /**
  * Validates Cloudflare Access on Pages Functions (including /api/*).
@@ -9,7 +10,7 @@ import { demoPagesGate } from './lib/demoPagesGate.js';
  * @type {import('@cloudflare/workers-types').PagesFunction}
  */
 async function accessMiddleware(context) {
-  if (context.env.DEMO_PUBLIC === 'true') {
+  if (isPublicDemoHub(context.env)) {
     return context.next();
   }
 
