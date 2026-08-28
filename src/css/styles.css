@@ -3937,6 +3937,27 @@ body.screensaver-active {
   gap: 14px;
 }
 
+.edit-stay-dialog {
+  width: min(480px, 92vw);
+}
+
+.edit-stay-dialog-form {
+  display: grid;
+  gap: 12px;
+}
+
+.edit-stay-dialog-form .hub-setup-field {
+  margin: 0;
+}
+
+.edit-stay-dialog-summary-error {
+  margin: 0;
+}
+
+.edit-stay-dialog .confirm-dialog-body {
+  gap: 14px;
+}
+
 .sitter-stays-section {
   gap: 14px;
 }
