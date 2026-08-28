@@ -35,11 +35,11 @@ npm run check --prefix worker
 
 Only push after lint and test pass. If either fails, fix locally, re-run both, then push.
 
-## Commits and pushes
+## Commits, pushes, and pull requests
 
-- Only create commits when the user asks, or when finishing agreed work on a feature branch.
+- For **features and fixes** (any agreed implementation work on a branch): **always** commit, push the branch, and open a PR when the work is done — do not wait for the user to ask separately.
+- Only skip commit/push/PR if the user explicitly says not to, or the work was exploratory/question-only with no code to ship.
 - Never force-push `main` unless the user explicitly requests it (e.g. undoing an accidental push).
-- Do not push to remote unless asked.
 
 ## After every push to a feature branch
 
