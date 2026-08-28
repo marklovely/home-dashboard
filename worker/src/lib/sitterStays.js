@@ -419,6 +419,43 @@ function normalizeDayCount(value, fallback) {
 }
 
 /**
+ * @typedef {{ sitStart: string, sitEnd: string }} SitterWelcomeStay
+ */
+
+/**
+ * Stay dates for the sitter welcome card (no emails or owner-only fields).
+ *
+ * @param {{ email?: string, role?: string }} auth
+ * @param {SitterStayRecord[]} stays
+ * @param {number} nowSec
+ * @returns {SitterWelcomeStay | null}
+ */
+export function resolveMyStayForWelcome(auth, stays, nowSec) {
+  const inAccessWindow = stays.filter(
+    (stay) =>
+      stay.status !== 'cancelled' && nowSec >= stay.accessOpensAt && nowSec < stay.accessClosesAt
+  );
+
+  if (inAccessWindow.length === 0) return null;
+
+  const email = String(auth.email ?? '')
+    .trim()
+    .toLowerCase();
+  if (email) {
+    const matched = inAccessWindow.find((stay) => stay.emails.includes(email));
+    if (matched) {
+      return { sitStart: matched.sitStart, sitEnd: matched.sitEnd };
+    }
+  }
+
+  if (inAccessWindow.length === 1) {
+    return { sitStart: inAccessWindow[0].sitStart, sitEnd: inAccessWindow[0].sitEnd };
+  }
+
+  return null;
+}
+
+/**
  * @param {SitterStayRecord} stay
  */
 export function serializeSitterStayForApi(stay) {

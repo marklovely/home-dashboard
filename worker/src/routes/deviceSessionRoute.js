@@ -5,6 +5,7 @@ import {
 } from '../lib/deviceSession.js';
 import { getEffectiveSitterAccessState } from '../lib/sitterSchedule.js';
 import { getPublicHubBranding } from '../lib/siteProfile.js';
+import { listSitterStays, resolveMyStayForWelcome } from '../lib/sitterStays.js';
 
 /**
  * @param {Request} request
@@ -25,12 +26,22 @@ export async function handleDeviceSession(request, env, fetchImpl = fetch) {
   }
 
   const session = await resolveAuthenticatedDeviceSession(request, env, access);
-  const [accessState, hubBranding] = await Promise.all([
-    getEffectiveSitterAccessState(env),
-    getPublicHubBranding(env)
+  const nowSec = Math.floor(Date.now() / 1000);
+  const [accessState, hubBranding, stays] = await Promise.all([
+    getEffectiveSitterAccessState(env, nowSec),
+    getPublicHubBranding(env),
+    listSitterStays(env, nowSec)
   ]);
-  return finalizeDeviceSessionJsonResponse(session, 200, {
+
+  /** @type {Record<string, unknown>} */
+  const extras = {
     sitterSecretsDisclosed: accessState.effectiveSecrets,
     ...hubBranding
-  });
+  };
+
+  if (session.mode === 'sitter') {
+    extras.myStay = resolveMyStayForWelcome(access, stays, nowSec);
+  }
+
+  return finalizeDeviceSessionJsonResponse(session, 200, extras);
 }
