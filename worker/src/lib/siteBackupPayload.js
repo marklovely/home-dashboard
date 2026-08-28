@@ -1,11 +1,13 @@
 import { getHubSecretsForBackup, HUB_SECRET_KEYS, setHubSecrets } from './hubSecrets.js';
 import { getSiteProfile, updateSiteProfile } from './siteProfile.js';
-import { resolveSitterAccessEmails } from '../routes/houseSettingsRoute.js';
+import { resolveSitterAccessEmailsManual } from '../routes/houseSettingsRoute.js';
 import {
-  getSitterSecretsDisclosed,
+  getSitterSecretsManual,
   setSitterAccessEmails,
-  setSitterSecretsDisclosed
+  setSitterSecretsManual
 } from './houseSettings.js';
+import { listSitterStays, replaceSitterStaysFromBackup, serializeSitterStayForApi } from './sitterStays.js';
+import { applySitterStaySchedule } from './sitterSchedule.js';
 import { importGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { loadImportableGuideCatalog } from '../houseGuide/exportCatalog.js';
 
@@ -48,8 +50,9 @@ export async function buildSiteBackupPayload(env, options = {}) {
   const scope = options.scope === 'guide' ? 'guide' : 'full';
   const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
   const seeded = await isHouseGuideSeeded(db);
-  const sitterSecretsDisclosed = await getSitterSecretsDisclosed(env);
-  const sitterAccessEmails = await resolveSitterAccessEmails(env);
+  const sitterSecretsManual = await getSitterSecretsManual(env);
+  const sitterAccessEmailsManual = await resolveSitterAccessEmailsManual(env);
+  const sitterStays = (await listSitterStays(env)).map(serializeSitterStayForApi);
 
   /** @type {{ seeded: boolean, catalog: object | null, uploadedMedia: { id: string, alt: string }[] }} */
   let guide = { seeded: false, catalog: null, uploadedMedia: [] };
@@ -69,8 +72,11 @@ export async function buildSiteBackupPayload(env, options = {}) {
     backupScope: scope,
     exportedAt: new Date().toISOString(),
     siteSettings: {
-      sitterSecretsDisclosed,
-      sitterAccessEmails
+      sitterSecretsManual,
+      sitterSecretsDisclosed: sitterSecretsManual,
+      sitterAccessEmailsManual,
+      sitterAccessEmails: sitterAccessEmailsManual,
+      sitterStays
     },
     guide
   };
@@ -88,15 +94,27 @@ export async function buildSiteBackupPayload(env, options = {}) {
  * @param {Record<string, unknown>} payload
  */
 export async function restoreSiteBackupPayload(env, payload) {
-  if (payload.siteSettings?.sitterSecretsDisclosed !== undefined) {
-    await setSitterSecretsDisclosed(env, Boolean(payload.siteSettings.sitterSecretsDisclosed));
+  const manualSecrets =
+    payload.siteSettings?.sitterSecretsManual ??
+    payload.siteSettings?.sitterSecretsDisclosed;
+  if (manualSecrets !== undefined) {
+    await setSitterSecretsManual(env, Boolean(manualSecrets));
   }
-  if (Array.isArray(payload.siteSettings?.sitterAccessEmails)) {
+
+  const manualEmails =
+    payload.siteSettings?.sitterAccessEmailsManual ?? payload.siteSettings?.sitterAccessEmails;
+  if (Array.isArray(manualEmails)) {
     await setSitterAccessEmails(
       env,
-      payload.siteSettings.sitterAccessEmails.map((email) => String(email))
+      manualEmails.map((email) => String(email))
     );
   }
+
+  if (Array.isArray(payload.siteSettings?.sitterStays)) {
+    await replaceSitterStaysFromBackup(env, payload.siteSettings.sitterStays);
+  }
+
+  await applySitterStaySchedule(env);
 
   if (payload.siteProfile && typeof payload.siteProfile === 'object') {
     await updateSiteProfile(env, payload.siteProfile);

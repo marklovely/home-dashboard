@@ -3,8 +3,11 @@ import { withApiCredentials } from './accessFetch.js';
 
 /**
  * @typedef {{
+ *   sitterSecretsManual?: boolean,
  *   sitterSecretsDisclosed: boolean,
+ *   sitterAccessEmailsManual?: string[],
  *   sitterAccessEmails?: string[],
+ *   sitterStays?: import('./sitterStaysApi.js').SitterStayPayload[],
  *   accessSitterSyncConfigured?: boolean,
  *   accessSyncOk?: boolean,
  *   accessSyncError?: string,

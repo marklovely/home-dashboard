@@ -51,7 +51,7 @@ export async function syncSitterAccessEmailsFromServer(fetchImpl = fetch) {
   if (!result.ok) {
     return false;
   }
-  applySitterAccessEmails(result.data.sitterAccessEmails, result.data.accessSitterSyncConfigured);
+  applySitterAccessEmails(result.data.sitterAccessEmailsManual ?? result.data.sitterAccessEmails, result.data.accessSitterSyncConfigured);
   return true;
 }
 
@@ -68,7 +68,7 @@ export async function saveSitterAccessEmails(emails, fetchImpl = fetch) {
       message: result.data?.accessSyncMessage ?? 'Could not save sitter emails.'
     };
   }
-  applySitterAccessEmails(result.data.sitterAccessEmails, result.data.accessSitterSyncConfigured);
+  applySitterAccessEmails(result.data.sitterAccessEmailsManual ?? result.data.sitterAccessEmails, result.data.accessSitterSyncConfigured);
   if (result.data.accessSyncOk === false) {
     return {
       ok: false,

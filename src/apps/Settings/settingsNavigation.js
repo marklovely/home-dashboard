@@ -31,7 +31,7 @@ export const OWNER_SETTINGS_SECTIONS = [
   {
     id: 'guest-mode',
     label: 'House sitter mode',
-    description: 'Hand the tablet to guests, share home access details, and manage sitter login emails.',
+    description: 'Wall tablet guest mode, scheduled remote stays, sitter login emails, and home access sharing.',
     ownerOnly: true
   },
   {

@@ -3,7 +3,7 @@ import {
   finalizeDeviceSessionJsonResponse,
   resolveAuthenticatedDeviceSession
 } from '../lib/deviceSession.js';
-import { getSitterSecretsDisclosed } from '../lib/houseSettings.js';
+import { getEffectiveSitterAccessState } from '../lib/sitterSchedule.js';
 import { getPublicHubBranding } from '../lib/siteProfile.js';
 
 /**
@@ -25,12 +25,12 @@ export async function handleDeviceSession(request, env, fetchImpl = fetch) {
   }
 
   const session = await resolveAuthenticatedDeviceSession(request, env, access);
-  const [sitterSecretsDisclosed, hubBranding] = await Promise.all([
-    getSitterSecretsDisclosed(env),
+  const [accessState, hubBranding] = await Promise.all([
+    getEffectiveSitterAccessState(env),
     getPublicHubBranding(env)
   ]);
   return finalizeDeviceSessionJsonResponse(session, 200, {
-    sitterSecretsDisclosed,
+    sitterSecretsDisclosed: accessState.effectiveSecrets,
     ...hubBranding
   });
 }

@@ -22,7 +22,7 @@ function requireHouseSettingsDb(db) {
 /**
  * @param {Record<string, string | undefined>} env
  */
-export async function getSitterSecretsDisclosed(env) {
+export async function getSitterSecretsManual(env) {
   const db = env.HOUSE_GUIDE_DB;
   if (!db) {
     return env.SITTER_SECRETS_DISCLOSED?.trim() === '1';
@@ -39,7 +39,10 @@ export async function getSitterSecretsDisclosed(env) {
  * @param {Record<string, string | undefined>} env
  * @param {boolean} disclosed
  */
-export async function setSitterSecretsDisclosed(env, disclosed) {
+/** @deprecated Use getSitterSecretsManual — stored owner toggle, not schedule-effective. */
+export const getSitterSecretsDisclosed = getSitterSecretsManual;
+
+export async function setSitterSecretsManual(env, disclosed) {
   const db = requireHouseSettingsDb(env.HOUSE_GUIDE_DB);
   const now = Math.floor(Date.now() / 1000);
   await db
@@ -51,6 +54,9 @@ export async function setSitterSecretsDisclosed(env, disclosed) {
     .bind(SITTER_SECRETS_KEY, disclosed ? '1' : '0', now)
     .run();
 }
+
+/** @deprecated Use setSitterSecretsManual */
+export const setSitterSecretsDisclosed = setSitterSecretsManual;
 
 /**
  * @param {Record<string, string | undefined>} env
