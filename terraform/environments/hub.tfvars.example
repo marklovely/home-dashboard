@@ -111,4 +111,14 @@ sites = {
     owner_emails = ["marklovely67@gmail.com"]
   }
 
+  practice = {
+    hostname        = "practice.lovely-hub.com"
+    hub_environment = "practice"
+    vanilla         = true
+    terraform       = true
+    zone_name       = "lovely-hub.com"
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+    owner_emails = ["marklovely67@gmail.com"]
+  }
+
 }
