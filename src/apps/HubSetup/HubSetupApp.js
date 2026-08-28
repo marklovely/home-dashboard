@@ -61,6 +61,7 @@ import {
 import { HUB_COUNTRY_OPTIONS, hubCountrySelectOptions, normalizeHubCountryCode } from '../../lib/hubCountries.js';
 import { validateHubContacts, validatePropertyAddress } from '../../lib/contactValidation.js';
 import { attachContactGroupValidation, attachPropertyAddressValidation } from '../../lib/contactFieldValidationUi.js';
+import { createHubSetupRestoreFromBackupBlock } from '../../components/HubSetup/hubSetupRestoreFromBackup.js';
 import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 
 const USE_CASE_OPTIONS = [
@@ -211,6 +212,10 @@ function mountHubSetupWizard(viewport, context) {
   welcomeLead.textContent = welcomeCopy.lead;
 
   welcomeBlock.append(welcomeEyebrow, welcomeTitle, welcomeLead);
+
+  const restoreHost = document.createElement('div');
+  restoreHost.className = 'hub-setup-restore-host';
+  welcomeBlock.append(restoreHost);
 
   const stepHeader = document.createElement('div');
   stepHeader.className = 'hub-setup-step-header';
@@ -409,6 +414,14 @@ function mountHubSetupWizard(viewport, context) {
     });
   }
 
+  function finishHubSetupAfterBackupRestore() {
+    resetHubSetupWizardStep();
+    clearHubSetupWizardRerunRequest();
+    clearHubSetupWizardForcedOpen();
+    context.navigate('home');
+    context.refreshShell?.();
+  }
+
   function renderStep() {
     setHubSetupWizardStep(step);
     renderNav();
@@ -417,6 +430,12 @@ function mountHubSetupWizard(viewport, context) {
     const welcomeCopy = getHubSetupWelcomeCopy();
     welcomeTitle.textContent = welcomeCopy.title;
     welcomeLead.textContent = welcomeCopy.lead;
+    restoreHost.replaceChildren();
+    if (step === 0) {
+      restoreHost.append(
+        createHubSetupRestoreFromBackupBlock(context, finishHubSetupAfterBackupRestore)
+      );
+    }
     nextButton.textContent = syncNextButtonLabel();
 
     const stepId = currentStepId();
