@@ -23,7 +23,8 @@
     "check": "npm run lint && npm run test && npm run build && node scripts/check-dist-secrets.js && npm run check --prefix worker",
     "guide:extract": "python3 scripts/extract_house_guide.py",
     "guide:build-catalog": ".venv-guide/bin/python scripts/build_house_guide_catalog.py",
-    "guide:check": "vitest run tests/guideCatalog.test.js tests/guideMedia.test.js"
+    "guide:check": "vitest run tests/guideCatalog.test.js tests/guideMedia.test.js",
+    "d1:migrate:all": "node scripts/apply-d1-migrations-all.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
