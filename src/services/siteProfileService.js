@@ -8,6 +8,7 @@ import {
 import { refreshPrivateConfig } from './privateConfigService.js';
 import { clearLocalSetup } from './siteSetupLocalStorage.js';
 import { getHubEnvironmentSync } from '../auth/hubEnvironment.js';
+import { formatOwnerUnlockInstructions } from '../lib/sitterUnlockPreferences.js';
 import { resetHubSetupWizardStep, requestHubSetupWizardAfterReset } from '../apps/HubSetup/hubSetupWizardState.js';
 
 /** @typedef {{ profile: Record<string, unknown>, guideSeeded?: boolean }} SiteProfileState */
@@ -81,7 +82,7 @@ export function getSiteSetupUnavailableMessage() {
     return 'Hub setup needs a database update on the server. Whoever manages this hub should run Worker migration 0005, then tap Try again.';
   }
   if (setupUnavailableCode === 'DEVICE_MODE_REQUIRED') {
-    return 'Unlock owner mode to finish setup — press and hold the Lovely Home logo, enter your owner PIN, then try again.';
+    return `Unlock owner mode to finish setup — ${formatOwnerUnlockInstructions()}`;
   }
   if (setupAvailability === 'offline') {
     return "You're offline or this hub can't be reached right now. Check your internet connection, then tap Try again.";

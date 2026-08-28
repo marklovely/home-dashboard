@@ -3629,6 +3629,16 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   font-weight: 700;
   text-align: left;
 }
+.settings-unlock-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
 #shell-eyebrow { cursor: default; user-select: none; }
 
 @media (max-width: 900px) {

@@ -202,3 +202,9 @@ export function resetDeviceSessionStoreForTests() {
   ownerSessionExpiresAt = null;
   listeners.clear();
 }
+
+/** @internal */
+export function setDeviceModeForTests(nextMode) {
+  mode = nextMode === 'sitter' ? 'sitter' : 'owner';
+  status = 'ready';
+}
