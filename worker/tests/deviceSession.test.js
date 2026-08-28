@@ -18,6 +18,7 @@ import { handleDeviceMode, handleAuthLock } from '../src/routes/deviceModeRoute.
 import { handleOwnerAuth } from '../src/routes/ownerAuth.js';
 import { handleCalendar } from '../src/routes/calendar.js';
 import { handlePrivateConfigRequest } from '../src/routes/privateConfigRoute.js';
+import { createSitterStay } from '../src/lib/sitterStays.js';
 import {
   createAccessTestEnv,
   signTestAccessJwt,
@@ -26,6 +27,7 @@ import {
   authedOwnerAccessRequest
 } from './accessTestHelpers.js';
 import { withTestLimiters } from './testEnv.js';
+import { createInMemoryHouseSettingsDb } from './mocks/houseSettingsStorage.js';
 
 const env = withTestLimiters(createAccessTestEnv());
 
@@ -110,6 +112,34 @@ describe('device session HTTP routes', () => {
     const body = await response.json();
     expect(body.mode).toBe('sitter');
     expect(response.headers.get('Set-Cookie')).toBeNull();
+  });
+
+  it('GET /api/device-session includes myStay dates for scheduled sitter access', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-10T12:00:00.000Z'));
+
+    const stayEnv = withTestLimiters(
+      createAccessTestEnv({
+        HOUSE_GUIDE_DB: createInMemoryHouseSettingsDb()
+      })
+    );
+    await createSitterStay(stayEnv, {
+      emails: ['sitter@example.com'],
+      sitStart: '2026-03-12',
+      sitEnd: '2026-03-19'
+    });
+
+    const jwt = await signTestAccessJwt('sitter@example.com', stayEnv);
+    const response = await handleDeviceSession(
+      new Request('https://worker.test/api/device-session', withAccessJwt(jwt)),
+      stayEnv
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.mode).toBe('sitter');
+    expect(body.myStay).toEqual({ sitStart: '2026-03-12', sitEnd: '2026-03-19' });
+
+    vi.useRealTimers();
   });
 
   it('owner PIN clears sitter lock and returns owner mode', async () => {

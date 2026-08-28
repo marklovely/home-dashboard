@@ -4,7 +4,8 @@ import {
   computeEffectiveSitterSecrets,
   createSitterStay,
   endSitterStayNow,
-  listSitterStays
+  listSitterStays,
+  resolveMyStayForWelcome
 } from '../src/lib/sitterStays.js';
 import { computeStayWindowTimestamps } from '../src/lib/sitterStayWindows.js';
 import { applySitterStaySchedule, getEffectiveSitterAccessState } from '../src/lib/sitterSchedule.js';
@@ -194,5 +195,41 @@ describe('computeEffective helpers', () => {
     expect(computeEffectiveSitterSecrets(false, [stay], 250)).toBe(true);
     expect(computeEffectiveSitterSecrets(false, [stay], 450)).toBe(false);
     expect(computeEffectiveSitterSecrets(true, [stay], 450)).toBe(true);
+  });
+});
+
+describe('resolveMyStayForWelcome', () => {
+  const stay = {
+    id: '1',
+    label: null,
+    emails: ['sitter@example.com'],
+    sitStart: '2026-03-12',
+    sitEnd: '2026-03-19',
+    accessOpensAt: 100,
+    accessClosesAt: 500,
+    secretsOpensAt: 200,
+    secretsClosesAt: 400,
+    status: 'active',
+    createdAt: 1,
+    updatedAt: 1,
+    accessLeadDays: 7,
+    accessGraceDays: 1
+  };
+
+  it('matches the logged-in sitter email', () => {
+    expect(
+      resolveMyStayForWelcome({ email: 'sitter@example.com', role: 'house-sitter' }, [stay], 150)
+    ).toEqual({ sitStart: '2026-03-12', sitEnd: '2026-03-19' });
+  });
+
+  it('returns the only in-window stay for tablet sitter mode', () => {
+    expect(resolveMyStayForWelcome({ email: 'owner@example.com', role: 'owner' }, [stay], 150)).toEqual({
+      sitStart: '2026-03-12',
+      sitEnd: '2026-03-19'
+    });
+  });
+
+  it('returns null when no stay is in the access window', () => {
+    expect(resolveMyStayForWelcome({ email: 'sitter@example.com', role: 'house-sitter' }, [stay], 50)).toBeNull();
   });
 });
