@@ -1,4 +1,5 @@
 import { showToast } from '../../js/modules/toast.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 import {
   normalizeCamerasProfile,
   readCamerasFromProfile
@@ -153,20 +154,16 @@ export function createCameraSettingsFields(context, onRefresh) {
       return;
     }
 
-    saveButton.disabled = true;
-    void saveSiteProfile({ cameras: next })
-      .then((result) => {
-        if (!result.ok) {
-          showToast(context.toast, result.message || 'Could not save cameras.');
-          return;
-        }
-        showToast(context.toast, 'Camera settings saved.');
-        onRefresh({ panelId: 'cameras', soft: true });
-        context.refreshShell?.();
-      })
-      .finally(() => {
-        saveButton.disabled = false;
-      });
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const result = await saveSiteProfile({ cameras: next });
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Could not save cameras.');
+        return;
+      }
+      showToast(context.toast, 'Camera settings saved.');
+      onRefresh({ panelId: 'cameras', soft: true });
+      context.refreshShell?.();
+    });
   });
 
   wrap.append(

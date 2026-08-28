@@ -969,6 +969,27 @@ body.is-bins-route .app-viewport > .bins-app {
   line-height: 1.45;
 }
 
+.hub-setup-restore-host {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.hub-setup-restore {
+  display: grid;
+  gap: 10px;
+  max-width: 42rem;
+}
+
+.hub-setup-restore-copy {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.hub-setup-restore-status {
+  margin: 0;
+}
+
 .hub-setup-step-header {
   display: grid;
   gap: 0;

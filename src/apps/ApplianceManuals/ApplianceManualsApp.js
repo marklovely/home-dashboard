@@ -2,6 +2,7 @@ import { defineApp } from '../../components/App/defineApp.js';
 import { getDeviceSessionStatus } from '../../auth/deviceSessionStore.js';
 import { isOwnerUserMode } from '../../auth/userMode.js';
 import { showToast } from '../../js/modules/toast.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 import {
   APPLIANCE_MANUAL_CATEGORIES,
   formatApplianceManualDate,
@@ -519,7 +520,7 @@ function createReplaceDialog(manual, onClose, toastEl) {
   form.append(actions);
 
   cancel.addEventListener('click', onClose);
-  form.addEventListener('submit', async (event) => {
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
     if (submit.disabled) return;
     const formData = new FormData(form);
@@ -528,19 +529,17 @@ function createReplaceDialog(manual, onClose, toastEl) {
       showFieldError(error, 'Please select a PDF file.');
       return;
     }
-    submit.disabled = true;
-    submit.textContent = 'Uploading…';
-    const uploadData = new FormData();
-    uploadData.append('file', file);
-    const result = await replaceApplianceManualPdf(manual.id, uploadData);
-    submit.disabled = false;
-    submit.textContent = 'Replace PDF';
-    if (!result.ok) {
-      showFieldError(error, result.message || 'Could not replace PDF.');
-      return;
-    }
-    notifyToast(toastEl, 'PDF replaced.');
-    onClose();
+    void withAsyncButtonFeedback(submit, 'Uploading…', async () => {
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      const result = await replaceApplianceManualPdf(manual.id, uploadData);
+      if (!result.ok) {
+        showFieldError(error, result.message || 'Could not replace PDF.');
+        return;
+      }
+      notifyToast(toastEl, 'PDF replaced.');
+      onClose();
+    });
   });
 
   dialog.append(form);
@@ -589,16 +588,16 @@ function createDeleteDialog(manual, onClose, toastEl) {
   actions.append(cancel, submit);
 
   cancel.addEventListener('click', onClose);
-  submit.addEventListener('click', async () => {
-    submit.disabled = true;
-    const result = await removeApplianceManual(manual.id);
-    submit.disabled = false;
-    if (!result.ok) {
-      notifyToast(toastEl, result.message || 'Could not delete manual.');
-      return;
-    }
-    notifyToast(toastEl, 'Manual deleted.');
-    onClose();
+  submit.addEventListener('click', () => {
+    void withAsyncButtonFeedback(submit, 'Deleting…', async () => {
+      const result = await removeApplianceManual(manual.id);
+      if (!result.ok) {
+        notifyToast(toastEl, result.message || 'Could not delete manual.');
+        return;
+      }
+      notifyToast(toastEl, 'Manual deleted.');
+      onClose();
+    });
   });
 
   dialog.append(title, copy, actions);
