@@ -1,10 +1,14 @@
 import { defineApp } from '../../components/App/defineApp.js';
+import { isOwnerUserMode } from '../../auth/userMode.js';
 import { renderBinCollectionIcon } from '../../components/icons/renderBinCollectionIcon.js';
+import { renderWheelieBinIcon } from '../../components/icons/renderWheelieBinIcon.js';
 import {
   GARDEN_WASTE_ACCEPTED,
   GARDEN_WASTE_NOT_ACCEPTED
 } from '../../data/binCollections/collectionTypes.js';
+import { applyBinAccentStyles, getBinAppearance } from '../../lib/binAppearanceProfile.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
+import { storeSettingsPanel } from '../Settings/settingsNavigation.js';
 import {
   describeCollectionEvent,
   getBinCollectionHomeSummary,
@@ -23,9 +27,38 @@ import {
 } from './binCollectionCopy.js';
 
 /**
+ * @param {HTMLElement} host
+ * @param {{ colorHex: string, cssModifier: string }} event
+ * @param {number} [size]
+ */
+function appendCollectionBinIcon(host, event, size = 28) {
+  applyBinAccentStyles(host, event.colorHex);
+  host.classList.add(`bins-collection-icon--${event.cssModifier}`);
+  host.append(renderWheelieBinIcon(event.colorHex, { size, className: 'bins-type-icon' }));
+}
+
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ * @returns {HTMLButtonElement | null}
+ */
+function createOwnerScheduleLink(context) {
+  if (!isOwnerUserMode()) return null;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'bins-edit-schedule-link';
+  button.textContent = 'Edit bin schedule';
+  button.addEventListener('click', () => {
+    storeSettingsPanel('bins');
+    context.navigate('settings');
+  });
+  return button;
+}
+
+/**
  * @returns {HTMLElement}
  */
-function createCollectionInformationPanel() {
+function createCollectionInformationPanel(ownerAction) {
   const copy = getCollectionInformationCopy();
   const panel = document.createElement('aside');
   panel.className = 'bins-collection-info';
@@ -45,6 +78,9 @@ function createCollectionInformationPanel() {
   location.textContent = copy.locationLine;
 
   panel.append(title, begin, location);
+  if (ownerAction) {
+    panel.append(ownerAction);
+  }
   return panel;
 }
 
@@ -56,6 +92,7 @@ function createCollectionInformationPanel() {
 function renderEventRow(host, event, houseSitter) {
   const row = document.createElement('article');
   row.className = `bins-timeline-item bins-timeline-item--${event.cssModifier}`;
+  applyBinAccentStyles(row, event.colorHex);
   if (event.type === 'gardenWaste') {
     row.classList.add('bins-timeline-item--secondary');
   }
@@ -63,7 +100,7 @@ function renderEventRow(host, event, houseSitter) {
 
   const iconWrap = document.createElement('span');
   iconWrap.className = 'bins-timeline-icon';
-  iconWrap.append(renderBinCollectionIcon(event.iconId, { size: 26, className: 'bins-type-icon' }));
+  appendCollectionBinIcon(iconWrap, event, 26);
 
   const body = document.createElement('div');
   body.className = 'bins-timeline-body';
@@ -102,6 +139,7 @@ function renderEventRow(host, event, houseSitter) {
 function fillSummaryCard(card, described, label, secondary) {
   card.className = `bins-summary-card bins-summary-card--${described.cssModifier}`;
   if (secondary) card.classList.add('bins-summary-card--secondary');
+  applyBinAccentStyles(card, described.colorHex);
 
   const heading = document.createElement('h3');
   heading.textContent = label;
@@ -111,7 +149,7 @@ function fillSummaryCard(card, described, label, secondary) {
   row.className = 'bins-summary-row';
   const iconWrap = document.createElement('span');
   iconWrap.className = 'bins-summary-icon';
-  iconWrap.append(renderBinCollectionIcon(described.iconId, { size: 24, className: 'bins-type-icon' }));
+  appendCollectionBinIcon(iconWrap, described, 24);
 
   const text = document.createElement('div');
   text.className = 'bins-summary-text';
@@ -150,10 +188,11 @@ function appendGardenMaterialList(list, items, kind) {
  * @param {HTMLElement} viewport
  * @param {import('../../types/app.js').ShellContext} context
  */
-function mountBinsApp(viewport, _context) {
+function mountBinsApp(viewport, context) {
   viewport.replaceChildren();
   const houseSitter = isHouseSitterMode();
   const asOf = new Date();
+  const ownerScheduleLink = createOwnerScheduleLink(context);
 
   const page = document.createElement('section');
   page.className = 'app-page bins-app';
@@ -183,10 +222,11 @@ function mountBinsApp(viewport, _context) {
   }
 
   const heroEvent = describeCollectionEvent(next, asOf);
-  const infoPanel = createCollectionInformationPanel();
+  const infoPanel = createCollectionInformationPanel(ownerScheduleLink);
 
   const hero = document.createElement('header');
   hero.className = `bins-hero bins-hero--${heroEvent.cssModifier}`;
+  applyBinAccentStyles(hero, heroEvent.colorHex);
 
   const heroLabel = document.createElement('p');
   heroLabel.className = 'bins-hero-eyebrow';
@@ -194,7 +234,7 @@ function mountBinsApp(viewport, _context) {
 
   const heroIcon = document.createElement('span');
   heroIcon.className = `bins-hero-icon bins-hero-icon--${heroEvent.cssModifier}`;
-  heroIcon.append(renderBinCollectionIcon(heroEvent.iconId, { size: 40, className: 'bins-type-icon' }));
+  appendCollectionBinIcon(heroIcon, heroEvent, 40);
 
   const heroTitle = document.createElement('h2');
   heroTitle.className = 'bins-hero-title';
@@ -271,7 +311,8 @@ function mountBinsApp(viewport, _context) {
   const gardenDetails = document.createElement('details');
   gardenDetails.className = 'bins-garden-details';
   const gardenSummary = document.createElement('summary');
-  gardenSummary.textContent = 'What goes in the brown bin?';
+  const gardenAppearance = getBinAppearance('gardenWaste');
+  gardenSummary.textContent = `What goes in the ${gardenAppearance.colorLabel.toLowerCase()} bin?`;
   gardenDetails.append(gardenSummary);
 
   const acceptedGroup = document.createElement('div');

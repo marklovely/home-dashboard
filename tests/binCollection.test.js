@@ -189,7 +189,8 @@ describe('bin collection alerts', () => {
   it('returns a sitter alert and home summary flag when within the window', () => {
     const asOf = new Date('2026-07-30T12:00:00');
     const alert = getBinCollectionAlert(asOf, { houseSitter: true });
-    expect(alert?.title).toMatch(/Bin collection tomorrow/i);
+    expect(alert?.title).toMatch(/Black bin collection tomorrow/i);
+    expect(alert?.detail).toMatch(/Black wheelie bin/i);
     expect(alert?.label).toMatch(/Recycling/i);
     expect(alert?.putOutLine).toMatch(/Put bins out by 6am tomorrow/i);
     expect(alert?.locationLine).toMatch(/Collection point:/i);
@@ -226,7 +227,6 @@ describe('home card and wording', () => {
       houseSitter: false
     });
     expect(summary.title).toContain('Recycling & glass');
-    expect(summary.title).toContain('⚫');
     expect(summary.subtitle).toContain('In 2 days');
     expect(summary.subtitle).toContain('Black wheelie bin');
   });
@@ -252,7 +252,7 @@ describe('home card and wording', () => {
       houseSitter: true
     });
     expect(summary.title).toContain('Rubbish');
-    expect(summary.title).toContain('🟢');
+    expect(summary.subtitle).toMatch(/Green wheelie bin/);
     expect(summary.subtitle).toMatch(/Monday · changed collection day/);
   });
 

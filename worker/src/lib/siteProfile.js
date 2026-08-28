@@ -34,7 +34,12 @@ export const DEFAULT_SITE_PROFILE = {
     normalCollectionDay: '',
     household: [],
     gardenWaste: [],
-    alertHoursBefore: 24
+    alertHoursBefore: 24,
+    binColors: {
+      rubbish: 'green',
+      recycling: 'black',
+      gardenWaste: 'brown'
+    }
   },
   cameras: {
     enabled: false,

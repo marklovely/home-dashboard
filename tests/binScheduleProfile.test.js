@@ -24,6 +24,11 @@ describe('binScheduleProfile', () => {
       { date: '2026-08-14', type: 'recycling', bankHolidayChange: true }
     ]);
     expect(schedule.gardenWaste).toEqual([{ date: '2026-08-05' }]);
+    expect(schedule.binColors).toEqual({
+      rubbish: 'green',
+      recycling: 'black',
+      gardenWaste: 'brown'
+    });
     expect(hasConfiguredBinSchedule(schedule)).toBe(true);
   });
 
