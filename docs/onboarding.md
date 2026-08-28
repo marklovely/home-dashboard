@@ -34,7 +34,7 @@ Owner-only app **`hub-setup`**. Opens automatically when `onboardingComplete` is
 
 Steps:
 
-1. Hub name and guest use case
+1. Hub name and guest use case — or **restore from backup** on step 1 to skip the wizard
 2. Primary and secondary contacts
 3. Pet details *(housesitter and both use cases only)*
 4. Wi-Fi, property address (structured lines), lockbox, owner PIN
@@ -77,7 +77,7 @@ Clears:
 
 Does **not** remove Wrangler CLI secrets or R2 uploaded photos. Download a backup first if needed. After reset, the setup wizard may show **deployment default** hints for Wi‑Fi, PIN, and lockbox when those values still exist as Worker secrets — enter new values to save them on the hub.
 
-After reset, the setup wizard opens so you can configure the hub again.
+After reset, the setup wizard opens so you can configure the hub again — or restore from a backup file on step 1 to skip setup.
 
 ## Migration
 
