@@ -1043,6 +1043,18 @@ body.is-bins-route .app-viewport > .bins-app {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
+
+.hub-setup-textarea {
+  min-height: 112px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.hub-setup-input[type='date'] {
+  min-height: 52px;
+  color-scheme: dark;
+}
+
 .hub-setup-input--invalid {
   border-color: #ff7b7b;
 }
@@ -3870,16 +3882,28 @@ body.screensaver-active {
   }
 }
 
+.sitter-stays-section {
+  gap: 14px;
+}
+
 .sitter-stays-list {
   display: grid;
-  gap: 10px;
-  margin: 12px 0;
+  gap: 12px;
+  margin: 4px 0 8px;
+}
+
+.sitter-stays-empty {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px dashed color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, #fff);
 }
 
 .sitter-stay-card {
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: 16px;
+  padding: 16px 18px;
   background: color-mix(in srgb, var(--surface) 94%, #fff);
 }
 
@@ -3914,16 +3938,61 @@ body.screensaver-active {
 .sitter-stay-card__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.sitter-stay-card__actions .settings-action-button {
+  width: auto;
+  min-width: 120px;
+  flex: 1 1 140px;
+}
+
+.sitter-stay-form-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 4px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 88%, var(--surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 4%, transparent);
+}
+
+.sitter-stay-form-panel__title {
+  font-size: 1rem;
 }
 
 .sitter-stay-form {
   display: grid;
+  gap: 18px;
+}
+
+.sitter-stay-form .hub-setup-field {
   gap: 10px;
-  margin-top: 12px;
+  padding-bottom: 0;
+}
+
+.sitter-stay-form__dates {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sitter-stay-form__submit {
+  margin-top: 4px;
 }
 
 .sitter-schedule-banner {
-  margin-top: 8px;
+  margin-top: 10px;
+}
+
+@media (max-width: 640px) {
+  .sitter-stay-form__dates {
+    grid-template-columns: 1fr;
+  }
+
+  .sitter-stay-form-panel {
+    padding: 16px;
+  }
 }
