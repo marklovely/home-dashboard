@@ -1,5 +1,6 @@
 import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
 import { createSetupField, createSetupTextarea } from '../../components/HubSetup/hubSetupFields.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
   SITTER_STAY_FORM_SUMMARY_ERROR,
@@ -36,7 +37,7 @@ export function createSitterStaysSection(context) {
   const list = document.createElement('div');
   list.className = 'sitter-stays-list';
 
-  const formPanel = createSitterStayForm(context, () => renderList(list, context));
+  const formPanel = createSitterStayForm(context, list, () => renderList(list, context));
 
   const render = () => {
     renderList(list, context);
@@ -197,10 +198,23 @@ function setFieldValidationState(input, fieldWrap, errorEl, message) {
 }
 
 /**
+ * @param {HTMLFormElement} form
+ * @param {boolean} busy
+ */
+function setSitterStayFormBusy(form, busy) {
+  for (const element of form.querySelectorAll('input, textarea, button')) {
+    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+      element.disabled = busy;
+    }
+  }
+}
+
+/**
  * @param {import('../../types/app.js').ShellContext} context
+ * @param {HTMLElement} staysList
  * @param {() => void} onCreated
  */
-function createSitterStayForm(context, onCreated) {
+function createSitterStayForm(context, staysList, onCreated) {
   const panel = document.createElement('div');
   panel.className = 'sitter-stay-form-panel';
 
@@ -216,6 +230,15 @@ function createSitterStayForm(context, onCreated) {
   summaryError.className = 'sitter-stay-form-summary-error';
   summaryError.hidden = true;
   summaryError.textContent = SITTER_STAY_FORM_SUMMARY_ERROR;
+
+  const summarySuccess = document.createElement('p');
+  summarySuccess.className = 'sitter-stay-form-summary-success';
+  summarySuccess.hidden = true;
+  summarySuccess.setAttribute('role', 'status');
+
+  const apiError = document.createElement('p');
+  apiError.className = 'sitter-stay-form-summary-error sitter-stay-form-api-error';
+  apiError.hidden = true;
 
   const labelField = createSetupField('Label (optional)', '', {
     placeholder: 'March house sit',
@@ -246,15 +269,16 @@ function createSitterStayForm(context, onCreated) {
     sitEnd: { input: endField.input, wrap: endField.wrap, error: endError }
   };
 
-  function clearFormValidation() {
+  function clearFormFeedback() {
     summaryError.hidden = true;
-    for (const field of Object.values(validatedFields)) {
-      setFieldValidationState(field.input, field.wrap, field.error, null);
-    }
+    summarySuccess.hidden = true;
+    apiError.hidden = true;
   }
 
   function showFormValidation(fieldErrors) {
+    clearFormFeedback();
     summaryError.hidden = false;
+    summaryError.textContent = SITTER_STAY_FORM_SUMMARY_ERROR;
     for (const [key, field] of Object.entries(validatedFields)) {
       setFieldValidationState(field.input, field.wrap, field.error, fieldErrors[key] ?? null);
     }
@@ -273,8 +297,39 @@ function createSitterStayForm(context, onCreated) {
       const stillInvalid = Object.values(validatedFields).some((entry) =>
         entry.input.classList.contains('hub-setup-input--invalid')
       );
-      if (!stillInvalid) summaryError.hidden = true;
+      if (!stillInvalid) {
+        summaryError.hidden = true;
+      }
     });
+  }
+
+  function showApiError(message) {
+    clearFormFeedback();
+    apiError.textContent = message;
+    apiError.hidden = false;
+    apiError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  /**
+   * @param {import('../../api/sitterStaysApi.js').SitterStayPayload | null | undefined} stay
+   */
+  function showSubmitSuccess(stay) {
+    for (const field of Object.values(validatedFields)) {
+      setFieldValidationState(field.input, field.wrap, field.error, null);
+    }
+    apiError.hidden = true;
+    summaryError.hidden = true;
+    const label = stay?.label?.trim() || stay?.emails?.join(', ') || 'Stay';
+    const dates =
+      stay?.sitStart && stay?.sitEnd
+        ? `${formatStayDate(stay.sitStart)} – ${formatStayDate(stay.sitEnd)}`
+        : 'dates saved';
+    summarySuccess.textContent = `${label} scheduled (${dates}). It appears in the list above.`;
+    summarySuccess.hidden = false;
+    onCreated();
+    staysList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    showToast(context.toast, 'Stay scheduled.', 3500);
+    summarySuccess.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   const submit = document.createElement('button');
@@ -282,7 +337,7 @@ function createSitterStayForm(context, onCreated) {
   submit.className = 'settings-action-button sitter-stay-form__submit';
   submit.textContent = 'Schedule stay';
 
-  form.append(summaryError, labelField.wrap, emailsField.wrap, datesRow, submit);
+  form.append(summaryError, apiError, summarySuccess, labelField.wrap, emailsField.wrap, datesRow, submit);
   panel.append(formTitle, form);
 
   form.addEventListener('submit', (event) => {
@@ -296,30 +351,36 @@ function createSitterStayForm(context, onCreated) {
 
     if (!validation.ok) {
       showFormValidation(validation.fieldErrors);
-      showToast(context.toast, SITTER_STAY_FORM_SUMMARY_ERROR);
+      showToast(context.toast, SITTER_STAY_FORM_SUMMARY_ERROR, 3500);
       return;
     }
 
-    clearFormValidation();
-    submit.disabled = true;
-    void createSitterStay({
-      label: labelField.input.value.trim(),
-      emails: emailsField.textarea.value,
-      sitStart: startField.input.value,
-      sitEnd: endField.input.value
-    }).then((result) => {
-      submit.disabled = false;
-      if (!result.ok) {
-        showToast(context.toast, result.message || 'Could not schedule stay.');
-        return;
+    void withAsyncButtonFeedback(submit, 'Scheduling…', async () => {
+      clearFormFeedback();
+      setSitterStayFormBusy(form, true);
+
+      try {
+        const result = await createSitterStay({
+          label: labelField.input.value.trim(),
+          emails: emailsField.textarea.value,
+          sitStart: startField.input.value,
+          sitEnd: endField.input.value
+        });
+
+        if (!result.ok) {
+          showApiError(result.message || 'Could not schedule stay.');
+          showToast(context.toast, result.message || 'Could not schedule stay.', 4000);
+          return;
+        }
+
+        labelField.input.value = '';
+        emailsField.textarea.value = '';
+        startField.input.value = '';
+        endField.input.value = '';
+        showSubmitSuccess(result.stay);
+      } finally {
+        setSitterStayFormBusy(form, false);
       }
-      labelField.input.value = '';
-      emailsField.textarea.value = '';
-      startField.input.value = '';
-      endField.input.value = '';
-      clearFormValidation();
-      showToast(context.toast, 'Stay scheduled.');
-      onCreated();
     });
   });
 
