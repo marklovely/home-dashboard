@@ -3,6 +3,9 @@ import { applySitterAccessEmails } from './sitterAccessEmailsService.js';
 import { refreshPrivateConfig } from './privateConfigService.js';
 
 /** @type {boolean | null} */
+let sitterSecretsManual = null;
+
+/** @type {boolean | null} */
 let sitterSecretsDisclosed = null;
 
 /** @type {Set<() => void>} */
@@ -20,6 +23,10 @@ function notify() {
   }
 }
 
+export function getSitterSecretsManual() {
+  return sitterSecretsManual;
+}
+
 export function getSitterSecretsDisclosed() {
   return sitterSecretsDisclosed;
 }
@@ -29,9 +36,32 @@ export function isSitterSecretsDisclosed() {
 }
 
 /**
+ * @param {import('../api/houseSettingsApi.js').HouseSettingsPayload} payload
+ */
+export function applySitterSecretsFromPayload(payload) {
+  if (payload.sitterSecretsManual !== undefined) {
+    applySitterSecretsManual(payload.sitterSecretsManual);
+  }
+  if (payload.sitterSecretsDisclosed !== undefined) {
+    applySitterSecretsEffective(payload.sitterSecretsDisclosed);
+  }
+}
+
+/**
  * @param {boolean | null | undefined} value
  */
-export function applySitterSecretsDisclosed(value) {
+export function applySitterSecretsManual(value) {
+  if (value == null) return;
+  const next = value === true;
+  if (sitterSecretsManual === next) return;
+  sitterSecretsManual = next;
+  notify();
+}
+
+/**
+ * @param {boolean | null | undefined} value
+ */
+export function applySitterSecretsEffective(value) {
   if (value == null) return;
   const next = value === true;
   if (sitterSecretsDisclosed === next) return;
@@ -48,8 +78,11 @@ export async function syncSitterSecretsFromServer(fetchImpl = fetch) {
   if (!result.ok) {
     return false;
   }
-  applySitterSecretsDisclosed(result.data.sitterSecretsDisclosed);
-  applySitterAccessEmails(result.data.sitterAccessEmails, result.data.accessSitterSyncConfigured);
+  applySitterSecretsFromPayload(result.data);
+  applySitterAccessEmails(
+    result.data.sitterAccessEmailsManual ?? result.data.sitterAccessEmails,
+    result.data.accessSitterSyncConfigured
+  );
   return true;
 }
 
@@ -62,12 +95,13 @@ export async function setSitterSecretsDisclosed(disclosed, fetchImpl = fetch) {
   if (!result.ok) {
     return false;
   }
-  applySitterSecretsDisclosed(result.data.sitterSecretsDisclosed);
+  applySitterSecretsFromPayload(result.data);
   return true;
 }
 
 /** @internal */
 export function resetSitterSecretsForTests() {
+  sitterSecretsManual = null;
   sitterSecretsDisclosed = null;
   listeners.clear();
 }

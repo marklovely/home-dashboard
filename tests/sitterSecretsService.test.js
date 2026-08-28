@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
-  applySitterSecretsDisclosed,
+  applySitterSecretsEffective,
+  applySitterSecretsFromPayload,
   getSitterSecretsDisclosed,
   resetSitterSecretsForTests,
   setSitterSecretsDisclosed
@@ -13,9 +14,9 @@ describe('sitterSecretsService', () => {
   });
 
   it('tracks server state from device session payloads', () => {
-    applySitterSecretsDisclosed(true);
+    applySitterSecretsFromPayload({ sitterSecretsDisclosed: true, sitterSecretsManual: false });
     expect(getSitterSecretsDisclosed()).toBe(true);
-    applySitterSecretsDisclosed(false);
+    applySitterSecretsEffective(false);
     expect(getSitterSecretsDisclosed()).toBe(false);
   });
 
@@ -25,7 +26,7 @@ describe('sitterSecretsService', () => {
       .fn()
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ sitterSecretsDisclosed: true })
+        json: async () => ({ sitterSecretsDisclosed: true, sitterSecretsManual: true })
       })
       .mockResolvedValueOnce({
         ok: true,
