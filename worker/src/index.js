@@ -15,6 +15,7 @@ import {
   handleSitterAccessEmailsSetting,
   handleSitterSecretsSetting
 } from './routes/houseSettingsRoute.js';
+import { handleSitterStayItem, handleSitterStaysCollection } from './routes/sitterStaysRoute.js';
 import { handleSiteBackup } from './routes/siteBackup.js';
 import { handleSiteSetup } from './routes/siteSetupRoute.js';
 import { handleBrandingLogo } from './routes/brandingRoute.js';
@@ -27,6 +28,7 @@ import { isAccessConfigured } from './lib/accessJwt.js';
 import { isDemoAuthEnabled, demoMutationsBlockedResponse, isDemoHubWorker } from './lib/demoHub.js';
 import { handleDemoLogin, handleDemoLogout, handleDemoReseed, handleDemoSession } from './routes/demoAuthRoute.js';
 import { ensureDemoHubSeeded, reseedDemoHubIfNeeded } from './lib/demoSeed.js';
+import { applySitterStaySchedule } from './lib/sitterSchedule.js';
 
 /**
  * @param {string} [headerValue]
@@ -81,6 +83,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       url.pathname === '/api/site/restore' ||
       url.pathname === '/api/site/backup' ||
       url.pathname === '/api/house-settings/sitter-emails' ||
+      url.pathname === '/api/house-settings/sitter-stays' ||
+      url.pathname.startsWith('/api/house-settings/sitter-stays/') ||
       (url.pathname.startsWith('/api/button/') && request.method === 'POST'));
 
   try {
@@ -140,6 +144,10 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleSitterSecretsSetting(request, env, fetchBound);
     } else if (url.pathname === '/api/house-settings/sitter-emails' && request.method === 'POST') {
       response = await handleSitterAccessEmailsSetting(request, env, fetchBound);
+    } else if (url.pathname === '/api/house-settings/sitter-stays' && (request.method === 'POST')) {
+      response = await handleSitterStaysCollection(request, env, fetchBound);
+    } else if (url.pathname.startsWith('/api/house-settings/sitter-stays/')) {
+      response = await handleSitterStayItem(request, env, url, fetchBound);
     } else if (url.pathname === '/api/site/backup' || url.pathname === '/api/site/restore') {
       response = await handleSiteBackup(request, url, env, correlationId);
     } else if (
@@ -214,14 +222,35 @@ export default {
     return handleRequest(request, env, fetch);
   },
   async scheduled(event, env, _ctx) {
-    if (!isDemoHubWorker(env)) return;
+    if (isDemoHubWorker(env)) {
+      try {
+        const reseeded = await reseedDemoHubIfNeeded(env);
+        console.log(JSON.stringify({ event: 'demo_scheduled_reseed', reseeded }));
+      } catch (error) {
+        console.error(
+          JSON.stringify({
+            event: 'demo_scheduled_reseed_failed',
+            detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+          })
+        );
+      }
+    }
+
     try {
-      const reseeded = await reseedDemoHubIfNeeded(env);
-      console.log(JSON.stringify({ event: 'demo_scheduled_reseed', reseeded }));
+      const schedule = await applySitterStaySchedule(env);
+      console.log(
+        JSON.stringify({
+          event: 'sitter_stay_schedule_applied',
+          ok: schedule.ok,
+          skipped: schedule.skipped ?? false,
+          emailCount: schedule.effectiveEmails?.length ?? 0,
+          secretsOpen: schedule.effectiveSecrets ?? false
+        })
+      );
     } catch (error) {
       console.error(
         JSON.stringify({
-          event: 'demo_scheduled_reseed_failed',
+          event: 'sitter_stay_schedule_failed',
           detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
         })
       );
