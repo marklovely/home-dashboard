@@ -1,4 +1,5 @@
 import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
+import { formatOwnerUnlockInstructions } from '../lib/sitterUnlockPreferences.js';
 import { withApiCredentials } from './accessFetch.js';
 import { fetchHouseGuideCatalog, importHouseGuideCatalog } from './houseGuideApi.js';
 import { fetchHouseSettings, postSitterSecretsDisclosed } from './houseSettingsApi.js';
@@ -13,7 +14,7 @@ import { fetchPrivateConfigFromApi } from './privateConfigApi.js';
 export function siteBackupErrorMessage(body, fallback = 'Request failed') {
   const code = typeof body?.error === 'object' && body?.error ? body.error.code : body?.code;
   if (code === 'DEVICE_MODE_REQUIRED') {
-    return 'Unlock owner mode first — press and hold the Lovely Home logo, enter your owner PIN, then try again.';
+    return `Unlock owner mode first — ${formatOwnerUnlockInstructions()}`;
   }
   if (typeof body?.error?.message === 'string') return body.error.message;
   if (typeof body?.message === 'string') return body.message;
