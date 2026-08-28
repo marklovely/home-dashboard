@@ -1,6 +1,10 @@
 import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
 import { createSetupField, createSetupTextarea } from '../../components/HubSetup/hubSetupFields.js';
 import { showToast } from '../../js/modules/toast.js';
+import {
+  SITTER_STAY_FORM_SUMMARY_ERROR,
+  validateSitterStayForm
+} from '../../lib/sitterStayFormValidation.js';
 import { getSitterSecretsManual, subscribeToSitterSecrets } from '../../services/sitterSecretsService.js';
 import {
   cancelSitterStay,
@@ -158,6 +162,41 @@ async function promptExtendStay(stay, context) {
 }
 
 /**
+ * @param {HTMLElement} fieldWrap
+ */
+function ensureFieldError(fieldWrap) {
+  let error = fieldWrap.querySelector('.hub-setup-field-error');
+  if (!error) {
+    error = document.createElement('p');
+    error.className = 'hub-setup-field-error subtle';
+    error.hidden = true;
+    fieldWrap.append(error);
+  }
+  return error;
+}
+
+/**
+ * @param {HTMLInputElement | HTMLTextAreaElement} input
+ * @param {HTMLElement} fieldWrap
+ * @param {HTMLElement} errorEl
+ * @param {string | null} message
+ */
+function setFieldValidationState(input, fieldWrap, errorEl, message) {
+  if (message) {
+    errorEl.textContent = message;
+    errorEl.hidden = false;
+    input.classList.add('hub-setup-input--invalid');
+    input.setAttribute('aria-invalid', 'true');
+    fieldWrap.classList.add('hub-setup-field--invalid');
+    return;
+  }
+  errorEl.hidden = true;
+  input.classList.remove('hub-setup-input--invalid');
+  input.removeAttribute('aria-invalid');
+  fieldWrap.classList.remove('hub-setup-field--invalid');
+}
+
+/**
  * @param {import('../../types/app.js').ShellContext} context
  * @param {() => void} onCreated
  */
@@ -172,6 +211,11 @@ function createSitterStayForm(context, onCreated) {
   const form = document.createElement('form');
   form.className = 'sitter-stay-form';
   form.noValidate = true;
+
+  const summaryError = document.createElement('p');
+  summaryError.className = 'sitter-stay-form-summary-error';
+  summaryError.hidden = true;
+  summaryError.textContent = SITTER_STAY_FORM_SUMMARY_ERROR;
 
   const labelField = createSetupField('Label (optional)', '', {
     placeholder: 'March house sit',
@@ -191,16 +235,72 @@ function createSitterStayForm(context, onCreated) {
   const endField = createSetupField('Sit ends', '', { type: 'date' });
   datesRow.append(startField.wrap, endField.wrap);
 
+  const emailsError = ensureFieldError(emailsField.wrap);
+  const startError = ensureFieldError(startField.wrap);
+  const endError = ensureFieldError(endField.wrap);
+
+  /** @type {Record<string, { input: HTMLInputElement | HTMLTextAreaElement, wrap: HTMLElement, error: HTMLElement }>} */
+  const validatedFields = {
+    emails: { input: emailsField.textarea, wrap: emailsField.wrap, error: emailsError },
+    sitStart: { input: startField.input, wrap: startField.wrap, error: startError },
+    sitEnd: { input: endField.input, wrap: endField.wrap, error: endError }
+  };
+
+  function clearFormValidation() {
+    summaryError.hidden = true;
+    for (const field of Object.values(validatedFields)) {
+      setFieldValidationState(field.input, field.wrap, field.error, null);
+    }
+  }
+
+  function showFormValidation(fieldErrors) {
+    summaryError.hidden = false;
+    for (const [key, field] of Object.entries(validatedFields)) {
+      setFieldValidationState(field.input, field.wrap, field.error, fieldErrors[key] ?? null);
+    }
+    const firstInvalid = Object.values(validatedFields).find((field) =>
+      field.input.classList.contains('hub-setup-input--invalid')
+    );
+    firstInvalid?.input.focus();
+    summaryError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  for (const field of Object.values(validatedFields)) {
+    field.input.addEventListener('input', () => {
+      if (field.input.classList.contains('hub-setup-input--invalid')) {
+        setFieldValidationState(field.input, field.wrap, field.error, null);
+      }
+      const stillInvalid = Object.values(validatedFields).some((entry) =>
+        entry.input.classList.contains('hub-setup-input--invalid')
+      );
+      if (!stillInvalid) summaryError.hidden = true;
+    });
+  }
+
   const submit = document.createElement('button');
   submit.type = 'submit';
   submit.className = 'settings-action-button sitter-stay-form__submit';
   submit.textContent = 'Schedule stay';
 
-  form.append(labelField.wrap, emailsField.wrap, datesRow, submit);
+  form.append(summaryError, labelField.wrap, emailsField.wrap, datesRow, submit);
   panel.append(formTitle, form);
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+
+    const validation = validateSitterStayForm({
+      emails: emailsField.textarea.value,
+      sitStart: startField.input.value,
+      sitEnd: endField.input.value
+    });
+
+    if (!validation.ok) {
+      showFormValidation(validation.fieldErrors);
+      showToast(context.toast, SITTER_STAY_FORM_SUMMARY_ERROR);
+      return;
+    }
+
+    clearFormValidation();
     submit.disabled = true;
     void createSitterStay({
       label: labelField.input.value.trim(),
@@ -217,6 +317,7 @@ function createSitterStayForm(context, onCreated) {
       emailsField.textarea.value = '';
       startField.input.value = '';
       endField.input.value = '';
+      clearFormValidation();
       showToast(context.toast, 'Stay scheduled.');
       onCreated();
     });
