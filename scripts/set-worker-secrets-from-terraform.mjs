@@ -28,6 +28,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const workerDir = join(root, 'worker');
 const registry = loadSitesYaml(join(root, 'platform/sites.yaml'));
 const vanilla = registry[siteId]?.vanilla !== false;
+const demoPublic = registry[siteId]?.demo_public === true;
 
 const contractRaw = execFileSync(
   'node',
@@ -60,20 +61,25 @@ if (!ownerEmails) {
 /** @type {Record<string, string>} */
 const secrets = {
   HUB_PROXY_SECRET: hubProxy,
-  CF_ACCESS_TEAM_DOMAIN: String(contract.cf_access_team_domain ?? ''),
-  CF_ACCESS_AUD: String(contract.access_aud_combined ?? ''),
   OWNER_EMAILS: ownerEmails
 };
 
-const accessManagementToken =
-  process.env.CF_ACCESS_MANAGEMENT_TOKEN?.trim() || process.env.CLOUDFLARE_API_TOKEN?.trim();
-if (accessManagementToken) {
-  secrets.CF_ACCESS_MANAGEMENT_TOKEN = accessManagementToken;
+if (!demoPublic) {
+  secrets.CF_ACCESS_TEAM_DOMAIN = String(contract.cf_access_team_domain ?? '');
+  secrets.CF_ACCESS_AUD = String(contract.access_aud_combined ?? '');
+  const accessManagementToken =
+    process.env.CF_ACCESS_MANAGEMENT_TOKEN?.trim() || process.env.CLOUDFLARE_API_TOKEN?.trim();
+  if (accessManagementToken) {
+    secrets.CF_ACCESS_MANAGEMENT_TOKEN = accessManagementToken;
+  }
+} else {
+  secrets.DEMO_USERNAME = process.env.DEMO_USERNAME?.trim() || 'demo';
+  secrets.DEMO_PASSWORD = process.env.DEMO_PASSWORD?.trim() || 'lovely-demo';
 }
 
 if (vanilla) {
   Object.assign(secrets, {
-    OWNER_PIN: '0000',
+    OWNER_PIN: demoPublic ? '1234' : '0000',
     VIRTUAL_BUTTONS_ACCESS_CODE: 'vanilla',
     PRIVATE_WIFI_SSID: 'VanillaGuest',
     PRIVATE_WIFI_PASSWORD: 'vanilla-guest',

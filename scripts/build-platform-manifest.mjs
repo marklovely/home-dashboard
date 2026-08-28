@@ -36,7 +36,8 @@ try {
 for (const [key, outputName, parser] of [
   ['cloudflareAccountId', 'cloudflare_account_id', (v) => v.trim()],
   ['accessTeamDomain', 'access_team_domain', (v) => v.trim()],
-  ['zoneName', 'zone_name', (v) => v.trim()]
+  ['zoneName', 'zone_name', (v) => v.trim()],
+  ['customerZoneName', 'customer_zone_name', (v) => v.trim()]
 ]) {
   try {
     const value = execFileSync('terraform', ['output', '-raw', outputName], {

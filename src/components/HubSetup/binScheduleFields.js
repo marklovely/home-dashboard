@@ -118,6 +118,12 @@ export function createBinScheduleDateEditor(options = {}) {
   entryPanel.innerHTML =
     '<legend class="hub-setup-bin-entry-legend">Add collection dates</legend>';
 
+  const entryIntro = document.createElement('p');
+  entryIntro.className = 'settings-help subtle hub-setup-bin-entry-intro';
+  entryIntro.textContent =
+    'Choose a date and bin type below, then tap Add to collection list. Repeating patterns add a full year of dates in one go — you can remove any you do not need.';
+  entryPanel.append(entryIntro);
+
   const entryDate = createSetupField('First collection date', '', { type: 'date', required: true });
   const entryType = createSetupSelect('Bin type', 'rubbish', BIN_TYPE_OPTIONS);
   const entryRepeat = createSetupSelect('Repeat', 'none', BIN_REPEAT_PRESETS, {
@@ -154,8 +160,8 @@ export function createBinScheduleDateEditor(options = {}) {
 
   const addButton = document.createElement('button');
   addButton.type = 'button';
-  addButton.className = 'settings-action-button settings-action-button--secondary hub-setup-bin-add-button';
-  addButton.textContent = 'Add date';
+  addButton.className = 'settings-action-button hub-setup-bin-add-button';
+  addButton.textContent = 'Add to collection list';
 
   entryPanel.append(
     entryDate.wrap,
@@ -167,15 +173,21 @@ export function createBinScheduleDateEditor(options = {}) {
     addButton
   );
 
+  const listSummary = document.createElement('p');
+  listSummary.className = 'hub-setup-bin-list-summary subtle';
+  listSummary.setAttribute('aria-live', 'polite');
+
+  const listScroll = document.createElement('div');
+  listScroll.className = 'hub-setup-bin-entry-list-scroll';
+
   const listHost = document.createElement('div');
   listHost.className = 'hub-setup-bin-entry-list';
-  listHost.setAttribute('aria-live', 'polite');
 
   function syncRepeatFields() {
     const repeating = entryRepeat.select.value !== 'none';
     repeatUntil.wrap.hidden = !repeating;
     customWeeksWrap.wrap.hidden = entryRepeat.select.value !== 'custom';
-    addButton.textContent = repeating ? 'Add dates' : 'Add date';
+    addButton.textContent = repeating ? 'Add dates to list' : 'Add to collection list';
     if (repeating && !repeatUntil.input.value.trim()) {
       const start = entryDate.input.value.trim();
       if (start) {
@@ -202,10 +214,13 @@ export function createBinScheduleDateEditor(options = {}) {
       const empty = document.createElement('p');
       empty.className = 'subtle hub-setup-bin-empty';
       empty.textContent =
-        'No dates added yet — pick a date and repeat pattern from your council calendar, or skip this step.';
+        'No dates yet — add your first collection above, or skip this step and come back later in Settings.';
       listHost.append(empty);
+      listSummary.textContent = 'No collection dates added yet.';
       return;
     }
+
+    listSummary.textContent = `${entries.length} collection date${entries.length === 1 ? '' : 's'} added. Continue below when you are ready.`;
 
     for (const entry of entries) {
       const row = document.createElement('div');
@@ -278,7 +293,8 @@ export function createBinScheduleDateEditor(options = {}) {
   syncRepeatFields();
   renderEntryList();
 
-  wrap.append(entryPanel, listHost);
+  listScroll.append(listHost);
+  wrap.append(entryPanel, listSummary, listScroll);
 
   return {
     wrap,

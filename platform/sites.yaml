@@ -28,7 +28,7 @@ sites:
     hub_environment: demo
     vanilla: true
     terraform: true
-    owner_emails: marklovely67@gmail.com
+    owner_emails: demo@lovely-home.co.uk
     attach_hub_api_binding: true
 
   dev:
@@ -36,5 +36,14 @@ sites:
     hub_environment: dev
     vanilla: true
     terraform: true
+    owner_emails: marklovely67@gmail.com
+    attach_hub_api_binding: true
+
+  smith:
+    hostname: smith.lovely-hub.com
+    hub_environment: smith
+    vanilla: false
+    terraform: true
+    zone_name: lovely-hub.com
     owner_emails: marklovely67@gmail.com
     attach_hub_api_binding: true

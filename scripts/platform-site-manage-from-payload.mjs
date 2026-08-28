@@ -73,6 +73,9 @@ if (payload.sitter_emails !== undefined) {
     : String(payload.sitter_emails);
   args.push('--sitter-emails', emails);
 }
+if (payload.zone_name !== undefined) {
+  args.push('--zone-name', String(payload.zone_name));
+}
 if (payload.confirm_hostname !== undefined) {
   args.push('--confirm-hostname', String(payload.confirm_hostname));
 }

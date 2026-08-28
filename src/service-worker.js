@@ -1,4 +1,4 @@
-const CACHE_NAME = 'home-dashboard-v1.0.10';
+const CACHE_NAME = 'home-dashboard-v__APP_VERSION__';
 
 /** @type {string[]} */
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
@@ -46,6 +46,11 @@ async function networkFirst(request) {
 }
 
 self.addEventListener('message', (event) => {
+  if (event.data?.type === 'skip-waiting') {
+    self.skipWaiting();
+    return;
+  }
+
   const urls = event.data?.urls;
   if (event.data?.type !== 'cache-guide-reads' || !Array.isArray(urls)) return;
   event.waitUntil(

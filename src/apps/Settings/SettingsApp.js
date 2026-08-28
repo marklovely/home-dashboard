@@ -1,5 +1,6 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { canReturnToHouseSitterMode } from '../../auth/ownerSession.js';
+import { promptOwnerPinUnlock } from '../../auth/ownerAccessGesture.js';
 import { isOwnerUserMode } from '../../auth/userMode.js';
 import { enterSitterMode, getDeviceMode, lockOwner } from '../../auth/deviceSessionStore.js';
 import {
@@ -93,9 +94,21 @@ import {
   getSiteProfileState,
   saveHubSecrets,
   saveSiteProfile,
+  subscribeToSiteProfile,
   syncSiteProfileFromServer
 } from '../../services/siteProfileService.js';
 import { refreshPrivateConfig } from '../../services/privateConfigService.js';
+import { normalizeHubCountryCode } from '../../lib/hubCountries.js';
+import { validateEmailAddresses, validateHubContacts, validatePropertyAddress } from '../../lib/contactValidation.js';
+import { attachContactGroupValidation, attachPropertyAddressValidation } from '../../lib/contactFieldValidationUi.js';
+import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
+import {
+  buildSitterUnlockPatch,
+  canUseSettingsPinUnlock,
+  formatOwnerUnlockInstructions,
+  getSitterUnlockPreferences,
+  normalizeSitterUnlock
+} from '../../lib/sitterUnlockPreferences.js';
 
 /**
  * @param {{ ok: boolean, code?: string, message?: string }} result
@@ -103,7 +116,7 @@ import { refreshPrivateConfig } from '../../services/privateConfigService.js';
  */
 function siteProfileSaveErrorMessage(result, fallback) {
   if (result.code === 'DEVICE_MODE_REQUIRED') {
-    return 'Unlock owner mode first — press and hold the Lovely Home logo, enter your owner PIN, then try again.';
+    return `Unlock owner mode first — ${formatOwnerUnlockInstructions()}`;
   }
   if (result.code === 'NETWORK_ERROR') {
     return 'Could not reach the hub API. PR preview URLs need HUB_API on preview (run enable-hub-pages-previews.mjs) or save from production.';
@@ -198,6 +211,10 @@ function mountSettingsApp(viewport, context, onRefresh, activePanelId) {
   panelBody.append(renderSettingsPanelContent(panelId, context, onRefresh));
 
   panelHost.append(panelHeader, panelBody);
+  const unlockBanner = createSettingsUnlockBanner(context);
+  if (unlockBanner) {
+    page.append(unlockBanner);
+  }
   page.append(nav, panelHost);
   viewport.replaceChildren(page);
 }
@@ -269,9 +286,8 @@ function createUtilitiesFields(context) {
   exportFullButton.className = 'settings-action-button';
   exportFullButton.textContent = 'Download full site backup';
   exportFullButton.addEventListener('click', () => {
-    exportFullButton.disabled = true;
-    exportGuideButton.disabled = true;
-    void (async () => {
+    void withAsyncButtonFeedback(exportFullButton, 'Preparing…', async () => {
+      exportGuideButton.disabled = true;
       try {
         const result = await fetchSiteBackup({ scope: 'full' });
         if (!result.ok || !result.data) {
@@ -298,10 +314,9 @@ function createUtilitiesFields(context) {
       } catch (error) {
         showToast(context.toast, error instanceof Error ? error.message : 'Could not export backup.');
       } finally {
-        exportFullButton.disabled = false;
         exportGuideButton.disabled = false;
       }
-    })();
+    });
   });
 
   const exportGuideButton = document.createElement('button');
@@ -309,9 +324,8 @@ function createUtilitiesFields(context) {
   exportGuideButton.className = 'settings-action-button settings-action-button--secondary';
   exportGuideButton.textContent = 'Download guide only';
   exportGuideButton.addEventListener('click', () => {
-    exportGuideButton.disabled = true;
-    exportFullButton.disabled = true;
-    void (async () => {
+    void withAsyncButtonFeedback(exportGuideButton, 'Preparing…', async () => {
+      exportFullButton.disabled = true;
       try {
         const result = await fetchSiteBackup({ scope: 'guide' });
         if (!result.ok || !result.data) {
@@ -331,10 +345,9 @@ function createUtilitiesFields(context) {
       } catch (error) {
         showToast(context.toast, error instanceof Error ? error.message : 'Could not export backup.');
       } finally {
-        exportGuideButton.disabled = false;
         exportFullButton.disabled = false;
       }
-    })();
+    });
   });
 
   const importButton = document.createElement('button');
@@ -485,7 +498,13 @@ function createHomeDetailsFields(context) {
   const secondaryGroup = createContactGroup('Secondary contact (optional)', profile.secondaryContact ?? {}, {
     variant: 'secondary'
   });
-  const guestFields = createGuestAccessFields(profile);
+  const guestFields = createGuestAccessFields(profile, {
+    hubCountryCode: normalizeHubCountryCode(profile.hubCountryCode)
+  });
+  const getCountryCode = () => normalizeHubCountryCode(profile.hubCountryCode);
+  attachContactGroupValidation(primaryGroup, getCountryCode);
+  attachContactGroupValidation(secondaryGroup, getCountryCode);
+  const addressValidation = attachPropertyAddressValidation(guestFields.propertyAddress, getCountryCode);
   let calendarFields = createCalendarConnectionField();
 
   void fetchHubSecretsConfigured().then((result) => {
@@ -506,66 +525,72 @@ function createHomeDetailsFields(context) {
   saveButton.className = 'settings-action-button';
   saveButton.textContent = 'Save home details';
   saveButton.addEventListener('click', () => {
-    saveButton.disabled = true;
-    void (async () => {
-      try {
-        const primaryInputs = /** @type {HTMLInputElement[]} */ (primaryGroup.querySelectorAll('input'));
-        const secondaryInputs = /** @type {HTMLInputElement[]} */ (secondaryGroup.querySelectorAll('input'));
-        const contacts = {
-          primaryContact: {
-            name: primaryInputs[0]?.value.trim() ?? '',
-            phone: primaryInputs[1]?.value.trim() ?? '',
-            email: primaryInputs[2]?.value.trim() ?? ''
-          },
-          secondaryContact: {
-            name: secondaryInputs[0]?.value.trim() ?? '',
-            phone: secondaryInputs[1]?.value.trim() ?? '',
-            email: secondaryInputs[2]?.value.trim() ?? ''
-          }
-        };
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const primaryInputs = /** @type {HTMLInputElement[]} */ (primaryGroup.querySelectorAll('input'));
+      const secondaryInputs = /** @type {HTMLInputElement[]} */ (secondaryGroup.querySelectorAll('input'));
+      const contacts = {
+        primaryContact: {
+          name: primaryInputs[0]?.value.trim() ?? '',
+          phone: primaryInputs[1]?.value.trim() ?? '',
+          email: primaryInputs[2]?.value.trim() ?? ''
+        },
+        secondaryContact: {
+          name: secondaryInputs[0]?.value.trim() ?? '',
+          phone: secondaryInputs[1]?.value.trim() ?? '',
+          email: secondaryInputs[2]?.value.trim() ?? ''
+        }
+      };
+      const countryCode = normalizeHubCountryCode(profile.hubCountryCode);
+      const contactError = validateHubContacts(contacts, countryCode);
+      if (contactError) {
+        showToast(context.toast, contactError);
+        return;
+      }
+      const addressPatch = readPropertyAddressProfilePatch(guestFields);
+      const addressError = validatePropertyAddress(addressPatch.propertyAddress, countryCode);
+      if (addressError) {
+        addressValidation?.validateAll();
+        showToast(context.toast, addressError);
+        return;
+      }
 
-        const profileResult = await saveSiteProfile({
-          hubName: hubName.input.value.trim(),
-          ...contacts,
-          ...readPropertyAddressProfilePatch(guestFields)
-        });
-        if (!profileResult.ok) {
-          showToast(context.toast, profileResult.message || 'Could not save profile.');
+      const profileResult = await saveSiteProfile({
+        hubName: hubName.input.value.trim(),
+        ...contacts,
+        ...addressPatch
+      });
+      if (!profileResult.ok) {
+        showToast(context.toast, profileResult.message || 'Could not save profile.');
+        return;
+      }
+
+      void syncWeatherLocationFromPropertyAddress(addressPatch.propertyAddress);
+
+      const secretsPatch = {
+        ...contactSecretsPatch(contacts),
+        ...readGuestAccessSecrets(guestFields),
+        ...calendarFields.readCalendarPatch()
+      };
+      if (Object.keys(secretsPatch).length) {
+        const pin = secretsPatch.owner_pin;
+        if (pin && !/^\d{4}$/.test(pin)) {
+          showToast(context.toast, 'Owner PIN must be exactly 4 digits.');
           return;
         }
-
-        void syncWeatherLocationFromPropertyAddress(
-          readPropertyAddressProfilePatch(guestFields).propertyAddress
-        );
-
-        const secretsPatch = {
-          ...contactSecretsPatch(contacts),
-          ...readGuestAccessSecrets(guestFields),
-          ...calendarFields.readCalendarPatch()
-        };
-        if (Object.keys(secretsPatch).length) {
-          const pin = secretsPatch.owner_pin;
-          if (pin && !/^\d{4}$/.test(pin)) {
-            showToast(context.toast, 'Owner PIN must be exactly 4 digits.');
-            return;
-          }
-          const secretsResult = await saveHubSecrets(secretsPatch);
-          if (!secretsResult.ok) {
-            showToast(context.toast, secretsResult.message || 'Could not save secrets.');
-            return;
-          }
+        const secretsResult = await saveHubSecrets(secretsPatch);
+        if (!secretsResult.ok) {
+          showToast(context.toast, secretsResult.message || 'Could not save secrets.');
+          return;
         }
-
-        guestFields.ownerPin.input.value = '';
-        guestFields.wifiPassword.input.value = '';
-        guestFields.lockbox.input.value = '';
-        calendarFields.input.value = '';
-        context.refreshShell?.();
-        showToast(context.toast, 'Home details saved.');
-      } finally {
-        saveButton.disabled = false;
       }
-    })();
+
+      guestFields.ownerPin.input.value = '';
+      guestFields.wifiPassword.input.value = '';
+      guestFields.lockbox.input.value = '';
+      calendarFields.input.value = '';
+      context.refreshShell?.();
+      showToast(context.toast, 'Home details saved.');
+    });
   });
 
   wrap.append(hubName.wrap, primaryGroup, secondaryGroup, guestFields.wrap, calendarFields.wrap, saveButton);
@@ -619,40 +644,33 @@ function createBinReminderFields(context, onRefresh) {
   saveButton.className = 'settings-action-button';
   saveButton.textContent = 'Save bin reminders';
   saveButton.addEventListener('click', () => {
-    saveButton.disabled = true;
-    const { household, gardenWaste } = dateEditor.readHouseholdAndGarden();
-    const binSchedule = inferBinSchedulePeriod(
-      normalizeBinSchedule({
-        ...schedule,
-        alertHoursBefore: alertField.readAlertHoursBefore(),
-        collectionLocation: locationField.input.value.trim(),
-        councilUrl: councilField.input.value.trim(),
-        validUntil: validUntilField.input.value.trim(),
-        household,
-        gardenWaste
-      })
-    );
-    const validation = validateBinSchedule(binSchedule);
-    if (!validation.ok) {
-      saveButton.disabled = false;
-      showToast(context.toast, validation.message);
-      return;
-    }
-    void saveSiteProfile({ binSchedule })
-      .then((result) => {
-        saveButton.disabled = false;
-        if (!result.ok) {
-          showToast(context.toast, siteProfileSaveErrorMessage(result, 'Could not save bin reminders.'));
-          return;
-        }
-        context.refreshShell?.();
-        onRefresh({ panelId: 'bins' });
-        showToast(context.toast, 'Bin reminders saved.');
-      })
-      .catch(() => {
-        saveButton.disabled = false;
-        showToast(context.toast, 'Could not reach the hub API. Check your connection and try again.');
-      });
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const { household, gardenWaste } = dateEditor.readHouseholdAndGarden();
+      const binSchedule = inferBinSchedulePeriod(
+        normalizeBinSchedule({
+          ...schedule,
+          alertHoursBefore: alertField.readAlertHoursBefore(),
+          collectionLocation: locationField.input.value.trim(),
+          councilUrl: councilField.input.value.trim(),
+          validUntil: validUntilField.input.value.trim(),
+          household,
+          gardenWaste
+        })
+      );
+      const validation = validateBinSchedule(binSchedule);
+      if (!validation.ok) {
+        showToast(context.toast, validation.message);
+        return;
+      }
+      const result = await saveSiteProfile({ binSchedule });
+      if (!result.ok) {
+        showToast(context.toast, siteProfileSaveErrorMessage(result, 'Could not save bin reminders.'));
+        return;
+      }
+      context.refreshShell?.();
+      onRefresh({ panelId: 'bins' });
+      showToast(context.toast, 'Bin reminders saved.');
+    });
   });
 
   wrap.append(
@@ -822,9 +840,13 @@ function createSitterAccessEmailsField(context) {
       .split(/[,;\n]+/)
       .map((part) => part.trim().toLowerCase())
       .filter(Boolean);
-    saveButton.disabled = true;
-    void saveSitterAccessEmails(emails).then((result) => {
-      saveButton.disabled = false;
+    const emailError = validateEmailAddresses(emails);
+    if (emailError) {
+      showToast(context.toast, emailError);
+      return;
+    }
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const result = await saveSitterAccessEmails(emails);
       if (!result.ok) {
         showToast(context.toast, result.message || 'Could not save sitter login emails.');
         return;
@@ -842,6 +864,133 @@ function createSitterAccessEmailsField(context) {
   });
 
   subsection.append(title, hint, emailsField.wrap, saveButton);
+  return subsection;
+}
+
+/** @param {import('../../types/app.js').ShellContext} context */
+function createSettingsUnlockBanner(context) {
+  if (!canUseSettingsPinUnlock()) return null;
+
+  const banner = document.createElement('div');
+  banner.className = 'settings-unlock-banner';
+
+  const copy = document.createElement('p');
+  copy.className = 'settings-help';
+  copy.textContent =
+    'This tablet is locked in House Sitter Mode. Owners can restore full access with their PIN.';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'settings-action-button';
+  button.textContent = 'Unlock owner mode';
+  button.addEventListener('click', () => {
+    const host = document.querySelector('#owner-access-host');
+    promptOwnerPinUnlock({
+      host,
+      onSuccess: () => {
+        context.refreshShell?.();
+        showToast(context.toast, 'Owner mode restored');
+      }
+    });
+  });
+
+  banner.append(copy, button);
+  return banner;
+}
+
+/** @param {import('../../types/app.js').ShellContext} context */
+function createSitterUnlockMethodFields(context) {
+  const subsection = document.createElement('div');
+  subsection.className = 'settings-subsection';
+
+  const title = document.createElement('p');
+  title.className = 'settings-subsection-title';
+  title.textContent = 'Unlock owner mode';
+
+  const hint = document.createElement('p');
+  hint.className = 'settings-help subtle';
+  hint.textContent =
+    'Choose how owners can leave House Sitter Mode on a locked tablet. A PIN is always required — sitters cannot use these options without it. Fully Kiosk admin exits and remote unlock are separate; configure those in Fully Kiosk.';
+
+  const logoLabel = document.createElement('label');
+  logoLabel.className = 'settings-option settings-option--toggle';
+  const logoInput = document.createElement('input');
+  logoInput.type = 'checkbox';
+  logoInput.className = 'settings-toggle-input';
+
+  const logoText = document.createElement('span');
+  logoText.className = 'settings-option-text';
+  const logoTitle = document.createElement('span');
+  logoTitle.textContent = 'Press and hold the Lovely Home logo';
+  const logoHint = document.createElement('small');
+  logoHint.className = 'settings-option-hint';
+  logoHint.textContent = 'Hold the header logo for five seconds, then enter your PIN.';
+  logoText.append(logoTitle, logoHint);
+  logoLabel.append(logoInput, logoText);
+
+  const settingsLabel = document.createElement('label');
+  settingsLabel.className = 'settings-option settings-option--toggle';
+  const settingsInput = document.createElement('input');
+  settingsInput.type = 'checkbox';
+  settingsInput.className = 'settings-toggle-input';
+
+  const settingsText = document.createElement('span');
+  settingsText.className = 'settings-option-text';
+  const settingsTitle = document.createElement('span');
+  settingsTitle.textContent = 'Settings unlock button';
+  const settingsHint = document.createElement('small');
+  settingsHint.className = 'settings-option-hint';
+  settingsHint.textContent = 'Show Unlock owner mode at the top of Settings while the tablet is locked.';
+  settingsText.append(settingsTitle, settingsHint);
+  settingsLabel.append(settingsInput, settingsText);
+
+  const applyPrefs = () => {
+    const prefs = getSitterUnlockPreferences();
+    logoInput.checked = prefs.logoHold;
+    settingsInput.checked = prefs.settingsButton;
+  };
+
+  const savePrefs = () => {
+    const next = normalizeSitterUnlock({
+      logoHold: logoInput.checked,
+      settingsButton: settingsInput.checked
+    });
+    logoInput.disabled = true;
+    settingsInput.disabled = true;
+    void saveSiteProfile(buildSitterUnlockPatch(next)).then((result) => {
+      logoInput.disabled = false;
+      settingsInput.disabled = false;
+      if (!result.ok) {
+        applyPrefs();
+        showToast(context.toast, siteProfileSaveErrorMessage(result, 'Could not save unlock options'));
+        return;
+      }
+      showToast(context.toast, 'Unlock options saved');
+    });
+  };
+
+  logoInput.addEventListener('change', () => {
+    if (!logoInput.checked && !settingsInput.checked) {
+      logoInput.checked = true;
+      showToast(context.toast, 'Keep at least one unlock option enabled.');
+      return;
+    }
+    savePrefs();
+  });
+
+  settingsInput.addEventListener('change', () => {
+    if (!logoInput.checked && !settingsInput.checked) {
+      settingsInput.checked = true;
+      showToast(context.toast, 'Keep at least one unlock option enabled.');
+      return;
+    }
+    savePrefs();
+  });
+
+  applyPrefs();
+  subscribeToSiteProfile(applyPrefs);
+
+  subsection.append(title, hint, logoLabel, settingsLabel);
   return subsection;
 }
 
@@ -879,7 +1028,7 @@ function createHouseSitterModeFields(context, onRefresh) {
     });
   });
 
-  wrap.append(createSitterSecretsToggle(context), createSitterAccessEmailsField(context), enableCopy, enableButton);
+  wrap.append(createSitterSecretsToggle(context), createSitterAccessEmailsField(context), createSitterUnlockMethodFields(context), enableCopy, enableButton);
 
   if (canReturnToHouseSitterMode()) {
     const lockButton = document.createElement('button');

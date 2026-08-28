@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { openHelpGuide } from '../src/components/HelpGuide/helpGuide.js';
 import { OWNER_HELP_SECTIONS } from '../src/components/HelpGuide/ownerHelpContent.js';
-import { SITTER_HELP_SECTIONS } from '../src/components/HelpGuide/sitterHelpContent.js';
+import { buildSitterHelpSections } from '../src/components/HelpGuide/sitterHelpContent.js';
 import { openGuideEditorHelp } from '../src/apps/HouseGuideEditor/guideEditorHelp.js';
 
 describe('hub help guides', () => {
   it('defines owner, sitter, and writing guide sections', () => {
     expect(OWNER_HELP_SECTIONS.length).toBeGreaterThanOrEqual(8);
-    expect(SITTER_HELP_SECTIONS.length).toBeGreaterThanOrEqual(8);
-    expect(new Set(SITTER_HELP_SECTIONS.map((section) => section.id)).size).toBe(SITTER_HELP_SECTIONS.length);
+    expect(buildSitterHelpSections().length).toBeGreaterThanOrEqual(7);
+    const sitterSections = buildSitterHelpSections();
+    expect(new Set(sitterSections.map((section) => section.id)).size).toBe(sitterSections.length);
   });
 
   it('opens shared help overlay for owner and sitter guides', () => {
@@ -25,7 +26,7 @@ describe('hub help guides', () => {
 
     openHelpGuide({
       title: 'Tablet guide',
-      sections: SITTER_HELP_SECTIONS,
+      sections: buildSitterHelpSections(),
       initialSectionId: 'house-guide',
       dialogId: 'test-sitter-help'
     });

@@ -3,17 +3,26 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderHouseSitterHome } from '../src/apps/Home/renderHouseSitterHome.js';
 import { getVisibleApps } from '../src/services/appVisibility.js';
 import { resetUserModeForTests } from '../src/auth/userMode.js';
+import {
+  resetSiteProfileStateForTests,
+  setSiteProfileStateForTests
+} from '../src/services/siteProfileService.js';
 
 describe('house sitter home layout', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.useRealTimers();
     resetUserModeForTests();
+    resetSiteProfileStateForTests();
   });
 
   it('structures the guest home with essentials, useful information, and help', async () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
     resetUserModeForTests();
+    setSiteProfileStateForTests({
+      profile: { hubName: 'Smith Home', petCare: { hasPets: true, name: 'Bailey' } },
+      loaded: true
+    });
 
     const viewport = document.createElement('div');
     const context = {
@@ -28,6 +37,8 @@ describe('house sitter home layout', () => {
     const page = viewport.querySelector('.home-screen--sitter');
     expect(page).toBeTruthy();
     expect(page?.querySelector('.sitter-welcome-card')).toBeTruthy();
+    expect(page?.querySelector('.sitter-welcome-title')?.textContent).toBe('Welcome to Smith Home');
+    expect(page?.querySelector('.sitter-welcome-lead')?.textContent).toMatch(/Bailey/);
     expect(page?.querySelector('.sitter-welcome-body')?.textContent).not.toMatch(/House Guide/i);
 
     const sectionTitles = [...(page?.querySelectorAll('.sitter-section-title') ?? [])].map(
@@ -38,7 +49,7 @@ describe('house sitter home layout', () => {
     const essentialCards = page?.querySelectorAll('.home-launcher-card--essential') ?? [];
     expect(essentialCards).toHaveLength(4);
     expect([...essentialCards].map((card) => card.querySelector('.home-launcher-title')?.textContent)).toEqual([
-      'Scooter',
+      'Bailey',
       'House Guide',
       'Home Controls',
       'Emergency'

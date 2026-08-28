@@ -1,6 +1,7 @@
 export const DEFAULT_SITE_PROFILE = {
   onboardingComplete: false,
   hubName: '',
+  hubCountryCode: 'GB',
   useCase: 'owner',
   primaryContact: { name: '', phone: '', email: '' },
   secondaryContact: { name: '', phone: '', email: '' },
@@ -47,6 +48,10 @@ export const DEFAULT_SITE_PROFILE = {
     screensaver: 'on',
     screensaverTimeoutMinutes: 15,
     dismissedBinCollectionDate: null
+  },
+  sitterUnlock: {
+    logoHold: true,
+    settingsButton: true
   }
 };
 
@@ -79,6 +84,10 @@ function parseProfilePayload(value) {
         ...(parsed.tabletPreferences && typeof parsed.tabletPreferences === 'object'
           ? parsed.tabletPreferences
           : {})
+      },
+      sitterUnlock: {
+        ...DEFAULT_SITE_PROFILE.sitterUnlock,
+        ...(parsed.sitterUnlock && typeof parsed.sitterUnlock === 'object' ? parsed.sitterUnlock : {})
       }
     };
   } catch {
@@ -118,6 +127,17 @@ export async function getSiteProfile(env) {
 }
 
 /**
+ * Public hub branding safe for any authenticated device session (owner or sitter).
+ *
+ * @param {Record<string, string | undefined>} env
+ */
+export async function getPublicHubBranding(env) {
+  const profile = await getSiteProfile(env);
+  const hubName = String(profile.hubName ?? '').trim();
+  return hubName ? { hubName } : {};
+}
+
+/**
  * @param {Record<string, string | undefined>} env
  * @param {Record<string, unknown>} patch
  */
@@ -151,7 +171,13 @@ export async function updateSiteProfile(env, patch) {
       : current.cameras,
     tabletPreferences: patch.tabletPreferences
       ? { ...current.tabletPreferences, ...patch.tabletPreferences }
-      : current.tabletPreferences
+      : current.tabletPreferences,
+    sitterUnlock: patch.sitterUnlock
+      ? {
+          ...current.sitterUnlock,
+          ...(patch.sitterUnlock && typeof patch.sitterUnlock === 'object' ? patch.sitterUnlock : {})
+        }
+      : current.sitterUnlock
   };
 
   const now = Math.floor(Date.now() / 1000);

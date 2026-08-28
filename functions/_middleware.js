@@ -1,5 +1,7 @@
 import cloudflareAccessPlugin from '@cloudflare/pages-plugin-cloudflare-access';
 import { accessTeamOrigin } from './lib/accessTeamDomain.js';
+import { demoPagesGate } from './lib/demoPagesGate.js';
+import { isPublicDemoHub } from './lib/publicDemoHub.js';
 
 /**
  * Validates Cloudflare Access on Pages Functions (including /api/*).
@@ -8,6 +10,10 @@ import { accessTeamOrigin } from './lib/accessTeamDomain.js';
  * @type {import('@cloudflare/workers-types').PagesFunction}
  */
 async function accessMiddleware(context) {
+  if (isPublicDemoHub(context.env)) {
+    return context.next();
+  }
+
   const domain = accessTeamOrigin(context.env.CF_ACCESS_TEAM_DOMAIN);
   const aud = context.env.CF_ACCESS_AUD_PAGES?.trim();
   if (!domain || !aud) {
@@ -21,4 +27,4 @@ async function accessMiddleware(context) {
   return handler(context);
 }
 
-export const onRequest = [accessMiddleware];
+export const onRequest = [demoPagesGate, accessMiddleware];

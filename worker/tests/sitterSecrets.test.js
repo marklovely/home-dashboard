@@ -12,7 +12,6 @@ import {
   createAccessTestEnv,
   signTestAccessJwt,
   withAccessJwt,
-  withDeviceSessionCookie,
   authedOwnerAccessRequest
 } from './accessTestHelpers.js';
 import { withTestLimiters } from './testEnv.js';
@@ -102,6 +101,17 @@ describe('house settings', () => {
     expect((await response.json()).sitterSecretsDisclosed).toBe(true);
   });
 
+  it('returns sitter device mode for sitter Access login without cookie', async () => {
+    const env = createEnv();
+    const jwt = await signTestAccessJwt('sitter@example.com', env);
+    const response = await handleDeviceSession(
+      new Request('https://worker.test/api/device-session', withAccessJwt(jwt)),
+      env
+    );
+    expect(response.status).toBe(200);
+    expect((await response.json()).mode).toBe('sitter');
+  });
+
   it('authenticated clients can read house settings', async () => {
     const env = createEnv();
     await setSitterSecretsDisclosed(env, true);
@@ -143,10 +153,7 @@ describe('private-config with sitter secret sharing', () => {
     const env = createEnv();
     const jwt = await signTestAccessJwt('sitter@example.com', env);
     const response = await handlePrivateConfigRequest(
-      new Request(
-        'https://worker.test/api/private-config',
-        await withDeviceSessionCookie(jwt, env, 'sitter')
-      ),
+      new Request('https://worker.test/api/private-config', withAccessJwt(jwt)),
       env
     );
     expect(response.status).toBe(403);
@@ -157,10 +164,7 @@ describe('private-config with sitter secret sharing', () => {
     await setSitterSecretsDisclosed(env, true);
     const jwt = await signTestAccessJwt('sitter@example.com', env);
     const response = await handlePrivateConfigRequest(
-      new Request(
-        'https://worker.test/api/private-config',
-        await withDeviceSessionCookie(jwt, env, 'sitter')
-      ),
+      new Request('https://worker.test/api/private-config', withAccessJwt(jwt)),
       env
     );
     expect(response.status).toBe(200);

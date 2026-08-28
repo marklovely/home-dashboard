@@ -27,6 +27,13 @@ describe('site registry validation', () => {
     expect(entry.vanilla).toBe(true);
   });
 
+  it('defaults new customer sites to lovely-hub.com', () => {
+    const entry = defaultSiteEntry('smith', { owner_emails: ['owner@example.com'] });
+    expect(entry.hostname).toBe('smith.lovely-hub.com');
+    expect(entry.zone_name).toBe('lovely-hub.com');
+    expect(entry.hub_environment).toBe('smith');
+  });
+
   it('requires owner emails on create', () => {
     const existing = {};
     expect(
@@ -117,6 +124,13 @@ describe('site registry validation', () => {
     });
     expect(ok.ok).toBe(true);
     expect(ok.payload.owner_emails).toEqual(['owner@example.com']);
+
+    const customer = buildSiteManagePayload(manifest, 'create', 'rose-cottage', {
+      ownerEmails: ['owner@example.com']
+    });
+    expect(customer.ok).toBe(true);
+    expect(customer.payload.hostname).toBe('rose-cottage.lovely-hub.com');
+    expect(customer.payload.zone_name).toBe('lovely-hub.com');
   });
 
   it('blocks create when site id is still in the platform manifest', () => {

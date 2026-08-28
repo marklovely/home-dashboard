@@ -37,4 +37,13 @@ describe('hubEnvironment', () => {
     resetHubEnvironmentForTests();
     vi.unstubAllGlobals();
   });
+
+  it('detects customer hub from lovely-hub.com hostname', () => {
+    resetHubEnvironmentForTests();
+    vi.stubGlobal('location', { hostname: 'smith.lovely-hub.com' });
+    expect(getHubEnvironmentSync()).toBe('smith');
+    expect(isVanillaHubEnvironment()).toBe(true);
+    resetHubEnvironmentForTests();
+    vi.unstubAllGlobals();
+  });
 });
