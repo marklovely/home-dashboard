@@ -511,7 +511,8 @@ function createHomeDetailsFields(context) {
 
   void fetchHubSecretsConfigured().then((result) => {
     const configured = result.ok ? result.data?.configured ?? {} : {};
-    applyGuestAccessDisplayValues(guestFields, configured);
+    const stored = result.ok ? result.data?.stored ?? configured : {};
+    applyGuestAccessDisplayValues(guestFields, configured, stored);
 
     if (configured.calendar_ics_url) {
       const existing = calendarFields;

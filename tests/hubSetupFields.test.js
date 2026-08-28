@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   applyGuestAccessDisplayValues,
   buildHomeDetailsFormProfile,
-  createGuestAccessFields
+  createGuestAccessFields,
+  HUB_SETUP_DEPLOYMENT_SECRET_HINT,
+  HUB_SETUP_STORED_SECRET_HINT
 } from '../src/components/HubSetup/hubSetupFields.js';
 import { hasPropertyAddress } from '../src/lib/propertyAddress.js';
 import {
@@ -77,17 +79,54 @@ describe('applyGuestAccessDisplayValues', () => {
     });
 
     const fields = createGuestAccessFields({});
-    applyGuestAccessDisplayValues(fields, {
-      wifi_password: true,
-      lockbox_code: true,
-      owner_pin: true
-    });
+    applyGuestAccessDisplayValues(
+      fields,
+      {
+        wifi_ssid: true,
+        wifi_password: true,
+        lockbox_code: true,
+        owner_pin: true
+      },
+      {
+        wifi_ssid: true,
+        wifi_password: true,
+        lockbox_code: true,
+        owner_pin: true
+      }
+    );
 
     expect(fields.wifiSsid.input.value).toBe('GuestNet');
-    expect(fields.wifiPassword.wrap.querySelector('.hub-setup-configured-hint')?.textContent).toMatch(
-      /already saved/i
+    expect(fields.wifiPassword.wrap.querySelector('.hub-setup-configured-hint')?.textContent).toBe(
+      HUB_SETUP_STORED_SECRET_HINT
     );
     expect(fields.lockbox.wrap.querySelector('.hub-setup-configured-hint')).toBeTruthy();
     expect(fields.ownerPin.wrap.querySelector('.hub-setup-configured-hint')).toBeTruthy();
+  });
+
+  it('shows deployment-default hints when secrets exist only as Worker env fallbacks', () => {
+    const fields = createGuestAccessFields({});
+    applyGuestAccessDisplayValues(
+      fields,
+      {
+        wifi_ssid: true,
+        wifi_password: true,
+        lockbox_code: true,
+        owner_pin: true
+      },
+      {}
+    );
+
+    expect(fields.wifiSsid.wrap.querySelector('.hub-setup-configured-hint')?.textContent).toMatch(
+      /deployment default/i
+    );
+    expect(fields.wifiPassword.wrap.querySelector('.hub-setup-configured-hint')?.textContent).toBe(
+      HUB_SETUP_DEPLOYMENT_SECRET_HINT
+    );
+    expect(fields.lockbox.wrap.querySelector('.hub-setup-configured-hint')?.textContent).toBe(
+      HUB_SETUP_DEPLOYMENT_SECRET_HINT
+    );
+    expect(fields.ownerPin.wrap.querySelector('.hub-setup-configured-hint')?.textContent).toBe(
+      HUB_SETUP_DEPLOYMENT_SECRET_HINT
+    );
   });
 });
