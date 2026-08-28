@@ -10,6 +10,12 @@ import {
   readBinScheduleFromProfile
 } from '../../lib/binScheduleProfile.js';
 import {
+  BIN_COLOR_PRESETS,
+  getBinColorPresetForType,
+  normalizeBinColors
+} from '../../lib/binAppearanceProfile.js';
+import { renderWheelieBinIcon } from '../icons/renderWheelieBinIcon.js';
+import {
   BIN_REPEAT_PRESETS,
   buildBinScheduleEntriesFromRepeat,
   defaultRepeatUntilDate
@@ -367,6 +373,8 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
     getRepeatUntilFallback: () => validUntil.input.value.trim()
   });
 
+  const colorFields = createBinColorFields(schedule);
+
   wrap.append(
     location.wrap,
     councilUrl.wrap,
@@ -374,6 +382,7 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
     validFrom.wrap,
     validUntil.wrap,
     alertHours.wrap,
+    colorFields.wrap,
     dateEditor.wrap
   );
 
@@ -390,10 +399,88 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
           validFrom: validFrom.input.value.trim(),
           validUntil: validUntil.input.value.trim(),
           alertHoursBefore: Number(alertHours.select.value),
+          binColors: colorFields.readBinColors(),
           household,
           gardenWaste
         })
       );
+    }
+  };
+}
+
+/** @typedef {Record<'rubbish' | 'recycling' | 'gardenWaste', string>} BinColorIds */
+
+/**
+ * @param {import('../../lib/binScheduleProfile.js').BinScheduleProfile} schedule
+ */
+export function createBinColorFields(schedule) {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-subsection';
+
+  const title = document.createElement('p');
+  title.className = 'settings-subsection-title';
+  title.textContent = 'Bin colours';
+
+  const hint = document.createElement('p');
+  hint.className = 'settings-help subtle';
+  hint.textContent =
+    'Choose the wheelie bin colour for each collection type. Reminders, the Bins app, and home alerts use these colours.';
+
+  wrap.append(title, hint);
+
+  /** @type {Record<'rubbish' | 'recycling' | 'gardenWaste', HTMLSelectElement>} */
+  const selects = {};
+
+  const colorOptions = BIN_COLOR_PRESETS.map((preset) => ({
+    value: preset.id,
+    label: preset.label
+  }));
+
+  for (const typeId of /** @type {const} */ (['rubbish', 'recycling', 'gardenWaste'])) {
+    const typeLabels = {
+      rubbish: 'Rubbish / general waste',
+      recycling: 'Recycling & glass',
+      gardenWaste: 'Garden waste'
+    };
+
+    const row = document.createElement('div');
+    row.className = 'settings-bin-color-row';
+
+    const preview = document.createElement('span');
+    preview.className = 'settings-bin-color-preview';
+    preview.setAttribute('aria-hidden', 'true');
+
+    const field = createSetupSelect(
+      typeLabels[typeId],
+      normalizeBinColors(schedule.binColors)[typeId],
+      colorOptions
+    );
+    selects[typeId] = field.select;
+
+    const refreshPreview = () => {
+      preview.replaceChildren();
+      const preset = getBinColorPresetForType(typeId, { [typeId]: field.select.value });
+      if (preset) {
+        preview.append(renderWheelieBinIcon(preset.hex, { size: 24 }));
+      }
+    };
+
+    field.select.addEventListener('change', refreshPreview);
+    refreshPreview();
+
+    row.append(preview, field.wrap);
+    wrap.append(row);
+  }
+
+  return {
+    wrap,
+    /** @returns {BinColorIds} */
+    readBinColors() {
+      return normalizeBinColors({
+        rubbish: selects.rubbish.value,
+        recycling: selects.recycling.value,
+        gardenWaste: selects.gardenWaste.value
+      });
     }
   };
 }

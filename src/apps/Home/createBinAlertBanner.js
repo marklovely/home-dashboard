@@ -1,4 +1,5 @@
-import { renderIcon } from '../../components/icons/renderIcon.js';
+import { renderWheelieBinIcon } from '../../components/icons/renderWheelieBinIcon.js';
+import { applyBinAccentStyles } from '../../lib/binAppearanceProfile.js';
 import { dismissBinAlertForCollection } from '../../services/binAlertDismissalService.js';
 
 /**
@@ -11,6 +12,7 @@ export function createBinAlertBanner(alert, navigate, onDismiss) {
   banner.className = 'bin-alert-banner';
   banner.setAttribute('role', 'status');
   banner.setAttribute('aria-live', 'polite');
+  applyBinAccentStyles(banner, alert.colorHex);
 
   const openButton = document.createElement('button');
   openButton.type = 'button';
@@ -25,7 +27,8 @@ export function createBinAlertBanner(alert, navigate, onDismiss) {
   const icon = document.createElement('span');
   icon.className = 'bin-alert-banner-icon';
   icon.setAttribute('aria-hidden', 'true');
-  icon.append(renderIcon('trash-2', { size: 28, className: 'bin-alert-banner-svg' }));
+  applyBinAccentStyles(icon, alert.colorHex);
+  icon.append(renderWheelieBinIcon(alert.colorHex, { size: 28, className: 'bin-alert-banner-svg' }));
 
   const copy = document.createElement('span');
   copy.className = 'bin-alert-banner-copy';
