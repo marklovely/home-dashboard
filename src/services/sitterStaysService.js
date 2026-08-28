@@ -1,3 +1,4 @@
+import { sitterStayApiErrorMessage } from '../lib/sitterStayApiErrors.js';
 import { fetchHouseSettings } from '../api/houseSettingsApi.js';
 import {
   postSitterStay,
@@ -64,7 +65,7 @@ export async function createSitterStay(body, fetchImpl = fetch) {
   if (!result.ok) {
     return {
       ok: false,
-      message: result.data?.message ?? 'Could not schedule sitter stay.'
+      message: sitterStayApiErrorMessage(result.data, 'Could not schedule sitter stay.')
     };
   }
   await syncSitterStaysFromServer(fetchImpl);
@@ -81,7 +82,7 @@ export async function updateSitterStay(id, body, fetchImpl = fetch) {
   if (!result.ok) {
     return {
       ok: false,
-      message: result.data?.message ?? 'Could not update sitter stay.'
+      message: sitterStayApiErrorMessage(result.data, 'Could not update sitter stay.')
     };
   }
   await syncSitterStaysFromServer(fetchImpl);
@@ -97,7 +98,7 @@ export async function cancelSitterStay(id, fetchImpl = fetch) {
   if (!result.ok) {
     return {
       ok: false,
-      message: result.data?.message ?? 'Could not cancel sitter stay.'
+      message: sitterStayApiErrorMessage(result.data, 'Could not cancel sitter stay.')
     };
   }
   await syncSitterStaysFromServer(fetchImpl);
@@ -114,7 +115,7 @@ export async function extendSitterStay(id, body, fetchImpl = fetch) {
   if (!result.ok) {
     return {
       ok: false,
-      message: result.data?.message ?? 'Could not extend sitter stay.'
+      message: sitterStayApiErrorMessage(result.data, 'Could not extend sitter stay.')
     };
   }
   await syncSitterStaysFromServer(fetchImpl);
@@ -130,7 +131,7 @@ export async function endSitterStayNow(id, fetchImpl = fetch) {
   if (!result.ok) {
     return {
       ok: false,
-      message: result.data?.message ?? 'Could not end sitter stay.'
+      message: sitterStayApiErrorMessage(result.data, 'Could not end sitter stay.')
     };
   }
   await syncSitterStaysFromServer(fetchImpl);
