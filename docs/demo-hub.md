@@ -23,7 +23,7 @@ Override `DEMO_USERNAME` / `DEMO_PASSWORD` when running `scripts/set-worker-secr
 - **Cameras** — hidden in apps and settings; not seeded as enabled.
 - **Controls / routines** — app hidden; `/api/button/*` POST blocked on the demo worker.
 - **Cloudflare Access** — disabled for demo via Terraform `access_enabled = false`.
-- **Destructive admin** — backup, restore, factory reset, and sitter email changes return `403 DEMO_READ_ONLY`.
+- **Destructive admin** — backup, restore, factory reset, sitter email changes, and scheduled stay edits return `403 DEMO_READ_ONLY`.
 
 ## Architecture
 

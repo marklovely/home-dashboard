@@ -1,6 +1,6 @@
 import { authenticateRequest, hasRequiredRole } from './requestAuth.js';
 import { resolveAuthenticatedDeviceSession } from './deviceSession.js';
-import { getSitterSecretsDisclosed } from './houseSettings.js';
+import { getEffectiveSitterAccessState } from './sitterSchedule.js';
 
 /**
  * Owner device mode, or sitter device mode when the owner has enabled secret sharing.
@@ -23,8 +23,8 @@ export async function requirePrivateConfigAccess(request, env, fetchImpl = fetch
     return { ok: true, access, session };
   }
 
-  const disclosed = await getSitterSecretsDisclosed(env);
-  if (!disclosed) {
+  const accessState = await getEffectiveSitterAccessState(env);
+  if (!accessState.effectiveSecrets) {
     return { ok: false, status: 403, code: 'SITTER_SECRETS_WITHHELD' };
   }
 

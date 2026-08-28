@@ -2,22 +2,40 @@ import { requireOwnerIdentity } from '../lib/deviceSessionAuth.js';
 import { authenticateRequest } from '../lib/requestAuth.js';
 import {
   isAccessSitterSyncConfigured,
-  readSitterEmailsFromAccess,
-  syncSitterEmailsToAccess
+  readSitterEmailsFromAccess
 } from '../lib/accessSitterPolicy.js';
 import { validateEmailList } from '../lib/emailLists.js';
 import {
   getSitterAccessEmailsRaw,
-  getSitterSecretsDisclosed,
   setSitterAccessEmails,
-  setSitterSecretsDisclosed
+  setSitterSecretsManual
 } from '../lib/houseSettings.js';
+import { applySitterStaySchedule, getEffectiveSitterAccessState } from '../lib/sitterSchedule.js';
+import { listSitterStays, serializeSitterStayForApi } from '../lib/sitterStays.js';
 
 /**
  * @param {Record<string, string | undefined>} env
  * @param {typeof fetch} [fetchImpl]
  */
 export async function resolveSitterAccessEmails(env, fetchImpl = fetch) {
+  const state = await getEffectiveSitterAccessState(env);
+  if ((await getSitterAccessEmailsRaw(env)) !== null) {
+    return state.effectiveEmails;
+  }
+
+  const bootstrapped = await readSitterEmailsFromAccess(env, fetchImpl);
+  if (bootstrapped.length > 0 && env.HOUSE_GUIDE_DB) {
+    await setSitterAccessEmails(env, bootstrapped);
+  }
+  const refreshed = await getEffectiveSitterAccessState(env);
+  return refreshed.effectiveEmails;
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function resolveSitterAccessEmailsManual(env, fetchImpl = fetch) {
   const stored = await getSitterAccessEmailsRaw(env);
   if (stored !== null) return stored;
 
@@ -32,11 +50,16 @@ export async function resolveSitterAccessEmails(env, fetchImpl = fetch) {
  * @param {Record<string, string | undefined>} env
  * @param {typeof fetch} [fetchImpl]
  */
-export async function buildHouseSettingsPayload(env, fetchImpl = fetch) {
-  const sitterAccessEmails = await resolveSitterAccessEmails(env, fetchImpl);
+export async function buildHouseSettingsPayload(env) {
+  const state = await getEffectiveSitterAccessState(env);
+  const stays = await listSitterStays(env);
+
   return {
-    sitterSecretsDisclosed: await getSitterSecretsDisclosed(env),
-    sitterAccessEmails,
+    sitterSecretsManual: state.manualSecrets,
+    sitterSecretsDisclosed: state.effectiveSecrets,
+    sitterAccessEmailsManual: state.manualEmails,
+    sitterAccessEmails: state.effectiveEmails,
+    sitterStays: stays.map(serializeSitterStayForApi),
     accessSitterSyncConfigured: isAccessSitterSyncConfigured(env)
   };
 }
@@ -88,7 +111,7 @@ export async function handleSitterSecretsSetting(request, env, fetchImpl = fetch
   }
 
   try {
-    await setSitterSecretsDisclosed(env, body.disclosed);
+    await setSitterSecretsManual(env, body.disclosed);
   } catch {
     return Response.json({ error: 'SETTINGS_UNAVAILABLE' }, { status: 503 });
   }
@@ -137,8 +160,10 @@ export async function handleSitterAccessEmailsSetting(request, env, fetchImpl = 
     return Response.json({ error: 'SETTINGS_UNAVAILABLE' }, { status: 503 });
   }
 
-  const syncResult = await syncSitterEmailsToAccess(env, emails, fetchImpl);
+  const schedule = await applySitterStaySchedule(env, fetchImpl);
   const payload = await buildHouseSettingsPayload(env, fetchImpl);
+  const syncResult = schedule.syncResult ?? { ok: false, code: 'ACCESS_SYNC_NOT_CONFIGURED' };
+
   if (!syncResult.ok) {
     return Response.json(
       {

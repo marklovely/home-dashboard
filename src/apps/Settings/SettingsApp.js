@@ -47,16 +47,18 @@ import {
   storeSettingsPanel
 } from './settingsNavigation.js';
 import { createCameraSettingsFields } from './createCameraSettingsFields.js';
+import { createSitterScheduleBanner, createSitterStaysSection } from './sitterStaysFields.js';
 import {
   syncSitterAccessEmailsFromServer
 } from '../../services/sitterAccessEmailsService.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
-  getSitterSecretsDisclosed,
+  getSitterSecretsManual,
   setSitterSecretsDisclosed,
   subscribeToSitterSecrets,
   syncSitterSecretsFromServer
 } from '../../services/sitterSecretsService.js';
+import { syncSitterStaysFromServer } from '../../services/sitterStaysService.js';
 import {
   getSitterAccessEmails,
   saveSitterAccessEmails,
@@ -763,8 +765,8 @@ function createSitterSecretsToggle(context) {
   const input = document.createElement('input');
   input.type = 'checkbox';
   input.className = 'settings-toggle-input';
-  input.checked = getSitterSecretsDisclosed() === true;
-  input.disabled = getSitterSecretsDisclosed() === null;
+  input.checked = getSitterSecretsManual() === true;
+  input.disabled = getSitterSecretsManual() === null;
 
   const textWrap = document.createElement('span');
   textWrap.className = 'settings-option-text';
@@ -795,15 +797,15 @@ function createSitterSecretsToggle(context) {
   });
 
   subscribeToSitterSecrets(() => {
-    if (getSitterSecretsDisclosed() === null) {
+    if (getSitterSecretsManual() === null) {
       input.disabled = true;
       return;
     }
     input.disabled = false;
-    input.checked = getSitterSecretsDisclosed() === true;
+    input.checked = getSitterSecretsManual() === true;
   });
 
-  subsection.append(title, hint, label);
+  subsection.append(title, hint, label, createSitterScheduleBanner(context));
   return subsection;
 }
 
@@ -819,7 +821,7 @@ function createSitterAccessEmailsField(context) {
   const hint = document.createElement('p');
   hint.className = 'settings-help subtle';
   hint.textContent =
-    'Cloudflare Access emails that can sign in to this hub as a house-sitter (not the same as contact details in Home details). Comma- or newline-separated. Leave empty to remove sitter login access.';
+    'Cloudflare Access emails with permanent sitter login (comma- or newline-separated). For temporary access, use Scheduled stays below instead. Leave empty to remove permanent sitter login.';
 
   const emailsField = createSetupTextarea(
     'Email addresses',
@@ -1032,7 +1034,14 @@ function createHouseSitterModeFields(context, onRefresh) {
     });
   });
 
-  wrap.append(createSitterSecretsToggle(context), createSitterAccessEmailsField(context), createSitterUnlockMethodFields(context), enableCopy, enableButton);
+  wrap.append(
+    createSitterSecretsToggle(context),
+    createSitterStaysSection(context),
+    createSitterAccessEmailsField(context),
+    createSitterUnlockMethodFields(context),
+    enableCopy,
+    enableButton
+  );
 
   if (canReturnToHouseSitterMode()) {
     const lockButton = document.createElement('button');
@@ -1500,7 +1509,8 @@ export const settingsApp = defineApp({
       syncSiteProfileFromServer(),
       refreshPrivateConfig(),
       syncSitterAccessEmailsFromServer(),
-      syncSitterSecretsFromServer()
+      syncSitterSecretsFromServer(),
+      syncSitterStaysFromServer()
     ]).finally(() => {
       mountSettingsApp(viewport, context, refreshSettings);
     });
