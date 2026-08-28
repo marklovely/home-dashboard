@@ -3914,6 +3914,29 @@ body.screensaver-active {
   cursor: wait;
 }
 
+.extend-stay-dialog-field {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.extend-stay-dialog-field__label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.extend-stay-dialog-date {
+  min-height: 52px;
+}
+
+.extend-stay-dialog-error {
+  margin: 0;
+}
+
+.extend-stay-dialog .confirm-dialog-body {
+  gap: 14px;
+}
+
 .sitter-stays-section {
   gap: 14px;
 }

@@ -7,6 +7,7 @@ import {
   validateSitterStayForm
 } from '../../lib/sitterStayFormValidation.js';
 import { getSitterSecretsManual, subscribeToSitterSecrets } from '../../services/sitterSecretsService.js';
+import { showExtendStayDialog } from './sitterStayExtendDialog.js';
 import {
   cancelSitterStay,
   createSitterStay,
@@ -17,6 +18,15 @@ import {
   getSitterStays,
   subscribeToSitterStays
 } from '../../services/sitterStaysService.js';
+
+const STAY_ACTION_TOAST_MS = 4000;
+
+/**
+ * @param {import('../../api/sitterStaysApi.js').SitterStayPayload} stay
+ */
+function stayDisplayLabel(stay) {
+  return stay.label?.trim() || stay.emails.join(', ');
+}
 
 /**
  * @param {import('../../types/app.js').ShellContext} context
@@ -110,7 +120,7 @@ function createStayCard(stay, context) {
     extendButton.className = 'settings-action-button settings-action-button--secondary';
     extendButton.textContent = 'Extend';
     extendButton.addEventListener('click', () => {
-      void promptExtendStay(stay, context);
+      void handleExtendStay(stay, context, extendButton);
     });
     actions.append(extendButton);
 
@@ -119,25 +129,7 @@ function createStayCard(stay, context) {
     endButton.className = 'settings-action-button settings-action-button--secondary';
     endButton.textContent = stay.status === 'active' ? 'End now' : 'Cancel';
     endButton.addEventListener('click', () => {
-      const isActive = stay.status === 'active';
-      void showConfirmDialog({
-        title: isActive ? 'End this stay now?' : 'Cancel scheduled stay?',
-        message: isActive
-          ? 'Sitter login and home access details will be removed immediately.'
-          : 'This stay will not open sitter access on the scheduled dates.',
-        confirmLabel: isActive ? 'End now' : 'Cancel stay',
-        cancelLabel: 'Keep'
-      }).then((confirmed) => {
-        if (!confirmed) return;
-        const action = isActive ? endSitterStayNow(stay.id) : cancelSitterStay(stay.id);
-        void action.then((result) => {
-          if (!result.ok) {
-            showToast(context.toast, result.message || 'Could not update stay.');
-            return;
-          }
-          showToast(context.toast, isActive ? 'Stay ended.' : 'Stay cancelled.');
-        });
-      });
+      void handleEndOrCancelStay(stay, context, endButton);
     });
     actions.append(endButton);
   }
@@ -149,17 +141,66 @@ function createStayCard(stay, context) {
 /**
  * @param {import('../../api/sitterStaysApi.js').SitterStayPayload} stay
  * @param {import('../../types/app.js').ShellContext} context
+ * @param {HTMLButtonElement} button
  */
-async function promptExtendStay(stay, context) {
-  const nextEnd = window.prompt('New sit end date (YYYY-MM-DD):', stay.sitEnd);
-  if (nextEnd == null || nextEnd.trim() === '') return;
+async function handleExtendStay(stay, context, button) {
+  const label = stayDisplayLabel(stay);
+  const nextEnd = await showExtendStayDialog({
+    stayLabel: label,
+    sitStart: stay.sitStart,
+    sitEnd: stay.sitEnd,
+    formatDate: formatStayDate
+  });
+  if (!nextEnd) return;
 
-  const result = await extendSitterStay(stay.id, { sitEnd: nextEnd.trim() });
-  if (!result.ok) {
-    showToast(context.toast, result.message || 'Could not extend stay.');
-    return;
-  }
-  showToast(context.toast, 'Stay extended.');
+  await withAsyncButtonFeedback(button, 'Extending…', async () => {
+    const result = await extendSitterStay(stay.id, { sitEnd: nextEnd });
+    if (!result.ok) {
+      showToast(context.toast, result.message || 'Could not extend stay.', STAY_ACTION_TOAST_MS);
+      return;
+    }
+    const newEnd = result.stay?.sitEnd ?? nextEnd;
+    showToast(
+      context.toast,
+      `${label} extended to ${formatStayDate(newEnd)}.`,
+      STAY_ACTION_TOAST_MS
+    );
+  });
+}
+
+/**
+ * @param {import('../../api/sitterStaysApi.js').SitterStayPayload} stay
+ * @param {import('../../types/app.js').ShellContext} context
+ * @param {HTMLButtonElement} button
+ */
+async function handleEndOrCancelStay(stay, context, button) {
+  const label = stayDisplayLabel(stay);
+  const isActive = stay.status === 'active';
+  const confirmed = await showConfirmDialog({
+    title: isActive ? 'End this stay now?' : 'Cancel scheduled stay?',
+    message: isActive
+      ? `${label} (${formatStayDate(stay.sitStart)} – ${formatStayDate(stay.sitEnd)}) — sitter login and home access details will be removed immediately.`
+      : `${label} (${formatStayDate(stay.sitStart)} – ${formatStayDate(stay.sitEnd)}) will not open sitter access on the scheduled dates.`,
+    confirmLabel: isActive ? 'End now' : 'Cancel stay',
+    cancelLabel: 'Keep',
+    danger: isActive
+  });
+  if (!confirmed) return;
+
+  await withAsyncButtonFeedback(button, isActive ? 'Ending…' : 'Cancelling…', async () => {
+    const result = await (isActive ? endSitterStayNow(stay.id) : cancelSitterStay(stay.id));
+    if (!result.ok) {
+      showToast(context.toast, result.message || 'Could not update stay.', STAY_ACTION_TOAST_MS);
+      return;
+    }
+    showToast(
+      context.toast,
+      isActive
+        ? `${label} ended — sitter access removed.`
+        : `${label} cancelled — scheduled access will not open.`,
+      STAY_ACTION_TOAST_MS
+    );
+  });
 }
 
 /**
