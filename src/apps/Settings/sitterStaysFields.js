@@ -1,4 +1,5 @@
 import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
+import { createSetupField, createSetupTextarea } from '../../components/HubSetup/hubSetupFields.js';
 import { showToast } from '../../js/modules/toast.js';
 import { getSitterSecretsManual, subscribeToSitterSecrets } from '../../services/sitterSecretsService.js';
 import {
@@ -17,7 +18,7 @@ import {
  */
 export function createSitterStaysSection(context) {
   const subsection = document.createElement('div');
-  subsection.className = 'settings-subsection';
+  subsection.className = 'settings-subsection sitter-stays-section';
 
   const title = document.createElement('p');
   title.className = 'settings-subsection-title';
@@ -31,7 +32,7 @@ export function createSitterStaysSection(context) {
   const list = document.createElement('div');
   list.className = 'sitter-stays-list';
 
-  const form = createSitterStayForm(context, () => renderList(list, context));
+  const formPanel = createSitterStayForm(context, () => renderList(list, context));
 
   const render = () => {
     renderList(list, context);
@@ -40,7 +41,7 @@ export function createSitterStaysSection(context) {
   subscribeToSitterStays(render);
   render();
 
-  subsection.append(title, hint, list, form);
+  subsection.append(title, hint, list, formPanel);
   return subsection;
 }
 
@@ -55,7 +56,7 @@ function renderList(list, context) {
 
   if (visible.length === 0) {
     const empty = document.createElement('p');
-    empty.className = 'settings-help subtle';
+    empty.className = 'settings-help subtle sitter-stays-empty';
     empty.textContent = 'No upcoming or active stays scheduled.';
     list.append(empty);
     return;
@@ -161,75 +162,67 @@ async function promptExtendStay(stay, context) {
  * @param {() => void} onCreated
  */
 function createSitterStayForm(context, onCreated) {
+  const panel = document.createElement('div');
+  panel.className = 'sitter-stay-form-panel';
+
+  const formTitle = document.createElement('p');
+  formTitle.className = 'settings-subsection-title sitter-stay-form-panel__title';
+  formTitle.textContent = 'Schedule a new stay';
+
   const form = document.createElement('form');
   form.className = 'sitter-stay-form';
   form.noValidate = true;
 
-  const labelField = document.createElement('label');
-  labelField.className = 'settings-field';
-  labelField.textContent = 'Label (optional)';
-  const labelInput = document.createElement('input');
-  labelInput.type = 'text';
-  labelInput.className = 'settings-input';
-  labelInput.placeholder = 'March house sit';
-  labelField.append(labelInput);
+  const labelField = createSetupField('Label (optional)', '', {
+    placeholder: 'March house sit',
+    helpText: 'A short name for you — sitters do not see this.'
+  });
 
-  const emailsField = document.createElement('label');
-  emailsField.className = 'settings-field';
-  emailsField.textContent = 'Sitter email(s)';
-  const emailsInput = document.createElement('textarea');
-  emailsInput.className = 'settings-input settings-input--textarea';
-  emailsInput.rows = 2;
-  emailsInput.placeholder = 'sitter@example.com';
-  emailsField.append(emailsInput);
+  const emailsField = createSetupTextarea('Sitter email(s)', '', {
+    rows: 3,
+    placeholder: 'sitter@example.com',
+    helpText: 'Comma- or newline-separated. Must match the email they use to sign in via Cloudflare Access.'
+  });
 
-  const startField = document.createElement('label');
-  startField.className = 'settings-field';
-  startField.textContent = 'Sit starts';
-  const startInput = document.createElement('input');
-  startInput.type = 'date';
-  startInput.className = 'settings-input';
-  startField.append(startInput);
+  const datesRow = document.createElement('div');
+  datesRow.className = 'sitter-stay-form__dates';
 
-  const endField = document.createElement('label');
-  endField.className = 'settings-field';
-  endField.textContent = 'Sit ends';
-  const endInput = document.createElement('input');
-  endInput.type = 'date';
-  endInput.className = 'settings-input';
-  endField.append(endInput);
+  const startField = createSetupField('Sit starts', '', { type: 'date' });
+  const endField = createSetupField('Sit ends', '', { type: 'date' });
+  datesRow.append(startField.wrap, endField.wrap);
 
   const submit = document.createElement('button');
   submit.type = 'submit';
-  submit.className = 'settings-action-button';
+  submit.className = 'settings-action-button sitter-stay-form__submit';
   submit.textContent = 'Schedule stay';
 
-  form.append(labelField, emailsField, startField, endField, submit);
+  form.append(labelField.wrap, emailsField.wrap, datesRow, submit);
+  panel.append(formTitle, form);
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     submit.disabled = true;
     void createSitterStay({
-      label: labelInput.value.trim(),
-      emails: emailsInput.value,
-      sitStart: startInput.value,
-      sitEnd: endInput.value
+      label: labelField.input.value.trim(),
+      emails: emailsField.textarea.value,
+      sitStart: startField.input.value,
+      sitEnd: endField.input.value
     }).then((result) => {
       submit.disabled = false;
       if (!result.ok) {
         showToast(context.toast, result.message || 'Could not schedule stay.');
         return;
       }
-      labelInput.value = '';
-      emailsInput.value = '';
-      startInput.value = '';
-      endInput.value = '';
+      labelField.input.value = '';
+      emailsField.textarea.value = '';
+      startField.input.value = '';
+      endField.input.value = '';
       showToast(context.toast, 'Stay scheduled.');
       onCreated();
     });
   });
 
-  return form;
+  return panel;
 }
 
 /** @param {import('../../types/app.js').ShellContext} _context */
