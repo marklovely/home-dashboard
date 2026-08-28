@@ -3882,6 +3882,22 @@ body.screensaver-active {
   }
 }
 
+.hub-setup-field--invalid .field-label-row,
+.hub-setup-field--invalid .settings-subsection-title {
+  color: #ffb4b4;
+}
+
+.sitter-stay-form-summary-error {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #ff7b7b 70%, var(--border));
+  background: color-mix(in srgb, #ff7b7b 14%, transparent);
+  color: #ffb4b4;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .sitter-stays-section {
   gap: 14px;
 }
