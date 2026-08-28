@@ -1,5 +1,6 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { canReturnToHouseSitterMode } from '../../auth/ownerSession.js';
+import { promptOwnerPinUnlock } from '../../auth/ownerAccessGesture.js';
 import { isOwnerUserMode } from '../../auth/userMode.js';
 import { enterSitterMode, getDeviceMode, lockOwner } from '../../auth/deviceSessionStore.js';
 import {
@@ -93,6 +94,7 @@ import {
   getSiteProfileState,
   saveHubSecrets,
   saveSiteProfile,
+  subscribeToSiteProfile,
   syncSiteProfileFromServer
 } from '../../services/siteProfileService.js';
 import { refreshPrivateConfig } from '../../services/privateConfigService.js';
@@ -100,6 +102,13 @@ import { normalizeHubCountryCode } from '../../lib/hubCountries.js';
 import { validateEmailAddresses, validateHubContacts, validatePropertyAddress } from '../../lib/contactValidation.js';
 import { attachContactGroupValidation, attachPropertyAddressValidation } from '../../lib/contactFieldValidationUi.js';
 import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
+import {
+  buildSitterUnlockPatch,
+  canUseSettingsPinUnlock,
+  formatOwnerUnlockInstructions,
+  getSitterUnlockPreferences,
+  normalizeSitterUnlock
+} from '../../lib/sitterUnlockPreferences.js';
 
 /**
  * @param {{ ok: boolean, code?: string, message?: string }} result
@@ -107,7 +116,7 @@ import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
  */
 function siteProfileSaveErrorMessage(result, fallback) {
   if (result.code === 'DEVICE_MODE_REQUIRED') {
-    return 'Unlock owner mode first — press and hold the Lovely Home logo, enter your owner PIN, then try again.';
+    return `Unlock owner mode first — ${formatOwnerUnlockInstructions()}`;
   }
   if (result.code === 'NETWORK_ERROR') {
     return 'Could not reach the hub API. PR preview URLs need HUB_API on preview (run enable-hub-pages-previews.mjs) or save from production.';
@@ -202,6 +211,10 @@ function mountSettingsApp(viewport, context, onRefresh, activePanelId) {
   panelBody.append(renderSettingsPanelContent(panelId, context, onRefresh));
 
   panelHost.append(panelHeader, panelBody);
+  const unlockBanner = createSettingsUnlockBanner(context);
+  if (unlockBanner) {
+    page.append(unlockBanner);
+  }
   page.append(nav, panelHost);
   viewport.replaceChildren(page);
 }
@@ -854,6 +867,133 @@ function createSitterAccessEmailsField(context) {
   return subsection;
 }
 
+/** @param {import('../../types/app.js').ShellContext} context */
+function createSettingsUnlockBanner(context) {
+  if (!canUseSettingsPinUnlock()) return null;
+
+  const banner = document.createElement('div');
+  banner.className = 'settings-unlock-banner';
+
+  const copy = document.createElement('p');
+  copy.className = 'settings-help';
+  copy.textContent =
+    'This tablet is locked in House Sitter Mode. Owners can restore full access with their PIN.';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'settings-action-button';
+  button.textContent = 'Unlock owner mode';
+  button.addEventListener('click', () => {
+    const host = document.querySelector('#owner-access-host');
+    promptOwnerPinUnlock({
+      host,
+      onSuccess: () => {
+        context.refreshShell?.();
+        showToast(context.toast, 'Owner mode restored');
+      }
+    });
+  });
+
+  banner.append(copy, button);
+  return banner;
+}
+
+/** @param {import('../../types/app.js').ShellContext} context */
+function createSitterUnlockMethodFields(context) {
+  const subsection = document.createElement('div');
+  subsection.className = 'settings-subsection';
+
+  const title = document.createElement('p');
+  title.className = 'settings-subsection-title';
+  title.textContent = 'Unlock owner mode';
+
+  const hint = document.createElement('p');
+  hint.className = 'settings-help subtle';
+  hint.textContent =
+    'Choose how owners can leave House Sitter Mode on a locked tablet. A PIN is always required — sitters cannot use these options without it. Fully Kiosk admin exits and remote unlock are separate; configure those in Fully Kiosk.';
+
+  const logoLabel = document.createElement('label');
+  logoLabel.className = 'settings-option settings-option--toggle';
+  const logoInput = document.createElement('input');
+  logoInput.type = 'checkbox';
+  logoInput.className = 'settings-toggle-input';
+
+  const logoText = document.createElement('span');
+  logoText.className = 'settings-option-text';
+  const logoTitle = document.createElement('span');
+  logoTitle.textContent = 'Press and hold the Lovely Home logo';
+  const logoHint = document.createElement('small');
+  logoHint.className = 'settings-option-hint';
+  logoHint.textContent = 'Hold the header logo for five seconds, then enter your PIN.';
+  logoText.append(logoTitle, logoHint);
+  logoLabel.append(logoInput, logoText);
+
+  const settingsLabel = document.createElement('label');
+  settingsLabel.className = 'settings-option settings-option--toggle';
+  const settingsInput = document.createElement('input');
+  settingsInput.type = 'checkbox';
+  settingsInput.className = 'settings-toggle-input';
+
+  const settingsText = document.createElement('span');
+  settingsText.className = 'settings-option-text';
+  const settingsTitle = document.createElement('span');
+  settingsTitle.textContent = 'Settings unlock button';
+  const settingsHint = document.createElement('small');
+  settingsHint.className = 'settings-option-hint';
+  settingsHint.textContent = 'Show Unlock owner mode at the top of Settings while the tablet is locked.';
+  settingsText.append(settingsTitle, settingsHint);
+  settingsLabel.append(settingsInput, settingsText);
+
+  const applyPrefs = () => {
+    const prefs = getSitterUnlockPreferences();
+    logoInput.checked = prefs.logoHold;
+    settingsInput.checked = prefs.settingsButton;
+  };
+
+  const savePrefs = () => {
+    const next = normalizeSitterUnlock({
+      logoHold: logoInput.checked,
+      settingsButton: settingsInput.checked
+    });
+    logoInput.disabled = true;
+    settingsInput.disabled = true;
+    void saveSiteProfile(buildSitterUnlockPatch(next)).then((result) => {
+      logoInput.disabled = false;
+      settingsInput.disabled = false;
+      if (!result.ok) {
+        applyPrefs();
+        showToast(context.toast, siteProfileSaveErrorMessage(result, 'Could not save unlock options'));
+        return;
+      }
+      showToast(context.toast, 'Unlock options saved');
+    });
+  };
+
+  logoInput.addEventListener('change', () => {
+    if (!logoInput.checked && !settingsInput.checked) {
+      logoInput.checked = true;
+      showToast(context.toast, 'Keep at least one unlock option enabled.');
+      return;
+    }
+    savePrefs();
+  });
+
+  settingsInput.addEventListener('change', () => {
+    if (!logoInput.checked && !settingsInput.checked) {
+      settingsInput.checked = true;
+      showToast(context.toast, 'Keep at least one unlock option enabled.');
+      return;
+    }
+    savePrefs();
+  });
+
+  applyPrefs();
+  subscribeToSiteProfile(applyPrefs);
+
+  subsection.append(title, hint, logoLabel, settingsLabel);
+  return subsection;
+}
+
 /** @param {import('../../types/app.js').ShellContext} context @param {() => void} onRefresh */
 function createHouseSitterModeFields(context, onRefresh) {
   const wrap = document.createElement('div');
@@ -888,7 +1028,7 @@ function createHouseSitterModeFields(context, onRefresh) {
     });
   });
 
-  wrap.append(createSitterSecretsToggle(context), createSitterAccessEmailsField(context), enableCopy, enableButton);
+  wrap.append(createSitterSecretsToggle(context), createSitterAccessEmailsField(context), createSitterUnlockMethodFields(context), enableCopy, enableButton);
 
   if (canReturnToHouseSitterMode()) {
     const lockButton = document.createElement('button');

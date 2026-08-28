@@ -1,12 +1,12 @@
-import { isOwnerAccessAllowed } from './deploymentMode.js';
+import { canUseLogoHoldUnlock, canUseSettingsPinUnlock } from '../lib/sitterUnlockPreferences.js';
 import { isHouseSitterExperience } from './userMode.js';
 import { openOwnerPinDialog } from '../components/OwnerAccess/ownerPinDialog.js';
 
 const HOLD_MS = 5000;
 
+/** @deprecated Prefer canUseLogoHoldUnlock or canUseSettingsPinUnlock */
 export function canPromptOwnerPinUnlock() {
-  if (!isOwnerAccessAllowed()) return false;
-  return isHouseSitterExperience();
+  return canUseLogoHoldUnlock();
 }
 
 /**
@@ -15,7 +15,7 @@ export function canPromptOwnerPinUnlock() {
  * @returns {boolean}
  */
 export function promptOwnerPinUnlock(options = {}) {
-  if (!canPromptOwnerPinUnlock()) return false;
+  if (!options.force && !canUseLogoHoldUnlock() && !canUseSettingsPinUnlock()) return false;
   const host = options.host ?? document.querySelector('#owner-access-host');
   if (!host) return false;
   openOwnerPinDialog({
@@ -59,7 +59,7 @@ function attachHoldTarget(element, onHoldComplete, onHoldStateChange) {
   element.addEventListener('pointerup', clearHold);
   element.addEventListener('pointercancel', clearHold);
   element.addEventListener('contextmenu', (event) => {
-    if (canPromptOwnerPinUnlock() && isHouseSitterExperience()) event.preventDefault();
+    if (canUseLogoHoldUnlock() && isHouseSitterExperience()) event.preventDefault();
   });
 }
 
@@ -75,12 +75,13 @@ export function attachOwnerAccessGesture({ logoElements, holdFeedbackElement, di
   if (!targets.length || !dialogHost) return;
 
   const openDialog = () => {
+    if (!canUseLogoHoldUnlock()) return;
     promptOwnerPinUnlock({ host: dialogHost, onSuccess: () => onOwnerUnlocked?.() });
   };
 
   const onHoldStateChange = (active) => {
     if (holdFeedbackElement) {
-      holdFeedbackElement.classList.toggle('is-owner-hold-active', active && canPromptOwnerPinUnlock());
+      holdFeedbackElement.classList.toggle('is-owner-hold-active', active && canUseLogoHoldUnlock());
     }
   };
 
