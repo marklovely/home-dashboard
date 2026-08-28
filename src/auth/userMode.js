@@ -4,6 +4,12 @@ import {
   isHouseSitterDeployment
 } from './deploymentMode.js';
 import { clearOwnerPinSession } from './ownerSession.js';
+import { isDemoHubEnvironment } from './hubEnvironment.js';
+import {
+  clearPersistedUiViewingMode,
+  persistUiViewingMode,
+  resolveUiViewingModeForDeviceSession
+} from './uiViewingModePreference.js';
 
 /** @typedef {'owner' | 'house-sitter'} UserModeId */
 
@@ -54,7 +60,11 @@ export function isHouseSitterMode() {
  * @param {'owner' | 'sitter'} serverMode
  */
 export function applyDeviceSessionMode(serverMode) {
-  const mapped = serverMode === 'owner' ? UserMode.Owner : UserMode.HouseSitter;
+  if (serverMode === 'sitter' && !isDemoHubEnvironment()) {
+    clearPersistedUiViewingMode();
+  }
+
+  const mapped = resolveUiViewingModeForDeviceSession(serverMode);
   if (currentUserMode === mapped) return;
   currentUserMode = mapped;
   if (mapped === UserMode.HouseSitter) {
@@ -65,9 +75,10 @@ export function applyDeviceSessionMode(serverMode) {
 
 /**
  * @param {UserModeId} mode
+ * @param {{ skipPersist?: boolean }} [options]
  * @returns {boolean}
  */
-export function setUserMode(mode) {
+export function setUserMode(mode, options = {}) {
   if (isHouseSitterDeployment() && mode === UserMode.Owner) {
     return false;
   }
@@ -75,6 +86,9 @@ export function setUserMode(mode) {
   currentUserMode = mode;
   if (mode === UserMode.HouseSitter) {
     clearOwnerPinSession();
+  }
+  if (!options.skipPersist && isHomeDeployment()) {
+    persistUiViewingMode(mode);
   }
   notifyUserModeChange();
   return true;

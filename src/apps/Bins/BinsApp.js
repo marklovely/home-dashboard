@@ -56,6 +56,23 @@ function createOwnerScheduleLink(context) {
 }
 
 /**
+ * @param {HTMLElement} page
+ * @param {import('../../types/app.js').ShellContext} context
+ * @param {string} message
+ * @param {{ extra?: HTMLElement }} [options]
+ */
+function appendBinsEmptyState(page, context, message, options = {}) {
+  const infoPanel = createCollectionInformationPanel(createOwnerScheduleLink(context));
+  const copy = document.createElement('p');
+  copy.className = 'subtle bins-empty-message';
+  copy.textContent = message;
+  page.append(infoPanel, copy);
+  if (options.extra) {
+    page.append(options.extra);
+  }
+}
+
+/**
  * @returns {HTMLElement}
  */
 function createCollectionInformationPanel(ownerAction) {
@@ -209,14 +226,18 @@ function mountBinsApp(viewport, context) {
     hint.className = 'subtle';
     hint.textContent = `Last known period: ${meta.household.validFrom} to ${meta.validUntil} (Calendar ${meta.household.calendar}, Round ${meta.gardenWaste.round}). See docs/bin-collection-maintenance.md.`;
     expiry.append(hint);
-    page.append(expiry);
+    appendBinsEmptyState(page, context, 'Update the bin schedule to restore collection reminders.', { extra: expiry });
     viewport.append(page);
     return;
   }
 
   const next = getNextCollection(asOf);
   if (!next) {
-    page.innerHTML = '<p class="subtle">No upcoming collections in the current schedule.</p>';
+    appendBinsEmptyState(
+      page,
+      context,
+      'No upcoming collections are scheduled yet. Add collection dates in bin schedule settings.'
+    );
     viewport.append(page);
     return;
   }
