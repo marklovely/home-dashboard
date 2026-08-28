@@ -1,6 +1,8 @@
 import { requireOwnerForHubSetup } from '../lib/hubSetupAuth.js';
 import { clearHouseSettings } from '../lib/houseSettings.js';
 import { clearHubSecrets, getHubSecretsStatus, HUB_SECRET_KEYS, setHubSecrets } from '../lib/hubSecrets.js';
+import { applySitterStaySchedule } from '../lib/sitterSchedule.js';
+import { clearSitterStays } from '../lib/sitterStays.js';
 import { getSiteProfile, resetSiteProfile, updateSiteProfile } from '../lib/siteProfile.js';
 import { clearGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { jsonError, methodNotAllowed } from '../lib/errors.js';
@@ -106,7 +108,7 @@ export async function handleHubSecretsStatusGet(request, env, correlationId) {
     return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
   }
 
-  const configured = await getHubSecretsStatus(env);
+  const stored = await getHubSecretsStatus(env);
   const envFallback = {
     owner_pin: Boolean(env.OWNER_PIN?.trim()),
     wifi_ssid: Boolean(env.PRIVATE_WIFI_SSID?.trim()),
@@ -121,12 +123,12 @@ export async function handleHubSecretsStatusGet(request, env, correlationId) {
   };
 
   /** @type {Record<string, boolean>} */
-  const status = {};
+  const configured = {};
   for (const key of HUB_SECRET_KEYS) {
-    status[key] = Boolean(configured[key] || envFallback[key]);
+    configured[key] = Boolean(stored[key] || envFallback[key]);
   }
 
-  return Response.json({ configured: status }, {
+  return Response.json({ configured, stored }, {
     status: 200,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
   });
@@ -177,7 +179,13 @@ export async function resetHubToDefaults(env) {
   await clearGuideCatalog(db);
   await clearHouseSettings(env);
   await clearHubSecrets(env);
+  await clearSitterStays(env);
   const profile = await resetSiteProfile(env);
+  try {
+    await applySitterStaySchedule(env);
+  } catch {
+    // Access sync is best-effort — reset must succeed even when CF API is unavailable.
+  }
   return { profile, guideSeeded: false };
 }
 
