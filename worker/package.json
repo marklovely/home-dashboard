@@ -28,6 +28,7 @@
     "secrets:dev": "bash scripts/print-env-secrets-checklist.sh dev",
     "deploy:smith": "node scripts/check-env-provisioned.mjs smith && wrangler deploy --env smith",
     "d1:migrate:smith": "node scripts/check-env-provisioned.mjs smith && wrangler d1 migrations apply lovely-home-appliance-manuals-smith --remote --env smith",
+    "d1:migrate:all": "node ../scripts/apply-d1-migrations-all.mjs",
     "secrets:smith": "bash scripts/print-env-secrets-checklist.sh smith"
   },
   "devDependencies": {
