@@ -22,7 +22,7 @@ A **managed household hub** for wall tablets and remote sitters: House Guide, pe
 | **Demo** | `demo.lovely-home.co.uk` — public username/password, nightly reseed |
 | **Sitter security** | Virtual Buttons **owner-only** in House Sitter Mode ([#168](https://github.com/marklovely/home-dashboard/pull/168)) |
 | **Pre-deprovision backup** | Full site JSON to platform R2 before destroy ([#168](https://github.com/marklovely/home-dashboard/pull/169)) |
-| **Billing / Stripe** | Not started — design agreed, implementation next |
+| **Billing / Stripe** | Not started — Stripe-managed trials + webhooks agreed; implementation next |
 
 ---
 
@@ -108,28 +108,85 @@ Automated hub provisioning, platform admin UI, Terraform-managed Access.
 
 ## Planned — Stage 3: Billing & customer lifecycle
 
-Goal: **self-service signup → trial → paid hub → pause/cancel → restore** with minimal manual platform-admin steps.
+Goal: **self-service signup → Stripe-managed trial → paid hub → pause/cancel → restore** with minimal manual platform-admin steps.
 
-### 3.1 Signup & trial (no card)
+**Source of truth:** Stripe Customer + Subscription (including trial state). Platform D1 mirrors Stripe via webhooks — not a separate trial record.
+
+### 3.1 Signup & trial (Stripe)
 
 | Item | Notes |
 |------|--------|
-| Public signup API | Collect household + owner email; create platform trial record (not Stripe trial) |
-| **14-day trial without card** | Provision hub immediately on signup |
-| Site id / hostname allocation | `{slug}.lovely-hub.com` from registry rules |
-| Post-provision wizard email | Owner lands on hub setup after DNS + Access propagate |
+| **14-day free trial via Stripe Billing** | Subscription created with `trial_period_days: 14` (or Trial Offer API); status `trialing` |
+| **No card required to start** | Checkout / API flow that starts trial without charging; collect payment method before trial ends (Stripe `trial_will_end` + Customer Portal) |
+| Provision on trial start | Webhook `customer.subscription.created` (or `checkout.session.completed`) → provision `{slug}.lovely-hub.com` while `trialing` |
+| Site id / hostname | `{slug}.lovely-hub.com` from registry rules; linked to `stripe_customer_id` + `stripe_subscription_id` |
+| Trial ends without payment | Stripe cancels subscription → webhook → archive + deprovision (same as cancel path) |
+| Post-provision | Owner email → hub setup wizard after DNS + Access propagate |
+
+```mermaid
+sequenceDiagram
+  participant U as Owner
+  participant S as Stripe
+  participant P as Platform
+  participant H as Hub
+
+  U->>S: Sign up (14-day trial, no charge)
+  S-->>P: subscription.created (trialing)
+  P->>P: Provision site + billing record
+  P->>H: DNS, Worker, Access
+  U->>H: Setup wizard
+  Note over S: Day 12: trial_will_end reminder
+  alt Adds payment method
+    S-->>P: subscription.updated (active)
+  else Trial expires
+    S-->>P: subscription.deleted
+    P->>P: Archive + deprovision
+  end
+```
 
 ### 3.2 Stripe billing
 
 | Item | Notes |
 |------|--------|
-| Stripe Checkout / Customer Portal | Monthly subscription; pausable/cancellable |
-| Webhooks | `checkout.session.completed`, subscription updated/deleted, payment failed |
-| Platform D1 (or KV) billing state | `site_id`, Stripe customer/subscription ids, trial ends, status |
+| Stripe Checkout + Customer Portal | Monthly subscription; pause/cancel self-service |
+| Webhooks | `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_failed`, `customer.subscription.trial_will_end` |
+| Platform D1 billing table | `site_id`, Stripe ids, `status` (`trialing` \| `active` \| `past_due` \| `canceled`), trial end, archive pointer |
 | Pricing | TBD (~£12–25/month UK starting point; iterate after real conversations) |
 | Smith (or practice) as billing test customer | End-to-end before public launch |
 
-### 3.3 Suspend, cancel, restore (automated)
+### 3.3 Billing economics (UK, pay-as-you-go)
+
+Stripe charges **nothing during a free trial** — no setup fee, no monthly account fee on the standard plan. Fees apply only when a payment succeeds ([Stripe UK pricing](https://stripe.com/gb/pricing)).
+
+| When | Stripe cost |
+|------|-------------|
+| 14-day trial (`trialing`, £0 invoices) | **£0** |
+| First monthly charge after trial | Card fee + Billing fee (below) |
+| Failed payment / retry | No fee until a charge succeeds |
+| Chargeback | **£15** per dispute (if it happens) |
+
+**Per successful monthly renewal** (Stripe Billing pay-as-you-go + UK card):
+
+| Component | Rate |
+|-----------|------|
+| Card processing (UK-issued card) | **1.5% + 20p** |
+| Stripe Billing | **+0.7%** of billing volume |
+| **Combined** | **~2.2% + 20p** per charge |
+
+The fixed **20p** matters more at low price points — effective rate is ~3–4% at £12–15/month, ~3% at £25/month.
+
+| Monthly price | Approx. Stripe fee (UK card) | Approx. net |
+|---------------|------------------------------|-------------|
+| £12 | ~46p | ~£11.54 |
+| £15 | ~53p | ~£14.47 |
+| £20 | ~64p | ~£19.36 |
+| £25 | ~75p | ~£24.25 |
+
+EU cards cost more (**2.5% + 20p** + 0.7% Billing). International cards higher still. At low household-hub volume, the **pay-as-you-go** Billing plan (0.7%) is appropriate; fixed **£450+/month** Billing plans only make sense at much higher volume.
+
+**Infra note:** Cloudflare + R2 costs for a paused hub are separate and small if the hub is deprovisioned on cancel (archive JSON only).
+
+### 3.4 Suspend, cancel, restore (automated)
 
 ```mermaid
 flowchart LR
