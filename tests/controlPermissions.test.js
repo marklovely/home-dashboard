@@ -5,14 +5,10 @@ import {
 } from '../src/config/controlPermissions.js';
 
 describe('controlPermissions', () => {
-  it('allows garage, downstairs off, and watch movie for sitters', () => {
-    expect(SITTER_ALLOWED_BUTTON_IDS).toContain(3);
-    expect(SITTER_ALLOWED_BUTTON_IDS).toContain(4);
-    expect(SITTER_ALLOWED_BUTTON_IDS).toContain(5);
-    expect(SITTER_ALLOWED_BUTTON_IDS).toContain(6);
-  });
-
-  it('keeps heating owner-only', () => {
-    expect(isButtonAllowedForSitter(7)).toBe(false);
+  it('does not allow any buttons for sitters', () => {
+    expect(SITTER_ALLOWED_BUTTON_IDS).toEqual([]);
+    for (const buttonId of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+      expect(isButtonAllowedForSitter(buttonId)).toBe(false);
+    }
   });
 });

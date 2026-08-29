@@ -84,22 +84,16 @@ describe('Cloudflare Access authentication', () => {
 });
 
 describe('control authorization', () => {
-  it('allows sitter to trigger permitted control', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({
-      ok: true,
-      headers: { get: () => 'application/json' },
-      json: async () => ({ pressed: 1, timeStamp: 'now' })
-    });
+  it('forbids sitter from all home controls', async () => {
     const token = await sitterJwt();
     const response = await handleRequest(
       new Request(
         'https://worker.test/api/button/VB01',
         withAccessJwt(token, { method: 'POST', body: '{}' })
       ),
-      baseEnv,
-      fetchImpl
+      baseEnv
     );
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(403);
   });
 
   it('forbids sitter from owner-only control', async () => {
