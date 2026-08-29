@@ -65,7 +65,23 @@ Example: household owners on production + sandbox; Airbnb trial guest on sandbox
 
 **Do not** add testers manually in Zero Trust → Access → Applications; Terraform owns those policies. Edit `hub.tfvars`, run `terraform apply`, then `node scripts/set-worker-secrets-from-terraform.mjs <site_id>`. See [platform-terraform.md — Add a tester](./platform-terraform.md#add-a-tester-sandbox--test-only).
 
-On Terraform-managed hubs, owners can also edit the **House sitters** allow-list from **Settings → House sitter mode → Sitter login emails**. The hub Worker stores the list in D1 and updates Cloudflare Access via API (requires `CF_ACCESS_MANAGEMENT_TOKEN`, `ACCESS_PAGES_APP_ID`, and `ACCESS_WORKER_APP_ID` on the Worker — set automatically during platform provision).
+On Terraform-managed hubs, owners can also edit the **House sitters** allow-list from **Settings → House sitter mode → Sitter login emails** or **Scheduled stays**. The hub Worker stores the list in D1 and updates Cloudflare Access via API (requires `CF_ACCESS_MANAGEMENT_TOKEN`, `ACCESS_PAGES_APP_ID`, and `ACCESS_WORKER_APP_ID` on the Worker).
+
+### Production dashboard (`dashboard.lovely-home.co.uk`)
+
+The default Worker (`lovely-home-hub-api`) uses top-level `wrangler.toml` `[vars]`, not `[env.production]`. Platform provision sets Access sync on new sites automatically; **production must be enabled once**:
+
+```bash
+export CLOUDFLARE_API_TOKEN='…'   # Zero Trust Access edit + Workers Scripts Edit
+export CLOUDFLARE_ACCOUNT_ID='…'
+node scripts/sync-wrangler-production-access.mjs
+node scripts/set-production-access-sync-secret.mjs
+npm run deploy --prefix worker
+```
+
+Then re-save a scheduled stay or sitter login emails in Settings — the Worker creates/updates the **House sitters** policy on both Pages and Worker Access apps.
+
+If sync is not configured, Settings shows a warning and stays save locally without pushing emails to Cloudflare (sitters will not receive Access OTP until their email is on the policy).
 
 ### 2. Application audience (AUD)
 

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { dedupeEnvVarsBlock, upsertEnvVar } from '../scripts/lib/wrangler-env-vars.mjs';
+import { dedupeEnvVarsBlock, dedupeTopLevelVarsBlock, upsertEnvVar, upsertTopLevelVar } from '../scripts/lib/wrangler-env-vars.mjs';
+
+const topLevelSample = `
+name = "lovely-home-hub-api"
+
+[vars]
+ALLOWED_ORIGINS = "https://dashboard.lovely-home.co.uk"
+HOME_LATITUDE = "50.88"
+
+[[d1_databases]]
+binding = "HOUSE_GUIDE_DB"
+`;
 
 const sample = `
 [env.demo]
@@ -48,5 +59,16 @@ binding = "GUIDE_MEDIA"
     expect(next).toContain('ACCESS_WORKER_APP_ID = "new"');
     expect(next).toContain('ACCESS_PAGES_APP_ID = "pages-new"');
     expect(next).toContain('HUB_ENVIRONMENT = "demo"');
+  });
+
+  it('upserts top-level [vars] keys for production Access sync', () => {
+    const next = upsertTopLevelVar(topLevelSample, 'ACCESS_PAGES_APP_ID', 'pages-123');
+    expect(next).toContain('ACCESS_PAGES_APP_ID = "pages-123"');
+    expect(next).toContain('ALLOWED_ORIGINS = "https://dashboard.lovely-home.co.uk"');
+    const deduped = dedupeTopLevelVarsBlock(
+      upsertTopLevelVar(next, 'ACCESS_PAGES_APP_ID', 'pages-456')
+    );
+    expect(deduped.match(/ACCESS_PAGES_APP_ID/g)).toHaveLength(1);
+    expect(deduped).toContain('ACCESS_PAGES_APP_ID = "pages-456"');
   });
 });
