@@ -1,9 +1,8 @@
+import { defineApp } from '../../components/App/defineApp.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
 import { isControlsConfigured } from '../../services/environmentAppPolicy.js';
-import { defineApp } from '../../components/App/defineApp.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
 import { getWidgetById } from '../../services/widgetRegistry.js';
-import { mountSitterControlsGrid } from '../../widgets/Controls/sitterControlsGrid.js';
 
 /**
  * @param {Node} mounted
@@ -45,7 +44,20 @@ export function mountControlsApp(viewport, context) {
   }
 
   if (isHouseSitterMode()) {
-    page.append(...collectMountedNodes(mountSitterControlsGrid(context)));
+    const panel = document.createElement('section');
+    panel.className = 'controls-unconfigured';
+    panel.setAttribute('aria-label', 'Controls unavailable');
+
+    const title = document.createElement('h2');
+    title.textContent = 'Home controls are owner-only';
+
+    const copy = document.createElement('p');
+    copy.className = 'subtle';
+    copy.textContent =
+      'Lighting, heating, and Alexa routines cannot be operated in House Sitter Mode. Owners can unlock the tablet to use controls.';
+
+    panel.append(title, copy);
+    page.append(panel);
     viewport.replaceChildren(page);
     return;
   }
@@ -69,13 +81,6 @@ export function mountControlsApp(viewport, context) {
  * @param {import('../../types/app.js').ShellContext} context
  */
 function controlsSummary(context) {
-  if (isHouseSitterMode()) {
-    const count = context.config.buttons?.length ?? 0;
-    return {
-      title: `${count} home control${count === 1 ? '' : 's'}`,
-      subtitle: 'Lighting, heating, and scenes'
-    };
-  }
   const count = context.config.buttons?.length ?? 0;
   return {
     title: `${count} routine${count === 1 ? '' : 's'} available`,
@@ -90,7 +95,7 @@ export const controlsApp = defineApp({
   description: 'Control lighting, heating, and scenes',
   capabilities: ['lighting', 'heating', 'scenes'],
   accent: '#8b7cff',
-  profiles: ['owner', 'housesitter'],
+  profiles: ['owner'],
   summary: controlsSummary,
   mount: mountControlsApp
 });

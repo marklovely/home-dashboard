@@ -20,9 +20,8 @@ import {
   resetUserModeForTests,
   setUserMode
 } from '../src/auth/userMode.js';
-import { getModeConfig, getAppDisplayTitle } from '../src/modes/modeConfig.js';
+import { getModeConfig } from '../src/modes/modeConfig.js';
 import { getVisibleApps, isAppVisible } from '../src/services/appVisibility.js';
-import { getAppById } from '../src/services/appRegistry.js';
 import { setActiveProfileId } from '../src/services/profileService.js';
 
 function resetAuthState() {
@@ -155,13 +154,12 @@ describe('house sitter experience (deployment locked)', () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
     resetUserModeForTests();
     const ids = getVisibleApps().map((app) => app.id);
-    expect(ids).toEqual(['weather', 'scooter', 'house-guide', 'controls', 'bins', 'emergency']);
+    expect(ids).toEqual(['weather', 'scooter', 'house-guide', 'bins', 'emergency']);
   });
 
-  it('renames controls for guest display', () => {
+  it('does not show controls to house sitters', () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
     resetUserModeForTests();
-    const controls = getAppById('controls');
-    expect(getAppDisplayTitle(controls)).toBe('Home Controls');
+    expect(isAppVisible('controls')).toBe(false);
   });
 });
