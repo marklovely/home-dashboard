@@ -7,5 +7,10 @@ output "platform_contract" {
     access_pages_aud      = cloudflare_zero_trust_access_application.platform.aud
     cf_access_team_domain = var.access_team_domain
     operator_emails       = var.operator_emails
+    platform_billing_d1 = {
+      database_name = cloudflare_d1_database.platform_billing.name
+      database_id   = cloudflare_d1_database.platform_billing.id
+      binding       = "PLATFORM_BILLING_DB"
+    }
   }
 }
