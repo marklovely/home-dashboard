@@ -17,6 +17,7 @@ import {
 } from './routes/houseSettingsRoute.js';
 import { handleSitterStayItem, handleSitterStaysCollection } from './routes/sitterStaysRoute.js';
 import { handleSiteBackup } from './routes/siteBackup.js';
+import { handlePlatformSiteArchive } from './routes/platformSiteArchive.js';
 import { handleSiteSetup } from './routes/siteSetupRoute.js';
 import { handleBrandingLogo } from './routes/brandingRoute.js';
 import { handleDeviceSession } from './routes/deviceSessionRoute.js';
@@ -85,7 +86,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       url.pathname === '/api/house-settings/sitter-emails' ||
       url.pathname === '/api/house-settings/sitter-stays' ||
       url.pathname.startsWith('/api/house-settings/sitter-stays/') ||
-      (url.pathname.startsWith('/api/button/') && request.method === 'POST'));
+      (url.pathname.startsWith('/api/button/') && request.method === 'POST') ||
+      url.pathname === '/api/platform/site-archive');
 
   try {
     if (url.pathname === '/api/health' && request.method === 'GET') {
@@ -148,6 +150,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleSitterStaysCollection(request, env, fetchBound);
     } else if (url.pathname.startsWith('/api/house-settings/sitter-stays/')) {
       response = await handleSitterStayItem(request, env, url, fetchBound);
+    } else if (url.pathname === '/api/platform/site-archive') {
+      response = await handlePlatformSiteArchive(request, env, correlationId);
     } else if (url.pathname === '/api/site/backup' || url.pathname === '/api/site/restore') {
       response = await handleSiteBackup(request, url, env, correlationId);
     } else if (

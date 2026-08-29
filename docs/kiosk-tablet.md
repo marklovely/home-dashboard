@@ -224,7 +224,7 @@ Controls call `POST /api/button/VBxx` on the Worker. Failures are usually:
 - **502 / 503** — Virtual Buttons or Worker briefly unavailable; the app retries once automatically.
 - **Rate limit** — wait a few seconds between taps (duplicate cooldown ~2s, max ~10/min).
 
-Ensure sitter-allowed button IDs in `controlPermissions.js` match what you expect (IDs 1–6, 8–10 for sitters; 7 is owner-only).
+Sitters **cannot** operate Virtual Buttons. Only owners in owner device mode can trigger controls — see `worker/src/lib/controlPermissions.js` and `src/config/controlPermissions.js`.
 
 ---
 

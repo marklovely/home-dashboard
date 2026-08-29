@@ -17,7 +17,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day) stay hidden from sitters. The sitter tablet shows a simpler Lovely Home home screen with pet care (when configured), House Guide, Controls (when configured), Emergency, Weather, and Bins.'
+        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day, Controls) stay hidden from sitters. The sitter tablet shows a simpler Lovely Home home screen with pet care (when configured), House Guide, Emergency, Weather, and Bins.'
       },
       {
         type: 'ul',
@@ -117,7 +117,7 @@ export const OWNER_HELP_SECTIONS = [
         type: 'table',
         headers: ['App', 'Purpose', 'Sitters'],
         rows: [
-          ['Controls', 'Fire Alexa Virtual Button routines (lighting, heating, scenes)', 'Yes — as Home Controls'],
+          ['Controls', 'Fire Alexa Virtual Button routines (lighting, heating, scenes)', 'No — owner only'],
           ['Guide Editor', 'Write and publish House Guide topics', 'No'],
           ['Appliance Manuals', 'Upload PDF user guides for sitters', 'No — manuals open inside House Guide'],
           ['My Day', 'Your personal calendar for the week ahead', 'No'],
@@ -130,7 +130,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Shows your configured Alexa Virtual Buttons. Sitters see a friendlier Home Controls grid with the same routines — labels like Downstairs Lights, Bedtime, and Watch Movie.'
+        text: 'Shows your configured Alexa Virtual Buttons. Sitters cannot operate these — unlock owner mode on the tablet when you need to run a routine.'
       }
     ]
   },

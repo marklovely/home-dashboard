@@ -127,6 +127,14 @@ function deleteWorker(workerName) {
 
 console.log(`\n=== Deprovisioning hub site: ${siteId} ===`);
 
+const archiveScript = join(root, 'scripts/archive-hub-site-backup.mjs');
+try {
+  run('node', [archiveScript, siteId]);
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`Pre-deprovision archive skipped or failed: ${message}`);
+}
+
 const workerName = readWorkerName();
 const inState = hubSiteModuleInState(siteId, tfDir);
 
