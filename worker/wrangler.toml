@@ -54,6 +54,10 @@ bucket_name = "lovely-home-guide-media"
 binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
 
+# Hourly sitter stay schedule (Access email sync). Demo env has its own trigger below.
+[triggers]
+crons = ["0 * * * *"]
+
 # ---------------------------------------------------------------------------
 # Test environment — isolated Worker, D1, and R2 (never shares production data).
 # Provision once: cd worker && npm run provision:test

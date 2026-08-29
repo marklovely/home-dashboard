@@ -9,6 +9,10 @@ import {
   validateSitterStayForm
 } from '../../lib/sitterStayFormValidation.js';
 import { getSitterSecretsManual, subscribeToSitterSecrets } from '../../services/sitterSecretsService.js';
+import {
+  isAccessSitterSyncConfigured,
+  subscribeToSitterAccessEmails
+} from '../../services/sitterAccessEmailsService.js';
 import { showExtendStayDialog } from './sitterStayExtendDialog.js';
 import { showEditStayDialog } from './sitterStayEditDialog.js';
 import {
@@ -24,6 +28,18 @@ import {
 } from '../../services/sitterStaysService.js';
 
 const STAY_ACTION_TOAST_MS = 4000;
+
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ * @param {string} successMessage
+ * @param {string | null | undefined} accessWarning
+ */
+function showStayActionResult(context, successMessage, accessWarning) {
+  showToast(context.toast, successMessage, STAY_ACTION_TOAST_MS);
+  if (accessWarning) {
+    showToast(context.toast, accessWarning, 8000);
+  }
+}
 
 /**
  * @param {import('../../api/sitterStaysApi.js').SitterStayPayload} stay
@@ -51,6 +67,18 @@ export function createSitterStaysSection(context) {
   const list = document.createElement('div');
   list.className = 'sitter-stays-list';
 
+  const syncBanner = document.createElement('p');
+  syncBanner.className = 'settings-help settings-help--warn sitter-stays-sync-banner';
+  syncBanner.hidden = true;
+  syncBanner.textContent =
+    'Cloudflare Access sync is not configured on this Worker. Scheduled stays are saved on the hub but sitter emails are not added to Access automatically — add them in Zero Trust or run production Access sync (see docs/cloudflare-access.md).';
+
+  const refreshSyncBanner = () => {
+    syncBanner.hidden = isAccessSitterSyncConfigured() !== false;
+  };
+  subscribeToSitterAccessEmails(refreshSyncBanner);
+  refreshSyncBanner();
+
   const formPanel = createSitterStayForm(context, list, () => renderList(list, context));
 
   const render = () => {
@@ -60,7 +88,7 @@ export function createSitterStaysSection(context) {
   subscribeToSitterStays(render);
   render();
 
-  subsection.append(title, hint, list, formPanel);
+  subsection.append(title, hint, syncBanner, list, formPanel);
   return subsection;
 }
 
@@ -167,7 +195,7 @@ async function handleEditStay(stay, context, button) {
       return;
     }
     const label = result.stay?.label?.trim() || result.stay?.emails?.join(', ') || stayDisplayLabel(stay);
-    showToast(context.toast, `${label} updated.`, STAY_ACTION_TOAST_MS);
+    showStayActionResult(context, `${label} updated.`, result.accessWarning);
   });
 }
 
@@ -400,8 +428,9 @@ function createSitterStayForm(context, staysList, onCreated) {
 
   /**
    * @param {import('../../api/sitterStaysApi.js').SitterStayPayload | null | undefined} stay
+   * @param {string | null | undefined} accessWarning
    */
-  function showSubmitSuccess(stay) {
+  function showSubmitSuccess(stay, accessWarning) {
     for (const field of Object.values(validatedFields)) {
       setFieldValidationState(field.input, field.wrap, field.error, null);
     }
@@ -416,7 +445,7 @@ function createSitterStayForm(context, staysList, onCreated) {
     summarySuccess.hidden = false;
     onCreated();
     staysList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    showToast(context.toast, 'Stay scheduled.', 3500);
+    showStayActionResult(context, 'Stay scheduled.', accessWarning);
     summarySuccess.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
@@ -465,7 +494,7 @@ function createSitterStayForm(context, staysList, onCreated) {
         emailsField.textarea.value = '';
         startField.input.value = '';
         endField.input.value = '';
-        showSubmitSuccess(result.stay);
+        showSubmitSuccess(result.stay, result.accessWarning);
       } finally {
         setSitterStayFormBusy(form, false);
       }

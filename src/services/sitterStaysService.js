@@ -1,4 +1,5 @@
 import { sitterStayApiErrorMessage } from '../lib/sitterStayApiErrors.js';
+import { sitterStayAccessSyncWarning } from '../lib/sitterStayAccessSyncMessage.js';
 import { fetchHouseSettings } from '../api/houseSettingsApi.js';
 import {
   postSitterStay,
@@ -69,7 +70,8 @@ export async function createSitterStay(body, fetchImpl = fetch) {
     };
   }
   await syncSitterStaysFromServer(fetchImpl);
-  return { ok: true, stay: result.data?.stay ?? null };
+  const accessWarning = sitterStayAccessSyncWarning(result.data ?? {});
+  return { ok: true, stay: result.data?.stay ?? null, accessWarning };
 }
 
 /**
@@ -86,7 +88,8 @@ export async function updateSitterStay(id, body, fetchImpl = fetch) {
     };
   }
   await syncSitterStaysFromServer(fetchImpl);
-  return { ok: true, stay: result.data?.stay ?? null };
+  const accessWarning = sitterStayAccessSyncWarning(result.data ?? {});
+  return { ok: true, stay: result.data?.stay ?? null, accessWarning };
 }
 
 /**
