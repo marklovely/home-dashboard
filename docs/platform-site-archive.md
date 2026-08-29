@@ -55,7 +55,9 @@ sequenceDiagram
 
 Set the same secret on every hub Worker and in GitHub Actions as `PLATFORM_SITE_ARCHIVE_SECRET`.
 
-**Automatic:** provision CI passes the repo secret through `set-worker-secrets-from-terraform.mjs` when present.
+Also applied automatically on provision when the repo secret is set.
+
+Uses `wrangler secret put` on live Workers; if a Worker has never been deployed (e.g. sandbox), falls back to `wrangler versions secret put` so the secret is stored for the next deploy.
 
 **Existing Workers:** run once after adding the repo secret:
 
