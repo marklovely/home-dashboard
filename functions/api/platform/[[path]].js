@@ -30,6 +30,16 @@ import {
   fetchSitePagesPreviewStatus,
   setSitePagesPreviewEnabled
 } from './platformPagesPreviews.js';
+import {
+  createBillingCheckoutSession,
+  defaultCheckoutUrls,
+  getPlatformBillingDb,
+  getSiteBilling,
+  listSiteBilling,
+  platformBillingDbConfigured,
+  stripeBillingConfigured,
+  validateBillingSiteId
+} from './platformBilling.js';
 
 /**
  * Platform operator API — /api/platform/*
@@ -90,6 +100,8 @@ export async function onRequest(context) {
       cloudflareUsageConfigured: cloudflareUsageApiConfigured(pagesEnv),
       cloudflarePagesConfigured: cloudflarePagesApiConfigured(pagesEnv),
       githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
+      stripeBillingConfigured: stripeBillingConfigured(pagesEnv),
+      platformBillingDbConfigured: platformBillingDbConfigured(pagesEnv),
       githubRepo: githubRepo(pagesEnv),
       hints: {
         healthServiceAuth:
@@ -99,9 +111,100 @@ export async function onRequest(context) {
         cloudflarePages:
           'Set PLATFORM_CF_API_TOKEN (Account → Cloudflare Pages → Edit) and CLOUDFLARE_ACCOUNT_ID on the platform Pages project to toggle PR preview builds per hub.',
         githubAutomation:
-          'Set PLATFORM_GITHUB_TOKEN (contents:write, actions:write) and PLATFORM_GITHUB_REPO on the platform Pages project to enable site wizard automation.'
+          'Set PLATFORM_GITHUB_TOKEN (contents:write, actions:write) and PLATFORM_GITHUB_REPO on the platform Pages project to enable site wizard automation.',
+        stripeBilling:
+          'Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID on the platform Pages project. Bind PLATFORM_BILLING_DB and apply platform/migrations/0001_site_billing.sql. Webhook URL: POST /api/stripe/webhook (Access bypass on platform hostname).'
       }
     });
+  }
+
+  if (suffix === 'billing' && request.method === 'GET') {
+    const db = getPlatformBillingDb(env);
+    if (!db) {
+      return Response.json(
+        { error: 'BILLING_DB_NOT_CONFIGURED', message: 'PLATFORM_BILLING_DB binding is missing.' },
+        { status: 503 }
+      );
+    }
+    return Response.json({ billing: await listSiteBilling(db) });
+  }
+
+  if (suffix === 'billing/checkout' && request.method === 'POST') {
+    if (!stripeBillingConfigured(pagesEnv)) {
+      return Response.json(
+        { error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe keys and price id are not set.' },
+        { status: 503 }
+      );
+    }
+
+    const body = await readJsonBody(request);
+    const siteId = String(body.siteId ?? '').trim();
+    const customerEmail = String(body.customerEmail ?? '').trim().toLowerCase();
+    const siteIdError = validateBillingSiteId(siteId);
+    if (siteIdError) {
+      return Response.json({ error: 'INVALID_SITE_ID', message: siteIdError }, { status: 400 });
+    }
+    if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+      return Response.json(
+        { error: 'INVALID_EMAIL', message: 'A valid customerEmail is required.' },
+        { status: 400 }
+      );
+    }
+
+    const site = getSiteFromManifest(manifest, siteId);
+    if (!site) {
+      return Response.json({ error: 'NOT_FOUND', message: `Unknown site: ${siteId}` }, { status: 404 });
+    }
+
+    const db = getPlatformBillingDb(env);
+    if (db) {
+      const existing = await getSiteBilling(db, siteId);
+      if (existing && (existing.status === 'trialing' || existing.status === 'active')) {
+        return Response.json(
+          {
+            error: 'BILLING_ALREADY_ACTIVE',
+            message: `Site ${siteId} already has ${existing.status} billing.`,
+            billing: existing
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    const platformHostname = String(manifest.platform?.hostname ?? pagesEnv.PLATFORM_HOSTNAME ?? 'platform.lovely-home.co.uk');
+    const urls = defaultCheckoutUrls(pagesEnv, platformHostname);
+    const successUrl = String(body.successUrl ?? urls.successUrl);
+    const cancelUrl = String(body.cancelUrl ?? urls.cancelUrl);
+
+    try {
+      const session = await createBillingCheckoutSession(pagesEnv, {
+        siteId,
+        customerEmail,
+        successUrl,
+        cancelUrl
+      });
+      if (!session.ok) {
+        return Response.json(session, { status: 503 });
+      }
+      return Response.json(session);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Checkout session failed.';
+      return Response.json({ error: 'STRIPE_CHECKOUT_FAILED', message }, { status: 502 });
+    }
+  }
+
+  const billingSiteMatch = suffix.match(/^billing\/sites\/([^/]+)$/);
+  if (billingSiteMatch && request.method === 'GET') {
+    const siteId = decodeURIComponent(billingSiteMatch[1]);
+    const db = getPlatformBillingDb(env);
+    if (!db) {
+      return Response.json({ error: 'BILLING_DB_NOT_CONFIGURED' }, { status: 503 });
+    }
+    const billing = await getSiteBilling(db, siteId);
+    if (!billing) {
+      return Response.json({ error: 'NOT_FOUND', message: `No billing record for ${siteId}` }, { status: 404 });
+    }
+    return Response.json({ billing });
   }
 
   if (suffix === 'usage/summary' && request.method === 'GET') {
