@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { validateDeploySiteId } from './lib/site-registry.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { formatEmailList } from './lib/email-lists.mjs';
+import { putWorkerSecret } from './lib/worker-secret-put.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
@@ -25,7 +26,6 @@ if (deployError) {
 }
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const workerDir = join(root, 'worker');
 const registry = loadSitesYaml(join(root, 'platform/sites.yaml'));
 const vanilla = registry[siteId]?.vanilla !== false;
 const demoPublic = registry[siteId]?.demo_public === true;
@@ -92,21 +92,21 @@ if (vanilla) {
   });
 }
 
+const archiveSecret = process.env.PLATFORM_SITE_ARCHIVE_SECRET?.trim();
+if (archiveSecret) {
+  secrets.PLATFORM_SITE_ARCHIVE_SECRET = archiveSecret;
+} else {
+  console.warn(
+    'PLATFORM_SITE_ARCHIVE_SECRET not set — skipping archive secret (deprovision backup will not work for this site until synced).'
+  );
+}
+
 for (const [name, value] of Object.entries(secrets)) {
   if (!value) {
     console.error(`Missing value for secret ${name}`);
     process.exit(1);
   }
-  console.log(`Setting Worker secret ${name} (--env ${siteId})`);
-  execFileSync(
-    'npx',
-    ['wrangler', 'secret', 'put', name, '--env', siteId],
-    {
-      cwd: workerDir,
-      input: value,
-      stdio: ['pipe', 'inherit', 'inherit']
-    }
-  );
+  putWorkerSecret(siteId, name, value);
 }
 
 console.log(`Worker secrets configured for ${siteId}.`);
