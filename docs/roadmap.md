@@ -47,7 +47,7 @@ Foundation for Mark’s home: PWA, widgets, Worker API, Cloudflare Access.
 
 ---
 
-### Phase 2 — Guide CMS, appearance, kiosk (Jul–Aug 2025)
+### Phase 2 — Guide CMS, appearance, kiosk (Jul–Aug 2026)
 
 | Theme | Highlights | PRs |
 |-------|------------|-----|
@@ -60,7 +60,7 @@ Foundation for Mark’s home: PWA, widgets, Worker API, Cloudflare Access.
 
 ---
 
-### Phase 3 — Platform multi-site (Aug 2025)
+### Phase 3 — Platform multi-site (Aug 2026)
 
 Automated hub provisioning, platform admin UI, Terraform-managed Access.
 
@@ -78,7 +78,7 @@ Automated hub provisioning, platform admin UI, Terraform-managed Access.
 
 ---
 
-### Phase 4 — Demo hub & customer domain (Aug 2025)
+### Phase 4 — Demo hub & customer domain (Aug 2026)
 
 | Theme | Highlights | PRs |
 |-------|------------|-----|
@@ -89,7 +89,7 @@ Automated hub provisioning, platform admin UI, Terraform-managed Access.
 
 ---
 
-### Phase 5 — Sitter lifecycle & sell-ready ops (Aug 2025)
+### Phase 5 — Sitter lifecycle & sell-ready ops (Aug 2026)
 
 | Theme | Highlights | PRs |
 |-------|------------|-----|
