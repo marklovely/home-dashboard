@@ -185,7 +185,7 @@ curl -sS -o /dev/null -w "%{http_code}\n" \
 
 1. Open `https://home-dashboard-a11.pages.dev` → Access login → dashboard loads.  
 2. Weather and house guide load (Worker JWT injected by Access on API hostname when both are protected).  
-3. Log in as sitter email → no My Day / calendar; sitter controls only.  
+3. Log in as sitter email → no My Day / calendar; controls must return forbidden.  
 4. Owner email → unlock owner UI with PIN → My Day loads if calendar URL configured.
 
 If the SPA loads but API calls return **503** `AUTH_NOT_CONFIGURED`, Worker secrets are missing. If **401**, Access is not attaching JWT to Worker requests — protect the **Worker hostname** with Access (app C) and use `credentials: 'include'` (already in the app).

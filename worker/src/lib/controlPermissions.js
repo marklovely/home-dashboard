@@ -2,16 +2,16 @@
 
 /** @type {Record<string, LovelyHomeRole[]>} */
 export const CONTROL_PERMISSIONS = Object.freeze({
-  VB01: ['owner', 'house-sitter'],
-  VB02: ['owner', 'house-sitter'],
-  VB03: ['owner', 'house-sitter'],
-  VB04: ['owner', 'house-sitter'],
-  VB05: ['owner', 'house-sitter'],
-  VB06: ['owner', 'house-sitter'],
-  VB09: ['owner', 'house-sitter'],
-  VB08: ['owner', 'house-sitter'],
-  VB10: ['owner', 'house-sitter'],
-  VB07: ['owner']
+  VB01: ['owner'],
+  VB02: ['owner'],
+  VB03: ['owner'],
+  VB04: ['owner'],
+  VB05: ['owner'],
+  VB06: ['owner'],
+  VB07: ['owner'],
+  VB08: ['owner'],
+  VB09: ['owner'],
+  VB10: ['owner']
 });
 
 /**

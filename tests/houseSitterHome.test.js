@@ -52,11 +52,10 @@ describe('house sitter home layout', () => {
     expect(sectionTitles).toEqual(['Essentials', 'Useful information']);
 
     const essentialCards = page?.querySelectorAll('.home-launcher-card--essential') ?? [];
-    expect(essentialCards).toHaveLength(4);
+    expect(essentialCards).toHaveLength(3);
     expect([...essentialCards].map((card) => card.querySelector('.home-launcher-title')?.textContent)).toEqual([
       'Bailey',
       'House Guide',
-      'Home Controls',
       'Emergency'
     ]);
 

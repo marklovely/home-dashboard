@@ -355,7 +355,7 @@ Session JSON responses use `Cache-Control: no-store` and never expose cookie byt
 | POST | `/api/auth/owner` | PIN clears sitter lock → Owner Mode |
 | POST | `/api/auth/lock` | Issues persistent sitter cookie (same as Enable House Sitter Mode) |
 
-Owner-only routes (`/api/calendar`, `/api/private-config`, …) require **Cloudflare Access owner identity** and **no active sitter cookie**. House-sitter-safe controls still require Access; effective control role follows device mode (sitter mode limits buttons even if Access identity is an owner).
+Owner-only routes (`/api/calendar`, `/api/private-config`, …) require **Cloudflare Access owner identity** and **no active sitter cookie**. Virtual Button controls require **owner device mode** — sitters cannot trigger Alexa routines even with a valid Access session.
 
 The Pages API proxy forwards the browser `Cookie` header and returns Worker `Set-Cookie` headers so device sessions work same-origin.
 

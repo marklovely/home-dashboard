@@ -1,6 +1,7 @@
 import { isDemoHubEnvironment } from '../auth/hubEnvironment.js';
 import { getAppDisplayTitle } from '../modes/modeConfig.js';
 import { isAppEnabledForEnvironment } from '../services/environmentAppPolicy.js';
+import { isAppVisible } from '../services/appVisibility.js';
 import { getAppById } from '../services/appRegistry.js';
 import { getSiteProfileState } from '../services/siteProfileService.js';
 
@@ -36,8 +37,7 @@ export function isPetCareVisibleInHelp() {
 
 /** @returns {boolean} */
 export function isControlsVisibleInHelp() {
-  const app = getAppById('controls');
-  return Boolean(app && isAppEnabledForEnvironment(app));
+  return isAppVisible('controls');
 }
 
 /** @returns {string} */

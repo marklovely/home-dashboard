@@ -1,7 +1,9 @@
 /**
  * House-sitter allowed Virtual Button IDs — keep in sync with worker/src/lib/controlPermissions.js
+ *
+ * Sitters and guests must not trigger Alexa routines or other home controls.
  */
-export const SITTER_ALLOWED_BUTTON_IDS = Object.freeze([1, 2, 3, 4, 5, 6, 8, 9, 10]);
+export const SITTER_ALLOWED_BUTTON_IDS = Object.freeze([]);
 
 /**
  * @param {number} buttonId

@@ -101,6 +101,6 @@ See `worker/.dev.vars.example` for local development (`CF_ACCESS_JWT_TEST_SECRET
 | `GET /api/weather` | Yes | Any |
 | `POST /api/auth/owner` | Yes | Owner email + PIN |
 | `GET /api/calendar` | Yes | Owner |
-| `POST /api/button/:code` | Yes | See `CONTROL_PERMISSIONS` in Worker |
+| `POST /api/button/:code` | Yes | Owner only — see `CONTROL_PERMISSIONS` in Worker |
 
-Sitters may trigger **VB01**, **VB02**, **VB08**, **VB09**, and **VB10** only.
+House sitters **cannot** trigger Virtual Buttons. Owners must unlock the tablet to owner mode before controls work, even if their Cloudflare Access identity is an owner email.
