@@ -14,6 +14,11 @@ async function accessMiddleware(context) {
     return context.next();
   }
 
+  const pathname = new URL(context.request.url).pathname;
+  if (context.env.PLATFORM_OPERATOR_EMAILS?.trim() && pathname === '/api/stripe/webhook') {
+    return context.next();
+  }
+
   const domain = accessTeamOrigin(context.env.CF_ACCESS_TEAM_DOMAIN);
   const aud = context.env.CF_ACCESS_AUD_PAGES?.trim();
   if (!domain || !aud) {
