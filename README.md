@@ -28,6 +28,10 @@ npm run build
 
 The deployable site is generated in `dist/`.
 
+## Roadmap
+
+Shipped milestones and planned work (billing, suspend/restore, platform ops): **[docs/roadmap.md](docs/roadmap.md)**.
+
 ## GitHub Pages
 
 Set GitHub Pages to deploy from a GitHub Actions workflow or upload the contents of `dist/` to the publishing branch. Because the Vite base is `./`, the app works from a project Pages URL.
