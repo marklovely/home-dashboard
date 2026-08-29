@@ -1,6 +1,12 @@
 locals {
   pages_preview_deployment_setting = var.pages_preview_deployments_enabled ? "all" : "none"
 
+  platform_d1_binding = {
+    PLATFORM_BILLING_DB = {
+      id = cloudflare_d1_database.platform_billing.id
+    }
+  }
+
   platform_production_env_vars = merge(
     {
       CF_ACCESS_TEAM_DOMAIN = {
@@ -47,6 +53,36 @@ locals {
         type  = "secret_text"
         value = var.platform_cf_api_token
       }
+    } : {},
+    var.stripe_secret_key != "" ? {
+      STRIPE_SECRET_KEY = {
+        type  = "secret_text"
+        value = var.stripe_secret_key
+      }
+    } : {},
+    var.stripe_webhook_secret != "" ? {
+      STRIPE_WEBHOOK_SECRET = {
+        type  = "secret_text"
+        value = var.stripe_webhook_secret
+      }
+    } : {},
+    var.stripe_price_id != "" ? {
+      STRIPE_PRICE_ID = {
+        type  = "plain_text"
+        value = var.stripe_price_id
+      }
+    } : {},
+    var.stripe_checkout_success_url != "" ? {
+      STRIPE_CHECKOUT_SUCCESS_URL = {
+        type  = "plain_text"
+        value = var.stripe_checkout_success_url
+      }
+    } : {},
+    var.stripe_checkout_cancel_url != "" ? {
+      STRIPE_CHECKOUT_CANCEL_URL = {
+        type  = "plain_text"
+        value = var.stripe_checkout_cancel_url
+      }
     } : {}
   )
 
@@ -58,12 +94,18 @@ locals {
 
   pages_production_config = merge(
     local.pages_runtime_base,
-    { env_vars = local.platform_production_env_vars }
+    {
+      env_vars     = local.platform_production_env_vars
+      d1_databases = local.platform_d1_binding
+    }
   )
 
   pages_preview_config = merge(
     local.pages_runtime_base,
-    { env_vars = local.platform_production_env_vars }
+    {
+      env_vars     = local.platform_production_env_vars
+      d1_databases = local.platform_d1_binding
+    }
   )
 }
 

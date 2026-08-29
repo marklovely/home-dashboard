@@ -19,7 +19,7 @@ npm run build:platform
 
 echo "==> Staging Pages Functions (shared repo functions + platform API route)"
 rm -rf dist-platform/functions
-mkdir -p dist-platform/functions/lib dist-platform/functions/api/platform
+mkdir -p dist-platform/functions/lib dist-platform/functions/api/platform dist-platform/functions/api/stripe
 cp functions/_middleware.js dist-platform/functions/
 cp functions/lib/emailLists.js dist-platform/functions/lib/
 cp functions/lib/accessTeamDomain.js dist-platform/functions/lib/
@@ -28,6 +28,7 @@ cp functions/api/accessIdentity.js dist-platform/functions/api/
 cp functions/api/accessJwtExtract.js dist-platform/functions/api/
 cp functions/api/platform/[[path]].js dist-platform/functions/api/platform/
 cp functions/api/platform/*.js dist-platform/functions/api/platform/
+cp functions/api/stripe/[[path]].js dist-platform/functions/api/stripe/
 
 echo "==> Deploying dist-platform/ to $PAGES_PROJECT (branch=$BRANCH)"
 npx wrangler pages deploy dist-platform \

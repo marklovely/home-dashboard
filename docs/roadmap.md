@@ -2,7 +2,7 @@
 
 Product and platform milestones for the home dashboard (`dashboard.lovely-home.co.uk`), customer hubs on `lovely-hub.com`, and platform ops on `lovely-home.co.uk`.
 
-**Related docs:** [customer hub playbook](./customer-hub-playbook.md) · [platform provision](./platform-provision.md) · [platform site archive](./platform-site-archive.md) · [architecture](./architecture.md)
+**Related docs:** [customer hub playbook](./customer-hub-playbook.md) · [platform provision](./platform-provision.md) · [platform site archive](./platform-site-archive.md) · [platform billing](./platform-billing.md) · [architecture](./architecture.md)
 
 ---
 
@@ -22,7 +22,7 @@ A **managed household hub** for wall tablets and remote sitters: House Guide, pe
 | **Demo** | `demo.lovely-home.co.uk` — public username/password, nightly reseed |
 | **Sitter security** | Virtual Buttons **owner-only** in House Sitter Mode ([#168](https://github.com/marklovely/home-dashboard/pull/168)) |
 | **Pre-deprovision backup** | Full site JSON to platform R2 before destroy ([#168](https://github.com/marklovely/home-dashboard/pull/169)) |
-| **Billing / Stripe** | Not started — Stripe-managed trials, card at signup, webhooks agreed; implementation next |
+| **Billing / Stripe** | In progress — Checkout, webhooks, platform D1 mirror; auto-provision/deprovision next |
 
 ---
 
