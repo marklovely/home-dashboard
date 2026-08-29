@@ -53,7 +53,19 @@ sequenceDiagram
 - Must be called **before** Terraform destroy removes D1.
 - Blocked on demo hub (`DEMO_READ_ONLY`).
 
-Set the same secret on every hub Worker (Terraform / `set-worker-secrets`) and in GitHub Actions as `PLATFORM_SITE_ARCHIVE_SECRET`.
+Set the same secret on every hub Worker and in GitHub Actions as `PLATFORM_SITE_ARCHIVE_SECRET`.
+
+**Automatic:** provision CI passes the repo secret through `set-worker-secrets-from-terraform.mjs` when present.
+
+**Existing Workers:** run once after adding the repo secret:
+
+```bash
+# Local (same CLOUDFLARE_API_TOKEN as deploy)
+export PLATFORM_SITE_ARCHIVE_SECRET='…'
+node scripts/sync-platform-site-archive-secret.mjs
+```
+
+Or use GitHub Actions → **Platform sync archive secret** (syncs all Workers, or one `--site` via workflow input).
 
 ## CI script
 

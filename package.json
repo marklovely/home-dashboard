@@ -25,7 +25,8 @@
     "guide:build-catalog": ".venv-guide/bin/python scripts/build_house_guide_catalog.py",
     "guide:check": "vitest run tests/guideCatalog.test.js tests/guideMedia.test.js",
     "d1:migrate:all": "node scripts/apply-d1-migrations-all.mjs",
-    "deploy:all": "node scripts/deploy-all-workers.mjs"
+    "deploy:all": "node scripts/deploy-all-workers.mjs",
+    "sync:archive-secret": "node scripts/sync-platform-site-archive-secret.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
