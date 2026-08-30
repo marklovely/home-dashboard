@@ -1,3 +1,5 @@
+import { maybeDispatchBillingProvision } from './platformBillingProvision.js';
+
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
 
 /** @typedef {{
@@ -8,6 +10,8 @@
  *   trial_end: number | null;
  *   archive_r2_key: string | null;
  *   owner_email: string | null;
+ *   provision_dispatched_at: number | null;
+ *   provision_last_error: string | null;
  *   created_at: number;
  *   updated_at: number;
  * }} SiteBillingRow */
@@ -312,9 +316,13 @@ export function parseStripeSubscription(subscription) {
 /**
  * @param {D1Database} db
  * @param {Record<string, unknown>} event
- * @returns {Promise<{ ok: true, action: string } | { ok: false, error: string, message?: string }>}
+ * @param {{
+ *   env?: Record<string, string | undefined>;
+ *   manifest?: object;
+ * }} [context]
+ * @returns {Promise<{ ok: true, action: string, provision?: Record<string, unknown> } | { ok: false, error: string, message?: string }>}
  */
-export async function handleStripeBillingEvent(db, event) {
+export async function handleStripeBillingEvent(db, event, context = {}) {
   const eventId = String(event.id ?? '');
   const eventType = String(event.type ?? '');
   if (!eventId || !eventType) {
@@ -382,17 +390,44 @@ export async function handleStripeBillingEvent(db, event) {
     };
   }
 
+  const existingBilling = await getSiteBilling(db, billingPatch.siteId);
+
   await upsertSiteBilling(db, {
     site_id: billingPatch.siteId,
     stripe_customer_id: billingPatch.customerId,
     stripe_subscription_id: billingPatch.subscriptionId,
     status: billingPatch.status,
     trial_end: billingPatch.trialEnd,
-    owner_email: billingPatch.ownerEmail ?? null
+    owner_email: billingPatch.ownerEmail ?? existingBilling?.owner_email ?? null
   });
 
+  /** @type {Record<string, unknown> | undefined} */
+  let provision;
+  const env = context.env;
+  const manifest = context.manifest;
+  if (env && manifest) {
+    const provisionResult = await maybeDispatchBillingProvision(env, db, manifest, {
+      siteId: billingPatch.siteId,
+      eventType,
+      status: billingPatch.status,
+      existingBilling
+    });
+    provision = provisionResult;
+    if (!provisionResult.ok) {
+      return {
+        ok: false,
+        error: provisionResult.error ?? 'PROVISION_DISPATCH_FAILED',
+        message: provisionResult.message
+      };
+    }
+  }
+
   await markWebhookEventProcessed(db, eventId, eventType);
-  return { ok: true, action: `updated_${billingPatch.status}` };
+  return {
+    ok: true,
+    action: `updated_${billingPatch.status}`,
+    ...(provision ? { provision } : {})
+  };
 }
 
 /**
