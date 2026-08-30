@@ -276,3 +276,53 @@ export async function dispatchSiteDeployWorkflow(env, siteId) {
     message: `Worker deploy started for ${siteId}.`
   };
 }
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {string} siteId
+ */
+export async function dispatchSiteBillingDeprovisionWorkflow(env, siteId) {
+  if (!githubAutomationConfigured(env)) {
+    return {
+      ok: false,
+      error: 'GITHUB_NOT_CONFIGURED',
+      message: 'GitHub automation is not configured on this platform project.'
+    };
+  }
+
+  const repo = githubRepo(env);
+  const [owner, repoName] = repo.split('/');
+  const ref = env.PLATFORM_GITHUB_REF?.trim() || 'main';
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/platform-site-billing-deprovision.yml/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        ...githubHeaders(env),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ref,
+        inputs: {
+          site_id: siteId
+        }
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    return {
+      ok: false,
+      error: 'GITHUB_DISPATCH_FAILED',
+      message: `Billing deprovision dispatch failed (${response.status}). ${detail.slice(0, 200)}`
+    };
+  }
+
+  return {
+    ok: true,
+    siteId,
+    workflow: 'platform-site-billing-deprovision.yml',
+    message: `Billing deprovision started for ${siteId} (archive → registry removal → terraform destroy). Track progress in GitHub Actions.`
+  };
+}
