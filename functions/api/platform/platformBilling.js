@@ -1,4 +1,5 @@
 import { maybeDispatchBillingProvision } from './platformBillingProvision.js';
+import { maybeDispatchBillingDeprovision } from './platformBillingDeprovision.js';
 
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
 
@@ -12,6 +13,8 @@ import { maybeDispatchBillingProvision } from './platformBillingProvision.js';
  *   owner_email: string | null;
  *   provision_dispatched_at: number | null;
  *   provision_last_error: string | null;
+ *   deprovision_dispatched_at: number | null;
+ *   deprovision_last_error: string | null;
  *   created_at: number;
  *   updated_at: number;
  * }} SiteBillingRow */
@@ -403,6 +406,8 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
 
   /** @type {Record<string, unknown> | undefined} */
   let provision;
+  /** @type {Record<string, unknown> | undefined} */
+  let deprovision;
   const env = context.env;
   const manifest = context.manifest;
   if (env && manifest) {
@@ -420,13 +425,29 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
         message: provisionResult.message
       };
     }
+
+    const deprovisionResult = await maybeDispatchBillingDeprovision(env, db, manifest, {
+      siteId: billingPatch.siteId,
+      eventType,
+      status: billingPatch.status,
+      existingBilling
+    });
+    deprovision = deprovisionResult;
+    if (!deprovisionResult.ok) {
+      return {
+        ok: false,
+        error: deprovisionResult.error ?? 'DEPROVISION_DISPATCH_FAILED',
+        message: deprovisionResult.message
+      };
+    }
   }
 
   await markWebhookEventProcessed(db, eventId, eventType);
   return {
     ok: true,
     action: `updated_${billingPatch.status}`,
-    ...(provision ? { provision } : {})
+    ...(provision ? { provision } : {}),
+    ...(deprovision ? { deprovision } : {})
   };
 }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   defaultSiteEntry,
   PROTECTED_SITE_IDS,
+  validateBillingDeprovisionSiteId,
   validateDeploySiteId,
   validateDeprovisionSiteId,
   validateSiteId,
@@ -108,6 +109,19 @@ describe('site registry validation', () => {
     expect(validateDeprovisionSiteId('production', registry)).toMatch(/protected/i);
     expect(validateDeprovisionSiteId('demo', registry)).toMatch(/still in platform\/sites\.yaml/i);
     expect(validateDeprovisionSiteId('removed', {})).toBeNull();
+  });
+
+  it('requires billing deprovision site to remain in registry', () => {
+    const registry = {
+      practice: {
+        hostname: 'practice.lovely-hub.com',
+        hub_environment: 'practice',
+        terraform: true
+      }
+    };
+    expect(validateBillingDeprovisionSiteId('practice', registry)).toBeNull();
+    expect(validateBillingDeprovisionSiteId('missing', registry)).toMatch(/not in platform\/sites\.yaml/i);
+    expect(validateBillingDeprovisionSiteId('production', registry)).toMatch(/protected/i);
   });
 
   it('requires owner emails when creating a site via platform API', () => {

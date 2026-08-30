@@ -1,0 +1,152 @@
+name: Platform site billing deprovision
+
+on:
+  workflow_dispatch:
+    inputs:
+      site_id:
+        description: Site id to archive and deprovision (must still be in sites.yaml)
+        required: true
+        type: string
+      skip_platform_admin:
+        description: Skip platform admin redeploy
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: platform-terraform-state
+  cancel-in-progress: false
+
+jobs:
+  billing-deprovision:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/London
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CUSTOMER_CLOUDFLARE_ZONE_ID: ${{ secrets.CUSTOMER_CLOUDFLARE_ZONE_ID }}
+      CUSTOMER_ZONE_NAME: ${{ secrets.CUSTOMER_ZONE_NAME }}
+      WORKERS_SUBDOMAIN: ${{ secrets.WORKERS_SUBDOMAIN }}
+      ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
+      OWNER_EMAILS: ${{ secrets.OWNER_EMAILS }}
+      PLATFORM_OPERATOR_EMAILS: ${{ secrets.PLATFORM_OPERATOR_EMAILS }}
+      SITTER_EMAILS: ${{ secrets.SITTER_EMAILS }}
+      HUB_PROXY_SECRETS_JSON: ${{ secrets.HUB_PROXY_SECRETS_JSON }}
+      PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+      PLATFORM_CF_API_TOKEN: ${{ secrets.PLATFORM_CF_API_TOKEN }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
+      PLATFORM_SITE_ARCHIVE_SECRET: ${{ secrets.PLATFORM_SITE_ARCHIVE_SECRET }}
+      PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID: ${{ secrets.PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID }}
+      PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET: ${{ secrets.PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET }}
+      PLATFORM_ARCHIVE_R2_BUCKET: ${{ secrets.PLATFORM_ARCHIVE_R2_BUCKET }}
+      GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_R2_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate site_id
+        id: validate
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+        run: node scripts/validate-billing-deprovision-site-id.mjs
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            worker/package-lock.json
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Require remote Terraform state
+        run: |
+          if [ -z "${{ secrets.TF_STATE_R2_BUCKET }}" ] || [ -z "${{ secrets.TF_STATE_R2_ENDPOINT }}" ]; then
+            echo "::error::Configure TF_STATE_R2_BUCKET and TF_STATE_R2_ENDPOINT repo secrets. See docs/platform-provision.md"
+            exit 1
+          fi
+
+      - name: Terraform init (R2 backend)
+        working-directory: terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_R2_BUCKET }}" \
+            -backend-config="key=home-dashboard/hub.tfstate" \
+            -backend-config="region=auto" \
+            -backend-config='endpoints={s3="${{ secrets.TF_STATE_R2_ENDPOINT }}"}' \
+            -backend-config="skip_credentials_validation=true" \
+            -backend-config="skip_metadata_api_check=true" \
+            -backend-config="skip_region_validation=true" \
+            -backend-config="skip_requesting_account_id=true" \
+            -backend-config="use_path_style=true"
+
+      - name: Install worker dependencies
+        run: npm ci --prefix worker
+
+      - name: Verify Cloudflare API token
+        run: bash scripts/verify-cloudflare-api-token.sh
+
+      - name: Archive hub backup before teardown
+        id: archive
+        continue-on-error: true
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+        run: |
+          set -euo pipefail
+          if node scripts/archive-hub-site-backup.mjs "$SITE_ID" | tee /tmp/archive.log; then
+            if grep -q 'Archived to r2://' /tmp/archive.log; then
+              KEY=$(grep 'Archived to r2://' /tmp/archive.log | head -1 | sed 's/.*r2:\\/\\/[^/]*\\///')
+              echo "archive_r2_key=$KEY" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Billing deprovision hub site
+        run: |
+          ARGS=( "${{ inputs.site_id }}" )
+          if [ "${{ inputs.skip_platform_admin }}" = "true" ]; then ARGS+=( --skip-platform-admin ); fi
+          node scripts/billing-deprovision-hub-site.mjs "${ARGS[@]}"
+
+      - name: Commit registry removal
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          SITE_ID: ${{ inputs.site_id }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::PLATFORM_GITHUB_TOKEN not set — commit registry removal manually."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add platform/sites.yaml worker/wrangler.toml worker/package.json terraform/environments/hub.tfvars.example
+          if git diff --staged --quiet; then
+            echo "No registry file changes to commit."
+            exit 0
+          fi
+          git commit -m "platform: billing deprovision ${SITE_ID} (remove registry stubs)"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+
+      - name: Prune HUB_PROXY_SECRETS_JSON
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          SITE_ID: ${{ inputs.site_id }}
+        run: node scripts/prune-hub-proxy-secrets-github-secret.mjs
+
+      - name: Record archive pointer in platform billing D1
+        if: steps.archive.outputs.archive_r2_key != ''
+        continue-on-error: true
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+          ARCHIVE_R2_KEY: ${{ steps.archive.outputs.archive_r2_key }}
+        run: |
+          node scripts/update-billing-archive-key.mjs "$SITE_ID" "$ARCHIVE_R2_KEY"

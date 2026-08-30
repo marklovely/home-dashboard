@@ -290,6 +290,7 @@ To override tfvars values, export the usual env vars (`WORKERS_SUBDOMAIN`, `CLOU
 | [`platform-site-deploy.yml`](../.github/workflows/platform-site-deploy.yml) | Worker-only redeploy |
 | [`platform-sync-google-places-key.yml`](../.github/workflows/platform-sync-google-places-key.yml) | Manual — push `GOOGLE_PLACES_API_KEY` to all hub Workers (or one site) |
 | [`platform-sync-archive-secret.yml`](../.github/workflows/platform-sync-archive-secret.yml) | Manual — push archive secret to Workers |
+| [`platform-site-billing-deprovision.yml`](../.github/workflows/platform-site-billing-deprovision.yml) | Stripe cancel/delete webhook or manual — archive, registry removal, terraform destroy |
 
 ## v5 — automated deprovision
 
