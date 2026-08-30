@@ -1,0 +1,428 @@
+{
+  "generatedAt": "2026-08-30T11:32:25.163Z",
+  "platform": {
+    "githubRepo": "marklovely/home-dashboard",
+    "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
+    "accessTeamDomain": "lovely-home",
+    "zoneName": "lovely-home.co.uk"
+  },
+  "sites": {
+    "production": {
+      "siteId": "production",
+      "hostname": "dashboard.lovely-home.co.uk",
+      "hubEnvironment": "production",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": false,
+      "ownerEmails": [],
+      "sitterEmails": [],
+      "pagesProject": "home-dashboard",
+      "workerName": "lovely-home-hub-api",
+      "pagesUrl": "https://dashboard.lovely-home.co.uk",
+      "workerApiOrigin": "https://lovely-home-hub-api.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "faa8df9dfac167314cb68b9cbc9851c20e2824fbf30666f0323a5d9b14444a9d,6840a5b000cdbbc2403738c3ed4faed72bb7916bd04a96f7bb3aa81809927337",
+        "access_enabled": true,
+        "access_pages_app_id": "c0cd852c-dce6-4855-82bf-3afa83c4a49d",
+        "access_pages_aud": "6840a5b000cdbbc2403738c3ed4faed72bb7916bd04a96f7bb3aa81809927337",
+        "access_worker_app_id": "b644f408-236c-498a-a314-e67b5fa3d76b",
+        "access_worker_aud": "faa8df9dfac167314cb68b9cbc9851c20e2824fbf30666f0323a5d9b14444a9d",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "6ba7c54d-8804-47c0-8648-77b1aa25e0e0",
+        "d1_database_name": "lovely-home-appliance-manuals",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "dashboard.lovely-home.co.uk",
+        "hub_environment": "production",
+        "owner_emails": [
+          "marklovely67@gmail.com"
+        ],
+        "pages_project": "home-dashboard",
+        "pages_url": "https://dashboard.lovely-home.co.uk",
+        "r2_guides_bucket": "lovely-home-appliance-guides",
+        "r2_media_bucket": "lovely-home-guide-media",
+        "site_id": "production",
+        "sitter_emails": [],
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        }
+      ]
+    },
+    "test": {
+      "siteId": "test",
+      "hostname": "test.lovely-home.co.uk",
+      "hubEnvironment": "test",
+      "vanilla": true,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "ownerEmails": [],
+      "sitterEmails": [],
+      "pagesProject": "home-dashboard-test",
+      "workerName": "lovely-home-hub-api-test",
+      "pagesUrl": "https://test.lovely-home.co.uk",
+      "workerApiOrigin": "https://lovely-home-hub-api-test.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "a49585221e362af612c7525bc3fb048c69dc54d5386ca6fea213387807fdf72c,f5979e014ca513b7a9ab2bdd2a949922281d7251d65acab03557b30ba5cccff9",
+        "access_enabled": true,
+        "access_pages_app_id": "543203c4-6d07-43e5-8557-36302437615c",
+        "access_pages_aud": "f5979e014ca513b7a9ab2bdd2a949922281d7251d65acab03557b30ba5cccff9",
+        "access_worker_app_id": "11c24664-381e-4a31-bc8c-92bb66ca3583",
+        "access_worker_aud": "a49585221e362af612c7525bc3fb048c69dc54d5386ca6fea213387807fdf72c",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "9f700f32-e92d-46cb-af9e-9a42f428aceb",
+        "d1_database_name": "lovely-home-appliance-manuals-test",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "test.lovely-home.co.uk",
+        "hub_environment": "test",
+        "owner_emails": [
+          "marklovely67@gmail.com",
+          "tara@dragonpd.co.uk"
+        ],
+        "pages_project": "home-dashboard-test",
+        "pages_url": "https://test.lovely-home.co.uk",
+        "r2_guides_bucket": "lovely-home-appliance-guides-test",
+        "r2_media_bucket": "lovely-home-guide-media-test",
+        "site_id": "test",
+        "sitter_emails": [],
+        "vanilla": true,
+        "worker_api_origin": "https://lovely-home-hub-api-test.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-test.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-test"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    },
+    "sandbox": {
+      "siteId": "sandbox",
+      "hostname": "sandbox.lovely-home.co.uk",
+      "hubEnvironment": "sandbox",
+      "vanilla": true,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "ownerEmails": [],
+      "sitterEmails": [],
+      "pagesProject": "home-dashboard-sandbox",
+      "workerName": "lovely-home-hub-api-sandbox",
+      "pagesUrl": "https://sandbox.lovely-home.co.uk",
+      "workerApiOrigin": "https://lovely-home-hub-api-sandbox.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "f65e4ee97d26449dffdbdcaf5e8e18447cacb8fd1cc1d81ea13e71f2e7dbcee8,5f2dc3eb82b0b808c5631083b343a0f0fa155195180f871fe00fe13597bb8696",
+        "access_enabled": true,
+        "access_pages_app_id": "c1efaa74-4635-4ee0-9365-0651bf19ce94",
+        "access_pages_aud": "5f2dc3eb82b0b808c5631083b343a0f0fa155195180f871fe00fe13597bb8696",
+        "access_worker_app_id": "ee4e495f-3ec8-4537-9a7a-96d31bb7596c",
+        "access_worker_aud": "f65e4ee97d26449dffdbdcaf5e8e18447cacb8fd1cc1d81ea13e71f2e7dbcee8",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "8e690b7c-cc90-4746-b578-ffd24fef08a5",
+        "d1_database_name": "lovely-home-appliance-manuals-sandbox",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "sandbox.lovely-home.co.uk",
+        "hub_environment": "sandbox",
+        "owner_emails": [
+          "marklovely67@gmail.com",
+          "jamie@jamester.net"
+        ],
+        "pages_project": "home-dashboard-sandbox",
+        "pages_url": "https://sandbox.lovely-home.co.uk",
+        "r2_guides_bucket": "lovely-home-appliance-guides-sandbox",
+        "r2_media_bucket": "lovely-home-guide-media-sandbox",
+        "site_id": "sandbox",
+        "sitter_emails": [],
+        "vanilla": true,
+        "worker_api_origin": "https://lovely-home-hub-api-sandbox.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-sandbox.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-sandbox"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    },
+    "demo": {
+      "siteId": "demo",
+      "hostname": "demo.lovely-home.co.uk",
+      "hubEnvironment": "demo",
+      "vanilla": true,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "ownerEmails": [
+        "demo@lovely-home.co.uk"
+      ],
+      "sitterEmails": [],
+      "pagesProject": "home-dashboard-demo",
+      "workerName": "lovely-home-hub-api-demo",
+      "pagesUrl": "https://demo.lovely-home.co.uk",
+      "workerApiOrigin": "https://lovely-home-hub-api-demo.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "",
+        "access_enabled": false,
+        "access_pages_app_id": "",
+        "access_pages_aud": "",
+        "access_worker_app_id": "",
+        "access_worker_aud": "",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "99fd8a57-5e5a-4e0d-8c01-30533ea47f13",
+        "d1_database_name": "lovely-home-appliance-manuals-demo",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "demo.lovely-home.co.uk",
+        "hub_environment": "demo",
+        "owner_emails": [
+          "marklovely67@gmail.com"
+        ],
+        "pages_project": "home-dashboard-demo",
+        "pages_url": "https://demo.lovely-home.co.uk",
+        "r2_guides_bucket": "lovely-home-appliance-guides-demo",
+        "r2_media_bucket": "lovely-home-guide-media-demo",
+        "site_id": "demo",
+        "sitter_emails": [],
+        "vanilla": true,
+        "worker_api_origin": "https://lovely-home-hub-api-demo.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-demo.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-demo"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    },
+    "dev": {
+      "siteId": "dev",
+      "hostname": "dev.lovely-home.co.uk",
+      "hubEnvironment": "dev",
+      "vanilla": true,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "ownerEmails": [
+        "marklovely67@gmail.com"
+      ],
+      "sitterEmails": [],
+      "pagesProject": "home-dashboard-dev",
+      "workerName": "lovely-home-hub-api-dev",
+      "pagesUrl": "https://dev.lovely-home.co.uk",
+      "workerApiOrigin": "https://lovely-home-hub-api-dev.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "25a4d45749f51b6d73ed6168ee56bb9c15cd2b8e285f269c8a3f08b4837857d3,5361f3d952f1e7ad9757cef23ece0b60b692a53a0543699915bc9e7cd51b1956",
+        "access_enabled": true,
+        "access_pages_app_id": "a52a2123-aebb-467b-a5ae-a01d3863468f",
+        "access_pages_aud": "5361f3d952f1e7ad9757cef23ece0b60b692a53a0543699915bc9e7cd51b1956",
+        "access_worker_app_id": "34c56072-efd9-41c1-b0f1-56cd6947fe56",
+        "access_worker_aud": "25a4d45749f51b6d73ed6168ee56bb9c15cd2b8e285f269c8a3f08b4837857d3",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "b0d86465-993b-493d-8fa2-240d65159505",
+        "d1_database_name": "lovely-home-appliance-manuals-dev",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "dev.lovely-home.co.uk",
+        "hub_environment": "dev",
+        "owner_emails": [
+          "marklovely67@gmail.com"
+        ],
+        "pages_project": "home-dashboard-dev",
+        "pages_url": "https://dev.lovely-home.co.uk",
+        "r2_guides_bucket": "lovely-home-appliance-guides-dev",
+        "r2_media_bucket": "lovely-home-guide-media-dev",
+        "site_id": "dev",
+        "sitter_emails": [],
+        "vanilla": true,
+        "worker_api_origin": "https://lovely-home-hub-api-dev.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-dev.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-dev"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    },
+    "smith": {
+      "siteId": "smith",
+      "hostname": "smith.lovely-hub.com",
+      "hubEnvironment": "smith",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "ownerEmails": [
+        "marklovely67@gmail.com"
+      ],
+      "sitterEmails": [],
+      "pagesProject": "home-dashboard-smith",
+      "workerName": "lovely-home-hub-api-smith",
+      "pagesUrl": "https://smith.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-smith.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "61c913f331dad4a80e67a0ce8a8f3d53a99319e74e23ead0400319c1395059f1,809fbae3de08be8649c9137d0f4522d1bb001baef29eb97d47e981f98075acc0",
+        "access_enabled": true,
+        "access_pages_app_id": "8322e160-132f-4b00-9351-b8b30d56b5eb",
+        "access_pages_aud": "809fbae3de08be8649c9137d0f4522d1bb001baef29eb97d47e981f98075acc0",
+        "access_worker_app_id": "f2e519a8-62d0-4c47-b2db-a112440deb48",
+        "access_worker_aud": "61c913f331dad4a80e67a0ce8a8f3d53a99319e74e23ead0400319c1395059f1",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "8faef1a8-517b-4d8e-9b2c-12f69187fe46",
+        "d1_database_name": "lovely-home-appliance-manuals-smith",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "smith.lovely-hub.com",
+        "hub_environment": "smith",
+        "owner_emails": [
+          "marklovely67@gmail.com"
+        ],
+        "pages_project": "home-dashboard-smith",
+        "pages_url": "https://smith.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-smith",
+        "r2_media_bucket": "lovely-home-guide-media-smith",
+        "site_id": "smith",
+        "sitter_emails": [],
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-smith.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-smith.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-smith"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    }
+  }
+}
