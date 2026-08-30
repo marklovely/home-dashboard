@@ -1,0 +1,54 @@
+name: Platform sync Google Places key
+
+on:
+  workflow_dispatch:
+    inputs:
+      site_id:
+        description: Wrangler env / site id (leave empty to sync all Workers)
+        required: false
+        type: string
+      dry_run:
+        description: Print targets only — do not call wrangler
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/London
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            worker/package-lock.json
+
+      - name: Require Google Places API key
+        run: |
+          if [ -z "$GOOGLE_PLACES_API_KEY" ]; then
+            echo "::error::Configure GOOGLE_PLACES_API_KEY repo secret first."
+            exit 1
+          fi
+
+      - name: Install worker dependencies
+        run: npm ci --prefix worker
+
+      - name: Sync GOOGLE_PLACES_API_KEY to Workers
+        run: |
+          set -euo pipefail
+          ARGS=( --continue )
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS+=( --dry-run ); fi
+          if [ -n "${{ inputs.site_id }}" ]; then ARGS+=( --site "${{ inputs.site_id }}" ); fi
+          node scripts/sync-google-places-api-key.mjs "${ARGS[@]}"
