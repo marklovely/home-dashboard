@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Billing-triggered hub teardown: remove registry stubs locally, then deprovision infra.
+ * Local/emergency billing teardown: remove registry stubs, then deprovision infra inline.
+ * CI uses platform-site-billing-deprovision.yml instead (archive → registry PR → v5 deprovision on merge).
  * Run after archive-hub-site-backup.mjs while the site is still live in Terraform.
  *
  * Usage: node scripts/billing-deprovision-hub-site.mjs <site_id> [--skip-platform-admin]

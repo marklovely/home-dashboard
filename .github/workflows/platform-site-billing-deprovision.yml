@@ -7,14 +7,10 @@ on:
         description: Site id to archive and deprovision (must still be in sites.yaml)
         required: true
         type: string
-      skip_platform_admin:
-        description: Skip platform admin redeploy
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: platform-terraform-state
@@ -61,9 +57,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            worker/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -90,11 +84,8 @@ jobs:
             -backend-config="skip_requesting_account_id=true" \
             -backend-config="use_path_style=true"
 
-      - name: Install worker dependencies
-        run: npm ci --prefix worker
-
-      - name: Verify Cloudflare API token
-        run: bash scripts/verify-cloudflare-api-token.sh
+      - name: Install dependencies
+        run: npm ci
 
       - name: Archive hub backup before teardown
         id: archive
@@ -110,37 +101,54 @@ jobs:
             fi
           fi
 
-      - name: Billing deprovision hub site
-        run: |
-          ARGS=( "${{ inputs.site_id }}" )
-          if [ "${{ inputs.skip_platform_admin }}" = "true" ]; then ARGS+=( --skip-platform-admin ); fi
-          node scripts/billing-deprovision-hub-site.mjs "${ARGS[@]}"
-
-      - name: Commit registry removal
+      - name: Remove site from registry (local)
         env:
-          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
           SITE_ID: ${{ inputs.site_id }}
+          HOSTNAME: ${{ steps.validate.outputs.hostname }}
         run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::warning::PLATFORM_GITHUB_TOKEN not set — commit registry removal manually."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add platform/sites.yaml worker/wrangler.toml worker/package.json terraform/environments/hub.tfvars.example
-          if git diff --staged --quiet; then
-            echo "No registry file changes to commit."
-            exit 0
-          fi
-          git commit -m "platform: billing deprovision ${SITE_ID} (remove registry stubs)"
-          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+          node scripts/platform-site-manage.mjs delete \
+            --site-id "$SITE_ID" \
+            --confirm-hostname "$HOSTNAME"
 
-      - name: Prune HUB_PROXY_SECRETS_JSON
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
-          SITE_ID: ${{ inputs.site_id }}
-        run: node scripts/prune-hub-proxy-secrets-github-secret.mjs
+      - name: Validate Terraform
+        run: |
+          cd terraform
+          terraform fmt -check -recursive
+          terraform init -backend=false
+          terraform validate
+
+      - name: Run registry test
+        run: npm test -- tests/platformSitesYaml.test.js
+
+      - name: Check PR token
+        run: |
+          if [ -z "${{ secrets.PLATFORM_GITHUB_TOKEN }}" ]; then
+            echo "::error title=Missing PLATFORM_GITHUB_TOKEN::Add repo secret PLATFORM_GITHUB_TOKEN (PAT with contents:write + pull_requests:write). Use the same token as platform admin."
+            exit 1
+          fi
+
+      - name: Open registry removal pull request
+        id: open_pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          branch: platform/site-${{ inputs.site_id }}-billing-deprovision-${{ github.run_id }}
+          delete-branch: true
+          title: platform: billing deprovision ${{ inputs.site_id }}
+          body: |
+            Automated billing deprovision from **Platform billing** (Stripe cancel/delete).
+
+            **Site:** `${{ inputs.site_id }}`
+
+            Hub archive (if configured) completed before this PR. **After merge**, [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) tears down Terraform + Worker and redeploys platform admin.
+
+            Triggered by Stripe billing webhook or manual **Platform site billing deprovision** workflow.
+
+      - name: Require pull request
+        if: steps.open_pr.outputs.pull-request-number == ''
+        run: |
+          echo "::error::No registry changes to commit — is ${{ inputs.site_id }} already removed from platform/sites.yaml?"
+          exit 1
 
       - name: Record archive pointer in platform billing D1
         if: steps.archive.outputs.archive_r2_key != ''
