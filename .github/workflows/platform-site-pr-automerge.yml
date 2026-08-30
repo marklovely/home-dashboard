@@ -30,6 +30,10 @@ jobs:
         (
           startsWith(github.event.pull_request.head.ref, 'platform/provision-') &&
           contains(github.event.pull_request.body, 'Automated provision follow-up from **Platform site provision**')
+        ) ||
+        (
+          contains(github.event.pull_request.head.ref, '-billing-deprovision-') &&
+          contains(github.event.pull_request.body, 'Automated billing deprovision from **Platform billing**')
         )
       )
     runs-on: ubuntu-latest
