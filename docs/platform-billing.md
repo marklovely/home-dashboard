@@ -11,7 +11,7 @@ Related: [roadmap](./roadmap.md) §3 · [platform provision](./platform-provisio
 | Checkout + billing API | Platform Pages Functions — `/api/platform/billing/*` |
 | Stripe webhooks | `/api/stripe/webhook` (no Cloudflare Access) |
 | Billing mirror | D1 `lovely-home-platform-billing` → binding `PLATFORM_BILLING_DB` |
-| Provision / deprovision | `trialing` webhook → GitHub **Platform site provision**; cancel/deprovision in slice 2b |
+| Provision / deprovision | `trialing` webhook → **Platform site provision**; `subscription.deleted` / canceled → **Platform site billing deprovision** |
 
 ## One-time setup (test mode)
 
@@ -121,8 +121,25 @@ node scripts/apply-platform-billing-migration.mjs
 
 **Operator test:** add a registry-only site (e.g. `practice`) with no Terraform contract, run Checkout for that `siteId`, confirm GitHub Actions **Platform site provision** starts.
 
-## Slice 2b (next)
+## Slice 2b — deprovision on cancel (shipped)
 
-- `subscription.deleted` / failed payment → archive + deprovision
-- Platform admin UI: billing status on site cards
+When Stripe sends **`customer.subscription.deleted`** or **`customer.subscription.updated`** with status **canceled** (includes `unpaid`):
+
+1. Platform D1 billing row is updated to `canceled`.
+2. If the site was live (provisioned or had `trialing`/`active`/`past_due` billing), the platform dispatches [`platform-site-billing-deprovision.yml`](../.github/workflows/platform-site-billing-deprovision.yml) via `PLATFORM_GITHUB_TOKEN`.
+3. The workflow: **archive** hub JSON to platform R2 → remove registry stubs → **terraform destroy** + Worker delete → rebuild manifest → commit registry removal to `main`.
+4. `site_billing.deprovision_dispatched_at` is set on success; `deprovision_last_error` on dispatch failure (webhook returns **503** for Stripe retry).
+5. `invoice.payment_failed` sets **`past_due` only** — hub stays live while Stripe retries billing.
+
+Apply migrations after deploy:
+
+```bash
+node scripts/apply-platform-billing-migration.mjs
+```
+
+**Operator test:** cancel a test subscription in Stripe Dashboard (or end a test clock) → confirm **Platform site billing deprovision** runs for that `siteId`.
+
+## Slice 3 (next)
+
 - Public signup + marketing site trial CTA
+- Stripe Customer Portal link for self-service cancel

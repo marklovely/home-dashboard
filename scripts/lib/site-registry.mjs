@@ -169,3 +169,25 @@ export function validateDeprovisionSiteId(siteId, registrySites) {
   }
   return null;
 }
+
+/**
+ * Validate site id for billing-triggered deprovision (site must still be in registry).
+ *
+ * @param {string} siteId
+ * @param {Record<string, SiteRegistryEntry>} registrySites
+ */
+export function validateBillingDeprovisionSiteId(siteId, registrySites) {
+  const idError = validateSiteId(siteId);
+  if (idError) return idError;
+  if (PROTECTED_SITE_IDS.has(siteId)) {
+    return `Site "${siteId}" is protected and cannot be billing-deprovisioned.`;
+  }
+  const entry = registrySites[siteId];
+  if (!entry) {
+    return `Site "${siteId}" is not in platform/sites.yaml — nothing to billing-deprovision.`;
+  }
+  if (entry.terraform === false) {
+    return `Site "${siteId}" is not Terraform-managed.`;
+  }
+  return null;
+}

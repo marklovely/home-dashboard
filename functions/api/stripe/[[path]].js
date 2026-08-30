@@ -58,7 +58,7 @@ export async function onRequest(context) {
     env: /** @type {Record<string, string | undefined>} */ (env),
     manifest
   });
-  const status = result.ok ? 200 : result.error === 'PROVISION_DISPATCH_FAILED' ? 503 : 422;
+  const status = result.ok ? 200 : result.error === 'PROVISION_DISPATCH_FAILED' || result.error === 'DEPROVISION_DISPATCH_FAILED' ? 503 : 422;
   return Response.json(result, { status });
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 200) : 'unknown';
