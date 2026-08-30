@@ -43,19 +43,22 @@ if (!j.success) {
   process.exit(1);
 }
 const env = j.result?.deployment_configs?.production?.env_vars ?? {};
-const id = env.STRIPE_SECRET_KEY?.value;
+const secretConfigured = (entry) =>
+  entry?.type === 'secret_text' || Boolean(entry?.value?.trim());
+const id = env.STRIPE_SECRET_KEY;
 const webhook = env.STRIPE_WEBHOOK_SECRET;
-const webhookConfigured =
-  webhook?.type === 'secret_text' || Boolean(webhook?.value?.trim());
 const price = env.STRIPE_PRICE_ID?.value;
 console.log('Project:', j.result?.name ?? process.env.CF_PROJECT);
-console.log('STRIPE_SECRET_KEY:', id ? '(set)' : 'MISSING');
+console.log(
+  'STRIPE_SECRET_KEY:',
+  secretConfigured(id) ? '(set — API hides secret values)' : 'MISSING'
+);
 console.log(
   'STRIPE_WEBHOOK_SECRET:',
-  webhookConfigured ? '(set — API hides secret values)' : 'MISSING'
+  secretConfigured(webhook) ? '(set — API hides secret values)' : 'MISSING'
 );
 console.log('STRIPE_PRICE_ID:', price ? price : 'MISSING');
-if (!id || !webhookConfigured || !price) {
+if (!secretConfigured(id) || !secretConfigured(webhook) || !price) {
   console.error('');
   console.error('Add stripe_* to terraform/environments/hub.tfvars and run:');
   console.error('  cd terraform && terraform apply -var-file=environments/hub.tfvars');
