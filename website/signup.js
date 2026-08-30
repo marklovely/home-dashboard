@@ -12,6 +12,12 @@
   if (!form || !siteInput || !emailInput || !submitBtn) return;
 
   const params = new URLSearchParams(window.location.search);
+  const planParam = (params.get('plan') || '').trim().toLowerCase();
+  if (planParam === 'year') {
+    const yearRadio = form.querySelector('input[name="billingInterval"][value="year"]');
+    if (yearRadio) yearRadio.checked = true;
+  }
+
   if (params.get('canceled') === '1') {
     showAlert('Checkout was canceled. You can try again when ready.', 'info');
     const canceledSite = (params.get('site') || '').trim().toLowerCase();
@@ -31,6 +37,8 @@
 
     const siteId = siteInput.value.trim().toLowerCase();
     const email = emailInput.value.trim().toLowerCase();
+    const billingInterval =
+      form.querySelector('input[name="billingInterval"]:checked')?.value === 'year' ? 'year' : 'month';
 
     if (!SITE_ID_RE.test(siteId)) {
       showAlert('Hub name must start with a letter and use lowercase letters, numbers, or hyphens only.', 'error');
@@ -55,7 +63,7 @@
       const response = await fetch(apiBase + '/api/public/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ siteId, customerEmail: email })
+        body: JSON.stringify({ siteId, customerEmail: email, billingInterval })
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -123,4 +131,8 @@
   }
 
   updateSlugHint();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.LovelyHomePricing) window.LovelyHomePricing.initPricing();
+  });
 })();

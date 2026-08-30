@@ -6,7 +6,8 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 
 | Path | Purpose |
 |------|---------|
-| `/` | Product landing — demo + **Start free trial** |
+| `/` | Product landing — demo + **Start free trial** + pricing summary |
+| `/pricing.html` | Full transparent pricing (live amount from platform API) |
 | `/signup.html` | Public trial signup (hub name + email → Stripe Checkout) |
 | `/signup-success.html` | Post-checkout confirmation |
 | `/app.html` | Screenshot gallery |
@@ -14,6 +15,8 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 | `/privacy.html` | Privacy policy |
 
 Public demo hub: [demo.lovely-home.co.uk/sign-in](https://demo.lovely-home.co.uk/sign-in) — username `demo`, password `lovely-demo`.
+
+Pricing on the marketing site is **£9.99/month or £99/year** (loaded live from `GET /api/public/signup/pricing` on the platform Worker, backed by `STRIPE_PRICE_ID` and `STRIPE_PRICE_ID_YEARLY`). Change prices in Stripe + Terraform — the website updates after deploy.
 
 ## Local preview
 

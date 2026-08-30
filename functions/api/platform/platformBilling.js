@@ -47,8 +47,22 @@ export function stripeBillingConfigured(env) {
   return Boolean(
     env.STRIPE_SECRET_KEY?.trim() &&
       env.STRIPE_WEBHOOK_SECRET?.trim() &&
-      env.STRIPE_PRICE_ID?.trim()
+      (env.STRIPE_PRICE_ID?.trim() || env.STRIPE_PRICE_ID_YEARLY?.trim())
   );
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {'month' | 'year' | string | undefined | null} billingInterval
+ */
+export function resolveStripePriceId(env, billingInterval) {
+  const interval = String(billingInterval ?? 'month')
+    .trim()
+    .toLowerCase();
+  if (interval === 'year' || interval === 'yearly' || interval === 'annual') {
+    return env.STRIPE_PRICE_ID_YEARLY?.trim() || null;
+  }
+  return env.STRIPE_PRICE_ID?.trim() || null;
 }
 
 /**
@@ -180,13 +194,26 @@ export function defaultCheckoutUrls(env, platformHostname) {
  *   customerEmail: string;
  *   successUrl: string;
  *   cancelUrl: string;
+ *   billingInterval?: string;
+ *   priceId?: string;
  * }} input
  */
 export async function createBillingCheckoutSession(env, input) {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
-  const priceId = env.STRIPE_PRICE_ID?.trim();
-  if (!secretKey || !priceId) {
+  const billingInterval = input.billingInterval ?? 'month';
+  const priceId = input.priceId?.trim() || resolveStripePriceId(env, billingInterval);
+  if (!secretKey) {
     return { ok: false, error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe billing is not configured.' };
+  }
+  if (!priceId) {
+    const yearly = ['year', 'yearly', 'annual'].includes(String(billingInterval).trim().toLowerCase());
+    return {
+      ok: false,
+      error: 'STRIPE_PRICE_NOT_CONFIGURED',
+      message: yearly
+        ? 'Yearly billing is not configured yet. Choose monthly or contact support.'
+        : 'Stripe billing is not configured.'
+    };
   }
 
   const siteId = input.siteId.trim();

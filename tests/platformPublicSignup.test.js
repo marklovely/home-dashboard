@@ -6,6 +6,7 @@ import {
   publicSignupUrls,
   validatePublicSignupSiteId
 } from '../functions/api/platform/platformPublicSignup.js';
+import { resolveStripePriceId } from '../functions/api/platform/platformBilling.js';
 
 vi.mock('../functions/api/platform/platformGitHub.js', () => ({
   dispatchSiteManageWorkflow: vi.fn(),
@@ -29,7 +30,8 @@ const baseEnv = {
   PUBLIC_SIGNUP_ENABLED: 'true',
   STRIPE_SECRET_KEY: 'sk_test',
   STRIPE_WEBHOOK_SECRET: 'whsec_test',
-  STRIPE_PRICE_ID: 'price_test',
+  STRIPE_PRICE_ID: 'price_month',
+  STRIPE_PRICE_ID_YEARLY: 'price_year',
   PLATFORM_GITHUB_TOKEN: 'ghp_test',
   PLATFORM_GITHUB_REPO: 'owner/repo'
 };
@@ -105,8 +107,44 @@ describe('platform public signup', () => {
       expect.objectContaining({
         siteId: 'rose-cottage',
         customerEmail: 'owner@example.com',
+        billingInterval: 'month',
         successUrl: expect.stringContaining('signup-success.html')
       })
     );
+  });
+
+  it('passes yearly billing interval to checkout', async () => {
+    vi.mocked(dispatchSiteManageWorkflow).mockResolvedValue({
+      ok: true,
+      siteId: 'rose-cottage',
+      workflow: 'platform-site-manage.yml',
+      message: 'started'
+    });
+    vi.mocked(createBillingCheckoutSession).mockResolvedValue({
+      ok: true,
+      url: 'https://checkout.stripe.com/test-year',
+      sessionId: 'cs_test_year'
+    });
+    vi.mocked(getSiteBilling).mockResolvedValue(null);
+
+    await handlePublicHubSignup(
+      baseEnv,
+      emptyManifest,
+      'rose-cottage',
+      'owner@example.com',
+      /** @type {D1Database} */ ({}),
+      'year'
+    );
+
+    expect(createBillingCheckoutSession).toHaveBeenCalledWith(
+      baseEnv,
+      expect.objectContaining({ billingInterval: 'year' })
+    );
+  });
+
+  it('resolves monthly and yearly Stripe price ids', () => {
+    expect(resolveStripePriceId(baseEnv, 'month')).toBe('price_month');
+    expect(resolveStripePriceId(baseEnv, 'year')).toBe('price_year');
+    expect(resolveStripePriceId(baseEnv, 'yearly')).toBe('price_year');
   });
 });
