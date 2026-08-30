@@ -27,6 +27,7 @@
     </a>
     <nav>
       <a href="/">Home</a>
+      <a href="pricing.html">Pricing</a>
       <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
       <a href="support.html">Support</a>
     </nav>
@@ -36,17 +37,18 @@
     <div class="signup-layout">
       <section class="signup-intro">
         <p class="hero-eyebrow"><span></span> Private household hub</p>
-        <h1>Start your 14-day free trial</h1>
+        <h1>Start your <span data-pricing="trial-days">14</span>-day free trial</h1>
         <p class="hero-lead">
           Your own hub at <strong>{your-name}.lovely-hub.com</strong> — house guide, bins, weather, and Alexa routines on a wall tablet.
         </p>
+        <p class="signup-pricing-callout" data-pricing="signup-summary">14-day free trial — card on file for when the trial ends.</p>
         <ul class="signup-benefits">
-          <li><strong>£0 today</strong> — card on file for when the trial ends</li>
-          <li>Cancel anytime before billing starts</li>
+          <li><strong>£0 today</strong> — then <span data-pricing="monthly-label">£9.99/month</span> or <span data-pricing="yearly-label">£99/year</span> after the trial</li>
+          <li>Cancel anytime before billing starts — no charge</li>
           <li>One private hub per household — not a public app</li>
           <li>We set up DNS and hosting after checkout</li>
         </ul>
-        <p class="signup-note muted">Questions first? <a href="mailto:support@lovely-home.co.uk">Email support</a> or <a href="https://demo.lovely-home.co.uk/sign-in">try the demo</a>.</p>
+        <p class="signup-note muted">See <a href="pricing.html">full pricing</a>, <a href="mailto:support@lovely-home.co.uk">email support</a>, or <a href="https://demo.lovely-home.co.uk/sign-in">try the demo</a>.</p>
       </section>
 
       <section class="signup-card" aria-labelledby="signup-form-title">
@@ -66,13 +68,35 @@
           </div>
 
           <div class="form-field">
+            <fieldset class="billing-interval-field">
+              <legend>Billing after trial</legend>
+              <div class="billing-interval-options">
+                <label class="billing-interval-option">
+                  <input type="radio" name="billingInterval" value="month" checked>
+                  <span class="billing-interval-copy">
+                    <span class="billing-interval-title">Monthly</span>
+                    <span class="billing-interval-price" data-pricing="interval-label" data-plan="month">£9.99/month</span>
+                  </span>
+                </label>
+                <label class="billing-interval-option billing-interval-option--featured">
+                  <input type="radio" name="billingInterval" value="year">
+                  <span class="billing-interval-copy">
+                    <span class="billing-interval-title">Yearly <span class="pricing-badge pricing-badge--inline" data-pricing="annual-savings">Save 17%</span></span>
+                    <span class="billing-interval-price" data-pricing="interval-label" data-plan="year">£99.00/year</span>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="form-field">
             <label for="owner-email">Your email</label>
             <input id="owner-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
             <p class="field-hint">Owner sign-in and billing receipts go here.</p>
           </div>
 
           <button type="submit" class="btn btn-primary btn-block" id="signup-submit">Continue to secure checkout</button>
-          <p class="signup-legal muted">By continuing you agree to our <a href="privacy.html">privacy policy</a>. Stripe handles payment details securely.</p>
+          <p class="signup-legal muted">By continuing you agree to our <a href="privacy.html">privacy policy</a>. Stripe handles payment details securely. <a href="pricing.html">Pricing details</a>.</p>
         </form>
       </section>
     </div>
@@ -87,6 +111,7 @@
     </p>
   </footer>
 
+  <script src="pricing.js" defer></script>
   <script src="signup.js" defer></script>
 </body>
 </html>

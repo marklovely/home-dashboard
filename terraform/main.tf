@@ -69,6 +69,7 @@ module "platform_admin" {
   stripe_secret_key                 = var.stripe_secret_key
   stripe_webhook_secret             = var.stripe_webhook_secret
   stripe_price_id                   = var.stripe_price_id
+  stripe_price_id_yearly            = var.stripe_price_id_yearly
   marketing_site_origin             = var.marketing_site_origin
   public_signup_enabled             = var.public_signup_enabled
   pages_preview_deployments_enabled = var.pages_preview_deployments_enabled

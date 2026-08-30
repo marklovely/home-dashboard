@@ -125,7 +125,13 @@ variable "stripe_webhook_secret" {
 variable "stripe_price_id" {
   type        = string
   default     = ""
-  description = "Stripe Price id for the monthly hub subscription (price_…)."
+  description = "Stripe Price id for the monthly hub subscription (price_…, e.g. £9.99/month)."
+}
+
+variable "stripe_price_id_yearly" {
+  type        = string
+  default     = ""
+  description = "Stripe Price id for the yearly hub subscription (price_…, e.g. £99/year)."
 }
 
 variable "marketing_site_origin" {
