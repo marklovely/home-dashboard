@@ -25,6 +25,8 @@ echo
 echo "Home:     https://lovely-home.co.uk/"
 echo "Gallery:  https://lovely-home.co.uk/app.html"
 echo "Support:  https://lovely-home.co.uk/support.html"
+echo "Signup:   https://lovely-home.co.uk/signup.html"
+echo "Success:  https://lovely-home.co.uk/signup-success.html"
 echo "Privacy:  https://lovely-home.co.uk/privacy.html"
 echo
 echo "If the custom domain is not attached yet, add lovely-home.co.uk in Cloudflare Pages → lovely-home → Custom domains."

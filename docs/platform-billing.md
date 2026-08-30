@@ -153,7 +153,43 @@ The same `site_id` can go through multiple billing cycles (throwaway test hubs, 
 
 Archive JSON in R2 is kept across cycles for optional restore ([platform-site-archive.md](./platform-site-archive.md)); automated restore on re-subscribe is not wired yet.
 
-## Slice 3 (next)
+## Slice 3 — public signup (in progress)
 
-- Public signup + marketing site trial CTA
+### Marketing site (`lovely-home.co.uk`)
+
+| Page | Purpose |
+| --- | --- |
+| `/signup.html` | Hub name + owner email → Stripe Checkout |
+| `/signup-success.html` | Post-checkout “we’re provisioning your hub” |
+
+Home page CTAs link to **Start free trial**.
+
+### Public API (platform Pages, no Access)
+
+Enable on `home-dashboard-platform`:
+
+| Env var | Example |
+| --- | --- |
+| `PUBLIC_SIGNUP_ENABLED` | `true` |
+| `MARKETING_SITE_ORIGIN` | `https://lovely-home.co.uk` |
+
+| Endpoint | Method | Purpose |
+| --- | --- | --- |
+| `/api/public/signup/status` | GET | Whether signup is enabled |
+| `/api/public/signup/slug/{siteId}` | GET | Slug availability check |
+| `/api/public/signup` | POST | Registry create + Stripe Checkout `{ siteId, customerEmail }` |
+
+Flow: validate slug → dispatch **platform-site-manage** create PR → return Stripe Checkout URL. Webhook `trialing` provisions once the registry PR merges (Stripe retries if needed).
+
+Deploy:
+
+```bash
+bash scripts/deploy-platform-admin.sh   # API + Access bypass for /api/public/*
+bash scripts/deploy-lovely-home-website.sh   # marketing pages
+```
+
+### Still to do
+
 - Stripe Customer Portal link for self-service cancel
+- Turnstile / rate limiting on public signup
+- Automated restore from archive on re-subscribe
