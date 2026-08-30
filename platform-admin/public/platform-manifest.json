@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-30T11:32:25.163Z",
+  "generatedAt": "2026-08-30T11:39:09.389Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -16,6 +16,8 @@
       "attachHubApiBinding": false,
       "ownerEmails": [],
       "sitterEmails": [],
+      "demoPublic": false,
+      "accessEnabled": true,
       "pagesProject": "home-dashboard",
       "workerName": "lovely-home-hub-api",
       "pagesUrl": "https://dashboard.lovely-home.co.uk",
@@ -80,6 +82,8 @@
       "attachHubApiBinding": true,
       "ownerEmails": [],
       "sitterEmails": [],
+      "demoPublic": false,
+      "accessEnabled": true,
       "pagesProject": "home-dashboard-test",
       "workerName": "lovely-home-hub-api-test",
       "pagesUrl": "https://test.lovely-home.co.uk",
@@ -150,6 +154,8 @@
       "attachHubApiBinding": true,
       "ownerEmails": [],
       "sitterEmails": [],
+      "demoPublic": false,
+      "accessEnabled": true,
       "pagesProject": "home-dashboard-sandbox",
       "workerName": "lovely-home-hub-api-sandbox",
       "pagesUrl": "https://sandbox.lovely-home.co.uk",
@@ -222,6 +228,8 @@
         "demo@lovely-home.co.uk"
       ],
       "sitterEmails": [],
+      "demoPublic": true,
+      "accessEnabled": false,
       "pagesProject": "home-dashboard-demo",
       "workerName": "lovely-home-hub-api-demo",
       "pagesUrl": "https://demo.lovely-home.co.uk",
@@ -277,7 +285,7 @@
         },
         {
           "id": "access-probe",
-          "label": "Access + API probe healthy",
+          "label": "Public demo gate (DEMO_PUBLIC on Pages)",
           "done": null
         }
       ]
@@ -293,6 +301,8 @@
         "marklovely67@gmail.com"
       ],
       "sitterEmails": [],
+      "demoPublic": false,
+      "accessEnabled": true,
       "pagesProject": "home-dashboard-dev",
       "workerName": "lovely-home-hub-api-dev",
       "pagesUrl": "https://dev.lovely-home.co.uk",
@@ -364,6 +374,8 @@
         "marklovely67@gmail.com"
       ],
       "sitterEmails": [],
+      "demoPublic": false,
+      "accessEnabled": true,
       "pagesProject": "home-dashboard-smith",
       "workerName": "lovely-home-hub-api-smith",
       "pagesUrl": "https://smith.lovely-hub.com",

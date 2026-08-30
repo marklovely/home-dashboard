@@ -1,16 +1,36 @@
 /**
+ * @param {Record<string, unknown> | undefined} site
+ */
+export function isPublicDemoSite(site) {
+  if (!site) return false;
+  return site.demoPublic === true || site.accessEnabled === false;
+}
+
+/**
+ * @param {Record<string, unknown>} probe
+ * @param {Record<string, unknown> | undefined} site
+ */
+export function isPublicDemoProbe(probe, site) {
+  if (probe.body?.demoPublic === true) return true;
+  return isPublicDemoSite(site);
+}
+
+/**
  * @param {Record<string, unknown>} health
  * @param {Record<string, unknown>} probe
+ * @param {Record<string, unknown> | undefined} [site]
  */
-export function evaluateSiteHealth(health, probe) {
+export function evaluateSiteHealth(health, probe, site) {
   if (health.needsServiceAuth || probe.needsServiceAuth) {
     return { status: 'unknown', score: 0, checks: [] };
   }
 
+  const publicDemo = isPublicDemoProbe(probe, site);
   const workerOk = health.ok === true && health.body?.status === 'ok';
   const bindingOk = probe.body?.usesHubApiBinding === true;
-  const accessOk =
-    probe.body?.canForwardJwt === true || probe.body?.middlewareAccessValidated === true;
+  const accessOk = publicDemo
+    ? probe.ok === true
+    : probe.body?.canForwardJwt === true || probe.body?.middlewareAccessValidated === true;
 
   const checks = [
     { id: 'worker', ok: workerOk, label: `Worker /api/health ${workerOk ? 'OK' : 'fail'}` },
@@ -18,7 +38,9 @@ export function evaluateSiteHealth(health, probe) {
     {
       id: 'access-probe',
       ok: accessOk,
-      label: `Access probe ${accessOk ? 'OK' : 'check Pages env'}`
+      label: publicDemo
+        ? `Public demo gate ${accessOk ? 'OK' : 'check DEMO_PUBLIC on Pages'}`
+        : `Access probe ${accessOk ? 'OK' : 'check Pages env'}`
     }
   ];
 
@@ -27,7 +49,7 @@ export function evaluateSiteHealth(health, probe) {
   if (score === checks.length) status = 'healthy';
   else if (score > 0) status = 'degraded';
 
-  return { status, score, checks, workerOk, bindingOk, accessOk };
+  return { status, score, checks, workerOk, bindingOk, accessOk, publicDemo };
 }
 
 /**

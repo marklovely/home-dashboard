@@ -6,6 +6,7 @@
 import { accessJwtProbe, extractAccessJwtFromRequest } from './accessJwtExtract.js';
 import { fetchAccessIdentityEmail, listCookieNames, resolvePagesAccessIdentity } from './accessIdentity.js';
 import { attachHubProxyAuthHeaders } from './hubProxySign.js';
+import { isPublicDemoHub } from '../lib/publicDemoHub.js';
 import { middlewareAccessEmail, middlewareAccessValidated } from './middlewareAccess.js';
 import { proxyWorkerResponse } from './proxyWorkerResponse.js';
 
@@ -129,11 +130,13 @@ export async function onRequest(context) {
 
   if (suffix === 'access-probe' && request.method === 'GET') {
     const probe = accessJwtProbe(request);
+    const demoPublic = isPublicDemoHub(pagesEnv);
     const getIdentityOk = Boolean(await fetchAccessIdentityEmail(request, pagesEnv));
     const workerHealth = await fetchWorkerHealth(env);
     return Response.json(
       {
         ...probe,
+        demoPublic,
         hasCookieHeader: Boolean(request.headers.get('Cookie')?.trim()),
         cookieNames: listCookieNames(request),
         getIdentityOk,
@@ -151,14 +154,17 @@ export async function onRequest(context) {
         usesWorkerOriginFallback: Boolean(workerApiOrigin(pagesEnv)),
         workerHealth,
         hints: {
-          noCookies:
-            'No Cookie header on /api — you may have an Access BYPASS for /api, or you opened this URL without completing Cloudflare login on this hostname. Remove /api bypass rules; load the dashboard home first, then retry.',
-          pagesEnv:
-            'Set Pages (Production): CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD_PAGES (Pages app AUD only), HUB_PROXY_SECRET (match Worker). Redeploy Pages.',
+          noCookies: demoPublic
+            ? 'Public demo hub — Cloudflare Access is intentionally disabled. Use /sign-in with demo credentials.'
+            : 'No Cookie header on /api — you may have an Access BYPASS for /api, or you opened this URL without completing Cloudflare login on this hostname. Remove /api bypass rules; load the dashboard home first, then retry.',
+          pagesEnv: demoPublic
+            ? 'Public demo: DEMO_PUBLIC=true on Pages; no CF_ACCESS_* vars. Run scripts/ensure-demo-pages-env.mjs if Access env leaked onto this project.'
+            : 'Set Pages (Production): CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD_PAGES (Pages app AUD only), HUB_PROXY_SECRET (match Worker). Redeploy Pages.',
           workerEnv:
             'Worker: HUB_PROXY_SECRET + redeploy. workerHealth.apiVersion should be 2.',
-          middleware:
-            'After Pages env is set, /api/access-probe should show middlewareAccessValidated:true when logged in, or redirect to Cloudflare OTP — not anonymous JSON.'
+          middleware: demoPublic
+            ? 'Public demo does not use Cloudflare Access middleware — ignore canForwardJwt here.'
+            : 'After Pages env is set, /api/access-probe should show middlewareAccessValidated:true when logged in, or redirect to Cloudflare OTP — not anonymous JSON.'
         }
       },
       { headers: { 'Cache-Control': 'no-store' } }
