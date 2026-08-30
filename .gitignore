@@ -22,4 +22,3 @@ worker/test-backup.sql
 *.d1.sql
 .wrangler/
 src/public/runtime-config.json
-platform-admin/public/platform-manifest.json
