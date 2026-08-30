@@ -93,6 +93,18 @@ variable "stripe_checkout_cancel_url" {
   description = "Optional Checkout cancel URL. Defaults to platform hostname + /?billing=cancel."
 }
 
+variable "marketing_site_origin" {
+  type        = string
+  default     = "https://lovely-home.co.uk"
+  description = "Public marketing site origin (no trailing slash). Used for PUBLIC_SIGNUP CORS and Checkout return URLs."
+}
+
+variable "public_signup_enabled" {
+  type        = bool
+  default     = false
+  description = "When true, sets PUBLIC_SIGNUP_ENABLED on platform Pages (requires Stripe + PLATFORM_GITHUB_TOKEN)."
+}
+
 variable "pages_preview_deployments_enabled" {
   type        = bool
   default     = true

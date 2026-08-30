@@ -12,8 +12,10 @@ describe('generate-hub-tfvars stripe passthrough', () => {
       STRIPE_SECRET_KEY: 'stripe_secret_key',
       STRIPE_WEBHOOK_SECRET: 'stripe_webhook_secret',
       STRIPE_PRICE_ID: 'stripe_price_id',
-      PLATFORM_CF_API_TOKEN: 'platform_cf_api_token'
+      PLATFORM_CF_API_TOKEN: 'platform_cf_api_token',
+      MARKETING_SITE_ORIGIN: 'marketing_site_origin',
+      PUBLIC_SIGNUP_ENABLED: 'public_signup_enabled'
     };
-    expect(Object.keys(mapping)).toHaveLength(4);
+    expect(Object.keys(mapping)).toHaveLength(6);
   });
 });

@@ -83,6 +83,18 @@ locals {
         type  = "plain_text"
         value = var.stripe_checkout_cancel_url
       }
+    } : {},
+    {
+      MARKETING_SITE_ORIGIN = {
+        type  = "plain_text"
+        value = var.marketing_site_origin
+      }
+    },
+    var.public_signup_enabled ? {
+      PUBLIC_SIGNUP_ENABLED = {
+        type  = "plain_text"
+        value = "true"
+      }
     } : {}
   )
 

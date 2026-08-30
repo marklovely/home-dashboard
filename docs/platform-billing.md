@@ -166,12 +166,14 @@ Home page CTAs link to **Start free trial**.
 
 ### Public API (platform Pages, no Access)
 
-Enable on `home-dashboard-platform`:
+Managed by **Terraform** on `module.platform_admin` (via `terraform/environments/hub.tfvars`):
 
-| Env var | Example |
-| --- | --- |
-| `PUBLIC_SIGNUP_ENABLED` | `true` |
-| `MARKETING_SITE_ORIGIN` | `https://lovely-home.co.uk` |
+| Terraform variable | Pages env var | Purpose |
+| --- | --- | --- |
+| `marketing_site_origin` | `MARKETING_SITE_ORIGIN` | CORS + Checkout return URLs (default `https://lovely-home.co.uk`) |
+| `public_signup_enabled` | `PUBLIC_SIGNUP_ENABLED` | Set `true` to enable `/api/public/signup` (requires Stripe + `platform_github_token`) |
+
+Also requires the Stripe vars from [One-time setup](#one-time-setup-test-mode). **Do not** set these only in the Cloudflare dashboard — the next `terraform apply` overwrites Pages env.
 
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
@@ -181,12 +183,13 @@ Enable on `home-dashboard-platform`:
 
 Flow: validate slug → dispatch **platform-site-manage** create PR → return Stripe Checkout URL. Webhook `trialing` provisions once the registry PR merges (Stripe retries if needed).
 
-Deploy:
+Deploy marketing pages after merge:
 
 ```bash
-bash scripts/deploy-platform-admin.sh   # API + Access bypass for /api/public/*
-bash scripts/deploy-lovely-home-website.sh   # marketing pages
+bash scripts/deploy-lovely-home-website.sh
 ```
+
+Platform admin deploys from GitHub on `main`; run `terraform apply` to push env vars, or `bash scripts/deploy-platform-admin.sh` for Functions-only updates.
 
 ### Still to do
 
