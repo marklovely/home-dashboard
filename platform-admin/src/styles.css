@@ -160,6 +160,50 @@ h1 {
   color: var(--warn);
 }
 
+.badge-bad {
+  background: rgba(255, 107, 107, 0.15);
+  color: var(--bad);
+}
+
+.billing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin: 0.35rem 0 0.65rem;
+  font-size: 0.88rem;
+}
+
+.billing-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.billing-meta {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.billing-muted {
+  color: var(--muted);
+}
+
+.billing-hint {
+  margin: -0.35rem 0 0.65rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: rgba(110, 168, 254, 0.08);
+  border: 1px solid rgba(110, 168, 254, 0.2);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.billing-hint-warn {
+  background: rgba(255, 200, 87, 0.08);
+  border-color: rgba(255, 200, 87, 0.25);
+  color: var(--warn);
+}
+
 .facts {
   margin: 0.85rem 0;
 }
