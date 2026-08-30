@@ -323,6 +323,6 @@ export async function dispatchSiteBillingDeprovisionWorkflow(env, siteId) {
     ok: true,
     siteId,
     workflow: 'platform-site-billing-deprovision.yml',
-    message: `Billing deprovision started for ${siteId} (archive → registry removal → terraform destroy). Track progress in GitHub Actions.`
+    message: `Billing deprovision started for ${siteId} (archive → registry removal PR → deprovision on merge). Track progress in GitHub Actions.`
   };
 }
