@@ -338,3 +338,49 @@ bucket_name = "lovely-home-guide-media-smith"
 [[env.smith.r2_buckets]]
 binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
+
+# ---------------------------------------------------------------------------
+# Powell environment — Terraform-managed (see docs/platform-terraform.md)
+# Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs powell
+# ---------------------------------------------------------------------------
+
+[env.powell]
+name = "lovely-home-hub-api-powell"
+
+[env.powell.vars]
+HUB_ENVIRONMENT = "powell"
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://powell.lovely-hub.com,https://home-dashboard-powell.pages.dev,https://*.home-dashboard-powell.pages.dev,https://*.pages.dev"
+HOME_LATITUDE = "51.5074"
+HOME_LONGITUDE = "-0.1278"
+
+[[env.powell.durable_objects.bindings]]
+name = "OWNER_AUTH_LIMITER"
+class_name = "OwnerAuthLimiter"
+
+[[env.powell.durable_objects.bindings]]
+name = "CONTROL_ACTION_LIMITER"
+class_name = "ControlActionLimiter"
+
+[[env.powell.r2_buckets]]
+binding = "APPLIANCE_GUIDES"
+bucket_name = "lovely-home-appliance-guides-powell"
+
+[[env.powell.d1_databases]]
+binding = "APPLIANCE_MANUALS_DB"
+database_name = "lovely-home-appliance-manuals-powell"
+database_id = "REPLACE_AFTER_PROVISION_POWELL"
+migrations_dir = "migrations"
+
+[[env.powell.d1_databases]]
+binding = "HOUSE_GUIDE_DB"
+database_name = "lovely-home-appliance-manuals-powell"
+database_id = "REPLACE_AFTER_PROVISION_POWELL"
+migrations_dir = "migrations"
+
+[[env.powell.r2_buckets]]
+binding = "GUIDE_MEDIA"
+bucket_name = "lovely-home-guide-media-powell"
+
+[[env.powell.r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"
