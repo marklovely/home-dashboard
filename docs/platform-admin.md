@@ -8,7 +8,7 @@ Mark-only operator UI for deploying and managing Lovely Home Hub **sites** (prod
 |-------|----------|
 | Site registry | `platform/sites.yaml` |
 | Live infra contract | `terraform output -json sites` |
-| Built manifest | `platform-admin/public/platform-manifest.json` (generated) |
+| Built manifest | `platform-admin/public/platform-manifest.json` (merged from Terraform + registry; **committed** so CI builds preserve contracts when state is unavailable) |
 | Admin UI | `platform-admin/` — separate Vite app → `dist-platform/` |
 | Operator API | `platform-admin/functions/api/` (Pages Functions) |
 
@@ -52,7 +52,7 @@ npx wrangler login
 bash scripts/deploy-platform-admin.sh
 ```
 
-Git-connected Production builds run `npm run build:platform`; use the deploy script when Functions or env vars change.
+Git-connected Production builds run `npm run build:platform`. The manifest is **committed** in git; CI merges registry changes with preserved contracts when Terraform state is not present. After `terraform apply`, run `npm run platform:manifest` and commit the updated manifest (or use the deploy script locally).
 
 ### Pages env vars (Terraform-managed)
 
