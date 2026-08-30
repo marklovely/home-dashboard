@@ -29,6 +29,9 @@ const checkAllUsageBtn = document.getElementById('check-all-usage-btn');
 const addSiteBtn = document.getElementById('add-site-btn');
 const summaryEl = document.getElementById('summary');
 
+/** @type {Map<string, Record<string, unknown>>} */
+const sitesById = new Map();
+
 /** @type {Map<string, { status: string, result: ReturnType<typeof evaluateSiteHealth> }>} */
 const healthBySite = new Map();
 
@@ -75,6 +78,10 @@ async function render() {
   const sites = Object.values(data.sites ?? {}).sort((a, b) =>
     String(a.siteId).localeCompare(String(b.siteId))
   );
+  sitesById.clear();
+  for (const site of sites) {
+    sitesById.set(String(site.siteId), site);
+  }
 
   updateSummary(sites, data.healthServiceAuthConfigured, data.cloudflareUsageConfigured);
   addSiteBtn?.setAttribute(
@@ -308,7 +315,7 @@ async function checkSiteHealth(siteId) {
   if (row) row.textContent = 'Checking…';
 
   const [health, probe] = await Promise.all([fetchSiteHealth(siteId), fetchSiteAccessProbe(siteId)]);
-  const result = evaluateSiteHealth(health, probe);
+  const result = evaluateSiteHealth(health, probe, sitesById.get(siteId));
   healthBySite.set(siteId, { status: result.status, result });
 
   if (row) row.innerHTML = renderHealthSummary(result);
