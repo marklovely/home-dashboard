@@ -128,6 +128,18 @@ variable "stripe_price_id" {
   description = "Stripe Price id for the monthly hub subscription (price_…)."
 }
 
+variable "marketing_site_origin" {
+  type        = string
+  default     = "https://lovely-home.co.uk"
+  description = "Public marketing site origin for trial signup (lovely-home.co.uk)."
+}
+
+variable "public_signup_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable public trial signup API (/api/public/signup) on platform Pages."
+}
+
 variable "pages_preview_deployments_enabled" {
   type        = bool
   default     = true
