@@ -9,7 +9,11 @@ const STRING_FIELD_TO_ENV = {
   workers_subdomain: 'WORKERS_SUBDOMAIN',
   access_team_domain: 'ACCESS_TEAM_DOMAIN',
   zone_name: 'ZONE_NAME',
-  platform_github_token: 'PLATFORM_GITHUB_TOKEN'
+  platform_github_token: 'PLATFORM_GITHUB_TOKEN',
+  platform_cf_api_token: 'PLATFORM_CF_API_TOKEN',
+  stripe_secret_key: 'STRIPE_SECRET_KEY',
+  stripe_webhook_secret: 'STRIPE_WEBHOOK_SECRET',
+  stripe_price_id: 'STRIPE_PRICE_ID'
 };
 
 /**

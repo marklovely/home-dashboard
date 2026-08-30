@@ -42,6 +42,10 @@ const ownerEmails = splitCsv(process.env.OWNER_EMAILS);
 const sitterEmails = splitCsv(process.env.SITTER_EMAILS);
 const operatorEmails = splitCsv(process.env.PLATFORM_OPERATOR_EMAILS);
 const platformGithubToken = process.env.PLATFORM_GITHUB_TOKEN?.trim() || '';
+const platformCfApiToken = process.env.PLATFORM_CF_API_TOKEN?.trim() || '';
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim() || '';
+const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim() || '';
+const stripePriceId = process.env.STRIPE_PRICE_ID?.trim() || '';
 const provisionSiteId = process.env.PROVISION_SITE_ID?.trim() || '';
 const provisionPhase = process.env.PROVISION_PHASE?.trim() || '';
 const deprovisionSiteId = process.env.DEPROVISION_SITE_ID?.trim() || '';
@@ -102,6 +106,22 @@ lines.push(
 
 if (platformGithubToken) {
   lines.push(`platform_github_token = "${escapeHcl(platformGithubToken)}"`, '');
+}
+
+if (platformCfApiToken) {
+  lines.push(`platform_cf_api_token = "${escapeHcl(platformCfApiToken)}"`, '');
+}
+
+if (stripeSecretKey) {
+  lines.push(`stripe_secret_key = "${escapeHcl(stripeSecretKey)}"`, '');
+}
+
+if (stripeWebhookSecret) {
+  lines.push(`stripe_webhook_secret = "${escapeHcl(stripeWebhookSecret)}"`, '');
+}
+
+if (stripePriceId) {
+  lines.push(`stripe_price_id = "${escapeHcl(stripePriceId)}"`, '');
 }
 
 lines.push(

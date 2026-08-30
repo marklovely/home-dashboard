@@ -108,6 +108,26 @@ variable "platform_cf_api_token" {
   description = "Cloudflare API token with Account Read, D1 Read, and R2 Read for platform storage usage checks."
 }
 
+variable "stripe_secret_key" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Stripe secret API key for platform billing (sk_test_… or sk_live_…). Must be set in hub.tfvars or CI secrets or terraform apply wipes dashboard-only vars."
+}
+
+variable "stripe_webhook_secret" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Stripe webhook signing secret (whsec_…) for platform /api/stripe/webhook."
+}
+
+variable "stripe_price_id" {
+  type        = string
+  default     = ""
+  description = "Stripe Price id for the monthly hub subscription (price_…)."
+}
+
 variable "pages_preview_deployments_enabled" {
   type        = bool
   default     = true
