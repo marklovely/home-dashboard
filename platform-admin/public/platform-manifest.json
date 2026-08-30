@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-30T11:39:09.389Z",
+  "generatedAt": "2026-08-30T12:06:03.662Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -413,6 +413,52 @@
           "id": "terraform",
           "label": "Terraform contract in platform manifest",
           "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    },
+    "practice": {
+      "siteId": "practice",
+      "hostname": "practice.lovely-hub.com",
+      "hubEnvironment": "practice",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": false,
+      "ownerEmails": [
+        "marklovely67@gmail.com"
+      ],
+      "sitterEmails": [],
+      "demoPublic": false,
+      "accessEnabled": true,
+      "pagesProject": "home-dashboard-practice",
+      "workerName": "lovely-home-hub-api-practice",
+      "pagesUrl": "https://practice.lovely-hub.com",
+      "workerApiOrigin": null,
+      "contract": null,
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest (rebuild after apply)",
+          "done": false
         },
         {
           "id": "worker",

@@ -49,3 +49,12 @@ sites:
     zone_name: lovely-hub.com
     owner_emails: marklovely67@gmail.com
     attach_hub_api_binding: true
+
+  practice:
+    hostname: practice.lovely-hub.com
+    hub_environment: practice
+    vanilla: false
+    terraform: true
+    zone_name: lovely-hub.com
+    owner_emails: marklovely67@gmail.com
+    attach_hub_api_binding: false
