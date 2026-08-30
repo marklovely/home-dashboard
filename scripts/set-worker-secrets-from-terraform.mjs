@@ -101,6 +101,15 @@ if (archiveSecret) {
   );
 }
 
+const googlePlacesKey = process.env.GOOGLE_PLACES_API_KEY?.trim();
+if (googlePlacesKey) {
+  secrets.GOOGLE_PLACES_API_KEY = googlePlacesKey;
+} else {
+  console.warn(
+    'GOOGLE_PLACES_API_KEY not set — skipping address lookup secret (setup wizard address autocomplete will be manual until synced).'
+  );
+}
+
 for (const [name, value] of Object.entries(secrets)) {
   if (!value) {
     console.error(`Missing value for secret ${name}`);
