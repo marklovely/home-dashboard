@@ -117,8 +117,8 @@ jobs:
           terraform init -backend=false
           terraform validate
 
-      - name: Run registry test
-        run: npm test -- tests/platformSitesYaml.test.js
+      - name: Run tests
+        run: npm run test
 
       - name: Check PR token
         run: |
