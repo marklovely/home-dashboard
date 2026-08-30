@@ -139,6 +139,20 @@ node scripts/apply-platform-billing-migration.mjs
 
 **Operator test:** cancel a test subscription in Stripe Dashboard (or end a test clock) → confirm **Platform site billing deprovision** runs for that `siteId`.
 
+### Re-trial and subscription resume
+
+The same `site_id` can go through multiple billing cycles (throwaway test hubs, cancel → sign up again).
+
+| Stripe event | Platform behaviour |
+| --- | --- |
+| **New trial / checkout** after prior deprovision | Clears stale `deprovision_dispatched_at` / `provision_dispatched_at` when status becomes `trialing` or `active` again (new subscription id or resumed from `canceled`). Re-provision runs if the manifest has no Terraform contract. |
+| **Cancel** while hub is live (`trialing` / `active` / `past_due`) | Dispatches billing deprovision even if an earlier cycle already set `deprovision_dispatched_at`. |
+| **Cancel at period end** (still `trialing` until period ends) | No deprovision until status becomes `canceled`. |
+| **Resume** before period end (`cancel_at_period_end` cleared) | `subscription.updated` → status stays `trialing` / `active`; no deprovision. |
+| **Duplicate** `subscription.deleted` webhooks | Second event skipped via `already_dispatched` once D1 status is `canceled`. |
+
+Archive JSON in R2 is kept across cycles for optional restore ([platform-site-archive.md](./platform-site-archive.md)); automated restore on re-subscribe is not wired yet.
+
 ## Slice 3 (next)
 
 - Public signup + marketing site trial CTA

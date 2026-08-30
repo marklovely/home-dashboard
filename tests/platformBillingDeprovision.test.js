@@ -48,7 +48,7 @@ describe('billing deprovision helpers', () => {
     }
   });
 
-  it('skips when deprovision already dispatched', () => {
+  it('skips when deprovision already dispatched for a canceled billing row', () => {
     const decision = shouldDispatchBillingDeprovision({
       eventType: 'customer.subscription.deleted',
       status: 'canceled',
@@ -57,6 +57,21 @@ describe('billing deprovision helpers', () => {
       manifestSite: { siteId: 'practice' }
     });
     expect(decision.reason).toBe('already_dispatched');
+  });
+
+  it('dispatches again when hub was live after a prior deprovision dispatch', () => {
+    const decision = shouldDispatchBillingDeprovision({
+      eventType: 'customer.subscription.deleted',
+      status: 'canceled',
+      siteId: 'practice',
+      existingBilling: {
+        status: 'trialing',
+        deprovision_dispatched_at: Date.now(),
+        provision_dispatched_at: Date.now()
+      },
+      manifestSite: { siteId: 'practice', contract: { d1_database_id: 'abc' } }
+    });
+    expect(decision).toEqual({ dispatch: true, reason: 'canceled_needs_deprovision' });
   });
 
   it('skips subscription.updated when billing was already canceled', () => {
@@ -187,6 +202,55 @@ describe('handleStripeBillingEvent deprovision dispatch', () => {
       db,
       {
         id: 'evt_sub_deleted',
+        type: 'customer.subscription.deleted',
+        data: {
+          object: {
+            id: 'sub_practice',
+            customer: 'cus_practice',
+            status: 'canceled',
+            metadata: { site_id: 'practice' }
+          }
+        }
+      },
+      { env: { PLATFORM_GITHUB_TOKEN: 'token' }, manifest }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.deprovision).toMatchObject({ action: 'deprovision_dispatched' });
+    expect(dispatchSiteBillingDeprovisionWorkflow).toHaveBeenCalledWith(
+      expect.objectContaining({ PLATFORM_GITHUB_TOKEN: 'token' }),
+      'practice'
+    );
+  });
+
+  it('dispatches deprovision after re-trial when prior deprovision flag is stale', async () => {
+    vi.mocked(dispatchSiteBillingDeprovisionWorkflow).mockResolvedValue({
+      ok: true,
+      siteId: 'practice',
+      workflow: 'platform-site-billing-deprovision.yml',
+      message: 'started'
+    });
+
+    const db = /** @type {D1Database} */ (createBillingDbMock());
+    db.siteBilling.set('practice', {
+      site_id: 'practice',
+      stripe_customer_id: 'cus_practice',
+      stripe_subscription_id: 'sub_practice',
+      status: 'trialing',
+      deprovision_dispatched_at: Date.now(),
+      provision_dispatched_at: Date.now()
+    });
+
+    const manifest = {
+      sites: {
+        practice: { siteId: 'practice', contract: { d1_database_id: 'abc' } }
+      }
+    };
+
+    const result = await handleStripeBillingEvent(
+      db,
+      {
+        id: 'evt_sub_deleted_retest',
         type: 'customer.subscription.deleted',
         data: {
           object: {
