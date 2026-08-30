@@ -31,6 +31,15 @@ Related: [roadmap](./roadmap.md) §3 · [platform provision](./platform-provisio
    ```
    Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_failed`, `customer.subscription.trial_will_end`.
 
+   **Cloudflare Access:** Stripe cannot log in via OTP. Add a **Bypass** Access application for `platform.lovely-home.co.uk/api/stripe/webhook` (Terraform: `platform_stripe_webhook` in `terraform/modules/platform_admin/access.tf`), or manually in Zero Trust → Access → Add application → path `/api/stripe/webhook` → Bypass → Everyone. Without this, deliveries fail (302/500) and billing rows are never written.
+
+   If you created the Access app manually first, import it before `terraform apply`:
+   ```bash
+   export CLOUDFLARE_API_TOKEN="..."
+   bash scripts/import-platform-stripe-webhook-access.sh -var-file=environments/hub.tfvars
+   cd terraform && terraform apply -var-file=environments/hub.tfvars
+   ```
+
 ## Local development
 
 Forward Stripe webhooks to the platform dev stack:
