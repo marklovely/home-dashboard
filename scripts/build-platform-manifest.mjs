@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 /**
  * Merge platform/sites.yaml with terraform output -json sites into platform-manifest.json.
+ * When Terraform state is unavailable (e.g. Cloudflare Pages CI), preserves contracts
+ * from the existing manifest file committed in git.
+ *
  * Usage: node scripts/build-platform-manifest.mjs
  */
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
+import {
+  mergePlatformMeta,
+  resolveSiteContract,
+  siteManifestFields
+} from './lib/platformManifestMerge.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sitesYamlPath = join(root, 'platform/sites.yaml');
@@ -18,20 +26,22 @@ const outPath = join(outDir, 'platform-manifest.json');
 
 /** @type {Record<string, object>} */
 let terraformSites = {};
+let terraformAvailable = false;
+
+const sitesRaw = runTerraform(['output', '-json', 'sites']);
+if (sitesRaw) {
+  terraformSites = JSON.parse(sitesRaw);
+  terraformAvailable = true;
+} else {
+  console.warn(
+    'build-platform-manifest: no terraform output — preserving contracts from existing manifest when available.'
+  );
+}
+
 /** @type {Record<string, string>} */
-let platformMeta = {
+const platformMeta = {
   githubRepo: 'marklovely/home-dashboard'
 };
-
-try {
-  const raw = execFileSync('terraform', ['output', '-json', 'sites'], {
-    cwd: tfDir,
-    encoding: 'utf8'
-  });
-  terraformSites = JSON.parse(raw);
-} catch {
-  console.warn('build-platform-manifest: no terraform output (run terraform apply or import first).');
-}
 
 for (const [key, outputName, parser] of [
   ['cloudflareAccountId', 'cloudflare_account_id', (v) => v.trim()],
@@ -39,41 +49,51 @@ for (const [key, outputName, parser] of [
   ['zoneName', 'zone_name', (v) => v.trim()],
   ['customerZoneName', 'customer_zone_name', (v) => v.trim()]
 ]) {
-  try {
-    const value = execFileSync('terraform', ['output', '-raw', outputName], {
-      cwd: tfDir,
-      encoding: 'utf8'
-    });
+  const value = runTerraform(['output', '-raw', outputName]);
+  if (value) {
     platformMeta[key] = parser(value);
-  } catch {
-    /* optional */
   }
 }
 
-try {
-  const adminRaw = execFileSync('terraform', ['output', '-json', 'platform_admin'], {
-    cwd: tfDir,
-    encoding: 'utf8'
-  });
-  const admin = JSON.parse(adminRaw);
-  if (admin?.cf_access_team_domain) {
-    platformMeta.accessTeamDomain = admin.cf_access_team_domain;
+const adminRaw = runTerraform(['output', '-json', 'platform_admin']);
+if (adminRaw) {
+  try {
+    const admin = JSON.parse(adminRaw);
+    if (admin?.cf_access_team_domain) {
+      platformMeta.accessTeamDomain = admin.cf_access_team_domain;
+    }
+  } catch {
+    /* optional */
   }
-} catch {
-  /* optional */
 }
 
 if (!platformMeta.cloudflareAccountId && process.env.CLOUDFLARE_ACCOUNT_ID?.trim()) {
   platformMeta.cloudflareAccountId = process.env.CLOUDFLARE_ACCOUNT_ID.trim();
 }
 
+const preservedManifest = await loadPreservedManifest(outPath);
+const mergedPlatform = mergePlatformMeta(
+  platformMeta,
+  /** @type {Record<string, string> | undefined} */ (preservedManifest?.platform)
+);
+
 const registry = loadSitesYaml(sitesYamlPath);
 /** @type {Record<string, object>} */
 const sites = {};
+let preservedContractCount = 0;
 
 for (const [siteId, meta] of Object.entries(registry)) {
-  const contract = terraformSites[siteId] ?? null;
+  const contract = resolveSiteContract(
+    siteId,
+    meta,
+    terraformSites,
+    /** @type {Record<string, { contract?: unknown }> | undefined} */ (preservedManifest?.sites)
+  );
+  if (contract && !terraformSites[siteId]) {
+    preservedContractCount += 1;
+  }
   const hostname = String(meta.hostname ?? '');
+  const fields = siteManifestFields(siteId, contract, hostname);
   sites[siteId] = {
     siteId,
     hostname,
@@ -83,16 +103,7 @@ for (const [siteId, meta] of Object.entries(registry)) {
     attachHubApiBinding: meta.attach_hub_api_binding === true,
     ownerEmails: parseEmailList(meta.owner_emails),
     sitterEmails: parseEmailList(meta.sitter_emails),
-    pagesProject:
-      contract?.pages_project ??
-      (siteId === 'production' ? 'home-dashboard' : `home-dashboard-${siteId}`),
-    workerName:
-      contract?.worker_name ??
-      (siteId === 'production' ? 'lovely-home-hub-api' : `lovely-home-hub-api-${siteId}`),
-    pagesUrl: contract?.pages_url ?? (hostname ? `https://${hostname}` : ''),
-    workerApiOrigin:
-      contract?.worker_api_origin ??
-      (contract?.worker_hostname ? `https://${contract.worker_hostname}` : null),
+    ...fields,
     contract,
     provisioning: buildProvisioningChecklist(siteId, meta, contract)
   };
@@ -100,13 +111,50 @@ for (const [siteId, meta] of Object.entries(registry)) {
 
 const manifest = {
   generatedAt: new Date().toISOString(),
-  platform: platformMeta,
+  platform: mergedPlatform,
   sites
 };
 
 mkdirSync(outDir, { recursive: true });
 writeFileSync(outPath, `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`Wrote ${outPath} (${Object.keys(sites).length} sites)`);
+
+const tfSiteCount = Object.keys(terraformSites).length;
+console.log(
+  `Wrote ${outPath} (${Object.keys(sites).length} sites, terraform=${terraformAvailable ? tfSiteCount : 'unavailable'}, preservedContracts=${preservedContractCount})`
+);
+
+/**
+ * @param {string} manifestPath
+ */
+async function loadPreservedManifest(manifestPath) {
+  if (existsSync(manifestPath)) {
+    try {
+      return JSON.parse(readFileSync(manifestPath, 'utf8'));
+    } catch (error) {
+      console.warn(
+        `build-platform-manifest: could not read ${manifestPath} (${error instanceof Error ? error.message : 'unknown'}).`
+      );
+    }
+  }
+
+  const fallbackUrl = process.env.PLATFORM_MANIFEST_FALLBACK_URL?.trim();
+  if (!fallbackUrl) return null;
+
+  try {
+    const response = await fetch(fallbackUrl, { headers: { Accept: 'application/json' } });
+    if (!response.ok) {
+      console.warn(`build-platform-manifest: fallback fetch failed (${response.status}) ${fallbackUrl}`);
+      return null;
+    }
+    console.warn(`build-platform-manifest: using fallback manifest from ${fallbackUrl}`);
+    return await response.json();
+  } catch (error) {
+    console.warn(
+      `build-platform-manifest: fallback fetch error (${error instanceof Error ? error.message : 'unknown'}).`
+    );
+    return null;
+  }
+}
 
 /**
  * @param {string} siteId
@@ -153,4 +201,22 @@ function buildProvisioningChecklist(siteId, meta, contract) {
     });
   }
   return steps;
+}
+
+/**
+ * @param {string[]} args
+ */
+function runTerraform(args) {
+  if (!terraformAvailable && args[2] !== 'sites') {
+    return null;
+  }
+  try {
+    return execFileSync('terraform', args, {
+      cwd: tfDir,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    });
+  } catch {
+    return null;
+  }
 }
