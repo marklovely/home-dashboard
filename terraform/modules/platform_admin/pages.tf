@@ -72,6 +72,12 @@ locals {
         value = var.stripe_price_id
       }
     } : {},
+    var.stripe_price_id_yearly != "" ? {
+      STRIPE_PRICE_ID_YEARLY = {
+        type  = "plain_text"
+        value = var.stripe_price_id_yearly
+      }
+    } : {},
     var.stripe_checkout_success_url != "" ? {
       STRIPE_CHECKOUT_SUCCESS_URL = {
         type  = "plain_text"

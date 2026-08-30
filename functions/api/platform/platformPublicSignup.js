@@ -118,8 +118,9 @@ export function publicSignupUrls(env, siteId) {
  * @param {string} siteId
  * @param {string} customerEmail
  * @param {D1Database | null | undefined} billingDb
+ * @param {string | undefined} billingInterval
  */
-export async function handlePublicHubSignup(env, manifest, siteId, customerEmail, billingDb) {
+export async function handlePublicHubSignup(env, manifest, siteId, customerEmail, billingDb, billingInterval) {
   if (!publicSignupConfigured(env)) {
     return {
       ok: false,
@@ -191,7 +192,8 @@ export async function handlePublicHubSignup(env, manifest, siteId, customerEmail
     siteId,
     customerEmail,
     successUrl: urls.successUrl,
-    cancelUrl: urls.cancelUrl
+    cancelUrl: urls.cancelUrl,
+    billingInterval: billingInterval ?? 'month'
   });
 
   if (!checkout.ok) {

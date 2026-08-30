@@ -845,3 +845,276 @@ a { color: var(--accent); }
 .success-hostname a:hover {
   text-decoration: underline;
 }
+
+/* Pricing */
+.pricing-page {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 2rem 1.35rem 3rem;
+}
+
+.pricing-page-head {
+  text-align: center;
+  max-width: 38rem;
+  margin: 0 auto 2rem;
+}
+
+.pricing-band {
+  margin: 2.5rem 0;
+}
+
+.pricing-hero {
+  display: grid;
+  gap: 2rem;
+  align-items: start;
+}
+
+.pricing-plans-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 700px) {
+  .pricing-plans-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 900px) {
+  .pricing-hero {
+    grid-template-columns: minmax(16rem, 28rem) 1fr;
+    gap: 2.5rem;
+  }
+
+  .pricing-plans-grid {
+    grid-column: 1;
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-details {
+    grid-column: 2;
+  }
+}
+
+.pricing-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.pricing-card--featured {
+  border-color: rgba(107, 82, 232, 0.35);
+  box-shadow: 0 12px 40px rgba(107, 82, 232, 0.12);
+  position: relative;
+}
+
+.pricing-badge {
+  display: inline-block;
+  margin-bottom: 0.65rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.pricing-badge--inline {
+  margin-bottom: 0;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+  font-size: 0.68rem;
+}
+
+.pricing-dual-line {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  margin: 0.35rem 0 0.75rem;
+  line-height: 1.25;
+}
+
+.pricing-card--compact {
+  max-width: 28rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.pricing-plan-name {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pricing-price {
+  margin: 0.25rem 0 0.75rem;
+  line-height: 1.1;
+}
+
+.pricing-amount {
+  font-size: clamp(2.2rem, 5vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pricing-amount--pending {
+  color: var(--muted);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.pricing-interval {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.pricing-trial-tag {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.pricing-summary {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.pricing-footnote {
+  margin: 0.85rem 0 0;
+  font-size: 0.88rem;
+}
+
+.pricing-details section + section {
+  margin-top: 1.75rem;
+}
+
+.pricing-details h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.65rem;
+}
+
+.pricing-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+}
+
+.pricing-list li + li {
+  margin-top: 0.4rem;
+}
+
+.pricing-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+}
+
+.pricing-steps li + li {
+  margin-top: 0.55rem;
+}
+
+.pricing-vat {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+}
+
+.pricing-faq {
+  margin-top: 3rem;
+}
+
+.faq-list {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.faq-list dt {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.faq-list dd {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.pricing-final-cta {
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+.signup-pricing-callout {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--accent-soft);
+  border: 1px solid rgba(107, 82, 232, 0.2);
+  border-radius: 12px;
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+html:not(.pricing-loaded) [data-pricing="price-card-amount"] .pricing-amount--pending,
+html:not(.pricing-loaded) [data-pricing="plan-amount"] .pricing-amount--pending {
+  opacity: 0.55;
+}
+
+.billing-interval-field {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.billing-interval-field legend {
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+  padding: 0;
+}
+
+.billing-interval-options {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.billing-interval-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  background: #fff;
+}
+
+.billing-interval-option:has(input:checked) {
+  border-color: rgba(107, 82, 232, 0.45);
+  background: var(--accent-soft);
+}
+
+.billing-interval-option--featured:has(input:checked) {
+  box-shadow: 0 0 0 1px rgba(107, 82, 232, 0.2);
+}
+
+.billing-interval-option input {
+  margin-top: 0.2rem;
+}
+
+.billing-interval-copy {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.billing-interval-title {
+  font-weight: 600;
+}
+
+.billing-interval-price {
+  color: var(--muted);
+  font-size: 0.92rem;
+}

@@ -217,7 +217,8 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 | `PLATFORM_CF_API_TOKEN` | Same token as platform admin Pages env (optional — usage + preview toggles) |
 | `STRIPE_SECRET_KEY` | Same as `stripe_secret_key` in hub.tfvars — **required for billing** or CI terraform apply strips Stripe vars from platform Pages |
 | `STRIPE_WEBHOOK_SECRET` | Same as `stripe_webhook_secret` in hub.tfvars |
-| `STRIPE_PRICE_ID` | Same as `stripe_price_id` in hub.tfvars |
+| `STRIPE_PRICE_ID` | Same as `stripe_price_id` in hub.tfvars (monthly, e.g. £9.99/month) |
+| `STRIPE_PRICE_ID_YEARLY` | Same as `stripe_price_id_yearly` in hub.tfvars (yearly, e.g. £99/year) |
 | `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` — only needed if Terraform output is unavailable; CI normally reads secrets from remote state |
 
 CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.

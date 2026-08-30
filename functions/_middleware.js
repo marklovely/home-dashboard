@@ -2,6 +2,7 @@ import cloudflareAccessPlugin from '@cloudflare/pages-plugin-cloudflare-access';
 import { accessTeamOrigin } from './lib/accessTeamDomain.js';
 import { demoPagesGate } from './lib/demoPagesGate.js';
 import { isPublicDemoHub } from './lib/publicDemoHub.js';
+import { shouldBypassPlatformAccess } from './lib/platformAccessBypass.js';
 
 /**
  * Validates Cloudflare Access on Pages Functions (including /api/*).
@@ -15,11 +16,7 @@ async function accessMiddleware(context) {
   }
 
   const pathname = new URL(context.request.url).pathname;
-  if (context.env.PLATFORM_OPERATOR_EMAILS?.trim() && pathname === '/api/stripe/webhook') {
-    return context.next();
-  }
-
-  if (context.env.PLATFORM_OPERATOR_EMAILS?.trim() && pathname.startsWith('/api/public/')) {
+  if (shouldBypassPlatformAccess(pathname, context.env)) {
     return context.next();
   }
 
