@@ -108,6 +108,26 @@ export function renderSiteBilling(site, billing, options) {
     }
   }
 
+  const deprovisionDispatched = Boolean(billing.deprovision_dispatched_at);
+  const deprovisionError = billing.deprovision_last_error ? String(billing.deprovision_last_error) : '';
+  const archiveKey = billing.archive_r2_key ? String(billing.archive_r2_key) : '';
+
+  let deprovisionHint = '';
+  if (status === 'canceled') {
+    if (deprovisionError) {
+      deprovisionHint = `<p class="billing-hint billing-hint-warn">${escapeHtml(deprovisionError)} Deprovision may need a manual workflow retry.</p>`;
+    } else if (deprovisionDispatched) {
+      deprovisionHint =
+        '<p class="billing-hint">Deprovision workflow dispatched — hub archive + teardown in progress. Check GitHub Actions.</p>';
+    }
+    if (archiveKey) {
+      deprovisionHint += `<p class="billing-hint billing-meta">Archive: <code>${escapeHtml(archiveKey)}</code></p>`;
+    }
+  } else if (status === 'past_due') {
+    deprovisionHint =
+      '<p class="billing-hint billing-hint-warn">Payment past due — Stripe will retry. Hub stays live until subscription is canceled.</p>';
+  }
+
   return `
     <div class="billing">
       <span class="billing-label">Billing</span>
@@ -117,6 +137,7 @@ export function renderSiteBilling(site, billing, options) {
       ${showStartTrial ? `<button type="button" class="btn btn-small btn-ghost" data-billing-checkout="${escapeHtml(siteId)}">Start new trial</button>` : ''}
     </div>
     ${provisionHint}
+    ${deprovisionHint}
   `;
 }
 
