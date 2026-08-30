@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Your Lovely Home hub trial has started — we're setting up your household dashboard.">
+  <title>Lovely Home — Trial started</title>
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <header class="site-header site-header--minimal">
+    <nav>
+      <a href="/">Home</a>
+      <a href="support.html">Support</a>
+    </nav>
+  </header>
+
+  <main class="page signup-success-page">
+    <div class="signup-success-card">
+      <p class="hero-eyebrow"><span></span> Trial started</p>
+      <h1>Thank you — we're setting up your hub</h1>
+      <p class="hero-lead" id="success-lead">
+        Your 14-day trial is active. We are registering and provisioning your private hub — this usually takes a few minutes.
+      </p>
+
+      <div class="success-hub-url" id="success-hub" hidden>
+        <p class="field-hint">Your hub address</p>
+        <p class="success-hostname"><a id="hub-link" href="#"></a></p>
+      </div>
+
+      <ol class="success-steps">
+        <li>We add your hub to our platform (automatic, ~2 minutes).</li>
+        <li>Stripe confirms your trial — you are not charged today.</li>
+        <li>We provision DNS, hosting, and your owner sign-in.</li>
+        <li>You receive access at the hub URL to run the setup wizard.</li>
+      </ol>
+
+      <p class="signup-note muted">
+        Need help? Email <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a> with your hub name.
+      </p>
+
+      <div class="cta-row">
+        <a class="btn btn-secondary" href="/">Back to home</a>
+        <a class="btn btn-primary" id="open-hub-btn" href="https://demo.lovely-home.co.uk/sign-in" hidden>Open your hub</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 Mark Lovely. All rights reserved.</p>
+  </footer>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const siteId = (params.get('site') || '').trim().toLowerCase();
+      if (!siteId) return;
+
+      const hostname = siteId + '.lovely-hub.com';
+      const hubUrl = 'https://' + hostname + '/';
+
+      const hubBlock = document.getElementById('success-hub');
+      const hubLink = document.getElementById('hub-link');
+      const openBtn = document.getElementById('open-hub-btn');
+      const lead = document.getElementById('success-lead');
+
+      hubLink.textContent = hostname;
+      hubLink.href = hubUrl;
+      openBtn.href = hubUrl;
+      hubBlock.hidden = false;
+      openBtn.hidden = false;
+      lead.textContent =
+        'Your 14-day trial is active for ' + hostname + '. Provisioning usually finishes within a few minutes — refresh the hub link if it is not ready yet.';
+    })();
+  </script>
+</body>
+</html>
