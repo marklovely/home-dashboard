@@ -103,6 +103,8 @@ for (const [siteId, meta] of Object.entries(registry)) {
     attachHubApiBinding: meta.attach_hub_api_binding === true,
     ownerEmails: parseEmailList(meta.owner_emails),
     sitterEmails: parseEmailList(meta.sitter_emails),
+    demoPublic: meta.demo_public === true,
+    accessEnabled: meta.access_enabled !== false,
     ...fields,
     contract,
     provisioning: buildProvisioningChecklist(siteId, meta, contract)
@@ -194,9 +196,12 @@ function buildProvisioningChecklist(siteId, meta, contract) {
     done: null
   });
   if (siteId !== 'production') {
+    const publicDemo = meta.demo_public === true || meta.access_enabled === false;
     steps.push({
       id: 'access-probe',
-      label: 'Access + API probe healthy',
+      label: publicDemo
+        ? 'Public demo gate (DEMO_PUBLIC on Pages)'
+        : 'Access + API probe healthy',
       done: null
     });
   }
