@@ -71,6 +71,15 @@ export async function onRequest(context) {
   }
 
   if (suffix === 'sites' && request.method === 'GET') {
+    /** @type {Record<string, import('./platformBilling.js').SiteBillingRow>} */
+    const billingBySite = {};
+    const billingDb = getPlatformBillingDb(env);
+    if (billingDb) {
+      for (const row of await listSiteBilling(billingDb)) {
+        billingBySite[row.site_id] = row;
+      }
+    }
+
     return Response.json({
       generatedAt: manifest.generatedAt,
       operator: auth.email,
@@ -79,6 +88,9 @@ export async function onRequest(context) {
       cloudflareUsageConfigured: cloudflareUsageApiConfigured(pagesEnv),
       cloudflarePagesConfigured: cloudflarePagesApiConfigured(pagesEnv),
       githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
+      stripeBillingConfigured: stripeBillingConfigured(pagesEnv),
+      platformBillingDbConfigured: platformBillingDbConfigured(pagesEnv),
+      billingBySite,
       sites: manifest.sites
     });
   }
