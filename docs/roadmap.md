@@ -22,7 +22,7 @@ A **managed household hub** for wall tablets and remote sitters: House Guide, pe
 | **Demo** | `demo.lovely-home.co.uk` — public username/password, nightly reseed |
 | **Sitter security** | Virtual Buttons **owner-only** in House Sitter Mode ([#168](https://github.com/marklovely/home-dashboard/pull/168)) |
 | **Pre-deprovision backup** | Full site JSON to platform R2 before destroy ([#168](https://github.com/marklovely/home-dashboard/pull/169)) |
-| **Billing / Stripe** | In progress — Checkout, webhooks, platform D1 mirror; auto-provision/deprovision next |
+| **Billing / Stripe** | In progress — Checkout, webhooks, D1 mirror, auto-provision on trialing; deprovision next |
 
 ---
 

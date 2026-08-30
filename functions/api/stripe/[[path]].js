@@ -4,6 +4,7 @@ import {
   platformBillingDbConfigured,
   readVerifiedStripeEvent
 } from '../platform/platformBilling.js';
+import { loadPlatformManifest } from '../platform/platformApi.js';
 
 /**
  * Stripe webhooks — /api/stripe/*
@@ -41,8 +42,24 @@ export async function onRequest(context) {
     return Response.json({ error: 'BILLING_DB_NOT_CONFIGURED' }, { status: 503 });
   }
 
-  const result = await handleStripeBillingEvent(db, verified.event);
-  return Response.json(result, { status: result.ok ? 200 : 422 });
+  let manifest = { sites: {} };
+  try {
+    manifest = await loadPlatformManifest(request, env);
+  } catch (error) {
+    console.warn(
+      JSON.stringify({
+        event: 'stripe_webhook_manifest_unavailable',
+        detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+      })
+    );
+  }
+
+  const result = await handleStripeBillingEvent(db, verified.event, {
+    env: /** @type {Record<string, string | undefined>} */ (env),
+    manifest
+  });
+  const status = result.ok ? 200 : result.error === 'PROVISION_DISPATCH_FAILED' ? 503 : 422;
+  return Response.json(result, { status });
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 200) : 'unknown';
     console.error(JSON.stringify({ event: 'stripe_webhook_failed', detail: message }));
