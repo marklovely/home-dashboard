@@ -19,7 +19,8 @@ Related: [roadmap](./roadmap.md) §3 · [platform provision](./platform-provisio
 2. **Terraform** — optional vars on `module.platform_admin` (via `terraform/environments/hub.tfvars`):
    - `stripe_secret_key` = `sk_test_…`
    - `stripe_webhook_secret` = `whsec_…` (from Stripe CLI or Dashboard endpoint)
-   - `stripe_price_id` = `price_…`
+   - `stripe_price_id` = monthly `price_…` (e.g. £9.99/month)
+   - `stripe_price_id_yearly` = yearly `price_…` (e.g. £99/year)
 
    **Important:** Platform Pages env is managed by Terraform. Setting Stripe vars **only in the Cloudflare dashboard** is not enough — the next `terraform apply` (including **Platform site provision** on any hub) rewrites env vars and **removes** dashboard-only secrets. Always keep Stripe values in `hub.tfvars` (local apply) and in GitHub Actions secrets (CI provision).
 
@@ -64,7 +65,8 @@ Set secrets in `.dev.vars` on the platform Pages project or export for local tes
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET` (from `stripe listen`)
-- `STRIPE_PRICE_ID`
+- `STRIPE_PRICE_ID` — monthly subscription price
+- `STRIPE_PRICE_ID_YEARLY` — yearly subscription price (optional but recommended for public signup)
 
 Local dev API (`scripts/platform-admin-dev-api.mjs`) does not yet mirror billing routes — use deployed preview or `wrangler pages dev` for full billing tests.
 
@@ -159,10 +161,11 @@ Archive JSON in R2 is kept across cycles for optional restore ([platform-site-ar
 
 | Page | Purpose |
 | --- | --- |
+| `/pricing.html` | Transparent pricing — monthly amount loaded from Stripe via public API |
 | `/signup.html` | Hub name + owner email → Stripe Checkout |
 | `/signup-success.html` | Post-checkout “we’re provisioning your hub” |
 
-Home page CTAs link to **Start free trial**.
+Home page and signup link to **Pricing** and **Start free trial**.
 
 ### Public API (platform Pages, no Access)
 
@@ -175,11 +178,16 @@ Managed by **Terraform** on `module.platform_admin` (via `terraform/environments
 
 Also requires the Stripe vars from [One-time setup](#one-time-setup-test-mode). **Do not** set these only in the Cloudflare dashboard — the next `terraform apply` overwrites Pages env.
 
+**Cloudflare Access:** Browser calls from `lovely-home.co.uk` hit `platform.lovely-home.co.uk/api/public/*`. Terraform creates a Zero Trust **bypass** application for that path (same pattern as `/api/stripe/webhook`). Without `public_signup_enabled = true` + `terraform apply`, slug checks fail with a CORS error after an Access login redirect.
+
+When `public_signup_enabled = true`, Terraform also creates a **Zero Trust bypass** for `/api/public/*` (same pattern as the Stripe webhook). Without it, browser requests from lovely-home.co.uk hit the Access login redirect and fail CORS during slug checks.
+
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
 | `/api/public/signup/status` | GET | Whether signup is enabled |
+| `/api/public/signup/pricing` | GET | Trial length + monthly/yearly prices from Stripe |
 | `/api/public/signup/slug/{siteId}` | GET | Slug availability check |
-| `/api/public/signup` | POST | Registry create + Stripe Checkout `{ siteId, customerEmail }` |
+| `/api/public/signup` | POST | Registry create + Stripe Checkout `{ siteId, customerEmail, billingInterval? }` (`month` or `year`) |
 
 Flow: validate slug → dispatch **platform-site-manage** create PR → return Stripe Checkout URL. Webhook `trialing` provisions once the registry PR merges (Stripe retries if needed).
 
