@@ -11,7 +11,7 @@ Related: [roadmap](./roadmap.md) §3 · [platform provision](./platform-provisio
 | Checkout + billing API | Platform Pages Functions — `/api/platform/billing/*` |
 | Stripe webhooks | `/api/stripe/webhook` (no Cloudflare Access) |
 | Billing mirror | D1 `lovely-home-platform-billing` → binding `PLATFORM_BILLING_DB` |
-| Provision / deprovision | Slice 2 — webhook → GitHub Actions (not wired yet) |
+| Provision / deprovision | `trialing` webhook → GitHub **Platform site provision**; cancel/deprovision in slice 2b |
 
 ## One-time setup (test mode)
 
@@ -94,8 +94,27 @@ Use [Stripe test cards](https://docs.stripe.com/testing#cards) — e.g. `4242 42
 
 Advance trial billing without waiting 14 days: [Stripe test clocks](https://docs.stripe.com/billing/testing/test-clocks).
 
-## Slice 2 (next)
+## Slice 2 — provision on trialing (shipped)
 
-- Webhook `customer.subscription.created` (`trialing`) → auto-provision hub
+When Stripe sends `checkout.session.completed` or `customer.subscription.created` with status **trialing**:
+
+1. Platform D1 billing row is upserted (as before).
+2. If the site is in `platform-manifest.json` but has **no Terraform contract** yet, the platform dispatches [`platform-site-provision.yml`](../.github/workflows/platform-site-provision.yml) via `PLATFORM_GITHUB_TOKEN`.
+3. `site_billing.provision_dispatched_at` is set on success so duplicate webhooks do not re-run provision.
+4. If GitHub dispatch fails, the webhook returns **503** (Stripe retries) and `provision_last_error` is recorded.
+
+Skipped automatically for `production`, `demo`, sites that already have a D1 contract in the manifest, or when provision was already dispatched.
+
+Apply migration after deploy:
+
+```bash
+node scripts/apply-platform-billing-migration.mjs
+```
+
+**Operator test:** add a registry-only site (e.g. `practice`) with no Terraform contract, run Checkout for that `siteId`, confirm GitHub Actions **Platform site provision** starts.
+
+## Slice 2b (next)
+
 - `subscription.deleted` / failed payment → archive + deprovision
 - Platform admin UI: billing status on site cards
+- Public signup + marketing site trial CTA
