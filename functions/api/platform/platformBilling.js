@@ -1,5 +1,7 @@
 import { maybeDispatchBillingProvision } from './platformBillingProvision.js';
 import { maybeDispatchBillingDeprovision } from './platformBillingDeprovision.js';
+import { getSiteFromManifest } from './platformApi.js';
+import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platformBillingLifecycle.js';
 
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
 
@@ -395,6 +397,32 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
 
   const existingBilling = await getSiteBilling(db, billingPatch.siteId);
 
+  const manifest = context.manifest;
+  const manifestSite = manifest ? getSiteFromManifest(manifest, billingPatch.siteId) : null;
+  const cycleReset = shouldResetBillingCycleFlags({
+    status: billingPatch.status,
+    subscriptionId: billingPatch.subscriptionId,
+    existingBilling,
+    manifestSite
+  });
+  if (cycleReset.reset) {
+    await resetBillingCycleFlags(db, billingPatch.siteId, cycleReset);
+  }
+
+  /** @type {SiteBillingRow | null} */
+  let billingForDispatch = existingBilling;
+  if (cycleReset.reset && existingBilling) {
+    billingForDispatch = {
+      ...existingBilling,
+      ...(cycleReset.clearDeprovision
+        ? { deprovision_dispatched_at: null, deprovision_last_error: null }
+        : {}),
+      ...(cycleReset.clearProvision
+        ? { provision_dispatched_at: null, provision_last_error: null }
+        : {})
+    };
+  }
+
   await upsertSiteBilling(db, {
     site_id: billingPatch.siteId,
     stripe_customer_id: billingPatch.customerId,
@@ -409,13 +437,12 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
   /** @type {Record<string, unknown> | undefined} */
   let deprovision;
   const env = context.env;
-  const manifest = context.manifest;
   if (env && manifest) {
     const provisionResult = await maybeDispatchBillingProvision(env, db, manifest, {
       siteId: billingPatch.siteId,
       eventType,
       status: billingPatch.status,
-      existingBilling
+      existingBilling: billingForDispatch
     });
     provision = provisionResult;
     if (!provisionResult.ok) {
@@ -430,7 +457,7 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
       siteId: billingPatch.siteId,
       eventType,
       status: billingPatch.status,
-      existingBilling
+      existingBilling: billingForDispatch
     });
     deprovision = deprovisionResult;
     if (!deprovisionResult.ok) {

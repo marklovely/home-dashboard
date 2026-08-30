@@ -48,7 +48,14 @@ export function shouldDispatchBillingProvision(input) {
     return { dispatch: false, reason: 'blocked_site' };
   }
   if (existingBilling?.provision_dispatched_at) {
-    return { dispatch: false, reason: 'already_dispatched' };
+    const siteNeedsInfra = !siteHasTerraformContract(manifestSite);
+    const mayReprovision =
+      siteNeedsInfra &&
+      (Boolean(existingBilling.deprovision_dispatched_at) ||
+        String(existingBilling.status ?? '') === 'canceled');
+    if (!mayReprovision) {
+      return { dispatch: false, reason: 'already_dispatched' };
+    }
   }
   if (!manifestSite) {
     return { dispatch: false, reason: 'site_not_in_manifest' };
