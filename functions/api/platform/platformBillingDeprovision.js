@@ -2,6 +2,7 @@ import { validateBillingSiteId } from './platformBilling.js';
 import { dispatchSiteBillingDeprovisionWorkflow } from './platformGitHub.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { siteHasTerraformContract } from './platformBillingProvision.js';
+import { priorDeprovisionBlocksDispatch } from './platformBillingLifecycle.js';
 
 /** Sites that must never be auto-deprovisioned from billing webhooks. */
 export const BILLING_DEPROVISION_BLOCKED_SITE_IDS = new Set(['production', 'demo']);
@@ -40,7 +41,7 @@ export function shouldDispatchBillingDeprovision(input) {
   if (BILLING_DEPROVISION_BLOCKED_SITE_IDS.has(siteId)) {
     return { dispatch: false, reason: 'blocked_site' };
   }
-  if (existingBilling?.deprovision_dispatched_at) {
+  if (priorDeprovisionBlocksDispatch({ existingBilling })) {
     return { dispatch: false, reason: 'already_dispatched' };
   }
   if (!manifestSite) {
