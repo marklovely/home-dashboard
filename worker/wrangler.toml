@@ -349,9 +349,18 @@ name = "lovely-home-hub-api-practice"
 
 [env.practice.vars]
 HUB_ENVIRONMENT = "practice"
+
 ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://practice.lovely-hub.com,https://home-dashboard-practice.pages.dev,https://*.home-dashboard-practice.pages.dev,https://*.pages.dev"
+
 HOME_LATITUDE = "51.5074"
+
 HOME_LONGITUDE = "-0.1278"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
+ACCESS_PAGES_APP_ID = "0a8b523b-1d45-452d-9b7f-706435cbb324"
+
+ACCESS_WORKER_APP_ID = "f3c1badc-d4a2-42c2-a414-f7275ab9498b"
 
 [[env.practice.durable_objects.bindings]]
 name = "OWNER_AUTH_LIMITER"
@@ -368,13 +377,13 @@ bucket_name = "lovely-home-appliance-guides-practice"
 [[env.practice.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-practice"
-database_id = "REPLACE_AFTER_PROVISION_PRACTICE"
+database_id = "62384d11-a70b-4da5-8472-37683ca1193b"
 migrations_dir = "migrations"
 
 [[env.practice.d1_databases]]
 binding = "HOUSE_GUIDE_DB"
 database_name = "lovely-home-appliance-manuals-practice"
-database_id = "REPLACE_AFTER_PROVISION_PRACTICE"
+database_id = "62384d11-a70b-4da5-8472-37683ca1193b"
 migrations_dir = "migrations"
 
 [[env.practice.r2_buckets]]
