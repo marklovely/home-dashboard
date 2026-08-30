@@ -29,3 +29,26 @@ resource "cloudflare_zero_trust_access_application" "platform" {
     include    = local.operator_policy_includes
   }] : []
 }
+
+# Stripe webhooks cannot complete Cloudflare Access OTP — bypass at Zero Trust (not Pages middleware only).
+resource "cloudflare_zero_trust_access_application" "platform_stripe_webhook" {
+  account_id       = var.account_id
+  name             = "Lovely Home — Platform Stripe webhook"
+  type             = "self_hosted"
+  domain           = "${var.hostname}/api/stripe/webhook"
+  session_duration = var.access_session_duration
+
+  destinations = [{
+    type = "public"
+    uri  = "${var.hostname}/api/stripe/webhook"
+  }]
+
+  policies = [{
+    name       = "Bypass Stripe webhooks"
+    decision   = "bypass"
+    precedence = 1
+    include = [{
+      everyone = {}
+    }]
+  }]
+}
