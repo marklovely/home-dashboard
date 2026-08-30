@@ -174,3 +174,20 @@ export async function provisionSite(siteId) {
   }
   return body;
 }
+
+/**
+ * @param {string} siteId
+ * @param {string} customerEmail
+ */
+export async function startBillingCheckout(siteId, customerEmail) {
+  const response = await fetch(`${API_BASE}/billing/checkout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ siteId, customerEmail })
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.message ?? `Checkout failed (${response.status})`);
+  }
+  return body;
+}

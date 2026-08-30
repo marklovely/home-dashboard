@@ -1,4 +1,5 @@
-import { fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled } from './api.js';
+import { fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled, startBillingCheckout } from './api.js';
+import { renderSiteBilling } from './billing.js';
 import {
   evaluateSiteHealth,
   mergeProvisioningWithHealth,
@@ -95,9 +96,10 @@ async function render() {
     ${data.cloudflareUsageConfigured === false ? '<div class="banner banner-warn">Storage usage needs <code>PLATFORM_CF_API_TOKEN</code> (Account → Workers R2 Storage → Read) and <code>CLOUDFLARE_ACCOUNT_ID</code> on the platform Pages project.</div>' : ''}
     ${data.cloudflarePagesConfigured === false ? '<div class="banner banner-warn">PR preview toggles need <code>PLATFORM_CF_API_TOKEN</code> (Account → Cloudflare Pages → Edit) and <code>CLOUDFLARE_ACCOUNT_ID</code> on the platform Pages project.</div>' : ''}
     ${data.githubAutomationConfigured === false ? '<div class="banner banner-warn">Site wizard needs <code>PLATFORM_GITHUB_TOKEN</code> (contents:write, actions:write) and <code>PLATFORM_GITHUB_REPO</code> on the platform Pages project.</div>' : ''}
+    ${data.stripeBillingConfigured === false && data.platformBillingDbConfigured ? '<div class="banner banner-warn">Stripe billing needs <code>STRIPE_SECRET_KEY</code>, <code>STRIPE_WEBHOOK_SECRET</code>, and <code>STRIPE_PRICE_ID</code> on the platform Pages project.</div>' : ''}
     <p class="meta">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
     <section class="grid">
-      ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true)).join('')}
+      ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {}, { stripeConfigured: data.stripeBillingConfigured === true, billingDbConfigured: data.platformBillingDbConfigured === true })).join('')}
     </section>
     <section class="panel new-site">
       <h2>Site automation</h2>
@@ -107,7 +109,7 @@ async function render() {
   `;
 
   main.setAttribute('data-platform', JSON.stringify(platform));
-  wireSiteActions(sites, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true);
+  wireSiteActions(sites, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {});
 
   if (data.healthServiceAuthConfigured && healthBySite.size === 0) {
     runAllHealthChecks().catch(showError);
@@ -142,8 +144,9 @@ function updateSummary(sites, healthConfigured, usageConfigured) {
  * @param {Record<string, unknown>[]} sites
  * @param {boolean} githubConfigured
  * @param {boolean} pagesConfigured
+ * @param {Record<string, Record<string, unknown>>} billingBySite
  */
-function wireSiteActions(sites, githubConfigured, pagesConfigured) {
+function wireSiteActions(sites, githubConfigured, pagesConfigured, billingBySite) {
   main.querySelectorAll('[data-check-site]').forEach((button) => {
     button.addEventListener('click', async () => {
       const siteId = button.getAttribute('data-check-site');
@@ -220,6 +223,33 @@ function wireSiteActions(sites, githubConfigured, pagesConfigured) {
         showError(error);
       } finally {
         checkbox.disabled = false;
+      }
+    });
+  });
+
+  main.querySelectorAll('[data-billing-checkout]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const siteId = button.getAttribute('data-billing-checkout');
+      if (!siteId) return;
+      const site = sites.find((row) => String(row.siteId) === siteId);
+      const billing = billingBySite[siteId];
+      const defaultEmail =
+        (billing?.owner_email ? String(billing.owner_email) : '') ||
+        (Array.isArray(site?.ownerEmails) && site.ownerEmails[0] ? String(site.ownerEmails[0]) : '');
+      const customerEmail = window.prompt('Customer email for Stripe checkout:', defaultEmail);
+      if (!customerEmail) return;
+      button.setAttribute('disabled', 'true');
+      try {
+        const result = await startBillingCheckout(siteId, customerEmail.trim());
+        if (result.url) {
+          window.open(String(result.url), '_blank', 'noopener,noreferrer');
+        } else {
+          throw new Error('Checkout did not return a Stripe URL.');
+        }
+      } catch (error) {
+        showError(error);
+      } finally {
+        button.removeAttribute('disabled');
       }
     });
   });
@@ -384,8 +414,10 @@ async function checkSiteUsage(siteId, options = {}) {
  * @param {Record<string, unknown>} platform
  * @param {boolean} githubConfigured
  * @param {boolean} pagesConfigured
+ * @param {Record<string, Record<string, unknown>>} billingBySite
+ * @param {{ stripeConfigured: boolean; billingDbConfigured: boolean }} billingOptions
  */
-function renderSiteCard(site, platform, githubConfigured, pagesConfigured) {
+function renderSiteCard(site, platform, githubConfigured, pagesConfigured, billingBySite, billingOptions) {
   const siteId = String(site.siteId);
   const isProduction = siteId === 'production';
   const stored = healthBySite.get(siteId);
@@ -417,6 +449,7 @@ function renderSiteCard(site, platform, githubConfigured, pagesConfigured) {
         <div><dt>Pages</dt><dd><code>${escapeHtml(String(site.pagesProject))}</code></dd></div>
         <div><dt>Worker</dt><dd><code>${escapeHtml(String(site.workerName))}</code></dd></div>
       </dl>
+      ${renderSiteBilling(site, billingBySite[siteId] ?? null, billingOptions)}
       ${
         manifestContractMissing
           ? `<div class="banner banner-warn site-manifest-banner">${escapeHtml(MANIFEST_CONTRACT_MISSING_MESSAGE)} ${escapeHtml(MANIFEST_CONTRACT_MISSING_HINT)}</div>`
