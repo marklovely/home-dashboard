@@ -134,7 +134,7 @@ jobs:
           token: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
           branch: platform/site-${{ inputs.site_id }}-billing-deprovision-${{ github.run_id }}
           delete-branch: true
-          title: platform: billing deprovision ${{ inputs.site_id }}
+          title: "platform: billing deprovision ${{ inputs.site_id }}"
           body: |
             Automated billing deprovision from **Platform billing** (Stripe cancel/delete).
 
