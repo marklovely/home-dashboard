@@ -124,6 +124,18 @@ if (stripePriceId) {
   lines.push(`stripe_price_id = "${escapeHcl(stripePriceId)}"`, '');
 }
 
+const marketingSiteOrigin = process.env.MARKETING_SITE_ORIGIN?.trim() || 'https://lovely-home.co.uk';
+lines.push(`marketing_site_origin = "${escapeHcl(marketingSiteOrigin)}"`, '');
+
+const publicSignupFlag = process.env.PUBLIC_SIGNUP_ENABLED?.trim().toLowerCase() ?? '';
+const publicSignupEnabled =
+  publicSignupFlag === 'true' || publicSignupFlag === '1' || publicSignupFlag === 'yes'
+    ? true
+    : publicSignupFlag === 'false' || publicSignupFlag === '0' || publicSignupFlag === 'no'
+      ? false
+      : Boolean(stripeSecretKey && stripeWebhookSecret && stripePriceId && platformGithubToken);
+lines.push(`public_signup_enabled = ${publicSignupEnabled}`, '');
+
 lines.push(
   'platform_admin = {',
   '  enabled    = true',

@@ -33,6 +33,10 @@ platform_operator_emails = [
 # stripe_webhook_secret = "whsec_..."
 # stripe_price_id       = "price_..."
 
+# Public trial signup on lovely-home.co.uk (Slice 3 — requires Stripe + platform_github_token above)
+# marketing_site_origin  = "https://lovely-home.co.uk"
+# public_signup_enabled  = true
+
 # Preview builds for non-main branches (platform admin + Terraform-managed hub Pages). Default true.
 # pages_preview_deployments_enabled = true
 
