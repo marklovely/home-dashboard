@@ -1,0 +1,126 @@
+(function () {
+  const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
+  const apiBase = (document.querySelector('meta[name="lovely-platform-api"]')?.content || 'https://platform.lovely-home.co.uk').replace(/\/$/, '');
+
+  const form = document.getElementById('signup-form');
+  const siteInput = document.getElementById('site-id');
+  const emailInput = document.getElementById('owner-email');
+  const submitBtn = document.getElementById('signup-submit');
+  const alertBox = document.getElementById('signup-alert');
+  const slugHint = document.getElementById('slug-hint');
+
+  if (!form || !siteInput || !emailInput || !submitBtn) return;
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('canceled') === '1') {
+    showAlert('Checkout was canceled. You can try again when ready.', 'info');
+    const canceledSite = (params.get('site') || '').trim().toLowerCase();
+    if (canceledSite && SITE_ID_RE.test(canceledSite)) {
+      siteInput.value = canceledSite;
+    }
+  }
+
+  siteInput.addEventListener('input', () => {
+    siteInput.value = siteInput.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    updateSlugHint();
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    clearAlert();
+
+    const siteId = siteInput.value.trim().toLowerCase();
+    const email = emailInput.value.trim().toLowerCase();
+
+    if (!SITE_ID_RE.test(siteId)) {
+      showAlert('Hub name must start with a letter and use lowercase letters, numbers, or hyphens only.', 'error');
+      siteInput.focus();
+      return;
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showAlert('Enter a valid email address.', 'error');
+      emailInput.focus();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const slugOk = await checkSlug(siteId);
+      if (!slugOk) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(apiBase + '/api/public/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ siteId, customerEmail: email })
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        showAlert(payload.message || payload.error || 'Signup failed. Try again or email support.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      const checkoutUrl = payload.checkoutUrl || payload.url;
+      if (!checkoutUrl) {
+        showAlert('Checkout could not be started. Email support@lovely-home.co.uk for help.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      showAlert('Network error — check your connection and try again.', 'error');
+      setLoading(false);
+    }
+  });
+
+  function updateSlugHint() {
+    const siteId = siteInput.value.trim();
+    if (!siteId) {
+      slugHint.textContent = 'Example: smith → smith.lovely-hub.com';
+      return;
+    }
+    slugHint.textContent = 'Your hub: ' + siteId + '.lovely-hub.com';
+  }
+
+  async function checkSlug(siteId) {
+    try {
+      const response = await fetch(apiBase + '/api/public/signup/slug/' + encodeURIComponent(siteId), {
+        headers: { Accept: 'application/json' }
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!payload.available) {
+        showAlert(payload.message || 'That hub name is not available.', 'error');
+        siteInput.focus();
+        return false;
+      }
+      return true;
+    } catch {
+      showAlert('Could not check hub name availability. Try again.', 'error');
+      return false;
+    }
+  }
+
+  function showAlert(message, tone) {
+    alertBox.textContent = message;
+    alertBox.className = 'signup-alert signup-alert--' + (tone || 'error');
+    alertBox.hidden = false;
+  }
+
+  function clearAlert() {
+    alertBox.hidden = true;
+    alertBox.textContent = '';
+  }
+
+  function setLoading(loading) {
+    submitBtn.disabled = loading;
+    submitBtn.textContent = loading ? 'Starting checkout…' : 'Continue to secure checkout';
+  }
+
+  updateSlugHint();
+})();

@@ -114,7 +114,6 @@ export async function onRequest(context) {
   const suffix = normalizePath(params.path);
 
   // Platform admin uses /api/platform/* (functions/api/platform/[[path]].js).
-  // If that route is missing, avoid falling through to the Worker proxy.
   if (suffix === 'platform' || suffix.startsWith('platform/')) {
     return Response.json(
       {
@@ -122,6 +121,19 @@ export async function onRequest(context) {
           code: 'PLATFORM_API_UNAVAILABLE',
           message:
             'Platform API route not deployed. Redeploy with bash scripts/deploy-platform-admin.sh or ensure functions/api/platform exists in the build.'
+        }
+      },
+      { status: 503 }
+    );
+  }
+
+  if (suffix === 'public' || suffix.startsWith('public/')) {
+    return Response.json(
+      {
+        error: {
+          code: 'PUBLIC_API_UNAVAILABLE',
+          message:
+            'Public API route not deployed. Redeploy with bash scripts/deploy-platform-admin.sh and set PUBLIC_SIGNUP_ENABLED on the platform Pages project.'
         }
       },
       { status: 503 }

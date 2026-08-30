@@ -6,7 +6,9 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 
 | Path | Purpose |
 |------|---------|
-| `/` | Product landing with link to public demo |
+| `/` | Product landing — demo + **Start free trial** |
+| `/signup.html` | Public trial signup (hub name + email → Stripe Checkout) |
+| `/signup-success.html` | Post-checkout confirmation |
 | `/app.html` | Screenshot gallery |
 | `/support.html` | Support & FAQ |
 | `/privacy.html` | Privacy policy |
