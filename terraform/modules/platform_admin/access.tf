@@ -76,28 +76,3 @@ resource "cloudflare_zero_trust_access_application" "platform_stripe_webhook" {
     }]
   }]
 }
-
-# Public signup API (lovely-home.co.uk → platform) cannot complete Access login — bypass at Zero Trust.
-resource "cloudflare_zero_trust_access_application" "platform_public_api" {
-  count = var.public_signup_enabled ? 1 : 0
-
-  account_id       = var.account_id
-  name             = "Lovely Home — Platform public signup API"
-  type             = "self_hosted"
-  domain           = "${var.hostname}/api/public"
-  session_duration = var.access_session_duration
-
-  destinations = [{
-    type = "public"
-    uri  = "${var.hostname}/api/public"
-  }]
-
-  policies = [{
-    name       = "Bypass public signup API"
-    decision   = "bypass"
-    precedence = 1
-    include = [{
-      everyone = {}
-    }]
-  }]
-}
