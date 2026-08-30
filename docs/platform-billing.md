@@ -16,10 +16,18 @@ Related: [roadmap](./roadmap.md) §3 · [platform provision](./platform-provisio
 ## One-time setup (test mode)
 
 1. **Stripe Dashboard (test mode)** — create Product + recurring Price (GBP). Note `price_…`.
-2. **Terraform** — optional vars on `module.platform_admin`:
+2. **Terraform** — optional vars on `module.platform_admin` (via `terraform/environments/hub.tfvars`):
    - `stripe_secret_key` = `sk_test_…`
    - `stripe_webhook_secret` = `whsec_…` (from Stripe CLI or Dashboard endpoint)
    - `stripe_price_id` = `price_…`
+
+   **Important:** Platform Pages env is managed by Terraform. Setting Stripe vars **only in the Cloudflare dashboard** is not enough — the next `terraform apply` (including **Platform site provision** on any hub) rewrites env vars and **removes** dashboard-only secrets. Always keep Stripe values in `hub.tfvars` (local apply) and in GitHub Actions secrets (CI provision).
+
+   For CI, add repo secrets `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_ID` (same values as Terraform). Verify after apply:
+
+   ```bash
+   bash scripts/verify-platform-stripe-env.sh
+   ```
 3. **`terraform apply`** — creates D1 database and binds `PLATFORM_BILLING_DB` on `home-dashboard-platform`.
 4. **Apply migration:**
    ```bash
