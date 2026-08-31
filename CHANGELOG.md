@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.3.0
+
 Public trial signup, household emails, and hub backups on cancel.
 
 ### Signup and billing
