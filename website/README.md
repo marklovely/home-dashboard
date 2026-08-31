@@ -9,7 +9,7 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 | `/` | Product landing — demo + **Start free trial** + pricing summary |
 | `/pricing.html` | Full transparent pricing (live amount from platform API) |
 | `/signup.html` | Public trial signup (hub name + email → Stripe Checkout) |
-| `/signup-success.html` | Post-checkout confirmation |
+| `/signup-success.html` | Post-checkout confirmation with live provisioning status |
 | `/app.html` | Screenshot gallery |
 | `/support.html` | Support & FAQ |
 | `/privacy.html` | Privacy policy |
@@ -17,6 +17,20 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 Public demo hub: [demo.lovely-home.co.uk/sign-in](https://demo.lovely-home.co.uk/sign-in) — username `demo`, password `lovely-demo`.
 
 Pricing on the marketing site is **£9.99/month or £99/year** (loaded live from `GET /api/public/signup/pricing` on the platform Worker, backed by `STRIPE_PRICE_ID` and `STRIPE_PRICE_ID_YEARLY`). The trial is **7 days** (`TRIAL_PERIOD_DAYS` in platform billing). Change prices in Stripe + Terraform — the website updates after deploy.
+
+## Hub provisioning status on the success page
+
+`signup-success.js` polls `GET /api/public/hub-status/<siteId>` on the platform (server-side HTTPS probe of the hub hostname). Until the hub answers, the page shows "Deploying your hub now" with no Open button; once it answers, it reveals the button plus a QR code so the buyer can open the hub on the device they want to use it on. Provisioning takes about **10 minutes**, so the copy and the poll budget (30 minutes) are set against that.
+
+## Vendored QR bundle
+
+`vendor/lovely-qr.js` is generated — this site has no build step, so the `qrcode` encoder plus the shared centre-badge overlay (`src/lib/qrLogoBadge.js`) are bundled and committed. Regenerate after changing either:
+
+```bash
+npm run build:website-qr
+```
+
+The website deploy script runs this automatically when `node_modules` is present.
 
 ## Local preview
 

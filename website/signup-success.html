@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="description" content="Your Lovely Home hub trial has started — we're setting up your household dashboard.">
+  <meta name="lovely-platform-api" content="https://platform.lovely-home.co.uk">
   <title>Lovely Home — Trial started</title>
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="stylesheet" href="site.css">
@@ -46,9 +47,10 @@
           <img class="brand-logo brand-logo--page" src="lovely-home-logo-dark.png" width="280" height="83" alt="Lovely Home — home hub">
         </a>
         <p class="hero-eyebrow"><span></span> Trial started</p>
-        <h1>Thank you — we're setting up your hub</h1>
+        <h1 id="success-heading">Thank you — we're building your hub</h1>
         <p class="hero-lead" id="success-lead">
-          Your 7-day trial is active. We are registering and provisioning your private hub — this usually takes a few minutes.
+          Your 7-day trial is active. Building a hub takes about 10 minutes — leave this page open and it will
+          tell you the moment yours is live.
         </p>
 
         <div class="success-hub-url" id="success-hub" hidden>
@@ -56,20 +58,34 @@
           <p class="success-hostname"><a id="hub-link" href="#"></a></p>
         </div>
 
+        <section class="hub-progress" id="hub-progress" data-state="provisioning" aria-live="polite" hidden>
+          <p class="hub-progress-title" id="hub-progress-title">
+            <span class="hub-progress-spinner" aria-hidden="true"></span>
+            Deploying your hub now
+          </p>
+          <p class="hub-progress-note" id="hub-progress-note">
+            This page checks every few seconds — no need to refresh or retry.
+          </p>
+          <figure class="hub-qr" id="hub-qr" hidden>
+            <div class="hub-qr-code" id="hub-qr-code"></div>
+            <figcaption>Scan to open your hub on a phone or tablet</figcaption>
+          </figure>
+        </section>
+
         <ol class="success-steps">
-          <li>We add your hub to our platform (automatic, ~2 minutes).</li>
           <li>Stripe confirms your trial — you are not charged today.</li>
-          <li>We provision DNS, hosting, and your owner sign-in.</li>
-          <li>You receive access at the hub URL to run the setup wizard.</li>
+          <li>We register your hub and run the automated build (about 10 minutes).</li>
+          <li>DNS, hosting, and your owner sign-in are provisioned.</li>
+          <li>This page shows an Open button and a QR code as soon as your hub answers.</li>
         </ol>
 
         <p class="signup-note muted">
-          Need help? Email <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a> with your hub name.
+          Need help? Email <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a> with your hub address.
         </p>
 
         <div class="cta-row">
           <a class="btn btn-secondary" href="/">Back to home</a>
-          <a class="btn btn-primary" id="open-hub-btn" href="https://demo.lovely-home.co.uk/sign-in" hidden>Open your hub</a>
+          <a class="btn btn-primary" id="open-hub-btn" href="#" hidden>Open your hub</a>
         </div>
       </div>
     </main>
@@ -85,28 +101,7 @@
   </div>
 
   <script src="site.js" defer></script>
-  <script>
-    (function () {
-      const params = new URLSearchParams(window.location.search);
-      const siteId = (params.get('site') || '').trim().toLowerCase();
-      if (!siteId) return;
-
-      const hostname = siteId + '.lovely-hub.com';
-      const hubUrl = 'https://' + hostname + '/';
-
-      const hubBlock = document.getElementById('success-hub');
-      const hubLink = document.getElementById('hub-link');
-      const openBtn = document.getElementById('open-hub-btn');
-      const lead = document.getElementById('success-lead');
-
-      hubLink.textContent = hostname;
-      hubLink.href = hubUrl;
-      openBtn.href = hubUrl;
-      hubBlock.hidden = false;
-      openBtn.hidden = false;
-      lead.textContent =
-        'Your 7-day trial is active for ' + hostname + '. Provisioning usually finishes within a few minutes — refresh the hub link if it is not ready yet.';
-    })();
-  </script>
+  <script src="vendor/lovely-qr.js" defer></script>
+  <script src="signup-success.js" defer></script>
 </body>
 </html>
