@@ -132,6 +132,15 @@ if (stripePriceIdYearly) {
 const marketingSiteOrigin = process.env.MARKETING_SITE_ORIGIN?.trim() || 'https://lovely-home.co.uk';
 lines.push(`marketing_site_origin = "${escapeHcl(marketingSiteOrigin)}"`, '');
 
+const marketingAccessFlag = process.env.MARKETING_SITE_ACCESS_PROTECTED?.trim().toLowerCase() ?? '';
+const marketingSiteAccessProtected =
+  marketingAccessFlag === 'true' || marketingAccessFlag === '1' || marketingAccessFlag === 'yes'
+    ? true
+    : marketingAccessFlag === 'false' || marketingAccessFlag === '0' || marketingAccessFlag === 'no'
+      ? false
+      : false;
+lines.push(`marketing_site_access_protected = ${marketingSiteAccessProtected}`, '');
+
 const publicSignupFlag = process.env.PUBLIC_SIGNUP_ENABLED?.trim().toLowerCase() ?? '';
 const publicSignupEnabled =
   publicSignupFlag === 'true' || publicSignupFlag === '1' || publicSignupFlag === 'yes'
