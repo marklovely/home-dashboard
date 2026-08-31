@@ -82,7 +82,7 @@ Environment:
 | `PLATFORM_SITE_ARCHIVE_SECRET` | Must match hub Worker secret |
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID` | Access service token (edge) |
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET` | Access service token (edge) |
-| `PLATFORM_ARCHIVE_R2_BUCKET` | e.g. `lovely-home-hub-archives` |
+| `PLATFORM_ARCHIVE_R2_BUCKET` | Platform R2 bucket (Terraform `lovely-home-hub-archives`; script default if unset) |
 | `CLOUDFLARE_ACCOUNT_ID` | For `wrangler r2 object put` |
 
 Objects written:
@@ -90,7 +90,13 @@ Objects written:
 - `{site_id}/site-backup-{exportedAt}.json` — full payload
 - `{site_id}/latest.json` — pointer `{ archivedAt, objectKey, formatVersion }`
 
-If archive env vars are missing, deprovision **logs a warning and continues** (internal stacks). For customer hubs on `lovely-hub.com`, configure archive secrets before relying on suspend/restore.
+Archive is required for customer deprovision: missing `PLATFORM_SITE_ARCHIVE_SECRET` or a failed hub fetch **stops** teardown so the live hub is not destroyed without a copy. Sync GitHub secrets from Terraform state with:
+
+```bash
+node scripts/sync-platform-archive-github-secrets.mjs
+```
+
+Or GitHub Actions → **Platform sync archive GitHub secrets**.
 
 ## Restore on reactivate
 

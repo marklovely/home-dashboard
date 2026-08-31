@@ -3,6 +3,9 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+/** Platform R2 bucket for pre-deprovision hub JSON (Terraform: cloudflare_r2_bucket.archives). */
+export const PLATFORM_ARCHIVE_R2_BUCKET_NAME = 'lovely-home-hub-archives';
+
 /**
  * @param {string} siteId
  * @param {Record<string, unknown>} payload

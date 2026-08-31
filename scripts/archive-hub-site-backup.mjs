@@ -7,7 +7,10 @@
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { uploadSiteArchiveToR2 } from './lib/platform-archive-storage.mjs';
+import {
+  PLATFORM_ARCHIVE_R2_BUCKET_NAME,
+  uploadSiteArchiveToR2
+} from './lib/platform-archive-storage.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
@@ -16,16 +19,13 @@ if (!siteId) {
 }
 
 const archiveSecret = process.env.PLATFORM_SITE_ARCHIVE_SECRET?.trim();
-const bucket = process.env.PLATFORM_ARCHIVE_R2_BUCKET?.trim();
+const bucket = process.env.PLATFORM_ARCHIVE_R2_BUCKET?.trim() || PLATFORM_ARCHIVE_R2_BUCKET_NAME;
 
 if (!archiveSecret) {
-  console.warn('PLATFORM_SITE_ARCHIVE_SECRET not set — skipping pre-deprovision archive.');
-  process.exit(0);
-}
-
-if (!bucket) {
-  console.warn('PLATFORM_ARCHIVE_R2_BUCKET not set — skipping pre-deprovision archive.');
-  process.exit(0);
+  console.error(
+    'PLATFORM_SITE_ARCHIVE_SECRET is not set — refusing to deprovision without a hub backup.'
+  );
+  process.exit(1);
 }
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
