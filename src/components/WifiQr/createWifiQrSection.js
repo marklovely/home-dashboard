@@ -2,6 +2,8 @@ import QRCode from 'qrcode';
 import { getProtectedString } from '../../content/houseguide/privateContent.js';
 import { isPrivateConfigLoading, subscribeToPrivateConfig } from '../../services/privateConfigService.js';
 import { buildWifiQrPayload } from '../../utils/wifiQrPayload.js';
+import { injectQrLogoBadge } from '../../lib/qrLogoBadge.js';
+import qrLogoUrl from '../../icons/icon-192.png';
 
 const PLACEHOLDER =
   'Wi-Fi QR code will appear once secure house-sitter access is enabled.';
@@ -72,11 +74,12 @@ export function createWifiQrSection(options = {}) {
         type: 'svg',
         margin: 2,
         width: 280,
+        errorCorrectionLevel: 'H',
         color: { dark: '#111111', light: '#ffffff' }
       });
       const wrap = document.createElement('div');
       wrap.className = 'guide-wifi-qr-code';
-      wrap.innerHTML = svg;
+      wrap.innerHTML = injectQrLogoBadge(svg, { logoHref: qrLogoUrl });
       const svgEl = wrap.querySelector('svg');
       if (svgEl) {
         svgEl.setAttribute('role', 'img');

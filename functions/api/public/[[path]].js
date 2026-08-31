@@ -11,6 +11,7 @@ import {
   buildPublicHubTrialStatus,
   publicHubTrialCorsHeaders
 } from '../platform/platformPublicHubTrial.js';
+import { getPublicHubProvisionStatus } from '../platform/platformPublicHubProvision.js';
 
 /**
  * Public marketing-site API — /api/public/*
@@ -84,6 +85,16 @@ export async function onRequest(context) {
         { status: 503, headers: { ...cors, 'Cache-Control': 'no-store' } }
       );
     }
+  }
+
+  const hubStatusMatch = suffix.match(/^hub-status\/([^/]+)$/);
+  if (hubStatusMatch && request.method === 'GET') {
+    const siteId = decodeURIComponent(hubStatusMatch[1]);
+    const result = await getPublicHubProvisionStatus(manifest, siteId);
+    return Response.json(result.body, {
+      status: result.status,
+      headers: { ...cors, 'Cache-Control': 'no-store' }
+    });
   }
 
   const slugMatch = suffix.match(/^signup\/slug\/([^/]+)$/);
