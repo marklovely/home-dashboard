@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T17:09:53.205Z",
+  "generatedAt": "2026-08-31T19:40:48.700Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -369,6 +369,72 @@
         "worker_api_origin": "https://lovely-home-hub-api-smith.mark-lovely67.workers.dev",
         "worker_hostname": "lovely-home-hub-api-smith.mark-lovely67.workers.dev",
         "worker_name": "lovely-home-hub-api-smith"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    },
+    "rosies": {
+      "siteId": "rosies",
+      "hostname": "rosies.lovely-hub.com",
+      "hubEnvironment": "rosies",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "hasOwnerEmails": false,
+      "demoPublic": false,
+      "accessEnabled": true,
+      "pagesProject": "home-dashboard-rosies",
+      "workerName": "lovely-home-hub-api-rosies",
+      "pagesUrl": "https://rosies.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-rosies.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "f6d6050323f72d3e84941eeef64b8282ce60c2a5be5dc92e2e600a81a8a4e00f,51f9e9893b3fe7b3eda8d63d4d35b18b4491a0de4ec2fcd377e1c08d7c7876b7",
+        "access_enabled": true,
+        "access_pages_app_id": "70dcf058-37ed-4f88-aa28-bb326c8f3105",
+        "access_pages_aud": "51f9e9893b3fe7b3eda8d63d4d35b18b4491a0de4ec2fcd377e1c08d7c7876b7",
+        "access_worker_app_id": "9e901b1d-8712-43e7-b112-8f97729a354b",
+        "access_worker_aud": "f6d6050323f72d3e84941eeef64b8282ce60c2a5be5dc92e2e600a81a8a4e00f",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "dbc995f3-54cc-4994-95dd-3c96318ef748",
+        "d1_database_name": "lovely-home-appliance-manuals-rosies",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "rosies.lovely-hub.com",
+        "hub_environment": "rosies",
+        "pages_project": "home-dashboard-rosies",
+        "pages_url": "https://rosies.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-rosies",
+        "r2_media_bucket": "lovely-home-guide-media-rosies",
+        "site_id": "rosies",
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-rosies.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-rosies.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-rosies"
       },
       "provisioning": [
         {

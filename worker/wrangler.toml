@@ -349,9 +349,18 @@ name = "lovely-home-hub-api-rosies"
 
 [env.rosies.vars]
 HUB_ENVIRONMENT = "rosies"
+
 ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://rosies.lovely-hub.com,https://home-dashboard-rosies.pages.dev,https://*.home-dashboard-rosies.pages.dev,https://*.pages.dev"
+
 HOME_LATITUDE = "51.5074"
+
 HOME_LONGITUDE = "-0.1278"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
+ACCESS_PAGES_APP_ID = "70dcf058-37ed-4f88-aa28-bb326c8f3105"
+
+ACCESS_WORKER_APP_ID = "9e901b1d-8712-43e7-b112-8f97729a354b"
 
 [[env.rosies.durable_objects.bindings]]
 name = "OWNER_AUTH_LIMITER"
@@ -368,13 +377,13 @@ bucket_name = "lovely-home-appliance-guides-rosies"
 [[env.rosies.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-rosies"
-database_id = "REPLACE_AFTER_PROVISION_ROSIES"
+database_id = "dbc995f3-54cc-4994-95dd-3c96318ef748"
 migrations_dir = "migrations"
 
 [[env.rosies.d1_databases]]
 binding = "HOUSE_GUIDE_DB"
 database_name = "lovely-home-appliance-manuals-rosies"
-database_id = "REPLACE_AFTER_PROVISION_ROSIES"
+database_id = "dbc995f3-54cc-4994-95dd-3c96318ef748"
 migrations_dir = "migrations"
 
 [[env.rosies.r2_buckets]]
