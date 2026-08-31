@@ -132,4 +132,14 @@ sites = {
 
 
 
+  blundell = {
+    hostname        = "blundell.lovely-hub.com"
+    hub_environment = "blundell"
+    vanilla         = false
+    terraform       = true
+    zone_name       = "lovely-hub.com"
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+    owner_emails = ["marklovely67+test-blundell@gmail.com"]
+  }
+
 }
