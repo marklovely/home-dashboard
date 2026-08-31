@@ -21,8 +21,18 @@
       </div>
     </div>
 
-    <header class="site-header site-header--minimal">
-      <nav>
+    <header class="site-header">
+      <a class="site-header-brand" href="/" aria-label="Lovely Home home">
+        <img src="favicon.png" width="36" height="36" alt="">
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
+      <div class="nav-backdrop" hidden></div>
+      <nav id="site-nav" class="site-nav" aria-label="Main">
+        <a href="/">Home</a>
         <a href="pricing.html">Pricing</a>
         <a href="signup.html">Start trial</a>
         <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
@@ -171,6 +181,7 @@
       </p>
     </footer>
   </div>
+  <script src="site.js" defer></script>
   <script src="pricing.js" defer></script>
   <script defer>
     document.addEventListener('DOMContentLoaded', function () {
