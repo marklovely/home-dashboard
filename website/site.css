@@ -848,51 +848,81 @@ a { color: var(--accent); }
 
 /* Pricing */
 .pricing-page {
-  max-width: 56rem;
+  max-width: 48rem;
   margin: 0 auto;
   padding: 2rem 1.35rem 3rem;
 }
 
+.pricing-page.page section {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+
 .pricing-page-head {
   text-align: center;
-  max-width: 38rem;
-  margin: 0 auto 2rem;
+  max-width: 36rem;
+  margin: 0 auto 2.5rem;
+}
+
+.pricing-page-head h1 {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.03em;
+}
+
+.pricing-page-head .hero-eyebrow {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pricing-page-head .hero-lead {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 32rem;
+}
+
+.pricing-plans {
+  margin-bottom: 2.5rem;
 }
 
 .pricing-band {
   margin: 2.5rem 0;
 }
 
-.pricing-hero {
-  display: grid;
-  gap: 2rem;
-  align-items: start;
-}
-
 .pricing-plans-grid {
   display: grid;
   gap: 1.25rem;
+  max-width: 42rem;
+  margin: 0 auto;
 }
 
-@media (min-width: 700px) {
+@media (min-width: 640px) {
   .pricing-plans-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
   }
 }
 
-@media (min-width: 900px) {
-  .pricing-hero {
-    grid-template-columns: minmax(16rem, 28rem) 1fr;
-    gap: 2.5rem;
-  }
+.pricing-details-panel {
+  margin-bottom: 2.5rem;
+}
 
-  .pricing-plans-grid {
-    grid-column: 1;
-    grid-template-columns: 1fr;
-  }
+.pricing-details {
+  display: grid;
+  gap: 1.75rem;
+}
 
+@media (min-width: 768px) {
   .pricing-details {
-    grid-column: 2;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem 2.5rem;
+  }
+
+  .pricing-details > section:last-child {
+    grid-column: 1 / -1;
   }
 }
 
@@ -902,6 +932,7 @@ a { color: var(--accent); }
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.5rem;
+  text-align: center;
 }
 
 .pricing-card--featured {
@@ -1026,6 +1057,13 @@ a { color: var(--accent); }
 
 .pricing-faq {
   margin-top: 3rem;
+  text-align: center;
+}
+
+.pricing-faq .faq-list {
+  text-align: left;
+  max-width: 40rem;
+  margin: 0 auto;
 }
 
 .faq-list {
