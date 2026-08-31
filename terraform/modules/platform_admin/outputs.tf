@@ -12,5 +12,6 @@ output "platform_contract" {
       database_id   = cloudflare_d1_database.platform_billing.id
       binding       = "PLATFORM_BILLING_DB"
     }
+    archive_r2_bucket = cloudflare_r2_bucket.archives.name
   }
 }

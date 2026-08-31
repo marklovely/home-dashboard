@@ -223,6 +223,10 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Bot check on public signup. Both must be set, or CI terraform apply leaves the check off |
 | `RESEND_API_KEY` | Same as `resend_api_key` in hub.tfvars — customer lifecycle emails. Without it, billing still works but owners get no hub-URL mail |
 | `CUSTOMER_EMAIL_FROM` | Optional. Same as `customer_email_from`. Default is `Lovely Home <support@lovely-home.co.uk>` |
+| `PLATFORM_SITE_ARCHIVE_SECRET` | Shared with every hub Worker — CI uses it to pull a full-site JSON backup before destroy |
+| `PLATFORM_ARCHIVE_R2_BUCKET` | Platform archive bucket (`lovely-home-hub-archives`). Optional; the archive script defaults to that name |
+| `PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID` | Platform health Access service token (same values Terraform puts on platform Pages) — required to fetch the hub through Access |
+| `PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET` | Service token secret. Sync with `node scripts/sync-platform-archive-github-secrets.mjs` |
 | `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` — only needed if Terraform output is unavailable; CI normally reads secrets from remote state |
 
 CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.

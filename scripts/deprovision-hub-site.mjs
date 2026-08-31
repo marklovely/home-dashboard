@@ -132,7 +132,8 @@ try {
   run('node', [archiveScript, siteId]);
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
-  console.warn(`Pre-deprovision archive skipped or failed: ${message}`);
+  console.error(`Pre-deprovision archive failed: ${message}`);
+  process.exit(1);
 }
 
 const workerName = readWorkerName();

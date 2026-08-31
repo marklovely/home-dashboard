@@ -95,7 +95,6 @@ jobs:
 
       - name: Archive hub backup before teardown
         id: archive
-        continue-on-error: true
         env:
           SITE_ID: ${{ inputs.site_id }}
         run: |
