@@ -7,12 +7,16 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 | Path | Purpose |
 |------|---------|
 | `/` | Product landing — demo + **Start free trial** + pricing summary |
+| `/included.html` | What the hub includes, what needs your own account, what is not included |
+| `/setup.html` | Tablet, Fully Kiosk / PWA, wizard, inviting a sitter |
+| `/security.html` | Isolation, sign-in, sitter limits, storage, backup — claims we can stand behind |
 | `/pricing.html` | Full transparent pricing (live amount from platform API) |
 | `/signup.html` | Public trial signup (hub name + email → Stripe Checkout) |
 | `/signup-success.html` | Post-checkout confirmation with live provisioning status |
 | `/app.html` | Screenshot gallery |
 | `/support.html` | Support & FAQ |
 | `/privacy.html` | Privacy policy |
+| `/terms.html` | Terms of service |
 
 Public demo hub: [demo.lovely-home.co.uk/sign-in](https://demo.lovely-home.co.uk/sign-in) — username `demo`, password `lovely-demo`.
 
