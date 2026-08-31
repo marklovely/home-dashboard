@@ -281,9 +281,9 @@ export const HUB_SETUP_HELP_SECTIONS = [
 /** @type {Record<string, { hint?: string, helpText?: string, helpLabel?: string }>} */
 export const HUB_SETUP_FIELD_HELP = {
   hubName: {
-    hint: 'Shown in the header and welcome area.',
+    hint: 'Shown in the header and welcome area. Pre-filled from your hub address — edit it if you prefer something else.',
     helpText:
-      'Pick a name sitters will recognise — often the property name. You can rename it later in Settings → Home details without affecting your guide content.'
+      'Your hub address (the part before .lovely-hub.com) is used as a starting point, so you can leave this as it is. Otherwise pick a name sitters will recognise — often the property name. You can rename it later in Settings → Home details without affecting your guide content.'
   },
   useCase: {
     helpText:
