@@ -14,9 +14,10 @@
     annualSavingsLabel: 'Save £20.88 vs paying monthly',
     annualSavingsPercent: 17,
     checkoutSummary:
-      '£0 today — then £9.99/month or £99.00/year after your 7-day trial. Cancel anytime before then.',
+      '£0 today — then £9.99/month or £99.00/year after your 7-day trial. Prices include VAT. Cancel anytime before then.',
     signupSummary:
-      '£0 today — choose £9.99/month or £99.00/year after the trial. Cancel anytime before billing starts.'
+      '£0 today — then £9.99/month or £99.00/year (inc. VAT). Use the trial to set up before your sitter arrives.',
+    vatNote: 'inc. VAT'
   };
 
   /**
@@ -142,11 +143,11 @@
       el.innerHTML =
         '<strong>' +
         trialDays +
-        '-day trial</strong> — <strong>£0 today</strong>, then <strong>' +
+        '-day trial</strong> to set up before guests arrive — <strong>£0 today</strong>, then <strong>' +
         escapeHtml(monthlyLabel) +
         '</strong> or <strong>' +
         escapeHtml(yearlyLabel) +
-        '</strong>. Cancel anytime before billing starts.';
+        '</strong> inc. VAT. Cancel anytime before billing starts.';
     });
 
     document.querySelectorAll('[data-pricing="dual-summary"]').forEach((el) => {
@@ -155,7 +156,7 @@
         escapeHtml(monthlyLabel) +
         '</strong> or <strong>' +
         escapeHtml(yearlyLabel) +
-        '</strong>';
+        '</strong> <span class="pricing-inc-vat-inline">inc. VAT</span>';
     });
 
     document.querySelectorAll('[data-pricing="plan-amount"]').forEach((el) => {

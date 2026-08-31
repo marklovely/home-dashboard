@@ -173,7 +173,7 @@ export const HUB_SETUP_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Unlocks owner mode after you enable House Sitter Mode. Press and hold the Lovely Home title in the header for five seconds, then enter this PIN. Optional during setup — you can set it later in Settings. Must be exactly four digits.'
+        text: 'Unlocks owner mode after you enable House Sitter Mode. Press and hold the hub title in the header for five seconds, then enter this PIN. Optional during setup — you can set it later in Settings. Must be exactly four digits.'
       }
     ]
   },
@@ -323,7 +323,7 @@ export const HUB_SETUP_FIELD_HELP = {
   ownerPin: {
     hint: 'Four digits — unlocks owner mode from the header logo.',
     helpText:
-      'After House Sitter Mode is on, press and hold the Lovely Home title for five seconds and enter this PIN to restore owner apps. Optional during setup; must be exactly four digits if set.'
+      'After House Sitter Mode is on, press and hold the hub title for five seconds and enter this PIN to restore owner apps. Optional during setup; must be exactly four digits if set.'
   },
   starterGuide: {
     helpText:
