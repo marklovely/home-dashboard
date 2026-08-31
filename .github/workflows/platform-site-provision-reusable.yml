@@ -124,21 +124,23 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add platform/sites.yaml worker/wrangler.toml
+          git add platform/sites.yaml worker/wrangler.toml platform-admin/public/platform-manifest.json
           if git diff --staged --quiet; then
             echo "No provision follow-up changes to commit."
             exit 0
           fi
           BRANCH="platform/provision-${SITE_ID}-${GITHUB_RUN_ID}"
           git checkout -b "$BRANCH"
-          git commit -m "platform: mark ${SITE_ID} provisioned (attach HUB_API, sync D1 ids)"
+          git commit -m "platform: mark ${SITE_ID} provisioned (attach HUB_API, sync D1 ids, manifest contract)"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${BRANCH}"
           gh pr create \
-            --title "platform: mark ${SITE_ID} provisioned (attach HUB_API, sync D1 ids)" \
+            --title "platform: mark ${SITE_ID} provisioned (attach HUB_API, sync D1 ids, manifest contract)" \
             --body "$(cat <<EOF
           Automated provision follow-up from **Platform site provision**.
 
-          Site \`${SITE_ID}\` finished Terraform, Worker deploy, and Pages. This PR sets \`attach_hub_api_binding: true\` in \`platform/sites.yaml\` and syncs D1 ids in \`worker/wrangler.toml\`.
+          Site \`${SITE_ID}\` finished Terraform, Worker deploy, and Pages. This PR sets \`attach_hub_api_binding: true\` in \`platform/sites.yaml\`, syncs D1 ids in \`worker/wrangler.toml\`, and commits the site's Terraform contract into \`platform-admin/public/platform-manifest.json\`.
+
+          The manifest commit matters: Cloudflare Pages rebuilds platform admin from git with no Terraform state, so contracts are only preserved from the committed manifest. Without it the site shows "not provisioned" again after the next platform-admin deploy.
 
           Auto-merge runs when required checks pass (see \`platform-site-pr-automerge.yml\`).
           EOF
