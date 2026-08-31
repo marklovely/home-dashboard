@@ -55,19 +55,32 @@ export function shouldDispatchSignupRegistry(input) {
 }
 
 /**
+ * @param {{ meta?: { changes?: number | null } } | null | undefined} result
+ */
+export function d1UpdateChangedRow(result) {
+  return Number(result?.meta?.changes ?? 0) > 0;
+}
+
+/**
+ * Claim the registry-dispatch lock before talking to GitHub.
+ * Stripe sends checkout.session.completed and customer.subscription.created
+ * together; a read of registry_dispatched_at is not enough — both handlers
+ * would see null and open two PRs. Only one UPDATE can win.
+ *
  * @param {D1Database} db
  * @param {string} siteId
  */
-export async function markRegistryDispatched(db, siteId) {
+export async function claimRegistryDispatch(db, siteId) {
   const now = Date.now();
-  await db
+  const result = await db
     .prepare(
       `UPDATE site_billing
        SET registry_dispatched_at = ?, registry_last_error = NULL, updated_at = ?
-       WHERE site_id = ?`
+       WHERE site_id = ? AND registry_dispatched_at IS NULL`
     )
     .bind(now, now, siteId)
     .run();
+  return d1UpdateChangedRow(result);
 }
 
 /**
@@ -79,7 +92,7 @@ export async function markRegistryFailed(db, siteId, message) {
   await db
     .prepare(
       `UPDATE site_billing
-       SET registry_last_error = ?, updated_at = ?
+       SET registry_dispatched_at = NULL, registry_last_error = ?, updated_at = ?
        WHERE site_id = ?`
     )
     .bind(message.slice(0, 500), Date.now(), siteId)
@@ -111,6 +124,11 @@ export async function maybeDispatchSignupRegistry(env, db, manifest, input) {
     return { ok: true, action: `registry_${decision.reason}` };
   }
 
+  const claimed = await claimRegistryDispatch(db, input.siteId);
+  if (!claimed) {
+    return { ok: true, action: 'registry_already_dispatched' };
+  }
+
   const built = buildSiteManagePayload(manifest, 'create', input.siteId, {
     hostname: `${input.siteId}.${CUSTOMER_HUB_ZONE_NAME}`,
     zone_name: CUSTOMER_HUB_ZONE_NAME,
@@ -133,7 +151,6 @@ export async function maybeDispatchSignupRegistry(env, db, manifest, input) {
     return { ok: false, error: 'REGISTRY_DISPATCH_FAILED', message };
   }
 
-  await markRegistryDispatched(db, input.siteId);
   return {
     ok: true,
     action: 'registry_dispatched',

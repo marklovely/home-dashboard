@@ -74,7 +74,9 @@ jobs:
           # "Allow GitHub Actions to create and approve pull requests" is enabled.
           # Use the same PAT as platform admin (repo secret PLATFORM_GITHUB_TOKEN).
           token: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
-          branch: platform/site-${{ steps.manage.outputs.site_id }}-${{ inputs.action }}-${{ github.run_id }}
+          # One branch per site+action so a second Stripe event updates the
+          # existing PR instead of opening a duplicate (do not suffix run_id).
+          branch: platform/site-${{ steps.manage.outputs.site_id }}-${{ inputs.action }}
           delete-branch: true
           title: "platform: ${{ inputs.action }} site ${{ steps.manage.outputs.site_id }}"
           body: |
