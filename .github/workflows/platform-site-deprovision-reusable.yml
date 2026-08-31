@@ -99,6 +99,41 @@ jobs:
           if [ "${{ inputs.skip_platform_admin }}" = "true" ]; then ARGS+=( --skip-platform-admin ); fi
           node scripts/deprovision-hub-site.mjs "${ARGS[@]}"
 
+      - name: Commit deprovisioned site manifest
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          SITE_ID: ${{ inputs.site_id }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::PLATFORM_GITHUB_TOKEN not set — skipping manifest commit. Run npm run platform:manifest and commit it, or the torn-down site keeps a contract in git."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add platform-admin/public/platform-manifest.json
+          if git diff --staged --quiet; then
+            echo "No manifest changes to commit."
+            exit 0
+          fi
+          BRANCH="platform/deprovision-${SITE_ID}-${GITHUB_RUN_ID}"
+          git checkout -b "$BRANCH"
+          git commit -m "platform: drop ${SITE_ID} contract from platform manifest"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${BRANCH}"
+          gh pr create \
+            --title "platform: drop ${SITE_ID} contract from platform manifest" \
+            --body "$(cat <<EOF
+          Automated deprovision follow-up from **Platform site deprovision**.
+
+          Site \`${SITE_ID}\` was destroyed (Terraform + Worker). This PR rebuilds \`platform-admin/public/platform-manifest.json\` from live Terraform output so the dead site stops carrying D1/R2 ids and Access AUDs in git.
+
+          Without it the committed manifest keeps the torn-down contract, and a later signup reusing the same slug inherits those ids until Terraform runs.
+
+          Auto-merge runs when required checks pass (see \`platform-site-pr-automerge.yml\`).
+          EOF
+          )" \
+            --base main \
+            --head "$BRANCH"
+
       - name: Prune HUB_PROXY_SECRETS_JSON
         continue-on-error: true
         env:
