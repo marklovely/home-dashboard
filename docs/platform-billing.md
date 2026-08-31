@@ -72,7 +72,9 @@ Local dev API (`scripts/platform-admin-dev-api.mjs`) does not yet mirror billing
 
 ## Operator API (Access-protected)
 
-### Create Checkout session (14-day trial, card at signup)
+### Create Checkout session (7-day trial, card at signup)
+
+Trial length is `TRIAL_PERIOD_DAYS` in `functions/api/platform/platformBilling.js` (currently **7**), sent as Stripe `subscription_data.trial_period_days`. It is not set on the Price in the Stripe Dashboard.
 
 ```http
 POST /api/platform/billing/checkout
@@ -102,7 +104,7 @@ GET /api/platform/billing/sites/smith
 
 Use [Stripe test cards](https://docs.stripe.com/testing#cards) — e.g. `4242 4242 4242 4242`, any future expiry, any CVC.
 
-Advance trial billing without waiting 14 days: [Stripe test clocks](https://docs.stripe.com/billing/testing/test-clocks).
+Advance trial billing without waiting 7 days: [Stripe test clocks](https://docs.stripe.com/billing/testing/test-clocks).
 
 ## Slice 2 — provision on trialing (shipped)
 
