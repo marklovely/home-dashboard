@@ -101,6 +101,18 @@ locals {
         type  = "plain_text"
         value = "true"
       }
+    } : {},
+    var.turnstile_site_key != "" ? {
+      TURNSTILE_SITE_KEY = {
+        type  = "plain_text"
+        value = var.turnstile_site_key
+      }
+    } : {},
+    var.turnstile_secret_key != "" ? {
+      TURNSTILE_SECRET_KEY = {
+        type  = "secret_text"
+        value = var.turnstile_secret_key
+      }
     } : {}
   )
 

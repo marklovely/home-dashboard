@@ -1012,6 +1012,11 @@ html.nav-open {
   font-size: 0.95rem;
 }
 
+.signup-challenge {
+  margin: 0 0 1rem;
+  min-height: 65px;
+}
+
 .signup-alert--error {
   background: rgba(180, 40, 40, 0.08);
   border: 1px solid rgba(180, 40, 40, 0.2);

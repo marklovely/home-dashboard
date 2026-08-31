@@ -61,6 +61,9 @@ export function applyLocalHubEnv(hubTfvarsPath, env = process.env) {
   if (!env.OWNER_EMAILS?.trim() && lists.owner_emails?.length) {
     env.OWNER_EMAILS = lists.owner_emails.join(',');
   }
+  if (!env.SUPPORT_OWNER_EMAILS?.trim() && lists.support_owner_emails?.length) {
+    env.SUPPORT_OWNER_EMAILS = lists.support_owner_emails.join(',');
+  }
   if (!env.SITTER_EMAILS?.trim() && lists.sitter_emails?.length) {
     env.SITTER_EMAILS = lists.sitter_emails.join(',');
   }

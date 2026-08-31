@@ -10,16 +10,39 @@ export function hasTerraformContract(contract) {
 }
 
 /**
+ * Terraform output only overrides committed contracts when it actually describes
+ * the estate. An empty sites output means the wrong workspace or state — not that
+ * every hub was destroyed — and trusting it would strip every contract at once.
+ *
+ * @param {boolean} terraformAvailable
+ * @param {Record<string, unknown> | null | undefined} terraformSites
+ */
+export function terraformOutputIsAuthoritative(terraformAvailable, terraformSites) {
+  return Boolean(terraformAvailable) && Object.keys(terraformSites ?? {}).length > 0;
+}
+
+/**
  * @param {string} siteId
  * @param {Record<string, unknown>} meta
  * @param {Record<string, unknown>} terraformSites
  * @param {Record<string, { contract?: unknown }> | undefined} preservedSites
+ * @param {{ terraformAvailable?: boolean }} [options]
  */
-export function resolveSiteContract(siteId, meta, terraformSites, preservedSites) {
+export function resolveSiteContract(siteId, meta, terraformSites, preservedSites, options = {}) {
   const fromTerraform = terraformSites[siteId];
   if (hasTerraformContract(fromTerraform)) {
     return /** @type {Record<string, unknown>} */ (fromTerraform);
   }
+
+  // Terraform output is authoritative whenever we can read it: a Terraform-managed
+  // site missing from it has been destroyed (or not applied yet), so reusing the
+  // committed contract would advertise D1/R2 ids that no longer exist and show the
+  // torn-down hub as provisioned. Sites Terraform does not manage keep their
+  // contract, which was hand-written or imported rather than derived from state.
+  if (options.terraformAvailable && meta.terraform === true) {
+    return null;
+  }
+
   const preserved = preservedSites?.[siteId]?.contract;
   if (hasTerraformContract(preserved)) {
     return /** @type {Record<string, unknown>} */ (preserved);

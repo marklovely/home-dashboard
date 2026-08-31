@@ -54,6 +54,10 @@ bash scripts/deploy-platform-admin.sh
 
 Git-connected Production builds run `npm run build:platform`. The manifest is **committed** in git; CI merges registry changes with preserved contracts when Terraform state is not present. After `terraform apply`, run `npm run platform:manifest` and commit the updated manifest (or use the deploy script locally).
 
+**Contract precedence.** When `terraform output -json sites` is readable, it wins outright: a Terraform-managed site missing from it has been destroyed, so its committed contract is dropped rather than preserved (the build logs `dropped stale contract for …`). Contracts are only carried over from the committed manifest when Terraform output is unavailable — Pages git builds — or for sites with `terraform: false`, whose contract was imported by hand. `platform-site-deprovision-reusable.yml` opens a follow-up PR with the rebuilt manifest after a teardown, so a destroyed hub stops carrying D1/R2 ids in git.
+
+**Deploy only from a synced checkout.** A local deploy rebuilds the manifest from *your* `platform/sites.yaml`, and because Terraform state lives in R2 (unreadable from a laptop) contracts are copied from the previous manifest rather than verified. Deploying from a checkout that predates a teardown therefore republishes the dead site, complete with an `in state` badge Terraform no longer backs. `scripts/check-platform-registry-sync.mjs` runs first and refuses when `platform/sites.yaml` or `worker/wrangler.toml` differ from `origin/main`; it skips in CI, and `PLATFORM_DEPLOY_ALLOW_STALE=1` overrides it.
+
 ### Pages env vars (Terraform-managed)
 
 | Variable | Purpose |

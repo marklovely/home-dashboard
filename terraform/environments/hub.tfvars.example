@@ -38,6 +38,10 @@ platform_operator_emails = [
 # marketing_site_origin  = "https://lovely-home.co.uk"
 # public_signup_enabled  = true
 
+# Bot check on the signup form. Both values must be set before the challenge is enforced.
+# turnstile_site_key    = "0x4AAA..."
+# turnstile_secret_key  = "0x4AAA..."
+
 # Pre-launch: OTP-gate the marketing site for platform_operator_emails only. Set false at public launch.
 # marketing_site_access_protected = true
 

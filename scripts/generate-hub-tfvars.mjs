@@ -20,6 +20,7 @@ import {
 } from './lib/hub-tfvars.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
+import { parseSiteOwnerEmailsEnv, resolveSiteOwnerEmails } from './lib/site-owner-emails.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sitesYamlPath = join(root, 'platform/sites.yaml');
@@ -39,6 +40,7 @@ const zoneName = process.env.ZONE_NAME?.trim() || 'lovely-home.co.uk';
 const customerZoneName = process.env.CUSTOMER_ZONE_NAME?.trim() || 'lovely-hub.com';
 const customerZoneId = process.env.CUSTOMER_CLOUDFLARE_ZONE_ID?.trim() || '';
 const ownerEmails = splitCsv(process.env.OWNER_EMAILS);
+const supportOwnerEmails = splitCsv(process.env.SUPPORT_OWNER_EMAILS);
 const sitterEmails = splitCsv(process.env.SITTER_EMAILS);
 const operatorEmails = splitCsv(process.env.PLATFORM_OPERATOR_EMAILS);
 const platformGithubToken = process.env.PLATFORM_GITHUB_TOKEN?.trim() || '';
@@ -50,6 +52,17 @@ const stripePriceIdYearly = process.env.STRIPE_PRICE_ID_YEARLY?.trim() || '';
 const provisionSiteId = process.env.PROVISION_SITE_ID?.trim() || '';
 const provisionPhase = process.env.PROVISION_PHASE?.trim() || '';
 const deprovisionSiteId = process.env.DEPROVISION_SITE_ID?.trim() || '';
+
+// Customer owner emails come from the platform billing database at provision
+// time, so they are never written to platform/sites.yaml in a public repo.
+/** @type {Record<string, string[]>} */
+let billingOwnerEmails = {};
+try {
+  billingOwnerEmails = parseSiteOwnerEmailsEnv(process.env.SITE_OWNER_EMAILS_JSON);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
 
 /** @type {Record<string, string>} */
 let hubProxySecretsEnv = {};
@@ -93,6 +106,10 @@ if (customerZoneId) {
 lines.push(
   'owner_emails = [',
   ...ownerEmails.map((email) => `  "${escapeHcl(email)}",`),
+  ']',
+  '',
+  'support_owner_emails = [',
+  ...supportOwnerEmails.map((email) => `  "${escapeHcl(email)}",`),
   ']',
   '',
   'sitter_emails = [',
@@ -149,6 +166,15 @@ const publicSignupEnabled =
       ? false
       : Boolean(stripeSecretKey && stripeWebhookSecret && stripePriceId && platformGithubToken);
 lines.push(`public_signup_enabled = ${publicSignupEnabled}`, '');
+
+const turnstileSiteKey = process.env.TURNSTILE_SITE_KEY?.trim() ?? '';
+const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY?.trim() ?? '';
+if (turnstileSiteKey) {
+  lines.push(`turnstile_site_key = "${escapeHcl(turnstileSiteKey)}"`, '');
+}
+if (turnstileSecretKey) {
+  lines.push(`turnstile_secret_key = "${escapeHcl(turnstileSecretKey)}"`, '');
+}
 
 lines.push(
   'platform_admin = {',
@@ -215,8 +241,23 @@ function appendSiteBlock(siteId, meta) {
     lines.push('    access_enabled = false');
   }
 
-  const siteOwnerEmails = parseEmailList(meta.owner_emails);
+  const siteOwnerEmails = resolveSiteOwnerEmails(siteId, meta.owner_emails, billingOwnerEmails);
   const siteSitterEmails = parseEmailList(meta.sitter_emails);
+
+  // Customer hubs no longer inherit the platform-wide owner list, so a hub with
+  // neither its own owners nor a support identity would lock everyone out.
+  const siteZoneName = String(meta.zone_name ?? '').trim() || hostnameZone(hostname) || zoneName;
+  if (
+    siteZoneName !== zoneName &&
+    meta.access_enabled !== false &&
+    siteOwnerEmails.length === 0 &&
+    supportOwnerEmails.length === 0
+  ) {
+    console.error(
+      `generate-hub-tfvars: ${siteId} is a customer hub with no owner emails. Set the SUPPORT_OWNER_EMAILS secret, or record the owner in the platform billing database, before applying.`
+    );
+    process.exit(1);
+  }
   if (siteOwnerEmails.length > 0) {
     lines.push('    owner_emails = [');
     for (const email of siteOwnerEmails) {
@@ -278,6 +319,16 @@ function requiredEnv(name) {
     process.exit(1);
   }
   return value;
+}
+
+/**
+ * Registry zone for a hostname, e.g. smith.lovely-hub.com → lovely-hub.com.
+ *
+ * @param {string} hostname
+ */
+function hostnameZone(hostname) {
+  const parts = String(hostname ?? '').trim().toLowerCase().split('.');
+  return parts.length > 2 ? parts.slice(1).join('.') : parts.join('.');
 }
 
 /**

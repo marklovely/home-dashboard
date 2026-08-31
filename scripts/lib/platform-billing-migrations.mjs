@@ -2,7 +2,8 @@
 export const PLATFORM_BILLING_MIGRATION_FILES = [
   '0001_site_billing.sql',
   '0002_site_billing_provision.sql',
-  '0003_site_billing_deprovision.sql'
+  '0003_site_billing_deprovision.sql',
+  '0004_signup_guards.sql'
 ];
 
 export const PLATFORM_BILLING_MIGRATIONS_TABLE_SQL = `
@@ -37,6 +38,9 @@ export function inferAppliedMigrationNames(schema) {
   }
   if (schema.columns.has('deprovision_dispatched_at')) {
     applied.push('0003_site_billing_deprovision.sql');
+  }
+  if (schema.columns.has('registry_dispatched_at')) {
+    applied.push('0004_signup_guards.sql');
   }
   return applied;
 }

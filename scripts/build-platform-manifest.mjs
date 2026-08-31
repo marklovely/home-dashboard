@@ -2,7 +2,9 @@
 /**
  * Merge platform/sites.yaml with terraform output -json sites into platform-manifest.json.
  * When Terraform state is unavailable (e.g. Cloudflare Pages CI), preserves contracts
- * from the existing manifest file committed in git.
+ * from the existing manifest file committed in git. When it is available, Terraform
+ * output wins outright — a managed site missing from it has been destroyed, so its
+ * committed contract is dropped instead of resurrected.
  *
  * Usage: node scripts/build-platform-manifest.mjs
  */
@@ -12,10 +14,13 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
+import { findEmailAddresses, redactEmailFields } from './lib/platformManifestPrivacy.mjs';
 import {
+  hasTerraformContract,
   mergePlatformMeta,
   resolveSiteContract,
-  siteManifestFields
+  siteManifestFields,
+  terraformOutputIsAuthoritative
 } from './lib/platformManifestMerge.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -35,6 +40,13 @@ if (sitesRaw) {
 } else {
   console.warn(
     'build-platform-manifest: no terraform output — preserving contracts from existing manifest when available.'
+  );
+}
+
+const terraformAuthoritative = terraformOutputIsAuthoritative(terraformAvailable, terraformSites);
+if (terraformAvailable && !terraformAuthoritative) {
+  console.warn(
+    'build-platform-manifest: terraform output holds no sites — preserving committed contracts rather than treating state as empty.'
   );
 }
 
@@ -81,34 +93,41 @@ const registry = loadSitesYaml(sitesYamlPath);
 /** @type {Record<string, object>} */
 const sites = {};
 let preservedContractCount = 0;
+/** @type {string[]} */
+const droppedContractSites = [];
 
 for (const [siteId, meta] of Object.entries(registry)) {
   const contract = resolveSiteContract(
     siteId,
     meta,
     terraformSites,
-    /** @type {Record<string, { contract?: unknown }> | undefined} */ (preservedManifest?.sites)
+    /** @type {Record<string, { contract?: unknown }> | undefined} */ (preservedManifest?.sites),
+    { terraformAvailable: terraformAuthoritative }
   );
   if (contract && !terraformSites[siteId]) {
     preservedContractCount += 1;
   }
+  if (!contract && hasTerraformContract(preservedManifest?.sites?.[siteId]?.contract)) {
+    droppedContractSites.push(siteId);
+  }
   const hostname = String(meta.hostname ?? '');
   const fields = siteManifestFields(siteId, contract, hostname);
-  sites[siteId] = {
+  // Owner and sitter emails are deliberately absent: this file is committed to
+  // a public repo. Platform admin reads them from the billing API instead.
+  sites[siteId] = redactEmailFields({
     siteId,
     hostname,
     hubEnvironment: meta.hub_environment ?? siteId,
     vanilla: Boolean(meta.vanilla),
     terraform: Boolean(meta.terraform),
     attachHubApiBinding: meta.attach_hub_api_binding === true,
-    ownerEmails: parseEmailList(meta.owner_emails),
-    sitterEmails: parseEmailList(meta.sitter_emails),
+    hasOwnerEmails: parseEmailList(meta.owner_emails).length > 0,
     demoPublic: meta.demo_public === true,
     accessEnabled: meta.access_enabled !== false,
     ...fields,
     contract,
     provisioning: buildProvisioningChecklist(siteId, meta, contract)
-  };
+  });
 }
 
 const manifest = {
@@ -117,6 +136,14 @@ const manifest = {
   sites
 };
 
+const leakedEmails = findEmailAddresses(manifest);
+if (leakedEmails.length > 0) {
+  console.error(
+    `build-platform-manifest: refusing to write personal data to a committed file (${leakedEmails.length} email address(es) found).`
+  );
+  process.exit(1);
+}
+
 mkdirSync(outDir, { recursive: true });
 writeFileSync(outPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
@@ -124,6 +151,11 @@ const tfSiteCount = Object.keys(terraformSites).length;
 console.log(
   `Wrote ${outPath} (${Object.keys(sites).length} sites, terraform=${terraformAvailable ? tfSiteCount : 'unavailable'}, preservedContracts=${preservedContractCount})`
 );
+if (droppedContractSites.length > 0) {
+  console.log(
+    `build-platform-manifest: dropped stale contract for ${droppedContractSites.join(', ')} — not in Terraform output.`
+  );
+}
 
 /**
  * @param {string} manifestPath

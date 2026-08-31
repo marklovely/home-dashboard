@@ -54,6 +54,21 @@ export function validateHostname(hostname, zoneName = PLATFORM_ZONE_NAME) {
   return validateHubHostname(hostname, ALLOWED_HUB_ZONE_NAMES);
 }
 
+export const CUSTOMER_HUB_OWNER_EMAILS_MESSAGE =
+  'Owner emails cannot be stored in platform/sites.yaml for a customer hub — the registry is public. The signup address is read from the platform billing database at provision time; use SUPPORT_OWNER_EMAILS for operator access.';
+
+/**
+ * Hubs outside the platform zone belong to customers, so their addresses must
+ * never reach the public registry.
+ *
+ * @param {string | undefined} hostname
+ */
+export function isCustomerHubHostname(hostname) {
+  const host = String(hostname ?? '').trim().toLowerCase();
+  if (!host) return false;
+  return !(host === PLATFORM_ZONE_NAME || host.endsWith(`.${PLATFORM_ZONE_NAME}`));
+}
+
 /**
  * @param {SiteAction} action
  * @param {string} siteId
@@ -72,7 +87,9 @@ export function validateSiteMutation(action, siteId, payload, existing, options 
     if (existing[siteId]) return `Site "${siteId}" already exists in the registry.`;
     const hostError = validateHubHostname(payload.hostname);
     if (hostError) return hostError;
-    const ownerError = validateEmailList(payload.owner_emails, { required: true });
+    const customerHub = isCustomerHubHostname(payload.hostname);
+    if (customerHub && payload.owner_emails?.length) return CUSTOMER_HUB_OWNER_EMAILS_MESSAGE;
+    const ownerError = validateEmailList(payload.owner_emails, { required: !customerHub });
     if (ownerError) return ownerError;
     const sitterError = validateEmailList(payload.sitter_emails);
     if (sitterError) return sitterError;
@@ -86,8 +103,13 @@ export function validateSiteMutation(action, siteId, payload, existing, options 
       if (hostError) return hostError;
     }
     if (payload.owner_emails !== undefined) {
-      const ownerError = validateEmailList(payload.owner_emails, { required: true });
-      if (ownerError) return ownerError;
+      const hostname = payload.hostname ?? existing[siteId]?.hostname;
+      if (isCustomerHubHostname(hostname)) {
+        if (payload.owner_emails?.length) return CUSTOMER_HUB_OWNER_EMAILS_MESSAGE;
+      } else {
+        const ownerError = validateEmailList(payload.owner_emails, { required: true });
+        if (ownerError) return ownerError;
+      }
     }
     const sitterError = validateEmailList(payload.sitter_emails);
     if (sitterError) return sitterError;

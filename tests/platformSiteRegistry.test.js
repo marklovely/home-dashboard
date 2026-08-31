@@ -139,9 +139,14 @@ describe('site registry validation', () => {
     expect(ok.ok).toBe(true);
     expect(ok.payload.owner_emails).toEqual(['owner@example.com']);
 
-    const customer = buildSiteManagePayload(manifest, 'create', 'rose-cottage', {
+    // Customer hubs default to the customer zone and take their owner from the
+    // billing database, so an address here is rejected rather than committed.
+    const customerWithEmail = buildSiteManagePayload(manifest, 'create', 'rose-cottage', {
       ownerEmails: ['owner@example.com']
     });
+    expect(customerWithEmail.ok).toBe(false);
+
+    const customer = buildSiteManagePayload(manifest, 'create', 'rose-cottage', {});
     expect(customer.ok).toBe(true);
     expect(customer.payload.hostname).toBe('rose-cottage.lovely-hub.com');
     expect(customer.payload.zone_name).toBe('lovely-hub.com');

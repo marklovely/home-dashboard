@@ -12,8 +12,10 @@ if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
   echo "Note: unset CLOUDFLARE_API_TOKEN so wrangler uses OAuth (recommended for pages deploy)." >&2
 fi
 
-echo "==> Building platform admin"
 cd "$ROOT"
+node scripts/check-platform-registry-sync.mjs
+
+echo "==> Building platform admin"
 npm ci
 npm run build:platform
 

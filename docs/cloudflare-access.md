@@ -57,9 +57,15 @@ Revoking access = remove the email from the policy (Terraform `owner_emails`, si
 
 | List | Scope | Access policy | Worker `OWNER_EMAILS` |
 |------|--------|---------------|------------------------|
-| `owner_emails` (global) | Every hub | Owners — Allow | Merged on each site |
+| `owner_emails` (global) | Platform hubs only (`lovely-home.co.uk`) | Owners — Allow | Merged on each platform site |
+| `support_owner_emails` (global) | Customer hubs only (`lovely-hub.com`) | Owners — Allow | Merged on each customer site |
 | `tester_emails` (per site) | That hub only (e.g. sandbox, test) | Owners — Allow | Merged on that site |
 | `sitter_emails` (global or per site) | Where listed | House sitters — Allow | Sitters are **not** owners for calendar/backup APIs |
+
+Customer hubs deliberately do **not** inherit the global `owner_emails` list — otherwise
+every address there would gain owner access to every household. A customer's own owner
+address is read from the platform billing database at provision time, never committed to
+`platform/sites.yaml`. Keep `support_owner_emails` limited to named operator accounts.
 
 Example: household owners on production + sandbox; Airbnb trial guest on sandbox/test only — set `tester_emails` under `sites.sandbox` and `sites.test`, not in global `owner_emails`.
 
