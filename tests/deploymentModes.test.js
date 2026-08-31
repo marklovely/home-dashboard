@@ -97,7 +97,7 @@ describe('owner authentication', () => {
     expect(ids).not.toContain('emergency');
     expect(ids).not.toContain('house-guide');
     expect(ids).not.toContain('scooter');
-    expect(getModeConfig().branding.eyebrow).toBe('LOVELY HOME HUB');
+    expect(getModeConfig().branding.eyebrow).toBe('HOME HUB');
   });
 
   it('returning to house sitter restores guest applications', () => {
@@ -143,11 +143,11 @@ describe('owner authentication', () => {
 describe('house sitter experience (deployment locked)', () => {
   afterEach(resetAuthState);
 
-  it('uses Lovely Home branding', () => {
+  it('uses hub branding', () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
     resetUserModeForTests();
     const config = getModeConfig();
-    expect(config.branding.homeChromeTitle).toBe('Lovely Home');
+    expect(config.branding.homeChromeTitle).toBe('Home Hub');
   });
 
   it('shows sitter app set', () => {

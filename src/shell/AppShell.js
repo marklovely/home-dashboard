@@ -2,6 +2,7 @@ import { renderModeHomeScreen } from '../apps/Home/renderModeHome.js';
 import { getAppById } from '../services/appRegistry.js';
 import { getVisibleApps, isAppVisible } from '../services/appVisibility.js';
 import { getModeConfig, getAppDisplayTitle } from '../modes/modeConfig.js';
+import { getHubDisplayName, subscribeToSiteProfile } from '../services/siteProfileService.js';
 import { applyShellBranding } from './shellBranding.js';
 import { mountShellBottomNav, syncShellBottomNav } from './bottomNav.js';
 import { getCurrentRoute, HOME_ROUTE, initRouter, navigate, subscribeToRoute } from './router.js';
@@ -87,9 +88,10 @@ export function createAppShell({
     document.body.classList.toggle('shell-route-home', isHome);
 
     const branding = mode.branding;
+    const hubName = getHubDisplayName();
     shellChromeTitle.textContent = isHome
-      ? branding.homeChromeTitle
-      : getAppDisplayTitle(getAppById(route) ?? { id: '', title: branding.homeChromeTitle });
+      ? hubName
+      : getAppDisplayTitle(getAppById(route) ?? { id: '', title: hubName });
     if (shellTagline) {
       shellTagline.hidden = !(isHome && branding.homeTagline);
       if (!shellTagline.hidden) shellTagline.textContent = branding.homeTagline ?? '';
@@ -101,7 +103,7 @@ export function createAppShell({
     syncShellBottomNav(bottomNav);
 
     if (isHome) {
-      document.title = branding.documentTitleBase;
+      document.title = hubName;
       document.body.classList.remove('is-weather-route', 'is-bins-route');
       lastMountedAppRoute = HOME_ROUTE;
       void renderModeHomeScreen(viewport, getVisibleApps(), shellContext);
@@ -112,7 +114,7 @@ export function createAppShell({
       syncShellBottomNav(bottomNav);
       const app = getAppById(route);
       if (app) {
-        document.title = `${getAppDisplayTitle(app)} · ${branding.documentTitleBase}`;
+        document.title = `${getAppDisplayTitle(app)} · ${hubName}`;
       }
       return;
     }
@@ -128,7 +130,7 @@ export function createAppShell({
       return;
     }
 
-    document.title = `${getAppDisplayTitle(app)} · ${branding.documentTitleBase}`;
+    document.title = `${getAppDisplayTitle(app)} · ${hubName}`;
     document.body.classList.remove('is-weather-route', 'is-bins-route');
     if (route === 'weather') document.body.classList.add('is-weather-route');
     if (route === 'bins') document.body.classList.add('is-bins-route');
@@ -155,6 +157,21 @@ export function createAppShell({
   subscribeToDisplayPreferences(() => {
     if (getCurrentRoute() === HOME_ROUTE) {
       renderRoute(HOME_ROUTE);
+    }
+  });
+  subscribeToSiteProfile(() => {
+    applyShellBranding({ shellEyebrow, shellTagline });
+    const route = getCurrentRoute();
+    const hubName = getHubDisplayName();
+    if (route === HOME_ROUTE) {
+      shellChromeTitle.textContent = hubName;
+      document.title = hubName;
+      return;
+    }
+    const app = getAppById(route);
+    if (app) {
+      shellChromeTitle.textContent = getAppDisplayTitle(app);
+      document.title = `${getAppDisplayTitle(app)} · ${hubName}`;
     }
   });
   initRouter(getAppById);

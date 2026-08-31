@@ -3,7 +3,7 @@ import { getAppDisplayTitle } from '../modes/modeConfig.js';
 import { isAppEnabledForEnvironment } from '../services/environmentAppPolicy.js';
 import { isAppVisible } from '../services/appVisibility.js';
 import { getAppById } from '../services/appRegistry.js';
-import { getSiteProfileState } from '../services/siteProfileService.js';
+import { getHubDisplayName, getSiteProfileState } from '../services/siteProfileService.js';
 
 /**
  * Host name(s) for sitter-facing copy (primary contact, then hub name).
@@ -13,15 +13,15 @@ export function getHostDisplayName(fallback = 'your hosts') {
   const profile = getSiteProfileState()?.profile;
   const primary = String(profile?.primaryContact?.name ?? '').trim();
   if (primary) return primary;
-  const hubName = String(profile?.hubName ?? '').trim();
-  if (hubName) return hubName;
+  const hubName = getHubDisplayName();
+  if (hubName && hubName !== 'Home Hub') return hubName;
   return fallback;
 }
 
 /** @returns {string} */
 export function getStayPlaceLabel() {
-  const hubName = String(getSiteProfileState()?.profile?.hubName ?? '').trim();
-  if (hubName) return hubName;
+  const hubName = getHubDisplayName();
+  if (hubName && hubName !== 'Home Hub') return hubName;
   const hosts = getHostDisplayName('');
   if (hosts) return `${hosts}'s home`;
   return 'this home';

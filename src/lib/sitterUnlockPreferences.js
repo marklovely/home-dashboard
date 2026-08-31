@@ -72,7 +72,7 @@ export function formatOwnerUnlockInstructions() {
   /** @type {string[]} */
   const parts = [];
   if (logoHold) {
-    parts.push('press and hold the Lovely Home logo for five seconds');
+    parts.push('press and hold the hub logo for five seconds');
   }
   if (settingsButton) {
     parts.push('open Settings and tap Unlock owner mode');

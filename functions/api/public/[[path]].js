@@ -1,5 +1,5 @@
 import { loadPlatformManifest } from '../platform/platformApi.js';
-import { getPlatformBillingDb } from '../platform/platformBilling.js';
+import { getPlatformBillingDb, getSiteBilling } from '../platform/platformBilling.js';
 import {
   handlePublicHubSignup,
   isPublicSignupSlugAvailable,
@@ -7,6 +7,10 @@ import {
   publicSignupCorsHeaders
 } from '../platform/platformPublicSignup.js';
 import { getPublicPlanPricing } from '../platform/platformPublicPricing.js';
+import {
+  buildPublicHubTrialStatus,
+  publicHubTrialCorsHeaders
+} from '../platform/platformPublicHubTrial.js';
 
 /**
  * Public marketing-site API — /api/public/*
@@ -21,7 +25,29 @@ export async function onRequest(context) {
   const cors = publicSignupCorsHeaders(request, pagesEnv);
 
   if (request.method === 'OPTIONS') {
+    if (suffix === 'hub-trial-status') {
+      const hubCors = publicHubTrialCorsHeaders(request);
+      if (!hubCors.siteId) {
+        return new Response(null, { status: 403, headers: hubCors.headers });
+      }
+      return new Response(null, { status: 204, headers: hubCors.headers });
+    }
     return new Response(null, { status: 204, headers: cors });
+  }
+
+  if (suffix === 'hub-trial-status' && request.method === 'GET') {
+    const hubCors = publicHubTrialCorsHeaders(request);
+    if (!hubCors.siteId) {
+      return Response.json(
+        { error: 'ORIGIN_NOT_ALLOWED', trialing: false, trialEnd: null },
+        { status: 403, headers: hubCors.headers }
+      );
+    }
+    const db = getPlatformBillingDb(env);
+    const row = db ? await getSiteBilling(db, hubCors.siteId) : null;
+    return Response.json(buildPublicHubTrialStatus(row), {
+      headers: { ...hubCors.headers, 'Cache-Control': 'no-store' }
+    });
   }
 
   let manifest;
