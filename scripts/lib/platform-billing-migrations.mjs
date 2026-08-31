@@ -3,7 +3,8 @@ export const PLATFORM_BILLING_MIGRATION_FILES = [
   '0001_site_billing.sql',
   '0002_site_billing_provision.sql',
   '0003_site_billing_deprovision.sql',
-  '0004_signup_guards.sql'
+  '0004_signup_guards.sql',
+  '0005_customer_emails.sql'
 ];
 
 export const PLATFORM_BILLING_MIGRATIONS_TABLE_SQL = `
@@ -41,6 +42,9 @@ export function inferAppliedMigrationNames(schema) {
   }
   if (schema.columns.has('registry_dispatched_at')) {
     applied.push('0004_signup_guards.sql');
+  }
+  if (schema.columns.has('signup_email_sent_at')) {
+    applied.push('0005_customer_emails.sql');
   }
   return applied;
 }

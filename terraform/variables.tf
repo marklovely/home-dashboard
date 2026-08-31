@@ -178,6 +178,19 @@ variable "turnstile_secret_key" {
   description = "Cloudflare Turnstile secret key used to verify signup tokens server-side."
 }
 
+variable "resend_api_key" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Resend API key for customer lifecycle emails (signup, trial ending, payment failed, cancelled). Omit until mail is enabled."
+}
+
+variable "customer_email_from" {
+  type        = string
+  default     = ""
+  description = "From header for customer emails, e.g. Lovely Home <support@lovely-home.co.uk>. Defaults in application code when empty."
+}
+
 variable "pages_preview_deployments_enabled" {
   type        = bool
   default     = true

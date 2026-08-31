@@ -176,6 +176,15 @@ if (turnstileSecretKey) {
   lines.push(`turnstile_secret_key = "${escapeHcl(turnstileSecretKey)}"`, '');
 }
 
+const resendApiKey = process.env.RESEND_API_KEY?.trim() ?? '';
+if (resendApiKey) {
+  lines.push(`resend_api_key = "${escapeHcl(resendApiKey)}"`, '');
+}
+const customerEmailFrom = process.env.CUSTOMER_EMAIL_FROM?.trim() ?? '';
+if (customerEmailFrom) {
+  lines.push(`customer_email_from = "${escapeHcl(customerEmailFrom)}"`, '');
+}
+
 lines.push(
   'platform_admin = {',
   '  enabled    = true',

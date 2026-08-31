@@ -4,6 +4,7 @@ import { maybeDispatchSignupRegistry } from './platformBillingRegistry.js';
 import { releaseSignupReservation } from './platformSignupGuards.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platformBillingLifecycle.js';
+import { maybeSendCustomerLifecycleEmail } from './platformCustomerEmail.js';
 
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
 
@@ -19,6 +20,10 @@ import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platform
  *   provision_last_error: string | null;
  *   deprovision_dispatched_at: number | null;
  *   deprovision_last_error: string | null;
+ *   signup_email_sent_at: number | null;
+ *   trial_ending_email_sent_at: number | null;
+ *   past_due_email_sent_at: number | null;
+ *   canceled_email_sent_at: number | null;
  *   created_at: number;
  *   updated_at: number;
  * }} SiteBillingRow */
@@ -296,6 +301,21 @@ export async function getSiteBilling(db, siteId) {
 
 /**
  * @param {D1Database} db
+ * @param {string} subscriptionId
+ * @returns {Promise<SiteBillingRow | null>}
+ */
+export async function getSiteBillingBySubscriptionId(db, subscriptionId) {
+  const id = String(subscriptionId ?? '').trim();
+  if (!id) return null;
+  const row = await db
+    .prepare('SELECT * FROM site_billing WHERE stripe_subscription_id = ? LIMIT 1')
+    .bind(id)
+    .first();
+  return row ? /** @type {SiteBillingRow} */ (row) : null;
+}
+
+/**
+ * @param {D1Database} db
  * @returns {Promise<SiteBillingRow[]>}
  */
 export async function listSiteBilling(db) {
@@ -354,6 +374,7 @@ export function parseStripeSubscription(subscription) {
  * @param {{
  *   env?: Record<string, string | undefined>;
  *   manifest?: object;
+ *   fetchImpl?: typeof fetch;
  * }} [context]
  * @returns {Promise<{ ok: true, action: string, provision?: Record<string, unknown> } | { ok: false, error: string, message?: string }>}
  */
@@ -394,8 +415,21 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
         ? String(object.customer_email)
         : null;
   } else if (eventType === 'customer.subscription.trial_will_end') {
-    await markWebhookEventProcessed(db, eventId, eventType);
-    return { ok: true, action: 'trial_will_end_logged' };
+    const parsed = parseStripeSubscription(object);
+    let existingForTrial = parsed.siteId ? await getSiteBilling(db, parsed.siteId) : null;
+    if (!existingForTrial && parsed.subscriptionId) {
+      existingForTrial = await getSiteBillingBySubscriptionId(db, parsed.subscriptionId);
+    }
+    billingPatch.siteId = parsed.siteId || existingForTrial?.site_id || null;
+    billingPatch.customerId = parsed.customerId || existingForTrial?.stripe_customer_id || null;
+    billingPatch.subscriptionId = parsed.subscriptionId || existingForTrial?.stripe_subscription_id || null;
+    billingPatch.status = existingForTrial?.status || parsed.status || /** @type {BillingStatus} */ ('trialing');
+    billingPatch.trialEnd = parsed.trialEnd || existingForTrial?.trial_end || null;
+    billingPatch.ownerEmail = existingForTrial?.owner_email || null;
+    if (!billingPatch.siteId || !billingPatch.customerId) {
+      await markWebhookEventProcessed(db, eventId, eventType);
+      return { ok: true, action: 'trial_will_end_logged' };
+    }
   } else if (eventType.startsWith('customer.subscription.')) {
     billingPatch = parseStripeSubscription(object);
   } else if (eventType === 'invoice.payment_failed') {
@@ -519,13 +553,41 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     }
   }
 
+  /** @type {Record<string, unknown> | undefined} */
+  let email;
+  if (env) {
+    const billingAfter = await getSiteBilling(db, billingPatch.siteId);
+    const emailResult = await maybeSendCustomerLifecycleEmail(
+      env,
+      db,
+      {
+        eventType,
+        status: billingPatch.status,
+        siteId: billingPatch.siteId,
+        ownerEmail: billingPatch.ownerEmail ?? billingAfter?.owner_email ?? null,
+        trialEnd: billingPatch.trialEnd ?? billingAfter?.trial_end ?? null,
+        existingBilling: billingAfter
+      },
+      context.fetchImpl
+    );
+    email = emailResult;
+    if (!emailResult.ok) {
+      return {
+        ok: false,
+        error: emailResult.error ?? 'EMAIL_SEND_FAILED',
+        message: emailResult.message
+      };
+    }
+  }
+
   await markWebhookEventProcessed(db, eventId, eventType);
   return {
     ok: true,
     action: `updated_${billingPatch.status}`,
     ...(registry ? { registry } : {}),
     ...(provision ? { provision } : {}),
-    ...(deprovision ? { deprovision } : {})
+    ...(deprovision ? { deprovision } : {}),
+    ...(email ? { email } : {})
   };
 }
 
