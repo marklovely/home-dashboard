@@ -34,7 +34,7 @@ describe('platform admin billing UI', () => {
       null,
       { stripeConfigured: true, billingDbConfigured: true }
     );
-    expect(html).toContain('Start 14-day trial');
+    expect(html).toContain('Start 7-day trial');
     expect(html).toContain('data-billing-checkout="practice"');
   });
 
