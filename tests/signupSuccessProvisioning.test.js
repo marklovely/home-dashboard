@@ -61,6 +61,7 @@ describe('signup success provisioning status', () => {
     expect(document.getElementById('open-hub-btn').hidden).toBe(true);
     expect(document.getElementById('hub-qr').hidden).toBe(true);
     expect(document.getElementById('hub-link').textContent).toBe('blundell.lovely-hub.com');
+    expect(document.getElementById('hub-link').getAttribute('href')).toBeNull();
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'https://platform.test/api/public/hub-status/blundell',
       expect.objectContaining({ cache: 'no-store' })
@@ -86,6 +87,7 @@ describe('signup success provisioning status', () => {
     expect(document.getElementById('success-lead').textContent).toMatch(/finished building/i);
     expect(openBtn.hidden).toBe(false);
     expect(openBtn.getAttribute('href')).toBe('https://blundell.lovely-hub.com/');
+    expect(document.getElementById('hub-link').getAttribute('href')).toBe('https://blundell.lovely-hub.com/');
     expect(document.getElementById('hub-qr').hidden).toBe(false);
 
     const svg = document.querySelector('#hub-qr-code svg');

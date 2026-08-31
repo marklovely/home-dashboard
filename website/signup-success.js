@@ -2,8 +2,8 @@
  * Live hub provisioning status for the trial success page.
  *
  * A hub takes roughly ten minutes to build, so the page polls the platform
- * instead of asking buyers to keep retrying the URL. The Open button and the
- * QR code only appear once the hub actually answers.
+ * instead of asking buyers to keep retrying the URL. The address stays as
+ * text until the hub SPA is live; the Open button and QR code appear then.
  */
 (function () {
   const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
@@ -42,7 +42,7 @@
   let settled = false;
 
   hubLink.textContent = hostname;
-  hubLink.href = hubUrl;
+  hubLink.removeAttribute('href');
   openBtn.href = hubUrl;
   hubBlock.hidden = false;
   progress.hidden = false;
@@ -117,6 +117,7 @@
       'Your 7-day trial is active for ' + hostname + '. Your hub finished building — use the trial to set it up before your sitter arrives.';
     setTitle('Your hub is live', false);
     progressNote.textContent = 'Open it below and run the setup wizard — or scan the code on the device you want to use.';
+    hubLink.href = hubUrl;
     openBtn.hidden = false;
     void renderQr();
   }
@@ -128,6 +129,7 @@
     setTitle('This is taking longer than usual', false);
     progressNote.textContent =
       'Your hub has not answered yet. Try the link above in a few minutes, or email support@lovely-home.co.uk and we will finish it for you.';
+    hubLink.href = hubUrl;
     openBtn.hidden = false;
     void renderQr();
   }
@@ -139,6 +141,7 @@
     setTitle('Your hub is being built', false);
     progressNote.textContent =
       'We cannot check the build status from here right now. Your hub is usually ready about 10 minutes after checkout — try the link below then.';
+    hubLink.href = hubUrl;
     openBtn.hidden = false;
     void renderQr();
   }

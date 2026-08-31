@@ -1090,6 +1090,15 @@ html.nav-open {
   text-decoration: underline;
 }
 
+.success-hostname a:not([href]) {
+  color: inherit;
+  cursor: default;
+}
+
+.success-hostname a:not([href]):hover {
+  text-decoration: none;
+}
+
 .hub-progress {
   margin: 1.5rem 0 0;
   padding: 1.1rem 1.2rem;

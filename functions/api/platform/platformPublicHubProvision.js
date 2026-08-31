@@ -8,9 +8,12 @@
 
 import { validateBillingSiteId } from './platformBilling.js';
 import { getSiteFromManifest } from './platformApi.js';
+import { platformHealthServiceAuth } from './platformHealthFetch.js';
 
 export const CUSTOMER_HUB_ZONE_NAME = 'lovely-hub.com';
 export const HUB_PROVISION_TYPICAL_MINUTES = 10;
+/** Marker present on the hub SPA index — not on an empty Pages project or Access login. */
+export const HUB_LIVE_HTML_FINGERPRINT = 'hub-shell';
 const PROBE_TIMEOUT_MS = 6000;
 
 /**
@@ -21,26 +24,40 @@ export function hubProvisionHostname(siteId) {
 }
 
 /**
- * A hub counts as live once its hostname answers over HTTPS. Cloudflare Access
- * redirects (3xx) and challenges (401/403) are healthy answers — the buyer is
- * meant to sign in next. DNS gaps, "nothing here yet" 404s from an unattached
- * Pages domain, and origin errors mean provisioning is still running.
+ * @param {string | null | undefined} html
+ */
+export function hubHtmlLooksLikeLiveHub(html) {
+  return typeof html === 'string' && html.includes(HUB_LIVE_HTML_FINGERPRINT);
+}
+
+/**
+ * A hub counts as live once the hostname returns the hub SPA. Cloudflare Access
+ * often answers with a login redirect a few minutes before Pages has actually
+ * deployed the app — that is still provisioning. DNS gaps, empty Pages 200s,
+ * and origin errors also mean the build is still running.
  *
- * @param {{ status?: number | null, error?: string | null }} probe
+ * @param {{
+ *   status?: number | null,
+ *   error?: string | null,
+ *   looksLikeHub?: boolean | null
+ * } | null} probe
  */
 export function hubProbeIsLive(probe) {
   if (!probe || probe.error) return false;
   const status = Number(probe.status);
-  if (!Number.isFinite(status) || status <= 0) return false;
-  if (status === 401 || status === 403) return true;
-  return status < 400;
+  if (!Number.isFinite(status) || status < 200 || status >= 300) return false;
+  return Boolean(probe.looksLikeHub);
 }
 
 /**
  * @param {{
  *   siteId: string,
  *   registered?: boolean,
- *   probe?: { status?: number | null, error?: string | null } | null
+ *   probe?: {
+ *     status?: number | null,
+ *     error?: string | null,
+ *     looksLikeHub?: boolean | null
+ *   } | null
  * }} input
  */
 export function buildHubProvisionStatus(input) {
@@ -57,6 +74,7 @@ export function buildHubProvisionStatus(input) {
     ready,
     registered: Boolean(input.registered),
     probeStatus: probe && Number.isFinite(Number(probe.status)) ? Number(probe.status) : null,
+    looksLikeHub: Boolean(probe?.looksLikeHub),
     typicalMinutes: HUB_PROVISION_TYPICAL_MINUTES,
     message: ready
       ? 'Your hub is live — open it and run the setup wizard.'
@@ -67,20 +85,38 @@ export function buildHubProvisionStatus(input) {
 /**
  * @param {string} hostname
  * @param {typeof fetch} [fetchImpl]
- * @returns {Promise<{ status: number | null, error: string | null }>}
+ * @param {Record<string, string | undefined>} [env]
+ * @returns {Promise<{ status: number | null, error: string | null, looksLikeHub: boolean }>}
  */
-export async function probeHubHostname(hostname, fetchImpl = fetch) {
+export async function probeHubHostname(hostname, fetchImpl = fetch, env = {}) {
+  const auth = platformHealthServiceAuth(env);
+  /** @type {Record<string, string>} */
+  const headers = { Accept: 'text/html' };
+  if (auth) {
+    headers['CF-Access-Client-Id'] = auth.clientId;
+    headers['CF-Access-Client-Secret'] = auth.clientSecret;
+  }
+
   /** @type {RequestInit} */
-  const init = { method: 'GET', redirect: 'manual', headers: { Accept: 'text/html' } };
+  const init = { method: 'GET', redirect: 'manual', headers };
   if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
     init.signal = AbortSignal.timeout(PROBE_TIMEOUT_MS);
   }
 
   try {
     const response = await fetchImpl(`https://${hostname}/`, init);
-    return { status: response.status, error: null };
+    let looksLikeHub = false;
+    if (response.status >= 200 && response.status < 300) {
+      const html = await response.text();
+      looksLikeHub = hubHtmlLooksLikeLiveHub(html);
+    }
+    return { status: response.status, error: null, looksLikeHub };
   } catch (error) {
-    return { status: null, error: error instanceof Error ? error.message : 'PROBE_FAILED' };
+    return {
+      status: null,
+      error: error instanceof Error ? error.message : 'PROBE_FAILED',
+      looksLikeHub: false
+    };
   }
 }
 
@@ -88,15 +124,16 @@ export async function probeHubHostname(hostname, fetchImpl = fetch) {
  * @param {object} manifest
  * @param {string} siteId
  * @param {typeof fetch} [fetchImpl]
+ * @param {Record<string, string | undefined>} [env]
  */
-export async function getPublicHubProvisionStatus(manifest, siteId, fetchImpl = fetch) {
+export async function getPublicHubProvisionStatus(manifest, siteId, fetchImpl = fetch, env = {}) {
   const id = String(siteId ?? '').trim().toLowerCase();
   const idError = validateBillingSiteId(id);
   if (idError) {
     return { ok: false, status: 400, body: { error: 'INVALID_SITE_ID', message: idError } };
   }
 
-  const probe = await probeHubHostname(hubProvisionHostname(id), fetchImpl);
+  const probe = await probeHubHostname(hubProvisionHostname(id), fetchImpl, env);
   return {
     ok: true,
     status: 200,
