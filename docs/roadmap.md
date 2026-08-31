@@ -116,7 +116,7 @@ Goal: **self-service signup → Stripe-managed trial → paid hub → pause/canc
 
 | Item | Notes |
 |------|--------|
-| **14-day free trial via Stripe Billing** | Subscription created with `trial_period_days: 14`; status `trialing` |
+| **7-day free trial via Stripe Billing** | Subscription created with `trial_period_days: 7`; status `trialing` |
 | **Card at signup (agreed)** | Stripe Checkout collects payment method up front; **£0 charged today**, first invoice on trial end. UX copy: *“£0 today — £X/month from [date]. Cancel anytime before then.”* |
 | Provision on trial start | Webhook `checkout.session.completed` / `customer.subscription.created` → provision `{slug}.lovely-hub.com` while `trialing` |
 | Site id / hostname | `{slug}.lovely-hub.com` from registry rules; linked to `stripe_customer_id` + `stripe_subscription_id` |
@@ -130,12 +130,12 @@ sequenceDiagram
   participant P as Platform
   participant H as Hub
 
-  U->>S: Checkout (card on file, £0 today, 14-day trial)
+  U->>S: Checkout (card on file, £0 today, 7-day trial)
   S-->>P: subscription.created (trialing)
   P->>P: Provision site + billing record
   P->>H: DNS, Worker, Access
   U->>H: Setup wizard
-  Note over S: Day 12: trial_will_end reminder
+  Note over S: 3 days before trial end: trial_will_end reminder
   alt Trial ends, charge succeeds
     S-->>P: subscription.updated (active)
   else Cancel before trial end / charge fails
@@ -163,7 +163,7 @@ Stripe does not use a separate “sandbox” product name in code — you use **
 | Test API keys | Dashboard → **Developers → API keys** (toggle **Test mode**). Use `sk_test_…` / `pk_test_…` in Worker secrets and local dev — never commit keys. |
 | Test cards | e.g. `4242 4242 4242 4242`, any future expiry, any CVC. [Full list](https://docs.stripe.com/testing#cards) includes decline, 3DS, and insufficient-funds scenarios. |
 | Webhooks locally | [Stripe CLI](https://docs.stripe.com/stripe-cli): `stripe listen --forward-to localhost:8787/api/stripe/webhook` — gives a `whsec_…` signing secret for dev. |
-| Billing / trials without waiting 14 days | [Test clocks](https://docs.stripe.com/billing/testing/test-clocks): attach a test Customer to a clock, advance time to fire `trial_will_end`, first invoice, `past_due`, cancel. |
+| Billing / trials without waiting 7 days | [Test clocks](https://docs.stripe.com/billing/testing/test-clocks): attach a test Customer to a clock, advance time to fire `trial_will_end`, first invoice, `past_due`, cancel. |
 | Test vs live isolation | Test-mode Customers, Subscriptions, and Products are separate from live — flip Dashboard test-mode toggle or use test keys in code. |
 | Our rollout | Stage 3: all Stripe + webhook + provision flows on **test mode** against `practice` or `smith`; switch to live keys only at public launch. |
 
@@ -173,7 +173,7 @@ Stripe charges **nothing during a free trial** — no setup fee, no monthly acco
 
 | When | Stripe cost |
 |------|-------------|
-| 14-day trial (`trialing`, £0 invoices) | **£0** |
+| 7-day trial (`trialing`, £0 invoices) | **£0** |
 | First monthly charge after trial | Card fee + Billing fee (below) |
 | Failed payment / retry | No fee until a charge succeeds |
 | Chargeback | **£15** per dispute (if it happens) |

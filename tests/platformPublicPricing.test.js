@@ -93,7 +93,7 @@ describe('platform public pricing', () => {
     const pricing = await getPublicPlanPricing({});
     expect(pricing.configured).toBe(false);
     expect(pricing.monthlyLabel).toBeNull();
-    expect(pricing.trialDays).toBe(14);
+    expect(pricing.trialDays).toBe(7);
   });
 
   it('fetches monthly and yearly Stripe prices when configured', async () => {
