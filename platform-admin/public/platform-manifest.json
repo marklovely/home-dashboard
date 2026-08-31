@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-30T12:06:03.662Z",
+  "generatedAt": "2026-08-31T13:21:55.813Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -37,7 +37,8 @@
         "hostname": "dashboard.lovely-home.co.uk",
         "hub_environment": "production",
         "owner_emails": [
-          "marklovely67@gmail.com"
+          "marklovely67@gmail.com",
+          "donnapowell@purefootcare.com"
         ],
         "pages_project": "home-dashboard",
         "pages_url": "https://dashboard.lovely-home.co.uk",
@@ -104,7 +105,7 @@
         "hub_environment": "test",
         "owner_emails": [
           "marklovely67@gmail.com",
-          "tara@dragonpd.co.uk"
+          "donnapowell@purefootcare.com"
         ],
         "pages_project": "home-dashboard-test",
         "pages_url": "https://test.lovely-home.co.uk",
@@ -176,7 +177,7 @@
         "hub_environment": "sandbox",
         "owner_emails": [
           "marklovely67@gmail.com",
-          "jamie@jamester.net"
+          "donnapowell@purefootcare.com"
         ],
         "pages_project": "home-dashboard-sandbox",
         "pages_url": "https://sandbox.lovely-home.co.uk",
@@ -228,15 +229,15 @@
         "demo@lovely-home.co.uk"
       ],
       "sitterEmails": [],
-      "demoPublic": true,
-      "accessEnabled": false,
+      "demoPublic": false,
+      "accessEnabled": true,
       "pagesProject": "home-dashboard-demo",
       "workerName": "lovely-home-hub-api-demo",
       "pagesUrl": "https://demo.lovely-home.co.uk",
       "workerApiOrigin": "https://lovely-home-hub-api-demo.mark-lovely67.workers.dev",
       "contract": {
         "access_aud_combined": "",
-        "access_enabled": false,
+        "access_enabled": true,
         "access_pages_app_id": "",
         "access_pages_aud": "",
         "access_worker_app_id": "",
@@ -249,7 +250,9 @@
         "hostname": "demo.lovely-home.co.uk",
         "hub_environment": "demo",
         "owner_emails": [
-          "marklovely67@gmail.com"
+          "marklovely67@gmail.com",
+          "donnapowell@purefootcare.com",
+          "demo@lovely-home.co.uk"
         ],
         "pages_project": "home-dashboard-demo",
         "pages_url": "https://demo.lovely-home.co.uk",
@@ -285,7 +288,7 @@
         },
         {
           "id": "access-probe",
-          "label": "Public demo gate (DEMO_PUBLIC on Pages)",
+          "label": "Access + API probe healthy",
           "done": null
         }
       ]
@@ -322,7 +325,8 @@
         "hostname": "dev.lovely-home.co.uk",
         "hub_environment": "dev",
         "owner_emails": [
-          "marklovely67@gmail.com"
+          "marklovely67@gmail.com",
+          "donnapowell@purefootcare.com"
         ],
         "pages_project": "home-dashboard-dev",
         "pages_url": "https://dev.lovely-home.co.uk",
@@ -395,7 +399,8 @@
         "hostname": "smith.lovely-hub.com",
         "hub_environment": "smith",
         "owner_emails": [
-          "marklovely67@gmail.com"
+          "marklovely67@gmail.com",
+          "donnapowell@purefootcare.com"
         ],
         "pages_project": "home-dashboard-smith",
         "pages_url": "https://smith.lovely-hub.com",
@@ -436,29 +441,57 @@
         }
       ]
     },
-    "practice": {
-      "siteId": "practice",
-      "hostname": "practice.lovely-hub.com",
-      "hubEnvironment": "practice",
+    "powell": {
+      "siteId": "powell",
+      "hostname": "powell.lovely-hub.com",
+      "hubEnvironment": "powell",
       "vanilla": false,
       "terraform": true,
-      "attachHubApiBinding": false,
+      "attachHubApiBinding": true,
       "ownerEmails": [
         "marklovely67@gmail.com"
       ],
       "sitterEmails": [],
       "demoPublic": false,
       "accessEnabled": true,
-      "pagesProject": "home-dashboard-practice",
-      "workerName": "lovely-home-hub-api-practice",
-      "pagesUrl": "https://practice.lovely-hub.com",
-      "workerApiOrigin": null,
-      "contract": null,
+      "pagesProject": "home-dashboard-powell",
+      "workerName": "lovely-home-hub-api-powell",
+      "pagesUrl": "https://powell.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-powell.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "8480a6e9287a23ebb3f750ddd61e986c9d95b2a2c5e055686a4280b185a4f406,9c4bccd78d50dab42dec54dc193e2f64c6b645e24242e46e24bfce3ecbdf7433",
+        "access_enabled": true,
+        "access_pages_app_id": "acfb1b5c-fe86-4c86-8fa2-5baf048bd355",
+        "access_pages_aud": "9c4bccd78d50dab42dec54dc193e2f64c6b645e24242e46e24bfce3ecbdf7433",
+        "access_worker_app_id": "5d3ba216-0c1f-47fd-afcb-3c75c5bbe6e4",
+        "access_worker_aud": "8480a6e9287a23ebb3f750ddd61e986c9d95b2a2c5e055686a4280b185a4f406",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "7e9d010f-9e23-4299-b988-b9fb8671ce41",
+        "d1_database_name": "lovely-home-appliance-manuals-powell",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "powell.lovely-hub.com",
+        "hub_environment": "powell",
+        "owner_emails": [
+          "marklovely67@gmail.com",
+          "donnapowell@purefootcare.com"
+        ],
+        "pages_project": "home-dashboard-powell",
+        "pages_url": "https://powell.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-powell",
+        "r2_media_bucket": "lovely-home-guide-media-powell",
+        "site_id": "powell",
+        "sitter_emails": [],
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-powell.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-powell.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-powell"
+      },
       "provisioning": [
         {
           "id": "terraform",
-          "label": "Terraform contract in platform manifest (rebuild after apply)",
-          "done": false
+          "label": "Terraform contract in platform manifest",
+          "done": true
         },
         {
           "id": "worker",
