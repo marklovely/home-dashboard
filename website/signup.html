@@ -65,18 +65,18 @@
 
         <section class="signup-card" aria-labelledby="signup-form-title">
           <h2 id="signup-form-title">Create your hub</h2>
-          <p class="signup-card-lead">Pick a short name for your hub address. Use lowercase letters, numbers, or hyphens.</p>
+          <p class="signup-card-lead">Pick a short web address for your hub. Use lowercase letters, numbers, or hyphens.</p>
 
           <div id="signup-alert" class="signup-alert" hidden role="alert"></div>
 
           <form id="signup-form" class="signup-form" novalidate>
             <div class="form-field">
-              <label for="site-id">Hub name</label>
+              <label for="site-id">Hub address</label>
               <div class="slug-input-wrap">
                 <input id="site-id" name="siteId" type="text" inputmode="lowercase" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="rose-cottage" required maxlength="32" pattern="[a-z][a-z0-9_-]{0,31}">
                 <span class="slug-suffix">.lovely-hub.com</span>
               </div>
-              <p id="slug-hint" class="field-hint" aria-live="polite">Example: <code>smith</code> → smith.lovely-hub.com</p>
+              <p id="slug-hint" class="field-hint" aria-live="polite">Example: <code>smith</code> → smith.lovely-hub.com. You name the home itself later, during hub setup.</p>
             </div>
 
             <div class="form-field">

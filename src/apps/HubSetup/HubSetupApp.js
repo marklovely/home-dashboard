@@ -256,9 +256,8 @@ function mountHubSetupWizard(viewport, context) {
       helpLabel: 'Why country first?'
     }
   );
-  const hubName = createSetupField('Hub name', String(profile.hubName ?? ''), {
-    placeholder: 'Rose Cottage Hub',
-    required: true,
+  const hubName = createSetupField('Hub name', String(profile.hubName ?? '') || getHubDisplayName(), {
+    placeholder: getHubDisplayName(),
     ...HUB_SETUP_FIELD_HELP.hubName
   });
   const useCase = createSetupSelect(
@@ -558,11 +557,7 @@ function mountHubSetupWizard(viewport, context) {
         const countryCode = hubCountry.select.value;
 
         if (stepId === 'hub') {
-          const name = hubName.input.value.trim();
-          if (!name) {
-            showToast(context.toast, 'Enter a hub name.');
-            return;
-          }
+          const name = hubName.input.value.trim() || getHubDisplayName();
           const result = await saveSiteProfile({
             hubName: name,
             hubCountryCode: normalizeHubCountryCode(countryCode),
