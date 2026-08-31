@@ -87,7 +87,9 @@ describe('platform public pricing', () => {
     expect(pricing.checkoutSummary).toContain('£9.99/month');
     expect(pricing.checkoutSummary).toContain('£99.00/year');
     expect(pricing.signupSummary).toContain('sitter');
-    expect(pricing.vatNote).toBe('inc. VAT');
+    expect(pricing.checkoutSummary).not.toMatch(/VAT/i);
+    expect(pricing.signupSummary).not.toMatch(/VAT/i);
+    expect(pricing.vatNote).toBe('');
   });
 
   it('returns unconfigured pricing when Stripe env is missing', async () => {

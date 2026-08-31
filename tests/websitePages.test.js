@@ -72,6 +72,34 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/Wall tablet, mount, or kiosk hardware/);
   });
 
+  it('setup page treats the hub as a URL, not hardware you must buy', () => {
+    const html = readPage('setup.html');
+    expect(html).toMatch(/No hardware required/);
+    expect(html).toMatch(/Send it to a sitter/);
+    expect(html).toMatch(/Optional: wall tablet/);
+    expect(html).not.toMatch(/A wall mount/);
+  });
+
+  it('does not claim prices include VAT', () => {
+    for (const name of pages) {
+      const html = readPage(name);
+      expect(html, name).not.toMatch(/inc\. VAT/i);
+      expect(html, name).not.toMatch(/include VAT/i);
+    }
+    const pricingJs = readFileSync(join(website, 'pricing.js'), 'utf8');
+    expect(pricingJs).not.toMatch(/inc\. VAT/);
+    expect(readPage('pricing.html')).toMatch(/VAT is not charged/);
+    expect(readPage('terms.html')).toMatch(/VAT is not charged/);
+  });
+
+  it('every page has a footer nav that sits above the landing background', () => {
+    for (const name of pages) {
+      expect(readPage(name)).toContain('site-footer-nav');
+    }
+    const css = readFileSync(join(website, 'site.css'), 'utf8');
+    expect(css).toMatch(/\.site-footer \{[\s\S]*?z-index:\s*1/);
+  });
+
   it('gallery includes a trial call to action', () => {
     const html = readPage('app.html');
     expect(html).toMatch(/href="signup\.html"/);

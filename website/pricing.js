@@ -14,10 +14,10 @@
     annualSavingsLabel: 'Save £20.88 vs paying monthly',
     annualSavingsPercent: 17,
     checkoutSummary:
-      '£0 today — then £9.99/month or £99.00/year after your 7-day trial. Prices include VAT. Cancel anytime before then.',
+      '£0 today — then £9.99/month or £99.00/year after your 7-day trial. Cancel anytime before then.',
     signupSummary:
-      '£0 today — then £9.99/month or £99.00/year (inc. VAT). Use the trial to set up before your sitter arrives.',
-    vatNote: 'inc. VAT'
+      '£0 today — then £9.99/month or £99.00/year. Use the trial to set up before your sitter arrives.',
+    vatNote: ''
   };
 
   /**
@@ -27,6 +27,19 @@
     if (apiBaseOverride) return apiBaseOverride.replace(/\/$/, '');
     const meta = document.querySelector('meta[name="lovely-platform-api"]');
     return (meta?.content || DEFAULT_API).replace(/\/$/, '');
+  }
+
+  /**
+   * Drop VAT claims from API copy. Prices are not VAT-inclusive (not VAT registered).
+   * @param {string} text
+   */
+  function stripVatClaims(text) {
+    return String(text || '')
+      .replace(/\s*\(inc\.?\s*VAT\)/gi, '')
+      .replace(/\s*inc\.?\s*VAT\.?/gi, '')
+      .replace(/\s*Prices include VAT\.?/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
   }
 
   /**
@@ -63,12 +76,15 @@
       annualSavingsLabel:
         (pricing.annualSavingsLabel && String(pricing.annualSavingsLabel)) ||
         STATIC_FALLBACK.annualSavingsLabel,
-      checkoutSummary:
+      checkoutSummary: stripVatClaims(
         (pricing.checkoutSummary && String(pricing.checkoutSummary)) ||
-        STATIC_FALLBACK.checkoutSummary,
-      signupSummary:
+          STATIC_FALLBACK.checkoutSummary
+      ),
+      signupSummary: stripVatClaims(
         (pricing.signupSummary && String(pricing.signupSummary)) ||
-        STATIC_FALLBACK.signupSummary
+          STATIC_FALLBACK.signupSummary
+      ),
+      vatNote: ''
     };
   }
 
@@ -140,6 +156,7 @@
     });
 
     document.querySelectorAll('[data-pricing="hero-note"]').forEach((el) => {
+      const demoSuffix = el.getAttribute('data-demo-suffix') || '';
       el.innerHTML =
         '<strong>' +
         trialDays +
@@ -147,7 +164,8 @@
         escapeHtml(monthlyLabel) +
         '</strong> or <strong>' +
         escapeHtml(yearlyLabel) +
-        '</strong> inc. VAT. Cancel anytime before billing starts.';
+        '</strong>. Cancel anytime before billing starts.' +
+        (demoSuffix ? ' ' + demoSuffix : '');
     });
 
     document.querySelectorAll('[data-pricing="dual-summary"]').forEach((el) => {
@@ -156,7 +174,7 @@
         escapeHtml(monthlyLabel) +
         '</strong> or <strong>' +
         escapeHtml(yearlyLabel) +
-        '</strong> <span class="pricing-inc-vat-inline">inc. VAT</span>';
+        '</strong>';
     });
 
     document.querySelectorAll('[data-pricing="plan-amount"]').forEach((el) => {

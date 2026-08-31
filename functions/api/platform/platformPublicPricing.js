@@ -125,22 +125,22 @@ export function buildPublicPricingFromPlans(plans, productName) {
   const monthlyLabel = monthPlan?.label || null;
   const yearlyLabel = yearPlan?.label || null;
 
-  let checkoutSummary = `${trialDays}-day free trial — card on file, no charge today. Prices include VAT.`;
+  let checkoutSummary = `${trialDays}-day free trial — card on file, no charge today.`;
   if (monthlyLabel && yearlyLabel) {
-    checkoutSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel} after your ${trialDays}-day trial. Prices include VAT. Cancel anytime before then.`;
+    checkoutSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel} after your ${trialDays}-day trial. Cancel anytime before then.`;
   } else if (monthlyLabel) {
-    checkoutSummary = `£0 today — ${monthlyLabel} after your ${trialDays}-day trial. Prices include VAT. Cancel anytime before then.`;
+    checkoutSummary = `£0 today — ${monthlyLabel} after your ${trialDays}-day trial. Cancel anytime before then.`;
   } else if (yearlyLabel) {
-    checkoutSummary = `£0 today — ${yearlyLabel} after your ${trialDays}-day trial. Prices include VAT. Cancel anytime before then.`;
+    checkoutSummary = `£0 today — ${yearlyLabel} after your ${trialDays}-day trial. Cancel anytime before then.`;
   }
 
-  let signupSummary = `${trialDays}-day free trial — set up the hub before anyone stays. Card on file; prices include VAT.`;
+  let signupSummary = `${trialDays}-day free trial — set up the hub before anyone stays. Card on file.`;
   if (monthlyLabel && yearlyLabel) {
-    signupSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel} (inc. VAT). Use the trial to set up before your sitter arrives.`;
+    signupSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel}. Use the trial to set up before your sitter arrives.`;
   } else if (monthlyLabel) {
-    signupSummary = `£0 today — then ${monthlyLabel} (inc. VAT). Use the trial to set up before your sitter arrives.`;
+    signupSummary = `£0 today — then ${monthlyLabel}. Use the trial to set up before your sitter arrives.`;
   } else if (yearlyLabel) {
-    signupSummary = `£0 today — then ${yearlyLabel} (inc. VAT). Use the trial to set up before your sitter arrives.`;
+    signupSummary = `£0 today — then ${yearlyLabel}. Use the trial to set up before your sitter arrives.`;
   }
 
   return {
@@ -157,7 +157,7 @@ export function buildPublicPricingFromPlans(plans, productName) {
     annualSavingsPercent: savings?.savingsPercent ?? null,
     checkoutSummary,
     signupSummary,
-    vatNote: 'inc. VAT'
+    vatNote: ''
   };
 }
 
