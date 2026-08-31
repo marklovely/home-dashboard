@@ -192,8 +192,11 @@ When `public_signup_enabled = true`, Terraform also creates a **Zero Trust bypas
 | `/api/public/signup/pricing` | GET | Trial length + monthly/yearly prices from Stripe |
 | `/api/public/signup/slug/{siteId}` | GET | Slug availability check |
 | `/api/public/signup` | POST | Registry create + Stripe Checkout `{ siteId, customerEmail, billingInterval? }` (`month` or `year`) |
+| `/api/public/hub-status/{siteId}` | GET | Provisioning status for the success page — probes `{siteId}.lovely-hub.com` and returns `{ state, ready, hubUrl }` |
 
 Flow: validate slug → dispatch **platform-site-manage** create PR → return Stripe Checkout URL. Webhook `trialing` provisions once the registry PR merges (Stripe retries if needed).
+
+Provisioning takes roughly **10 minutes** end to end, so `signup-success.html` polls `hub-status` and only shows the Open button and hub QR code once the hostname answers. An Access redirect or challenge counts as live — the buyer signs in next.
 
 Deploy marketing pages after merge:
 

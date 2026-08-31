@@ -13,6 +13,14 @@ fi
 PROJECT_NAME="lovely-home"
 PRODUCTION_BRANCH="main"
 
+# website/ ships as-is, so the QR bundle is generated ahead of upload.
+if [ -d node_modules/qrcode ]; then
+  echo "==> Rebuilding website/vendor/lovely-qr.js"
+  npm run build:website-qr
+else
+  echo "==> Skipping QR bundle rebuild (node_modules missing) — using committed website/vendor/lovely-qr.js"
+fi
+
 if ! "${WRANGLER[@]}" pages project list 2>/dev/null | grep -qE "│ ${PROJECT_NAME}[[:space:]]"; then
   echo "==> Creating Pages project: ${PROJECT_NAME} (production branch: ${PRODUCTION_BRANCH})"
   "${WRANGLER[@]}" pages project create "${PROJECT_NAME}" --production-branch "${PRODUCTION_BRANCH}"
