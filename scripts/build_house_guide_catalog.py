@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -13,14 +14,34 @@ ROOT = Path(__file__).resolve().parents[1]
 EXTRACTED_TEXT = ROOT / "src/content/houseguide/source/extracted-text.txt"
 CATALOG_OUT = ROOT / "src/content/houseguide/guide-catalog.json"
 
+# Generic shapes that are safe to spell out: no household value is embedded here.
 FORBIDDEN_PATTERNS = [
-    r"L0udCl0ud",
-    r"BlueberryHills",
-    r"mark\.lovely67",
-    r"donnapowell",
-    r"07891074147",
-    r"41 Wagtail Road PO8 9YD",
+    r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}",
+    r"\b07\d{9}\b",
+    r"\b\+44\s?7\d{9}\b",
 ]
+
+# The household's Wi-Fi credentials and postcode are held as SHA-256 digests so
+# this file cannot leak the values it guards against. Public venue postcodes in
+# the local-area guide are expected and allowed, which is why only the specific
+# household values are listed.
+#   python3 -c "import hashlib;print(hashlib.sha256(b'VALUE').hexdigest())"
+FORBIDDEN_TOKEN_HASHES = {
+    "569aec22ee70c4b310b9b3d33090d350941742b8b936671ef351595f05382184",
+    "e16fb790ce2520cedac8a5c32a9c8d748ca956c2f053fe524bcd0ae1d9841859",
+    "1cce73b769492b5272a5ff918c29d0a2774c3195155e1e0d266492f5fec0e489",
+}
+
+# Multi-word values (the household street address) hashed after lowercasing and
+# collapsing whitespace.
+FORBIDDEN_PHRASE_HASHES = {
+    "4d90ee3d8b8376e3b87bd348fa0fb7740dd84e6d22a1e2e9a49acaf001012128",
+}
+FORBIDDEN_PHRASE_WORDS = 5
+
+POSTCODE_RE = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b")
+WORD_RE = re.compile(r"[A-Za-z0-9]+")
+
 FORBIDDEN_LITERAL = "Content coming soon."
 
 
@@ -1656,6 +1677,28 @@ def build_catalog() -> dict[str, Any]:
     }
 
 
+def leaked_secrets(text: str) -> list[str]:
+    """Return household values found in ``text``, matched by hash."""
+
+    found: list[str] = []
+
+    candidates = set(WORD_RE.findall(text))
+    for match in POSTCODE_RE.finditer(text.upper()):
+        candidates.add(match.group(0).replace(" ", ""))
+    for token in candidates:
+        if hashlib.sha256(token.encode()).hexdigest() in FORBIDDEN_TOKEN_HASHES:
+            found.append(token)
+
+    words = [word.lower() for word in WORD_RE.findall(text)]
+    for size in range(2, FORBIDDEN_PHRASE_WORDS + 1):
+        for start in range(len(words) - size + 1):
+            phrase = " ".join(words[start : start + size])
+            if hashlib.sha256(phrase.encode()).hexdigest() in FORBIDDEN_PHRASE_HASHES:
+                found.append(phrase)
+
+    return found
+
+
 def validate_catalog(catalog: dict[str, Any]) -> None:
     blob = json.dumps(catalog, ensure_ascii=False)
     if FORBIDDEN_LITERAL in blob:
@@ -1663,6 +1706,9 @@ def validate_catalog(catalog: dict[str, Any]) -> None:
     for pattern in FORBIDDEN_PATTERNS:
         if re.search(pattern, blob, re.IGNORECASE):
             raise ValueError(f"Catalog matches forbidden pattern: {pattern}")
+    leaked = leaked_secrets(blob)
+    if leaked:
+        raise ValueError(f"Catalog contains {len(leaked)} household secret(s)")
     if catalog.get("version") != 2:
         raise ValueError("Catalog version must be 2")
     cats = catalog.get("categories") or []
