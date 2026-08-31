@@ -30,7 +30,10 @@
     "d1:migrate:smith": "node scripts/check-env-provisioned.mjs smith && wrangler d1 migrations apply lovely-home-appliance-manuals-smith --remote --env smith",
     "d1:migrate:all": "node ../scripts/apply-d1-migrations-all.mjs",
     "deploy:all": "node ../scripts/deploy-all-workers.mjs",
-    "secrets:smith": "bash scripts/print-env-secrets-checklist.sh smith"
+    "secrets:smith": "bash scripts/print-env-secrets-checklist.sh smith",
+    "deploy:rosies": "node scripts/check-env-provisioned.mjs rosies && wrangler deploy --env rosies",
+    "d1:migrate:rosies": "node scripts/check-env-provisioned.mjs rosies && wrangler d1 migrations apply lovely-home-appliance-manuals-rosies --remote --env rosies",
+    "secrets:rosies": "bash scripts/print-env-secrets-checklist.sh rosies"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.19.0",
