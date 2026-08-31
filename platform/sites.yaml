@@ -46,11 +46,3 @@ sites:
     terraform: true
     zone_name: lovely-hub.com
     attach_hub_api_binding: true
-
-  rosies:
-    hostname: rosies.lovely-hub.com
-    hub_environment: rosies
-    vanilla: false
-    terraform: true
-    zone_name: lovely-hub.com
-    attach_hub_api_binding: true

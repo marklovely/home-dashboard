@@ -142,13 +142,6 @@ sites = {
 
 
 
-  rosies = {
-    hostname        = "rosies.lovely-hub.com"
-    hub_environment = "rosies"
-    vanilla         = false
-    terraform       = true
-    zone_name       = "lovely-hub.com"
-    attach_hub_api_binding = false # first apply only; set true after Worker deploy
-  }
+
 
 }
