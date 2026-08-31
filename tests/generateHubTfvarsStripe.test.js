@@ -15,8 +15,9 @@ describe('generate-hub-tfvars stripe passthrough', () => {
       STRIPE_PRICE_ID_YEARLY: 'stripe_price_id_yearly',
       PLATFORM_CF_API_TOKEN: 'platform_cf_api_token',
       MARKETING_SITE_ORIGIN: 'marketing_site_origin',
-      PUBLIC_SIGNUP_ENABLED: 'public_signup_enabled'
+      PUBLIC_SIGNUP_ENABLED: 'public_signup_enabled',
+      RESEND_API_KEY: 'resend_api_key'
     };
-    expect(Object.keys(mapping)).toHaveLength(7);
+    expect(Object.keys(mapping)).toHaveLength(8);
   });
 });

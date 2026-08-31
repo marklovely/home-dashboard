@@ -222,6 +222,27 @@ Signup abuse controls, all backed by the platform billing D1 database:
 
 Provisioning takes roughly **10 minutes** end to end, so `signup-success.html` polls `hub-status` and only shows the Open button and hub QR code once the hostname answers. An Access redirect or challenge counts as live — the buyer signs in next.
 
+## Customer emails
+
+The webhook also sends mail through [Resend](https://resend.com) when `RESEND_API_KEY` is set on platform Pages (Terraform: `resend_api_key`). Without the key, billing still works; the customer only gets Stripe’s own receipts.
+
+| Stripe event | Email |
+| --- | --- |
+| `checkout.session.completed` (and `customer.subscription.created` if checkout did not already send) | Trial started, hub URL, success-page link |
+| `customer.subscription.trial_will_end` | Trial ending; first charge date |
+| `invoice.payment_failed` | Card failed; hub stays up while Stripe retries |
+| `customer.subscription.deleted` / canceled | Hub is ending; download a backup while it is up |
+
+Each kind is recorded on `site_billing` (`signup_email_sent_at`, …) so webhook retries do not send twice. From-address defaults to `Lovely Home <support@lovely-home.co.uk>` (`customer_email_from` / `CUSTOMER_EMAIL_FROM`). Verify that domain in Resend before going live.
+
+Apply the mail columns after deploy:
+
+```bash
+node scripts/apply-platform-billing-migration.mjs
+```
+
+Set GitHub secret `RESEND_API_KEY` (and the same value in `hub.tfvars`) so the next `terraform apply` does not wipe it.
+
 Deploy marketing pages after merge:
 
 ```bash

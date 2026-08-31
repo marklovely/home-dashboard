@@ -13,7 +13,10 @@ const STRING_FIELD_TO_ENV = {
   platform_cf_api_token: 'PLATFORM_CF_API_TOKEN',
   stripe_secret_key: 'STRIPE_SECRET_KEY',
   stripe_webhook_secret: 'STRIPE_WEBHOOK_SECRET',
-  stripe_price_id: 'STRIPE_PRICE_ID'
+  stripe_price_id: 'STRIPE_PRICE_ID',
+  stripe_price_id_yearly: 'STRIPE_PRICE_ID_YEARLY',
+  resend_api_key: 'RESEND_API_KEY',
+  customer_email_from: 'CUSTOMER_EMAIL_FROM'
 };
 
 /**

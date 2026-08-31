@@ -29,12 +29,20 @@ describe('platform billing migrations', () => {
     expect(
       inferAppliedMigrationNames({
         hasSiteBillingTable: true,
-        columns: new Set(['site_id', 'provision_dispatched_at', 'deprovision_dispatched_at'])
+        columns: new Set([
+          'site_id',
+          'provision_dispatched_at',
+          'deprovision_dispatched_at',
+          'registry_dispatched_at',
+          'signup_email_sent_at'
+        ])
       })
     ).toEqual([
       '0001_site_billing.sql',
       '0002_site_billing_provision.sql',
-      '0003_site_billing_deprovision.sql'
+      '0003_site_billing_deprovision.sql',
+      '0004_signup_guards.sql',
+      '0005_customer_emails.sql'
     ]);
   });
 

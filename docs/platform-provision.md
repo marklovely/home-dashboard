@@ -221,6 +221,8 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 | `STRIPE_PRICE_ID` | Same as `stripe_price_id` in hub.tfvars (monthly, e.g. £9.99/month) |
 | `STRIPE_PRICE_ID_YEARLY` | Same as `stripe_price_id_yearly` in hub.tfvars (yearly, e.g. £99/year) |
 | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Bot check on public signup. Both must be set, or CI terraform apply leaves the check off |
+| `RESEND_API_KEY` | Same as `resend_api_key` in hub.tfvars — customer lifecycle emails. Without it, billing still works but owners get no hub-URL mail |
+| `CUSTOMER_EMAIL_FROM` | Optional. Same as `customer_email_from`. Default is `Lovely Home <support@lovely-home.co.uk>` |
 | `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` — only needed if Terraform output is unavailable; CI normally reads secrets from remote state |
 
 CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.

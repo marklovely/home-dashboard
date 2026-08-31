@@ -42,6 +42,10 @@ platform_operator_emails = [
 # turnstile_site_key    = "0x4AAA..."
 # turnstile_secret_key  = "0x4AAA..."
 
+# Customer emails (Resend). Verify support@lovely-home.co.uk (or your from-address) on the domain.
+# resend_api_key       = "re_..."
+# customer_email_from  = "Lovely Home <support@lovely-home.co.uk>"
+
 # Pre-launch: OTP-gate the marketing site for platform_operator_emails only. Set false at public launch.
 # marketing_site_access_protected = true
 

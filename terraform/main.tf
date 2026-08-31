@@ -95,5 +95,7 @@ module "platform_admin" {
   public_signup_enabled             = var.public_signup_enabled
   turnstile_site_key                = var.turnstile_site_key
   turnstile_secret_key              = var.turnstile_secret_key
+  resend_api_key                    = var.resend_api_key
+  customer_email_from               = var.customer_email_from
   pages_preview_deployments_enabled = var.pages_preview_deployments_enabled
 }

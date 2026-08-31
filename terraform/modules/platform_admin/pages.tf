@@ -113,6 +113,18 @@ locals {
         type  = "secret_text"
         value = var.turnstile_secret_key
       }
+    } : {},
+    var.resend_api_key != "" ? {
+      RESEND_API_KEY = {
+        type  = "secret_text"
+        value = var.resend_api_key
+      }
+    } : {},
+    var.customer_email_from != "" ? {
+      CUSTOMER_EMAIL_FROM = {
+        type  = "plain_text"
+        value = var.customer_email_from
+      }
     } : {}
   )
 

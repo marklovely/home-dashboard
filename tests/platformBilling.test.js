@@ -127,9 +127,28 @@ function createBillingDbMock() {
           if (sql.includes('INSERT OR IGNORE INTO stripe_webhook_events')) {
             webhookEvents.add(String(bound[0]));
           }
+          if (sql.includes('UPDATE site_billing SET') && sql.includes('_email_sent_at')) {
+            const siteId = String(bound[2]);
+            const row = siteBilling.get(siteId);
+            if (row) {
+              const column = sql.includes('signup_email_sent_at')
+                ? 'signup_email_sent_at'
+                : sql.includes('trial_ending_email_sent_at')
+                  ? 'trial_ending_email_sent_at'
+                  : sql.includes('past_due_email_sent_at')
+                    ? 'past_due_email_sent_at'
+                    : 'canceled_email_sent_at';
+              row[column] = bound[0];
+              row.updated_at = bound[1];
+            }
+          }
           return { success: true };
         },
         async first() {
+          if (sql.includes('FROM site_billing WHERE stripe_subscription_id')) {
+            const id = String(bound[0]);
+            return [...siteBilling.values()].find((row) => row.stripe_subscription_id === id) ?? null;
+          }
           if (sql.includes('FROM site_billing WHERE site_id')) {
             return siteBilling.get(String(bound[0])) ?? null;
           }
