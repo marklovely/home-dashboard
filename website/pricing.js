@@ -29,6 +29,49 @@
   }
 
   /**
+   * Merge API payload with static fallbacks so cards never show "…" when we know the list price.
+   * @param {Record<string, unknown>} pricing
+   */
+  function normalizePricing(pricing) {
+    const plans = pricing.plans && typeof pricing.plans === 'object' ? pricing.plans : {};
+    const monthPlan = plans.month || STATIC_FALLBACK.plans.month;
+    const yearPlan = plans.year || STATIC_FALLBACK.plans.year;
+    const monthlyLabel =
+      (pricing.monthlyLabel && String(pricing.monthlyLabel)) ||
+      (monthPlan?.label && String(monthPlan.label)) ||
+      STATIC_FALLBACK.monthlyLabel;
+    const yearlyLabel =
+      (pricing.yearlyLabel && String(pricing.yearlyLabel)) ||
+      (yearPlan?.label && String(yearPlan.label)) ||
+      STATIC_FALLBACK.yearlyLabel;
+
+    let annualSavingsPercent = Number(pricing.annualSavingsPercent);
+    if (!Number.isFinite(annualSavingsPercent) || annualSavingsPercent <= 0) {
+      annualSavingsPercent = STATIC_FALLBACK.annualSavingsPercent;
+    }
+
+    return {
+      ...STATIC_FALLBACK,
+      ...pricing,
+      trialDays: Number(pricing.trialDays) || STATIC_FALLBACK.trialDays,
+      productName: pricing.productName ? String(pricing.productName) : STATIC_FALLBACK.productName,
+      plans: { month: monthPlan, year: yearPlan },
+      monthlyLabel,
+      yearlyLabel,
+      annualSavingsPercent,
+      annualSavingsLabel:
+        (pricing.annualSavingsLabel && String(pricing.annualSavingsLabel)) ||
+        STATIC_FALLBACK.annualSavingsLabel,
+      checkoutSummary:
+        (pricing.checkoutSummary && String(pricing.checkoutSummary)) ||
+        STATIC_FALLBACK.checkoutSummary,
+      signupSummary:
+        (pricing.signupSummary && String(pricing.signupSummary)) ||
+        STATIC_FALLBACK.signupSummary
+    };
+  }
+
+  /**
    * @param {string} [apiBaseOverride]
    */
   async function loadPricing(apiBaseOverride) {
@@ -39,15 +82,9 @@
       });
       if (!response.ok) throw new Error('pricing unavailable');
       const pricing = await response.json();
-      if (!pricing.monthlyLabel && pricing.plans?.month?.label) {
-        pricing.monthlyLabel = pricing.plans.month.label;
-      }
-      if (!pricing.yearlyLabel && pricing.plans?.year?.label) {
-        pricing.yearlyLabel = pricing.plans.year.label;
-      }
-      return pricing;
+      return normalizePricing(pricing);
     } catch {
-      return { ...STATIC_FALLBACK };
+      return normalizePricing(STATIC_FALLBACK);
     }
   }
 
@@ -55,16 +92,15 @@
    * @param {Record<string, unknown>} pricing
    */
   function applyPricing(pricing) {
-    const trialDays = Number(pricing.trialDays) || 14;
-    const monthPlan = pricing.plans?.month || null;
-    const yearPlan = pricing.plans?.year || null;
-    const monthlyLabel = pricing.monthlyLabel ? String(pricing.monthlyLabel) : monthPlan?.label || null;
-    const yearlyLabel = pricing.yearlyLabel ? String(pricing.yearlyLabel) : yearPlan?.label || null;
-    const productName = pricing.productName ? String(pricing.productName) : 'Household Hub';
-    const checkoutSummary = pricing.checkoutSummary ? String(pricing.checkoutSummary) : null;
-    const signupSummary = pricing.signupSummary ? String(pricing.signupSummary) : null;
-    const savingsLabel = pricing.annualSavingsLabel ? String(pricing.annualSavingsLabel) : null;
-    const savingsPercent = Number(pricing.annualSavingsPercent) || null;
+    const normalized = normalizePricing(pricing);
+    const trialDays = normalized.trialDays;
+    const monthlyLabel = normalized.monthlyLabel;
+    const yearlyLabel = normalized.yearlyLabel;
+    const productName = normalized.productName;
+    const checkoutSummary = normalized.checkoutSummary;
+    const signupSummary = normalized.signupSummary;
+    const savingsLabel = normalized.annualSavingsLabel;
+    const savingsPercent = normalized.annualSavingsPercent;
 
     document.querySelectorAll('[data-pricing="trial-days"]').forEach((el) => {
       el.textContent = String(trialDays);
@@ -75,19 +111,19 @@
     });
 
     document.querySelectorAll('[data-pricing="monthly-label"]').forEach((el) => {
-      el.textContent = monthlyLabel || '£9.99/month';
+      el.textContent = monthlyLabel;
     });
 
     document.querySelectorAll('[data-pricing="yearly-label"]').forEach((el) => {
-      el.textContent = yearlyLabel || '£99.00/year';
+      el.textContent = yearlyLabel;
     });
 
     document.querySelectorAll('[data-pricing="checkout-summary"]').forEach((el) => {
-      if (checkoutSummary) el.textContent = checkoutSummary;
+      el.textContent = checkoutSummary;
     });
 
     document.querySelectorAll('[data-pricing="signup-summary"]').forEach((el) => {
-      if (signupSummary) el.textContent = signupSummary;
+      el.textContent = signupSummary;
     });
 
     document.querySelectorAll('[data-pricing="annual-savings"]').forEach((el) => {
@@ -103,49 +139,28 @@
     });
 
     document.querySelectorAll('[data-pricing="hero-note"]').forEach((el) => {
-      if (monthlyLabel && yearlyLabel) {
-        el.innerHTML =
-          '<strong>' +
-          trialDays +
-          '-day trial</strong> — <strong>£0 today</strong>, then <strong>' +
-          escapeHtml(monthlyLabel) +
-          '</strong> or <strong>' +
-          escapeHtml(yearlyLabel) +
-          '</strong>. Cancel anytime before billing starts.';
-      } else if (monthlyLabel) {
-        el.innerHTML =
-          '<strong>' +
-          trialDays +
-          '-day trial</strong> — <strong>£0 today</strong>, then <strong>' +
-          escapeHtml(monthlyLabel) +
-          '</strong>. Cancel anytime before billing starts.';
-      } else {
-        el.innerHTML =
-          '<strong>' +
-          trialDays +
-          '-day trial</strong> — <strong>£0 today</strong>. Price confirmed at secure checkout.';
-      }
+      el.innerHTML =
+        '<strong>' +
+        trialDays +
+        '-day trial</strong> — <strong>£0 today</strong>, then <strong>' +
+        escapeHtml(monthlyLabel) +
+        '</strong> or <strong>' +
+        escapeHtml(yearlyLabel) +
+        '</strong>. Cancel anytime before billing starts.';
     });
 
     document.querySelectorAll('[data-pricing="dual-summary"]').forEach((el) => {
-      if (monthlyLabel && yearlyLabel) {
-        el.innerHTML =
-          '<strong>' +
-          escapeHtml(monthlyLabel) +
-          '</strong> or <strong>' +
-          escapeHtml(yearlyLabel) +
-          '</strong>';
-      } else if (monthlyLabel) {
-        el.innerHTML = '<strong>' + escapeHtml(monthlyLabel) + '</strong>';
-      }
+      el.innerHTML =
+        '<strong>' +
+        escapeHtml(monthlyLabel) +
+        '</strong> or <strong>' +
+        escapeHtml(yearlyLabel) +
+        '</strong>';
     });
 
-    document.querySelectorAll('[data-pricing="plan-amount"][data-plan="month"]').forEach((el) => {
-      renderPlanAmount(el, monthlyLabel);
-    });
-
-    document.querySelectorAll('[data-pricing="plan-amount"][data-plan="year"]').forEach((el) => {
-      renderPlanAmount(el, yearlyLabel);
+    document.querySelectorAll('[data-pricing="plan-amount"]').forEach((el) => {
+      const plan = el.getAttribute('data-plan') === 'year' ? 'year' : 'month';
+      renderPlanAmount(el, plan === 'year' ? yearlyLabel : monthlyLabel);
     });
 
     document.querySelectorAll('[data-pricing="price-card-amount"]').forEach((el) => {
@@ -154,8 +169,7 @@
 
     document.querySelectorAll('[data-pricing="interval-label"]').forEach((el) => {
       const plan = el.getAttribute('data-plan');
-      const label = plan === 'year' ? yearlyLabel : monthlyLabel;
-      if (label) el.textContent = label;
+      el.textContent = plan === 'year' ? yearlyLabel : monthlyLabel;
     });
 
     document.documentElement.classList.add('pricing-loaded');
@@ -163,19 +177,15 @@
 
   /**
    * @param {Element} el
-   * @param {string | null} label
+   * @param {string} label
    */
   function renderPlanAmount(el, label) {
-    if (label) {
-      const parts = label.split('/');
-      el.innerHTML =
-        '<span class="pricing-amount">' +
-        escapeHtml(parts[0] || label) +
-        '</span>' +
-        (parts[1] ? '<span class="pricing-interval">/' + escapeHtml(parts[1]) + '</span>' : '');
-    } else {
-      el.innerHTML = '<span class="pricing-amount pricing-amount--pending">…</span>';
-    }
+    const parts = label.split('/');
+    el.innerHTML =
+      '<span class="pricing-amount">' +
+      escapeHtml(parts[0] || label) +
+      '</span>' +
+      (parts[1] ? '<span class="pricing-interval">/' + escapeHtml(parts[1]) + '</span>' : '');
   }
 
   /**
@@ -198,5 +208,5 @@
     return pricing;
   }
 
-  window.LovelyHomePricing = { loadPricing, applyPricing, initPricing, resolveApiBase, STATIC_FALLBACK };
+  window.LovelyHomePricing = { loadPricing, applyPricing, initPricing, resolveApiBase, STATIC_FALLBACK, normalizePricing };
 })();
