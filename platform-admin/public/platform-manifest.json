@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T13:48:55.448Z",
+  "generatedAt": "2026-08-31T14:34:18.307Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -412,81 +412,6 @@
         "worker_api_origin": "https://lovely-home-hub-api-smith.mark-lovely67.workers.dev",
         "worker_hostname": "lovely-home-hub-api-smith.mark-lovely67.workers.dev",
         "worker_name": "lovely-home-hub-api-smith"
-      },
-      "provisioning": [
-        {
-          "id": "terraform",
-          "label": "Terraform contract in platform manifest",
-          "done": true
-        },
-        {
-          "id": "worker",
-          "label": "Worker deployed (Wrangler)",
-          "done": null
-        },
-        {
-          "id": "pages",
-          "label": "Pages production deployment",
-          "done": null
-        },
-        {
-          "id": "hub-api",
-          "label": "HUB_API Pages binding",
-          "done": null
-        },
-        {
-          "id": "access-probe",
-          "label": "Access + API probe healthy",
-          "done": null
-        }
-      ]
-    },
-    "blundell": {
-      "siteId": "blundell",
-      "hostname": "blundell.lovely-hub.com",
-      "hubEnvironment": "blundell",
-      "vanilla": false,
-      "terraform": true,
-      "attachHubApiBinding": true,
-      "ownerEmails": [
-        "marklovely67+test-blundell@gmail.com"
-      ],
-      "sitterEmails": [],
-      "demoPublic": false,
-      "accessEnabled": true,
-      "pagesProject": "home-dashboard-blundell",
-      "workerName": "lovely-home-hub-api-blundell",
-      "pagesUrl": "https://blundell.lovely-hub.com",
-      "workerApiOrigin": "https://lovely-home-hub-api-blundell.mark-lovely67.workers.dev",
-      "contract": {
-        "access_aud_combined": "0cc5ba6d9099c7907d1716d4bb7988899363fbcfcd3d63260d5c5096e8807ed4,9b912c233b5d59da38d886e685c1bbe15454e3fb53faf4e028664b7228dfec65",
-        "access_enabled": true,
-        "access_pages_app_id": "e938f2e9-1512-4b70-b2cd-49ddea54786b",
-        "access_pages_aud": "9b912c233b5d59da38d886e685c1bbe15454e3fb53faf4e028664b7228dfec65",
-        "access_worker_app_id": "2506d889-68e2-4aca-93b9-4150f9befed2",
-        "access_worker_aud": "0cc5ba6d9099c7907d1716d4bb7988899363fbcfcd3d63260d5c5096e8807ed4",
-        "cf_access_team_domain": "lovely-home",
-        "d1_database_id": "d819e927-feaa-414e-a51e-3ac17e444d87",
-        "d1_database_name": "lovely-home-appliance-manuals-blundell",
-        "default_latitude": "51.5074",
-        "default_longitude": "-0.1278",
-        "hostname": "blundell.lovely-hub.com",
-        "hub_environment": "blundell",
-        "owner_emails": [
-          "marklovely67@gmail.com",
-          "donnapowell@purefootcare.com",
-          "marklovely67+test-blundell@gmail.com"
-        ],
-        "pages_project": "home-dashboard-blundell",
-        "pages_url": "https://blundell.lovely-hub.com",
-        "r2_guides_bucket": "lovely-home-appliance-guides-blundell",
-        "r2_media_bucket": "lovely-home-guide-media-blundell",
-        "site_id": "blundell",
-        "sitter_emails": [],
-        "vanilla": false,
-        "worker_api_origin": "https://lovely-home-hub-api-blundell.mark-lovely67.workers.dev",
-        "worker_hostname": "lovely-home-hub-api-blundell.mark-lovely67.workers.dev",
-        "worker_name": "lovely-home-hub-api-blundell"
       },
       "provisioning": [
         {
