@@ -824,6 +824,30 @@ html.nav-open {
   margin: 0;
 }
 
+.shot-open {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+  text-align: inherit;
+  font: inherit;
+  color: inherit;
+  border-radius: 22px;
+  transition: transform 0.15s ease;
+}
+
+.shot-open:hover {
+  transform: translateY(-2px);
+}
+
+.shot-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .shot-frame {
   background: linear-gradient(160deg, #ffffff, #f4f0ff);
   border: 1px solid var(--border);
@@ -1104,6 +1128,7 @@ html.nav-open {
   .pricing-plans-grid {
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
+    align-items: stretch;
   }
 }
 
@@ -1128,12 +1153,42 @@ html.nav-open {
 }
 
 .pricing-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.5rem;
   text-align: center;
+}
+
+.pricing-badge-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.65rem;
+  margin-bottom: 0.65rem;
+}
+
+.pricing-badge-slot:empty {
+  visibility: hidden;
+}
+
+.pricing-summary {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.pricing-card-cta {
+  margin-top: auto;
 }
 
 .pricing-card--featured {
@@ -1144,7 +1199,7 @@ html.nav-open {
 
 .pricing-badge {
   display: inline-block;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
   background: var(--accent-soft);
@@ -1209,12 +1264,6 @@ html.nav-open {
 .pricing-trial-tag {
   margin: 0 0 0.75rem;
   font-size: 1.05rem;
-}
-
-.pricing-summary {
-  margin: 0 0 1.25rem;
-  color: var(--muted);
-  line-height: 1.5;
 }
 
 .pricing-footnote {
@@ -1365,4 +1414,120 @@ html:not(.pricing-loaded) [data-pricing="plan-amount"] .pricing-amount--pending 
 .billing-interval-price {
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+/* Gallery lightbox */
+html.gallery-open {
+  overflow: hidden;
+}
+
+.gallery-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(16, 12, 28, 0.88);
+  backdrop-filter: blur(6px);
+}
+
+.gallery-lightbox[hidden] {
+  display: none;
+}
+
+.gallery-lightbox-inner {
+  width: min(56rem, 100%);
+  max-height: calc(100vh - 4rem);
+  max-height: calc(100dvh - 4rem);
+  overflow: auto;
+}
+
+.gallery-lightbox-figure {
+  margin: 0;
+  text-align: center;
+}
+
+.gallery-lightbox-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: calc(100vh - 10rem);
+  max-height: calc(100dvh - 10rem);
+  margin: 0 auto;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  object-fit: contain;
+}
+
+.gallery-lightbox-caption {
+  margin-top: 1rem;
+  color: #fff;
+}
+
+.gallery-lightbox-title {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+}
+
+.gallery-lightbox-desc {
+  display: block;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.gallery-lightbox-close,
+.gallery-lightbox-prev,
+.gallery-lightbox-next {
+  position: fixed;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+
+.gallery-lightbox-close:hover,
+.gallery-lightbox-prev:hover,
+.gallery-lightbox-next:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.gallery-lightbox-close {
+  top: 1rem;
+  right: 1rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.gallery-lightbox-prev,
+.gallery-lightbox-next {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.gallery-lightbox-prev {
+  left: max(0.75rem, env(safe-area-inset-left));
+}
+
+.gallery-lightbox-next {
+  right: max(0.75rem, env(safe-area-inset-right));
+}
+
+.gallery-lightbox-prev:disabled,
+.gallery-lightbox-next:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
