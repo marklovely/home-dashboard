@@ -153,6 +153,7 @@ async function initialiseDashboard() {
 
   const versionLabel = document.querySelector('#shell-version-label');
   if (versionLabel && typeof __APP_VERSION__ !== 'undefined') {
+    versionLabel.hidden = false;
     versionLabel.textContent = `Home Hub v${__APP_VERSION__}`;
   }
 

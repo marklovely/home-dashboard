@@ -386,6 +386,14 @@ html.nav-open {
   color: var(--accent);
 }
 
+.site-version:empty {
+  display: none;
+}
+
+.site-version {
+  margin-left: 0.35rem;
+}
+
 .landing-wrap {
   position: relative;
   overflow: hidden;

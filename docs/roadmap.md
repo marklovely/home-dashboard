@@ -2,7 +2,7 @@
 
 Product and platform milestones for the home dashboard (`dashboard.lovely-home.co.uk`), customer hubs on `lovely-hub.com`, and platform ops on `lovely-home.co.uk`.
 
-**Related docs:** [customer hub playbook](./customer-hub-playbook.md) · [platform provision](./platform-provision.md) · [platform site archive](./platform-site-archive.md) · [platform billing](./platform-billing.md) · [architecture](./architecture.md)
+**Related docs:** [customer hub playbook](./customer-hub-playbook.md) · [platform provision](./platform-provision.md) · [platform site archive](./platform-site-archive.md) · [platform billing](./platform-billing.md) · [architecture](./architecture.md) · [releases](./releases.md)
 
 ---
 

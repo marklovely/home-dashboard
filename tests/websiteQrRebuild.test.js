@@ -70,6 +70,7 @@ describe('deploy-lovely-home-website.sh', () => {
   it('delegates QR rebuild to the helper that can skip a broken Rollup install', () => {
     const script = readFileSync(join(repo, 'scripts/deploy-lovely-home-website.sh'), 'utf8');
     expect(script).toContain('ensure-website-qr.mjs');
+    expect(script).toContain('write-website-version.mjs');
     expect(script).not.toMatch(/npm run build:website-qr/);
   });
 });
