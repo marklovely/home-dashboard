@@ -8,9 +8,12 @@
     function setOpen(open) {
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      nav.setAttribute('aria-hidden', open ? 'false' : 'true');
       document.documentElement.classList.toggle('nav-open', open);
       if (backdrop) backdrop.hidden = !open;
     }
+
+    setOpen(false);
 
     function closeNav() {
       setOpen(false);
