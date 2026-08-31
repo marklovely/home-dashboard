@@ -10,46 +10,58 @@
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
-  <div class="site-banner">
-    <div class="site-banner-inner">
-      <span><a href="https://demo.lovely-home.co.uk/sign-in">Try the live demo</a> — sign in with <strong>demo</strong> / <strong>lovely-demo</strong></span>
+  <div class="landing-wrap">
+    <div class="landing-bg" aria-hidden="true"></div>
+
+    <div class="site-banner">
+      <div class="site-banner-inner">
+        <span><a href="https://demo.lovely-home.co.uk/sign-in">Try the live demo</a> — sign in with <strong>demo</strong> / <strong>lovely-demo</strong></span>
+      </div>
     </div>
-  </div>
 
-  <header class="site-header">
-    <a class="brand-lockup brand-lockup--header" href="/">
-      <img class="brand-mark" src="favicon.png" width="52" height="52" alt="">
-      <span class="brand-text">
-        <span class="brand-name">Lovely Home</span>
-        <span class="brand-tagline">Everything guests need in one place</span>
-      </span>
-    </a>
-    <nav>
-      <a href="/">Home</a>
-      <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
-      <a href="app.html">See the hub</a>
-      <a href="support.html">Support</a>
-    </nav>
-  </header>
+    <header class="site-header">
+      <a class="site-header-brand" href="/" aria-label="Lovely Home home">
+        <img src="favicon.png" width="36" height="36" alt="">
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
+      <div class="nav-backdrop" hidden></div>
+      <nav id="site-nav" class="site-nav" aria-label="Main">
+        <a href="/">Home</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="signup.html">Start trial</a>
+        <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+        <a href="app.html">See the hub</a>
+        <a href="support.html">Support</a>
+        <a href="privacy.html">Privacy</a>
+      </nav>
+    </header>
 
-  <main class="page">
-    <h1>Privacy Policy</h1>
-    <p class="updated">Lovely Home · Last updated: 26 August 2026</p>
+    <main class="landing inner-page">
+      <header class="page-hero">
+        <p class="hero-eyebrow"><span></span> Your household, your data</p>
+        <h1>Privacy Policy</h1>
+        <p class="updated hero-lead">Lovely Home · Last updated: 26 August 2026</p>
+      </header>
 
-    <section>
-      <h2>Summary</h2>
-      <p>
-        Lovely Home is a private household hub — each installation is set up for one home and is not
-        a public sign-up service. Data you enter on a hub is stored on servers run for that household
-        and is not shared with other Lovely Home installations.
-      </p>
-      <p>
-        This marketing site at <strong>lovely-home.co.uk</strong> is static — it does not collect analytics
-        or account data. If you email support, we use your message only to respond.
-      </p>
-    </section>
+      <div class="content-stack">
+        <section class="content-card">
+          <h2>Summary</h2>
+          <p>
+            Lovely Home is a private household hub — each installation is set up for one home and is not
+            a public sign-up service. Data you enter on a hub is stored on servers run for that household
+            and is not shared with other Lovely Home installations.
+          </p>
+          <p>
+            This marketing site at <strong>lovely-home.co.uk</strong> is static — it does not collect analytics
+            or account data. If you email support, we use your message only to respond.
+          </p>
+        </section>
 
-    <section>
+        <section class="content-card">
       <h2>Data stored on your household hub</h2>
       <p>On a running hub, typical data includes information you enter or generate, such as:</p>
       <ul>
@@ -65,7 +77,7 @@
       </p>
     </section>
 
-    <section>
+        <section class="content-card">
       <h2>Access and sign-in</h2>
       <p>
         Household members and guests sign in through secure access configured for that hub.
@@ -77,7 +89,7 @@
       </p>
     </section>
 
-    <section>
+        <section class="content-card">
       <h2>Third-party services</h2>
       <p>These apply only when the household owner enables them:</p>
       <ul>
@@ -100,7 +112,7 @@
       <p>Those services receive only what is needed for the feature the owner enabled.</p>
     </section>
 
-    <section>
+        <section class="content-card">
       <h2>Local storage</h2>
       <p>
         The hub may cache guide content and preferences in the browser for speed and offline resilience.
@@ -108,7 +120,7 @@
       </p>
     </section>
 
-    <section>
+        <section class="content-card">
       <h2>Reminders on the hub</h2>
       <p>
         Bin reminders and similar alerts are derived from schedule data already stored on your hub.
@@ -117,7 +129,7 @@
       </p>
     </section>
 
-    <section>
+        <section class="content-card">
       <h2>Analytics and tracking</h2>
       <p>
         We do not sell personal information. This marketing site does not use third-party advertising
@@ -126,7 +138,7 @@
       </p>
     </section>
 
-    <section>
+        <section class="content-card">
       <h2>Children</h2>
       <p>
         Lovely Home is not directed at children under 13. We do not knowingly collect personal
@@ -134,7 +146,7 @@
       </p>
     </section>
 
-    <section>
+        <section class="content-card">
       <h2>Changes</h2>
       <p>
         We may update this policy from time to time. The “Last updated” date at the top will change
@@ -143,22 +155,29 @@
       </p>
     </section>
 
-    <section>
+        <section class="content-card">
       <h2>Contact</h2>
       <p>
         Questions about privacy or this policy:
         <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
       </p>
     </section>
-  </main>
+      </div>
+    </main>
 
-  <footer class="site-footer">
-    <p>© 2026 Mark Lovely. All rights reserved.</p>
-    <p>
-      <a href="/">Home</a>
-      · <a href="support.html">Support</a>
-      · <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
-    </p>
-  </footer>
+    <footer class="site-footer">
+      <p>© 2026 Mark Lovely. All rights reserved.</p>
+      <p>
+        <a href="pricing.html">Pricing</a>
+        · <a href="signup.html">Start trial</a>
+        · <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+        · <a href="support.html">Support</a>
+        · <a href="privacy.html">Privacy</a>
+        · <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
+      </p>
+    </footer>
+  </div>
+
+  <script src="site.js" defer></script>
 </body>
 </html>
