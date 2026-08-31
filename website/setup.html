@@ -4,18 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="How to set up a Lovely Home hub — tablet, Fully Kiosk or PWA, the 30-minute wizard, and inviting a house sitter.">
+  <meta name="description" content="How to set up a Lovely Home hub — send the household URL to a sitter, or optionally put it on a wall tablet. No hardware to buy.">
   <title>Set it up — Lovely Home</title>
   <link rel="canonical" href="https://lovely-home.co.uk/setup.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Lovely Home">
   <meta property="og:title" content="Set it up — Lovely Home">
-  <meta property="og:description" content="How to set up a Lovely Home hub — tablet, Fully Kiosk or PWA, the 30-minute wizard, and inviting a house sitter.">
+  <meta property="og:description" content="How to set up a Lovely Home hub — send the household URL to a sitter, or optionally put it on a wall tablet. No hardware to buy.">
   <meta property="og:url" content="https://lovely-home.co.uk/setup.html">
   <meta property="og:image" content="https://lovely-home.co.uk/lovely-home-logo-dark.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Set it up — Lovely Home">
-  <meta name="twitter:description" content="How to set up a Lovely Home hub — tablet, Fully Kiosk or PWA, the 30-minute wizard, and inviting a house sitter.">
+  <meta name="twitter:description" content="How to set up a Lovely Home hub — send the household URL to a sitter, or optionally put it on a wall tablet. No hardware to buy.">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="favicon.png">
   <link rel="stylesheet" href="site.css">
@@ -57,19 +57,18 @@
         <a class="brand-lockup brand-lockup--page" href="/">
           <img class="brand-logo brand-logo--page" src="lovely-home-logo-dark.png" width="280" height="83" alt="Lovely Home — home hub">
         </a>
-        <p class="hero-eyebrow"><span></span> Before your sitter arrives</p>
+        <p class="hero-eyebrow"><span></span> No hardware required</p>
         <h1>Set it up</h1>
-        <p class="hero-lead">Use the 7-day trial to get the tablet on the wall and the guide filled in. The trial is for setup — not a complimentary stay.</p>
+        <p class="hero-lead">Your hub is a private web address. Send it to a sitter on their phone, or open it on a wall tablet if you have one. Use the 7-day trial to fill in the house guide — not a complimentary stay.</p>
       </header>
 
       <div class="content-stack">
         <section class="content-card">
           <h2>What you need</h2>
           <ul>
-            <li><strong>A tablet</strong> — 10&quot; or larger works well on a wall. Android is the usual choice if you want Fully Kiosk; an iPad works in the browser or as a home-screen app.</li>
-            <li><strong>Power and Wi‑Fi</strong> — the tablet should stay plugged in, with a reliable signal where you mount it.</li>
-            <li><strong>A wall mount</strong> — any secure tablet mount you are happy with. We do not sell hardware.</li>
-            <li><strong>About 30 minutes</strong> for the setup wizard once your hub is live (about 10 minutes after checkout).</li>
+            <li><strong>A browser</strong> — phone, laptop, or tablet. Sitters use the same hub URL you do. Nothing to buy.</li>
+            <li><strong>About 30 minutes</strong> for the setup wizard once your hub is live (usually around 10 minutes after checkout).</li>
+            <li><strong>Optional: a wall tablet</strong> — only if you want a screen in the house. We do not sell mounts, tablets, or kiosk hardware.</li>
           </ul>
         </section>
 
@@ -79,15 +78,27 @@
             <li><strong>Wait for the hub.</strong> The success page watches the build and shows an Open button plus a QR code when it answers — usually around 10 minutes.</li>
             <li><strong>Sign in as owner.</strong> Open <code>{your-name}.lovely-hub.com</code>. Cloudflare emails a one-time code to the address you used at signup.</li>
             <li><strong>Walk through the wizard.</strong> Hub name, contacts, Wi‑Fi, lockbox, bins, optional calendar, and a starter house guide.</li>
-            <li><strong>Set an owner PIN.</strong> That is what unlocks owner tools on the wall tablet.</li>
-            <li><strong>Put it on the tablet.</strong> Open the hub URL, then either add it to the home screen, or set it as the start URL in Fully Kiosk.</li>
+            <li><strong>Set an owner PIN.</strong> That unlocks owner tools on any device — phone, laptop, or tablet.</li>
+            <li><strong>Share the URL.</strong> Send the hub address to your sitter, or open it yourself wherever you like.</li>
           </ol>
         </section>
 
         <section class="content-card">
-          <h2>Wall tablet (Fully Kiosk)</h2>
+          <h2>Send it to a sitter</h2>
+          <p>This is the usual way. They open the hub on their own phone or laptop — no wall tablet required.</p>
+          <ol class="setup-steps">
+            <li><strong>Scheduled stay (usual).</strong> Settings → House sitter mode → add their email and dates. They can sign in from a few days before; Wi‑Fi and lockbox show on the stay dates; access drops after the stay ends.</li>
+            <li><strong>When the sit starts.</strong> Turn on <em>Sitter is here</em> so home-access details appear for that stay.</li>
+            <li><strong>Long-term sitter.</strong> Add their email as a permanent sitter login — not for one-off visits.</li>
+          </ol>
+          <p>Sitters never see the guide editor, backups, or home-control buttons. <a href="security.html">How access is locked down</a>.</p>
+        </section>
+
+        <section class="content-card">
+          <h2>Optional: wall tablet</h2>
           <p>
-            Fully Kiosk Browser (Android) keeps the hub fullscreen and awake. It is a separate app with its own licence — not part of Lovely Home.
+            If you want the hub on the wall as well, open the same URL on a tablet and add it to the home screen.
+            Android users who want a locked, always-on display can use Fully Kiosk Browser — a separate app with its own licence, not part of Lovely Home.
           </p>
           <ol class="setup-steps">
             <li>Install Fully and turn on <strong>Remote Admin</strong> (local network) with a password <em>before</em> you lock kiosk mode.</li>
@@ -100,26 +111,16 @@
         </section>
 
         <section class="content-card">
-          <h2>Invite a sitter</h2>
-          <ol class="setup-steps">
-            <li><strong>Scheduled stay (usual).</strong> Settings → House sitter mode → add their email and dates. They can sign in from a few days before; Wi‑Fi and lockbox show on the stay dates; access drops after the stay ends.</li>
-            <li><strong>Wall tablet only.</strong> Leave the tablet in sitter mode. Turn on <em>Sitter is here</em> while someone is staying so home-access details appear.</li>
-            <li><strong>Long-term sitter.</strong> Add their email as a permanent sitter login — not for one-off visits.</li>
-          </ol>
-          <p>Sitters never see the guide editor, backups, or home-control buttons. <a href="security.html">How access is locked down</a>.</p>
-        </section>
-
-        <section class="content-card">
           <h2>Stuck?</h2>
           <p>
             Email <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a> with your hub address.
-            We cannot reset a tablet kiosk PIN — keep that with your household notes.
+            If you use a kiosk PIN on a tablet, we cannot reset it — keep that with your household notes.
           </p>
         </section>
       </div>
 
       <section class="final-cta">
-        <p class="cta-note">Use the week to get it on the wall before anyone stays.</p>
+        <p class="cta-note">Use the week to fill in the guide before anyone stays. A wall tablet is optional.</p>
         <div class="cta-row">
           <a class="btn btn-primary" href="signup.html">Start free trial</a>
           <a class="btn btn-secondary" href="included.html">What's included</a>
@@ -129,18 +130,18 @@
 
     <footer class="site-footer">
       <p>© 2026 Mark Lovely. All rights reserved.</p>
-      <p>
+      <nav class="site-footer-nav" aria-label="Footer">
         <a href="included.html">What's included</a>
-        · <a href="setup.html">Set it up</a>
-        · <a href="pricing.html">Pricing</a>
-        · <a href="signup.html">Start trial</a>
-        · <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
-        · <a href="support.html">Support</a>
-        · <a href="security.html">Security</a>
-        · <a href="privacy.html">Privacy</a>
-        · <a href="terms.html">Terms</a>
-        · <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
-      </p>
+        <a href="setup.html">Set it up</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="signup.html">Start trial</a>
+        <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+        <a href="support.html">Support</a>
+        <a href="security.html">Security</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
+      </nav>
     </footer>
   </div>
   <script src="site.js" defer></script>
