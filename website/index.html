@@ -21,21 +21,31 @@
       </div>
     </div>
 
-    <header class="site-header site-header--minimal">
-      <nav>
-        <a href="pricing.html">Pricing</a>
-        <a href="signup.html">Start trial</a>
-        <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
-        <a href="app.html">See the hub</a>
-        <a href="support.html">Support</a>
-        <a href="privacy.html">Privacy</a>
-      </nav>
+    <header class="site-header">
+      <a class="site-header-brand" href="/" aria-label="Lovely Home home">
+        <img class="brand-logo brand-logo--header" src="lovely-home-logo-dark.png" width="140" height="42" alt="Lovely Home — home hub">
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
     </header>
+    <div class="nav-backdrop" hidden></div>
+    <nav id="site-nav" class="site-nav" aria-label="Main" aria-hidden="true">
+      <a href="/">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="signup.html">Start trial</a>
+      <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+      <a href="app.html">See the hub</a>
+      <a href="support.html">Support</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
 
     <main class="landing">
       <section class="hero">
         <a class="brand-lockup brand-lockup--hero" href="/">
-          <img class="brand-logo brand-logo--hero" src="lovely-home-logo-dark.png" width="384" height="120" alt="Lovely Home — home hub">
+          <img class="brand-logo brand-logo--hero" src="lovely-home-logo-dark.png" width="376" height="112" alt="Lovely Home — home hub">
         </a>
 
         <div class="hero-copy hero-copy--solo">
@@ -171,6 +181,7 @@
       </p>
     </footer>
   </div>
+  <script src="site.js" defer></script>
   <script src="pricing.js" defer></script>
   <script defer>
     document.addEventListener('DOMContentLoaded', function () {

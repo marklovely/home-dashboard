@@ -19,24 +19,42 @@
       </div>
     </div>
 
-    <header class="site-header site-header--minimal">
-      <nav>
-        <a href="/">Home</a>
-        <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
-        <a href="support.html">Support</a>
-        <a href="privacy.html">Privacy</a>
-      </nav>
+    <header class="site-header">
+      <a class="site-header-brand" href="/" aria-label="Lovely Home home">
+        <img class="brand-logo brand-logo--header" src="lovely-home-logo-dark.png" width="140" height="42" alt="Lovely Home — home hub">
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
     </header>
+    <div class="nav-backdrop" hidden></div>
+    <nav id="site-nav" class="site-nav" aria-label="Main" aria-hidden="true">
+      <a href="/">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="signup.html">Start trial</a>
+      <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+      <a href="app.html">See the hub</a>
+      <a href="support.html">Support</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
 
-    <main class="landing app-gallery-page">
-      <div class="section-head app-gallery-intro">
+    <main class="landing app-gallery-page inner-page">
+      <header class="page-hero app-gallery-intro">
+        <a class="brand-lockup brand-lockup--page" href="/">
+          <img class="brand-logo brand-logo--page" src="lovely-home-logo-dark.png" width="280" height="83" alt="Lovely Home — home hub">
+        </a>
+        <p class="hero-eyebrow"><span></span> Inside the hub</p>
         <h1>See the hub</h1>
-        <p>A calm dashboard for the wall — house guide, routines, and the day at a glance.</p>
-      </div>
+        <p class="hero-lead">A calm dashboard for the wall — house guide, routines, and the day at a glance.</p>
+      </header>
 
       <div class="shot-grid">
         <figure class="shot shot--tablet">
-          <div class="shot-frame"><img src="screenshots/guest-home.jpg" alt="Guest home screen with essentials for sitters" loading="lazy"></div>
+          <button type="button" class="shot-open" aria-label="View Guest home screenshot">
+            <div class="shot-frame"><img src="screenshots/guest-home.jpg" alt="Guest home screen with essentials for sitters" loading="lazy"></div>
+          </button>
           <figcaption>
             <strong>Guest home</strong>
             <span>Welcome message, essentials, weather, and bins — everything for the stay at a glance.</span>
@@ -44,7 +62,9 @@
         </figure>
 
         <figure class="shot shot--tablet">
-          <div class="shot-frame"><img src="screenshots/house-guide.jpg" alt="House guide categories for rooms, appliances, and Wi-Fi" loading="lazy"></div>
+          <button type="button" class="shot-open" aria-label="View House guide screenshot">
+            <div class="shot-frame"><img src="screenshots/house-guide.jpg" alt="House guide categories for rooms, appliances, and Wi-Fi" loading="lazy"></div>
+          </button>
           <figcaption>
             <strong>House guide</strong>
             <span>Rooms, appliances, Wi‑Fi, and local info — organised by topic with search.</span>
@@ -52,7 +72,9 @@
         </figure>
 
         <figure class="shot shot--tablet">
-          <div class="shot-frame"><img src="screenshots/scooter-care.jpg" alt="Pet care guide topics for house sitters" loading="lazy"></div>
+          <button type="button" class="shot-open" aria-label="View Topic guides screenshot">
+            <div class="shot-frame"><img src="screenshots/scooter-care.jpg" alt="Pet care guide topics for house sitters" loading="lazy"></div>
+          </button>
           <figcaption>
             <strong>Topic guides</strong>
             <span>Step-by-step care instructions — walks, meals, bedtime, and more.</span>
@@ -60,7 +82,9 @@
         </figure>
 
         <figure class="shot shot--tablet">
-          <div class="shot-frame"><img src="screenshots/appliance-manuals.jpg" alt="Appliance manuals grid in the house guide" loading="lazy"></div>
+          <button type="button" class="shot-open" aria-label="View Appliance manuals screenshot">
+            <div class="shot-frame"><img src="screenshots/appliance-manuals.jpg" alt="Appliance manuals grid in the house guide" loading="lazy"></div>
+          </button>
           <figcaption>
             <strong>Appliance manuals</strong>
             <span>Kitchen, laundry, heating, and TV — manuals searchable in one place.</span>
@@ -68,7 +92,9 @@
         </figure>
 
         <figure class="shot shot--tablet">
-          <div class="shot-frame"><img src="screenshots/emergency.jpg" alt="Emergency contacts for owners, vet, and utilities" loading="lazy"></div>
+          <button type="button" class="shot-open" aria-label="View Emergency screenshot">
+            <div class="shot-frame"><img src="screenshots/emergency.jpg" alt="Emergency contacts for owners, vet, and utilities" loading="lazy"></div>
+          </button>
           <figcaption>
             <strong>Emergency</strong>
             <span>Owners, vet, utilities, and safety info — one tap away for sitters.</span>
@@ -76,7 +102,9 @@
         </figure>
 
         <figure class="shot shot--tablet">
-          <div class="shot-frame"><img src="screenshots/settings.png" alt="Settings for theme, clock, and tablet preferences" loading="lazy"></div>
+          <button type="button" class="shot-open" aria-label="View Settings screenshot">
+            <div class="shot-frame"><img src="screenshots/settings.png" alt="Settings for theme, clock, and tablet preferences" loading="lazy"></div>
+          </button>
           <figcaption>
             <strong>Settings</strong>
             <span>Theme, clock format, home screen size, and screensaver — synced across tablets.</span>
@@ -95,12 +123,16 @@
     <footer class="site-footer">
       <p>© 2026 Mark Lovely. All rights reserved.</p>
       <p>
-        <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+        <a href="pricing.html">Pricing</a>
+        · <a href="signup.html">Start trial</a>
+        · <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
         · <a href="support.html">Support</a>
         · <a href="privacy.html">Privacy</a>
         · <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
       </p>
     </footer>
   </div>
+  <script src="site.js" defer></script>
+  <script src="gallery.js" defer></script>
 </body>
 </html>
