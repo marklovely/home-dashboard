@@ -8,16 +8,16 @@ import { getHelpGuideSection, searchHelpGuideSections } from './helpGuide.js';
 export const OWNER_HELP_SECTIONS = [
   {
     id: 'overview',
-    title: 'Lovely Home Hub',
+    title: 'Your home hub',
     keywords: ['home hub', 'dashboard', 'tablet', 'owner', 'lovely home'],
     blocks: [
       {
         type: 'p',
-        text: 'Lovely Home Hub is your control centre for the wall tablet and your own browser. From here you manage the House Guide, appliance manuals, Alexa routines, and settings — then hand the tablet to sitters in House Sitter Mode when you go away.'
+        text: 'This hub is your control centre for the wall tablet and your own browser. From here you manage the House Guide, appliance manuals, Alexa routines, and settings — then hand the tablet to sitters in House Sitter Mode when you go away.'
       },
       {
         type: 'p',
-        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day, Controls) stay hidden from sitters. The sitter tablet shows a simpler Lovely Home home screen with pet care (when configured), House Guide, Emergency, Weather, and Bins.'
+        text: 'Owner-only apps (Guide Editor, Appliance Manuals, My Day, Controls) stay hidden from sitters. The sitter tablet shows a simpler home screen with pet care (when configured), House Guide, Emergency, Weather, and Bins.'
       },
       {
         type: 'ul',
@@ -86,7 +86,7 @@ export const OWNER_HELP_SECTIONS = [
         items: [
           'Open Settings → House sitter mode.',
           'Tap Enable House Sitter Mode and confirm.',
-          'The home screen switches to Lovely Home with sitter apps only.',
+          'The home screen switches to the sitter layout with sitter apps only.',
           'Hand the tablet to your sitter — no PIN needed for them.'
         ]
       },
@@ -96,7 +96,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'When the tablet is locked in House Sitter Mode, owners need their PIN to restore full access. In Settings → House sitter mode you can choose how to unlock: press and hold the Lovely Home logo for five seconds, tap Unlock owner mode at the top of Settings, or use both. Fully Kiosk admin exits are separate — configure those in Fully Kiosk if you use kiosk lock.'
+        text: 'When the tablet is locked in House Sitter Mode, owners need their PIN to restore full access. In Settings → House sitter mode you can choose how to unlock: press and hold the hub logo for five seconds, tap Unlock owner mode at the top of Settings, or use both. Fully Kiosk admin exits are separate — configure those in Fully Kiosk if you use kiosk lock.'
       },
       {
         type: 'p',

@@ -22,6 +22,7 @@ import { stripeApiRequest, TRIAL_PERIOD_DAYS } from './platformBilling.js';
  *   annualSavingsPercent: number | null;
  *   checkoutSummary: string;
  *   signupSummary: string;
+ *   vatNote: string;
  * }} PublicPlanPricing
  */
 
@@ -124,22 +125,22 @@ export function buildPublicPricingFromPlans(plans, productName) {
   const monthlyLabel = monthPlan?.label || null;
   const yearlyLabel = yearPlan?.label || null;
 
-  let checkoutSummary = `${trialDays}-day free trial — card on file, no charge today.`;
+  let checkoutSummary = `${trialDays}-day free trial — card on file, no charge today. Prices include VAT.`;
   if (monthlyLabel && yearlyLabel) {
-    checkoutSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel} after your ${trialDays}-day trial. Cancel anytime before then.`;
+    checkoutSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel} after your ${trialDays}-day trial. Prices include VAT. Cancel anytime before then.`;
   } else if (monthlyLabel) {
-    checkoutSummary = `£0 today — ${monthlyLabel} after your ${trialDays}-day trial. Cancel anytime before then.`;
+    checkoutSummary = `£0 today — ${monthlyLabel} after your ${trialDays}-day trial. Prices include VAT. Cancel anytime before then.`;
   } else if (yearlyLabel) {
-    checkoutSummary = `£0 today — ${yearlyLabel} after your ${trialDays}-day trial. Cancel anytime before then.`;
+    checkoutSummary = `£0 today — ${yearlyLabel} after your ${trialDays}-day trial. Prices include VAT. Cancel anytime before then.`;
   }
 
-  let signupSummary = `${trialDays}-day free trial — card on file for when the trial ends.`;
+  let signupSummary = `${trialDays}-day free trial — set up the hub before anyone stays. Card on file; prices include VAT.`;
   if (monthlyLabel && yearlyLabel) {
-    signupSummary = `£0 today — choose ${monthlyLabel} or ${yearlyLabel} after the trial. Cancel anytime before billing starts.`;
+    signupSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel} (inc. VAT). Use the trial to set up before your sitter arrives.`;
   } else if (monthlyLabel) {
-    signupSummary = `£0 today — then ${monthlyLabel}. Cancel anytime before billing starts.`;
+    signupSummary = `£0 today — then ${monthlyLabel} (inc. VAT). Use the trial to set up before your sitter arrives.`;
   } else if (yearlyLabel) {
-    signupSummary = `£0 today — then ${yearlyLabel}. Cancel anytime before billing starts.`;
+    signupSummary = `£0 today — then ${yearlyLabel} (inc. VAT). Use the trial to set up before your sitter arrives.`;
   }
 
   return {
@@ -155,7 +156,8 @@ export function buildPublicPricingFromPlans(plans, productName) {
     annualSavingsLabel: savings?.savingsLabel ?? null,
     annualSavingsPercent: savings?.savingsPercent ?? null,
     checkoutSummary,
-    signupSummary
+    signupSummary,
+    vatNote: 'inc. VAT'
   };
 }
 

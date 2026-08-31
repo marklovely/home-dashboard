@@ -8,7 +8,7 @@ describe('shellBrandLogo', () => {
       <div class="shell-chrome-title-block">
         <button type="button" id="shell-logo-button" class="shell-logo-button">
           <img id="shell-logo" class="shell-logo" src="/api/branding/logo" alt="" />
-          <span id="shell-eyebrow" class="shell-eyebrow-text">LOVELY HOME HUB</span>
+          <span id="shell-eyebrow" class="shell-eyebrow-text">HOME HUB</span>
         </button>
       </div>
     `;
