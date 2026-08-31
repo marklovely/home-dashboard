@@ -10,80 +10,99 @@
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
-  <div class="site-banner">
-    <div class="site-banner-inner">
-      <span><a href="https://demo.lovely-home.co.uk/sign-in">Try the live demo</a> — sign in with <strong>demo</strong> / <strong>lovely-demo</strong></span>
-    </div>
-  </div>
+  <div class="landing-wrap">
+    <div class="landing-bg" aria-hidden="true"></div>
 
-  <header class="site-header">
-    <a class="brand-lockup brand-lockup--header" href="/">
-      <img class="brand-mark" src="favicon.png" width="52" height="52" alt="">
-      <span class="brand-text">
-        <span class="brand-name">Lovely Home</span>
-        <span class="brand-tagline">Everything guests need in one place</span>
-      </span>
-    </a>
-    <nav>
+    <div class="site-banner">
+      <div class="site-banner-inner">
+        <span><a href="https://demo.lovely-home.co.uk/sign-in">Try the live demo</a> — sign in with <strong>demo</strong> / <strong>lovely-demo</strong></span>
+      </div>
+    </div>
+
+    <header class="site-header">
+      <a class="site-header-brand" href="/" aria-label="Lovely Home home">
+        <img class="brand-logo brand-logo--header" src="lovely-home-logo-dark.png" width="140" height="42" alt="Lovely Home — home hub">
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
+    </header>
+    <div class="nav-backdrop" hidden></div>
+    <nav id="site-nav" class="site-nav" aria-label="Main" aria-hidden="true">
       <a href="/">Home</a>
       <a href="pricing.html">Pricing</a>
       <a href="signup.html">Start trial</a>
       <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
       <a href="app.html">See the hub</a>
+      <a href="support.html">Support</a>
       <a href="privacy.html">Privacy</a>
     </nav>
-  </header>
 
-  <main class="page">
-    <h1>Support</h1>
-    <p class="tagline">Home hub for your wall tablet.</p>
+    <main class="landing inner-page">
+      <header class="page-hero">
+        <a class="brand-lockup brand-lockup--page" href="/">
+          <img class="brand-logo brand-logo--page" src="lovely-home-logo-dark.png" width="280" height="83" alt="Lovely Home — home hub">
+        </a>
+        <p class="hero-eyebrow"><span></span> We're here to help</p>
+        <h1>Support</h1>
+        <p class="hero-lead">Home hub for your wall tablet — questions, setup tips, and how to reach us.</p>
+      </header>
 
-    <section>
+      <div class="content-stack">
+        <section class="content-card">
+          <p>
+            Lovely Home is a progressive web app (PWA) for wall tablets and browsers. It brings together
+            a house guide, bin reminders, weather, Alexa routines, and owner setup tools for a single household.
+          </p>
+          <p>
+            Each paying household gets a private hub at <code>{name}.lovely-hub.com</code> — only people you invite can sign in.
+            <a href="signup.html">Start a 14-day free trial</a> (<a href="pricing.html">see pricing</a>) or explore the
+            <a href="https://demo.lovely-home.co.uk/sign-in">public demo hub</a> first (username <strong>demo</strong>, password <strong>lovely-demo</strong>; fictional data, resets nightly).
+          </p>
+          <p>
+            For questions, feedback, or help with the product in general, email:
+            <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
+          </p>
+        </section>
+
+        <section class="content-card">
+          <h2>Common topics</h2>
+          <ul>
+            <li><strong>Pricing &amp; billing</strong> — <a href="pricing.html">Transparent monthly pricing</a> after a 14-day trial. Card on file at signup; cancel before the trial ends to pay nothing.</li>
+            <li><strong>Try before you buy</strong> — Open the <a href="https://demo.lovely-home.co.uk/sign-in">public demo</a>. Sign in with username <strong>demo</strong> and password <strong>lovely-demo</strong> (pre-filled on the sign-in page). Data resets overnight.</li>
+            <li><strong>Installing on a tablet</strong> — Open your household hub URL in the browser, then use the browser’s “Add to Home Screen” (or Fully Kiosk start URL) so it launches fullscreen.</li>
+            <li><strong>House sitter mode</strong> — A simpler home screen and optional screensaver for guests. Owner tools are hidden until you unlock with your owner PIN.</li>
+            <li><strong>House guide</strong> — Topics with photos, edited by the owner. Content is stored on the household’s hub server.</li>
+            <li><strong>Alexa routines</strong> — Requires Virtual Buttons (or compatible integration) configured by the household owner.</li>
+            <li><strong>Not your hub?</strong> — This site describes the Lovely Home product. Your wall tablet URL and login details come from whoever manages your household — we cannot reset access for a private installation.</li>
+          </ul>
+        </section>
+
+        <section class="content-card">
+          <h2>Privacy</h2>
+          <p>
+            Read how Lovely Home handles information on a household hub:
+            <a href="privacy.html">Privacy Policy</a>
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Mark Lovely. All rights reserved.</p>
       <p>
-        Lovely Home is a progressive web app (PWA) for wall tablets and browsers. It brings together
-        a house guide, bin reminders, weather, Alexa routines, and owner setup tools for a single household.
+        <a href="pricing.html">Pricing</a>
+        · <a href="signup.html">Start trial</a>
+        · <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+        · <a href="support.html">Support</a>
+        · <a href="privacy.html">Privacy</a>
+        · <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
       </p>
-      <p>
-        Each paying household gets a private hub at <code>{name}.lovely-hub.com</code> — only people you invite can sign in.
-        <a href="signup.html">Start a 14-day free trial</a> (<a href="pricing.html">see pricing</a>) or explore the
-        <a href="https://demo.lovely-home.co.uk/sign-in">public demo hub</a> first (username <strong>demo</strong>, password <strong>lovely-demo</strong>; fictional data, resets nightly).
-      </p>
-      <p>
-        For questions, feedback, or help with the product in general, email:
-        <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
-      </p>
-    </section>
+    </footer>
+  </div>
 
-    <section>
-      <h2>Common topics</h2>
-      <ul>
-        <li><strong>Pricing &amp; billing</strong> — <a href="pricing.html">Transparent monthly pricing</a> after a 14-day trial. Card on file at signup; cancel before the trial ends to pay nothing.</li>
-        <li><strong>Try before you buy</strong> — Open the <a href="https://demo.lovely-home.co.uk/sign-in">public demo</a>. Sign in with username <strong>demo</strong> and password <strong>lovely-demo</strong> (pre-filled on the sign-in page). Data resets overnight.</li>
-        <li><strong>Installing on a tablet</strong> — Open your household hub URL in the browser, then use the browser’s “Add to Home Screen” (or Fully Kiosk start URL) so it launches fullscreen.</li>
-        <li><strong>House sitter mode</strong> — A simpler home screen and optional screensaver for guests. Owner tools are hidden until you unlock with your owner PIN.</li>
-        <li><strong>House guide</strong> — Topics with photos, edited by the owner. Content is stored on the household’s hub server.</li>
-        <li><strong>Alexa routines</strong> — Requires Virtual Buttons (or compatible integration) configured by the household owner.</li>
-        <li><strong>Not your hub?</strong> — This site describes the Lovely Home product. Your wall tablet URL and login details come from whoever manages your household — we cannot reset access for a private installation.</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>Privacy</h2>
-      <p>
-        Read how Lovely Home handles information on a household hub:
-        <a href="privacy.html">Privacy Policy</a>
-      </p>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <p>© 2026 Mark Lovely. All rights reserved.</p>
-    <p>
-      <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
-      · <a href="/">Home</a>
-      · <a href="privacy.html">Privacy Policy</a>
-      · <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
-    </p>
-  </footer>
+  <script src="site.js" defer></script>
 </body>
 </html>
