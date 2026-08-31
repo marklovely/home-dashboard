@@ -220,7 +220,7 @@ Signup abuse controls, all backed by the platform billing D1 database:
 | Slug reservation | An in-flight Checkout holds the slug, so two buyers cannot race for one hostname |
 | Turnstile | Active only when both Turnstile keys are set; `signup/status` advertises the site key so the widget renders itself |
 
-Provisioning takes roughly **10 minutes** end to end, so `signup-success.html` polls `hub-status` and only shows the Open button and hub QR code once the hostname answers. An Access redirect or challenge counts as live — the buyer signs in next.
+Provisioning takes roughly **10 minutes** end to end, so `signup-success.html` polls `hub-status` and only shows the Open button and hub QR code once the hub SPA is actually serving (HTML contains `hub-shell`). Cloudflare Access often starts redirecting to login a few minutes before Pages has deployed the app — that still counts as provisioning.
 
 ## Customer emails
 

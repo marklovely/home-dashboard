@@ -24,7 +24,7 @@ Pricing on the marketing site is **£9.99/month or £99/year** (loaded live from
 
 ## Hub provisioning status on the success page
 
-`signup-success.js` polls `GET /api/public/hub-status/<siteId>` on the platform (server-side HTTPS probe of the hub hostname). Until the hub answers, the page shows "Deploying your hub now" with no Open button; once it answers, it reveals the button plus a QR code so the buyer can open the hub on the device they want to use it on. Provisioning takes about **10 minutes**, so the copy and the poll budget (30 minutes) are set against that.
+`signup-success.js` polls `GET /api/public/hub-status/<siteId>` on the platform (server-side HTTPS probe of the hub hostname). Until the hub SPA is serving, the page shows "Deploying your hub now" with the address as text only; once the hub HTML is live, it turns the address into a link and reveals the Open button plus a QR code. Provisioning takes about **10 minutes**, so the copy and the poll budget (30 minutes) are set against that.
 
 ## Vendored QR bundle
 
