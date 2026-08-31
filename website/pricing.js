@@ -3,7 +3,7 @@
 
   const STATIC_FALLBACK = {
     configured: false,
-    trialDays: 14,
+    trialDays: 7,
     productName: 'Household Hub',
     plans: {
       month: { interval: 'month', label: '£9.99/month', amount: 9.99, currency: 'gbp' },
@@ -14,7 +14,7 @@
     annualSavingsLabel: 'Save £20.88 vs paying monthly',
     annualSavingsPercent: 17,
     checkoutSummary:
-      '£0 today — then £9.99/month or £99.00/year after your 14-day trial. Cancel anytime before then.',
+      '£0 today — then £9.99/month or £99.00/year after your 7-day trial. Cancel anytime before then.',
     signupSummary:
       '£0 today — choose £9.99/month or £99.00/year after the trial. Cancel anytime before billing starts.'
   };

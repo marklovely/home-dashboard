@@ -21,7 +21,8 @@ import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platform
  *   updated_at: number;
  * }} SiteBillingRow */
 
-export const TRIAL_PERIOD_DAYS = 14;
+/** Card-required trial length sent to Stripe Checkout (`subscription_data.trial_period_days`). */
+export const TRIAL_PERIOD_DAYS = 7;
 
 const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
 

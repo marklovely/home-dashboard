@@ -83,7 +83,7 @@ export function renderSiteBilling(site, billing, options) {
       <div class="billing">
         <span class="billing-label">Billing</span>
         <span class="billing-muted">No subscription</span>
-        <button type="button" class="btn btn-small" data-billing-checkout="${escapeHtml(siteId)}">Start 14-day trial</button>
+        <button type="button" class="btn btn-small" data-billing-checkout="${escapeHtml(siteId)}">Start 7-day trial</button>
       </div>
     `;
   }

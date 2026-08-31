@@ -27,6 +27,10 @@ describe('platform billing helpers', () => {
     expect(validateBillingSiteId('Bad')).toBeTruthy();
   });
 
+  it('uses a 7-day Stripe trial', () => {
+    expect(TRIAL_PERIOD_DAYS).toBe(7);
+  });
+
   it('encodes nested Stripe form params', () => {
     const entries = encodeStripeFormEntries({
       mode: 'subscription',
