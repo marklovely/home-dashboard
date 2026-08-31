@@ -204,7 +204,9 @@ and opens Checkout; the registry PR is dispatched from the webhook:
    for the life of the session. No GitHub dispatch, no Cloudflare resources.
 2. Stripe `checkout.session.completed` / `customer.subscription.created` with a `trialing`
    subscription → dispatch **platform-site-manage** to open the registry PR
-   (`registry_dispatched_at` on `site_billing` makes this idempotent) → release the slug
+   (`registry_dispatched_at` is claimed with an atomic D1 update before GitHub
+   is called, so `checkout.session.completed` and `customer.subscription.created`
+   cannot open two PRs) → release the slug
    reservation now that the registry owns the name.
 3. Registry PR merges → **platform-site-provision** builds the hub.
 

@@ -1,5 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { shouldDispatchSignupRegistry } from '../functions/api/platform/platformBillingRegistry.js';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import {
+  d1UpdateChangedRow,
+  shouldDispatchSignupRegistry
+} from '../functions/api/platform/platformBillingRegistry.js';
 
 vi.mock('../functions/api/platform/platformGitHub.js', () => ({
   dispatchSiteManageWorkflow: vi.fn(),
@@ -13,7 +18,7 @@ const { dispatchSiteManageWorkflow } = await import('../functions/api/platform/p
 
 const emptyManifest = { sites: {}, platform: { customerZoneName: 'lovely-hub.com' } };
 
-function fakeDb() {
+function fakeDb(claimChanges = 1) {
   /** @type {string[]} */
   const statements = [];
   return {
@@ -22,7 +27,10 @@ function fakeDb() {
       statements.push(sql.replace(/\s+/g, ' ').trim());
       const api = {
         bind: () => api,
-        run: async () => ({ success: true }),
+        run: async () => ({
+          success: true,
+          meta: { changes: sql.includes('registry_dispatched_at IS NULL') ? claimChanges : 1 }
+        }),
         first: async () => null
       };
       return api;
@@ -131,7 +139,31 @@ describe('signup registry dispatch', () => {
       terraform: true
     });
     expect(JSON.stringify(payload)).not.toMatch(/@/);
-    expect(db.statements.join(' ')).toContain('registry_dispatched_at');
+    expect(db.statements.join(' ')).toContain('registry_dispatched_at IS NULL');
+  });
+
+  it('lets only one of two concurrent Stripe events call GitHub', async () => {
+    vi.mocked(dispatchSiteManageWorkflow).mockResolvedValue({
+      ok: true,
+      workflow: 'platform-site-manage.yml',
+      message: 'started'
+    });
+    const db = fakeDb(0);
+
+    const result = await maybeDispatchSignupRegistry(
+      /** @type {never} */ ({}),
+      /** @type {never} */ (db),
+      emptyManifest,
+      {
+        siteId: 'rose-cottage',
+        eventType: 'customer.subscription.created',
+        status: 'trialing',
+        existingBilling: null
+      }
+    );
+
+    expect(result).toEqual({ ok: true, action: 'registry_already_dispatched' });
+    expect(dispatchSiteManageWorkflow).not.toHaveBeenCalled();
   });
 
   it('records the failure so the operator can retry', async () => {
@@ -156,5 +188,24 @@ describe('signup registry dispatch', () => {
 
     expect(result).toMatchObject({ ok: false, error: 'REGISTRY_DISPATCH_FAILED' });
     expect(db.statements.join(' ')).toContain('registry_last_error');
+    expect(db.statements.join(' ')).toMatch(/registry_dispatched_at = NULL/);
+  });
+});
+
+describe('registry D1 claim result', () => {
+  it('treats a D1 UPDATE with changes as a won claim', () => {
+    expect(d1UpdateChangedRow({ meta: { changes: 1 } })).toBe(true);
+    expect(d1UpdateChangedRow({ meta: { changes: 0 } })).toBe(false);
+    expect(d1UpdateChangedRow({})).toBe(false);
+  });
+});
+
+describe('registry manage PR branch', () => {
+  it('uses a stable branch name so a second workflow updates the same PR', () => {
+    const yaml = readFileSync(resolve(process.cwd(), '.github/workflows/platform-site-manage.yml'), 'utf8');
+    expect(yaml).toMatch(
+      /branch:\s*platform\/site-\$\{\{\s*steps\.manage\.outputs\.site_id\s*\}\}-\$\{\{\s*inputs\.action\s*\}\}/
+    );
+    expect(yaml).not.toMatch(/branch:.*github\.run_id/);
   });
 });
