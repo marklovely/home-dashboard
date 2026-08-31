@@ -9,6 +9,8 @@ worker/.dev.vars
 worker/node_modules/
 .venv-guide/
 .venv-bins/
+__pycache__/
+*.pyc
 src/content/houseguide/source/*.pdf
 src/content/houseguide/source/extracted-text.txt
 src/content/houseguide/private-content.local.json
