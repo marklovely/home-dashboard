@@ -47,12 +47,3 @@ sites:
     zone_name: lovely-hub.com
     owner_emails: marklovely67@gmail.com
     attach_hub_api_binding: true
-
-  powell:
-    hostname: powell.lovely-hub.com
-    hub_environment: powell
-    vanilla: false
-    terraform: true
-    zone_name: lovely-hub.com
-    owner_emails: marklovely67@gmail.com
-    attach_hub_api_binding: true
