@@ -1309,6 +1309,18 @@ html.nav-open {
   margin-top: 0.55rem;
 }
 
+.pricing-inc-vat {
+  margin: 0.15rem 0 0.65rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pricing-inc-vat-inline {
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .pricing-vat {
   margin: 1rem 0 0;
   font-size: 0.9rem;

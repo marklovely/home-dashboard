@@ -905,7 +905,7 @@ function createSitterUnlockMethodFields(context) {
   const logoText = document.createElement('span');
   logoText.className = 'settings-option-text';
   const logoTitle = document.createElement('span');
-  logoTitle.textContent = 'Press and hold the Lovely Home logo';
+  logoTitle.textContent = 'Press and hold the hub logo';
   const logoHint = document.createElement('small');
   logoHint.className = 'settings-option-hint';
   logoHint.textContent = 'Hold the header logo for five seconds, then enter your PIN.';

@@ -276,7 +276,7 @@ export function buildSitterHelpSections() {
         {
           type: 'p',
           text: isDemo
-            ? 'Owner explore is available on this demo — hold the Lovely Home title and enter PIN 1234 to preview owner apps.'
+            ? 'Owner explore is available on this demo — hold the hub title and enter PIN 1234 to preview owner apps.'
             : `You cannot enable owner mode from here — that is for ${hosts} only.`
         }
       ]

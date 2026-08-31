@@ -36,6 +36,7 @@ import {
 import {
   fetchHubSecretsConfigured,
   getHubDisplayName,
+  getHubEyebrow,
   getSiteProfileState,
   getSiteSetupUnavailableMessage,
   isSiteSetupAvailable,
@@ -45,7 +46,6 @@ import {
 } from '../../services/siteProfileService.js';
 import { refreshGuideContent } from '../../services/guideContentService.js';
 import { syncWeatherLocationFromPropertyAddress } from '../../services/weatherLocationFromProfile.js';
-import { getModeConfig } from '../../modes/modeConfig.js';
 import { applyShellBranding } from '../../shell/shellBranding.js';
 import {
   clearHubSetupWizardForcedOpen,
@@ -71,15 +71,18 @@ const USE_CASE_OPTIONS = [
   { value: 'both', label: 'Both sitters and short lets' }
 ];
 
-const HUB_SETUP_WELCOME = {
-  title: 'Welcome to Lovely Home setup',
+const HUB_SETUP_WELCOME_LEAD =
+  'A few short steps to name your hub, add contacts, and get guests started. Each step saves as you go — you can change everything later in Settings.';
+
+const HUB_SETUP_RERUN_WELCOME = {
+  title: 'Hub setup wizard',
   lead:
-    'A few short steps to name your hub, add contacts, and get guests started. Each step saves as you go — you can change everything later in Settings.'
+    'Step through your hub settings with your current details pre-filled. Leave secret fields blank to keep saved values.'
 };
 
 function getHubSetupWelcomeCopy() {
+  const hubName = getHubDisplayName();
   if (isHubSetupWizardRerunRequested()) {
-    const hubName = getHubDisplayName();
     if (hubName && hubName !== 'Home Hub') {
       return {
         title: `Welcome to ${hubName}`,
@@ -89,21 +92,11 @@ function getHubSetupWelcomeCopy() {
     return HUB_SETUP_RERUN_WELCOME;
   }
 
-  const hubName = getHubDisplayName();
-  if (hubName && hubName !== 'Home Hub') {
-    return {
-      title: `Welcome to ${hubName}`,
-      lead: HUB_SETUP_WELCOME.lead
-    };
-  }
-  return HUB_SETUP_WELCOME;
+  return {
+    title: `Welcome to ${hubName} setup`,
+    lead: HUB_SETUP_WELCOME_LEAD
+  };
 }
-
-const HUB_SETUP_RERUN_WELCOME = {
-  title: 'Hub setup wizard',
-  lead:
-    'Step through your hub settings with your current details pre-filled. Leave secret fields blank to keep saved values.'
-};
 
 /**
  * @param {HTMLElement} viewport
@@ -199,7 +192,7 @@ function mountHubSetupWizard(viewport, context) {
 
   const welcomeEyebrow = document.createElement('p');
   welcomeEyebrow.className = 'hub-setup-welcome-eyebrow';
-  welcomeEyebrow.textContent = getModeConfig().branding.eyebrow;
+  welcomeEyebrow.textContent = getHubEyebrow();
 
   const welcomeCopy = getHubSetupWelcomeCopy();
 
@@ -428,6 +421,7 @@ function mountHubSetupWizard(viewport, context) {
     body.replaceChildren();
     backButton.hidden = step === 0;
     const welcomeCopy = getHubSetupWelcomeCopy();
+    welcomeEyebrow.textContent = getHubEyebrow();
     welcomeTitle.textContent = welcomeCopy.title;
     welcomeLead.textContent = welcomeCopy.lead;
     restoreHost.replaceChildren();

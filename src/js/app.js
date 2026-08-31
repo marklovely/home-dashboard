@@ -23,6 +23,7 @@ import { startDeviceSessionKeepalive } from '../auth/deviceSessionKeepalive.js';
 import { initAccessSessionBanner } from '../shell/accessSessionBanner.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
 import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
+import { initTrialWatermark } from '../shell/trialWatermark.js';
 import { initShellBrandLogo } from '../shell/shellBrandLogo.js';
 import { applyShellBranding } from '../shell/shellBranding.js';
 import { subscribeToSiteProfile } from '../services/siteProfileService.js';
@@ -55,6 +56,7 @@ function setStartupLoading(active) {
 
 async function initialiseDashboard() {
   void initTestEnvironmentBanner();
+  void initTrialWatermark();
   void preloadPrivateConfig();
   if (!isHouseSitterExperience()) {
     startMyDayCalendarService();

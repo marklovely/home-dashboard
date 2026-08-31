@@ -32,7 +32,7 @@ import { getPetDisplayName } from '../lib/petDisplayName.js';
 /** @type {ModeConfig} */
 const ownerConfig = {
   branding: {
-    eyebrow: 'LOVELY HOME HUB',
+    eyebrow: 'HOME HUB',
     homeChromeTitle: 'Home Hub',
     documentTitleBase: 'Home Hub',
     homeTagline: null
@@ -55,9 +55,9 @@ const ownerConfig = {
 /** @type {ModeConfig} */
 const houseSitterConfig = {
   branding: {
-    eyebrow: 'LOVELY HOME',
-    homeChromeTitle: 'Lovely Home',
-    documentTitleBase: 'Lovely Home',
+    eyebrow: 'HOME HUB',
+    homeChromeTitle: 'Home Hub',
+    documentTitleBase: 'Home Hub',
     homeTagline: null
   },
   homeAppIds: ['weather', 'scooter', 'house-guide', 'bins', 'emergency'],

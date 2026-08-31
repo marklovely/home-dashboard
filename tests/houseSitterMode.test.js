@@ -17,11 +17,11 @@ describe('house sitter mode configuration', () => {
     setActiveProfileId('owner');
   });
 
-  it('uses Lovely Home branding in house sitter user mode', () => {
+  it('uses hub branding in house sitter user mode', () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
     resetUserModeForTests();
     const config = getModeConfig();
-    expect(config.branding.eyebrow).toBe('LOVELY HOME');
+    expect(config.branding.eyebrow).toBe('HOME HUB');
     expect(config.branding.homeTagline).toBeNull();
     expect(config.sitterEssentialAppIds).toEqual(['scooter', 'house-guide', 'emergency']);
     expect(config.showSitterHeaderWeather).toBe(true);
@@ -32,7 +32,7 @@ describe('house sitter mode configuration', () => {
     resetUserModeForTests();
     setUserMode(UserMode.Owner);
     const config = getModeConfig();
-    expect(config.branding.eyebrow).toBe('LOVELY HOME HUB');
+    expect(config.branding.eyebrow).toBe('HOME HUB');
   });
 
   it('shows only sitter apps in house sitter user mode', () => {

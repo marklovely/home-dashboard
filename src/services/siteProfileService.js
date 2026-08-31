@@ -8,7 +8,9 @@ import {
 import { refreshPrivateConfig } from './privateConfigService.js';
 import { clearLocalSetup } from './siteSetupLocalStorage.js';
 import { getHubEnvironmentSync } from '../auth/hubEnvironment.js';
+import { formatHubHomeName } from '../lib/hubHomeName.js';
 import { formatOwnerUnlockInstructions } from '../lib/sitterUnlockPreferences.js';
+import { isHouseSitterExperience } from '../auth/userMode.js';
 import { resetHubSetupWizardStep, requestHubSetupWizardAfterReset } from '../apps/HubSetup/hubSetupWizardState.js';
 
 /** @typedef {{ profile: Record<string, unknown>, guideSeeded?: boolean }} SiteProfileState */
@@ -114,19 +116,24 @@ export function isOnboardingComplete() {
 }
 
 /**
+ * Household name for chrome and greetings (`Powell Home`).
  * @returns {string}
  */
 export function getHubDisplayName() {
-  const name = /** @type {string | undefined} */ (state?.profile?.hubName)?.trim();
-  return name || 'Home Hub';
+  const name = /** @type {string | undefined} */ (state?.profile?.hubName);
+  return formatHubHomeName(name, getHubEnvironmentSync());
 }
 
 /**
+ * Header eyebrow: `POWELL HOME HUB` in owner mode, `POWELL HOME` for sitters.
  * @returns {string}
  */
 export function getHubEyebrow() {
-  const name = /** @type {string | undefined} */ (state?.profile?.hubName)?.trim();
-  return name ? name.toUpperCase() : 'HOME HUB';
+  const display = getHubDisplayName();
+  const upper = display.toUpperCase();
+  if (isHouseSitterExperience()) return upper;
+  if (upper === 'HOME HUB' || upper.endsWith(' HUB')) return upper;
+  return `${upper} HUB`;
 }
 
 /**
