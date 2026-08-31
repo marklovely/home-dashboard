@@ -26,7 +26,13 @@ variable "access_team_domain" {
 
 variable "owner_emails" {
   type        = list(string)
-  description = "Household owner emails — merged into the Owners Access policy on every managed hub."
+  description = "Platform owner emails — merged into the Owners Access policy on hubs in the platform zone only. Never add customer addresses here; customer hubs would inherit them."
+}
+
+variable "support_owner_emails" {
+  type        = list(string)
+  default     = []
+  description = "Support identities allowed into customer hubs ({site}.lovely-hub.com) alongside the household's own owners. Keep this to named operator accounts."
 }
 
 variable "sitter_emails" {
@@ -81,6 +87,7 @@ variable "sites" {
     include_pages_dev_access_destinations = optional(bool, true)
     access_enabled                        = optional(bool, true)
     demo_public                           = optional(bool, false)
+    customer_hub                          = optional(bool)
     owner_emails                          = optional(list(string))
     sitter_emails                         = optional(list(string))
     tester_emails                         = optional(list(string))
@@ -156,6 +163,19 @@ variable "public_signup_enabled" {
   type        = bool
   default     = false
   description = "Enable public trial signup API (/api/public/signup) on platform Pages."
+}
+
+variable "turnstile_site_key" {
+  type        = string
+  default     = ""
+  description = "Cloudflare Turnstile site key for the public signup form. The bot check stays off until both Turnstile values are set."
+}
+
+variable "turnstile_secret_key" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Cloudflare Turnstile secret key used to verify signup tokens server-side."
 }
 
 variable "pages_preview_deployments_enabled" {

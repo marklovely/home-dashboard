@@ -14,6 +14,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
+import { findEmailAddresses, redactEmailFields } from './lib/platformManifestPrivacy.mjs';
 import {
   hasTerraformContract,
   mergePlatformMeta,
@@ -111,21 +112,22 @@ for (const [siteId, meta] of Object.entries(registry)) {
   }
   const hostname = String(meta.hostname ?? '');
   const fields = siteManifestFields(siteId, contract, hostname);
-  sites[siteId] = {
+  // Owner and sitter emails are deliberately absent: this file is committed to
+  // a public repo. Platform admin reads them from the billing API instead.
+  sites[siteId] = redactEmailFields({
     siteId,
     hostname,
     hubEnvironment: meta.hub_environment ?? siteId,
     vanilla: Boolean(meta.vanilla),
     terraform: Boolean(meta.terraform),
     attachHubApiBinding: meta.attach_hub_api_binding === true,
-    ownerEmails: parseEmailList(meta.owner_emails),
-    sitterEmails: parseEmailList(meta.sitter_emails),
+    hasOwnerEmails: parseEmailList(meta.owner_emails).length > 0,
     demoPublic: meta.demo_public === true,
     accessEnabled: meta.access_enabled !== false,
     ...fields,
     contract,
     provisioning: buildProvisioningChecklist(siteId, meta, contract)
-  };
+  });
 }
 
 const manifest = {
@@ -133,6 +135,14 @@ const manifest = {
   platform: mergedPlatform,
   sites
 };
+
+const leakedEmails = findEmailAddresses(manifest);
+if (leakedEmails.length > 0) {
+  console.error(
+    `build-platform-manifest: refusing to write personal data to a committed file (${leakedEmails.length} email address(es) found).`
+  );
+  process.exit(1);
+}
 
 mkdirSync(outDir, { recursive: true });
 writeFileSync(outPath, `${JSON.stringify(manifest, null, 2)}\n`);

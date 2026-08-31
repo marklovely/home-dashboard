@@ -177,6 +177,8 @@ Managed by **Terraform** on `module.platform_admin` (via `terraform/environments
 | --- | --- | --- |
 | `marketing_site_origin` | `MARKETING_SITE_ORIGIN` | CORS + Checkout return URLs (default `https://lovely-home.co.uk`) |
 | `public_signup_enabled` | `PUBLIC_SIGNUP_ENABLED` | Set `true` to enable `/api/public/signup` (requires Stripe + `platform_github_token`) |
+| `turnstile_site_key` | `TURNSTILE_SITE_KEY` | Optional Cloudflare Turnstile widget key. Setting both keys turns on the bot check |
+| `turnstile_secret_key` | `TURNSTILE_SECRET_KEY` | Turnstile server secret used to verify the token |
 
 Also requires the Stripe vars from [One-time setup](#one-time-setup-test-mode). **Do not** set these only in the Cloudflare dashboard — the next `terraform apply` overwrites Pages env.
 
@@ -191,10 +193,32 @@ When `public_signup_enabled = true`, Terraform also creates a **Zero Trust bypas
 | `/api/public/signup/status` | GET | Whether signup is enabled |
 | `/api/public/signup/pricing` | GET | Trial length + monthly/yearly prices from Stripe |
 | `/api/public/signup/slug/{siteId}` | GET | Slug availability check |
-| `/api/public/signup` | POST | Registry create + Stripe Checkout `{ siteId, customerEmail, billingInterval? }` (`month` or `year`) |
+| `/api/public/signup` | POST | Slug reservation + Stripe Checkout `{ siteId, customerEmail, billingInterval?, turnstileToken? }` (`month` or `year`) |
 | `/api/public/hub-status/{siteId}` | GET | Provisioning status for the success page — probes `{siteId}.lovely-hub.com` and returns `{ state, ready, hubUrl }` |
 
-Flow: validate slug → dispatch **platform-site-manage** create PR → return Stripe Checkout URL. Webhook `trialing` provisions once the registry PR merges (Stripe retries if needed).
+**Nothing is provisioned until Stripe confirms the trial.** Signup only reserves the slug
+and opens Checkout; the registry PR is dispatched from the webhook:
+
+1. `POST /api/public/signup` — Turnstile check (if configured) → per-IP rate limit → slug
+   availability (including live reservations) → Stripe Checkout session → reserve the slug
+   for the life of the session. No GitHub dispatch, no Cloudflare resources.
+2. Stripe `checkout.session.completed` / `customer.subscription.created` with a `trialing`
+   subscription → dispatch **platform-site-manage** to open the registry PR
+   (`registry_dispatched_at` on `site_billing` makes this idempotent) → release the slug
+   reservation now that the registry owns the name.
+3. Registry PR merges → **platform-site-provision** builds the hub.
+
+Abandoned checkouts therefore cost nothing and free their slug when the reservation
+expires. `registry_last_error` records a failed dispatch so a Stripe webhook retry (or a
+manual replay) can pick it back up.
+
+Signup abuse controls, all backed by the platform billing D1 database:
+
+| Control | Behaviour |
+| --- | --- |
+| Rate limit | Fixed window per client IP; the IP is stored only as a SHA-256 hash. Over the limit returns `429` with `error: rate_limited` |
+| Slug reservation | An in-flight Checkout holds the slug, so two buyers cannot race for one hostname |
+| Turnstile | Active only when both Turnstile keys are set; `signup/status` advertises the site key so the widget renders itself |
 
 Provisioning takes roughly **10 minutes** end to end, so `signup-success.html` polls `hub-status` and only shows the Open button and hub QR code once the hostname answers. An Access redirect or challenge counts as live — the buyer signs in next.
 
@@ -209,5 +233,4 @@ Platform admin deploys from GitHub on `main`; run `terraform apply` to push env 
 ### Still to do
 
 - Stripe Customer Portal link for self-service cancel
-- Turnstile / rate limiting on public signup
 - Automated restore from archive on re-subscribe

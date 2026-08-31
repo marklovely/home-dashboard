@@ -5,9 +5,16 @@ import {
   TRIAL_PERIOD_DAYS,
   validateBillingSiteId
 } from './platformBilling.js';
-import { buildSiteManagePayload } from './platformSiteMutations.js';
-import { dispatchSiteManageWorkflow, githubAutomationConfigured } from './platformGitHub.js';
+import { githubAutomationConfigured } from './platformGitHub.js';
 import { getSiteFromManifest } from './platformApi.js';
+import {
+  consumeSignupAttempt,
+  getActiveSignupReservation,
+  hashSignupClientKey,
+  pruneExpiredSignupData,
+  reserveSignupSlug
+} from './platformSignupGuards.js';
+import { turnstileConfigured, verifyTurnstileToken } from './platformSignupTurnstile.js';
 
 /** Reserved slugs — internal hubs and common DNS names. */
 export const PUBLIC_SIGNUP_BLOCKED_SITE_IDS = new Set([
@@ -113,14 +120,59 @@ export function publicSignupUrls(env, siteId) {
 }
 
 /**
- * @param {Record<string, string | undefined>} env
+ * Slug availability including reservations held by in-flight Checkout sessions.
+ *
  * @param {object} manifest
  * @param {string} siteId
- * @param {string} customerEmail
  * @param {D1Database | null | undefined} billingDb
- * @param {string | undefined} billingInterval
+ * @param {number} [nowMs]
  */
-export async function handlePublicHubSignup(env, manifest, siteId, customerEmail, billingDb, billingInterval) {
+export async function checkPublicSignupSlug(manifest, siteId, billingDb, nowMs = Date.now()) {
+  const base = isPublicSignupSlugAvailable(manifest, siteId);
+  if (!base.available) return base;
+
+  const reservation = await getActiveSignupReservation(billingDb, siteId, nowMs);
+  if (reservation) {
+    return {
+      available: false,
+      reason: `Site id "${siteId}" is being set up by someone else right now. Try another name.`
+    };
+  }
+  return { available: true, reason: null };
+}
+
+/**
+ * Start a trial: verify the request, hold the slug, and hand back a Stripe
+ * Checkout URL. Nothing is provisioned here — the registry entry is created
+ * from the Stripe webhook once payment details are confirmed, so an abandoned
+ * or hostile signup cannot build infrastructure.
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {{
+ *   manifest: object;
+ *   siteId: string;
+ *   customerEmail: string;
+ *   billingDb?: D1Database | null;
+ *   billingInterval?: string;
+ *   clientIp?: string;
+ *   turnstileToken?: string;
+ *   fetchImpl?: typeof fetch;
+ *   nowMs?: number;
+ * }} input
+ */
+export async function handlePublicHubSignup(env, input) {
+  const {
+    manifest,
+    siteId,
+    customerEmail,
+    billingDb = null,
+    billingInterval,
+    clientIp = '',
+    turnstileToken = '',
+    fetchImpl,
+    nowMs = Date.now()
+  } = input;
+
   if (!publicSignupConfigured(env)) {
     return {
       ok: false,
@@ -132,7 +184,48 @@ export async function handlePublicHubSignup(env, manifest, siteId, customerEmail
     };
   }
 
-  const slugCheck = isPublicSignupSlugAvailable(manifest, siteId);
+  const idError = validatePublicSignupSiteId(siteId);
+  if (idError) {
+    return {
+      ok: false,
+      status: 400,
+      body: { error: 'INVALID_SITE_ID', message: idError }
+    };
+  }
+
+  if (turnstileConfigured(env)) {
+    const verdict = await verifyTurnstileToken(env, { token: turnstileToken, clientIp, fetchImpl });
+    if (!verdict.ok) {
+      return {
+        ok: false,
+        status: 403,
+        body: {
+          error: 'CHALLENGE_FAILED',
+          message: 'We could not verify that request. Reload the page and try again.',
+          codes: verdict.codes
+        }
+      };
+    }
+  }
+
+  if (billingDb) {
+    const clientKey = await hashSignupClientKey(clientIp);
+    const throttle = await consumeSignupAttempt(billingDb, { clientKey, nowMs });
+    if (!throttle.allowed) {
+      return {
+        ok: false,
+        status: 429,
+        retryAfterSec: throttle.retryAfterSec,
+        body: {
+          error: 'RATE_LIMITED',
+          message: 'Too many signup attempts from this connection. Try again later.'
+        }
+      };
+    }
+    await pruneExpiredSignupData(billingDb, nowMs);
+  }
+
+  const slugCheck = await checkPublicSignupSlug(manifest, siteId, billingDb, nowMs);
   if (!slugCheck.available) {
     return {
       ok: false,
@@ -157,36 +250,6 @@ export async function handlePublicHubSignup(env, manifest, siteId, customerEmail
   }
 
   const hostname = `${siteId}.${CUSTOMER_HUB_ZONE_NAME}`;
-  const built = buildSiteManagePayload(manifest, 'create', siteId, {
-    hostname,
-    zone_name: CUSTOMER_HUB_ZONE_NAME,
-    hub_environment: siteId,
-    vanilla: false,
-    terraform: true,
-    attach_hub_api_binding: true,
-    owner_emails: [customerEmail]
-  });
-
-  if (!built.ok) {
-    return {
-      ok: false,
-      status: 400,
-      body: { error: built.error ?? 'VALIDATION_ERROR', message: built.message ?? 'Invalid signup.' }
-    };
-  }
-
-  const registry = await dispatchSiteManageWorkflow(env, 'create', built.payload);
-  if (!registry.ok) {
-    return {
-      ok: false,
-      status: 503,
-      body: {
-        error: registry.error ?? 'REGISTRY_DISPATCH_FAILED',
-        message: registry.message ?? 'Could not start hub registration.'
-      }
-    };
-  }
-
   const urls = publicSignupUrls(env, siteId);
   const checkout = await createBillingCheckoutSession(env, {
     siteId,
@@ -207,6 +270,13 @@ export async function handlePublicHubSignup(env, manifest, siteId, customerEmail
     };
   }
 
+  const reservation = await reserveSignupSlug(billingDb, {
+    siteId,
+    ownerEmail: customerEmail,
+    sessionId: checkout.sessionId ?? null,
+    nowMs
+  });
+
   return {
     ok: true,
     status: 200,
@@ -215,9 +285,9 @@ export async function handlePublicHubSignup(env, manifest, siteId, customerEmail
       siteId,
       hostname,
       trialDays: TRIAL_PERIOD_DAYS,
-      registry,
       checkoutUrl: checkout.url,
-      sessionId: checkout.sessionId
+      sessionId: checkout.sessionId,
+      reservedUntil: reservation.expiresAt ?? null
     }
   };
 }

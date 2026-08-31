@@ -8,8 +8,11 @@
   const submitBtn = document.getElementById('signup-submit');
   const alertBox = document.getElementById('signup-alert');
   const slugHint = document.getElementById('slug-hint');
+  const challengeSlot = document.getElementById('signup-challenge');
 
   if (!form || !siteInput || !emailInput || !submitBtn) return;
+
+  let challengeRequired = false;
 
   const params = new URLSearchParams(window.location.search);
   const planParam = (params.get('plan') || '').trim().toLowerCase();
@@ -60,15 +63,23 @@
         return;
       }
 
+      const turnstileToken = readChallengeToken();
+      if (challengeRequired && !turnstileToken) {
+        showAlert('Complete the “I am human” check to continue.', 'error');
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(apiBase + '/api/public/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ siteId, customerEmail: email, billingInterval })
+        body: JSON.stringify({ siteId, customerEmail: email, billingInterval, turnstileToken })
       });
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
         showAlert(payload.message || payload.error || 'Signup failed. Try again or email support.', 'error');
+        resetChallenge();
         setLoading(false);
         return;
       }
@@ -114,6 +125,47 @@
     }
   }
 
+  // Turnstile is optional: the widget only appears once the platform reports a
+  // site key, so signup keeps working before the keys are configured.
+  async function initChallenge() {
+    if (!challengeSlot) return;
+    try {
+      const response = await fetch(apiBase + '/api/public/signup/status', {
+        headers: { Accept: 'application/json' }
+      });
+      const payload = await response.json().catch(() => ({}));
+      const siteKey = (payload.turnstileSiteKey || '').trim();
+      if (!siteKey) return;
+
+      challengeRequired = true;
+      const widget = document.createElement('div');
+      widget.className = 'cf-turnstile';
+      widget.dataset.sitekey = siteKey;
+      widget.dataset.theme = 'light';
+      challengeSlot.appendChild(widget);
+      challengeSlot.hidden = false;
+
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    } catch {
+      // Leave signup usable if the status check fails.
+    }
+  }
+
+  function readChallengeToken() {
+    const field = form.querySelector('[name="cf-turnstile-response"]');
+    return field && field.value ? field.value : '';
+  }
+
+  function resetChallenge() {
+    if (challengeRequired && window.turnstile && typeof window.turnstile.reset === 'function') {
+      window.turnstile.reset();
+    }
+  }
+
   function showAlert(message, tone) {
     alertBox.textContent = message;
     alertBox.className = 'signup-alert signup-alert--' + (tone || 'error');
@@ -131,6 +183,7 @@
   }
 
   updateSlugHint();
+  initChallenge();
 
   document.addEventListener('DOMContentLoaded', function () {
     if (window.LovelyHomePricing) window.LovelyHomePricing.initPricing();

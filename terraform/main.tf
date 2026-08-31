@@ -13,10 +13,20 @@ locals {
     for site_id, site in local.managed_sites : site_id => coalesce(site.zone_name, var.zone_name)
   }
 
-  # Global owners on every hub; tester_emails (and legacy site owner_emails) add site-only access.
+  # Hubs outside the platform zone belong to customers. They must not inherit the
+  # platform-wide owner list, or every household would share one Access policy.
+  customer_hubs = {
+    for site_id, site in local.managed_sites : site_id => coalesce(
+      site.customer_hub,
+      local.site_zone_names[site_id] != var.zone_name
+    )
+  }
+
+  # Platform sites get the global owner list; customer hubs get only the named
+  # support identities plus their own owners.
   site_owner_emails = {
     for site_id, site in local.managed_sites : site_id => distinct(concat(
-      var.owner_emails,
+      local.customer_hubs[site_id] ? var.support_owner_emails : var.owner_emails,
       coalesce(site.tester_emails, []),
       coalesce(site.owner_emails, []),
     ))
@@ -83,5 +93,7 @@ module "platform_admin" {
   stripe_price_id_yearly            = var.stripe_price_id_yearly
   marketing_site_origin             = var.marketing_site_origin
   public_signup_enabled             = var.public_signup_enabled
+  turnstile_site_key                = var.turnstile_site_key
+  turnstile_secret_key              = var.turnstile_secret_key
   pages_preview_deployments_enabled = var.pages_preview_deployments_enabled
 }
