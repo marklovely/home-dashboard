@@ -41,7 +41,7 @@
       form.querySelector('input[name="billingInterval"]:checked')?.value === 'year' ? 'year' : 'month';
 
     if (!SITE_ID_RE.test(siteId)) {
-      showAlert('Hub name must start with a letter and use lowercase letters, numbers, or hyphens only.', 'error');
+      showAlert('Hub address must start with a letter and use lowercase letters, numbers, or hyphens only.', 'error');
       siteInput.focus();
       return;
     }
@@ -103,13 +103,13 @@
       });
       const payload = await response.json().catch(() => ({}));
       if (!payload.available) {
-        showAlert(payload.message || 'That hub name is not available.', 'error');
+        showAlert(payload.message || 'That hub address is not available.', 'error');
         siteInput.focus();
         return false;
       }
       return true;
     } catch {
-      showAlert('Could not check hub name availability. Try again.', 'error');
+      showAlert('Could not check hub address availability. Try again.', 'error');
       return false;
     }
   }
