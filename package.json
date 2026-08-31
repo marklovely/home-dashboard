@@ -28,7 +28,8 @@
     "d1:migrate:all": "node scripts/apply-d1-migrations-all.mjs",
     "deploy:all": "node scripts/deploy-all-workers.mjs",
     "sync:archive-secret": "node scripts/sync-platform-site-archive-secret.mjs",
-    "sync:production-access": "node scripts/sync-wrangler-production-access.mjs"
+    "sync:production-access": "node scripts/sync-wrangler-production-access.mjs",
+    "release": "node scripts/cut-release.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

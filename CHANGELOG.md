@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+Public trial signup, household emails, and hub backups on cancel.
+
+### Signup and billing
+
+- Payment-gated public signup on lovely-home.co.uk (hub is registered only after Stripe confirms the trial)
+- Customer lifecycle email via Resend (trial started, trial ending, payment failed, cancelled)
+- Stripe twin events no longer open two registry PRs for the same hub
+
+### Marketing site
+
+- URL-first setup copy (wall tablet optional); VAT not charged
+- Trial success page waits until the hub SPA is live before showing the QR and Open link
+
+### Platform
+
+- Pre-deprovision JSON archive to platform R2; teardown stops if the backup cannot run
+- Customer owner emails stay out of the public git registry
+
+### Releases
+
+- GitHub Releases are created from CHANGELOG.md when a `vX.Y.Z` tag is pushed
+- Marketing site footer and hub chrome show the same package version
+
 ## 2.2.0
 
 Minor release: bin collection reminders for sitters, Settings sidebar layout, and preview/provision reliability.

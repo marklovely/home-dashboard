@@ -16,6 +16,7 @@ PRODUCTION_BRANCH="main"
 # website/ ships as-is. Rebuild the QR bundle when Vite/Rollup can run; otherwise
 # keep the committed file. npm often omits Rollup's optional native binary.
 node scripts/ensure-website-qr.mjs
+node scripts/write-website-version.mjs
 
 if ! "${WRANGLER[@]}" pages project list 2>/dev/null | grep -qE "│ ${PROJECT_NAME}[[:space:]]"; then
   echo "==> Creating Pages project: ${PROJECT_NAME} (production branch: ${PRODUCTION_BRANCH})"

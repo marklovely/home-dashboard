@@ -2208,6 +2208,14 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .button-subtitle { display: block; margin-top: 5px; color: var(--muted); font-size: 0.82rem; }
 
 .footer { display: flex; justify-content: space-between; gap: 12px; color: #8f99aa; font-size: 0.78rem; }
+
+.shell-version-label {
+  margin: 0.15rem 0 0.45rem;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--muted);
+  opacity: 0.75;
+}
 .toast {
   position: fixed;
   left: 50%;

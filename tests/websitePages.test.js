@@ -100,6 +100,19 @@ describe('marketing site pages', () => {
     expect(css).toMatch(/\.site-footer \{[\s\S]*?z-index:\s*1/);
   });
 
+  it('every page shows the release version from version.json', () => {
+    for (const name of pages) {
+      const html = readPage(name);
+      expect(html, name).toContain('data-site-version');
+      expect(html, name).toContain('src="site.js"');
+    }
+    const siteJs = readFileSync(join(website, 'site.js'), 'utf8');
+    expect(siteJs).toMatch(/fetch\('version\.json'/);
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+    const versionFile = JSON.parse(readFileSync(join(website, 'version.json'), 'utf8'));
+    expect(versionFile.version).toBe(pkg.version);
+  });
+
   it('gallery includes a trial call to action', () => {
     const html = readPage('app.html');
     expect(html).toMatch(/href="signup\.html"/);

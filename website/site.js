@@ -41,4 +41,27 @@
   } else {
     initNav();
   }
+
+  applySiteVersion();
+
+  function applySiteVersion() {
+    const nodes = document.querySelectorAll('[data-site-version]');
+    if (!nodes.length) return;
+
+    fetch('version.json', { cache: 'no-store', headers: { Accept: 'application/json' } })
+      .then(function (response) {
+        if (!response.ok) throw new Error('version');
+        return response.json();
+      })
+      .then(function (payload) {
+        const version = String(payload && payload.version ? payload.version : '').trim();
+        if (!version) return;
+        nodes.forEach(function (node) {
+          node.textContent = 'v' + version;
+        });
+      })
+      .catch(function () {
+        /* Footer stays without a version if version.json is missing. */
+      });
+  }
 })();
