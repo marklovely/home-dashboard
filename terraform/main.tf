@@ -50,6 +50,17 @@ module "hub_site" {
   platform_health_checks_enabled        = var.platform_admin.enabled
 }
 
+module "marketing_site" {
+  count  = var.marketing_site_access_protected ? 1 : 0
+  source = "./modules/marketing_site"
+
+  account_id                        = var.cloudflare_account_id
+  hostname                          = var.zone_name
+  pages_name                        = var.marketing_site_pages_name
+  operator_emails                   = var.platform_operator_emails
+  pages_preview_deployments_enabled = var.pages_preview_deployments_enabled
+}
+
 module "platform_admin" {
   count  = var.platform_admin.enabled ? 1 : 0
   source = "./modules/platform_admin"

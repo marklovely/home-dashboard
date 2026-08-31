@@ -35,6 +35,19 @@ bash scripts/deploy-lovely-home-website.sh
 
 Attach the custom domain **lovely-home.co.uk** (and optionally **www**) in the Cloudflare dashboard after the first deploy. Point DNS at Cloudflare when the domain transfer from Hostinger is complete.
 
+### Pre-launch Access gate
+
+While building before public launch, protect the site with Cloudflare Zero Trust (OTP for platform operators only):
+
+```hcl
+# terraform/environments/hub.tfvars
+marketing_site_access_protected = true
+```
+
+Then `terraform apply` from `terraform/` (uses `platform_operator_emails`). Set `marketing_site_access_protected = false` when you go live.
+
+This gates **lovely-home.co.uk** only. The public signup API on **platform.lovely-home.co.uk** (`/api/public/*`) keeps its existing Access bypass — signup flows from the marketing site are unaffected once the site is public.
+
 Screenshots live in `website/screenshots/` as JPEG/PNG exports from the live hub. Replace the files and redeploy after UI changes.
 
 Brand assets:
