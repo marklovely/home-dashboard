@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T13:21:55.813Z",
+  "generatedAt": "2026-08-31T13:48:55.448Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -441,51 +441,52 @@
         }
       ]
     },
-    "powell": {
-      "siteId": "powell",
-      "hostname": "powell.lovely-hub.com",
-      "hubEnvironment": "powell",
+    "blundell": {
+      "siteId": "blundell",
+      "hostname": "blundell.lovely-hub.com",
+      "hubEnvironment": "blundell",
       "vanilla": false,
       "terraform": true,
       "attachHubApiBinding": true,
       "ownerEmails": [
-        "marklovely67@gmail.com"
+        "marklovely67+test-blundell@gmail.com"
       ],
       "sitterEmails": [],
       "demoPublic": false,
       "accessEnabled": true,
-      "pagesProject": "home-dashboard-powell",
-      "workerName": "lovely-home-hub-api-powell",
-      "pagesUrl": "https://powell.lovely-hub.com",
-      "workerApiOrigin": "https://lovely-home-hub-api-powell.mark-lovely67.workers.dev",
+      "pagesProject": "home-dashboard-blundell",
+      "workerName": "lovely-home-hub-api-blundell",
+      "pagesUrl": "https://blundell.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-blundell.mark-lovely67.workers.dev",
       "contract": {
-        "access_aud_combined": "8480a6e9287a23ebb3f750ddd61e986c9d95b2a2c5e055686a4280b185a4f406,9c4bccd78d50dab42dec54dc193e2f64c6b645e24242e46e24bfce3ecbdf7433",
+        "access_aud_combined": "0cc5ba6d9099c7907d1716d4bb7988899363fbcfcd3d63260d5c5096e8807ed4,9b912c233b5d59da38d886e685c1bbe15454e3fb53faf4e028664b7228dfec65",
         "access_enabled": true,
-        "access_pages_app_id": "acfb1b5c-fe86-4c86-8fa2-5baf048bd355",
-        "access_pages_aud": "9c4bccd78d50dab42dec54dc193e2f64c6b645e24242e46e24bfce3ecbdf7433",
-        "access_worker_app_id": "5d3ba216-0c1f-47fd-afcb-3c75c5bbe6e4",
-        "access_worker_aud": "8480a6e9287a23ebb3f750ddd61e986c9d95b2a2c5e055686a4280b185a4f406",
+        "access_pages_app_id": "e938f2e9-1512-4b70-b2cd-49ddea54786b",
+        "access_pages_aud": "9b912c233b5d59da38d886e685c1bbe15454e3fb53faf4e028664b7228dfec65",
+        "access_worker_app_id": "2506d889-68e2-4aca-93b9-4150f9befed2",
+        "access_worker_aud": "0cc5ba6d9099c7907d1716d4bb7988899363fbcfcd3d63260d5c5096e8807ed4",
         "cf_access_team_domain": "lovely-home",
-        "d1_database_id": "7e9d010f-9e23-4299-b988-b9fb8671ce41",
-        "d1_database_name": "lovely-home-appliance-manuals-powell",
+        "d1_database_id": "d819e927-feaa-414e-a51e-3ac17e444d87",
+        "d1_database_name": "lovely-home-appliance-manuals-blundell",
         "default_latitude": "51.5074",
         "default_longitude": "-0.1278",
-        "hostname": "powell.lovely-hub.com",
-        "hub_environment": "powell",
+        "hostname": "blundell.lovely-hub.com",
+        "hub_environment": "blundell",
         "owner_emails": [
           "marklovely67@gmail.com",
-          "REDACTED_CUSTOMER_EMAIL"
+          "REDACTED_CUSTOMER_EMAIL",
+          "marklovely67+test-blundell@gmail.com"
         ],
-        "pages_project": "home-dashboard-powell",
-        "pages_url": "https://powell.lovely-hub.com",
-        "r2_guides_bucket": "lovely-home-appliance-guides-powell",
-        "r2_media_bucket": "lovely-home-guide-media-powell",
-        "site_id": "powell",
+        "pages_project": "home-dashboard-blundell",
+        "pages_url": "https://blundell.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-blundell",
+        "r2_media_bucket": "lovely-home-guide-media-blundell",
+        "site_id": "blundell",
         "sitter_emails": [],
         "vanilla": false,
-        "worker_api_origin": "https://lovely-home-hub-api-powell.mark-lovely67.workers.dev",
-        "worker_hostname": "lovely-home-hub-api-powell.mark-lovely67.workers.dev",
-        "worker_name": "lovely-home-hub-api-powell"
+        "worker_api_origin": "https://lovely-home-hub-api-blundell.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-blundell.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-blundell"
       },
       "provisioning": [
         {
