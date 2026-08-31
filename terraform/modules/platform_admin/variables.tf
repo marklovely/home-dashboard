@@ -111,6 +111,19 @@ variable "public_signup_enabled" {
   description = "When true, sets PUBLIC_SIGNUP_ENABLED on platform Pages (requires Stripe + PLATFORM_GITHUB_TOKEN)."
 }
 
+variable "turnstile_site_key" {
+  type        = string
+  default     = ""
+  description = "Cloudflare Turnstile site key for the public signup form. Signup only enforces the challenge when both Turnstile values are set."
+}
+
+variable "turnstile_secret_key" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Cloudflare Turnstile secret key used to verify signup tokens server-side."
+}
+
 variable "pages_preview_deployments_enabled" {
   type        = bool
   default     = true

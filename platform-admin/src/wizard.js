@@ -216,11 +216,18 @@ function renderWizardStep(mode, step, form, ctx) {
         <span>Attach HUB_API binding on first Terraform apply</span>
         <small class="muted">Leave off until the Worker exists; enable on a second apply.</small>
       </label>
-      <label class="field">
+      ${
+        form.internalPlatformSite
+          ? `<label class="field">
         <span>Owner emails</span>
         <textarea name="ownerEmailsText" rows="2" placeholder="owner@example.com, partner@example.com">${escapeHtml(form.ownerEmailsText)}</textarea>
         <small class="muted">Household owners for Cloudflare Access and calendar/API. Comma- or newline-separated.</small>
-      </label>
+      </label>`
+          : `<div class="field">
+        <span>Owner emails</span>
+        <small class="muted">Customer hub owners are read from the billing database at provision time, so they stay out of the public site registry. Operator access comes from the <code>SUPPORT_OWNER_EMAILS</code> secret.</small>
+      </div>`
+      }
       <label class="field">
         <span>Sitter emails (optional)</span>
         <textarea name="sitterEmailsText" rows="2" placeholder="sitter@example.com">${escapeHtml(form.sitterEmailsText)}</textarea>
@@ -285,7 +292,7 @@ function renderReview(mode, form) {
     <div><dt>Wrangler env</dt><dd><code>${escapeHtml(form.hubEnvironment || form.siteId)}</code></dd></div>
     <div><dt>Vanilla</dt><dd>${form.vanilla ? 'yes' : 'no'}</dd></div>
     <div><dt>HUB_API on first apply</dt><dd>${form.attachHubApiBinding ? 'yes' : 'no'}</dd></div>
-    <div><dt>Owner emails</dt><dd>${escapeHtml(form.ownerEmailsText || '—')}</dd></div>
+    <div><dt>Owner emails</dt><dd>${form.internalPlatformSite ? escapeHtml(form.ownerEmailsText || '—') : 'from billing database'}</dd></div>
     <div><dt>Sitter emails</dt><dd>${escapeHtml(form.sitterEmailsText || '—')}</dd></div>
   `;
 }
@@ -373,11 +380,13 @@ function validateStep(mode, step, form, ctx) {
   }
 
   if (step === 2 && mode !== 'delete') {
-    if (!parseEmailList(form.ownerEmailsText).length) {
-      return 'At least one owner email is required.';
+    if (form.internalPlatformSite) {
+      if (!parseEmailList(form.ownerEmailsText).length) {
+        return 'At least one owner email is required.';
+      }
+      const ownerError = validateEmailList(form.ownerEmailsText, { required: true });
+      if (ownerError) return ownerError;
     }
-    const ownerError = validateEmailList(form.ownerEmailsText, { required: true });
-    if (ownerError) return ownerError;
     const sitterError = validateEmailList(form.sitterEmailsText);
     if (sitterError) return sitterError;
   }
@@ -472,7 +481,7 @@ async function submitWizard(mode, form, panel, githubConfigured, onComplete, clo
       hubEnvironment: form.hubEnvironment || form.siteId,
       vanilla: form.vanilla,
       attachHubApiBinding: form.attachHubApiBinding,
-      ownerEmails: parseEmailList(form.ownerEmailsText),
+      ...(form.internalPlatformSite ? { ownerEmails: parseEmailList(form.ownerEmailsText) } : {}),
       sitterEmails: parseEmailList(form.sitterEmailsText)
     };
 
