@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="How Lovely Home keeps each household private — isolated servers, Cloudflare Access sign-in, sitter limits, and password-encrypted backups.">
+  <title>Security &amp; privacy — Lovely Home</title>
+  <link rel="canonical" href="https://lovely-home.co.uk/security.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Lovely Home">
+  <meta property="og:title" content="Security &amp; privacy — Lovely Home">
+  <meta property="og:description" content="How Lovely Home keeps each household private — isolated servers, Cloudflare Access sign-in, sitter limits, and password-encrypted backups.">
+  <meta property="og:url" content="https://lovely-home.co.uk/security.html">
+  <meta property="og:image" content="https://lovely-home.co.uk/lovely-home-logo-dark.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Security &amp; privacy — Lovely Home">
+  <meta name="twitter:description" content="How Lovely Home keeps each household private — isolated servers, Cloudflare Access sign-in, sitter limits, and password-encrypted backups.">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <div class="landing-wrap">
+    <div class="landing-bg" aria-hidden="true"></div>
+
+    <div class="site-banner">
+      <div class="site-banner-inner">
+        <span><a href="https://demo.lovely-home.co.uk/sign-in">Try the live demo</a> — sign in with <strong>demo</strong> / <strong>lovely-demo</strong></span>
+      </div>
+    </div>
+
+    <header class="site-header">
+      <a class="site-header-brand" href="/" aria-label="Lovely Home home">
+        <img class="brand-logo brand-logo--header" src="lovely-home-logo-dark.png" width="140" height="42" alt="Lovely Home — home hub">
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
+    </header>
+    <div class="nav-backdrop" hidden></div>
+    <nav id="site-nav" class="site-nav" aria-label="Main" aria-hidden="true">
+      <a href="/">Home</a>
+      <a href="included.html">What's included</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="signup.html">Start trial</a>
+      <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+      <a href="setup.html">Set it up</a>
+      <a href="app.html">See the hub</a>
+      <a href="support.html">Support</a>
+    </nav>
+
+    <main class="landing inner-page">
+      <header class="page-hero">
+        <a class="brand-lockup brand-lockup--page" href="/">
+          <img class="brand-logo brand-logo--page" src="lovely-home-logo-dark.png" width="280" height="83" alt="Lovely Home — home hub">
+        </a>
+        <p class="hero-eyebrow"><span></span> Private by design</p>
+        <h1>Security &amp; privacy</h1>
+        <p class="hero-lead">Each paying household gets its own hub. Only people you invite can sign in. This page states what we can stand behind today.</p>
+      </header>
+
+      <div class="content-stack content-stack--wide">
+        <section class="content-card">
+          <h2>Your own hub, not a shared app</h2>
+          <p>
+            A customer hub is a separate stack for that household. Other customers cannot open it, query it, or see its house guide.
+            The public demo is a different site with fictional data.
+          </p>
+          <ul class="isolation-list">
+            <li>Worker (API)<span>One per hub</span></li>
+            <li>Database<span>One per hub</span></li>
+            <li>File storage (guides and photos)<span>One per hub</span></li>
+            <li>Website and DNS<span>One hostname per hub</span></li>
+            <li>Sign-in applications<span>Two per hub (site + API)</span></li>
+          </ul>
+          <p>Billing records live in a platform database keyed by hub. When a subscription ends we take a hub archive for possible restore, stored separately and prefixed by site.</p>
+        </section>
+
+        <div class="security-grid">
+          <section class="content-card">
+            <h2>How sign-in works</h2>
+            <p>
+              Owners and sitters sign in with <strong>Cloudflare Zero Trust</strong>. A one-time code is emailed to an address you have allowed.
+              There is no public registration on a live hub.
+            </p>
+            <p>
+              Every API call is checked server-side against that session. Sharing the hub URL is not enough — the email must be on the allow-list.
+            </p>
+            <p>
+              Owner tools on the tablet also need an <strong>owner PIN</strong> you set. The PIN is rate-limited so guessing it is slow.
+            </p>
+          </section>
+
+          <section class="content-card">
+            <h2>What a sitter can see</h2>
+            <p>
+              House sitter mode is a simpler home screen. Guide editor, backups, and home-control buttons stay with the owner.
+            </p>
+            <p>
+              Wi‑Fi, address, and lockbox details stay hidden until you share them — either with the <em>Sitter is here</em> toggle, or automatically on the dates of a booked stay.
+            </p>
+            <p>
+              A remote sitter uses their own device and the same email one-time code. They never get owner mode on that login.
+            </p>
+          </section>
+        </div>
+
+        <section class="content-card">
+          <h2>What we store, and where</h2>
+          <ul>
+            <li><strong>On your hub</strong> — house guide, photos, bin dates, contacts, Wi‑Fi and lockbox details you enter, and display preferences.</li>
+            <li><strong>For billing</strong> — your email, hub name, and Stripe subscription status. Stripe holds the card. We do not store card numbers.</li>
+            <li><strong>This marketing site</strong> — static pages. No analytics product, no advertising cookies.</li>
+          </ul>
+          <p>
+            Cloudflare encrypts the database and file storage <strong>at rest</strong> (AES-256) and all traffic uses HTTPS.
+            Household secrets in the hub database are readable by that hub's server so the guide and Wi‑Fi QR can work.
+            We do not claim operator-proof secrecy of those values.
+          </p>
+          <p>
+            We do not promise a UK-only or EU-only data region on existing hubs. We do not keep an audit log of who opened which guide topic.
+          </p>
+        </section>
+
+        <section class="content-card">
+          <h2>Backups and deletion</h2>
+          <p>
+            You can download a hub backup at any time. The file is encrypted in your browser with a password you choose — we never see that password.
+            Uploaded photos and appliance PDFs are listed, not embedded; re-upload them after a restore.
+          </p>
+          <p>
+            Cancel before the trial ends and you pay nothing. After a paid period ends, the hub is taken down and archived.
+            Email <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a> if you need a copy or want the archive removed.
+          </p>
+          <p><a href="privacy.html">Full privacy policy</a> · <a href="terms.html">Terms</a></p>
+        </section>
+      </div>
+
+      <section class="final-cta">
+        <p class="cta-note">Questions about security — email support. Ready to try it?</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="signup.html">Start free trial</a>
+          <a class="btn btn-secondary" href="privacy.html">Privacy policy</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Mark Lovely. All rights reserved.</p>
+      <p>
+        <a href="included.html">What's included</a>
+        · <a href="setup.html">Set it up</a>
+        · <a href="pricing.html">Pricing</a>
+        · <a href="signup.html">Start trial</a>
+        · <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+        · <a href="support.html">Support</a>
+        · <a href="security.html">Security</a>
+        · <a href="privacy.html">Privacy</a>
+        · <a href="terms.html">Terms</a>
+        · <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
+      </p>
+    </footer>
+  </div>
+  <script src="site.js" defer></script>
+</body>
+</html>
