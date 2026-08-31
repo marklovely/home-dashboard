@@ -31,6 +31,7 @@ jobs:
       WORKERS_SUBDOMAIN: ${{ secrets.WORKERS_SUBDOMAIN }}
       ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
       OWNER_EMAILS: ${{ secrets.OWNER_EMAILS }}
+      SUPPORT_OWNER_EMAILS: ${{ secrets.SUPPORT_OWNER_EMAILS }}
       PLATFORM_OPERATOR_EMAILS: ${{ secrets.PLATFORM_OPERATOR_EMAILS }}
       SITTER_EMAILS: ${{ secrets.SITTER_EMAILS }}
       HUB_PROXY_SECRETS_JSON: ${{ secrets.HUB_PROXY_SECRETS_JSON }}
@@ -39,6 +40,9 @@ jobs:
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
+      STRIPE_PRICE_ID_YEARLY: ${{ secrets.STRIPE_PRICE_ID_YEARLY }}
+      TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
       PLATFORM_SITE_ARCHIVE_SECRET: ${{ secrets.PLATFORM_SITE_ARCHIVE_SECRET }}
       PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID: ${{ secrets.PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID }}
       PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET: ${{ secrets.PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET }}
@@ -98,6 +102,41 @@ jobs:
           ARGS=( "${{ inputs.site_id }}" )
           if [ "${{ inputs.skip_platform_admin }}" = "true" ]; then ARGS+=( --skip-platform-admin ); fi
           node scripts/deprovision-hub-site.mjs "${ARGS[@]}"
+
+      - name: Commit deprovisioned site manifest
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          SITE_ID: ${{ inputs.site_id }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::PLATFORM_GITHUB_TOKEN not set — skipping manifest commit. Run npm run platform:manifest and commit it, or the torn-down site keeps a contract in git."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add platform-admin/public/platform-manifest.json
+          if git diff --staged --quiet; then
+            echo "No manifest changes to commit."
+            exit 0
+          fi
+          BRANCH="platform/deprovision-${SITE_ID}-${GITHUB_RUN_ID}"
+          git checkout -b "$BRANCH"
+          git commit -m "platform: drop ${SITE_ID} contract from platform manifest"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${BRANCH}"
+          gh pr create \
+            --title "platform: drop ${SITE_ID} contract from platform manifest" \
+            --body "$(cat <<EOF
+          Automated deprovision follow-up from **Platform site deprovision**.
+
+          Site \`${SITE_ID}\` was destroyed (Terraform + Worker). This PR rebuilds \`platform-admin/public/platform-manifest.json\` from live Terraform output so the dead site stops carrying D1/R2 ids and Access AUDs in git.
+
+          Without it the committed manifest keeps the torn-down contract, and a later signup reusing the same slug inherits those ids until Terraform runs.
+
+          Auto-merge runs when required checks pass (see \`platform-site-pr-automerge.yml\`).
+          EOF
+          )" \
+            --base main \
+            --head "$BRANCH"
 
       - name: Prune HUB_PROXY_SECRETS_JSON
         continue-on-error: true

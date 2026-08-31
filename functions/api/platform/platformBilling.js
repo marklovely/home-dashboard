@@ -1,5 +1,7 @@
 import { maybeDispatchBillingProvision } from './platformBillingProvision.js';
 import { maybeDispatchBillingDeprovision } from './platformBillingDeprovision.js';
+import { maybeDispatchSignupRegistry } from './platformBillingRegistry.js';
+import { releaseSignupReservation } from './platformSignupGuards.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platformBillingLifecycle.js';
 
@@ -461,11 +463,31 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
   });
 
   /** @type {Record<string, unknown> | undefined} */
+  let registry;
+  /** @type {Record<string, unknown> | undefined} */
   let provision;
   /** @type {Record<string, unknown> | undefined} */
   let deprovision;
   const env = context.env;
   if (env && manifest) {
+    const registryResult = await maybeDispatchSignupRegistry(env, db, manifest, {
+      siteId: billingPatch.siteId,
+      eventType,
+      status: billingPatch.status,
+      existingBilling: billingForDispatch
+    });
+    registry = registryResult;
+    if (!registryResult.ok) {
+      return {
+        ok: false,
+        error: registryResult.error ?? 'REGISTRY_DISPATCH_FAILED',
+        message: registryResult.message
+      };
+    }
+    if (registryResult.action === 'registry_dispatched') {
+      await releaseSignupReservation(db, billingPatch.siteId);
+    }
+
     const provisionResult = await maybeDispatchBillingProvision(env, db, manifest, {
       siteId: billingPatch.siteId,
       eventType,
@@ -501,6 +523,7 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
   return {
     ok: true,
     action: `updated_${billingPatch.status}`,
+    ...(registry ? { registry } : {}),
     ...(provision ? { provision } : {}),
     ...(deprovision ? { deprovision } : {})
   };

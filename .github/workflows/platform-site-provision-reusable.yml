@@ -36,6 +36,7 @@ jobs:
       WORKERS_SUBDOMAIN: ${{ secrets.WORKERS_SUBDOMAIN }}
       ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
       OWNER_EMAILS: ${{ secrets.OWNER_EMAILS }}
+      SUPPORT_OWNER_EMAILS: ${{ secrets.SUPPORT_OWNER_EMAILS }}
       PLATFORM_OPERATOR_EMAILS: ${{ secrets.PLATFORM_OPERATOR_EMAILS }}
       SITTER_EMAILS: ${{ secrets.SITTER_EMAILS }}
       PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
@@ -43,6 +44,9 @@ jobs:
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
+      STRIPE_PRICE_ID_YEARLY: ${{ secrets.STRIPE_PRICE_ID_YEARLY }}
+      TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
       HUB_PROXY_SECRETS_JSON: ${{ secrets.HUB_PROXY_SECRETS_JSON }}
       PLATFORM_SITE_ARCHIVE_SECRET: ${{ secrets.PLATFORM_SITE_ARCHIVE_SECRET }}
       GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
@@ -105,6 +109,11 @@ jobs:
 
       - name: Verify Cloudflare API token
         run: bash scripts/verify-cloudflare-api-token.sh
+
+      # Customer owner emails live in the billing database, not in the public
+      # repository, so Access policies are built from a lookup at apply time.
+      - name: Resolve site owner emails from billing
+        run: node scripts/fetch-site-owner-emails.mjs "${{ inputs.site_id }}" --github-env
 
       - name: Provision hub site
         run: |

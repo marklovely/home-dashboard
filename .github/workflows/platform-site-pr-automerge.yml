@@ -32,6 +32,10 @@ jobs:
           contains(github.event.pull_request.body, 'Automated provision follow-up from **Platform site provision**')
         ) ||
         (
+          startsWith(github.event.pull_request.head.ref, 'platform/deprovision-') &&
+          contains(github.event.pull_request.body, 'Automated deprovision follow-up from **Platform site deprovision**')
+        ) ||
+        (
           contains(github.event.pull_request.head.ref, '-billing-deprovision-') &&
           contains(github.event.pull_request.body, 'Automated billing deprovision from **Platform billing**')
         )

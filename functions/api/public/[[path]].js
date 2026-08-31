@@ -1,11 +1,13 @@
 import { loadPlatformManifest } from '../platform/platformApi.js';
 import { getPlatformBillingDb, getSiteBilling } from '../platform/platformBilling.js';
 import {
+  checkPublicSignupSlug,
   handlePublicHubSignup,
-  isPublicSignupSlugAvailable,
   publicSignupConfigured,
   publicSignupCorsHeaders
 } from '../platform/platformPublicSignup.js';
+import { signupClientIp } from '../platform/platformSignupGuards.js';
+import { turnstileSiteKey } from '../platform/platformSignupTurnstile.js';
 import { getPublicPlanPricing } from '../platform/platformPublicPricing.js';
 import {
   buildPublicHubTrialStatus,
@@ -66,7 +68,8 @@ export async function onRequest(context) {
     return Response.json(
       {
         enabled: publicSignupConfigured(pagesEnv),
-        marketingOrigin: pagesEnv.MARKETING_SITE_ORIGIN?.trim() || 'https://lovely-home.co.uk'
+        marketingOrigin: pagesEnv.MARKETING_SITE_ORIGIN?.trim() || 'https://lovely-home.co.uk',
+        turnstileSiteKey: turnstileSiteKey(pagesEnv)
       },
       { headers: { ...cors, 'Cache-Control': 'no-store' } }
     );
@@ -100,7 +103,7 @@ export async function onRequest(context) {
   const slugMatch = suffix.match(/^signup\/slug\/([^/]+)$/);
   if (slugMatch && request.method === 'GET') {
     const siteId = decodeURIComponent(slugMatch[1]).trim().toLowerCase();
-    const result = isPublicSignupSlugAvailable(manifest, siteId);
+    const result = await checkPublicSignupSlug(manifest, siteId, getPlatformBillingDb(env));
     return Response.json(
       {
         siteId,
@@ -126,8 +129,18 @@ export async function onRequest(context) {
     }
 
     const billingDb = getPlatformBillingDb(env);
-    const result = await handlePublicHubSignup(pagesEnv, manifest, siteId, customerEmail, billingDb, billingInterval);
-    return Response.json(result.body, { status: result.status, headers: cors });
+    const result = await handlePublicHubSignup(pagesEnv, {
+      manifest,
+      siteId,
+      customerEmail,
+      billingDb,
+      billingInterval,
+      clientIp: signupClientIp(request),
+      turnstileToken: String(body.turnstileToken ?? body['cf-turnstile-response'] ?? '').trim()
+    });
+    const headers = { ...cors };
+    if (result.retryAfterSec) headers['Retry-After'] = String(result.retryAfterSec);
+    return Response.json(result.body, { status: result.status, headers });
   }
 
   return Response.json({ error: 'NOT_FOUND' }, { status: 404, headers: cors });

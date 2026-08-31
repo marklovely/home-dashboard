@@ -33,6 +33,22 @@ function validateHostname(hostname) {
 }
 
 /**
+ * Customer hubs live outside the platform zone. `platform/sites.yaml` and the
+ * generated manifest are both public, so a household's address must never be
+ * written there — provisioning reads it from the billing database instead.
+ *
+ * @param {string} hostname
+ */
+function isCustomerHubHostname(hostname) {
+  const host = String(hostname ?? '').trim().toLowerCase();
+  if (!host) return false;
+  return !(host === PLATFORM_ZONE_NAME || host.endsWith(`.${PLATFORM_ZONE_NAME}`));
+}
+
+const CUSTOMER_HUB_OWNER_EMAILS_MESSAGE =
+  'Owner emails are not stored in the public site registry for customer hubs. The address captured at signup is read from the billing database at provision time; use the SUPPORT_OWNER_EMAILS secret for operator access.';
+
+/**
  * @param {string} siteId
  * @param {Record<string, unknown>} payload
  * @param {string} zoneName
@@ -121,7 +137,14 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
     Object.assign(payload, defaultSiteEntry(siteId, payload, zoneName));
     const hostError = validateHostname(String(payload.hostname));
     if (hostError) return { ok: false, error: 'VALIDATION_ERROR', message: hostError };
-    const ownerError = validateEmailList(payload.owner_emails, { required: true });
+    const customerHub = isCustomerHubHostname(String(payload.hostname));
+    if (customerHub) {
+      if (Array.isArray(payload.owner_emails) && payload.owner_emails.length) {
+        return { ok: false, error: 'VALIDATION_ERROR', message: CUSTOMER_HUB_OWNER_EMAILS_MESSAGE };
+      }
+      delete payload.owner_emails;
+    }
+    const ownerError = validateEmailList(payload.owner_emails, { required: !customerHub });
     if (ownerError) return { ok: false, error: 'VALIDATION_ERROR', message: ownerError };
     const sitterError = validateEmailList(payload.sitter_emails);
     if (sitterError) return { ok: false, error: 'VALIDATION_ERROR', message: sitterError };
@@ -134,8 +157,16 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
       if (hostError) return { ok: false, error: 'VALIDATION_ERROR', message: hostError };
     }
     if (payload.owner_emails !== undefined) {
-      const ownerError = validateEmailList(payload.owner_emails, { required: true });
-      if (ownerError) return { ok: false, error: 'VALIDATION_ERROR', message: ownerError };
+      const hostname = String(payload.hostname ?? existing[siteId]?.hostname ?? '');
+      if (isCustomerHubHostname(hostname)) {
+        if (Array.isArray(payload.owner_emails) && payload.owner_emails.length) {
+          return { ok: false, error: 'VALIDATION_ERROR', message: CUSTOMER_HUB_OWNER_EMAILS_MESSAGE };
+        }
+        delete payload.owner_emails;
+      } else {
+        const ownerError = validateEmailList(payload.owner_emails, { required: true });
+        if (ownerError) return { ok: false, error: 'VALIDATION_ERROR', message: ownerError };
+      }
     }
     const sitterError = validateEmailList(payload.sitter_emails);
     if (sitterError) return { ok: false, error: 'VALIDATION_ERROR', message: sitterError };

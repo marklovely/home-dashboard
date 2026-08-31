@@ -3,7 +3,8 @@ import {
   hasTerraformContract,
   mergePlatformMeta,
   resolveSiteContract,
-  siteManifestFields
+  siteManifestFields,
+  terraformOutputIsAuthoritative
 } from '../scripts/lib/platformManifestMerge.mjs';
 
 describe('platform manifest merge', () => {
@@ -28,6 +29,46 @@ describe('platform manifest merge', () => {
       { terraform: true },
       {},
       { smith: { contract: { d1_database_id: 'from-file' } } }
+    );
+    expect(contract).toEqual({ d1_database_id: 'from-file' });
+  });
+
+  it('drops the preserved contract when terraform no longer manages the site', () => {
+    const contract = resolveSiteContract(
+      'powell',
+      { terraform: true },
+      { smith: { d1_database_id: 'from-tf' } },
+      { powell: { contract: { d1_database_id: 'destroyed' } } },
+      { terraformAvailable: true }
+    );
+    expect(contract).toBeNull();
+  });
+
+  it('keeps preserved contracts for sites terraform does not manage', () => {
+    const contract = resolveSiteContract(
+      'legacy',
+      { terraform: false },
+      { smith: { d1_database_id: 'from-tf' } },
+      { legacy: { contract: { d1_database_id: 'hand-written' } } },
+      { terraformAvailable: true }
+    );
+    expect(contract).toEqual({ d1_database_id: 'hand-written' });
+  });
+
+  it('does not trust an empty terraform output as an empty estate', () => {
+    expect(terraformOutputIsAuthoritative(true, { smith: {} })).toBe(true);
+    expect(terraformOutputIsAuthoritative(true, {})).toBe(false);
+    expect(terraformOutputIsAuthoritative(false, { smith: {} })).toBe(false);
+    expect(terraformOutputIsAuthoritative(true, null)).toBe(false);
+  });
+
+  it('keeps preserved contracts when terraform output cannot be read (Pages CI)', () => {
+    const contract = resolveSiteContract(
+      'smith',
+      { terraform: true },
+      {},
+      { smith: { contract: { d1_database_id: 'from-file' } } },
+      { terraformAvailable: false }
     );
     expect(contract).toEqual({ d1_database_id: 'from-file' });
   });

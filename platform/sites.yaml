@@ -1,6 +1,11 @@
 # Hub platform site registry.
 # Managed sites are provisioned via terraform/ (see docs/platform-terraform.md).
 # Platform admin UI reads this manifest — see docs/platform-admin.md.
+#
+# This file is public. Never add a customer's email address to a hub on
+# lovely-hub.com: owner addresses live in the platform billing database and are
+# read at provision time. Operator access to customer hubs comes from the
+# SUPPORT_OWNER_EMAILS secret. See docs/platform-provision.md.
 
 sites:
   production:
@@ -45,5 +50,4 @@ sites:
     vanilla: false
     terraform: true
     zone_name: lovely-hub.com
-    owner_emails: marklovely67@gmail.com
     attach_hub_api_binding: true

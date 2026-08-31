@@ -210,7 +210,8 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 
 | Secret | Purpose |
 |--------|---------|
-| `OWNER_EMAILS` | Optional fallback when a site has no `owner_emails` in `platform/sites.yaml` (legacy production/test/sandbox) |
+| `OWNER_EMAILS` | Platform hubs only (`*.lovely-home.co.uk`). Never applied to customer hubs |
+| `SUPPORT_OWNER_EMAILS` | Operator access to customer hubs (`*.lovely-hub.com`). Required before provisioning a customer hub whose owner email is not yet in the billing database |
 | `SITTER_EMAILS` | Optional fallback when a site has no `sitter_emails` in the registry |
 | `CF_ACCESS_MANAGEMENT_TOKEN` | Optional dedicated token for hub Settings sitter-email sync (defaults to `CLOUDFLARE_API_TOKEN` in CI) |
 | `PLATFORM_GITHUB_TOKEN` | Same PAT as platform admin Pages env — **must also be a GitHub Actions repo secret** so site-manage can open PRs, provision can open the post-provision follow-up PR, and deprovision can prune `HUB_PROXY_SECRETS_JSON` (needs **repo secrets** write) |
@@ -219,6 +220,7 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 | `STRIPE_WEBHOOK_SECRET` | Same as `stripe_webhook_secret` in hub.tfvars |
 | `STRIPE_PRICE_ID` | Same as `stripe_price_id` in hub.tfvars (monthly, e.g. £9.99/month) |
 | `STRIPE_PRICE_ID_YEARLY` | Same as `stripe_price_id_yearly` in hub.tfvars (yearly, e.g. £99/year) |
+| `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Bot check on public signup. Both must be set, or CI terraform apply leaves the check off |
 | `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` — only needed if Terraform output is unavailable; CI normally reads secrets from remote state |
 
 CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.
@@ -251,11 +253,27 @@ bash scripts/verify-cloudflare-api-token.sh
 
 **Terraform apply fails with Access `400 Bad Request` / `domain does not belong to zone` on a new site:** The Pages Access app includes `*.pages.dev` destinations, which Cloudflare rejects until the Pages project exists. CI now omits those destinations during the pre-worker apply and adds them on the post-worker apply. Merge the fix and re-run **Platform site provision** (workflow dispatch with the site id). Partial applies resume safely on retry.
 
+## Who gets owner access (and why customer emails stay out of git)
+
+`platform/sites.yaml` and `platform-admin/public/platform-manifest.json` are both public.
+Customer addresses must never appear in either, so owner access to a customer hub is
+assembled at provision time instead:
+
+| Source | Applies to |
+|--------|------------|
+| Billing database (`site_billing.owner_email`, read by [`scripts/fetch-site-owner-emails.mjs`](../scripts/fetch-site-owner-emails.mjs) into `SITE_OWNER_EMAILS_JSON`) | The household that signed up |
+| `SUPPORT_OWNER_EMAILS` secret | Named operator accounts, on every customer hub |
+| `OWNER_EMAILS` secret | Platform hubs (`*.lovely-home.co.uk`) only |
+
+`generate-hub-tfvars.mjs` fails the run if a customer hub would end up with no owner
+addresses from any source, rather than silently applying a hub nobody can sign in to.
+`build-platform-manifest.mjs` fails the same way if an email survives into the manifest.
+
 ## What runs in CI
 
 [`scripts/provision-hub-site.mjs`](../scripts/provision-hub-site.mjs):
 
-1. `generate-hub-tfvars.mjs` — builds tfvars from `platform/sites.yaml` + secrets (never committed)
+1. `generate-hub-tfvars.mjs` — builds tfvars from `platform/sites.yaml` + billing owner emails + secrets (never committed)
 2. `terraform apply` (attach_hub_api_binding=false for new site)
 3. `sync-wrangler-from-terraform.mjs`
 4. `set-worker-secrets-from-terraform.mjs` — HUB_PROXY_SECRET, Access AUD, vanilla dummy secrets, optional `GOOGLE_PLACES_API_KEY` (address lookup)
