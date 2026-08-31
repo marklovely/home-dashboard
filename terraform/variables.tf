@@ -140,6 +140,18 @@ variable "marketing_site_origin" {
   description = "Public marketing site origin for trial signup (lovely-home.co.uk)."
 }
 
+variable "marketing_site_access_protected" {
+  type        = bool
+  default     = false
+  description = "When true, require Cloudflare Access OTP on lovely-home.co.uk (platform operators only). Set false at public launch."
+}
+
+variable "marketing_site_pages_name" {
+  type        = string
+  default     = "lovely-home"
+  description = "Cloudflare Pages project name for the marketing site (Access *.pages.dev destinations)."
+}
+
 variable "public_signup_enabled" {
   type        = bool
   default     = false

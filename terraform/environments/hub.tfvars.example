@@ -38,6 +38,9 @@ platform_operator_emails = [
 # marketing_site_origin  = "https://lovely-home.co.uk"
 # public_signup_enabled  = true
 
+# Pre-launch: OTP-gate the marketing site for platform_operator_emails only. Set false at public launch.
+# marketing_site_access_protected = true
+
 # Preview builds for non-main branches (platform admin + Terraform-managed hub Pages). Default true.
 # pages_preview_deployments_enabled = true
 
