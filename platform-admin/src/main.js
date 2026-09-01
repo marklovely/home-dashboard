@@ -99,6 +99,7 @@ async function render() {
     ${data.githubAutomationConfigured === false ? '<div class="banner banner-warn">Site wizard needs <code>PLATFORM_GITHUB_TOKEN</code> (contents:write, actions:write) and <code>PLATFORM_GITHUB_REPO</code> on the platform Pages project.</div>' : ''}
     ${data.stripeBillingConfigured === false && data.platformBillingDbConfigured ? '<div class="banner banner-warn">Stripe billing needs <code>STRIPE_SECRET_KEY</code>, <code>STRIPE_WEBHOOK_SECRET</code>, and at least one of <code>STRIPE_PRICE_ID</code> / <code>STRIPE_PRICE_ID_YEARLY</code> on the platform Pages project.</div>' : ''}
     <p class="meta">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
+    <div id="marketing-access-slot"></div>
     <section class="grid">
       ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {}, { stripeConfigured: data.stripeBillingConfigured === true, billingDbConfigured: data.platformBillingDbConfigured === true })).join('')}
     </section>
@@ -107,7 +108,6 @@ async function render() {
       <p class="muted">Add sites via wizard → merge PR → provisioning runs automatically on <code>main</code> (Terraform, Worker, Pages, manifest). Or click <strong>Provision</strong> on a site card to retry.</p>
       <p class="muted">Requires remote Terraform state and GitHub secrets — see <code>docs/platform-provision.md</code>.</p>
     </section>
-    <div id="marketing-access-slot"></div>
   `;
 
   main.setAttribute('data-platform', JSON.stringify(platform));

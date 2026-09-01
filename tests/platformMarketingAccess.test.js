@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   accessIncludeFromEmails,
@@ -245,6 +248,18 @@ describe('marketing Access panel', () => {
     });
     expect(html).toContain('marketing_site_access_protected');
     expect(html).not.toContain('marketing-access-form');
+  });
+
+  it('sits above the site cards on the dashboard', () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), '../platform-admin/src/main.js'),
+      'utf8'
+    );
+    const slot = source.indexOf('id="marketing-access-slot"');
+    const grid = source.indexOf('<section class="grid">');
+    expect(slot).toBeGreaterThan(-1);
+    expect(grid).toBeGreaterThan(-1);
+    expect(slot).toBeLessThan(grid);
   });
 });
 

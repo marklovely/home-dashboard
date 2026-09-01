@@ -18,6 +18,7 @@
 
 - Automated restore from R2 archive when a cancelled hub re-subscribes
 - Add extra marketing-site OTP emails from the platform dashboard (guests, not operators)
+- Marketing site access panel sits at the top of the dashboard, above the site cards
 
 ## 2.4.0
 
