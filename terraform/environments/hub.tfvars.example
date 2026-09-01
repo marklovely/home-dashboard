@@ -144,13 +144,6 @@ sites = {
 
 
 
-  kitchen-home = {
-    hostname        = "kitchen-home.lovely-hub.com"
-    hub_environment = "kitchen-home"
-    vanilla         = false
-    terraform       = true
-    zone_name       = "lovely-hub.com"
-    attach_hub_api_binding = false # first apply only; set true after Worker deploy
-  }
+
 
 }
