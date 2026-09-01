@@ -49,6 +49,10 @@ export function setActiveTheme(themeId, options = {}) {
   }
 }
 
+export function toggleEffectiveTheme() {
+  setActiveTheme(getEffectiveTheme() === 'dark' ? 'light' : 'dark');
+}
+
 export function initTheme() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -77,7 +81,7 @@ function applyTheme() {
 
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
   if (themeColorMeta) {
-    themeColorMeta.setAttribute('content', effective === 'light' ? '#eef1f7' : '#10131a');
+    themeColorMeta.setAttribute('content', effective === 'light' ? '#f4f1ea' : '#10131a');
   }
 }
 

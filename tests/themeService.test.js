@@ -4,7 +4,8 @@ import {
   getEffectiveTheme,
   initTheme,
   resetThemeForTests,
-  setActiveTheme
+  setActiveTheme,
+  toggleEffectiveTheme
 } from '../src/services/themeService.js';
 
 describe('themeService', () => {
@@ -41,7 +42,7 @@ describe('themeService', () => {
     setActiveTheme('light');
     expect(getActiveTheme()).toBe('light');
     expect(document.documentElement.dataset.theme).toBe('light');
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#eef1f7');
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#f4f1ea');
     expect(localStorage.getItem('home-hub-theme')).toBe('light');
   });
 
@@ -63,5 +64,26 @@ describe('themeService', () => {
     localStorage.setItem('home-hub-theme', 'light');
     initTheme();
     expect(getActiveTheme()).toBe('light');
+  });
+
+  it('toggles the effective appearance and pins an explicit theme', () => {
+    setActiveTheme('dark');
+    toggleEffectiveTheme();
+    expect(getActiveTheme()).toBe('light');
+    expect(getEffectiveTheme()).toBe('light');
+
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      }))
+    );
+    setActiveTheme('auto');
+    expect(getEffectiveTheme()).toBe('light');
+    toggleEffectiveTheme();
+    expect(getActiveTheme()).toBe('dark');
+    expect(getEffectiveTheme()).toBe('dark');
   });
 });

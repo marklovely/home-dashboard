@@ -268,7 +268,7 @@ export function buildSitterHelpSections() {
           type: 'table',
           headers: ['Setting', 'What it does'],
           rows: [
-            ['Theme', 'Light, Dark, or Auto — pick what is easiest to read'],
+            ['Theme', 'Light, Dark, or Auto — pick what is easiest to read. Sun/moon in the header also switches light and dark'],
             ['Clock format', '12-hour or 24-hour time in the header'],
             ['Screensaver', 'After idle time, a dim clock appears — tap anywhere on the screen to wake the dashboard']
           ]

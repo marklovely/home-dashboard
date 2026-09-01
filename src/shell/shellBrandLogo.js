@@ -1,9 +1,16 @@
 /**
- * Shell header logo loaded from R2 via /api/branding/logo.
+ * Shell header logo loaded from R2 via /api/branding/logo (dark) or the
+ * light-background lockup SVG bundled with the hub.
  */
+import { getEffectiveTheme, subscribeToTheme } from '../services/themeService.js';
+import lockupLightUrl from '../brand/lovely-home-lockup-light.svg?url';
 
 const LOGO_PATH = '/api/branding/logo';
 const HOME_TAP_MS = 450;
+
+function logoSrcForTheme() {
+  return getEffectiveTheme() === 'light' ? lockupLightUrl : LOGO_PATH;
+}
 
 /**
  * @param {{ onNavigateHome?: () => void, onRouteChange?: (isHome: boolean) => void }} [options]
@@ -32,6 +39,13 @@ export function initShellBrandLogo(options = {}) {
     if (eyebrow instanceof HTMLElement) eyebrow.hidden = true;
   };
 
+  const applyLogoSrc = () => {
+    const next = logoSrcForTheme();
+    if (logo.getAttribute('src') !== next) {
+      logo.src = next;
+    }
+  };
+
   if (logo.complete) {
     if (logo.naturalWidth > 0) showLogo();
     else showTextFallback();
@@ -39,10 +53,8 @@ export function initShellBrandLogo(options = {}) {
 
   logo.addEventListener('load', showLogo);
   logo.addEventListener('error', showTextFallback);
-
-  if (logo.getAttribute('src') !== LOGO_PATH) {
-    logo.src = LOGO_PATH;
-  }
+  subscribeToTheme(applyLogoSrc);
+  applyLogoSrc();
 
   button.addEventListener('pointerdown', () => {
     pointerDownAt = Date.now();

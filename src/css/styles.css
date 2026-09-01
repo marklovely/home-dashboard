@@ -112,6 +112,8 @@
   --shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
   --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.16);
   --focus-ring: #ffffff;
+  --accent: #7eab90;
+  --accent-bright: #9bc4ab;
   --bg-accent-a: rgba(47, 90, 67, 0.18);
   --bg-accent-b: rgba(25, 193, 154, 0.12);
   --accent-selection: #7eab90;
@@ -124,47 +126,51 @@
 
 [data-theme="light"] {
   color-scheme: light;
-  --bg: #eef1f7;
-  --surface: #ffffff;
-  --surface-2: #e3e8f2;
-  --surface-glass: rgba(255, 255, 255, 0.92);
-  --text: #12151c;
-  --muted: #5c6578;
-  --border: rgba(15, 23, 42, 0.1);
-  --shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
-  --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --bg: #f4f1ea;
+  --surface: #fbfaf6;
+  --surface-2: #e8e3d8;
+  --surface-glass: rgba(251, 250, 246, 0.94);
+  --text: #1c241e;
+  --muted: #5a6258;
+  --border: rgba(28, 36, 30, 0.12);
+  --shadow: 0 14px 40px rgba(28, 36, 30, 0.08);
+  --shadow-soft: 0 8px 24px rgba(28, 36, 30, 0.06);
   --focus-ring: #2f5a43;
+  --accent: #2f5a43;
+  --accent-bright: #3f7a5c;
   --bg-accent-a: rgba(47, 90, 67, 0.14);
-  --bg-accent-b: rgba(25, 193, 154, 0.1);
+  --bg-accent-b: rgba(196, 92, 74, 0.08);
   --accent-selection: #2f5a43;
-  --overlay-scrim: rgba(15, 23, 42, 0.45);
-  --overlay-scrim-strong: rgba(15, 23, 42, 0.55);
-  --shell-nav-bg: rgba(255, 255, 255, 0.96);
-  --toast-bg: rgba(255, 255, 255, 0.96);
-  --screensaver-bg: #dbe3f0;
+  --overlay-scrim: rgba(28, 36, 30, 0.4);
+  --overlay-scrim-strong: rgba(28, 36, 30, 0.52);
+  --shell-nav-bg: rgba(251, 250, 246, 0.96);
+  --toast-bg: rgba(251, 250, 246, 0.96);
+  --screensaver-bg: #e8e3d8;
 }
 
 @media (prefers-color-scheme: light) {
   [data-theme="auto"] {
     color-scheme: light;
-    --bg: #eef1f7;
-    --surface: #ffffff;
-    --surface-2: #e3e8f2;
-    --surface-glass: rgba(255, 255, 255, 0.92);
-    --text: #12151c;
-    --muted: #5c6578;
-    --border: rgba(15, 23, 42, 0.1);
-    --shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
-    --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
+    --bg: #f4f1ea;
+    --surface: #fbfaf6;
+    --surface-2: #e8e3d8;
+    --surface-glass: rgba(251, 250, 246, 0.94);
+    --text: #1c241e;
+    --muted: #5a6258;
+    --border: rgba(28, 36, 30, 0.12);
+    --shadow: 0 14px 40px rgba(28, 36, 30, 0.08);
+    --shadow-soft: 0 8px 24px rgba(28, 36, 30, 0.06);
     --focus-ring: #2f5a43;
+    --accent: #2f5a43;
+    --accent-bright: #3f7a5c;
     --bg-accent-a: rgba(47, 90, 67, 0.14);
-    --bg-accent-b: rgba(25, 193, 154, 0.1);
+    --bg-accent-b: rgba(196, 92, 74, 0.08);
     --accent-selection: #2f5a43;
-    --overlay-scrim: rgba(15, 23, 42, 0.45);
-    --overlay-scrim-strong: rgba(15, 23, 42, 0.55);
-    --shell-nav-bg: rgba(255, 255, 255, 0.96);
-    --toast-bg: rgba(255, 255, 255, 0.96);
-    --screensaver-bg: #dbe3f0;
+    --overlay-scrim: rgba(28, 36, 30, 0.4);
+    --overlay-scrim-strong: rgba(28, 36, 30, 0.52);
+    --shell-nav-bg: rgba(251, 250, 246, 0.96);
+    --toast-bg: rgba(251, 250, 246, 0.96);
+    --screensaver-bg: #e8e3d8;
   }
 }
 
@@ -181,6 +187,8 @@
     --shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
     --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.16);
     --focus-ring: #ffffff;
+    --accent: #7eab90;
+    --accent-bright: #9bc4ab;
     --bg-accent-a: rgba(47, 90, 67, 0.18);
     --bg-accent-b: rgba(25, 193, 154, 0.12);
     --accent-selection: #7eab90;
@@ -332,6 +340,35 @@ button { font: inherit; }
   gap: clamp(12px, 2vw, 18px);
   min-width: 0;
 }
+.shell-theme-toggle {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+.shell-theme-toggle:hover {
+  background: color-mix(in srgb, var(--text) 10%, var(--surface));
+}
+.shell-theme-toggle:active {
+  transform: scale(0.96);
+}
+.shell-theme-toggle:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+.shell-theme-toggle-icon {
+  display: grid;
+  place-items: center;
+}
 .shell-chrome-title-block { min-width: 0; }
 .shell-chrome-brand-row {
   display: flex;
@@ -423,7 +460,7 @@ button { font: inherit; }
   padding: 3px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 .shell-profile-switcher-button {
   min-height: 36px;
@@ -1008,7 +1045,7 @@ body.is-bins-route .app-viewport > .bins-app {
 
 .hub-setup-welcome-eyebrow {
   margin: 0;
-  color: #8e9aab;
+  color: var(--muted);
   letter-spacing: 0.2em;
   font-size: 0.78rem;
   font-weight: 800;
@@ -1435,7 +1472,7 @@ body.is-bins-route .app-viewport > .bins-app {
 }
 
 .topbar { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
-.eyebrow { margin: 0 0 6px; color: #8e9aab; letter-spacing: 0.2em; font-size: 0.78rem; font-weight: 800; }
+.eyebrow { margin: 0 0 6px; color: var(--muted); letter-spacing: 0.2em; font-size: 0.78rem; font-weight: 800; }
 h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .subtle { margin: 8px 0 0; color: var(--muted); font-size: clamp(0.95rem, 1.8vw, 1.1rem); }
 .clock-block { display: flex; align-items: baseline; gap: 8px; text-align: left; }
@@ -2207,7 +2244,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .button-title { display: block; font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 800; }
 .button-subtitle { display: block; margin-top: 5px; color: var(--muted); font-size: 0.82rem; }
 
-.footer { display: flex; justify-content: space-between; gap: 12px; color: #8f99aa; font-size: 0.78rem; }
+.footer { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 0.78rem; }
 
 .shell-version-label {
   margin: 0.15rem 0 0.45rem;
@@ -3753,7 +3790,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   padding: 12px 16px;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
   color: inherit;
   font: inherit;
   font-weight: 700;
@@ -3767,7 +3804,7 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   padding: 16px;
   border-radius: 16px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
 }
 #shell-eyebrow { cursor: default; user-select: none; }
 

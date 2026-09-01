@@ -15,6 +15,7 @@
 ### Hub
 
 - Default accents follow the same forest/sage palette
+- Light appearance uses a cream forest palette, a dark wordmark, and a header sun/moon toggle for owners and guests
 
 ### Platform
 

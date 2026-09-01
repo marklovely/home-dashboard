@@ -17,13 +17,18 @@ describe('shellClockPlacement', () => {
 
   it('keeps the clock in the toolbar on app routes', () => {
     document.body.innerHTML = `
-      <div class="shell-chrome-trailing"></div>
+      <div class="shell-chrome-trailing">
+        <button type="button" id="shell-theme-toggle" class="shell-theme-toggle"></button>
+      </div>
       <div class="shell-home-intro"></div>
       <section class="clock-block"></section>
     `;
 
     syncShellClockPlacement('weather', { bottomNav: [] });
 
-    expect(document.querySelector('.shell-chrome-trailing')?.contains(document.querySelector('.clock-block'))).toBe(true);
+    const trailing = document.querySelector('.shell-chrome-trailing');
+    expect(trailing?.contains(document.querySelector('.clock-block'))).toBe(true);
+    expect(trailing?.children[0]?.id).toBe('shell-theme-toggle');
+    expect(trailing?.children[1]?.className).toBe('clock-block');
   });
 });
