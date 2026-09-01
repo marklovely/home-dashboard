@@ -8,6 +8,10 @@
 - Signup success page stops on a recorded setup failure and no longer shows a QR after 30 minutes if the hub never answered
 - Success page heading switches to “Success — your hub is now ready” (or a setup-failed heading) instead of staying on “we’re building your hub”
 
+### Platform
+
+- Provision CI reads sensitive Terraform `hub_proxy_secrets` (disable the setup-terraform wrapper) so a new hub is not blocked by production’s proxy secret
+
 ### Marketing site
 
 - Scheduled sitter stays: guide 7 days before, home-access details on sit dates, login removed after checkout

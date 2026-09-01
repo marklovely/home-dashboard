@@ -9,6 +9,7 @@
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseTerraformJsonOutput, terraformStringMap } from './terraform-output-json.mjs';
 
 const mode = process.argv[2]?.trim();
 const siteId = process.argv[3]?.trim();
@@ -28,12 +29,14 @@ function readTerraformOutput(name) {
     cwd: tfDir,
     encoding: 'utf8'
   });
-  return JSON.parse(raw);
+  return parseTerraformJsonOutput(raw);
 }
 
 try {
   if (mode === 'site') {
-    const sites = readTerraformOutput('sites');
+    const sites = /** @type {Record<string, { hub_environment?: string }>} */ (
+      readTerraformOutput('sites') ?? {}
+    );
     const site = sites[siteId];
     if (!site) {
       console.error(`Site not in terraform output: ${siteId}`);
@@ -41,11 +44,13 @@ try {
     }
     console.log(JSON.stringify(site));
   } else if (mode === 'hub-environment') {
-    const sites = readTerraformOutput('sites');
+    const sites = /** @type {Record<string, { hub_environment?: string }>} */ (
+      readTerraformOutput('sites') ?? {}
+    );
     const site = sites[siteId];
     console.log(site?.hub_environment ?? siteId);
   } else if (mode === 'hub-proxy-secret') {
-    const secrets = readTerraformOutput('hub_proxy_secrets');
+    const secrets = terraformStringMap(readTerraformOutput('hub_proxy_secrets'));
     console.log(secrets[siteId] ?? '');
   } else {
     console.error(`Unknown mode: ${mode}`);

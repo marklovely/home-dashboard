@@ -229,6 +229,8 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET` | Service token secret. Sync with `node scripts/sync-platform-archive-github-secrets.mjs` |
 | `HUB_PROXY_SECRETS_JSON` | `{"production":"...","test":"..."}` — only needed if Terraform output is unavailable; CI normally reads secrets from remote state |
 
+Provision and deprovision workflows set `terraform_wrapper: false` on `hashicorp/setup-terraform`. The wrapper wraps sensitive outputs as `{ sensitive: true, value }` (or redacts them), which made `generate-hub-tfvars` think production had no `hub_proxy_secret` and abort a new customer hub. The generator also unwraps that JSON shape if a wrapper is present.
+
 CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.
 
 Provisioning runs **one site at a time** (`max-parallel: 1` + workflow concurrency) because R2 state locking does not use DynamoDB.

@@ -20,6 +20,7 @@ import {
 } from './lib/hub-tfvars.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
+import { terraformStringMap, parseTerraformJsonOutput } from './lib/terraform-output-json.mjs';
 import { parseSiteOwnerEmailsEnv, resolveSiteOwnerEmails } from './lib/site-owner-emails.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -360,7 +361,9 @@ function readTerraformSitesOutput() {
       cwd: tfDir,
       encoding: 'utf8'
     });
-    return JSON.parse(raw);
+    const parsed = parseTerraformJsonOutput(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    return /** @type {Record<string, object>} */ (parsed);
   } catch {
     return {};
   }
@@ -370,15 +373,7 @@ function readTerraformSitesOutput() {
  * @returns {Set<string>}
  */
 function readTerraformSiteIds() {
-  try {
-    const raw = execFileSync('terraform', ['output', '-json', 'sites'], {
-      cwd: tfDir,
-      encoding: 'utf8'
-    });
-    return new Set(Object.keys(JSON.parse(raw)));
-  } catch {
-    return new Set();
-  }
+  return new Set(Object.keys(readTerraformSitesOutput()));
 }
 
 /**
@@ -390,8 +385,13 @@ function readTerraformHubProxySecrets() {
       cwd: tfDir,
       encoding: 'utf8'
     });
-    return JSON.parse(raw);
-  } catch {
+    return terraformStringMap(parseTerraformJsonOutput(raw));
+  } catch (error) {
+    console.error(
+      `generate-hub-tfvars: could not read terraform output hub_proxy_secrets (${
+        error instanceof Error ? error.message : String(error)
+      }). Falling back to HUB_PROXY_SECRETS_JSON.`
+    );
     return {};
   }
 }

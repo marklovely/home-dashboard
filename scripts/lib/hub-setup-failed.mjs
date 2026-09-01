@@ -49,16 +49,24 @@ export function clipHubSetupFailedMessage(message) {
  *   siteId: string,
  *   kind: string,
  *   message?: string,
- *   now?: number
+ *   now?: number,
+ *   clear?: boolean
  * }} input
  */
 export function hubSetupFailedSql(input) {
   const siteId = assertHubSetupFailedSiteId(input.siteId);
   const kind = assertHubSetupFailedKind(input.kind);
-  const message = escapeSqlString(clipHubSetupFailedMessage(input.message));
   const now = Number.isFinite(Number(input.now)) ? Number(input.now) : Date.now();
   const id = escapeSqlString(siteId);
 
+  if (input.clear) {
+    if (kind === 'registry') {
+      return `UPDATE site_billing SET registry_last_error = NULL, updated_at = ${now} WHERE site_id = '${id}';`;
+    }
+    return `UPDATE site_billing SET provision_last_error = NULL, updated_at = ${now} WHERE site_id = '${id}';`;
+  }
+
+  const message = escapeSqlString(clipHubSetupFailedMessage(input.message));
   if (kind === 'registry') {
     return `UPDATE site_billing SET registry_dispatched_at = NULL, registry_last_error = '${message}', updated_at = ${now} WHERE site_id = '${id}';`;
   }

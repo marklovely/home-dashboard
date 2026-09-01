@@ -95,8 +95,12 @@ export function hubProxySecretForGeneratedTfvars(
   if (terraformSiteIds.has(siteId)) {
     const fromState = stateSecrets[siteId]?.trim();
     if (!fromState) {
+      const known = [...new Set([...Object.keys(envSecrets), ...Object.keys(stateSecrets)])]
+        .sort()
+        .join(', ');
       throw new Error(
         `Missing hub_proxy_secret for in-state site "${siteId}". ` +
+          `Readable secret keys: ${known || '(none)'}. ` +
           'Ensure terraform output is readable or add the site to HUB_PROXY_SECRETS_JSON.'
       );
     }
