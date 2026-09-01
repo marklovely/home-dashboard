@@ -5,7 +5,22 @@
     const backdrop = document.querySelector('.nav-backdrop');
     if (!toggle || !nav) return;
 
+    const desktopQuery = window.matchMedia('(min-width: 1280px)');
+
+    function isDesktopNav() {
+      return desktopQuery.matches;
+    }
+
     function setOpen(open) {
+      if (isDesktopNav()) {
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'Open menu');
+        nav.removeAttribute('aria-hidden');
+        document.documentElement.classList.remove('nav-open');
+        if (backdrop) backdrop.hidden = true;
+        return;
+      }
+
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
       nav.setAttribute('aria-hidden', open ? 'false' : 'true');
@@ -13,13 +28,18 @@
       if (backdrop) backdrop.hidden = !open;
     }
 
-    setOpen(false);
-
     function closeNav() {
       setOpen(false);
     }
 
+    function syncDesktopNav() {
+      setOpen(false);
+    }
+
+    setOpen(false);
+
     toggle.addEventListener('click', function () {
+      if (isDesktopNav()) return;
       setOpen(toggle.getAttribute('aria-expanded') !== 'true');
     });
 
@@ -34,6 +54,12 @@
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') closeNav();
     });
+
+    if (typeof desktopQuery.addEventListener === 'function') {
+      desktopQuery.addEventListener('change', syncDesktopNav);
+    } else if (typeof desktopQuery.addListener === 'function') {
+      desktopQuery.addListener(syncDesktopNav);
+    }
   }
 
   if (document.readyState === 'loading') {

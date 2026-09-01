@@ -170,14 +170,16 @@ describe('marketing site pages', () => {
     const css = readFileSync(join(website, 'site.css'), 'utf8');
     expect(css).toContain('--accent: #2f5a43');
     expect(css).not.toMatch(/#6b52e8|#8b7cff/);
-    expect(css).not.toMatch(/@media \(min-width: 900px\) \{[\s\S]*?\.nav-toggle/);
+    expect(css).toMatch(/@media \(min-width: 1280px\) \{[\s\S]*?\.nav-toggle/);
     expect(css).toMatch(/\.nav-toggle \{[\s\S]*?display:\s*inline-flex/);
+    expect(css).toMatch(/padding:\s*calc\(7\.25rem/);
     for (const name of pages) {
       const html = readPage(name);
       expect(html, name).toContain('lovely-home-mark.svg');
       expect(html, name).toContain('lovely-home-og.png');
       expect(html, name).toContain('class="nav-toggle"');
       expect(html, name).toContain('id="site-nav"');
+      expect(html, name).toMatch(/id="site-nav"[\s\S]*?href="account\.html"/);
       expect(html, name).not.toContain('lovely-home-logo-dark.png');
     }
     expect(css).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*2\.75rem/);

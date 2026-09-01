@@ -74,6 +74,7 @@ a { color: var(--accent); }
   z-index: 210;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 2.75rem;
+  grid-template-areas: "brand toggle";
   align-items: center;
   column-gap: 0.75rem;
   width: 100%;
@@ -91,6 +92,7 @@ a { color: var(--accent); }
 }
 
 .site-header-brand {
+  grid-area: brand;
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
@@ -105,6 +107,7 @@ a { color: var(--accent); }
 }
 
 .nav-toggle {
+  grid-area: toggle;
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
@@ -172,7 +175,7 @@ html.nav-open .nav-toggle-bar:nth-child(3) {
   height: 100vh;
   height: 100dvh;
   margin: 0;
-  padding: 4.5rem 1.25rem 1.5rem;
+  padding: calc(7.25rem + env(safe-area-inset-top, 0px)) 1.25rem 1.75rem;
   background: var(--card);
   border-left: 1px solid var(--border);
   box-shadow: -12px 0 40px rgba(28, 36, 30, 0.08);
@@ -183,6 +186,7 @@ html.nav-open .nav-toggle-bar:nth-child(3) {
   pointer-events: none;
   transition: transform 0.25s ease, visibility 0.25s ease;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 html.nav-open .site-nav {
@@ -859,6 +863,56 @@ html.nav-open {
 
 .final-cta-buttons {
   justify-content: center;
+}
+
+@media (min-width: 1280px) {
+  .nav-toggle,
+  .nav-backdrop {
+    display: none;
+  }
+
+  .site-header {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "brand nav";
+    max-width: none;
+    padding-left: clamp(1rem, 2.4vw, 2rem);
+    padding-right: clamp(1rem, 2.4vw, 2rem);
+  }
+
+  .site-nav {
+    grid-area: nav;
+    position: static;
+    transform: none;
+    visibility: visible;
+    pointer-events: auto;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.05rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    overflow: visible;
+    font-size: 0.86rem;
+  }
+
+  .site-nav a {
+    padding: 0.38rem 0.48rem;
+    white-space: nowrap;
+  }
+
+  .site-nav a[href="/"] {
+    display: none;
+  }
+
+  html.nav-open {
+    overflow: visible;
+  }
 }
 
 @media (max-width: 900px) {
