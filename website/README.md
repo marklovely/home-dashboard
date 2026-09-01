@@ -67,12 +67,14 @@ Then `terraform apply` from `terraform/` (uses `platform_operator_emails`). Set 
 
 This gates **lovely-home.co.uk** only. The public signup API on **platform.lovely-home.co.uk** (`/api/public/*`) keeps its existing Access bypass — signup flows from the marketing site are unaffected once the site is public.
 
-Screenshots live in `website/screenshots/` as JPEG/PNG exports from the live hub. Replace the files and redeploy after UI changes.
+Screenshots live in `website/screenshots/` as JPEG/PNG exports from the live hub. Replace the files, then `npm run sync:brand-media` (also run by the website deploy script) so they land in R2 bucket `lovely-home-media`.
 
-Brand assets:
+Brand assets (git is the source of truth; `npm run sync:brand-media` copies them into R2 bucket `lovely-home-media`). Hubs load the wordmark from R2 via authenticated `GET /api/branding/logo`. Marketing Pages still ships the same files so Open Graph tags and `npx serve website` work without a public media hostname.
 
-- `lovely-home-mark.svg` — house mark for the header lockup
+- `lovely-home-mark.svg` — cottage mark for the header lockup (scales on any screen)
 - `lovely-home-icon.svg` / `favicon.png` — rounded forest icon for tabs and QR badges
-- `lovely-home-og.png` — Open Graph image (stone ground, forest mark, serif wordmark)
+- `lovely-home-og.png` — Open Graph image
 - `lovely-home-lockup-light.svg` / `lovely-home-lockup-dark.svg` — sources for raster wordmarks
-- `../assets/lovely-home-logo.png` — light wordmark on dark for the hub shell / R2
+- `../assets/lovely-home-logo.png` — light wordmark on dark (`lovely-home-logo.png` in R2)
+
+A public `media.lovely-home.co.uk` custom domain is not attached yet; until it is, keep serving marketing `<img>` from Pages and the hub logo from the Worker.

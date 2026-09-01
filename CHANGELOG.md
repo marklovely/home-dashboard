@@ -4,8 +4,10 @@
 
 ### Marketing site
 
-- Forest-and-stone palette in place of purple; cottage house mark and serif wordmark
-- Horizontal header nav on desktop, fewer gradient banners, glow shadows, and pill labels
+- Forest-and-stone palette in place of purple; cottage mark with climbing rose, chimney smoke, and serif wordmark
+- Hamburger menu pinned on every viewport (forest button, cream bars)
+- Fluid type, wrapping, and safe-area padding for phone, tablet, and desktop
+- Product brand and marketing screenshots sync to the `lovely-home-media` R2 bucket
 
 ### Hub
 
