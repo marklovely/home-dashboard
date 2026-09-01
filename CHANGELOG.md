@@ -9,6 +9,7 @@
 - Success page heading switches to “Success — your hub is now ready” (or a setup-failed heading) instead of staying on “we’re building your hub”
 - Owners manage billing from lovely-home.co.uk/account.html (email code, then Stripe Customer Portal)
 - Account stays signed in when returning from Stripe; expired sessions ask for a new code
+- Cancelled hubs say so on the account page; Stripe’s portal only has invoices and the saved card after the plan ends
 
 ### Platform
 

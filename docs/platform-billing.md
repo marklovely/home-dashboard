@@ -237,7 +237,7 @@ The webhook also sends mail through [Resend](https://resend.com) when `RESEND_AP
 
 Each kind is recorded on `site_billing` (`signup_email_sent_at`, …) so webhook retries do not send twice. From-address defaults to `Lovely Home <support@lovely-home.co.uk>` (`customer_email_from` / `CUSTOMER_EMAIL_FROM`). Verify that domain in Resend before going live.
 
-Owners manage billing themselves at [lovely-home.co.uk/account.html](https://lovely-home.co.uk/account.html): email OTP (Resend), then a Stripe [Customer Portal](https://docs.stripe.com/customer-management/integrate-customer-portal) session (`POST /v1/billing_portal/sessions`). Activate the portal in Stripe Dashboard → Settings → Billing → Customer portal (allow card update, invoices, and cancel). Apply the OTP tables after deploy:
+Owners manage billing themselves at [lovely-home.co.uk/account.html](https://lovely-home.co.uk/account.html): email OTP (Resend), then a Stripe [Customer Portal](https://docs.stripe.com/customer-management/integrate-customer-portal) session (`POST /v1/billing_portal/sessions`). Activate the portal in Stripe Dashboard → Settings → Billing → Customer portal (allow card update, invoices, and cancel). After a subscription is cancelled, Stripe’s portal only shows invoices and the saved card — there is no live plan to cancel or change. The account page states **Cancelled**. Apply the OTP tables after deploy:
 
 ```bash
 node scripts/apply-platform-billing-migration.mjs

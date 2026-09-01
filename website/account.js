@@ -193,19 +193,36 @@
   }
 
   function renderHub(hub) {
+    const canceled = hub.status === 'canceled';
     const trial = formatTrial(hub.trialEnd);
     const status = statusCopy(hub.status, trial);
     const manage = hub.canManageBilling
-      ? '<button type="button" class="btn btn-primary btn-block" data-portal-site="' + escapeHtml(hub.siteId) + '">Manage billing on Stripe</button>'
+      ? '<button type="button" class="btn ' +
+        (canceled ? 'btn-secondary' : 'btn-primary') +
+        ' btn-block" data-portal-site="' +
+        escapeHtml(hub.siteId) +
+        '">' +
+        (canceled ? 'View invoices on Stripe' : 'Manage billing on Stripe') +
+        '</button>'
       : '<p class="signup-note muted">Billing is not linked yet. Email support@lovely-home.co.uk.</p>';
+    const openHub = canceled
+      ? ''
+      : '<a class="btn btn-secondary btn-block" href="' + escapeHtml(hub.hubUrl) + '">Open hub</a>';
+    const body = canceled
+      ? '<p>This subscription is cancelled, so Stripe has no live plan to change — only invoices and the saved card. Start a new trial if you want the hub back.</p>'
+      : '<p>This is your private household hub. Sitters sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
+        '<p>Cancel before the trial ends and you pay nothing. After a paid period, cancel anytime; the hub stays up until that period ends, then we archive the house guide JSON and take the site down. Photos and appliance PDFs are not in the archive.</p>';
     return (
       '<article class="account-hub-card">' +
-        '<p class="account-hub-status">' + escapeHtml(status) + '</p>' +
+        '<p class="account-hub-status' +
+        (canceled ? ' account-hub-status--canceled' : '') +
+        '">' +
+        escapeHtml(status) +
+        '</p>' +
         '<h3>' + escapeHtml(hub.siteId) + '.lovely-hub.com</h3>' +
-        '<p>This is your private household hub. Sitters sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
-        '<p>Cancel before the trial ends and you pay nothing. After a paid period, cancel anytime; the hub stays up until that period ends, then we archive the house guide JSON and take the site down. Photos and appliance PDFs are not in the archive.</p>' +
+        body +
         '<div class="account-hub-actions">' +
-          '<a class="btn btn-secondary btn-block" href="' + escapeHtml(hub.hubUrl) + '">Open hub</a>' +
+          openHub +
           manage +
         '</div>' +
       '</article>'
@@ -243,7 +260,7 @@
     if (status === 'trialing') return trial ? 'Trial — first charge ' + trial : 'Trial — you are not charged today';
     if (status === 'active') return 'Paid subscription';
     if (status === 'past_due') return 'Payment failed — update the card on Stripe';
-    if (status === 'canceled') return 'Ended — the live hub is being taken down';
+    if (status === 'canceled') return 'Cancelled — this hub has ended';
     return 'Hub status: ' + status;
   }
 
