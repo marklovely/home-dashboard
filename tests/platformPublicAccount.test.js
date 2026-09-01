@@ -2,9 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ACCOUNT_GENERIC_OTP_MESSAGE,
   ACCOUNT_OTP_MAX_ATTEMPTS,
+  ACCOUNT_SESSION_EXPIRED_MESSAGE,
   generateAccountOtpCode,
   handleAccountOtpRequest,
   handleAccountPortal,
+  handleAccountSession,
   handleAccountVerify,
   hashAccountSecret,
   normalizeAccountEmail,
@@ -202,6 +204,45 @@ describe('account OTP and portal', () => {
       customer: 'cus_kitchen',
       return_url: 'https://lovely-home.co.uk/account.html'
     });
+
+    const restored = await handleAccountSession(env, /** @type {D1Database} */ (db), {
+      sessionToken: String(verified.body.sessionToken)
+    });
+    expect(restored.status).toBe(200);
+    expect(restored.body.hubs).toEqual(verified.body.hubs);
+    expect(restored.body.email).toBe('owner@example.com');
+  });
+
+  it('tells the owner they were signed out when the session has expired', async () => {
+    const db = createAccountDb([
+      {
+        site_id: 'kitchen-home',
+        status: 'trialing',
+        stripe_customer_id: 'cus_kitchen',
+        owner_email: 'owner@example.com'
+      }
+    ]);
+    await handleAccountOtpRequest(
+      env,
+      /** @type {D1Database} */ (db),
+      { email: 'owner@example.com', clientIp: '203.0.113.13' },
+      { sendEmail: async () => ({ ok: true, id: 'x' }), generateCode: () => '333333' }
+    );
+    const verified = await handleAccountVerify(
+      env,
+      /** @type {D1Database} */ (db),
+      { email: 'owner@example.com', code: '333333' },
+      { nowMs: 1_000 }
+    );
+    expect(verified.status).toBe(200);
+    const expired = await handleAccountSession(
+      env,
+      /** @type {D1Database} */ (db),
+      { sessionToken: String(verified.body.sessionToken) },
+      { nowMs: 1_000 + 31 * 60 * 1000 }
+    );
+    expect(expired.status).toBe(401);
+    expect(expired.body.message).toBe(ACCOUNT_SESSION_EXPIRED_MESSAGE);
   });
 
   it('rejects a wrong code without opening a session', async () => {
