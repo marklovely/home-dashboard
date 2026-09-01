@@ -27,6 +27,8 @@
   const openBtn = document.getElementById('open-hub-btn');
   const lead = document.getElementById('success-lead');
   const heading = document.getElementById('success-heading');
+  const eyebrow = document.getElementById('success-eyebrow');
+  const waitBanner = document.getElementById('success-wait-banner');
   const progress = document.getElementById('hub-progress');
   const progressTitle = document.getElementById('hub-progress-title');
   const progressNote = document.getElementById('hub-progress-note');
@@ -84,7 +86,7 @@
       const payload = await response.json();
       consecutiveErrors = 0;
 
-      if (payload.ready) {
+      if (payload.ready || payload.state === 'ready') {
         showReady();
         return;
       }
@@ -118,6 +120,19 @@
     clearTimeout(giveUpTimer);
   }
 
+  function setPageHeading(eyebrowText, headingText, documentTitle) {
+    if (eyebrow) {
+      const mark = document.createElement('span');
+      eyebrow.replaceChildren(mark, document.createTextNode(' ' + eyebrowText));
+    }
+    heading.textContent = headingText;
+    document.title = documentTitle;
+  }
+
+  function hideWaitBanner() {
+    if (waitBanner) waitBanner.hidden = true;
+  }
+
   function showProvisioning() {
     progress.dataset.state = 'provisioning';
     setTitle('Deploying your hub now', true);
@@ -130,7 +145,7 @@
   function showReady() {
     stopPolling();
     progress.dataset.state = 'ready';
-    heading.textContent = 'Your hub is ready';
+    setPageHeading('Success', 'Success — your hub is now ready', 'Lovely Home — Your hub is ready');
     lead.textContent =
       'Your 7-day trial is active for ' + hostname + '. Your hub finished building — use the trial to set it up before your sitter arrives.';
     setTitle('Your hub is live', false);
@@ -138,6 +153,7 @@
     hubLink.href = hubUrl;
     openBtn.hidden = false;
     hideRetry();
+    hideWaitBanner();
     if (successSteps) successSteps.hidden = false;
     void renderQr();
   }
@@ -146,7 +162,11 @@
     stopPolling();
     progress.dataset.state = 'failed';
     const invalidName = payload?.failureKind === 'invalid_hostname' || siteId.includes('_');
-    heading.textContent = invalidName ? 'We could not create this hub' : 'We could not finish your hub';
+    setPageHeading(
+      'Setup failed',
+      invalidName ? 'We could not create this hub' : 'We could not finish your hub',
+      'Lovely Home — Hub setup failed'
+    );
     lead.textContent = invalidName
       ? 'Your card was not charged, but this hub address cannot be used. Pick a name with letters, numbers, or hyphens — no underscores.'
       : 'Your 7-day trial started, but we could not finish building this hub. You have not been charged. Email support@lovely-home.co.uk with this address and we will complete it.';
@@ -157,13 +177,18 @@
     hubLink.removeAttribute('href');
     openBtn.hidden = true;
     showRetry();
+    hideWaitBanner();
     if (successSteps) successSteps.hidden = true;
   }
 
   function showSlow() {
     stopPolling();
     progress.dataset.state = 'slow';
-    heading.textContent = 'This is taking longer than usual';
+    setPageHeading(
+      'Needs help',
+      'This is taking longer than usual',
+      'Lovely Home — Hub setup delayed'
+    );
     lead.textContent =
       'Your 7-day trial is active for ' +
       hostname +
@@ -174,6 +199,7 @@
     hubLink.removeAttribute('href');
     openBtn.hidden = true;
     showRetry();
+    hideWaitBanner();
   }
 
   function showUnknown() {

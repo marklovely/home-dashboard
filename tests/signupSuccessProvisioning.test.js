@@ -56,6 +56,8 @@ describe('signup success provisioning status', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(document.getElementById('hub-progress').dataset.state).toBe('provisioning');
+    expect(document.getElementById('success-heading').textContent).toBe("Thank you — we're building your hub");
+    expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Trial started');
     expect(document.getElementById('hub-progress-title').textContent).toMatch(/Deploying your hub now/i);
     expect(document.getElementById('hub-progress-note').textContent).toMatch(/about 10 minutes/i);
     expect(document.getElementById('open-hub-btn').hidden).toBe(true);
@@ -83,7 +85,10 @@ describe('signup success provisioning status', () => {
 
     const openBtn = document.getElementById('open-hub-btn');
     expect(document.getElementById('hub-progress').dataset.state).toBe('ready');
-    expect(document.getElementById('success-heading').textContent).toMatch(/ready/i);
+    expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Success');
+    expect(document.getElementById('success-heading').textContent).toBe('Success — your hub is now ready');
+    expect(document.title).toBe('Lovely Home — Your hub is ready');
+    expect(document.getElementById('success-wait-banner').hidden).toBe(true);
     expect(document.getElementById('success-lead').textContent).toMatch(/finished building/i);
     expect(openBtn.hidden).toBe(false);
     expect(openBtn.getAttribute('href')).toBe('https://blundell.lovely-hub.com/');
@@ -126,7 +131,9 @@ describe('signup success provisioning status', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(document.getElementById('hub-progress').dataset.state).toBe('failed');
+    expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Setup failed');
     expect(document.getElementById('success-heading').textContent).toMatch(/could not create/i);
+    expect(document.getElementById('success-wait-banner').hidden).toBe(true);
     expect(document.getElementById('open-hub-btn').hidden).toBe(true);
     expect(document.getElementById('retry-signup-btn').hidden).toBe(false);
     expect(document.getElementById('hub-progress-note').textContent).toMatch(/underscores/i);
@@ -150,6 +157,7 @@ describe('signup success provisioning status', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(document.getElementById('hub-progress').dataset.state).toBe('failed');
+    expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Setup failed');
     expect(document.getElementById('success-heading').textContent).toMatch(/could not finish/i);
     expect(document.getElementById('success-lead').textContent).toMatch(/support@lovely-home\.co\.uk/i);
     expect(document.getElementById('open-hub-btn').hidden).toBe(true);
