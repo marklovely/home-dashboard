@@ -93,7 +93,9 @@ export async function onRequest(context) {
   const hubStatusMatch = suffix.match(/^hub-status\/([^/]+)$/);
   if (hubStatusMatch && request.method === 'GET') {
     const siteId = decodeURIComponent(hubStatusMatch[1]);
-    const result = await getPublicHubProvisionStatus(manifest, siteId, fetch, pagesEnv);
+    const db = getPlatformBillingDb(env);
+    const billing = db ? await getSiteBilling(db, siteId) : null;
+    const result = await getPublicHubProvisionStatus(manifest, siteId, fetch, pagesEnv, billing);
     return Response.json(result.body, {
       status: result.status,
       headers: { ...cors, 'Cache-Control': 'no-store' }

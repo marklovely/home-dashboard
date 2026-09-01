@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Signup
+
+- Hub addresses must be DNS-safe (letters, numbers, hyphens). Underscores like `kitchen_home` no longer start a trial that can never deploy.
+
 ## 2.3.0
 
 Public trial signup, household emails, and hub backups on cancel.

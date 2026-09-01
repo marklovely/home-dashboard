@@ -23,6 +23,8 @@ describe('platform billing helpers', () => {
 
   it('validates billing site ids', () => {
     expect(validateBillingSiteId('smith')).toBeNull();
+    expect(validateBillingSiteId('kitchen-home')).toBeNull();
+    expect(validateBillingSiteId('kitchen_home')).toMatch(/hyphens/i);
     expect(validateBillingSiteId('')).toBeTruthy();
     expect(validateBillingSiteId('Bad')).toBeTruthy();
   });

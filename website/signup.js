@@ -1,5 +1,5 @@
 (function () {
-  const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
+  const SITE_ID_RE = /^[a-z][a-z0-9-]{0,31}$/;
   const apiBase = (document.querySelector('meta[name="lovely-platform-api"]')?.content || 'https://platform.lovely-home.co.uk').replace(/\/$/, '');
 
   const form = document.getElementById('signup-form');
@@ -30,7 +30,7 @@
   }
 
   siteInput.addEventListener('input', () => {
-    siteInput.value = siteInput.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    siteInput.value = siteInput.value.toLowerCase().replace(/_/g, '-').replace(/[^a-z0-9-]/g, '');
     updateSlugHint();
   });
 
