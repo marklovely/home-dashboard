@@ -76,6 +76,7 @@ export function resolveHubProxySecret(siteId, terraformSiteIds, envSecrets, stat
  * @param {Set<string>} randomProxySiteIds
  * @param {Record<string, string>} envSecrets
  * @param {Record<string, string>} stateSecrets
+ * @param {string} [applySiteId] Site Terraform will `-target` (provision or deprovision)
  * @returns {string | undefined}
  */
 export function hubProxySecretForGeneratedTfvars(
@@ -83,7 +84,8 @@ export function hubProxySecretForGeneratedTfvars(
   terraformSiteIds,
   randomProxySiteIds,
   envSecrets,
-  stateSecrets
+  stateSecrets,
+  applySiteId = ''
 ) {
   const fromEnv = envSecrets[siteId]?.trim();
   if (fromEnv) return fromEnv;
@@ -94,17 +96,22 @@ export function hubProxySecretForGeneratedTfvars(
 
   if (terraformSiteIds.has(siteId)) {
     const fromState = stateSecrets[siteId]?.trim();
-    if (!fromState) {
-      const known = [...new Set([...Object.keys(envSecrets), ...Object.keys(stateSecrets)])]
-        .sort()
-        .join(', ');
-      throw new Error(
-        `Missing hub_proxy_secret for in-state site "${siteId}". ` +
-          `Readable secret keys: ${known || '(none)'}. ` +
-          'Ensure terraform output is readable or add the site to HUB_PROXY_SECRETS_JSON.'
-      );
+    if (fromState) return fromState;
+    const target = String(applySiteId ?? '').trim();
+    // Targeted apply does not touch other modules. Production was imported with
+    // a locally pinned secret that is not in HUB_PROXY_SECRETS_JSON; requiring
+    // it here blocked every new customer hub.
+    if (target && siteId !== target) {
+      return undefined;
     }
-    return fromState;
+    const known = [...new Set([...Object.keys(envSecrets), ...Object.keys(stateSecrets)])]
+      .sort()
+      .join(', ');
+    throw new Error(
+      `Missing hub_proxy_secret for in-state site "${siteId}". ` +
+        `Readable secret keys: ${known || '(none)'}. ` +
+        'Ensure terraform output is readable or add the site to HUB_PROXY_SECRETS_JSON.'
+    );
   }
 
   return undefined;

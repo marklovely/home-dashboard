@@ -20,7 +20,7 @@ import {
 } from './lib/hub-tfvars.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
-import { terraformStringMap, parseTerraformJsonOutput } from './lib/terraform-output-json.mjs';
+import { terraformStringMap, parseTerraformJsonOutput, parseHubProxySecretsFromTerraformState } from './lib/terraform-output-json.mjs';
 import { parseSiteOwnerEmailsEnv, resolveSiteOwnerEmails } from './lib/site-owner-emails.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -53,6 +53,7 @@ const stripePriceIdYearly = process.env.STRIPE_PRICE_ID_YEARLY?.trim() || '';
 const provisionSiteId = process.env.PROVISION_SITE_ID?.trim() || '';
 const provisionPhase = process.env.PROVISION_PHASE?.trim() || '';
 const deprovisionSiteId = process.env.DEPROVISION_SITE_ID?.trim() || '';
+const applySiteId = provisionSiteId || deprovisionSiteId;
 
 // Customer owner emails come from the platform billing database at provision
 // time, so they are never written to platform/sites.yaml in a public repo.
@@ -78,7 +79,10 @@ if (process.env.HUB_PROXY_SECRETS_JSON?.trim()) {
 
 const registry = loadSitesYaml(sitesYamlPath);
 const terraformSiteIds = readTerraformSiteIds();
-const hubProxySecretsState = readTerraformHubProxySecrets();
+const hubProxySecretsState = {
+  ...readTerraformStatePullHubProxySecrets(),
+  ...readTerraformHubProxySecrets()
+};
 const randomProxySiteIds = readRandomHubProxySiteIds();
 
 /** @type {Record<string, string>} */
@@ -225,7 +229,8 @@ function appendSiteBlock(siteId, meta) {
       terraformSiteIds,
       randomProxySiteIds,
       hubProxySecretsEnv,
-      hubProxySecretsState
+      hubProxySecretsState,
+      applySiteId
     );
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
@@ -390,7 +395,28 @@ function readTerraformHubProxySecrets() {
     console.error(
       `generate-hub-tfvars: could not read terraform output hub_proxy_secrets (${
         error instanceof Error ? error.message : String(error)
-      }). Falling back to HUB_PROXY_SECRETS_JSON.`
+      }). Falling back to state pull and HUB_PROXY_SECRETS_JSON.`
+    );
+    return {};
+  }
+}
+
+/**
+ * @returns {Record<string, string>}
+ */
+function readTerraformStatePullHubProxySecrets() {
+  try {
+    const raw = execFileSync('terraform', ['state', 'pull'], {
+      cwd: tfDir,
+      encoding: 'utf8',
+      maxBuffer: 32 * 1024 * 1024
+    });
+    return parseHubProxySecretsFromTerraformState(raw);
+  } catch (error) {
+    console.error(
+      `generate-hub-tfvars: could not pull terraform state for hub_proxy_secrets (${
+        error instanceof Error ? error.message : String(error)
+      }).`
     );
     return {};
   }
