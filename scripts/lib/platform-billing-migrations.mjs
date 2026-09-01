@@ -4,7 +4,8 @@ export const PLATFORM_BILLING_MIGRATION_FILES = [
   '0002_site_billing_provision.sql',
   '0003_site_billing_deprovision.sql',
   '0004_signup_guards.sql',
-  '0005_customer_emails.sql'
+  '0005_customer_emails.sql',
+  '0006_account_otp.sql'
 ];
 
 export const PLATFORM_BILLING_MIGRATIONS_TABLE_SQL = `

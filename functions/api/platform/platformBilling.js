@@ -327,6 +327,23 @@ export async function listSiteBilling(db) {
 
 /**
  * @param {D1Database} db
+ * @param {string} ownerEmail
+ * @returns {Promise<SiteBillingRow[]>}
+ */
+export async function listSiteBillingByOwnerEmail(db, ownerEmail) {
+  const email = String(ownerEmail ?? '')
+    .trim()
+    .toLowerCase();
+  if (!email || !email.includes('@')) return [];
+  const result = await db
+    .prepare('SELECT * FROM site_billing WHERE lower(owner_email) = ? ORDER BY updated_at DESC')
+    .bind(email)
+    .all();
+  return /** @type {SiteBillingRow[]} */ (result.results ?? []);
+}
+
+/**
+ * @param {D1Database} db
  * @param {string} eventId
  * @param {string} eventType
  */

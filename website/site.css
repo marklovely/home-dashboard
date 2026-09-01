@@ -1138,6 +1138,34 @@ html.nav-open {
   margin-top: 0.5rem;
 }
 
+.account-hub-card {
+  margin-top: 0.35rem;
+  padding-top: 0.25rem;
+}
+
+.account-hub-card h3 {
+  margin: 0.2rem 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.account-hub-status {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.account-hub-card p {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.account-hub-actions {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.1rem;
+}
+
 .success-hostname {
   font-size: 1.15rem;
   font-weight: 600;
