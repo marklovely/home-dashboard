@@ -46,6 +46,19 @@ describe('platform admin billing UI', () => {
     );
     expect(html).toContain('Billing');
     expect(html).toContain('Provision');
-    expect(html).toContain('not provisioned');
+    expect(html).toContain('no Terraform contract');
+    expect(html).not.toContain('not provisioned');
+  });
+
+  it('does not tell operators to provision when hub health is already green', () => {
+    const html = renderSiteBilling(
+      { siteId: 'wagtail', terraform: true, contract: null },
+      { status: 'trialing', trial_end: Date.now() + 86400000, provision_dispatched_at: null },
+      { stripeConfigured: true, billingDbConfigured: true, hubHealthy: true }
+    );
+    expect(html).toContain('already live');
+    expect(html).toContain('do not provision again');
+    expect(html).not.toContain('not provisioned');
+    expect(html).not.toContain('Click <strong>Provision</strong>');
   });
 });

@@ -259,6 +259,8 @@ bash scripts/verify-cloudflare-api-token.sh
 
 **Pages deploy fails with `Unknown arguments: functions-directory`:** Wrangler 4.128 dropped that flag. `deploy-cloudflare-pages-site.sh` now stages pruned Functions as `dist-hub-functions/functions` and runs wrangler from that directory. Do not add the old flag back.
 
+**Platform admin says billing is active but infrastructure is not provisioned, while health checks are green:** The card reads `platform-manifest.json` served by the platform Pages deployment. Git can already have the Terraform contract (`attach_hub_api_binding: true` + D1 id) while the live dashboard is still on an older Git-connected build. Rebuild/redeploy platform admin from current `main` — do not click Provision again. The amber “Terraform contract” row is that stale file; Worker/Pages/HUB_API rows come from live Cloudflare.
+
 **Post-worker apply fails with `Invalid Service name ()` (8000022):** CI runs `scripts/attach-hub-api-pages-binding.mjs` (direct Cloudflare API) then redeploys Pages so the binding is active. Local: `bash scripts/deploy-cloudflare-pages-site.sh <site_id>` after Worker deploy.
 
 **Platform admin shows `HUB_API binding no` after provision:** The binding is project-level; the **active** Pages deployment must be created after attach. `deploy-cloudflare-pages-site.sh` attaches then redeploys automatically. Re-run that script or **Platform site deploy** for the site.

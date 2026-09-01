@@ -36,7 +36,7 @@ const sql = `INSERT INTO house_settings (key, value, updated_at) VALUES ('sitter
 
 execFileSync(
   'npx',
-  ['wrangler', 'd1', 'execute', dbName, '--remote', '--env', siteId, '--command', sql],
+  ['wrangler', 'd1', 'execute', dbName, '--remote', '--env', siteId, '--yes', '--command', sql],
   {
     cwd: join(root, 'worker'),
     stdio: 'inherit',

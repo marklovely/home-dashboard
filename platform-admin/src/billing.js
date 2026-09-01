@@ -67,10 +67,10 @@ export function formatBillingTrialEnd(trialEndMs) {
 /**
  * @param {Record<string, unknown>} site
  * @param {Record<string, unknown> | null | undefined} billing
- * @param {{ stripeConfigured: boolean; billingDbConfigured: boolean }} options
+ * @param {{ stripeConfigured: boolean; billingDbConfigured: boolean; hubHealthy?: boolean }} options
  */
 export function renderSiteBilling(site, billing, options) {
-  const { stripeConfigured, billingDbConfigured } = options;
+  const { stripeConfigured, billingDbConfigured, hubHealthy = false } = options;
   if (!stripeConfigured && !billingDbConfigured) return '';
 
   const siteId = String(site.siteId);
@@ -97,14 +97,17 @@ export function renderSiteBilling(site, billing, options) {
 
   let provisionHint = '';
   if ((status === 'trialing' || status === 'active') && site.terraform && !hasContract) {
-    if (provisionError) {
+    if (hubHealthy) {
+      provisionHint =
+        '<p class="billing-hint">This hub is already live (health checks passed). The platform manifest on this dashboard is stale — rebuild it, do not provision again.</p>';
+    } else if (provisionError) {
       provisionHint = `<p class="billing-hint billing-hint-warn">${escapeHtml(provisionError)} Click <strong>Provision</strong> to retry.</p>`;
     } else if (provisionDispatched) {
       provisionHint =
         '<p class="billing-hint">Provision workflow dispatched — check GitHub Actions. If it failed, click <strong>Provision</strong> to retry.</p>';
     } else {
       provisionHint =
-        '<p class="billing-hint billing-hint-warn">Billing is active but infrastructure is not provisioned yet. Click <strong>Provision</strong> to deploy this hub.</p>';
+        '<p class="billing-hint billing-hint-warn">Billing is active but this card has no Terraform contract yet. Click <strong>Provision</strong> only if the hub itself is still empty.</p>';
     }
   }
 

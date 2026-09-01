@@ -435,7 +435,9 @@ function renderSiteCard(site, platform, githubConfigured, pagesConfigured, billi
   const commands = siteOperatorCommands(site);
   const steps = Array.isArray(site.provisioning) ? site.provisioning : [];
   const attachPending = site.attachHubApiBinding !== true;
-  const needsProvision = site.terraform && !isProduction && (!site.contract || attachPending);
+  const hubHealthy = stored?.status === 'healthy';
+  const needsProvision =
+    site.terraform && !isProduction && (!site.contract || attachPending) && !hubHealthy;
   const manifestContractMissing = siteMissingManifestContract(site);
 
   return `
@@ -452,7 +454,7 @@ function renderSiteCard(site, platform, githubConfigured, pagesConfigured, billi
         <div><dt>Pages</dt><dd><code>${escapeHtml(String(site.pagesProject))}</code></dd></div>
         <div><dt>Worker</dt><dd><code>${escapeHtml(String(site.workerName))}</code></dd></div>
       </dl>
-      ${renderSiteBilling(site, billingBySite[siteId] ?? null, billingOptions)}
+      ${renderSiteBilling(site, billingBySite[siteId] ?? null, { ...billingOptions, hubHealthy })}
       ${
         manifestContractMissing
           ? `<div class="banner banner-warn site-manifest-banner">${escapeHtml(MANIFEST_CONTRACT_MISSING_MESSAGE)} ${escapeHtml(MANIFEST_CONTRACT_MISSING_HINT)}</div>`

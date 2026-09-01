@@ -17,6 +17,17 @@ describe('loadSitesYaml', () => {
     expect(sites.demo.sitter_emails).toEqual(['sitter@example.com']);
   });
 
+  it('committed manifest has a D1 contract once attach_hub_api_binding is true', () => {
+    const sites = loadSitesYaml(join(process.cwd(), 'platform/sites.yaml'));
+    const manifest = JSON.parse(
+      readFileSync(join(process.cwd(), 'platform-admin/public/platform-manifest.json'), 'utf8')
+    );
+    for (const [siteId, entry] of Object.entries(sites)) {
+      if (entry.attach_hub_api_binding !== true) continue;
+      expect(manifest.sites[siteId]?.contract?.d1_database_id, `${siteId} missing D1 contract`).toBeTruthy();
+    }
+  });
+
   it('requires worker deploy scripts for every terraform site in the registry', () => {
     const sites = loadSitesYaml(join(process.cwd(), 'platform/sites.yaml'));
     const pkg = JSON.parse(readFileSync(join(process.cwd(), 'worker/package.json'), 'utf8'));
