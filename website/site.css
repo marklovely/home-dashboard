@@ -1155,6 +1155,10 @@ html.nav-open {
   color: var(--accent);
 }
 
+.account-hub-status--canceled {
+  color: var(--muted);
+}
+
 .account-hub-card p {
   color: var(--muted);
   font-size: 0.95rem;

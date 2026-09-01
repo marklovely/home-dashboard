@@ -80,6 +80,8 @@ describe('marketing site pages', () => {
     expect(js).toMatch(/\/api\/public\/account\/session/);
     expect(js).toMatch(/localStorage\.setItem\(SESSION_KEY/);
     expect(js).toMatch(/You have been signed out/);
+    expect(js).toMatch(/Cancelled — this hub has ended/);
+    expect(js).toMatch(/View invoices on Stripe/);
   });
 
   it('included page lists ready features and customer-owned extras', () => {
