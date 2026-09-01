@@ -94,3 +94,17 @@ jobs:
             **Delete only:** after merge, [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) runs automatically (Worker delete → Terraform destroy → manifest). See [docs/platform-provision.md](../docs/platform-provision.md#v5--automated-deprovision).
 
             Triggered by platform operator via `platform-site-manage` workflow.
+
+      - name: Record registry failure for the signup page
+        if: failure() && inputs.action == 'create'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SITE_MANAGE_PAYLOAD: ${{ inputs.payload }}
+        run: |
+          SITE_ID="$(node -e 'try { process.stdout.write(String(JSON.parse(process.env.SITE_MANAGE_PAYLOAD || "{}").siteId || "").trim()) } catch { process.exit(0) }')"
+          if [ -z "$SITE_ID" ]; then
+            echo "No site id in payload; skip billing failure record."
+            exit 0
+          fi
+          node scripts/mark-hub-setup-failed.mjs "$SITE_ID" --kind registry --message "Hub registry workflow failed (run ${{ github.run_id }})."

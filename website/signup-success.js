@@ -4,6 +4,8 @@
  * A hub takes roughly ten minutes to build, so the page polls the platform
  * instead of asking buyers to keep retrying the URL. The address stays as
  * text until the hub SPA is live; the Open button and QR code appear then.
+ * A recorded setup failure stops the spinner immediately. After 30 minutes
+ * without a live hub, the page asks for support instead of showing a QR.
  */
 (function () {
   const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
@@ -25,11 +27,15 @@
   const openBtn = document.getElementById('open-hub-btn');
   const lead = document.getElementById('success-lead');
   const heading = document.getElementById('success-heading');
+  const eyebrow = document.getElementById('success-eyebrow');
+  const waitBanner = document.getElementById('success-wait-banner');
   const progress = document.getElementById('hub-progress');
   const progressTitle = document.getElementById('hub-progress-title');
   const progressNote = document.getElementById('hub-progress-note');
   const qrFigure = document.getElementById('hub-qr');
   const qrHost = document.getElementById('hub-qr-code');
+  const retryBtn = document.getElementById('retry-signup-btn');
+  const successSteps = document.getElementById('success-steps');
 
   if (!siteId || !SITE_ID_RE.test(siteId) || !progress) return;
 
@@ -38,6 +44,7 @@
   const startedAt = Date.now();
 
   let timer = null;
+  let giveUpTimer = null;
   let consecutiveErrors = 0;
   let settled = false;
 
@@ -52,6 +59,9 @@
     '. Building a hub takes about 10 minutes — leave this page open and it will tell you the moment yours is live.';
 
   void poll();
+  giveUpTimer = setTimeout(() => {
+    if (!settled) showSlow();
+  }, GIVE_UP_MS);
 
   document.addEventListener('visibilitychange', () => {
     if (!settled && document.visibilityState === 'visible') {
@@ -76,13 +86,13 @@
       const payload = await response.json();
       consecutiveErrors = 0;
 
-      if (payload.ready) {
+      if (payload.ready || payload.state === 'ready') {
         showReady();
         return;
       }
 
       if (payload.state === 'failed') {
-        showFailed(payload.message);
+        showFailed(payload);
         return;
       }
 
@@ -104,6 +114,25 @@
     timer = setTimeout(poll, wait);
   }
 
+  function stopPolling() {
+    settled = true;
+    clearTimeout(timer);
+    clearTimeout(giveUpTimer);
+  }
+
+  function setPageHeading(eyebrowText, headingText, documentTitle) {
+    if (eyebrow) {
+      const mark = document.createElement('span');
+      eyebrow.replaceChildren(mark, document.createTextNode(' ' + eyebrowText));
+    }
+    heading.textContent = headingText;
+    document.title = documentTitle;
+  }
+
+  function hideWaitBanner() {
+    if (waitBanner) waitBanner.hidden = true;
+  }
+
   function showProvisioning() {
     progress.dataset.state = 'provisioning';
     setTitle('Deploying your hub now', true);
@@ -114,49 +143,67 @@
   }
 
   function showReady() {
-    settled = true;
-    clearTimeout(timer);
+    stopPolling();
     progress.dataset.state = 'ready';
-    heading.textContent = 'Your hub is ready';
+    setPageHeading('Success', 'Success — your hub is now ready', 'Lovely Home — Your hub is ready');
     lead.textContent =
       'Your 7-day trial is active for ' + hostname + '. Your hub finished building — use the trial to set it up before your sitter arrives.';
     setTitle('Your hub is live', false);
     progressNote.textContent = 'Open it below and run the setup wizard — or scan the code on the device you want to use.';
     hubLink.href = hubUrl;
     openBtn.hidden = false;
+    hideRetry();
+    hideWaitBanner();
+    if (successSteps) successSteps.hidden = false;
     void renderQr();
   }
 
-  function showFailed(message) {
-    settled = true;
-    clearTimeout(timer);
+  function showFailed(payload) {
+    stopPolling();
     progress.dataset.state = 'failed';
-    heading.textContent = 'We could not create this hub';
-    lead.textContent =
-      'Your card was not charged, but this hub address cannot be used. Pick a name with letters, numbers, or hyphens — no underscores.';
-    setTitle('Hub address cannot be used', false);
+    const invalidName = payload?.failureKind === 'invalid_hostname' || siteId.includes('_');
+    setPageHeading(
+      'Setup failed',
+      invalidName ? 'We could not create this hub' : 'We could not finish your hub',
+      'Lovely Home — Hub setup failed'
+    );
+    lead.textContent = invalidName
+      ? 'Your card was not charged, but this hub address cannot be used. Pick a name with letters, numbers, or hyphens — no underscores.'
+      : 'Your 7-day trial started, but we could not finish building this hub. You have not been charged. Email support@lovely-home.co.uk with this address and we will complete it.';
+    setTitle(invalidName ? 'Hub address cannot be used' : 'Hub setup did not finish', false);
     progressNote.textContent =
-      (message || 'We could not start building your hub.') +
-      ' Use signup to try a different address, then cancel this trial from the Stripe email if you still have one.';
+      (payload?.message || 'We could not finish building your hub.') +
+      ' You can try a different address below, then cancel this trial from the Stripe email if you still have one.';
     hubLink.removeAttribute('href');
     openBtn.hidden = true;
+    showRetry();
+    hideWaitBanner();
+    if (successSteps) successSteps.hidden = true;
   }
 
   function showSlow() {
-    settled = true;
-    clearTimeout(timer);
+    stopPolling();
     progress.dataset.state = 'slow';
-    setTitle('This is taking longer than usual', false);
+    setPageHeading(
+      'Needs help',
+      'This is taking longer than usual',
+      'Lovely Home — Hub setup delayed'
+    );
+    lead.textContent =
+      'Your 7-day trial is active for ' +
+      hostname +
+      ', but this page could not confirm the hub is live. Email support@lovely-home.co.uk with this address and we will finish it.';
+    setTitle('We could not confirm your hub is live', false);
     progressNote.textContent =
-      'Your hub has not answered yet. Try the link above in a few minutes, or email support@lovely-home.co.uk and we will finish it for you.';
-    hubLink.href = hubUrl;
-    openBtn.hidden = false;
-    void renderQr();
+      'Do not keep waiting here. Send us the hub address above and we will complete the setup. You have not been charged.';
+    hubLink.removeAttribute('href');
+    openBtn.hidden = true;
+    showRetry();
+    hideWaitBanner();
   }
 
   function showUnknown() {
-    settled = true;
-    clearTimeout(timer);
+    stopPolling();
     progress.dataset.state = 'unknown';
     setTitle('Your hub is being built', false);
     progressNote.textContent =
@@ -175,6 +222,14 @@
       progressTitle.append(spinner);
     }
     progressTitle.append(document.createTextNode(text));
+  }
+
+  function showRetry() {
+    if (retryBtn) retryBtn.hidden = false;
+  }
+
+  function hideRetry() {
+    if (retryBtn) retryBtn.hidden = true;
   }
 
   function elapsedSuffix() {
