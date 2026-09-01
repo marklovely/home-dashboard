@@ -6,6 +6,7 @@ import { openGuideEditorHelp } from '../src/apps/HouseGuideEditor/guideEditorHel
 
 describe('hub help guides', () => {
   it('defines owner, sitter, and writing guide sections', () => {
+    expect(OWNER_HELP_SECTIONS[0]).toMatchObject({ id: 'setup', title: 'Set it up' });
     expect(OWNER_HELP_SECTIONS.length).toBeGreaterThanOrEqual(8);
     expect(buildSitterHelpSections().length).toBeGreaterThanOrEqual(7);
     const sitterSections = buildSitterHelpSections();
@@ -13,6 +14,15 @@ describe('hub help guides', () => {
   });
 
   it('opens shared help overlay for owner and sitter guides', () => {
+    openHelpGuide({
+      title: 'Owner guide',
+      sections: OWNER_HELP_SECTIONS,
+      dialogId: 'test-owner-help-setup-first'
+    });
+    expect(document.querySelector('.help-guide-content-title')?.textContent).toBe('Set it up');
+    expect(document.querySelector('ol.help-guide-list')).toBeTruthy();
+    document.querySelector('.help-guide-close')?.dispatchEvent(new Event('click'));
+
     openHelpGuide({
       title: 'Owner guide',
       sections: OWNER_HELP_SECTIONS,

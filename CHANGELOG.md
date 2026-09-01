@@ -11,13 +11,15 @@
 - Product brand and marketing screenshots sync to the `lovely-home-media` R2 bucket
 - Home page brand lockup is larger in the header and hero; satellite pages stay compact
 - Home hero is the cottage mark only (name stays in the header), and opening the menu no longer blurs the page
-- Owner and guest hub guides on Help; Support is the contact form, billing, and links into those guides
+- Owner and guest hub guides on Help, starting with Set it up; `/setup.html` redirects there
+- Support is the contact form, billing, and links into those guides
 
 ### Hub
 
 - Default accents follow the same forest/sage palette
 - Light appearance uses a cream forest palette, a dark wordmark, and a header sun/moon toggle for owners and guests
 - Owner and guest help covers scheduled stays, weather from the home address, and the header theme toggle
+- Set it up is the first owner help topic (trial, sending the hub URL, optional wall tablet)
 
 ### Platform
 

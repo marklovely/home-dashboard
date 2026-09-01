@@ -1,9 +1,101 @@
-/** @typedef {{ type: 'p', text: string } | { type: 'h4', text: string } | { type: 'ul', items: string[] } | { type: 'table', headers: string[], rows: string[][] }} HelpGuideBlock */
+/** @typedef {{ type: 'p', text: string } | { type: 'h4', text: string } | { type: 'ul', items: string[] } | { type: 'ol', items: string[] } | { type: 'table', headers: string[], rows: string[][] }} HelpGuideBlock */
 
 /** @typedef {{ id: string, title: string, keywords: string[], blocks: HelpGuideBlock[] }} HelpGuideSection */
 
 /** @type {HelpGuideSection[]} */
 export const OWNER_HELP_SECTIONS = [
+  {
+    id: 'setup',
+    title: 'Set it up',
+    keywords: [
+      'setup',
+      'trial',
+      'wizard',
+      'url',
+      'tablet',
+      'fully kiosk',
+      'sitter',
+      'hardware',
+      'pin',
+      'home screen'
+    ],
+    blocks: [
+      {
+        type: 'p',
+        text: 'Your hub is a private web address. Send it to a sitter on their phone, or open it on a wall tablet if you have one. Use the 7-day trial to fill in the House Guide — not a complimentary stay. No hardware to buy.'
+      },
+      {
+        type: 'h4',
+        text: 'What you need'
+      },
+      {
+        type: 'ul',
+        items: [
+          'A browser — phone, laptop, or tablet. Sitters use the same hub URL you do. Nothing to buy.',
+          'About 30 minutes for the setup wizard once your hub is live (usually around 10 minutes after checkout).',
+          'Optional: a wall tablet — only if you want a screen in the house. We do not sell mounts, tablets, or kiosk hardware.'
+        ]
+      },
+      {
+        type: 'h4',
+        text: 'After you start a trial'
+      },
+      {
+        type: 'ol',
+        items: [
+          'Wait for the hub. The success page watches the build and shows an Open button plus a QR code when it answers — usually around 10 minutes.',
+          'Sign in as owner. Open {your-name}.lovely-hub.com. Cloudflare emails a one-time code to the address you used at signup.',
+          'Walk through the wizard. Hub name, contacts, Wi‑Fi, lockbox, bins, optional calendar, and a starter house guide.',
+          'Set an owner PIN. That unlocks owner tools on any device — phone, laptop, or tablet.',
+          'Share the URL. Send the hub address to your sitter, or open it yourself wherever you like.'
+        ]
+      },
+      {
+        type: 'h4',
+        text: 'Send it to a sitter'
+      },
+      {
+        type: 'p',
+        text: 'This is the usual way. They open the hub on their own phone or laptop — no wall tablet required. Add every upcoming stay in one list.'
+      },
+      {
+        type: 'ol',
+        items: [
+          'Schedule the stay. Settings → House sitter mode → add their email and dates (optional label for you). Book as many sits as you need.',
+          'Seven days before. They sign in with a one-time email code and can read the house guide. Wi‑Fi, address, and lockbox stay hidden.',
+          'On the sit dates. Those home-access details appear automatically. You do not need Sitter is here for a booked remote stay.',
+          'After checkout. Their login is removed the day after the stay ends. Edit, extend, cancel, or end a stay early from the same list.',
+          'Long-term sitter. Add their email as a permanent sitter login — not for one-off visits.'
+        ]
+      },
+      {
+        type: 'p',
+        text: 'Sitters never see the guide editor, backups, or home-control buttons. On a wall tablet in the house, use Sitter is here so a guest without their own login can see home-access details. See Security for how access is locked down.'
+      },
+      {
+        type: 'h4',
+        text: 'Optional: wall tablet'
+      },
+      {
+        type: 'p',
+        text: 'If you want the hub on the wall as well, open the same URL on a tablet and add it to the home screen. Android users who want a locked, always-on display can use Fully Kiosk Browser — a separate app with its own licence, not part of Lovely Home.'
+      },
+      {
+        type: 'ol',
+        items: [
+          'Install Fully and turn on Remote Admin (local network) with a password before you lock kiosk mode.',
+          'Set the start URL to your hub, for example https://rose-cottage.lovely-hub.com.',
+          'Keep cookies. If Fully clears cookies on reload, Cloudflare will ask for a login code every time the screen wakes.',
+          'Choose an exit gesture and kiosk PIN, write them down, then enable kiosk mode.',
+          'On the hub, enable House sitter mode on that device before you mount it.'
+        ]
+      },
+      {
+        type: 'p',
+        text: 'Prefer not to use Fully? Chrome or Safari “Add to Home Screen” is enough for a simpler setup. If you use a kiosk PIN on a tablet, we cannot reset it — keep that with your household notes.'
+      }
+    ]
+  },
   {
     id: 'overview',
     title: 'Your home hub',
