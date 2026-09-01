@@ -11,6 +11,7 @@
 ### Platform
 
 - Provision CI reads sensitive Terraform `hub_proxy_secrets` (disable the setup-terraform wrapper) so a new hub is not blocked by production’s proxy secret
+- Targeted hub provision no longer requires production’s proxy secret when that value is not in the CI secret map
 
 ### Marketing site
 

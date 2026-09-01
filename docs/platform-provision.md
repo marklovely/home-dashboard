@@ -231,6 +231,8 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 
 Provision and deprovision workflows set `terraform_wrapper: false` on `hashicorp/setup-terraform`. The wrapper wraps sensitive outputs as `{ sensitive: true, value }` (or redacts them), which made `generate-hub-tfvars` think production had no `hub_proxy_secret` and abort a new customer hub. The generator also unwraps that JSON shape if a wrapper is present.
 
+Production was imported with a locally pinned secret that is **not** in `HUB_PROXY_SECRETS_JSON` (that map currently has CI-created sites such as demo, sandbox, smith). A targeted apply (`-target=module.hub_site["kitchen-home"]`) does not touch production, so generate-hub-tfvars no longer requires production’s secret when provisioning a different site. It still throws if the site being applied is in state and the secret cannot be read. CI also merges `terraform state pull` (random_password + Pages `HUB_PROXY_SECRET`) into the readable map.
+
 CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.
 
 Provisioning runs **one site at a time** (`max-parallel: 1` + workflow concurrency) because R2 state locking does not use DynamoDB.
