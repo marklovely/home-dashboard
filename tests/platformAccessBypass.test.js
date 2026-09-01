@@ -18,6 +18,7 @@ describe('platform Access bypass paths', () => {
   it('bypasses public signup routes for operators', () => {
     expect(shouldBypassPlatformAccess('/api/public/signup/slug/powell', platformEnv)).toBe(true);
     expect(shouldBypassPlatformAccess('/api/public/signup', platformEnv)).toBe(true);
+    expect(shouldBypassPlatformAccess('/api/public/contact', platformEnv)).toBe(true);
   });
 
   it('bypasses public signup routes when PUBLIC_SIGNUP_ENABLED', () => {

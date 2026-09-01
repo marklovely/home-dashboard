@@ -11,17 +11,20 @@
 - Product brand and marketing screenshots sync to the `lovely-home-media` R2 bucket
 - Home page brand lockup is larger in the header and hero; satellite pages stay compact
 - Home hero is the cottage mark only (name stays in the header), and opening the menu no longer blurs the page
+- Owner and guest hub guides on Help; Support is the contact form, billing, and links into those guides
 
 ### Hub
 
 - Default accents follow the same forest/sage palette
 - Light appearance uses a cream forest palette, a dark wordmark, and a header sun/moon toggle for owners and guests
+- Owner and guest help covers scheduled stays, weather from the home address, and the header theme toggle
 
 ### Platform
 
 - Automated restore from R2 archive when a cancelled hub re-subscribes
 - Add extra marketing-site OTP emails from the platform dashboard (guests, not operators)
 - Marketing site access panel sits at the top of the dashboard, above the site cards
+- Public contact form on Support (`POST /api/public/contact`) emails `support@lovely-home.co.uk` via Resend
 
 ## 2.4.0
 

@@ -20,6 +20,7 @@ describe('marketing site pages', () => {
       'included.html',
       'security.html',
       'setup.html',
+      'help.html',
       'terms.html'
     ]));
   });
@@ -180,6 +181,7 @@ describe('marketing site pages', () => {
       expect(html, name).toContain('class="nav-toggle"');
       expect(html, name).toContain('id="site-nav"');
       expect(html, name).toMatch(/id="site-nav"[\s\S]*?href="account\.html"/);
+      expect(html, name).toMatch(/id="site-nav"[\s\S]*?href="help\.html"/);
       expect(html, name).not.toContain('lovely-home-logo-dark.png');
     }
     expect(css).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*2\.75rem/);
@@ -201,5 +203,32 @@ describe('marketing site pages', () => {
     const css = readFileSync(join(website, 'site.css'), 'utf8');
     expect(css).toMatch(/\.brand-lockup--hero \.brand-mark \{[\s\S]*?11\.5rem/);
     expect(css).toMatch(/\.site-header--home \.brand-mark \{[\s\S]*?3\.6rem/);
+  });
+
+  it('publishes owner and guest guides on Help and a contact form on Support', () => {
+    const help = readPage('help.html');
+    expect(help).toMatch(/Using the hub/);
+    expect(help).toMatch(/Staying as a guest/);
+    expect(help).toContain('src="help.js"');
+    const helpJs = readFileSync(join(website, 'help.js'), 'utf8');
+    expect(helpJs).toMatch(/from '\.\/help-data\.js'/);
+
+    const support = readPage('support.html');
+    expect(support).toMatch(/id="contact-form"/);
+    expect(support).toMatch(/mailto:support@lovely-home\.co\.uk/);
+    expect(support).toMatch(/help\.html#owner/);
+    const supportJs = readFileSync(join(website, 'support.js'), 'utf8');
+    expect(supportJs).toMatch(/\/api\/public\/contact/);
+  });
+
+  it('uses support@lovely-home.co.uk for every marketing mailto link', () => {
+    for (const name of pages) {
+      const html = readPage(name);
+      const mailtos = [...html.matchAll(/href="mailto:([^"]+)"/g)].map((match) => match[1]);
+      expect(mailtos.length, name).toBeGreaterThan(0);
+      for (const address of mailtos) {
+        expect(address, name).toBe('support@lovely-home.co.uk');
+      }
+    }
   });
 });

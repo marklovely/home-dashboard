@@ -14,8 +14,9 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 | `/signup.html` | Public trial signup (hub name + email → Stripe Checkout) |
 | `/signup-success.html` | Post-checkout confirmation with live provisioning status |
 | `/account.html` | Owner account: email code, then Stripe Customer Portal |
+| `/help.html` | Owner and guest how-to guides (same copy as the hub) |
 | `/app.html` | Screenshot gallery |
-| `/support.html` | Support & FAQ |
+| `/support.html` | Contact form, billing links, and entry to Help |
 | `/privacy.html` | Privacy policy |
 | `/terms.html` | Terms of service |
 
@@ -36,6 +37,16 @@ npm run build:website-qr
 ```
 
 The website deploy script runs this automatically when `node_modules` is present.
+
+## Hub help catalog
+
+`help-data.js` is generated from the hub owner and guest guides. After editing `src/help/`, regenerate:
+
+```bash
+npm run build:website-help
+```
+
+CI fails if that file is stale.
 
 ## Local preview
 
