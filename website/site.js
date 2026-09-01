@@ -62,10 +62,56 @@
     }
   }
 
+  function initCookieNotice() {
+    const storageKey = 'lovely-home-cookie-notice';
+    try {
+      if (window.localStorage.getItem(storageKey) === 'accepted') return;
+    } catch {
+      /* Keep showing the notice if storage is blocked. */
+    }
+
+    const notice = document.createElement('div');
+    notice.className = 'cookie-notice';
+    notice.setAttribute('role', 'dialog');
+    notice.setAttribute('aria-label', 'Cookies');
+    notice.setAttribute('aria-describedby', 'cookie-notice-text');
+
+    const inner = document.createElement('div');
+    inner.className = 'cookie-notice-inner';
+
+    const text = document.createElement('p');
+    text.id = 'cookie-notice-text';
+    text.innerHTML =
+      'This site uses only the cookies it needs to work — sign-in, security, and remembering this choice. No analytics or ads. <a href="privacy.html#cookies">Privacy</a>.';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-primary cookie-notice-accept';
+    button.textContent = 'Accept';
+    button.addEventListener('click', function () {
+      try {
+        window.localStorage.setItem(storageKey, 'accepted');
+      } catch {
+        /* Closing the bar still works if storage is blocked. */
+      }
+      notice.remove();
+      document.documentElement.classList.remove('cookie-notice-open');
+    });
+
+    inner.append(text, button);
+    notice.append(inner);
+    document.body.append(notice);
+    document.documentElement.classList.add('cookie-notice-open');
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initNav);
+    document.addEventListener('DOMContentLoaded', function () {
+      initNav();
+      initCookieNotice();
+    });
   } else {
     initNav();
+    initCookieNotice();
   }
 
   applySiteVersion();
