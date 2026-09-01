@@ -195,6 +195,8 @@ When `public_signup_enabled = true`, Terraform also creates a **Zero Trust bypas
 | `/api/public/signup/slug/{siteId}` | GET | Slug availability check |
 | `/api/public/signup` | POST | Slug reservation + Stripe Checkout `{ siteId, customerEmail, billingInterval?, turnstileToken? }` (`month` or `year`) |
 | `/api/public/hub-status/{siteId}` | GET | Provisioning status for the success page — probes `{siteId}.lovely-hub.com` and returns `{ state, ready, hubUrl }` |
+| `/api/public/contact/status` | GET | Whether the Support contact form can send mail (`enabled`) plus optional Turnstile site key |
+| `/api/public/contact` | POST | Support contact form `{ name, email, subject, message, hub?, turnstileToken? }` — emails `support@lovely-home.co.uk` via Resend |
 
 **Nothing is provisioned until Stripe confirms the trial.** Signup only reserves the slug
 and opens Checkout; the registry PR is dispatched from the webhook:

@@ -21,6 +21,7 @@ import {
   handleAccountVerify,
   publicAccountStatus
 } from '../platform/platformPublicAccount.js';
+import { handlePublicContact, publicContactStatus } from '../platform/platformPublicContact.js';
 
 /**
  * Public marketing-site API — /api/public/*
@@ -43,6 +44,21 @@ export async function onRequest(context) {
       return new Response(null, { status: 204, headers: hubCors.headers });
     }
     return new Response(null, { status: 204, headers: cors });
+  }
+
+  if (suffix === 'contact/status' && request.method === 'GET') {
+    return Response.json(publicContactStatus(pagesEnv), {
+      headers: { ...cors, 'Cache-Control': 'no-store' }
+    });
+  }
+
+  if (suffix === 'contact' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handlePublicContact(pagesEnv, {
+      body,
+      clientIp: signupClientIp(request)
+    });
+    return Response.json(result.body, { status: result.status, headers: cors });
   }
 
   if (suffix === 'hub-trial-status' && request.method === 'GET') {

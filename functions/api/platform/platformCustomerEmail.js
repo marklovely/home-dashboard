@@ -185,7 +185,7 @@ export async function markCustomerEmailSent(db, siteId, column) {
 
 /**
  * @param {Record<string, string | undefined>} env
- * @param {{ to: string; subject: string; text: string }} message
+ * @param {{ to: string; subject: string; text: string; replyTo?: string }} message
  * @param {typeof fetch} [fetchImpl]
  */
 export async function sendResendEmail(env, message, fetchImpl = fetch) {
@@ -194,29 +194,35 @@ export async function sendResendEmail(env, message, fetchImpl = fetch) {
     return { ok: false, error: 'EMAIL_NOT_CONFIGURED', message: 'RESEND_API_KEY is not set.' };
   }
 
+  /** @type {Record<string, unknown>} */
+  const payload = {
+    from: customerEmailFrom(env),
+    to: [message.to],
+    subject: message.subject,
+    text: message.text
+  };
+  if (message.replyTo) {
+    payload.reply_to = [message.replyTo];
+  }
+
   const response = await fetchImpl(RESEND_EMAILS_URL, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      from: customerEmailFrom(env),
-      to: [message.to],
-      subject: message.subject,
-      text: message.text
-    })
+    body: JSON.stringify(payload)
   });
 
-  const payload = await response.json().catch(() => ({}));
+  const result = await response.json().catch(() => ({}));
   if (!response.ok) {
     const detail =
-      payload && typeof payload === 'object' && 'message' in payload
-        ? String(/** @type {{ message?: string }} */ (payload).message)
+      result && typeof result === 'object' && 'message' in result
+        ? String(/** @type {{ message?: string }} */ (result).message)
         : `Resend ${response.status}`;
     return { ok: false, error: 'EMAIL_SEND_FAILED', message: detail };
   }
-  return { ok: true, id: payload && typeof payload === 'object' ? String(payload.id ?? '') : '' };
+  return { ok: true, id: result && typeof result === 'object' ? String(result.id ?? '') : '' };
 }
 
 /**
