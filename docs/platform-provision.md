@@ -340,7 +340,7 @@ flowchart TD
 1. **Wizard** dispatches `platform-site-manage.yml` (delete) → opens PR removing the site from registry and Wrangler stubs.
 2. **Merge PR** to `main`.
 3. **Auto-trigger**: push to `main` changing `platform/sites.yaml` starts `platform-site-deprovision.yml` for each removed site (`terraform: true`, not protected). CI exports a full site backup from the hub **Worker** (`worker_api_origin`) to platform R2 **before** Terraform destroy — see [platform-site-archive.md](./platform-site-archive.md). Billing deprovision must complete that archive before it opens the registry-removal PR.
-4. **Manual retry**: workflow dispatch with `site_id` (site must already be absent from `platform/sites.yaml`).
+4. **Manual retry**: workflow dispatch with `site_id` (site must already be absent from `platform/sites.yaml`). If Terraform already destroyed the hub, archive and destroy are skipped so a failed git follow-up can still drop the contract from the platform manifest.
 
 ### What gets removed
 

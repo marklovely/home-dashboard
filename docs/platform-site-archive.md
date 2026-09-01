@@ -87,10 +87,12 @@ Environment:
 | `PLATFORM_ARCHIVE_R2_BUCKET` | Platform R2 bucket (Terraform `lovely-home-hub-archives`; script default if unset) |
 | `CLOUDFLARE_ACCOUNT_ID` | Set on the Wrangler process (not `--account-id`; Wrangler 4 `r2 object put` rejects that flag) |
 
-Objects written:
+Objects written to the **platform** bucket `lovely-home-hub-archives` (not `lovely-home-appliance-guides-{site}` or `lovely-home-guide-media-{site}` — those are destroyed with the hub):
 
 - `{site_id}/site-backup-{exportedAt}.json` — full payload
 - `{site_id}/latest.json` — pointer `{ archivedAt, objectKey, formatVersion }`
+
+In the Cloudflare dashboard: R2 → search **`lovely-home-hub-archives`** → open the `{site_id}/` prefix. The bucket sits alphabetically after the `lovely-home-guide-media-*` list.
 
 Archive is required for customer deprovision: missing `PLATFORM_SITE_ARCHIVE_SECRET` or a failed hub fetch **stops** teardown so the live hub is not destroyed without a copy. Sync GitHub secrets from Terraform state with:
 

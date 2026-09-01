@@ -128,16 +128,23 @@ function deleteWorker(workerName) {
 console.log(`\n=== Deprovisioning hub site: ${siteId} ===`);
 
 const archiveScript = join(root, 'scripts/archive-hub-site-backup.mjs');
-try {
-  run('node', [archiveScript, siteId]);
-} catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`Pre-deprovision archive failed: ${message}`);
-  process.exit(1);
+const inState = hubSiteModuleInState(siteId, tfDir);
+
+if (inState) {
+  try {
+    run('node', [archiveScript, siteId]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Pre-deprovision archive failed: ${message}`);
+    process.exit(1);
+  }
+} else {
+  console.log(
+    `Skipping archive — ${siteId} is not in terraform state (already destroyed).`
+  );
 }
 
 const workerName = readWorkerName();
-const inState = hubSiteModuleInState(siteId, tfDir);
 
 if (inState) {
   run('node', [generatedTfvars, '--output', tfvarsPath], {

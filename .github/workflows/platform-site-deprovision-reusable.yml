@@ -53,6 +53,8 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_R2_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Validate site_id
         id: validate
@@ -125,6 +127,9 @@ jobs:
           BRANCH="platform/deprovision-${SITE_ID}-${GITHUB_RUN_ID}"
           git checkout -b "$BRANCH"
           git commit -m "platform: drop ${SITE_ID} contract from platform manifest"
+          # checkout's GITHUB_TOKEN extraheader wins over the PAT in the URL and
+          # GitHub reports 403 as github-actions[bot] when the job is contents:read.
+          git config --unset-all http.https://github.com/.extraheader || true
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${BRANCH}"
           gh pr create \
             --title "platform: drop ${SITE_ID} contract from platform manifest" \
@@ -142,6 +147,7 @@ jobs:
             --head "$BRANCH"
 
       - name: Prune HUB_PROXY_SECRETS_JSON
+        if: always()
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
