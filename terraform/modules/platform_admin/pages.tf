@@ -96,6 +96,12 @@ locals {
         value = var.marketing_site_origin
       }
     },
+    var.marketing_access_app_id != "" ? {
+      MARKETING_ACCESS_APP_ID = {
+        type  = "plain_text"
+        value = var.marketing_access_app_id
+      }
+    } : {},
     var.public_signup_enabled ? {
       PUBLIC_SIGNUP_ENABLED = {
         type  = "plain_text"

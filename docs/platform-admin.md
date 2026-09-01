@@ -67,8 +67,10 @@ Git-connected Production builds run `npm run build:platform`. The manifest is **
 | `PLATFORM_OPERATOR_EMAILS` | Comma-separated operator emails |
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID` | Access service token client ID (Terraform) |
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET` | Access service token secret (Terraform) |
-| `PLATFORM_CF_API_TOKEN` | Optional — Cloudflare API token for D1/R2 usage (Terraform `platform_cf_api_token`) |
+| `PLATFORM_CF_API_TOKEN` | Optional — Cloudflare API token for D1/R2 usage, Pages preview toggles, and marketing OTP guests (Terraform `platform_cf_api_token`). Needs **Access: Apps and Policies Edit** for the marketing list |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID (Terraform) |
+| `MARKETING_SITE_ORIGIN` | Marketing site origin (default `https://lovely-home.co.uk`) |
+| `MARKETING_ACCESS_APP_ID` | Access application id for the pre-launch marketing gate (set when `marketing_site_access_protected` is true) |
 
 Health probes call each hub site's `/api/health` and `/api/access-probe`. Those URLs are Access-protected, so Terraform creates a **service token** on the platform Pages project and adds an `any_valid_service_token` allow policy on each Terraform-managed hub site's Pages + Worker Access apps.
 
@@ -99,7 +101,20 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 - Direct **Access probe** link per site
 - **Check all usage** / per-site **Check usage** — D1 database size and R2 bucket usage vs Cloudflare free-tier limits (10 GB R2, 5 GB D1 per account)
 
-Set `PLATFORM_CF_API_TOKEN` (Account Read, D1 Read, R2 Read) and `CLOUDFLARE_ACCOUNT_ID` on the platform Pages project (`platform_cf_api_token` in Terraform). Usage is fetched server-side via the Cloudflare API when you click Check usage.
+Set `PLATFORM_CF_API_TOKEN` (Account Read, D1 Read, R2 Read, Pages Edit, **Access: Apps and Policies Edit**) and `CLOUDFLARE_ACCOUNT_ID` on the platform Pages project (`platform_cf_api_token` in Terraform). Usage is fetched server-side via the Cloudflare API when you click Check usage. The same token updates the marketing-site OTP list.
+
+## Marketing site OTP list
+
+While `marketing_site_access_protected = true`, **Marketing site access** on the dashboard lists who can OTP into `lovely-home.co.uk`.
+
+- **Operators** (`platform_operator_emails`) always stay on that list and cannot be removed here. They also reach this dashboard.
+- **Guests** are extra emails you add on the panel. They can open the marketing site only.
+
+Do not add a previewer to `platform_operator_emails` unless they should also open `platform.lovely-home.co.uk`.
+
+Terraform ignores guest drift on the marketing Access app (`lifecycle.ignore_changes = [policies]`), so a later apply does not wipe emails added here. Operator-list changes in tfvars are re-applied the next time you add or remove a guest from the dashboard.
+
+If the panel shows a Cloudflare 403, update `platform_cf_api_token` with **Access: Apps and Policies Edit** and re-apply.
 
 ## v3 — site wizard
 
@@ -178,3 +193,4 @@ See [platform-provision.md](./platform-provision.md#v5--automated-deprovision).
 
 - [platform-terraform.md](./platform-terraform.md) — site provisioning
 - [platform/sites.yaml](../platform/sites.yaml) — manifest
+- [website/README.md](../website/README.md) — marketing site Access gate

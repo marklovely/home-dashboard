@@ -17,6 +17,7 @@
 ### Platform
 
 - Automated restore from R2 archive when a cancelled hub re-subscribes
+- Add extra marketing-site OTP emails from the platform dashboard (guests, not operators)
 
 ## 2.4.0
 

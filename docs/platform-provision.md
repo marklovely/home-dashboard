@@ -215,7 +215,7 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 | `SITTER_EMAILS` | Optional fallback when a site has no `sitter_emails` in the registry |
 | `CF_ACCESS_MANAGEMENT_TOKEN` | Optional dedicated token for hub Settings sitter-email sync (defaults to `CLOUDFLARE_API_TOKEN` in CI) |
 | `PLATFORM_GITHUB_TOKEN` | Same PAT as platform admin Pages env — **must also be a GitHub Actions repo secret** so site-manage can open PRs, provision can open the post-provision follow-up PR, and deprovision can prune `HUB_PROXY_SECRETS_JSON` (needs **repo secrets** write) |
-| `PLATFORM_CF_API_TOKEN` | Same token as platform admin Pages env (optional — usage + preview toggles) |
+| `PLATFORM_CF_API_TOKEN` | Same token as platform admin Pages env (optional — usage, preview toggles, marketing OTP guests). Needs **Access: Apps and Policies Edit** for the guest list |
 | `STRIPE_SECRET_KEY` | Same as `stripe_secret_key` in hub.tfvars — **required for billing** or CI terraform apply strips Stripe vars from platform Pages |
 | `STRIPE_WEBHOOK_SECRET` | Same as `stripe_webhook_secret` in hub.tfvars |
 | `STRIPE_PRICE_ID` | Same as `stripe_price_id` in hub.tfvars (monthly, e.g. £9.99/month) |

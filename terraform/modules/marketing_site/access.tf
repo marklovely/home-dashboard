@@ -34,4 +34,10 @@ resource "cloudflare_zero_trust_access_application" "marketing_site" {
     precedence = 1
     include    = local.operator_policy_includes
   }] : []
+
+  # Dashboard-managed preview guests are extra emails on this policy.
+  # Ignore drift so terraform apply does not wipe them.
+  lifecycle {
+    ignore_changes = [policies]
+  }
 }

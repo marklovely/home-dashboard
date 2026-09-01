@@ -25,8 +25,8 @@ platform_operator_emails = [
 # Optional — enables platform admin site wizard (GitHub Actions PR automation)
 # platform_github_token = "ghp_..."
 
-# Optional — enables D1/R2 storage usage checks in platform admin
-# platform_cf_api_token = "..." # Account Read, D1 Read, R2 Read
+# Optional — D1/R2 usage, PR preview toggles, and marketing-site OTP guest list
+# platform_cf_api_token = "..." # Account Read, D1 Read, R2 Read, Pages Edit, Access: Apps and Policies Edit
 
 # Stripe billing on platform admin (required if billing enabled — terraform apply wipes dashboard-only vars)
 # stripe_secret_key     = "sk_test_..."
@@ -46,7 +46,9 @@ platform_operator_emails = [
 # resend_api_key       = "re_..."
 # customer_email_from  = "Lovely Home <support@lovely-home.co.uk>"
 
-# Pre-launch: OTP-gate the marketing site for platform_operator_emails only. Set false at public launch.
+# Pre-launch: OTP-gate lovely-home.co.uk. Operators come from platform_operator_emails.
+# Extra preview emails: platform dashboard → Marketing site access (not this list).
+# Set false at public launch.
 # marketing_site_access_protected = true
 
 # Preview builds for non-main branches (platform admin + Terraform-managed hub Pages). Default true.
