@@ -89,6 +89,41 @@ describe('hubPagesPlatformPathUnavailable', () => {
   });
 });
 
+describe('deploy-cloudflare-pages-site', () => {
+  const deployScript = () =>
+    readFileSync(join(process.cwd(), 'scripts/deploy-cloudflare-pages-site.sh'), 'utf8');
+
+  const pagesDeployFn = (script) => script.match(/pages_deploy\(\) \{[\s\S]*?\n\}/)?.[0] ?? '';
+
+  it('does not pass --functions-directory (Wrangler 4 pages deploy rejects it)', () => {
+    const script = deployScript();
+    const deployFn = pagesDeployFn(script);
+    expect(deployFn).toMatch(/cd "\$HUB_FUNCTIONS_CWD"/);
+    expect(deployFn).toMatch(/npx wrangler pages deploy "\$ROOT\/dist"/);
+    expect(deployFn).not.toMatch(/functions-directory|functionsDirectory/);
+    expect(script).toContain('prune-hub-pages-functions.mjs');
+    expect(script).toContain('--out "$HUB_FUNCTIONS_CWD/functions"');
+  });
+
+  it('only passes flags wrangler pages deploy still accepts', () => {
+    const deployFn = pagesDeployFn(deployScript());
+    const help = spawnSync('npx', ['wrangler', 'pages', 'deploy', '--help'], {
+      encoding: 'utf8',
+      timeout: 90_000
+    });
+    expect(help.status, help.stderr || help.stdout).toBe(0);
+    const helpText = `${help.stdout}\n${help.stderr}`;
+    const flags = [...deployFn.matchAll(/--([a-z][a-z0-9-]*)/g)].map((match) => match[1]);
+    expect(flags).toEqual(['project-name', 'branch', 'commit-dirty']);
+    for (const flag of flags) {
+      expect(helpText, `unknown wrangler pages deploy flag --${flag}`).toMatch(
+        new RegExp(`--${flag}\\b`)
+      );
+    }
+    expect(helpText).not.toMatch(/--functions-directory/);
+  });
+});
+
 describe('prune-hub-pages-functions', () => {
   it('copies hub Functions without platform, stripe, or public routes', () => {
     const dest = mkdtempSync(join(tmpdir(), 'hub-functions-'));

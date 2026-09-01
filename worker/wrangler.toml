@@ -349,9 +349,18 @@ name = "lovely-home-hub-api-wagtail"
 
 [env.wagtail.vars]
 HUB_ENVIRONMENT = "wagtail"
+
 ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://wagtail.lovely-hub.com,https://home-dashboard-wagtail.pages.dev,https://*.home-dashboard-wagtail.pages.dev,https://*.pages.dev"
+
 HOME_LATITUDE = "51.5074"
+
 HOME_LONGITUDE = "-0.1278"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
+ACCESS_PAGES_APP_ID = "c3a2aba1-b82e-4d7c-a962-d27979809a66"
+
+ACCESS_WORKER_APP_ID = "fdbe55ec-1f74-4bd4-97ac-7cd056f17314"
 
 [[env.wagtail.durable_objects.bindings]]
 name = "OWNER_AUTH_LIMITER"
@@ -368,13 +377,13 @@ bucket_name = "lovely-home-appliance-guides-wagtail"
 [[env.wagtail.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-wagtail"
-database_id = "REPLACE_AFTER_PROVISION_WAGTAIL"
+database_id = "84bac5f1-0517-478d-80bf-c8ff309d505e"
 migrations_dir = "migrations"
 
 [[env.wagtail.d1_databases]]
 binding = "HOUSE_GUIDE_DB"
 database_name = "lovely-home-appliance-manuals-wagtail"
-database_id = "REPLACE_AFTER_PROVISION_WAGTAIL"
+database_id = "84bac5f1-0517-478d-80bf-c8ff309d505e"
 migrations_dir = "migrations"
 
 [[env.wagtail.r2_buckets]]

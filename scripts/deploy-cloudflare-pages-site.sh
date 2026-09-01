@@ -32,15 +32,21 @@ npm ci
 VITE_HUB_ENVIRONMENT="$HUB_ENV" VITE_DEPLOYMENT_MODE=home npm run build
 
 echo "==> Staging hub-only Pages Functions (no platform/stripe/public routes)"
-node "$ROOT/scripts/prune-hub-pages-functions.mjs" --out dist-hub-functions
+# Wrangler 4 looks for ./functions in cwd. --functions-directory was removed
+# in 4.128 and fails provision with "Unknown arguments".
+HUB_FUNCTIONS_CWD="$ROOT/dist-hub-functions"
+rm -rf "$HUB_FUNCTIONS_CWD"
+node "$ROOT/scripts/prune-hub-pages-functions.mjs" --out "$HUB_FUNCTIONS_CWD/functions"
 
 echo "==> Deploying dist/ to Cloudflare Pages (branch=$BRANCH)"
 pages_deploy() {
-  npx wrangler pages deploy dist \
-    --project-name="$PAGES_PROJECT" \
-    --branch="$BRANCH" \
-    --commit-dirty=true \
-    --functions-directory dist-hub-functions
+  (
+    cd "$HUB_FUNCTIONS_CWD"
+    npx wrangler pages deploy "$ROOT/dist" \
+      --project-name="$PAGES_PROJECT" \
+      --branch="$BRANCH" \
+      --commit-dirty=true
+  )
 }
 
 pages_deploy
