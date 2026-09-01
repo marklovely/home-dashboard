@@ -30,7 +30,7 @@ describe('hub help guides', () => {
       dialogId: 'test-owner-help-faq'
     });
     expect(document.querySelector('.help-guide-content-title')?.textContent).toBe('Common questions');
-    expect(document.querySelector('.help-guide-qa')).toBeTruthy();
+    expect(document.querySelector('.help-guide-subheading')?.textContent).toBe('Can I try before I pay?');
     document.querySelector('.help-guide-close')?.dispatchEvent(new Event('click'));
 
     openHelpGuide({

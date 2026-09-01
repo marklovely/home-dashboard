@@ -45,6 +45,7 @@ describe('public help catalog', () => {
     expect(text).toMatch(/What if I cancel\?/);
     expect(text).toMatch(/Can I book sits in advance\?/);
     expect(text).toMatch(/Is this a public app\?/);
+    expect(faq.blocks.every((block) => block.type === 'h4' || block.type === 'p')).toBe(true);
   });
 
   it('builds a generic guest guide for the marketing site', () => {
