@@ -10,6 +10,7 @@
 - Fluid type, wrapping, and safe-area padding for phone, tablet, and desktop
 - Product brand and marketing screenshots sync to the `lovely-home-media` R2 bucket
 - Home page brand lockup is larger in the header and hero; satellite pages stay compact
+- Home hero is the cottage mark only (name stays in the header), and opening the menu no longer blurs the page
 
 ### Hub
 
