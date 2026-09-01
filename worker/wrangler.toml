@@ -349,9 +349,18 @@ name = "lovely-home-hub-api-kitchen-home"
 
 [env.kitchen-home.vars]
 HUB_ENVIRONMENT = "kitchen-home"
+
 ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://kitchen-home.lovely-hub.com,https://home-dashboard-kitchen-home.pages.dev,https://*.home-dashboard-kitchen-home.pages.dev,https://*.pages.dev"
+
 HOME_LATITUDE = "51.5074"
+
 HOME_LONGITUDE = "-0.1278"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
+ACCESS_PAGES_APP_ID = "1eae870a-bcdc-46f6-aed4-506175dac8ae"
+
+ACCESS_WORKER_APP_ID = "bdce10aa-0d5d-4834-b368-7330b5db157b"
 
 [[env.kitchen-home.durable_objects.bindings]]
 name = "OWNER_AUTH_LIMITER"
@@ -368,13 +377,13 @@ bucket_name = "lovely-home-appliance-guides-kitchen-home"
 [[env.kitchen-home.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-kitchen-home"
-database_id = "REPLACE_AFTER_PROVISION_KITCHEN-HOME"
+database_id = "7a4a67bf-7965-4b77-923d-9a5700339d99"
 migrations_dir = "migrations"
 
 [[env.kitchen-home.d1_databases]]
 binding = "HOUSE_GUIDE_DB"
 database_name = "lovely-home-appliance-manuals-kitchen-home"
-database_id = "REPLACE_AFTER_PROVISION_KITCHEN-HOME"
+database_id = "7a4a67bf-7965-4b77-923d-9a5700339d99"
 migrations_dir = "migrations"
 
 [[env.kitchen-home.r2_buckets]]
