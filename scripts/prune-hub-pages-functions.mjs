@@ -6,8 +6,8 @@
  * Usage:
  *   node scripts/prune-hub-pages-functions.mjs
  *     In-place (Cloudflare Pages GitHub build for a hub project).
- *   node scripts/prune-hub-pages-functions.mjs --out dist-hub-functions
- *     Copy hub-only Functions into a staging directory (wrangler deploy).
+ *   node scripts/prune-hub-pages-functions.mjs --out dist-hub-functions/functions
+ *     Copy hub-only Functions into ./functions for Wrangler 4 pages deploy.
  */
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname, isAbsolute, join } from 'node:path';

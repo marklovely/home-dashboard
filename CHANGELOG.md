@@ -32,6 +32,7 @@
 - Marketing site access panel sits at the top of the dashboard, above the site cards
 - Public contact form on Support (`POST /api/public/contact`) emails `support@lovely-home.co.uk` via Resend
 - Re-attach production `HUB_API` Pages bindings after main deploys (sandbox was losing the Worker link on every marketing merge)
+- Hub Pages deploy stages pruned Functions as `./functions` for Wrangler 4 (`--functions-directory` was removed and blocked new-hub provision)
 
 ## 2.4.0
 

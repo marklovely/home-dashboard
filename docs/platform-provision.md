@@ -257,6 +257,8 @@ bash scripts/verify-cloudflare-api-token.sh
 
 **Deploy fails with `Authentication error [code: 10000]` on `/workers/subdomain`:** Add **Workers Routes → Edit** on zone `lovely-home.co.uk` (included in Cloudflare’s “Edit Cloudflare Workers” template). Re-run verify — it checks the subdomain endpoint before terraform apply.
 
+**Pages deploy fails with `Unknown arguments: functions-directory`:** Wrangler 4.128 dropped that flag. `deploy-cloudflare-pages-site.sh` now stages pruned Functions as `dist-hub-functions/functions` and runs wrangler from that directory. Do not add the old flag back.
+
 **Post-worker apply fails with `Invalid Service name ()` (8000022):** CI runs `scripts/attach-hub-api-pages-binding.mjs` (direct Cloudflare API) then redeploys Pages so the binding is active. Local: `bash scripts/deploy-cloudflare-pages-site.sh <site_id>` after Worker deploy.
 
 **Platform admin shows `HUB_API binding no` after provision:** The binding is project-level; the **active** Pages deployment must be created after attach. `deploy-cloudflare-pages-site.sh` attaches then redeploys automatically. Re-run that script or **Platform site deploy** for the site.
