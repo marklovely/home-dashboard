@@ -1,10 +1,12 @@
 {
-  "generatedAt": "2026-09-01T11:18:14.731Z",
+  "generatedAt": "2026-09-01T20:46:42.263Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
     "accessTeamDomain": "lovely-home",
-    "zoneName": "lovely-home.co.uk"
+    "zoneName": "lovely-home.co.uk",
+    "marketingAccessAppId": "c3bf4dd5-2a7d-48d7-8d7f-b8061df2219a",
+    "marketingSiteOrigin": "https://lovely-home.co.uk"
   },
   "sites": {
     "production": {
@@ -369,6 +371,72 @@
         "worker_api_origin": "https://lovely-home-hub-api-smith.mark-lovely67.workers.dev",
         "worker_hostname": "lovely-home-hub-api-smith.mark-lovely67.workers.dev",
         "worker_name": "lovely-home-hub-api-smith"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    },
+    "wagtail": {
+      "siteId": "wagtail",
+      "hostname": "wagtail.lovely-hub.com",
+      "hubEnvironment": "wagtail",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "hasOwnerEmails": false,
+      "demoPublic": false,
+      "accessEnabled": true,
+      "pagesProject": "home-dashboard-wagtail",
+      "workerName": "lovely-home-hub-api-wagtail",
+      "pagesUrl": "https://wagtail.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-wagtail.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "87aa24c4b07ad5b4d65780e15a01cc8f69b377ce2cffc5b12d68629768428315,a0a8c80eeb4227a25b3ffe8b1a1fe185acf94d406021412f343d05e0560b9a85",
+        "access_enabled": true,
+        "access_pages_app_id": "c3a2aba1-b82e-4d7c-a962-d27979809a66",
+        "access_pages_aud": "a0a8c80eeb4227a25b3ffe8b1a1fe185acf94d406021412f343d05e0560b9a85",
+        "access_worker_app_id": "fdbe55ec-1f74-4bd4-97ac-7cd056f17314",
+        "access_worker_aud": "87aa24c4b07ad5b4d65780e15a01cc8f69b377ce2cffc5b12d68629768428315",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "84bac5f1-0517-478d-80bf-c8ff309d505e",
+        "d1_database_name": "lovely-home-appliance-manuals-wagtail",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "wagtail.lovely-hub.com",
+        "hub_environment": "wagtail",
+        "pages_project": "home-dashboard-wagtail",
+        "pages_url": "https://wagtail.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-wagtail",
+        "r2_media_bucket": "lovely-home-guide-media-wagtail",
+        "site_id": "wagtail",
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-wagtail.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-wagtail.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-wagtail"
       },
       "provisioning": [
         {
