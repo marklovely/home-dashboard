@@ -123,7 +123,7 @@ def category_arrival() -> dict[str, Any]:
         "title": "Arrival",
         "cardSubtitle": "Directions • Keys • EV charging",
         "iconId": "key-round",
-        "accent": "#8b7cff",
+        "accent": "#7eab90",
         "searchTerms": ["arrival", "finding", "parking", "lockbox", "directions"],
         "topics": [
             _topic(
@@ -1462,7 +1462,7 @@ def category_local() -> dict[str, Any]:
         "title": "Local Area",
         "cardSubtitle": "Shops • Pubs • Walks",
         "iconId": "map-pin",
-        "accent": "#8b7cff",
+        "accent": "#7eab90",
         "searchTerms": ["local", "shop", "pub", "walk", "food"],
         "topics": [
             _topic(

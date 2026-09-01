@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Marketing site
+
+- Forest-and-stone palette in place of purple; cottage house mark and serif wordmark
+- Horizontal header nav on desktop, fewer gradient banners, glow shadows, and pill labels
+
+### Hub
+
+- Default accents follow the same forest/sage palette
+
 ### Platform
 
 - Automated restore from R2 archive when a cancelled hub re-subscribes

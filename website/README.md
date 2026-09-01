@@ -71,6 +71,8 @@ Screenshots live in `website/screenshots/` as JPEG/PNG exports from the live hub
 
 Brand assets:
 
-- `lovely-home-logo-dark.png` — wordmark for the light marketing pages
-- `lovely-home-logo.png` — light wordmark for dark backgrounds (hub shell / R2)
-- `favicon.png` — square hub icon for browser tabs
+- `lovely-home-mark.svg` — house mark for the header lockup
+- `lovely-home-icon.svg` / `favicon.png` — rounded forest icon for tabs and QR badges
+- `lovely-home-og.png` — Open Graph image (stone ground, forest mark, serif wordmark)
+- `lovely-home-lockup-light.svg` / `lovely-home-lockup-dark.svg` — sources for raster wordmarks
+- `../assets/lovely-home-logo.png` — light wordmark on dark for the hub shell / R2

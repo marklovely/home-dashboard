@@ -266,7 +266,7 @@
       "title": "Local area",
       "cardSubtitle": "Shops • Walks • Food",
       "iconId": "map-pin",
-      "accent": "#8b7cff",
+      "accent": "#7eab90",
       "searchTerms": ["local", "shop", "pub", "walk", "restaurant"],
       "topics": [
         {

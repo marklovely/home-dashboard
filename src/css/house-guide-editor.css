@@ -123,7 +123,7 @@
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .house-guide-editor-topic-row:hover {
-  border-color: color-mix(in srgb, var(--accent, #8b7cff) 35%, var(--border));
+  border-color: color-mix(in srgb, var(--accent, #7eab90) 35%, var(--border));
   background: rgba(255, 255, 255, 0.06);
 }
 .house-guide-editor-topic-row-wrap {
@@ -144,7 +144,7 @@
 }
 .guide-editor-reorder-placeholder {
   border-radius: 14px;
-  border: 2px dashed color-mix(in srgb, var(--accent, #8b7cff) 50%, var(--border));
+  border: 2px dashed color-mix(in srgb, var(--accent, #7eab90) 50%, var(--border));
   background: rgba(139, 124, 255, 0.1);
   box-sizing: border-box;
   min-height: 56px;
@@ -336,7 +336,7 @@ body.guide-editor-is-reordering .guide-editor-drag-handle {
   box-shadow: none;
 }
 .guide-editor-block[data-block-type='text'] {
-  --block-accent: #8b7cff;
+  --block-accent: #7eab90;
 }
 .guide-editor-block[data-block-type='tip'] {
   --block-accent: #28d17c;
@@ -386,8 +386,8 @@ body.guide-editor-is-reordering .guide-editor-drag-handle {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--block-accent, #8b7cff);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--block-accent, #8b7cff) 22%, transparent);
+  background: var(--block-accent, #7eab90);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--block-accent, #7eab90) 22%, transparent);
 }
 .guide-editor-block-body {
   display: grid;
@@ -442,8 +442,8 @@ body.guide-editor-is-reordering .guide-editor-drag-handle {
 .guide-editor-field select:focus-visible,
 .house-guide-editor-add-select:focus-visible {
   outline: none;
-  border-color: color-mix(in srgb, var(--accent, #8b7cff) 45%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #8b7cff) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #7eab90) 45%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #7eab90) 18%, transparent);
   background: rgba(0, 0, 0, 0.24);
 }
 .guide-editor-inline-field {
@@ -537,7 +537,7 @@ body.guide-editor-is-reordering .guide-editor-drag-handle {
 .house-guide-editor-app .button-primary {
   border: 0;
   color: #fff;
-  background: linear-gradient(135deg, #9b8cff 0%, #7b66ff 100%);
+  background: linear-gradient(135deg, #7eab90 0%, #3f7a5c 100%);
   box-shadow: 0 8px 20px rgba(123, 102, 255, 0.28);
 }
 .house-guide-editor-app .button-primary:hover {
@@ -699,7 +699,7 @@ body.guide-editor-is-reordering .guide-editor-drag-handle {
 .help-guide-inline-link {
   border: 0;
   background: transparent;
-  color: var(--accent, #8b7cff);
+  color: var(--accent, #7eab90);
   font-size: 0.88rem;
   font-weight: 700;
   padding: 4px 0;
@@ -991,7 +991,7 @@ body.guide-editor-preview-open {
   color: var(--text);
 }
 .guide-editor-format-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent, #8b7cff) 55%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--accent, #7eab90) 55%, transparent);
   outline-offset: 1px;
 }
 .guide-editor-emoji-picker {

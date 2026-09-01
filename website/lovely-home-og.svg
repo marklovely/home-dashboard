@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Lovely Home">
+  <rect width="1200" height="630" fill="#F4F1EA"/>
+  <g transform="translate(268, 175) scale(2.35)">
+    <path fill="#2F5A43" fill-rule="evenodd" d="M32 8.2 58 30.4v3.4H52.2V55H11.8V33.8H6V30.4L32 8.2Zm0 14.6a5.4 5.4 0 1 0 0 10.8 5.4 5.4 0 0 0 0-10.8ZM28.8 41.2h6.4V55h-6.4V41.2Z"/>
+  </g>
+  <text x="430" y="318" fill="#1C241E" font-family="Iowan Old Style, Palatino Linotype, Palatino, Georgia, serif" font-size="72" font-weight="600">Lovely Home</text>
+  <text x="434" y="368" fill="#5A6258" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="600" letter-spacing="0.32em">HOME HUB</text>
+</svg>

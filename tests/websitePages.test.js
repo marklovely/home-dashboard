@@ -165,4 +165,16 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/href="signup\.html"/);
     expect(html).toMatch(/Start free trial/);
   });
+
+  it('uses the forest brand palette and house mark, not purple wordmarks', () => {
+    const css = readFileSync(join(website, 'site.css'), 'utf8');
+    expect(css).toContain('--accent: #2f5a43');
+    expect(css).not.toMatch(/#6b52e8|#8b7cff/);
+    for (const name of pages) {
+      const html = readPage(name);
+      expect(html, name).toContain('lovely-home-mark.svg');
+      expect(html, name).toContain('lovely-home-og.png');
+      expect(html, name).not.toContain('lovely-home-logo-dark.png');
+    }
+  });
 });

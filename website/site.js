@@ -5,7 +5,18 @@
     const backdrop = document.querySelector('.nav-backdrop');
     if (!toggle || !nav) return;
 
+    const desktopNav = window.matchMedia('(min-width: 900px)');
+
     function setOpen(open) {
+      if (desktopNav.matches) {
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'Open menu');
+        nav.removeAttribute('aria-hidden');
+        document.documentElement.classList.remove('nav-open');
+        if (backdrop) backdrop.hidden = true;
+        return;
+      }
+
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
       nav.setAttribute('aria-hidden', open ? 'false' : 'true');
@@ -14,6 +25,9 @@
     }
 
     setOpen(false);
+    desktopNav.addEventListener('change', function () {
+      setOpen(false);
+    });
 
     function closeNav() {
       setOpen(false);
