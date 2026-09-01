@@ -17,7 +17,7 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 | `/help.html` | Owner and guest how-to guides (same copy as the hub), starting with Set it up and Common questions |
 | `/app.html` | Screenshot gallery |
 | `/support.html` | Contact form, common questions, billing links, and entry to Help |
-| `/privacy.html` | Privacy policy |
+| `/privacy.html` | Privacy policy, including cookies |
 | `/terms.html` | Terms of service |
 
 Public demo hub: [demo.lovely-home.co.uk/sign-in](https://demo.lovely-home.co.uk/sign-in) — username `demo`, password `lovely-demo`.

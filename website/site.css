@@ -2152,3 +2152,41 @@ html.gallery-open {
   color: var(--muted);
   text-align: right;
 }
+
+.cookie-notice {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -12px 32px rgba(28, 36, 30, 0.08);
+  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+.cookie-notice-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem 1.25rem;
+  flex-wrap: wrap;
+  max-width: 68rem;
+  margin: 0 auto;
+}
+
+.cookie-notice p {
+  flex: 1 1 16rem;
+  margin: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.cookie-notice-accept {
+  flex: 0 0 auto;
+  padding: 0.65rem 1.15rem;
+}
+
+html.cookie-notice-open {
+  padding-bottom: 7.5rem;
+}

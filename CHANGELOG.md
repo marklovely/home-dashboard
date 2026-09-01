@@ -15,6 +15,7 @@
 - Common questions (trial, billing, booking sits) live in Help and Support, not only on Pricing
 - Common questions on Help use the same heading/paragraph blocks as the rest of the guide so the answers actually show
 - Support is the contact form, billing, and links into those guides
+- Cookie bar on every marketing page: necessary cookies only, no analytics or ads
 
 ### Hub
 

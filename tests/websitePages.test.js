@@ -156,6 +156,16 @@ describe('marketing site pages', () => {
     expect(versionFile.version).toBe(pkg.version);
   });
 
+  it('explains necessary cookies and paints the notice from site.js', () => {
+    const siteJs = readFileSync(join(website, 'site.js'), 'utf8');
+    expect(siteJs).toMatch(/lovely-home-cookie-notice/);
+    expect(siteJs).toMatch(/className = 'cookie-notice'/);
+    const css = readFileSync(join(website, 'site.css'), 'utf8');
+    expect(css).toMatch(/\.cookie-notice \{/);
+    expect(readPage('privacy.html')).toMatch(/id="cookies"/);
+    expect(readPage('privacy.html')).toMatch(/does not use advertising or analytics cookies/);
+  });
+
   it('gallery includes a trial call to action', () => {
     const html = readPage('app.html');
     expect(html).toMatch(/href="signup\.html"/);
