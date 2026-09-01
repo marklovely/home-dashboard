@@ -109,29 +109,44 @@ export const PUBLIC_HELP_CATALOG = {
       ],
       "blocks": [
         {
-          "type": "qa",
-          "question": "Can I try before I pay?",
-          "answer": "Yes. Use the public demo with fictional data, or start a free trial for your own private hub. Use the week to fill in the guide before anyone stays — the trial is not a free guest stay. You can send the hub URL to a sitter; a wall tablet is optional."
+          "type": "h4",
+          "text": "Can I try before I pay?"
         },
         {
-          "type": "qa",
-          "question": "When am I charged?",
-          "answer": "Not at signup. The first charge happens when your 7-day trial ends, unless you cancel before then. Stripe shows the exact date during checkout."
+          "type": "p",
+          "text": "Yes. Use the public demo with fictional data, or start a free trial for your own private hub. Use the week to fill in the guide before anyone stays — the trial is not a free guest stay. You can send the hub URL to a sitter; a wall tablet is optional."
         },
         {
-          "type": "qa",
-          "question": "What if I cancel?",
-          "answer": "Cancel before the trial ends and you pay nothing. If you cancel later, access continues until the end of the paid period, then the hub is taken down and archived. Cancel from your account page or by emailing support."
+          "type": "h4",
+          "text": "When am I charged?"
         },
         {
-          "type": "qa",
-          "question": "Can I book sits in advance?",
-          "answer": "Yes. Add each stay with dates and the sitter’s email under Settings → House sitter mode. They can read the house guide from 7 days before; Wi‑Fi, address, and lockbox appear on the sit dates; their login is removed the day after checkout. Add as many upcoming stays as you need."
+          "type": "p",
+          "text": "Not at signup. The first charge happens when your 7-day trial ends, unless you cancel before then. Stripe shows the exact date during checkout."
         },
         {
-          "type": "qa",
-          "question": "Is this a public app?",
-          "answer": "No. Each paying household gets a private hub — only people you invite can sign in."
+          "type": "h4",
+          "text": "What if I cancel?"
+        },
+        {
+          "type": "p",
+          "text": "Cancel before the trial ends and you pay nothing. If you cancel later, access continues until the end of the paid period, then the hub is taken down and archived. Cancel from your account page or by emailing support."
+        },
+        {
+          "type": "h4",
+          "text": "Can I book sits in advance?"
+        },
+        {
+          "type": "p",
+          "text": "Yes. Add each stay with dates and the sitter’s email under Settings → House sitter mode. They can read the house guide from 7 days before; Wi‑Fi, address, and lockbox appear on the sit dates; their login is removed the day after checkout. Add as many upcoming stays as you need."
+        },
+        {
+          "type": "h4",
+          "text": "Is this a public app?"
+        },
+        {
+          "type": "p",
+          "text": "No. Each paying household gets a private hub — only people you invite can sign in."
         }
       ]
     },

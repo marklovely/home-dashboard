@@ -43,19 +43,36 @@ function linkedAnswer(text) {
   return fragment;
 }
 
+/**
+ * @param {{ type: string, text?: string, question?: string, answer?: string }} block
+ * @param {{ type: string, text?: string } | undefined} next
+ */
+function faqPair(block, next) {
+  if (block.type === 'qa' && block.question && block.answer) {
+    return { question: block.question, answer: block.answer, skip: 0 };
+  }
+  if (block.type === 'h4' && next?.type === 'p' && next.text) {
+    return { question: block.text, answer: next.text, skip: 1 };
+  }
+  return null;
+}
+
 function paintFaqLists() {
   const roots = document.querySelectorAll('[data-faq-section]');
   for (const root of roots) {
     const section = faqSection(root.getAttribute('data-faq-section') || '');
     if (!section) continue;
     root.replaceChildren();
-    for (const block of section.blocks) {
-      if (block.type !== 'qa') continue;
+    const blocks = section.blocks;
+    for (let index = 0; index < blocks.length; index += 1) {
+      const pair = faqPair(blocks[index], blocks[index + 1]);
+      if (!pair) continue;
+      index += pair.skip;
       const item = document.createElement('div');
       const dt = document.createElement('dt');
-      dt.textContent = block.question;
+      dt.textContent = pair.question;
       const dd = document.createElement('dd');
-      dd.append(linkedAnswer(block.answer));
+      dd.append(linkedAnswer(pair.answer));
       item.append(dt, dd);
       root.append(item);
     }

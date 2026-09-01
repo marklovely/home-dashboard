@@ -13,6 +13,7 @@
 - Home hero is the cottage mark only (name stays in the header), and opening the menu no longer blurs the page
 - Owner and guest hub guides on Help, starting with Set it up; `/setup.html` redirects there
 - Common questions (trial, billing, booking sits) live in Help and Support, not only on Pricing
+- Common questions on Help use the same heading/paragraph blocks as the rest of the guide so the answers actually show
 - Support is the contact form, billing, and links into those guides
 
 ### Hub
