@@ -104,6 +104,7 @@ export function buildCustomerEmail(input) {
   const hubUrl = customerHubUrl(siteId);
   const origin = (input.marketingOrigin || DEFAULT_MARKETING_ORIGIN).replace(/\/$/, '');
   const successUrl = `${origin}/signup-success.html?site=${encodeURIComponent(siteId)}`;
+  const accountUrl = `${origin}/account.html`;
   const trialDate = formatUkDate(input.trialEnd);
 
   if (input.kind === 'signup') {
@@ -119,7 +120,8 @@ export function buildCustomerEmail(input) {
         '',
         'Use the week to fill in the house guide, then share the URL with whoever is staying — a sitter, tenant, Airbnb guest, or anyone else in the home. A wall tablet is optional; nothing extra to buy.',
         '',
-        'You are not charged today. After the trial your card is billed at the plan you chose. Cancel from the Stripe receipt email, or write to support@lovely-home.co.uk before the trial ends, to pay nothing.',
+        'You are not charged today. After the trial your card is billed at the plan you chose. Cancel from your account page before the trial ends to pay nothing:',
+        accountUrl,
         '',
         'Questions: support@lovely-home.co.uk'
       ].join('\n')
@@ -133,7 +135,7 @@ export function buildCustomerEmail(input) {
       text: [
         `Your trial for ${hubUrl} ends${when}. If you do nothing, your card will be charged then.`,
         '',
-        'To cancel and pay nothing, use the link in your Stripe receipt email or write to support@lovely-home.co.uk.',
+        `To cancel and pay nothing, open ${accountUrl} (we email you a code), or write to support@lovely-home.co.uk.`,
         '',
         `Open your hub: ${hubUrl}`
       ].join('\n')
@@ -146,7 +148,7 @@ export function buildCustomerEmail(input) {
       text: [
         `Stripe could not charge the card on file for ${hubUrl}. Your hub stays up while Stripe retries.`,
         '',
-        'Update the card from the Stripe receipt email, or write to support@lovely-home.co.uk.',
+        `Update the card at ${accountUrl} (we email you a code), or write to support@lovely-home.co.uk.`,
         '',
         `Open your hub: ${hubUrl}`
       ].join('\n')

@@ -14,6 +14,12 @@ import {
   publicHubTrialCorsHeaders
 } from '../platform/platformPublicHubTrial.js';
 import { getPublicHubProvisionStatus } from '../platform/platformPublicHubProvision.js';
+import {
+  handleAccountOtpRequest,
+  handleAccountPortal,
+  handleAccountVerify,
+  publicAccountStatus
+} from '../platform/platformPublicAccount.js';
 
 /**
  * Public marketing-site API — /api/public/*
@@ -115,6 +121,42 @@ export async function onRequest(context) {
       },
       { headers: { ...cors, 'Cache-Control': 'no-store' } }
     );
+  }
+
+  if (suffix === 'account/status' && request.method === 'GET') {
+    return Response.json(publicAccountStatus(pagesEnv), {
+      headers: { ...cors, 'Cache-Control': 'no-store' }
+    });
+  }
+
+  if (suffix === 'account/otp' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handleAccountOtpRequest(pagesEnv, getPlatformBillingDb(env), {
+      email: String(body.email ?? '').trim(),
+      clientIp: signupClientIp(request),
+      turnstileToken: String(body.turnstileToken ?? body['cf-turnstile-response'] ?? '').trim()
+    });
+    const headers = { ...cors };
+    if (result.retryAfterSec) headers['Retry-After'] = String(result.retryAfterSec);
+    return Response.json(result.body, { status: result.status, headers });
+  }
+
+  if (suffix === 'account/verify' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handleAccountVerify(pagesEnv, getPlatformBillingDb(env), {
+      email: String(body.email ?? '').trim(),
+      code: String(body.code ?? '').trim()
+    });
+    return Response.json(result.body, { status: result.status, headers: cors });
+  }
+
+  if (suffix === 'account/portal' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handleAccountPortal(pagesEnv, getPlatformBillingDb(env), {
+      sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim(),
+      siteId: String(body.siteId ?? body.site_id ?? '').trim()
+    });
+    return Response.json(result.body, { status: result.status, headers: cors });
   }
 
   if (suffix === 'signup' && request.method === 'POST') {
