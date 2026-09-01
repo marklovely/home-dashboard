@@ -13,6 +13,8 @@
 
 - Pre-deprovision archive fetches the hub Worker (`worker_api_origin`), not the Pages hostname that 404s operator routes
 - Archive R2 upload uses `CLOUDFLARE_ACCOUNT_ID` with the pinned Worker Wrangler, not `--account-id` (removed in Wrangler 4.127)
+- Deprovision manifest follow-up PRs push with the platform PAT, not checkout’s github-actions token
+- Re-running deprovision skips archive and destroy when the hub is already gone from Terraform
 - Billing deprovision stops if that archive does not land in R2, so a failed backup cannot remove the site from git
 - Hub Pages builds drop platform/stripe/public Functions so they cannot shadow the Worker archive route
 - Provision CI reads sensitive Terraform `hub_proxy_secrets` (disable the setup-terraform wrapper) so a new hub is not blocked by production’s proxy secret
