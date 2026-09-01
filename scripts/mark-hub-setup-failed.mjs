@@ -6,6 +6,7 @@
  * Usage:
  *   node scripts/mark-hub-setup-failed.mjs <site-id> --kind provision --message "..."
  *   node scripts/mark-hub-setup-failed.mjs <site-id> --kind registry --message "..."
+ *   node scripts/mark-hub-setup-failed.mjs <site-id> --kind provision --clear
  */
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
@@ -19,16 +20,17 @@ const kindIndex = args.indexOf('--kind');
 const messageIndex = args.indexOf('--message');
 const kind = kindIndex >= 0 ? String(args[kindIndex + 1] ?? '').trim() : '';
 const message = messageIndex >= 0 ? String(args[messageIndex + 1] ?? '').trim() : '';
+const clear = args.includes('--clear');
 const databaseName = process.env.PLATFORM_BILLING_D1_NAME?.trim() || 'lovely-home-platform-billing';
 
 if (!siteId || !kind) {
   console.error(
-    'Usage: node scripts/mark-hub-setup-failed.mjs <site-id> --kind provision|registry [--message "..."]'
+    'Usage: node scripts/mark-hub-setup-failed.mjs <site-id> --kind provision|registry [--message "..."] [--clear]'
   );
   process.exit(1);
 }
 
-const sql = hubSetupFailedSql({ siteId, kind, message });
+const sql = hubSetupFailedSql({ siteId, kind, message, clear });
 
 try {
   execFileSync(
@@ -45,4 +47,8 @@ try {
   process.exit(1);
 }
 
-console.log(`Recorded ${kind} setup failure for ${siteId}`);
+console.log(
+  clear
+    ? `Cleared ${kind} setup failure for ${siteId}`
+    : `Recorded ${kind} setup failure for ${siteId}`
+);

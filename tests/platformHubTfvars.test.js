@@ -73,6 +73,16 @@ describe('hub tfvars helpers', () => {
     expect(hubProxySecretForGeneratedTfvars('demo', inState, randomProxy, {}, {})).toBeUndefined();
   });
 
+  it('names the missing in-state site without requiring HUB_PROXY_SECRETS_JSON for other sites', () => {
+    const inState = new Set(['production', 'kitchen-home']);
+    expect(() =>
+      hubProxySecretForGeneratedTfvars('production', inState, new Set(), { 'kitchen-home': 'new' }, {})
+    ).toThrow(/Missing hub_proxy_secret for in-state site "production"/);
+    expect(() =>
+      hubProxySecretForGeneratedTfvars('production', inState, new Set(), { 'kitchen-home': 'new' }, {})
+    ).toThrow(/Readable secret keys: kitchen-home/);
+  });
+
   it('requires deprovision site to be written into generated tfvars', () => {
     expect(deprovisionSiteMissingError('', new Set())).toBeNull();
     expect(deprovisionSiteMissingError('demo', new Set(['demo']))).toBeNull();

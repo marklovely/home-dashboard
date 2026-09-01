@@ -41,6 +41,17 @@ describe('hub setup failed SQL', () => {
     expect(() => hubSetupFailedSql({ siteId: 'smith', kind: 'delete' })).toThrow(/kind must be/i);
   });
 
+  it('clears a previous provision error so a retry can show deploying again', () => {
+    const sql = hubSetupFailedSql({
+      siteId: 'kitchen-home',
+      kind: 'provision',
+      clear: true,
+      now: 1_700_000_000
+    });
+    expect(sql).toContain('provision_last_error = NULL');
+    expect(sql).not.toContain('Hub provision');
+  });
+
   it('clips long messages', () => {
     expect(clipHubSetupFailedMessage('x'.repeat(600))).toHaveLength(500);
   });
@@ -52,6 +63,8 @@ describe('provision workflow records signup-page failures', () => {
     expect(yaml).toMatch(/if:\s*failure\(\)/);
     expect(yaml).toMatch(/mark-hub-setup-failed\.mjs/);
     expect(yaml).toMatch(/--kind provision/);
+    expect(yaml).toMatch(/terraform_wrapper:\s*false/);
+    expect(yaml).toMatch(/--clear/);
   });
 
   it('writes registry_last_error when a create site-manage job fails', () => {

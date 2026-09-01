@@ -73,6 +73,8 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.6
+          # Wrapper redacts sensitive outputs (hub_proxy_secrets) as { sensitive: true, value }.
+          terraform_wrapper: false
 
       - name: Require remote Terraform state
         run: |
@@ -116,6 +118,10 @@ jobs:
       # repository, so Access policies are built from a lookup at apply time.
       - name: Resolve site owner emails from billing
         run: node scripts/fetch-site-owner-emails.mjs "${{ inputs.site_id }}" --github-env
+
+      - name: Clear previous setup failure
+        continue-on-error: true
+        run: node scripts/mark-hub-setup-failed.mjs "${{ inputs.site_id }}" --kind provision --clear
 
       - name: Provision hub site
         run: |
