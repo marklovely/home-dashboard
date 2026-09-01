@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Platform
+
+- Automated restore from R2 archive when a cancelled hub re-subscribes
+
+## 2.4.0
+
+Minor release: owner account page, signup reliability, and hub teardown archives.
+
 ### Signup
 
 - Hub addresses must be DNS-safe (letters, numbers, hyphens). Underscores like `kitchen_home` no longer start a trial that can never deploy.
