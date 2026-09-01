@@ -88,6 +88,30 @@ describe('marketing site pages', () => {
     expect(html).not.toMatch(/A wall mount/);
   });
 
+  it('explains scheduled stays: guide early, secrets on the sit, access after checkout', () => {
+    const home = readPage('index.html');
+    expect(home).toMatch(/Book sits in advance/);
+    expect(home).toMatch(/7 days before/);
+    expect(home).toMatch(/House guide, no secrets/);
+    expect(home).toMatch(/After checkout/);
+
+    const setup = readPage('setup.html');
+    expect(setup).toMatch(/Seven days before/);
+    expect(setup).toMatch(/do not need <em>Sitter is here<\/em> for a booked remote stay/);
+    expect(setup).not.toMatch(/Turn on <em>Sitter is here<\/em> so home-access details appear for that stay/);
+
+    const included = readPage('included.html');
+    expect(included).toMatch(/guide 7 days before/);
+
+    const security = readPage('security.html');
+    expect(security).toMatch(/from 7 days before/);
+    expect(security).toMatch(/day after checkout/);
+
+    const pricing = readPage('pricing.html');
+    expect(pricing).toMatch(/book several sits in one list/);
+    expect(pricing).toMatch(/Can I book sits in advance/);
+  });
+
   it('does not claim prices include VAT', () => {
     for (const name of pages) {
       const html = readPage(name);
