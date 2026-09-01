@@ -23,6 +23,18 @@ describe('public help catalog', () => {
     expect(OWNER_HELP_SECTIONS.some((section) => section.id === 'house-sitter-mode')).toBe(true);
   });
 
+  it('starts owner help with Set it up: URL first, no hardware to buy', () => {
+    expect(OWNER_HELP_SECTIONS[0]).toMatchObject({ id: 'setup', title: 'Set it up' });
+    const setupText = JSON.stringify(OWNER_HELP_SECTIONS[0]);
+    expect(setupText).toMatch(/No hardware to buy/);
+    expect(setupText).toMatch(/Send it to a sitter/);
+    expect(setupText).toMatch(/Optional: wall tablet/);
+    expect(setupText).toMatch(/Seven days before/);
+    expect(setupText).toMatch(/You do not need Sitter is here for a booked remote stay/);
+    expect(setupText).not.toMatch(/A wall mount/);
+    expect(setupText).not.toMatch(/Turn on Sitter is here so home-access details appear for that stay/);
+  });
+
   it('builds a generic guest guide for the marketing site', () => {
     const sections = buildSitterHelpSections(PUBLIC_SITTER_HELP_OPTIONS);
     const text = JSON.stringify(sections);

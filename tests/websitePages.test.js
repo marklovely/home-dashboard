@@ -96,12 +96,11 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/Wall tablet, mount, or kiosk hardware/);
   });
 
-  it('setup page treats the hub as a URL, not hardware you must buy', () => {
+  it('setup page redirects to Help → Set it up', () => {
     const html = readPage('setup.html');
-    expect(html).toMatch(/No hardware required/);
-    expect(html).toMatch(/Send it to a sitter/);
-    expect(html).toMatch(/Optional: wall tablet/);
-    expect(html).not.toMatch(/A wall mount/);
+    expect(html).toMatch(/help\.html#owner\/setup/);
+    expect(html).toMatch(/http-equiv="refresh"/);
+    expect(html).toMatch(/location\.replace\('help\.html#owner\/setup'\)/);
   });
 
   it('explains scheduled stays: guide early, secrets on the sit, access after checkout', () => {
@@ -110,11 +109,6 @@ describe('marketing site pages', () => {
     expect(home).toMatch(/7 days before/);
     expect(home).toMatch(/House guide, no secrets/);
     expect(home).toMatch(/After checkout/);
-
-    const setup = readPage('setup.html');
-    expect(setup).toMatch(/Seven days before/);
-    expect(setup).toMatch(/do not need <em>Sitter is here<\/em> for a booked remote stay/);
-    expect(setup).not.toMatch(/Turn on <em>Sitter is here<\/em> so home-access details appear for that stay/);
 
     const included = readPage('included.html');
     expect(included).toMatch(/guide 7 days before/);
@@ -209,7 +203,11 @@ describe('marketing site pages', () => {
     const help = readPage('help.html');
     expect(help).toMatch(/Using the hub/);
     expect(help).toMatch(/Staying as a guest/);
+    expect(help).toMatch(/Set it up, House Guide/);
     expect(help).toContain('src="help.js"');
+    expect(readPage('index.html')).toMatch(/help\.html#owner\/setup/);
+    expect(readPage('included.html')).toMatch(/help\.html#owner\/setup/);
+    expect(readPage('support.html')).toMatch(/help\.html#owner\/setup/);
     const helpJs = readFileSync(join(website, 'help.js'), 'utf8');
     expect(helpJs).toMatch(/from '\.\/help-data\.js'/);
 

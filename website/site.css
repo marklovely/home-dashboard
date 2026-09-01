@@ -361,7 +361,8 @@ html.nav-open {
   margin: 0 0 0.65rem;
 }
 
-.content-card ul {
+.content-card ul,
+.content-card ol {
   margin: 0;
   padding-left: 1.2rem;
 }
@@ -1988,6 +1989,11 @@ html.gallery-open {
 
 .help-article h2 {
   margin-top: 0;
+}
+
+.help-article ul,
+.help-article ol {
+  margin: 0 0 0.85rem;
 }
 
 .help-subheading {

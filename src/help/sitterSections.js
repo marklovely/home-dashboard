@@ -1,4 +1,4 @@
-/** @typedef {{ type: 'p', text: string } | { type: 'h4', text: string } | { type: 'ul', items: string[] } | { type: 'table', headers: string[], rows: string[][] }} HelpGuideBlock */
+/** @typedef {{ type: 'p', text: string } | { type: 'h4', text: string } | { type: 'ul', items: string[] } | { type: 'ol', items: string[] } | { type: 'table', headers: string[], rows: string[][] }} HelpGuideBlock */
 
 /** @typedef {{ id: string, title: string, keywords: string[], blocks: HelpGuideBlock[] }} HelpGuideSection */
 

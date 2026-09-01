@@ -13,7 +13,7 @@ export function openOwnerHelp(options = {}) {
     title: OWNER_HELP_TITLE,
     sections: OWNER_HELP_SECTIONS,
     initialSectionId: options.initialSectionId,
-    searchPlaceholder: 'House sitter mode, Guide Editor, manuals…',
+    searchPlaceholder: 'Set it up, House Guide, bins…',
     dialogId: OWNER_HELP_DIALOG_ID
   });
 }
@@ -27,7 +27,7 @@ export function createOwnerHelpButton(options = {}) {
     label: 'Owner guide',
     title: OWNER_HELP_TITLE,
     sections: OWNER_HELP_SECTIONS,
-    searchPlaceholder: 'House sitter mode, Guide Editor, manuals…',
+    searchPlaceholder: 'Set it up, House Guide, bins…',
     dialogId: OWNER_HELP_DIALOG_ID,
     buttonClassName: options.buttonClassName ?? 'button-secondary help-guide-trigger'
   });

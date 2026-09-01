@@ -42,7 +42,7 @@ if (!nav || !article || !searchInput || tabButtons.length === 0) {
       if (section.keywords.some((word) => word.toLowerCase().includes(trimmed))) return true;
       return section.blocks.some((block) => {
         if (block.type === 'p' || block.type === 'h4') return block.text.toLowerCase().includes(trimmed);
-        if (block.type === 'ul') return block.items.some((item) => item.toLowerCase().includes(trimmed));
+        if (block.type === 'ul' || block.type === 'ol') return block.items.some((item) => item.toLowerCase().includes(trimmed));
         if (block.type === 'table') {
           return (
             block.headers.some((cell) => cell.toLowerCase().includes(trimmed)) ||
@@ -61,8 +61,8 @@ if (!nav || !article || !searchInput || tabButtons.length === 0) {
       heading.textContent = block.text;
       return heading;
     }
-    if (block.type === 'ul') {
-      const list = document.createElement('ul');
+    if (block.type === 'ul' || block.type === 'ol') {
+      const list = document.createElement(block.type);
       for (const item of block.items) {
         const li = document.createElement('li');
         li.textContent = item;

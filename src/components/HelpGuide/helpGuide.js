@@ -1,4 +1,4 @@
-/** @typedef {{ type: 'p', text: string } | { type: 'h4', text: string } | { type: 'ul', items: string[] } | { type: 'table', headers: string[], rows: string[][] }} HelpGuideBlock */
+/** @typedef {{ type: 'p', text: string } | { type: 'h4', text: string } | { type: 'ul', items: string[] } | { type: 'ol', items: string[] } | { type: 'table', headers: string[], rows: string[][] }} HelpGuideBlock */
 
 /** @typedef {{ id: string, title: string, keywords: string[], blocks: HelpGuideBlock[] }} HelpGuideSection */
 
@@ -24,7 +24,7 @@ export function searchHelpGuideSections(sections, query) {
     if (section.keywords.some((word) => word.includes(trimmed))) return true;
     return section.blocks.some((block) => {
       if (block.type === 'p' || block.type === 'h4') return block.text.toLowerCase().includes(trimmed);
-      if (block.type === 'ul') return block.items.some((item) => item.toLowerCase().includes(trimmed));
+      if (block.type === 'ul' || block.type === 'ol') return block.items.some((item) => item.toLowerCase().includes(trimmed));
       if (block.type === 'table') {
         return (
           block.headers.some((cell) => cell.toLowerCase().includes(trimmed)) ||
@@ -47,8 +47,8 @@ function renderHelpBlock(block) {
     return heading;
   }
 
-  if (block.type === 'ul') {
-    const list = document.createElement('ul');
+  if (block.type === 'ul' || block.type === 'ol') {
+    const list = document.createElement(block.type);
     list.className = 'help-guide-list';
     for (const item of block.items) {
       const li = document.createElement('li');
