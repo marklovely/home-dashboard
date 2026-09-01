@@ -12,6 +12,7 @@
 - Home page brand lockup is larger in the header and hero; satellite pages stay compact
 - Home hero is the cottage mark only (name stays in the header), and opening the menu no longer blurs the page
 - Owner and guest hub guides on Help, starting with Set it up; `/setup.html` redirects there
+- Common questions (trial, billing, booking sits) live in Help and Support, not only on Pricing
 - Support is the contact form, billing, and links into those guides
 
 ### Hub
@@ -20,6 +21,7 @@
 - Light appearance uses a cream forest palette, a dark wordmark, and a header sun/moon toggle for owners and guests
 - Owner and guest help covers scheduled stays, weather from the home address, and the header theme toggle
 - Set it up is the first owner help topic (trial, sending the hub URL, optional wall tablet)
+- Common questions is the second owner help topic, shared with the marketing site
 
 ### Platform
 

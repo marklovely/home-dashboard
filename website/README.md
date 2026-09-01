@@ -10,13 +10,13 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 | `/included.html` | What the hub includes, what needs your own account, what is not included |
 | `/setup.html` | Redirects to Help → Set it up |
 | `/security.html` | Isolation, sign-in, sitter limits, storage, backup — claims we can stand behind |
-| `/pricing.html` | Full transparent pricing (live amount from platform API) |
+| `/pricing.html` | Full transparent pricing (live amount from platform API); common questions from Help |
 | `/signup.html` | Public trial signup (hub name + email → Stripe Checkout) |
 | `/signup-success.html` | Post-checkout confirmation with live provisioning status |
 | `/account.html` | Owner account: email code, then Stripe Customer Portal |
-| `/help.html` | Owner and guest how-to guides (same copy as the hub), starting with Set it up |
+| `/help.html` | Owner and guest how-to guides (same copy as the hub), starting with Set it up and Common questions |
 | `/app.html` | Screenshot gallery |
-| `/support.html` | Contact form, billing links, and entry to Help |
+| `/support.html` | Contact form, common questions, billing links, and entry to Help |
 | `/privacy.html` | Privacy policy |
 | `/terms.html` | Terms of service |
 

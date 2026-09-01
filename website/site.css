@@ -1689,6 +1689,10 @@ html.nav-open {
   gap: 1.25rem;
 }
 
+.content-card .faq-list {
+  margin: 0.85rem 0 0;
+}
+
 .faq-list dt {
   font-weight: 600;
   margin-bottom: 0.25rem;
@@ -1994,6 +1998,14 @@ html.gallery-open {
 .help-article ul,
 .help-article ol {
   margin: 0 0 0.85rem;
+}
+
+.help-qa {
+  margin: 0 0 1rem;
+}
+
+.help-qa .help-subheading {
+  margin-top: 0;
 }
 
 .help-subheading {

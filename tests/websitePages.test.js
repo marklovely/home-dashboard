@@ -119,7 +119,8 @@ describe('marketing site pages', () => {
 
     const pricing = readPage('pricing.html');
     expect(pricing).toMatch(/book several sits in one list/);
-    expect(pricing).toMatch(/Can I book sits in advance/);
+    expect(pricing).toMatch(/data-faq-section="common-questions"/);
+    expect(pricing).toContain('src="faq.js"');
   });
 
   it('does not claim prices include VAT', () => {
@@ -203,11 +204,14 @@ describe('marketing site pages', () => {
     const help = readPage('help.html');
     expect(help).toMatch(/Using the hub/);
     expect(help).toMatch(/Staying as a guest/);
-    expect(help).toMatch(/Set it up, House Guide/);
+    expect(help).toMatch(/Set it up, Common questions/);
     expect(help).toContain('src="help.js"');
     expect(readPage('index.html')).toMatch(/help\.html#owner\/setup/);
     expect(readPage('included.html')).toMatch(/help\.html#owner\/setup/);
     expect(readPage('support.html')).toMatch(/help\.html#owner\/setup/);
+    expect(readPage('support.html')).toMatch(/help\.html#owner\/common-questions/);
+    expect(readPage('support.html')).toMatch(/data-faq-section="common-questions"/);
+    expect(readPage('support.html')).toContain('src="faq.js"');
     const helpJs = readFileSync(join(website, 'help.js'), 'utf8');
     expect(helpJs).toMatch(/from '\.\/help-data\.js'/);
 

@@ -43,6 +43,9 @@ if (!nav || !article || !searchInput || tabButtons.length === 0) {
       return section.blocks.some((block) => {
         if (block.type === 'p' || block.type === 'h4') return block.text.toLowerCase().includes(trimmed);
         if (block.type === 'ul' || block.type === 'ol') return block.items.some((item) => item.toLowerCase().includes(trimmed));
+        if (block.type === 'qa') {
+          return block.question.toLowerCase().includes(trimmed) || block.answer.toLowerCase().includes(trimmed);
+        }
         if (block.type === 'table') {
           return (
             block.headers.some((cell) => cell.toLowerCase().includes(trimmed)) ||
@@ -69,6 +72,17 @@ if (!nav || !article || !searchInput || tabButtons.length === 0) {
         list.append(li);
       }
       return list;
+    }
+    if (block.type === 'qa') {
+      const wrap = document.createElement('div');
+      wrap.className = 'help-qa';
+      const heading = document.createElement('h3');
+      heading.className = 'help-subheading';
+      heading.textContent = block.question;
+      const paragraph = document.createElement('p');
+      paragraph.textContent = block.answer;
+      wrap.append(heading, paragraph);
+      return wrap;
     }
     if (block.type === 'table') {
       const wrap = document.createElement('div');
