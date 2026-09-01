@@ -189,6 +189,10 @@ html.nav-open .nav-toggle-bar:nth-child(3) {
   overscroll-behavior: contain;
 }
 
+.site-header--home .site-nav {
+  padding-top: calc(8.6rem + env(safe-area-inset-top, 0px));
+}
+
 html.nav-open .site-nav {
   transform: translateX(0);
   visibility: visible;
@@ -265,6 +269,24 @@ html.nav-open {
 
 .site-header-brand .brand-tagline {
   font-size: 0.62rem;
+}
+
+.site-header--home {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
+.site-header--home .brand-mark {
+  width: clamp(2.85rem, 8vw, 3.6rem);
+  height: clamp(2.85rem, 8vw, 3.6rem);
+}
+
+.site-header--home .brand-name {
+  font-size: clamp(1.22rem, 3.2vw, 1.55rem);
+}
+
+.site-header--home .brand-tagline {
+  font-size: 0.72rem;
 }
 
 .page {
@@ -440,7 +462,7 @@ html.nav-open {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.75rem 0 2rem;
+  padding: 2.15rem 0 2.35rem;
 }
 
 .brand-lockup--hero,
@@ -452,21 +474,25 @@ html.nav-open {
 }
 
 .brand-lockup--hero {
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.15rem;
+  margin-bottom: 1.75rem;
+  align-items: center;
+  max-width: 100%;
 }
 
 .brand-lockup--hero .brand-mark {
-  width: 3.5rem;
-  height: 3.5rem;
+  width: clamp(4.75rem, 18vw, 7.25rem);
+  height: clamp(4.75rem, 18vw, 7.25rem);
 }
 
 .brand-lockup--hero .brand-name {
-  font-size: clamp(1.85rem, 4vw, 2.4rem);
+  font-size: clamp(2.4rem, 7.5vw, 3.75rem);
+  white-space: nowrap;
 }
 
 .brand-lockup--hero .brand-tagline {
-  font-size: 0.78rem;
+  font-size: clamp(0.82rem, 2.2vw, 1.05rem);
+  letter-spacing: 0.2em;
 }
 
 .brand-lockup--footer {
@@ -910,6 +936,10 @@ html.nav-open {
     display: none;
   }
 
+  .site-header--home .site-nav {
+    padding-top: 0;
+  }
+
   html.nav-open {
     overflow: visible;
   }
@@ -929,8 +959,29 @@ html.nav-open {
     display: none;
   }
 
+  .site-header--home .brand-tagline {
+    display: block;
+  }
+
   .hero-copy h1 {
     font-size: clamp(1.85rem, 7vw, 2.6rem);
+  }
+}
+
+@media (max-width: 720px) {
+  .brand-lockup--hero {
+    flex-direction: column;
+    gap: 0.7rem;
+    text-align: center;
+  }
+
+  .brand-lockup--hero .brand-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .brand-lockup--hero .brand-name {
+    font-size: clamp(2.1rem, 11vw, 2.85rem);
   }
 }
 
@@ -941,7 +992,7 @@ html.nav-open {
   }
 
   .cta-row .btn {
-    flex: 1 1 10rem;
+    flex: 1 1 100%;
   }
 
   .site-banner {
