@@ -160,8 +160,39 @@ describe('hub provision status', () => {
     });
 
     expect(status).toMatchObject({ state: 'failed', ready: false, registered: false });
+    expect(status.failureKind).toBe('invalid_hostname');
     expect(status.message).toMatch(/underscores are not allowed/i);
     expect(status.message).toMatch(/kitchen-home/);
+  });
+
+  it('reports a failed provision without leaking the internal error', () => {
+    const status = buildHubProvisionStatus({
+      siteId: 'kitchen-home',
+      registered: true,
+      provisionLastError: 'Terraform apply failed: secret GITHUB_TOKEN leaked',
+      probe: { status: 530 }
+    });
+
+    expect(status).toMatchObject({
+      state: 'failed',
+      ready: false,
+      registered: true,
+      failureKind: 'setup_failed'
+    });
+    expect(status.message).toMatch(/could not finish building kitchen-home\.lovely-hub\.com/i);
+    expect(status.message).toMatch(/support@lovely-home\.co\.uk/i);
+    expect(status.message).not.toMatch(/Terraform|GITHUB_TOKEN/i);
+  });
+
+  it('keeps a live hub ready even if an old provision error is still stored', () => {
+    const status = buildHubProvisionStatus({
+      siteId: 'smith',
+      registered: true,
+      provisionLastError: 'old failure',
+      probe: { status: 200, looksLikeHub: true }
+    });
+
+    expect(status).toMatchObject({ state: 'ready', ready: true, failureKind: null });
   });
 
   it('reads registry_last_error from billing for unregistered sites', async () => {
@@ -174,7 +205,22 @@ describe('hub provision status', () => {
       { registry_last_error: 'Hostname must be a valid DNS name.' }
     );
     expect(result.body.state).toBe('failed');
+    expect(result.body.failureKind).toBe('invalid_hostname');
     expect(result.body.message).toMatch(/kitchen-home/);
+  });
+
+  it('reads provision_last_error from billing after a workflow failure', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 530 }));
+    const result = await getPublicHubProvisionStatus(
+      manifest,
+      'rose-cottage',
+      fetchImpl,
+      {},
+      { provision_last_error: 'Hub provision workflow failed (run 99).' }
+    );
+    expect(result.body.state).toBe('failed');
+    expect(result.body.failureKind).toBe('setup_failed');
+    expect(result.body.message).not.toMatch(/run 99/);
   });
 
   it('does not treat an empty Pages success page as ready', async () => {

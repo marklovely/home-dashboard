@@ -5,6 +5,7 @@
 ### Signup
 
 - Hub addresses must be DNS-safe (letters, numbers, hyphens). Underscores like `kitchen_home` no longer start a trial that can never deploy.
+- Signup success page stops on a recorded setup failure and no longer shows a QR after 30 minutes if the hub never answered
 
 ### Marketing site
 

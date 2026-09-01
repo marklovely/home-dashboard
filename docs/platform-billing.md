@@ -222,7 +222,7 @@ Signup abuse controls, all backed by the platform billing D1 database:
 | Slug reservation | An in-flight Checkout holds the slug, so two buyers cannot race for one hostname |
 | Turnstile | Active only when both Turnstile keys are set; `signup/status` advertises the site key so the widget renders itself |
 
-Provisioning takes roughly **10 minutes** end to end, so `signup-success.html` polls `hub-status` and only shows the Open button and hub QR code once the hub SPA is actually serving (HTML contains `hub-shell`). Cloudflare Access often starts redirecting to login a few minutes before Pages has deployed the app — that still counts as provisioning.
+Provisioning takes roughly **10 minutes** end to end, so `signup-success.html` polls `hub-status` and only shows the Open button and hub QR code once the hub SPA is actually serving (HTML contains `hub-shell`). Cloudflare Access often starts redirecting to login a few minutes before Pages has deployed the app — that still counts as provisioning. `registry_last_error` (invalid hostname, GitHub dispatch, or a failed `platform-site-manage` create) and `provision_last_error` (GitHub dispatch or a failed `platform-site-provision` run) both surface as `state: "failed"` so the success page can stop the spinner. After 30 minutes without a live hub the page asks for support instead of showing a QR.
 
 ## Customer emails
 
