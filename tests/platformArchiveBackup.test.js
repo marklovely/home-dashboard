@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PLATFORM_ARCHIVE_R2_BUCKET_NAME } from '../scripts/lib/platform-archive-storage.mjs';
+import { PLATFORM_ARCHIVE_R2_BUCKET_NAME, wranglerR2ObjectPutArgs } from '../scripts/lib/platform-archive-storage.mjs';
 import { parsePlatformHealthServiceTokenFromState } from '../scripts/lib/platform-archive-github-secrets.mjs';
 import { resolveHubArchiveUrl } from '../scripts/lib/hub-archive-url.mjs';
 import { hubPagesPlatformPathUnavailable } from '../functions/lib/hubPagesPlatformPath.js';
@@ -12,6 +12,25 @@ describe('platform archive bucket name', () => {
   it('matches the Terraform R2 bucket resource', () => {
     const tf = readFileSync(join(process.cwd(), 'terraform/modules/platform_admin/r2.tf'), 'utf8');
     expect(tf).toContain(`name       = "${PLATFORM_ARCHIVE_R2_BUCKET_NAME}"`);
+  });
+});
+
+describe('wranglerR2ObjectPutArgs', () => {
+  it('does not pass --account-id (Wrangler 4 r2 object put rejects it)', () => {
+    const args = wranglerR2ObjectPutArgs(
+      'lovely-home-hub-archives/kitchen-home/latest.json',
+      '/tmp/latest.json'
+    );
+    expect(args).toEqual([
+      'r2',
+      'object',
+      'put',
+      'lovely-home-hub-archives/kitchen-home/latest.json',
+      '--file',
+      '/tmp/latest.json',
+      '--remote'
+    ]);
+    expect(args.join(' ')).not.toMatch(/account-id|accountId/);
   });
 });
 
