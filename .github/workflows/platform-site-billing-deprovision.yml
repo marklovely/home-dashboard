@@ -100,12 +100,13 @@ jobs:
           SITE_ID: ${{ inputs.site_id }}
         run: |
           set -euo pipefail
-          if node scripts/archive-hub-site-backup.mjs "$SITE_ID" | tee /tmp/archive.log; then
-            if grep -q 'Archived to r2://' /tmp/archive.log; then
-              KEY=$(grep 'Archived to r2://' /tmp/archive.log | head -1 | sed 's/.*r2:\\/\\/[^/]*\\///')
-              echo "archive_r2_key=$KEY" >> "$GITHUB_OUTPUT"
-            fi
+          node scripts/archive-hub-site-backup.mjs "$SITE_ID" | tee /tmp/archive.log
+          if ! grep -q 'Archived to r2://' /tmp/archive.log; then
+            echo "::error::Archive finished without an R2 object key — refusing to remove the site from the registry."
+            exit 1
           fi
+          KEY=$(grep 'Archived to r2://' /tmp/archive.log | head -1 | sed 's/.*r2:\/\/[^/]*\///')
+          echo "archive_r2_key=$KEY" >> "$GITHUB_OUTPUT"
 
       - name: Remove site from registry (local)
         env:
