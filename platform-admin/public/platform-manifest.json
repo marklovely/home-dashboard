@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T08:55:17.919Z",
+  "generatedAt": "2026-09-01T11:18:14.731Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -369,72 +369,6 @@
         "worker_api_origin": "https://lovely-home-hub-api-smith.mark-lovely67.workers.dev",
         "worker_hostname": "lovely-home-hub-api-smith.mark-lovely67.workers.dev",
         "worker_name": "lovely-home-hub-api-smith"
-      },
-      "provisioning": [
-        {
-          "id": "terraform",
-          "label": "Terraform contract in platform manifest",
-          "done": true
-        },
-        {
-          "id": "worker",
-          "label": "Worker deployed (Wrangler)",
-          "done": null
-        },
-        {
-          "id": "pages",
-          "label": "Pages production deployment",
-          "done": null
-        },
-        {
-          "id": "hub-api",
-          "label": "HUB_API Pages binding",
-          "done": null
-        },
-        {
-          "id": "access-probe",
-          "label": "Access + API probe healthy",
-          "done": null
-        }
-      ]
-    },
-    "kitchen-home": {
-      "siteId": "kitchen-home",
-      "hostname": "kitchen-home.lovely-hub.com",
-      "hubEnvironment": "kitchen-home",
-      "vanilla": false,
-      "terraform": true,
-      "attachHubApiBinding": true,
-      "hasOwnerEmails": false,
-      "demoPublic": false,
-      "accessEnabled": true,
-      "pagesProject": "home-dashboard-kitchen-home",
-      "workerName": "lovely-home-hub-api-kitchen-home",
-      "pagesUrl": "https://kitchen-home.lovely-hub.com",
-      "workerApiOrigin": "https://lovely-home-hub-api-kitchen-home.mark-lovely67.workers.dev",
-      "contract": {
-        "access_aud_combined": "4728074542b0b6f83fec5f9cc607e3ac2db4055ee46b13395c3497c6c815bde5,c955a50ce9ad5a7aa6dbf5293f1fcba8f303b92276d3c19c7505e4e273113114",
-        "access_enabled": true,
-        "access_pages_app_id": "1eae870a-bcdc-46f6-aed4-506175dac8ae",
-        "access_pages_aud": "c955a50ce9ad5a7aa6dbf5293f1fcba8f303b92276d3c19c7505e4e273113114",
-        "access_worker_app_id": "bdce10aa-0d5d-4834-b368-7330b5db157b",
-        "access_worker_aud": "4728074542b0b6f83fec5f9cc607e3ac2db4055ee46b13395c3497c6c815bde5",
-        "cf_access_team_domain": "lovely-home",
-        "d1_database_id": "7a4a67bf-7965-4b77-923d-9a5700339d99",
-        "d1_database_name": "lovely-home-appliance-manuals-kitchen-home",
-        "default_latitude": "51.5074",
-        "default_longitude": "-0.1278",
-        "hostname": "kitchen-home.lovely-hub.com",
-        "hub_environment": "kitchen-home",
-        "pages_project": "home-dashboard-kitchen-home",
-        "pages_url": "https://kitchen-home.lovely-hub.com",
-        "r2_guides_bucket": "lovely-home-appliance-guides-kitchen-home",
-        "r2_media_bucket": "lovely-home-guide-media-kitchen-home",
-        "site_id": "kitchen-home",
-        "vanilla": false,
-        "worker_api_origin": "https://lovely-home-hub-api-kitchen-home.mark-lovely67.workers.dev",
-        "worker_hostname": "lovely-home-hub-api-kitchen-home.mark-lovely67.workers.dev",
-        "worker_name": "lovely-home-hub-api-kitchen-home"
       },
       "provisioning": [
         {
