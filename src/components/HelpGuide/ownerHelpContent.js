@@ -247,7 +247,7 @@ export const OWNER_HELP_SECTIONS = [
         type: 'table',
         headers: ['Setting', 'What it does'],
         rows: [
-          ['Theme', 'Light, Dark, or Auto (follows system)'],
+            ['Theme', 'Light, Dark, or Auto (follows system). Sun/moon in the header switches light and dark without opening Settings'],
           ['Clock format', '12-hour or 24-hour time in the header'],
           ['Home screen scale', 'Make launcher cards larger or smaller on the owner home screen'],
           ['Screensaver', 'Dim clock after idle time; tap anywhere to wake (especially useful in sitter mode)'],

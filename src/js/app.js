@@ -25,6 +25,7 @@ import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
 import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
 import { initTrialWatermark } from '../shell/trialWatermark.js';
 import { initShellBrandLogo } from '../shell/shellBrandLogo.js';
+import { initShellThemeToggle } from '../shell/shellThemeToggle.js';
 import { applyShellBranding } from '../shell/shellBranding.js';
 import { subscribeToSiteProfile } from '../services/siteProfileService.js';
 import {
@@ -201,6 +202,7 @@ async function initialiseDashboard() {
 
   registerServiceWorker();
   initScreensaverOverlay();
+  initShellThemeToggle();
   initShellBrandLogo({
     onNavigateHome: () => shellContext.navigate(HOME_ROUTE)
   });

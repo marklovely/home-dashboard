@@ -23,5 +23,11 @@ export function syncShellClockPlacement(route, mode) {
     return;
   }
 
+  const themeToggle = trailing.querySelector('#shell-theme-toggle');
+  if (themeToggle instanceof HTMLElement) {
+    themeToggle.after(clock);
+    return;
+  }
+
   trailing.prepend(clock);
 }
