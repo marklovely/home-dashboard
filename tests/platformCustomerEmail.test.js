@@ -34,6 +34,7 @@ describe('customer lifecycle email copy', () => {
     expect(mail.subject).toContain('rose-cottage.lovely-hub.com');
     expect(mail.text).toContain(customerHubUrl('rose-cottage'));
     expect(mail.text).toContain('signup-success.html?site=rose-cottage');
+    expect(mail.text).toContain('account.html');
     expect(mail.text).toMatch(/sitter, tenant, Airbnb guest/i);
     expect(mail.text).toMatch(/wall tablet is optional/i);
   });

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Manage your Lovely Home hub subscription — cancel, update your card, or open your household hub.">
+  <meta name="lovely-platform-api" content="https://platform.lovely-home.co.uk">
+  <title>Lovely Home — Account</title>
+  <link rel="canonical" href="https://lovely-home.co.uk/account.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Lovely Home">
+  <meta property="og:title" content="Lovely Home — Account">
+  <meta property="og:description" content="Manage your Lovely Home hub subscription — cancel, update your card, or open your household hub.">
+  <meta property="og:url" content="https://lovely-home.co.uk/account.html">
+  <meta property="og:image" content="https://lovely-home.co.uk/lovely-home-logo-dark.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Lovely Home — Account">
+  <meta name="twitter:description" content="Manage your Lovely Home hub subscription — cancel, update your card, or open your household hub.">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <div class="landing-wrap">
+    <div class="landing-bg" aria-hidden="true"></div>
+
+    <div class="site-banner">
+      <div class="site-banner-inner">
+        <span>Need the hub instead? Sign in at your <strong>{name}.lovely-hub.com</strong> address.</span>
+      </div>
+    </div>
+
+    <header class="site-header">
+      <a class="site-header-brand" href="/" aria-label="Lovely Home home">
+        <img class="brand-logo brand-logo--header" src="lovely-home-logo-dark.png" width="140" height="42" alt="Lovely Home — home hub">
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
+    </header>
+    <div class="nav-backdrop" hidden></div>
+    <nav id="site-nav" class="site-nav" aria-label="Main" aria-hidden="true">
+      <a href="/">Home</a>
+      <a href="included.html">What's included</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="signup.html">Start trial</a>
+      <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+      <a href="setup.html">Set it up</a>
+      <a href="app.html">See the hub</a>
+      <a href="account.html">Account</a>
+      <a href="support.html">Support</a>
+    </nav>
+
+    <main class="landing inner-page signup-page">
+      <div class="signup-layout">
+        <section class="signup-intro">
+          <a class="brand-lockup brand-lockup--page" href="/">
+            <img class="brand-logo brand-logo--page" src="lovely-home-logo-dark.png" width="280" height="83" alt="Lovely Home — home hub">
+          </a>
+          <p class="hero-eyebrow"><span></span> Your subscription</p>
+          <h1>Manage your hub</h1>
+          <p class="hero-lead">
+            Use the email you signed up with. We send a one-time code — we do not keep a password for this page.
+          </p>
+          <ul class="signup-benefits">
+            <li>Open your private hub URL</li>
+            <li>Update the card Stripe holds for you</li>
+            <li>Cancel the trial or paid plan (pay nothing if you cancel before the trial ends)</li>
+            <li>Download invoices from Stripe</li>
+            <li>Cancelling takes the live hub down after we archive the house guide JSON — photos and PDFs are not in that file</li>
+          </ul>
+          <p class="signup-note muted">We do not store your card on lovely-home.co.uk. Billing changes happen on Stripe’s secure page, then you come back here.</p>
+        </section>
+
+        <section class="signup-card" aria-labelledby="account-form-title">
+          <h2 id="account-form-title">Sign in</h2>
+          <p class="signup-card-lead" id="account-lead">Enter the email from signup. If we have a hub for it, we email a six-digit code.</p>
+          <div id="account-alert" class="signup-alert" hidden></div>
+
+          <form id="account-email-form" class="signup-form">
+            <div class="form-field">
+              <label for="account-email">Email</label>
+              <input id="account-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+            </div>
+            <div id="account-challenge" class="signup-challenge" hidden></div>
+            <button type="submit" class="btn btn-primary btn-block" id="account-email-submit">Email me a code</button>
+          </form>
+
+          <form id="account-code-form" class="signup-form" hidden>
+            <div class="form-field">
+              <label for="account-code">Six-digit code</label>
+              <input id="account-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="account-code-submit">Continue</button>
+            <button type="button" class="btn btn-secondary btn-block" id="account-code-back">Use a different email</button>
+          </form>
+
+          <div id="account-hubs" hidden></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Mark Lovely. All rights reserved. <span class="site-version" data-site-version></span></p>
+      <nav class="site-footer-nav" aria-label="Footer">
+        <a href="included.html">What's included</a>
+        <a href="setup.html">Set it up</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="signup.html">Start trial</a>
+        <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
+        <a href="account.html">Account</a>
+        <a href="support.html">Support</a>
+        <a href="security.html">Security</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
+      </nav>
+    </footer>
+  </div>
+
+  <script src="site.js" defer></script>
+  <script src="account.js" defer></script>
+</body>
+</html>

@@ -64,9 +64,19 @@ describe('marketing site pages', () => {
 
   it('pricing explains cancel, archive, and backup exclusions', () => {
     const html = readPage('pricing.html');
-    expect(html).toMatch(/Stripe receipt email/);
+    expect(html).toMatch(/account\.html/);
     expect(html).toMatch(/taken down and archived/);
     expect(html).toMatch(/Photos and appliance PDFs/);
+  });
+
+  it('account page signs in with an email code then Stripe billing', () => {
+    const html = readPage('account.html');
+    expect(html).toMatch(/Manage your hub/);
+    expect(html).toMatch(/id="account-email"/);
+    expect(html).toMatch(/id="account-code"/);
+    const js = readFileSync(join(website, 'account.js'), 'utf8');
+    expect(js).toMatch(/\/api\/public\/account\/otp/);
+    expect(js).toMatch(/\/api\/public\/account\/portal/);
   });
 
   it('included page lists ready features and customer-owned extras', () => {

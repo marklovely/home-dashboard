@@ -13,6 +13,7 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 | `/pricing.html` | Full transparent pricing (live amount from platform API) |
 | `/signup.html` | Public trial signup (hub name + email → Stripe Checkout) |
 | `/signup-success.html` | Post-checkout confirmation with live provisioning status |
+| `/account.html` | Owner account: email code, then Stripe Customer Portal |
 | `/app.html` | Screenshot gallery |
 | `/support.html` | Support & FAQ |
 | `/privacy.html` | Privacy policy |

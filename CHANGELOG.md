@@ -7,6 +7,7 @@
 - Hub addresses must be DNS-safe (letters, numbers, hyphens). Underscores like `kitchen_home` no longer start a trial that can never deploy.
 - Signup success page stops on a recorded setup failure and no longer shows a QR after 30 minutes if the hub never answered
 - Success page heading switches to “Success — your hub is now ready” (or a setup-failed heading) instead of staying on “we’re building your hub”
+- Owners manage billing from lovely-home.co.uk/account.html (email code, then Stripe Customer Portal)
 
 ### Platform
 
