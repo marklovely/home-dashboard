@@ -253,7 +253,7 @@
       "title": "Local area",
       "cardSubtitle": "Eat • See • Shop • Travel",
       "iconId": "map-pin",
-      "accent": "#8b7cff",
+      "accent": "#7eab90",
       "searchTerms": ["local", "restaurant", "attraction", "shop"],
       "topics": [
         {

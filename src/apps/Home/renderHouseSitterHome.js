@@ -59,7 +59,7 @@ function createLauncherCard(app, onSelect, options = {}) {
   button.className = 'home-launcher-card';
   if (options.essential) button.classList.add('home-launcher-card--essential');
   if (options.secondary) button.classList.add('sitter-info-card');
-  button.style.setProperty('--accent', app.accent ?? '#8b7cff');
+  button.style.setProperty('--accent', app.accent ?? '#7eab90');
   const titleText = getAppDisplayTitle(app);
   button.setAttribute('aria-label', `${titleText}. ${app.description}`);
 

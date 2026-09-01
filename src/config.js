@@ -12,7 +12,7 @@ export const CONFIG = {
     { title: 'Heating', buttonIds: [7] }
   ],
   buttons: [
-    { id: 2, title: 'Bedtime', subtitle: 'Run bedtime scene', icon: '☾', colour: '#8b7cff' },
+    { id: 2, title: 'Bedtime', subtitle: 'Run bedtime scene', icon: '☾', colour: '#7eab90' },
     { id: 6, title: 'Watch Movie', subtitle: 'Set up the lounge', icon: '▶', colour: '#d16dff' },
     { id: 9, title: 'Restore Lights After Movie', subtitle: 'Restore lounge lighting', icon: '◉', colour: '#f4b64f' },
     { id: 1, title: 'Downstairs On', subtitle: 'Turn lights on', icon: '●', colour: '#f4b64f' },

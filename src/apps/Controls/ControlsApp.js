@@ -94,7 +94,7 @@ export const controlsApp = defineApp({
   iconId: 'lightbulb',
   description: 'Control lighting, heating, and scenes',
   capabilities: ['lighting', 'heating', 'scenes'],
-  accent: '#8b7cff',
+  accent: '#7eab90',
   profiles: ['owner'],
   summary: controlsSummary,
   mount: mountControlsApp

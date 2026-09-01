@@ -17,6 +17,7 @@ PRODUCTION_BRANCH="main"
 # keep the committed file. npm often omits Rollup's optional native binary.
 node scripts/ensure-website-qr.mjs
 node scripts/write-website-version.mjs
+node scripts/sync-brand-media.mjs
 
 if ! "${WRANGLER[@]}" pages project list 2>/dev/null | grep -qE "│ ${PROJECT_NAME}[[:space:]]"; then
   echo "==> Creating Pages project: ${PROJECT_NAME} (production branch: ${PRODUCTION_BRANCH})"

@@ -261,7 +261,7 @@ function renderActionButton(action, context, openTopic, root) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'guide-action-button routine-button';
-  button.style.setProperty('--accent', '#8b7cff');
+  button.style.setProperty('--accent', '#7eab90');
   button.textContent = action.label;
   ensureRoutineButtonStatus(button);
 

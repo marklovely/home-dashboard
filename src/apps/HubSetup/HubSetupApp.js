@@ -715,7 +715,7 @@ export const hubSetupApp = defineApp({
   iconId: 'settings',
   description: 'First-time setup wizard for your home hub',
   capabilities: ['setup'],
-  accent: '#7b66ff',
+  accent: '#3f7a5c',
   profiles: ['owner'],
   mount(viewport, context) {
     ensureOwnerModeForHubSetup();

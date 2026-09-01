@@ -11,7 +11,7 @@ function createLauncherCard(app, onSelect) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'home-launcher-card';
-  button.style.setProperty('--accent', app.accent ?? '#8b7cff');
+  button.style.setProperty('--accent', app.accent ?? '#7eab90');
   button.setAttribute('aria-label', `${app.title}. ${app.description}`);
 
   const iconWrap = document.createElement('span');

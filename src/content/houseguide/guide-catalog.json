@@ -38,7 +38,7 @@
       "title": "Arrival",
       "cardSubtitle": "Directions • Keys • EV charging",
       "iconId": "key-round",
-      "accent": "#8b7cff",
+      "accent": "#7eab90",
       "searchTerms": [
         "arrival",
         "finding",
@@ -1758,7 +1758,7 @@
       "title": "Local Area",
       "cardSubtitle": "Shops • Pubs • Walks",
       "iconId": "map-pin",
-      "accent": "#8b7cff",
+      "accent": "#7eab90",
       "searchTerms": [
         "local",
         "shop",

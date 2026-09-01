@@ -16,5 +16,5 @@ export const HOUSE_GUIDE_PAGES = [
   { slug: 'wifi', title: 'Wi-Fi', shortTitle: 'Wi-Fi', icon: '📶', accent: '#28d17c' },
   { slug: 'scooter', title: 'Scooter', shortTitle: 'Scooter', icon: '🐶', accent: '#ff9f43' },
   { slug: 'emergency', title: 'Emergency Contacts', shortTitle: 'Emergency', icon: '🚨', accent: '#ff5f6d' },
-  { slug: 'local', title: 'Local Recommendations', shortTitle: 'Local', icon: '🍕', accent: '#8b7cff' }
+  { slug: 'local', title: 'Local Recommendations', shortTitle: 'Local', icon: '🍕', accent: '#7eab90' }
 ];
