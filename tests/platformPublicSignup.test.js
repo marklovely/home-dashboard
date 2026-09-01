@@ -92,6 +92,7 @@ describe('platform public signup', () => {
   it('blocks reserved slugs', () => {
     expect(validatePublicSignupSiteId('demo')).toMatch(/reserved/i);
     expect(validatePublicSignupSiteId('rose-cottage')).toBeNull();
+    expect(validatePublicSignupSiteId('kitchen_home')).toMatch(/hyphens/i);
   });
 
   it('checks slug availability against manifest', () => {

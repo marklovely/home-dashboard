@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Signup
+
+- Hub addresses must be DNS-safe (letters, numbers, hyphens). Underscores like `kitchen_home` no longer start a trial that can never deploy.
+
 ### Marketing site
 
 - Scheduled sitter stays: guide 7 days before, home-access details on sit dates, login removed after checkout

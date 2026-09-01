@@ -6,7 +6,6 @@
  * roughly ten minutes end to end (registry commit, Terraform, Worker, Pages).
  */
 
-import { validateBillingSiteId } from './platformBilling.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { platformHealthServiceAuth } from './platformHealthFetch.js';
 
@@ -15,6 +14,8 @@ export const HUB_PROVISION_TYPICAL_MINUTES = 10;
 /** Marker present on the hub SPA index — not on an empty Pages project or Access login. */
 export const HUB_LIVE_HTML_FINGERPRINT = 'hub-shell';
 const PROBE_TIMEOUT_MS = 6000;
+/** Existing billing rows may still use underscores; new signups must not. */
+const SITE_ID_LOOKUP_RE = /^[a-z][a-z0-9_-]{0,31}$/;
 
 /**
  * @param {string} siteId
@@ -66,20 +67,41 @@ export function buildHubProvisionStatus(input) {
   const probe = input.probe ?? null;
   const ready = hubProbeIsLive(probe);
 
+  const registryLastError = String(input.registryLastError ?? '').trim();
+  const failed = !ready && !input.registered && Boolean(registryLastError);
+
   return {
     siteId,
     hostname,
     hubUrl: `https://${hostname}/`,
-    state: ready ? 'ready' : 'provisioning',
+    state: ready ? 'ready' : failed ? 'failed' : 'provisioning',
     ready,
     registered: Boolean(input.registered),
     probeStatus: probe && Number.isFinite(Number(probe.status)) ? Number(probe.status) : null,
     looksLikeHub: Boolean(probe?.looksLikeHub),
     typicalMinutes: HUB_PROVISION_TYPICAL_MINUTES,
-    message: ready
-      ? 'Your hub is live — open it and run the setup wizard.'
-      : `We are still building your hub. This usually takes about ${HUB_PROVISION_TYPICAL_MINUTES} minutes.`
+    message: hubProvisionMessage({ ready, failed, hostname, siteId, registryLastError })
   };
+}
+
+/**
+ * @param {{
+ *   ready: boolean,
+ *   failed: boolean,
+ *   hostname: string,
+ *   siteId: string,
+ *   registryLastError: string
+ * }} input
+ */
+function hubProvisionMessage(input) {
+  if (input.ready) return 'Your hub is live — open it and run the setup wizard.';
+  if (input.failed && input.siteId.includes('_')) {
+    return `We could not create ${input.hostname} because underscores are not allowed in web addresses. Sign up again using hyphens, for example ${input.siteId.replaceAll('_', '-')}.`;
+  }
+  if (input.failed) {
+    return `We could not start building your hub. ${input.registryLastError}`;
+  }
+  return `We are still building your hub. This usually takes about ${HUB_PROVISION_TYPICAL_MINUTES} minutes.`;
 }
 
 /**
@@ -125,12 +147,18 @@ export async function probeHubHostname(hostname, fetchImpl = fetch, env = {}) {
  * @param {string} siteId
  * @param {typeof fetch} [fetchImpl]
  * @param {Record<string, string | undefined>} [env]
+ * @param {{ registry_last_error?: string | null } | null} [billing]
  */
-export async function getPublicHubProvisionStatus(manifest, siteId, fetchImpl = fetch, env = {}) {
+export async function getPublicHubProvisionStatus(
+  manifest,
+  siteId,
+  fetchImpl = fetch,
+  env = {},
+  billing = null
+) {
   const id = String(siteId ?? '').trim().toLowerCase();
-  const idError = validateBillingSiteId(id);
-  if (idError) {
-    return { ok: false, status: 400, body: { error: 'INVALID_SITE_ID', message: idError } };
+  if (!SITE_ID_LOOKUP_RE.test(id)) {
+    return { ok: false, status: 400, body: { error: 'INVALID_SITE_ID', message: 'Invalid hub address.' } };
   }
 
   const probe = await probeHubHostname(hubProvisionHostname(id), fetchImpl, env);
@@ -140,7 +168,8 @@ export async function getPublicHubProvisionStatus(manifest, siteId, fetchImpl = 
     body: buildHubProvisionStatus({
       siteId: id,
       registered: Boolean(getSiteFromManifest(manifest ?? {}, id)),
-      probe
+      probe,
+      registryLastError: billing?.registry_last_error ?? ''
     })
   };
 }

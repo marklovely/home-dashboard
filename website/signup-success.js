@@ -81,6 +81,11 @@
         return;
       }
 
+      if (payload.state === 'failed') {
+        showFailed(payload.message);
+        return;
+      }
+
       showProvisioning();
     } catch {
       consecutiveErrors += 1;
@@ -120,6 +125,21 @@
     hubLink.href = hubUrl;
     openBtn.hidden = false;
     void renderQr();
+  }
+
+  function showFailed(message) {
+    settled = true;
+    clearTimeout(timer);
+    progress.dataset.state = 'failed';
+    heading.textContent = 'We could not create this hub';
+    lead.textContent =
+      'Your card was not charged, but this hub address cannot be used. Pick a name with letters, numbers, or hyphens — no underscores.';
+    setTitle('Hub address cannot be used', false);
+    progressNote.textContent =
+      (message || 'We could not start building your hub.') +
+      ' Use signup to try a different address, then cancel this trial from the Stripe email if you still have one.';
+    hubLink.removeAttribute('href');
+    openBtn.hidden = true;
   }
 
   function showSlow() {

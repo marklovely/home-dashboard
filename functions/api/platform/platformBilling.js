@@ -31,7 +31,7 @@ import { maybeSendCustomerLifecycleEmail } from './platformCustomerEmail.js';
 /** Card-required trial length sent to Stripe Checkout (`subscription_data.trial_period_days`). */
 export const TRIAL_PERIOD_DAYS = 7;
 
-const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
+const SITE_ID_RE = /^[a-z][a-z0-9-]{0,31}$/;
 
 /**
  * @param {string} siteId
@@ -40,7 +40,7 @@ export function validateBillingSiteId(siteId) {
   const id = String(siteId ?? '').trim();
   if (!id) return 'Site id is required.';
   if (!SITE_ID_RE.test(id)) {
-    return 'Site id must start with a letter and use lowercase letters, numbers, hyphens, or underscores (max 32 chars).';
+    return 'Site id must start with a letter and use lowercase letters, numbers, or hyphens (max 32 chars).';
   }
   return null;
 }

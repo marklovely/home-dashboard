@@ -368,7 +368,7 @@ function validateStep(mode, step, form, ctx) {
 
   if (step === 1) {
     if (!form.siteId) return 'Site id is required.';
-    if (!/^[a-z][a-z0-9_-]{0,31}$/.test(form.siteId)) return 'Invalid site id format.';
+    if (!/^[a-z][a-z0-9-]{0,31}$/.test(form.siteId)) return 'Invalid site id format.';
     const hostError = validateWizardHostname(form.hostname, ALLOWED_HUB_ZONE_NAMES);
     if (hostError) return hostError;
     if (mode === 'create' && form.internalPlatformSite && !form.hostname.endsWith(`.${ctx.platformZoneName}`)) {

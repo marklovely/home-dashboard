@@ -107,6 +107,30 @@ describe('signup success provisioning status', () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(3);
   });
 
+  it('stops on a failed registry instead of waiting for a hub that will never exist', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        jsonResponse({
+          ...provisioning,
+          siteId: 'kitchen_home',
+          hostname: 'kitchen_home.lovely-hub.com',
+          state: 'failed',
+          message: 'We could not create kitchen_home.lovely-hub.com because underscores are not allowed.'
+        })
+      )
+    );
+    mountPage('?site=kitchen_home');
+
+    runPageScript();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(document.getElementById('hub-progress').dataset.state).toBe('failed');
+    expect(document.getElementById('success-heading').textContent).toMatch(/could not create/i);
+    expect(document.getElementById('open-hub-btn').hidden).toBe(true);
+    expect(document.getElementById('hub-progress-note').textContent).toMatch(/underscores/i);
+  });
+
   it('does nothing without a site query parameter', async () => {
     vi.stubGlobal('fetch', vi.fn());
     mountPage('');

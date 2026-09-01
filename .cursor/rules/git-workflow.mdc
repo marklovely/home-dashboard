@@ -37,7 +37,9 @@ Only push after lint and test pass. If either fails, fix locally, re-run both, t
 
 ## Commits, pushes, and pull requests
 
-- For **features and fixes** (any agreed implementation work on a branch): **always** commit, push the branch, and open a PR when the work is done — do not wait for the user to ask separately.
+- For **features and fixes** (any agreed implementation work on a branch): **always** commit and push when the work is done — do not wait for the user to ask separately.
+- **Reuse an open PR.** If this conversation already has an open feature/fix PR, or you are on an unmerged branch with an open PR, put follow-up work on that same branch and push. Do **not** open a second PR for a related fix that can land with the existing one.
+- Open a **new** PR only when there is no open PR for the current branch, the existing PR is merged or closed, the work is a clearly separate topic the user wants isolated, or the user asks for a separate PR.
 - Only skip commit/push/PR if the user explicitly says not to, or the work was exploratory/question-only with no code to ship.
 - Never force-push `main` unless the user explicitly requests it (e.g. undoing an accidental push).
 

@@ -1175,7 +1175,8 @@ html.nav-open {
   background: rgba(31, 138, 92, 0.08);
 }
 
-.hub-progress[data-state='slow'] {
+.hub-progress[data-state='slow'],
+.hub-progress[data-state='failed'] {
   border-color: rgba(180, 40, 40, 0.2);
   background: rgba(180, 40, 40, 0.06);
 }

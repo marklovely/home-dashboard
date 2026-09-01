@@ -47,6 +47,14 @@ describe('marketing site pages', () => {
     expect(security).toMatch(/operator-proof secrecy/i);
   });
 
+  it('signup hub addresses cannot use underscores', () => {
+    const html = readPage('signup.html');
+    expect(html).toContain('pattern="[a-z][a-z0-9-]{0,31}"');
+    expect(html).not.toContain('a-z0-9_-');
+    const js = readFileSync(join(website, 'signup.js'), 'utf8');
+    expect(js).toMatch(/replace\(\/_\/g, '-'\)/);
+  });
+
   it('signup agrees to terms and says the hub address cannot change', () => {
     const html = readPage('signup.html');
     expect(html).toMatch(/agree to our <a href="terms\.html">terms<\/a>/);

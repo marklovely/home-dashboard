@@ -1,6 +1,6 @@
 import { parseEmailList, validateEmailList } from '../../lib/emailLists.js';
 
-const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
+const SITE_ID_RE = /^[a-z][a-z0-9-]{0,31}$/;
 const HOSTNAME_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 const PLATFORM_ZONE_NAME = 'lovely-home.co.uk';
 const CUSTOMER_HUB_ZONE_NAME = 'lovely-hub.com';
@@ -14,7 +14,7 @@ function validateSiteId(siteId) {
   const id = String(siteId ?? '').trim();
   if (!id) return 'Site id is required.';
   if (!SITE_ID_RE.test(id)) {
-    return 'Site id must start with a letter and use lowercase letters, numbers, hyphens, or underscores (max 32 chars).';
+    return 'Site id must start with a letter and use lowercase letters, numbers, or hyphens (max 32 chars).';
   }
   return null;
 }

@@ -151,6 +151,32 @@ describe('hub provision status', () => {
     expect(result.body).toMatchObject({ registered: false, state: 'provisioning', ready: false });
   });
 
+  it('reports a failed registry when the hostname was never valid', () => {
+    const status = buildHubProvisionStatus({
+      siteId: 'kitchen_home',
+      registered: false,
+      registryLastError: 'Hostname must be a valid DNS name.',
+      probe: { status: 530 }
+    });
+
+    expect(status).toMatchObject({ state: 'failed', ready: false, registered: false });
+    expect(status.message).toMatch(/underscores are not allowed/i);
+    expect(status.message).toMatch(/kitchen-home/);
+  });
+
+  it('reads registry_last_error from billing for unregistered sites', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 530 }));
+    const result = await getPublicHubProvisionStatus(
+      manifest,
+      'kitchen_home',
+      fetchImpl,
+      {},
+      { registry_last_error: 'Hostname must be a valid DNS name.' }
+    );
+    expect(result.body.state).toBe('failed');
+    expect(result.body.message).toMatch(/kitchen-home/);
+  });
+
   it('does not treat an empty Pages success page as ready', async () => {
     const fetchImpl = vi
       .fn()
