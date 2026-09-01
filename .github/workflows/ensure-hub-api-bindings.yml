@@ -1,0 +1,29 @@
+name: Ensure hub HUB_API bindings
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  ensure:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/London
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Wait for Cloudflare Git Pages deploys
+        run: sleep 180
+      - name: Re-attach any missing production HUB_API bindings
+        run: node scripts/ensure-hub-api-bindings.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
