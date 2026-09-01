@@ -22,6 +22,8 @@ export const ACCOUNT_OTP_RESEND_MS = 45 * 1000;
 export const ACCOUNT_RATE_LIMIT_MAX = 8;
 export const ACCOUNT_GENERIC_OTP_MESSAGE =
   'If that email has a Lovely Home hub, we sent a six-digit code.';
+export const ACCOUNT_SESSION_EXPIRED_MESSAGE =
+  'You have been signed out. Enter your email for a new code.';
 
 /**
  * @param {string} email
@@ -102,6 +104,25 @@ export async function pruneExpiredAccountAuth(db, nowMs = Date.now()) {
   if (!db) return;
   await db.prepare('DELETE FROM account_otp_challenges WHERE expires_at <= ?').bind(nowMs).run();
   await db.prepare('DELETE FROM account_sessions WHERE expires_at <= ?').bind(nowMs).run();
+}
+
+/**
+ * @param {D1Database} db
+ * @param {string} sessionToken
+ * @param {number} [nowMs]
+ * @returns {Promise<{ email: string, expiresAt: number } | null>}
+ */
+export async function loadAccountSession(db, sessionToken, nowMs = Date.now()) {
+  const token = String(sessionToken ?? '').trim();
+  if (!token) return null;
+  await pruneExpiredAccountAuth(db, nowMs);
+  const tokenHash = await hashAccountSecret(token);
+  const session = await db
+    .prepare('SELECT email, expires_at FROM account_sessions WHERE token_hash = ? LIMIT 1')
+    .bind(tokenHash)
+    .first();
+  if (!session || Number(session.expires_at) <= nowMs) return null;
+  return { email: String(session.email ?? ''), expiresAt: Number(session.expires_at) };
 }
 
 /**
@@ -333,30 +354,24 @@ export async function handleAccountPortal(env, db, input, deps = {}) {
   }
 
   const nowMs = deps.nowMs ?? Date.now();
-  await pruneExpiredAccountAuth(db, nowMs);
-
   const token = String(input.sessionToken ?? '').trim();
   const siteId = String(input.siteId ?? '').trim().toLowerCase();
   if (!token || !siteId) {
     return {
       status: 400,
-      body: { error: 'INVALID_SESSION', message: 'Sign in again to manage billing.' }
+      body: { error: 'INVALID_SESSION', message: ACCOUNT_SESSION_EXPIRED_MESSAGE }
     };
   }
 
-  const tokenHash = await hashAccountSecret(token);
-  const session = await db
-    .prepare('SELECT email, expires_at FROM account_sessions WHERE token_hash = ? LIMIT 1')
-    .bind(tokenHash)
-    .first();
-  if (!session || Number(session.expires_at) <= nowMs) {
+  const session = await loadAccountSession(db, token, nowMs);
+  if (!session) {
     return {
       status: 401,
-      body: { error: 'INVALID_SESSION', message: 'Sign in again to manage billing.' }
+      body: { error: 'INVALID_SESSION', message: ACCOUNT_SESSION_EXPIRED_MESSAGE }
     };
   }
 
-  const rows = await listSiteBillingByOwnerEmail(db, String(session.email ?? ''));
+  const rows = await listSiteBillingByOwnerEmail(db, session.email);
   const row = rows.find((item) => String(item.site_id) === siteId);
   const customerId = String(row?.stripe_customer_id ?? '').trim();
   if (!row || !customerId) {
@@ -392,6 +407,43 @@ export async function handleAccountPortal(env, db, input, deps = {}) {
       }
     };
   }
+}
+
+/**
+ * Restore hubs after Stripe Portal returns to the marketing site.
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {D1Database | null | undefined} db
+ * @param {{ sessionToken: string }} input
+ * @param {{ nowMs?: number }} [deps]
+ */
+export async function handleAccountSession(env, db, input, deps = {}) {
+  if (!db) {
+    return {
+      status: 503,
+      body: { error: 'BILLING_DB_NOT_CONFIGURED', message: 'Account sign-in is not available right now.' }
+    };
+  }
+
+  const nowMs = deps.nowMs ?? Date.now();
+  const session = await loadAccountSession(db, input.sessionToken, nowMs);
+  if (!session) {
+    return {
+      status: 401,
+      body: { error: 'INVALID_SESSION', message: ACCOUNT_SESSION_EXPIRED_MESSAGE }
+    };
+  }
+
+  const rows = await listSiteBillingByOwnerEmail(db, session.email);
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      email: session.email,
+      hubs: rows.map(publicAccountHubFromRow),
+      expiresAt: session.expiresAt
+    }
+  };
 }
 
 /**

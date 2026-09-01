@@ -18,7 +18,10 @@
 
   let challengeRequired = false;
   let pendingEmail = '';
+  const SESSION_KEY = 'lovelyAccountSession';
+  const SESSION_EXPIRED_MESSAGE = 'You have been signed out. Enter your email for a new code.';
 
+  restoreSession();
   initChallenge();
 
   emailForm.addEventListener('submit', async (event) => {
@@ -83,11 +86,11 @@
         showAlert(payload.message || 'That code did not work. Try again.', 'error');
         return;
       }
-      sessionStorage.setItem('lovelyAccountSession', JSON.stringify({
+      writeStoredSession({
         sessionToken: payload.sessionToken,
         email: payload.email,
         expiresAt: payload.expiresAt
-      }));
+      });
       showHubs(payload.hubs || [], payload.sessionToken);
     } catch {
       showAlert('Network error — check your connection and try again.', 'error');
@@ -98,15 +101,76 @@
 
   backBtn?.addEventListener('click', () => {
     pendingEmail = '';
+    showSignIn();
+    resetChallenge();
+  });
+
+  async function restoreSession() {
+    const stored = readStoredSession();
+    if (stored && stored.expired) {
+      showSignIn(SESSION_EXPIRED_MESSAGE);
+      return;
+    }
+    if (!stored || !stored.sessionToken) return;
+    try {
+      const response = await fetch(apiBase + '/api/public/account/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ sessionToken: stored.sessionToken })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        clearStoredSession();
+        showSignIn(payload.message || SESSION_EXPIRED_MESSAGE);
+        return;
+      }
+      writeStoredSession({
+        sessionToken: stored.sessionToken,
+        email: payload.email,
+        expiresAt: payload.expiresAt
+      });
+      showHubs(payload.hubs || [], stored.sessionToken);
+    } catch {
+      // Leave the sign-in form if the restore request fails.
+    }
+  }
+
+  function readStoredSession() {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.sessionToken) return null;
+      if (Number(parsed.expiresAt) > 0 && Number(parsed.expiresAt) <= Date.now()) {
+        clearStoredSession();
+        return { expired: true };
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeStoredSession(session) {
+    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
+  function clearStoredSession() {
+    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+
+  function showSignIn(message) {
+    emailForm.hidden = false;
     codeForm.hidden = true;
     hubsEl.hidden = true;
     hubsEl.innerHTML = '';
-    emailForm.hidden = false;
     if (title) title.textContent = 'Sign in';
     if (lead) lead.textContent = 'Enter the email from signup. If we have a hub for it, we email a six-digit code.';
-    resetChallenge();
-    clearAlert();
-  });
+    if (message) showAlert(message, 'info');
+    else clearAlert();
+  }
 
   function showHubs(hubs, sessionToken) {
     emailForm.hidden = true;
@@ -115,7 +179,7 @@
     if (title) title.textContent = 'Your hub';
     if (lead) {
       lead.textContent = hubs.length
-        ? 'Billing changes open on Stripe. Come back here afterwards.'
+        ? 'Billing changes open on Stripe. You stay signed in when you come back.'
         : 'We could not find a hub for that email.';
     }
     if (!hubs.length) {
@@ -158,6 +222,11 @@
         body: JSON.stringify({ sessionToken, siteId })
       });
       const payload = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        clearStoredSession();
+        showSignIn(SESSION_EXPIRED_MESSAGE);
+        return;
+      }
       if (!response.ok || !payload.url) {
         showAlert(payload.message || 'Could not open Stripe billing. Email support@lovely-home.co.uk.', 'error');
         return;

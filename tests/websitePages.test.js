@@ -77,6 +77,9 @@ describe('marketing site pages', () => {
     const js = readFileSync(join(website, 'account.js'), 'utf8');
     expect(js).toMatch(/\/api\/public\/account\/otp/);
     expect(js).toMatch(/\/api\/public\/account\/portal/);
+    expect(js).toMatch(/\/api\/public\/account\/session/);
+    expect(js).toMatch(/localStorage\.setItem\(SESSION_KEY/);
+    expect(js).toMatch(/You have been signed out/);
   });
 
   it('included page lists ready features and customer-owned extras', () => {

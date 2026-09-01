@@ -17,6 +17,7 @@ import { getPublicHubProvisionStatus } from '../platform/platformPublicHubProvis
 import {
   handleAccountOtpRequest,
   handleAccountPortal,
+  handleAccountSession,
   handleAccountVerify,
   publicAccountStatus
 } from '../platform/platformPublicAccount.js';
@@ -146,6 +147,14 @@ export async function onRequest(context) {
     const result = await handleAccountVerify(pagesEnv, getPlatformBillingDb(env), {
       email: String(body.email ?? '').trim(),
       code: String(body.code ?? '').trim()
+    });
+    return Response.json(result.body, { status: result.status, headers: cors });
+  }
+
+  if (suffix === 'account/session' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handleAccountSession(pagesEnv, getPlatformBillingDb(env), {
+      sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim()
     });
     return Response.json(result.body, { status: result.status, headers: cors });
   }
