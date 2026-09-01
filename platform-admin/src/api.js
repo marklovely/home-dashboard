@@ -3,6 +3,14 @@ const API_BASE = '/api/platform';
 /**
  * @returns {Promise<object>}
  */
+export async function fetchMarketingAccess() {
+  const response = await fetch(`${API_BASE}/marketing-access`, { cache: 'no-store' });
+  return response.json();
+}
+
+/**
+ * @returns {Promise<object>}
+ */
 export async function fetchSites() {
   const response = await fetch(`${API_BASE}/sites`, { cache: 'no-store' });
   if (!response.ok) {

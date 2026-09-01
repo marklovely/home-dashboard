@@ -58,7 +58,7 @@ variable "platform_cf_api_token" {
   type        = string
   default     = ""
   sensitive   = true
-  description = "Cloudflare API token with Account Read, D1 Read, and R2 Read for platform storage usage checks."
+  description = "Cloudflare API token with Account Read, D1 Read, R2 Read, Pages Edit, and Access Apps and Policies Edit (marketing preview emails + usage + preview toggles)."
 }
 
 variable "stripe_secret_key" {
@@ -103,6 +103,12 @@ variable "marketing_site_origin" {
   type        = string
   default     = "https://lovely-home.co.uk"
   description = "Public marketing site origin (no trailing slash). Used for PUBLIC_SIGNUP CORS and Checkout return URLs."
+}
+
+variable "marketing_access_app_id" {
+  type        = string
+  default     = ""
+  description = "Cloudflare Access application id for the pre-launch marketing site gate (lovely-home.co.uk)."
 }
 
 variable "public_signup_enabled" {

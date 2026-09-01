@@ -92,6 +92,7 @@ module "platform_admin" {
   stripe_price_id                   = var.stripe_price_id
   stripe_price_id_yearly            = var.stripe_price_id_yearly
   marketing_site_origin             = var.marketing_site_origin
+  marketing_access_app_id           = try(module.marketing_site[0].marketing_site_contract.access_app_id, "")
   public_signup_enabled             = var.public_signup_enabled
   turnstile_site_key                = var.turnstile_site_key
   turnstile_secret_key              = var.turnstile_secret_key

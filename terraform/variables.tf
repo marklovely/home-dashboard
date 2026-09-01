@@ -112,7 +112,7 @@ variable "platform_cf_api_token" {
   type        = string
   default     = ""
   sensitive   = true
-  description = "Cloudflare API token with Account Read, D1 Read, and R2 Read for platform storage usage checks."
+  description = "Cloudflare API token with Account Read, D1 Read, R2 Read, Pages Edit, and Access Apps and Policies Edit for platform admin."
 }
 
 variable "stripe_secret_key" {

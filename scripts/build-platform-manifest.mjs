@@ -79,6 +79,21 @@ if (adminRaw) {
   }
 }
 
+const marketingRaw = runTerraform(['output', '-json', 'marketing_site']);
+if (marketingRaw) {
+  try {
+    const marketing = JSON.parse(marketingRaw);
+    if (marketing?.access_app_id) {
+      platformMeta.marketingAccessAppId = String(marketing.access_app_id);
+    }
+    if (marketing?.hostname) {
+      platformMeta.marketingSiteOrigin = `https://${marketing.hostname}`;
+    }
+  } catch {
+    /* optional */
+  }
+}
+
 if (!platformMeta.cloudflareAccountId && process.env.CLOUDFLARE_ACCOUNT_ID?.trim()) {
   platformMeta.cloudflareAccountId = process.env.CLOUDFLARE_ACCOUNT_ID.trim();
 }

@@ -56,14 +56,18 @@ Attach the custom domain **lovely-home.co.uk** (and optionally **www**) in the C
 
 ### Pre-launch Access gate
 
-While building before public launch, protect the site with Cloudflare Zero Trust (OTP for platform operators only):
+While building before public launch, protect the site with Cloudflare Zero Trust (email OTP):
 
 ```hcl
 # terraform/environments/hub.tfvars
 marketing_site_access_protected = true
 ```
 
-Then `terraform apply` from `terraform/` (uses `platform_operator_emails`). Set `marketing_site_access_protected = false` when you go live.
+Then `terraform apply` from `terraform/`. Platform operators (`platform_operator_emails`) can always OTP in — they also reach **platform.lovely-home.co.uk**.
+
+Add extra preview emails from **Marketing site access** on the platform dashboard. Those guests can open the marketing site only; they do not get the dashboard. Do not put a previewer in `platform_operator_emails` unless they should.
+
+Set `marketing_site_access_protected = false` when you go live.
 
 This gates **lovely-home.co.uk** only. The public signup API on **platform.lovely-home.co.uk** (`/api/public/*`) keeps its existing Access bypass — signup flows from the marketing site are unaffected once the site is public.
 

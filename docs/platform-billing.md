@@ -186,7 +186,7 @@ Also requires the Stripe vars from [One-time setup](#one-time-setup-test-mode). 
 
 When `public_signup_enabled = true`, Terraform also creates a **Zero Trust bypass** for `/api/public/*` (same pattern as the Stripe webhook). Without it, browser requests from lovely-home.co.uk hit the Access login redirect and fail CORS during slug checks.
 
-**Pre-launch marketing site gate:** Set `marketing_site_access_protected = true` in hub tfvars to require OTP on `lovely-home.co.uk` for `platform_operator_emails` only (`terraform/modules/marketing_site`). This does not change platform Access — set `false` at public launch.
+**Pre-launch marketing site gate:** Set `marketing_site_access_protected = true` in hub tfvars to require OTP on `lovely-home.co.uk` (`terraform/modules/marketing_site`). Operators always stay on that list. Extra preview emails are guests managed from **Marketing site access** on the platform dashboard — they do not get platform Access. Set `false` at public launch.
 
 | Endpoint | Method | Purpose |
 | --- | --- | --- |

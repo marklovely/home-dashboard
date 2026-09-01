@@ -1,4 +1,4 @@
-import { fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled, startBillingCheckout } from './api.js';
+import { fetchMarketingAccess, fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled, startBillingCheckout } from './api.js';
 import { renderSiteBilling } from './billing.js';
 import {
   evaluateSiteHealth,
@@ -22,6 +22,7 @@ import {
   siteOperatorCommands
 } from './links.js';
 import { confirmDeployWorker, confirmProvisionSite, openSiteWizard } from './wizard.js';
+import { renderMarketingAccessPanel, wireMarketingAccessPanel } from './marketingAccess.js';
 
 const main = document.getElementById('main');
 const refreshBtn = document.getElementById('refresh-btn');
@@ -106,10 +107,12 @@ async function render() {
       <p class="muted">Add sites via wizard → merge PR → provisioning runs automatically on <code>main</code> (Terraform, Worker, Pages, manifest). Or click <strong>Provision</strong> on a site card to retry.</p>
       <p class="muted">Requires remote Terraform state and GitHub secrets — see <code>docs/platform-provision.md</code>.</p>
     </section>
+    <div id="marketing-access-slot"></div>
   `;
 
   main.setAttribute('data-platform', JSON.stringify(platform));
   wireSiteActions(sites, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {});
+  await loadMarketingAccessPanel();
 
   if (data.healthServiceAuthConfigured && healthBySite.size === 0) {
     runAllHealthChecks().catch(showError);
@@ -514,6 +517,22 @@ function renderProvisioningList(steps) {
       return `<li class="${done}">${escapeHtml(String(step.label))}</li>`;
     })
     .join('');
+}
+
+async function loadMarketingAccessPanel() {
+  const slot = document.getElementById('marketing-access-slot');
+  if (!slot) return;
+  slot.innerHTML = '<section class="panel marketing-access"><p class="muted">Loading marketing access…</p></section>';
+  try {
+    const data = await fetchMarketingAccess();
+    slot.innerHTML = renderMarketingAccessPanel(data);
+    wireMarketingAccessPanel(showError, loadMarketingAccessPanel);
+  } catch (error) {
+    slot.innerHTML = renderMarketingAccessPanel({
+      ok: false,
+      message: error instanceof Error ? error.message : 'Could not load marketing access.'
+    });
+  }
 }
 
 /**

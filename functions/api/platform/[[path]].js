@@ -31,6 +31,10 @@ import {
   setSitePagesPreviewEnabled
 } from './platformPagesPreviews.js';
 import {
+  getMarketingAccess,
+  updateMarketingAccess
+} from './platformMarketingAccess.js';
+import {
   createBillingCheckoutSession,
   defaultCheckoutUrls,
   getPlatformBillingDb,
@@ -122,6 +126,8 @@ export async function onRequest(context) {
           'Set PLATFORM_CF_API_TOKEN (Account → Workers R2 Storage → Read) and CLOUDFLARE_ACCOUNT_ID on the platform Pages project to show D1/R2 usage per hub.',
         cloudflarePages:
           'Set PLATFORM_CF_API_TOKEN (Account → Cloudflare Pages → Edit) and CLOUDFLARE_ACCOUNT_ID on the platform Pages project to toggle PR preview builds per hub.',
+        marketingAccess:
+          'Set PLATFORM_CF_API_TOKEN with Access: Apps and Policies Edit to add OTP emails for lovely-home.co.uk from this dashboard.',
         githubAutomation:
           'Set PLATFORM_GITHUB_TOKEN (contents:write, actions:write) and PLATFORM_GITHUB_REPO on the platform Pages project to enable site wizard automation.',
         stripeBilling:
@@ -221,6 +227,23 @@ export async function onRequest(context) {
 
   if (suffix === 'usage/summary' && request.method === 'GET') {
     return Response.json(await fetchAccountStorageSummary(manifest, pagesEnv));
+  }
+
+  if (suffix === 'marketing-access' && request.method === 'GET') {
+    return Response.json(await getMarketingAccess(pagesEnv, manifest.platform ?? {}));
+  }
+
+  if (suffix === 'marketing-access' && (request.method === 'POST' || request.method === 'DELETE')) {
+    const body = await readJsonBody(request);
+    const email = String(body.email ?? '').trim();
+    const result = await updateMarketingAccess(
+      pagesEnv,
+      manifest.platform ?? {},
+      request.method === 'POST' ? 'add' : 'remove',
+      email
+    );
+    const status = result.ok ? 200 : result.code === 'INVALID_EMAIL' || result.code === 'OPERATOR_LOCKED' ? 400 : 503;
+    return Response.json(result, { status });
   }
 
   if (suffix === 'wizard/schema' && request.method === 'GET') {
