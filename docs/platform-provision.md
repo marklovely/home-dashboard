@@ -261,6 +261,8 @@ bash scripts/verify-cloudflare-api-token.sh
 
 **Platform admin shows `HUB_API binding no` after provision:** The binding is project-level; the **active** Pages deployment must be created after attach. `deploy-cloudflare-pages-site.sh` attaches then redeploys automatically. Re-run that script or **Platform site deploy** for the site.
 
+**Sandbox (or another hub) loses `HUB_API` after a merge to `main`:** Every hub Pages project is Git-connected to this repo with production deploys on. A marketing-only merge still rebuilds sandbox/test/demo/… and Cloudflare can drop `deployment_configs.production.services` while preview keeps the binding. CI runs `scripts/ensure-hub-api-bindings.mjs` after those deploys; locally: `node scripts/ensure-hub-api-bindings.mjs sandbox` then retry the latest production Pages deploy.
+
 **Terraform apply fails with Access `400 Bad Request` / `domain does not belong to zone` on a new site:** The Pages Access app includes `*.pages.dev` destinations, which Cloudflare rejects until the Pages project exists. CI now omits those destinations during the pre-worker apply and adds them on the post-worker apply. Merge the fix and re-run **Platform site provision** (workflow dispatch with the site id). Partial applies resume safely on retry.
 
 ## Who gets owner access (and why customer emails stay out of git)
