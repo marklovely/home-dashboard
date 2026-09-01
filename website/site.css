@@ -124,6 +124,8 @@ a { color: var(--accent); }
   cursor: pointer;
   position: relative;
   z-index: 212;
+  isolation: isolate;
+  transform: translateZ(0);
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s ease, box-shadow 0.15s ease;
 }
@@ -159,8 +161,7 @@ html.nav-open .nav-toggle-bar:nth-child(3) {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(28, 36, 30, 0.35);
-  backdrop-filter: blur(2px);
+  background: rgba(28, 36, 30, 0.28);
 }
 
 .site-nav {
@@ -474,25 +475,13 @@ html.nav-open {
 }
 
 .brand-lockup--hero {
-  gap: 1.15rem;
-  margin-bottom: 1.75rem;
-  align-items: center;
-  max-width: 100%;
+  justify-content: center;
+  margin-bottom: 1.5rem;
 }
 
 .brand-lockup--hero .brand-mark {
-  width: clamp(4.75rem, 18vw, 7.25rem);
-  height: clamp(4.75rem, 18vw, 7.25rem);
-}
-
-.brand-lockup--hero .brand-name {
-  font-size: clamp(2.4rem, 7.5vw, 3.75rem);
-  white-space: nowrap;
-}
-
-.brand-lockup--hero .brand-tagline {
-  font-size: clamp(0.82rem, 2.2vw, 1.05rem);
-  letter-spacing: 0.2em;
+  width: clamp(7rem, 32vw, 11.5rem);
+  height: clamp(7rem, 32vw, 11.5rem);
 }
 
 .brand-lockup--footer {
@@ -965,23 +954,6 @@ html.nav-open {
 
   .hero-copy h1 {
     font-size: clamp(1.85rem, 7vw, 2.6rem);
-  }
-}
-
-@media (max-width: 720px) {
-  .brand-lockup--hero {
-    flex-direction: column;
-    gap: 0.7rem;
-    text-align: center;
-  }
-
-  .brand-lockup--hero .brand-text {
-    align-items: center;
-    text-align: center;
-  }
-
-  .brand-lockup--hero .brand-name {
-    font-size: clamp(2.1rem, 11vw, 2.85rem);
   }
 }
 
