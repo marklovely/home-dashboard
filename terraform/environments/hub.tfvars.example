@@ -148,4 +148,13 @@ sites = {
 
 
 
+  wagtail = {
+    hostname        = "wagtail.lovely-hub.com"
+    hub_environment = "wagtail"
+    vanilla         = false
+    terraform       = true
+    zone_name       = "lovely-hub.com"
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+  }
+
 }
