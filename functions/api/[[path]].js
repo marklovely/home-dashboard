@@ -7,6 +7,7 @@ import { accessJwtProbe, extractAccessJwtFromRequest } from './accessJwtExtract.
 import { fetchAccessIdentityEmail, listCookieNames, resolvePagesAccessIdentity } from './accessIdentity.js';
 import { attachHubProxyAuthHeaders } from './hubProxySign.js';
 import { isPublicDemoHub } from '../lib/publicDemoHub.js';
+import { hubPagesPlatformPathUnavailable } from '../lib/hubPagesPlatformPath.js';
 import { middlewareAccessEmail, middlewareAccessValidated } from './middlewareAccess.js';
 import { proxyWorkerResponse } from './proxyWorkerResponse.js';
 
@@ -16,6 +17,7 @@ const FORWARD_REQUEST_HEADERS = [
   'accept',
   'authorization',
   'x-correlation-id',
+  'x-platform-site-archive-secret',
   'cookie'
 ];
 
@@ -113,8 +115,9 @@ export async function onRequest(context) {
 
   const suffix = normalizePath(params.path);
 
-  // Platform admin uses /api/platform/* (functions/api/platform/[[path]].js).
-  if (suffix === 'platform' || suffix.startsWith('platform/')) {
+  // Platform admin uses functions/api/platform. Hub Pages must not 503 the
+  // pre-deprovision archive route — proxy it to the Worker like other /api/*.
+  if (hubPagesPlatformPathUnavailable(suffix)) {
     return Response.json(
       {
         error: {

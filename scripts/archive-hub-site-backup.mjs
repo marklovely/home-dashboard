@@ -11,6 +11,7 @@ import {
   PLATFORM_ARCHIVE_R2_BUCKET_NAME,
   uploadSiteArchiveToR2
 } from './lib/platform-archive-storage.mjs';
+import { resolveHubArchiveUrl } from './lib/hub-archive-url.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
@@ -46,10 +47,9 @@ function readTerraformSite() {
 }
 
 /**
- * @param {string} hostname
+ * @param {string} url
  */
-async function fetchArchivePayload(hostname) {
-  const url = `https://${hostname}/api/platform/site-archive`;
+async function fetchArchivePayload(url) {
   /** @type {Record<string, string>} */
   const headers = {
     Accept: 'application/json',
@@ -83,13 +83,14 @@ async function fetchArchivePayload(hostname) {
 console.log(`\n=== Archiving hub site backup: ${siteId} ===`);
 
 const site = readTerraformSite();
-const hostname = String(site.hostname ?? '').trim();
-if (!hostname) {
-  console.error(`No hostname in terraform output for "${siteId}".`);
+const archive = resolveHubArchiveUrl(site);
+if (!archive.url) {
+  console.error(`No worker_api_origin or hostname in terraform output for "${siteId}".`);
   process.exit(1);
 }
 
-const payload = await fetchArchivePayload(hostname);
+console.log(`Fetching archive via ${archive.via}: ${archive.url}`);
+const payload = await fetchArchivePayload(archive.url);
 const { backupKey, latestKey } = uploadSiteArchiveToR2(siteId, payload, {
   bucket,
   accountId: process.env.CLOUDFLARE_ACCOUNT_ID

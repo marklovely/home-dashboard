@@ -35,7 +35,7 @@ sequenceDiagram
   participant Hub as Hub Worker
   participant R2 as Platform archive R2
 
-  CI->>Hub: GET /api/platform/site-archive
+  CI->>Hub: GET {worker_api_origin}/api/platform/site-archive
   Note over CI,Hub: Access service token + archive secret
   Hub->>Hub: buildSiteBackupPayload(full)
   Hub-->>CI: JSON backup
@@ -47,7 +47,9 @@ sequenceDiagram
 
 | Method | Path | Auth |
 |--------|------|------|
-| GET | `/api/platform/site-archive` | `X-Platform-Site-Archive-Secret` header matches Worker secret `PLATFORM_SITE_ARCHIVE_SECRET` |
+| GET | `/api/platform/site-archive` on the **Worker** (`worker_api_origin`, e.g. `https://lovely-home-hub-api-{site}.….workers.dev`) | `X-Platform-Site-Archive-Secret` header matches Worker secret `PLATFORM_SITE_ARCHIVE_SECRET` |
+
+Do not call the custom Pages hostname. Hub GitHub builds also upload `functions/api/platform`, and that operator route returns `{ error: "NOT_FOUND" }` on customer hubs. Archive CI uses Terraform `worker_api_origin`; hub deploys prune those Functions so a Pages URL would proxy to the Worker.
 
 - Does **not** require owner device mode (CI has no sitter cookie).
 - Must be called **before** Terraform destroy removes D1.

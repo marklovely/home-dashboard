@@ -31,12 +31,16 @@ cd "$ROOT"
 npm ci
 VITE_HUB_ENVIRONMENT="$HUB_ENV" VITE_DEPLOYMENT_MODE=home npm run build
 
+echo "==> Staging hub-only Pages Functions (no platform/stripe/public routes)"
+node "$ROOT/scripts/prune-hub-pages-functions.mjs" --out dist-hub-functions
+
 echo "==> Deploying dist/ to Cloudflare Pages (branch=$BRANCH)"
 pages_deploy() {
   npx wrangler pages deploy dist \
     --project-name="$PAGES_PROJECT" \
     --branch="$BRANCH" \
-    --commit-dirty=true
+    --commit-dirty=true \
+    --functions-directory dist-hub-functions
 }
 
 pages_deploy

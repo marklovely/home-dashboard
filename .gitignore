@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-hub-functions/
 dist-platform/
 coverage/
 .DS_Store

@@ -4,7 +4,7 @@ resource "cloudflare_pages_project" "dashboard" {
   production_branch = var.github_production_branch
 
   build_config = {
-    build_command   = "npm run build"
+    build_command   = "npm run build && node scripts/prune-hub-pages-functions.mjs"
     destination_dir = "dist"
     root_dir        = ""
   }
