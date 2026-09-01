@@ -185,4 +185,18 @@ describe('marketing site pages', () => {
     expect(css).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*2\.75rem/);
     expect(css).not.toMatch(/\.landing-wrap \{[^}]*overflow:\s*hidden/);
   });
+
+  it('gives the home page a large hero lockup without changing satellite headers', () => {
+    const home = readPage('index.html');
+    expect(home).toContain('site-header--home');
+    expect(home).toContain('brand-lockup--hero');
+    for (const name of pages.filter((page) => page !== 'index.html')) {
+      const html = readPage(name);
+      expect(html, name).not.toContain('site-header--home');
+      expect(html, name).not.toContain('brand-lockup--hero');
+    }
+    const css = readFileSync(join(website, 'site.css'), 'utf8');
+    expect(css).toMatch(/\.brand-lockup--hero \.brand-mark \{[\s\S]*?7\.25rem/);
+    expect(css).toMatch(/\.site-header--home \.brand-mark \{[\s\S]*?3\.6rem/);
+  });
 });

@@ -9,6 +9,7 @@
 - Drawer links sit below the header so Home is not clipped
 - Fluid type, wrapping, and safe-area padding for phone, tablet, and desktop
 - Product brand and marketing screenshots sync to the `lovely-home-media` R2 bucket
+- Home page brand lockup is larger in the header and hero; satellite pages stay compact
 
 ### Hub
 
