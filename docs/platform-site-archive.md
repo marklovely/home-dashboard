@@ -85,7 +85,7 @@ Environment:
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID` | Access service token (edge) |
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET` | Access service token (edge) |
 | `PLATFORM_ARCHIVE_R2_BUCKET` | Platform R2 bucket (Terraform `lovely-home-hub-archives`; script default if unset) |
-| `CLOUDFLARE_ACCOUNT_ID` | For `wrangler r2 object put` |
+| `CLOUDFLARE_ACCOUNT_ID` | Set on the Wrangler process (not `--account-id`; Wrangler 4 `r2 object put` rejects that flag) |
 
 Objects written:
 
