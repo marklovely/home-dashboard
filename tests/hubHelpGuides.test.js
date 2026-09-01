@@ -26,6 +26,16 @@ describe('hub help guides', () => {
     openHelpGuide({
       title: 'Owner guide',
       sections: OWNER_HELP_SECTIONS,
+      initialSectionId: 'common-questions',
+      dialogId: 'test-owner-help-faq'
+    });
+    expect(document.querySelector('.help-guide-content-title')?.textContent).toBe('Common questions');
+    expect(document.querySelector('.help-guide-qa')).toBeTruthy();
+    document.querySelector('.help-guide-close')?.dispatchEvent(new Event('click'));
+
+    openHelpGuide({
+      title: 'Owner guide',
+      sections: OWNER_HELP_SECTIONS,
       initialSectionId: 'house-sitter-mode',
       dialogId: 'test-owner-help'
     });

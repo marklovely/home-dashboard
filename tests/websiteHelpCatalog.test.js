@@ -35,6 +35,18 @@ describe('public help catalog', () => {
     expect(setupText).not.toMatch(/Turn on Sitter is here so home-access details appear for that stay/);
   });
 
+  it('keeps common questions in the help catalog, not only on Pricing', () => {
+    const faq = OWNER_HELP_SECTIONS.find((section) => section.id === 'common-questions');
+    expect(faq?.title).toBe('Common questions');
+    expect(OWNER_HELP_SECTIONS[1].id).toBe('common-questions');
+    const text = JSON.stringify(faq);
+    expect(text).toMatch(/Can I try before I pay\?/);
+    expect(text).toMatch(/When am I charged\?/);
+    expect(text).toMatch(/What if I cancel\?/);
+    expect(text).toMatch(/Can I book sits in advance\?/);
+    expect(text).toMatch(/Is this a public app\?/);
+  });
+
   it('builds a generic guest guide for the marketing site', () => {
     const sections = buildSitterHelpSections(PUBLIC_SITTER_HELP_OPTIONS);
     const text = JSON.stringify(sections);

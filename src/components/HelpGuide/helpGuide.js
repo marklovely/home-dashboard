@@ -1,4 +1,4 @@
-/** @typedef {{ type: 'p', text: string } | { type: 'h4', text: string } | { type: 'ul', items: string[] } | { type: 'ol', items: string[] } | { type: 'table', headers: string[], rows: string[][] }} HelpGuideBlock */
+/** @typedef {{ type: 'p', text: string } | { type: 'h4', text: string } | { type: 'ul', items: string[] } | { type: 'ol', items: string[] } | { type: 'qa', question: string, answer: string } | { type: 'table', headers: string[], rows: string[][] }} HelpGuideBlock */
 
 /** @typedef {{ id: string, title: string, keywords: string[], blocks: HelpGuideBlock[] }} HelpGuideSection */
 
@@ -25,6 +25,9 @@ export function searchHelpGuideSections(sections, query) {
     return section.blocks.some((block) => {
       if (block.type === 'p' || block.type === 'h4') return block.text.toLowerCase().includes(trimmed);
       if (block.type === 'ul' || block.type === 'ol') return block.items.some((item) => item.toLowerCase().includes(trimmed));
+      if (block.type === 'qa') {
+        return block.question.toLowerCase().includes(trimmed) || block.answer.toLowerCase().includes(trimmed);
+      }
       if (block.type === 'table') {
         return (
           block.headers.some((cell) => cell.toLowerCase().includes(trimmed)) ||
@@ -56,6 +59,19 @@ function renderHelpBlock(block) {
       list.append(li);
     }
     return list;
+  }
+
+  if (block.type === 'qa') {
+    const wrap = document.createElement('div');
+    wrap.className = 'help-guide-qa';
+    const heading = document.createElement('h4');
+    heading.className = 'help-guide-subheading';
+    heading.textContent = block.question;
+    const paragraph = document.createElement('p');
+    paragraph.className = 'help-guide-paragraph';
+    paragraph.textContent = block.answer;
+    wrap.append(heading, paragraph);
+    return wrap;
   }
 
   if (block.type === 'table') {
