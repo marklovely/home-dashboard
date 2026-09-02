@@ -54,11 +54,3 @@ sites:
     terraform: true
     zone_name: lovely-hub.com
     attach_hub_api_binding: true
-
-  e2e-qm7pegno:
-    hostname: e2e-qm7pegno.lovely-hub.com
-    hub_environment: e2e-qm7pegno
-    vanilla: false
-    terraform: true
-    zone_name: lovely-hub.com
-    attach_hub_api_binding: true
