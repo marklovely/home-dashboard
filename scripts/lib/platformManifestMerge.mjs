@@ -1,6 +1,7 @@
 /**
  * Merge Terraform site output with a preserved platform manifest (local file or fallback).
  */
+import { isTerraformStack, terraformStackForSite } from './terraform-stack.mjs';
 
 /**
  * @param {Record<string, unknown> | null | undefined} contract
@@ -26,7 +27,7 @@ export function terraformOutputIsAuthoritative(terraformAvailable, terraformSite
  * @param {Record<string, unknown>} meta
  * @param {Record<string, unknown>} terraformSites
  * @param {Record<string, { contract?: unknown }> | undefined} preservedSites
- * @param {{ terraformAvailable?: boolean }} [options]
+ * @param {{ terraformAvailable?: boolean; terraformStack?: string | null }} [options]
  */
 export function resolveSiteContract(siteId, meta, terraformSites, preservedSites, options = {}) {
   const fromTerraform = terraformSites[siteId];
@@ -34,16 +35,25 @@ export function resolveSiteContract(siteId, meta, terraformSites, preservedSites
     return /** @type {Record<string, unknown>} */ (fromTerraform);
   }
 
-  // Terraform output is authoritative whenever we can read it: a Terraform-managed
-  // site missing from it has been destroyed (or not applied yet), so reusing the
-  // committed contract would advertise D1/R2 ids that no longer exist and show the
-  // torn-down hub as provisioned. Sites Terraform does not manage keep their
-  // contract, which was hand-written or imported rather than derived from state.
+  const preserved = preservedSites?.[siteId]?.contract;
+  const siteStack = terraformStackForSite(siteId, meta);
+  const currentStack = isTerraformStack(options.terraformStack) ? options.terraformStack : null;
+
+  // A split-stack apply only owns one estate. Missing output for the other
+  // stack must not look like a destroy.
+  if (currentStack && siteStack !== currentStack) {
+    if (hasTerraformContract(preserved)) {
+      return /** @type {Record<string, unknown>} */ (preserved);
+    }
+    return null;
+  }
+
+  // Terraform output is authoritative for this stack: a Terraform-managed
+  // site missing from it has been destroyed (or not applied yet).
   if (options.terraformAvailable && meta.terraform === true) {
     return null;
   }
 
-  const preserved = preservedSites?.[siteId]?.contract;
   if (hasTerraformContract(preserved)) {
     return /** @type {Record<string, unknown>} */ (preserved);
   }

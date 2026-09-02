@@ -14,6 +14,17 @@ variable "zone_name" {
   description = "DNS zone name (without trailing dot)."
 }
 
+variable "terraform_stack" {
+  type        = string
+  default     = "platform"
+  description = "Which remote state this apply uses: platform (admin + lovely-home.co.uk hubs) or customers (lovely-hub.com hubs)."
+
+  validation {
+    condition     = contains(["platform", "customers"], var.terraform_stack)
+    error_message = "terraform_stack must be \"platform\" or \"customers\"."
+  }
+}
+
 variable "workers_subdomain" {
   type        = string
   description = "Workers.dev account subdomain (e.g. mark-lovely67 from lovely-home-hub-api.mark-lovely67.workers.dev)."

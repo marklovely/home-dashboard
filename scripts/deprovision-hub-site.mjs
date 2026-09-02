@@ -11,6 +11,12 @@ import { applyLocalHubEnv, missingProvisionEnvKeys } from './lib/load-local-hub-
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { suggestedWorkerName, validateDeprovisionSiteId } from './lib/site-registry.mjs';
 import { hubSiteModuleInState } from './lib/terraform-state.mjs';
+import {
+  isTerraformStack,
+  resolveTerraformStack,
+  terraformStackForSite,
+  terraformStackVarArgs
+} from './lib/terraform-stack.mjs';
 
 const args = process.argv.slice(2);
 const siteId = args.find((arg) => !arg.startsWith('--'))?.trim();
@@ -28,6 +34,21 @@ if (deprovisionError) {
   console.error(deprovisionError);
   process.exit(1);
 }
+
+const envStack = process.env.TF_VAR_terraform_stack?.trim() || process.env.TERRAFORM_STACK?.trim();
+const siteStack = registry[siteId]
+  ? terraformStackForSite(siteId, registry[siteId])
+  : resolveTerraformStack(siteId, null, envStack);
+if (isTerraformStack(envStack) && registry[siteId] && envStack !== siteStack) {
+  console.error(
+    `TERRAFORM_STACK=${envStack} does not match site "${siteId}" (yaml stack is ${siteStack}).`
+  );
+  process.exit(1);
+}
+const terraformStack = isTerraformStack(envStack) ? envStack : siteStack;
+process.env.TERRAFORM_STACK = terraformStack;
+process.env.TF_VAR_terraform_stack = terraformStack;
+const skipPlatformAdminEffective = skipPlatformAdmin || terraformStack === 'customers';
 
 const tfDir = join(root, 'terraform');
 const hubTfvarsPath = join(tfDir, 'environments/hub.tfvars');
@@ -67,6 +88,7 @@ function terraformDestroyArgs() {
     '-auto-approve',
     '-var-file=environments/hub.generated.tfvars',
     '-var-file=environments/hub.generated.secrets.tfvars.json',
+    ...terraformStackVarArgs(terraformStack),
     `-target=module.hub_site[${JSON.stringify(siteId)}]`
   ];
 }
@@ -125,7 +147,7 @@ function deleteWorker(workerName) {
   run('node', [deleteWorkerScript, workerName]);
 }
 
-console.log(`\n=== Deprovisioning hub site: ${siteId} ===`);
+console.log(`\n=== Deprovisioning hub site: ${siteId} (terraform_stack=${terraformStack}) ===`);
 
 const archiveScript = join(root, 'scripts/archive-hub-site-backup.mjs');
 const inState = hubSiteModuleInState(siteId, tfDir);
@@ -159,7 +181,7 @@ deleteWorker(workerName);
 
 run('node', [join(root, 'scripts/build-platform-manifest.mjs')]);
 
-if (!skipPlatformAdmin) {
+if (!skipPlatformAdminEffective) {
   run('bash', [join(root, 'scripts/deploy-platform-admin.sh')], {
     env: {
       ...process.env,

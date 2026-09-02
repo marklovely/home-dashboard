@@ -9,6 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { detectAddedTerraformSites } from './lib/detect-site-yaml-changes.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
+import { partitionSiteIdsByStack } from './lib/terraform-stack.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const yamlPath = join(root, 'platform/sites.yaml');
@@ -36,10 +37,16 @@ try {
 }
 
 const added = detectAddedTerraformSites(before, after);
+const partitioned = partitionSiteIdsByStack(added, after);
 
 const githubOutput = process.env.GITHUB_OUTPUT;
 if (githubOutput) {
   appendFileSync(githubOutput, `site_ids=${JSON.stringify(added)}\n`);
+  appendFileSync(githubOutput, `platform_site_ids=${JSON.stringify(partitioned.platform)}\n`);
+  appendFileSync(githubOutput, `customer_site_ids=${JSON.stringify(partitioned.customers)}\n`);
 }
 
-console.log(`New terraform sites: ${added.length ? added.join(', ') : '(none)'}`);
+const label = added.length
+  ? added.map((id) => `${id} (${partitioned.customers.includes(id) ? 'customers' : 'platform'})`).join(', ')
+  : '(none)';
+console.log(`New terraform sites: ${label}`);

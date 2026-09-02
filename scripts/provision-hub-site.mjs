@@ -9,6 +9,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyLocalHubEnv, missingProvisionEnvKeys } from './lib/load-local-hub-env.mjs';
 import { validateDeploySiteId } from './lib/site-registry.mjs';
+import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
+import {
+  isTerraformStack,
+  terraformStackForSite,
+  terraformStackVarArgs
+} from './lib/terraform-stack.mjs';
 
 const args = process.argv.slice(2);
 const siteId = args.find((arg) => !arg.startsWith('--'))?.trim();
@@ -27,6 +33,20 @@ if (deployError) {
 }
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const registry = loadSitesYaml(join(root, 'platform/sites.yaml'));
+const siteMeta = registry[siteId];
+const envStack = process.env.TF_VAR_terraform_stack?.trim() || process.env.TERRAFORM_STACK?.trim();
+const siteStack = terraformStackForSite(siteId, siteMeta);
+if (isTerraformStack(envStack) && envStack !== siteStack) {
+  console.error(
+    `TERRAFORM_STACK=${envStack} does not match site "${siteId}" (yaml stack is ${siteStack}).`
+  );
+  process.exit(1);
+}
+const terraformStack = isTerraformStack(envStack) ? envStack : siteStack;
+process.env.TERRAFORM_STACK = terraformStack;
+process.env.TF_VAR_terraform_stack = terraformStack;
+const skipPlatformAdminEffective = skipPlatformAdmin || terraformStack === 'customers';
 const tfDir = join(root, 'terraform');
 const hubTfvarsPath = join(tfDir, 'environments/hub.tfvars');
 const tfvarsPath = join(tfDir, 'environments/hub.generated.tfvars');
@@ -50,6 +70,7 @@ function terraformApplyArgs() {
     '-auto-approve',
     '-var-file=environments/hub.generated.tfvars',
     '-var-file=environments/hub.generated.secrets.tfvars.json',
+    ...terraformStackVarArgs(terraformStack),
     `-target=module.hub_site[${JSON.stringify(siteId)}]`
   ];
 }
@@ -135,7 +156,7 @@ function generateTfvars(phase) {
   });
 }
 
-console.log(`\n=== Provisioning hub site: ${siteId} ===`);
+console.log(`\n=== Provisioning hub site: ${siteId} (terraform_stack=${terraformStack}) ===`);
 
 generateTfvars('pre-worker');
 runTerraformApply();
@@ -182,7 +203,7 @@ run('node', [join(root, 'scripts/mark-site-provisioned.mjs'), siteId]);
 
 run('node', [join(root, 'scripts/build-platform-manifest.mjs')]);
 
-if (!skipPlatformAdmin) {
+if (!skipPlatformAdminEffective) {
   run('bash', [join(root, 'scripts/deploy-platform-admin.sh')], {
     env: {
       ...process.env,

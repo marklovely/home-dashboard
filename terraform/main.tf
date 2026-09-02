@@ -1,6 +1,15 @@
 locals {
+  site_is_customer = {
+    for site_id, site in var.sites : site_id => coalesce(
+      site.customer_hub,
+      coalesce(site.zone_name, var.zone_name) == var.customer_zone_name
+    )
+  }
+
   managed_sites = {
-    for site_id, site in var.sites : site_id => site if site.terraform
+    for site_id, site in var.sites : site_id => site if site.terraform && (
+      var.terraform_stack == "customers" ? local.site_is_customer[site_id] : !local.site_is_customer[site_id]
+    )
   }
 
   hub_zone_ids = merge(
@@ -61,7 +70,7 @@ module "hub_site" {
 }
 
 module "marketing_site" {
-  count  = var.marketing_site_access_protected ? 1 : 0
+  count  = var.terraform_stack == "platform" && var.marketing_site_access_protected ? 1 : 0
   source = "./modules/marketing_site"
 
   account_id                        = var.cloudflare_account_id
@@ -72,7 +81,7 @@ module "marketing_site" {
 }
 
 module "platform_admin" {
-  count  = var.platform_admin.enabled ? 1 : 0
+  count  = var.terraform_stack == "platform" && var.platform_admin.enabled ? 1 : 0
   source = "./modules/platform_admin"
 
   account_id                        = var.cloudflare_account_id

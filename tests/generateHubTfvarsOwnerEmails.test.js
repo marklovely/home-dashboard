@@ -30,6 +30,7 @@ function generate(env) {
         stdio: ['ignore', 'pipe', 'pipe'],
         env: {
           PATH: process.env.PATH,
+          TERRAFORM_STACK: 'platform',
           CLOUDFLARE_ACCOUNT_ID: 'account',
           CLOUDFLARE_ZONE_ID: 'zone',
           WORKERS_SUBDOMAIN: 'workers-sub',
@@ -78,6 +79,7 @@ describe('generate-hub-tfvars owner emails', () => {
       SUPPORT_OWNER_EMAILS: 'support@lovely-home.co.uk'
     });
     expect(result.ok).toBe(true);
+    expect(result.tfvars).toContain('terraform_stack       = "platform"');
     expect(result.tfvars).toContain('support_owner_emails = [');
     expect(result.tfvars).toContain('"support@lovely-home.co.uk"');
   });
@@ -100,6 +102,12 @@ describe('generate-hub-tfvars owner emails', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.stderr).toMatch(/customer hub with no owner emails/i);
+  });
+
+  it('refuses to generate tfvars without terraform_stack', () => {
+    const result = generate({ TERRAFORM_STACK: '' });
+    expect(result.ok).toBe(false);
+    expect(result.stderr).toMatch(/TERRAFORM_STACK/);
   });
 
   it('rejects a malformed billing owner payload', () => {

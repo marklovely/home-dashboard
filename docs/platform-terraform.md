@@ -16,6 +16,19 @@ Site registry: [`platform/sites.yaml`](../platform/sites.yaml).
 
 **Production** can be imported into Terraform (legacy names: `home-dashboard`, `lovely-home-hub-api`). Use `scripts/terraform-plan-production-safe.sh` before apply. **Test** and **sandbox** are Terraform-managed.
 
+## Terraform stacks (ring-fenced state)
+
+Two remote states share the same R2 bucket:
+
+| Stack | Backend key | What it owns |
+|-------|-------------|--------------|
+| `platform` | `home-dashboard/platform.tfstate` | Platform admin, marketing Access, `*.lovely-home.co.uk` hubs |
+| `customers` | `home-dashboard/customers.tfstate` | `*.lovely-hub.com` household hubs (signup / teardown) |
+
+`var.terraform_stack` filters `module.hub_site` (and skips `platform_admin` / `marketing_site` on the customers stack). Always pass `-var=terraform_stack=…` — the Terraform default is `platform`, which would destroy customer hubs if applied against `customers.tfstate`.
+
+One-time split from the legacy combined `home-dashboard/hub.tfstate`: GitHub Actions **Split Terraform state stacks**, or `bash scripts/migrate-terraform-state-stacks.sh split-stacks`. See [platform-provision.md](./platform-provision.md).
+
 ## Prerequisites
 
 1. **Cloudflare API token** (not the Global API Key, not Wrangler OAuth). Create at [Profile → API Tokens](https://dash.cloudflare.com/profile/api-tokens).

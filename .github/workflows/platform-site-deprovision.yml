@@ -12,6 +12,11 @@ on:
         description: Site id to deprovision (must already be removed from sites.yaml)
         required: true
         type: string
+      terraform_stack:
+        description: platform or customers (leave empty to infer from the site id)
+        required: false
+        type: string
+        default: ''
       skip_platform_admin:
         description: Skip platform admin redeploy
         required: false
@@ -31,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       site_ids: ${{ steps.detect.outputs.site_ids }}
+      platform_site_ids: ${{ steps.detect.outputs.platform_site_ids }}
+      customer_site_ids: ${{ steps.detect.outputs.customer_site_ids }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,8 +50,8 @@ jobs:
       - id: detect
         run: node scripts/detect-removed-sites-from-yaml.mjs
 
-  deprovision-auto:
-    if: github.event_name == 'push' && needs.detect-removed-sites.outputs.site_ids != '[]'
+  deprovision-auto-platform:
+    if: github.event_name == 'push' && needs.detect-removed-sites.outputs.platform_site_ids != '[]'
     needs: detect-removed-sites
     permissions:
       contents: read
@@ -52,19 +59,62 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        site_id: ${{ fromJson(needs.detect-removed-sites.outputs.site_ids) }}
+        site_id: ${{ fromJson(needs.detect-removed-sites.outputs.platform_site_ids) }}
     uses: ./.github/workflows/platform-site-deprovision-reusable.yml
     with:
       site_id: ${{ matrix.site_id }}
+      terraform_stack: platform
       skip_platform_admin: false
     secrets: inherit
 
+  deprovision-auto-customers:
+    if: github.event_name == 'push' && needs.detect-removed-sites.outputs.customer_site_ids != '[]'
+    needs: detect-removed-sites
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        site_id: ${{ fromJson(needs.detect-removed-sites.outputs.customer_site_ids) }}
+    uses: ./.github/workflows/platform-site-deprovision-reusable.yml
+    with:
+      site_id: ${{ matrix.site_id }}
+      terraform_stack: customers
+      skip_platform_admin: true
+    secrets: inherit
+
+  resolve-manual-stack:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      terraform_stack: ${{ steps.resolve.outputs.terraform_stack }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - id: resolve
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+          TERRAFORM_STACK_INPUT: ${{ inputs.terraform_stack }}
+        run: |
+          STACK="${TERRAFORM_STACK_INPUT// /}"
+          if [ -z "$STACK" ]; then
+            STACK=$(node scripts/terraform-stack-for-site.mjs "$SITE_ID" --guess)
+          fi
+          echo "terraform_stack=$STACK" >> "$GITHUB_OUTPUT"
+
   deprovision-manual:
     if: github.event_name == 'workflow_dispatch'
+    needs: resolve-manual-stack
     permissions:
       contents: read
     uses: ./.github/workflows/platform-site-deprovision-reusable.yml
     with:
       site_id: ${{ inputs.site_id }}
-      skip_platform_admin: ${{ inputs.skip_platform_admin }}
+      terraform_stack: ${{ needs.resolve-manual-stack.outputs.terraform_stack }}
+      skip_platform_admin: ${{ inputs.skip_platform_admin || needs.resolve-manual-stack.outputs.terraform_stack == 'customers' }}
     secrets: inherit
