@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T20:46:42.263Z",
+  "generatedAt": "2026-09-02T11:02:52.983Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -437,6 +437,72 @@
         "worker_api_origin": "https://lovely-home-hub-api-wagtail.mark-lovely67.workers.dev",
         "worker_hostname": "lovely-home-hub-api-wagtail.mark-lovely67.workers.dev",
         "worker_name": "lovely-home-hub-api-wagtail"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    },
+    "e2e-fjeealxp": {
+      "siteId": "e2e-fjeealxp",
+      "hostname": "e2e-fjeealxp.lovely-hub.com",
+      "hubEnvironment": "e2e-fjeealxp",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "hasOwnerEmails": false,
+      "demoPublic": false,
+      "accessEnabled": true,
+      "pagesProject": "home-dashboard-e2e-fjeealxp",
+      "workerName": "lovely-home-hub-api-e2e-fjeealxp",
+      "pagesUrl": "https://e2e-fjeealxp.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-e2e-fjeealxp.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "e0a353461fa6261b56ef7079ecab33bdeaca2c88f17664164ad5da6af92c3ca0,9872df444000323d5ede4b2f76f933f07ff28e2f166ad3f9fb4d2c16685bec92",
+        "access_enabled": true,
+        "access_pages_app_id": "628209ee-30bb-478b-a2e8-4939294e3f1e",
+        "access_pages_aud": "9872df444000323d5ede4b2f76f933f07ff28e2f166ad3f9fb4d2c16685bec92",
+        "access_worker_app_id": "eac0e0c0-044d-4863-8f1a-c27dd6aac8f3",
+        "access_worker_aud": "e0a353461fa6261b56ef7079ecab33bdeaca2c88f17664164ad5da6af92c3ca0",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "924a085e-849a-482e-8b10-5e085b11a6f8",
+        "d1_database_name": "lovely-home-appliance-manuals-e2e-fjeealxp",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "e2e-fjeealxp.lovely-hub.com",
+        "hub_environment": "e2e-fjeealxp",
+        "pages_project": "home-dashboard-e2e-fjeealxp",
+        "pages_url": "https://e2e-fjeealxp.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-e2e-fjeealxp",
+        "r2_media_bucket": "lovely-home-guide-media-e2e-fjeealxp",
+        "site_id": "e2e-fjeealxp",
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-e2e-fjeealxp.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-e2e-fjeealxp.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-e2e-fjeealxp"
       },
       "provisioning": [
         {
