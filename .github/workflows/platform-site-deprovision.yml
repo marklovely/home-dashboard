@@ -81,7 +81,7 @@ jobs:
     with:
       site_id: ${{ matrix.site_id }}
       terraform_stack: customers
-      skip_platform_admin: true
+      skip_platform_admin: false
     secrets: inherit
 
   resolve-manual-stack:
@@ -116,5 +116,5 @@ jobs:
     with:
       site_id: ${{ inputs.site_id }}
       terraform_stack: ${{ needs.resolve-manual-stack.outputs.terraform_stack }}
-      skip_platform_admin: ${{ inputs.skip_platform_admin || needs.resolve-manual-stack.outputs.terraform_stack == 'customers' }}
+      skip_platform_admin: ${{ inputs.skip_platform_admin }}
     secrets: inherit

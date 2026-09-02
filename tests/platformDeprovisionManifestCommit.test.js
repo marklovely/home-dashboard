@@ -33,6 +33,16 @@ describe('deprovision manifest follow-up', () => {
     expect(script).toMatch(/Skipping archive — \$\{siteId\} is not in terraform state/);
   });
 
+  it('redeploys platform admin after a customer hub teardown', () => {
+    const workflow = readFileSync(
+      resolve(root, '.github/workflows/platform-site-deprovision.yml'),
+      'utf8'
+    );
+    expect(workflow).toMatch(/terraform_stack: customers\n\s+skip_platform_admin: false/);
+    const script = readFileSync(resolve(root, 'scripts/deprovision-hub-site.mjs'), 'utf8');
+    expect(script).not.toMatch(/skipPlatformAdmin \|\| terraformStack === 'customers'/);
+  });
+
   it('lets auto-merge pick up the follow-up PR', () => {
     expect(automergeWorkflow).toContain("startsWith(github.event.pull_request.head.ref, 'platform/deprovision-')");
     expect(automergeWorkflow).toContain(BODY_MARKER);
