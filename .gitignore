@@ -25,3 +25,6 @@ worker/test-backup.sql
 *.d1.sql
 .wrangler/
 src/public/runtime-config.json
+playwright-report/
+test-results/
+blob-report/

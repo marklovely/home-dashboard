@@ -1,4 +1,5 @@
-import { stripeApiRequest, TRIAL_PERIOD_DAYS } from './platformBilling.js';
+import { getPlatformBillingDb, stripeApiRequest, TRIAL_PERIOD_DAYS } from './platformBilling.js';
+import { getActiveStripeCredentials } from './platformStripeMode.js';
 
 /**
  * @typedef {'month' | 'year'} BillingIntervalKey
@@ -166,9 +167,11 @@ export function buildPublicPricingFromPlans(plans, productName) {
  * @returns {Promise<PublicPlanPricing>}
  */
 export async function getPublicPlanPricing(env) {
-  const secretKey = env.STRIPE_SECRET_KEY?.trim();
-  const monthlyPriceId = env.STRIPE_PRICE_ID?.trim();
-  const yearlyPriceId = env.STRIPE_PRICE_ID_YEARLY?.trim();
+  const db = getPlatformBillingDb(env);
+  const { credentials } = await getActiveStripeCredentials(env, db);
+  const secretKey = credentials.secretKey;
+  const monthlyPriceId = credentials.priceId;
+  const yearlyPriceId = credentials.priceIdYearly;
   const trialDays = TRIAL_PERIOD_DAYS;
   const empty = buildPublicPricingFromPlans({}, 'Household Hub');
 

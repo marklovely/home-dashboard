@@ -31,8 +31,13 @@ platform_operator_emails = [
 # Stripe billing on platform admin (required if billing enabled — terraform apply wipes dashboard-only vars)
 # stripe_secret_key     = "sk_test_..."
 # stripe_webhook_secret = "whsec_..."
-# stripe_price_id         = "price_..."  # £9.99/month
-# stripe_price_id_yearly  = "price_..."  # £99/year
+# stripe_price_id         = "price_..."  # £9.99/month (test)
+# stripe_price_id_yearly  = "price_..."  # £99/year (test)
+# Live keys — optional until public launch. Mode is switched from platform admin, not Terraform.
+# stripe_secret_key_live     = "sk_live_..."
+# stripe_webhook_secret_live = "whsec_..."
+# stripe_price_id_live         = "price_..."
+# stripe_price_id_yearly_live  = "price_..."
 
 # Public trial signup on lovely-home.co.uk (Slice 3 — requires Stripe + platform_github_token above)
 # marketing_site_origin  = "https://lovely-home.co.uk"

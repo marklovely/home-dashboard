@@ -22,7 +22,7 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 
 Public demo hub: [demo.lovely-home.co.uk/sign-in](https://demo.lovely-home.co.uk/sign-in) — username `demo`, password `lovely-demo`.
 
-Pricing on the marketing site is **£9.99/month or £99/year** (loaded live from `GET /api/public/signup/pricing` on the platform Worker, backed by `STRIPE_PRICE_ID` and `STRIPE_PRICE_ID_YEARLY`). The trial is **7 days** (`TRIAL_PERIOD_DAYS` in platform billing). Change prices in Stripe + Terraform — the website updates after deploy.
+Pricing on the marketing site is **£9.99/month or £99/year** (loaded live from `GET /api/public/signup/pricing` on the platform Worker, backed by the **active** Stripe mode’s price ids). The trial is **7 days** (`TRIAL_PERIOD_DAYS` in platform billing). Change prices in Stripe + Terraform, then switch Test/Live from platform admin — the website updates after deploy.
 
 ## Hub provisioning status on the success page
 

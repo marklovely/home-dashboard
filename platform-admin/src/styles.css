@@ -287,6 +287,11 @@ h1 {
   background: transparent;
 }
 
+.btn-danger {
+  background: rgba(255, 107, 107, 0.18);
+  border-color: var(--bad);
+}
+
 .checklist {
   margin: 0.75rem 0 0;
   padding-left: 1.1rem;
@@ -609,6 +614,28 @@ a {
   margin-top: 0.75rem;
   font-size: 0.92rem;
   line-height: 1.45;
+}
+
+.stripe-mode-facts {
+  margin: 0.75rem 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+}
+
+.stripe-mode-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.stripe-mode-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+
+.stripe-mode-ack input {
+  margin-top: 0.2rem;
 }
 
 .usage-ok .usage-value,

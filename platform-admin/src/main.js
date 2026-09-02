@@ -1,4 +1,5 @@
 import { fetchMarketingAccess, fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled, startBillingCheckout } from './api.js';
+import { renderStripeModePanel, wireStripeModePanel } from './stripeMode.js';
 import { renderSiteBilling } from './billing.js';
 import {
   evaluateSiteHealth,
@@ -96,9 +97,9 @@ async function render() {
     ${data.healthServiceAuthConfigured === false ? '<div class="banner banner-warn">Health checks need <code>PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID</code> and <code>PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET</code> on the platform Pages project. Run <code>terraform apply -var-file=environments/hub.tfvars</code>.</div>' : ''}
     ${data.cloudflareUsageConfigured === false ? '<div class="banner banner-warn">Storage usage needs <code>PLATFORM_CF_API_TOKEN</code> (Account → Workers R2 Storage → Read) and <code>CLOUDFLARE_ACCOUNT_ID</code> on the platform Pages project.</div>' : ''}
     ${data.cloudflarePagesConfigured === false ? '<div class="banner banner-warn">PR preview toggles need <code>PLATFORM_CF_API_TOKEN</code> (Account → Cloudflare Pages → Edit) and <code>CLOUDFLARE_ACCOUNT_ID</code> on the platform Pages project.</div>' : ''}
-    ${data.githubAutomationConfigured === false ? '<div class="banner banner-warn">Site wizard needs <code>PLATFORM_GITHUB_TOKEN</code> (contents:write, actions:write) and <code>PLATFORM_GITHUB_REPO</code> on the platform Pages project.</div>' : ''}
-    ${data.stripeBillingConfigured === false && data.platformBillingDbConfigured ? '<div class="banner banner-warn">Stripe billing needs <code>STRIPE_SECRET_KEY</code>, <code>STRIPE_WEBHOOK_SECRET</code>, and at least one of <code>STRIPE_PRICE_ID</code> / <code>STRIPE_PRICE_ID_YEARLY</code> on the platform Pages project.</div>' : ''}
+    ${data.githubAutomationConfigured === false ? '<div class="banner banner-warn">Site wizard needs <code>PLATFORM_GITHUB_TOKEN</code> (contents:write, actions:write, plus Variables write) and <code>PLATFORM_GITHUB_REPO</code> on the platform Pages project.</div>' : ''}
     <p class="meta">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
+    <div id="stripe-mode-slot"></div>
     <div id="marketing-access-slot"></div>
     <section class="grid">
       ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {}, { stripeConfigured: data.stripeBillingConfigured === true, billingDbConfigured: data.platformBillingDbConfigured === true })).join('')}
@@ -112,6 +113,7 @@ async function render() {
 
   main.setAttribute('data-platform', JSON.stringify(platform));
   wireSiteActions(sites, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {});
+  loadStripeModePanel(data.stripeMode, data.platformBillingDbConfigured === true);
   await loadMarketingAccessPanel();
 
   if (data.healthServiceAuthConfigured && healthBySite.size === 0) {
@@ -519,6 +521,17 @@ function renderProvisioningList(steps) {
       return `<li class="${done}">${escapeHtml(String(step.label))}</li>`;
     })
     .join('');
+}
+
+/**
+ * @param {Record<string, unknown> | null | undefined} stripe
+ * @param {boolean} billingDbConfigured
+ */
+function loadStripeModePanel(stripe, billingDbConfigured) {
+  const slot = document.getElementById('stripe-mode-slot');
+  if (!slot) return;
+  slot.innerHTML = renderStripeModePanel(stripe, billingDbConfigured);
+  wireStripeModePanel(showError, () => render(), stripe);
 }
 
 async function loadMarketingAccessPanel() {

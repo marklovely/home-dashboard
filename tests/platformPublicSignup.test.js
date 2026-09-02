@@ -91,6 +91,8 @@ describe('platform public signup', () => {
 
   it('blocks reserved slugs', () => {
     expect(validatePublicSignupSiteId('demo')).toMatch(/reserved/i);
+    expect(validatePublicSignupSiteId('e2e')).toMatch(/reserved/i);
+    expect(validatePublicSignupSiteId('e2e-abc12')).toBeNull();
     expect(validatePublicSignupSiteId('rose-cottage')).toBeNull();
     expect(validatePublicSignupSiteId('kitchen_home')).toMatch(/hyphens/i);
   });
@@ -241,6 +243,29 @@ describe('platform public signup', () => {
       baseEnv,
       expect.objectContaining({ billingInterval: 'year' })
     );
+  });
+
+  it('refuses lifecycle slugs while Stripe is live', async () => {
+    const liveDb = {
+      prepare() {
+        return {
+          bind() {
+            return this;
+          },
+          async first() {
+            return { value: 'live' };
+          }
+        };
+      }
+    };
+    const result = await handlePublicHubSignup(
+      baseEnv,
+      signupInput({ siteId: 'e2e-abc12', billingDb: /** @type {D1Database} */ (liveDb) })
+    );
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(403);
+    expect(result.body.error).toBe('E2E_NOT_ALLOWED');
+    expect(createBillingCheckoutSession).not.toHaveBeenCalled();
   });
 
   it('resolves monthly and yearly Stripe price ids', () => {

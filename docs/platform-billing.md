@@ -21,10 +21,11 @@ Related: [roadmap](./roadmap.md) §3 · [platform provision](./platform-provisio
    - `stripe_webhook_secret` = `whsec_…` (from Stripe CLI or Dashboard endpoint)
    - `stripe_price_id` = monthly `price_…` (e.g. £9.99/month)
    - `stripe_price_id_yearly` = yearly `price_…` (e.g. £99/year)
+   - Optional live twins (`stripe_secret_key_live`, `stripe_webhook_secret_live`, `stripe_price_id_live`, `stripe_price_id_yearly_live`) — store them before public launch. Mode is switched from platform admin, not Terraform.
 
    **Important:** Platform Pages env is managed by Terraform. Setting Stripe vars **only in the Cloudflare dashboard** is not enough — the next `terraform apply` (including **Platform site provision** on any hub) rewrites env vars and **removes** dashboard-only secrets. Always keep Stripe values in `hub.tfvars` (local apply) and in GitHub Actions secrets (CI provision).
 
-   For CI, add repo secrets `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_ID` (same values as Terraform). Verify after apply:
+   For CI, add repo secrets `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `STRIPE_PRICE_ID_YEARLY` (test) and the matching `STRIPE_*_LIVE` secrets. Add repo **variable** `STRIPE_MODE` (`test` | `live`). Verify after apply:
 
    ```bash
    bash scripts/verify-platform-stripe-env.sh
@@ -246,6 +247,26 @@ node scripts/apply-platform-billing-migration.mjs
 ```
 
 Set GitHub secret `RESEND_API_KEY` (and the same value in `hub.tfvars`) so the next `terraform apply` does not wipe it.
+
+## Going live
+
+Keep both Stripe key sets on platform Pages. D1 `platform_settings.stripe_mode` is the source of truth (`test` until you switch).
+
+1. Create the live Product and Prices in the Stripe Dashboard (live mode). Register the **same** webhook URL (`https://platform.lovely-home.co.uk/api/stripe/webhook`) in live mode and copy its `whsec_…`.
+2. Put live values in `hub.tfvars` and GitHub secrets `STRIPE_SECRET_KEY_LIVE`, `STRIPE_WEBHOOK_SECRET_LIVE`, `STRIPE_PRICE_ID_LIVE`, `STRIPE_PRICE_ID_YEARLY_LIVE`. Apply Terraform so Pages receives them. Test keys stay in the existing `STRIPE_*` vars.
+3. Apply billing migrations so `0007_platform_settings.sql` exists:
+   ```bash
+   node scripts/apply-platform-billing-migration.mjs
+   ```
+4. Grant `PLATFORM_GITHUB_TOKEN` permission to write Actions **variables** (fine-grained: Variables read/write). The go-live button sets repo variable `STRIPE_MODE`.
+5. On platform admin, use **Go live…** and type `GO LIVE`. If D1 still has open test subscriptions, tick the acknowledgement. Reverse with **Switch to test mode…** and `USE TEST`.
+6. Run the on-demand lifecycle test while still in test mode before going live — see [e2e/README.md](../e2e/README.md).
+
+Checkout, webhooks, public pricing, and the customer portal all read the active mode. `terraform apply` does not flip the switch.
+
+## Lifecycle regression
+
+`npm run test:lifecycle` and workflow **Hub lifecycle (Stripe test)** (`workflow_dispatch` only) sign up a throwaway `e2e-…` hub with the test card, wait for `hub-shell`, cancel the trial immediately, and assert teardown. They refuse to run when `STRIPE_MODE` is live or the secret is not `sk_test_`.
 
 Deploy marketing pages after merge:
 
