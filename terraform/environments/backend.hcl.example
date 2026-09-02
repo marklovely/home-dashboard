@@ -3,17 +3,23 @@
 # SETUP (one time):
 #   1. Create R2 bucket in Cloudflare dashboard (e.g. lovely-home-terraform-state)
 #   2. Create R2 API token with Object Read & Write on that bucket
-#   3. cp this file to backend.hcl and fill in bucket + endpoint below
+#   3. cp this file to backend.hcl and set bucket + endpoint + the key for the
+#      stack you are working on (see keys below)
 #   4. export AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY from the R2 token
-#   5. cd terraform && terraform init -backend-config=environments/backend.hcl
-#      (answer yes when asked to copy local state — that is the migration)
+#   5. cd terraform && terraform init -reconfigure -backend-config=environments/backend.hcl
+#      then pass -var=terraform_stack=platform or customers on plan/apply
 #
-# See docs/platform-provision.md for the full walkthrough.
+# Two ring-fenced states (never apply against the legacy combined key):
+#   home-dashboard/platform.tfstate   — platform admin, marketing Access, lovely-home.co.uk hubs
+#   home-dashboard/customers.tfstate  — lovely-hub.com household hubs
+#   home-dashboard/hub.tfstate        — legacy combined backup; do not apply
+#
+# See docs/platform-provision.md for the split migration.
 #
 # backend.hcl is gitignored — never commit it or the R2 token.
 
 bucket                      = "YOUR_R2_BUCKET_NAME"
-key                         = "home-dashboard/hub.tfstate"
+key                         = "home-dashboard/platform.tfstate"
 region                      = "auto"
 endpoints = {
   s3 = "https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com"

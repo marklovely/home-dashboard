@@ -36,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       site_ids: ${{ steps.detect.outputs.site_ids }}
+      platform_site_ids: ${{ steps.detect.outputs.platform_site_ids }}
+      customer_site_ids: ${{ steps.detect.outputs.customer_site_ids }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,8 +50,8 @@ jobs:
       - id: detect
         run: node scripts/detect-new-sites-from-yaml.mjs
 
-  provision-auto:
-    if: github.event_name == 'push' && needs.detect-new-sites.outputs.site_ids != '[]'
+  provision-auto-platform:
+    if: github.event_name == 'push' && needs.detect-new-sites.outputs.platform_site_ids != '[]'
     needs: detect-new-sites
     permissions:
       contents: write
@@ -58,22 +60,63 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        site_id: ${{ fromJson(needs.detect-new-sites.outputs.site_ids) }}
+        site_id: ${{ fromJson(needs.detect-new-sites.outputs.platform_site_ids) }}
     uses: ./.github/workflows/platform-site-provision-reusable.yml
     with:
       site_id: ${{ matrix.site_id }}
+      terraform_stack: platform
       skip_pages: false
       skip_platform_admin: false
     secrets: inherit
 
+  provision-auto-customers:
+    if: github.event_name == 'push' && needs.detect-new-sites.outputs.customer_site_ids != '[]'
+    needs: detect-new-sites
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        site_id: ${{ fromJson(needs.detect-new-sites.outputs.customer_site_ids) }}
+    uses: ./.github/workflows/platform-site-provision-reusable.yml
+    with:
+      site_id: ${{ matrix.site_id }}
+      terraform_stack: customers
+      skip_pages: false
+      skip_platform_admin: true
+    secrets: inherit
+
+  resolve-manual-stack:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      terraform_stack: ${{ steps.resolve.outputs.terraform_stack }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - id: resolve
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+        run: |
+          STACK=$(node scripts/terraform-stack-for-site.mjs "$SITE_ID")
+          echo "terraform_stack=$STACK" >> "$GITHUB_OUTPUT"
+
   provision-manual:
     if: github.event_name == 'workflow_dispatch'
+    needs: resolve-manual-stack
     permissions:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/platform-site-provision-reusable.yml
     with:
       site_id: ${{ inputs.site_id }}
+      terraform_stack: ${{ needs.resolve-manual-stack.outputs.terraform_stack }}
       skip_pages: ${{ inputs.skip_pages }}
-      skip_platform_admin: ${{ inputs.skip_platform_admin }}
+      skip_platform_admin: ${{ inputs.skip_platform_admin || needs.resolve-manual-stack.outputs.terraform_stack == 'customers' }}
     secrets: inherit

@@ -13,6 +13,16 @@ output "zone_name" {
   value       = var.zone_name
 }
 
+output "customer_zone_name" {
+  description = "Customer hub DNS zone."
+  value       = var.customer_zone_name
+}
+
+output "terraform_stack" {
+  description = "Which stack this state file belongs to."
+  value       = var.terraform_stack
+}
+
 output "sites" {
   description = "Provisioned hub sites (JSON contract for scripts and future platform admin)."
   value = {

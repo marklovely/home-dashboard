@@ -9,6 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { detectRemovedTerraformSites } from './lib/detect-site-yaml-changes.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
+import { partitionSiteIdsByStack } from './lib/terraform-stack.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const yamlPath = join(root, 'platform/sites.yaml');
@@ -36,10 +37,16 @@ try {
 }
 
 const removed = detectRemovedTerraformSites(before, after);
+const partitioned = partitionSiteIdsByStack(removed, before);
 
 const githubOutput = process.env.GITHUB_OUTPUT;
 if (githubOutput) {
   appendFileSync(githubOutput, `site_ids=${JSON.stringify(removed)}\n`);
+  appendFileSync(githubOutput, `platform_site_ids=${JSON.stringify(partitioned.platform)}\n`);
+  appendFileSync(githubOutput, `customer_site_ids=${JSON.stringify(partitioned.customers)}\n`);
 }
 
-console.log(`Removed terraform sites: ${removed.length ? removed.join(', ') : '(none)'}`);
+const label = removed.length
+  ? removed.map((id) => `${id} (${partitioned.customers.includes(id) ? 'customers' : 'platform'})`).join(', ')
+  : '(none)';
+console.log(`Removed terraform sites: ${label}`);

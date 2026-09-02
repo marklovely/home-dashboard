@@ -3,8 +3,9 @@
  * Merge platform/sites.yaml with terraform output -json sites into platform-manifest.json.
  * When Terraform state is unavailable (e.g. Cloudflare Pages CI), preserves contracts
  * from the existing manifest file committed in git. When it is available, Terraform
- * output wins outright — a managed site missing from it has been destroyed, so its
- * committed contract is dropped instead of resurrected.
+ * output is authoritative only for sites on the current stack (platform vs customers).
+ * Other-stack contracts stay in the committed manifest so a customer apply cannot
+ * wipe production.
  *
  * Usage: node scripts/build-platform-manifest.mjs
  */
@@ -22,12 +23,14 @@ import {
   siteManifestFields,
   terraformOutputIsAuthoritative
 } from './lib/platformManifestMerge.mjs';
+import { isTerraformStack, terraformStackForSite } from './lib/terraform-stack.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sitesYamlPath = join(root, 'platform/sites.yaml');
 const tfDir = join(root, 'terraform');
 const outDir = join(root, 'platform-admin/public');
 const outPath = join(outDir, 'platform-manifest.json');
+const registry = loadSitesYaml(sitesYamlPath);
 
 /** @type {Record<string, object>} */
 let terraformSites = {};
@@ -49,6 +52,8 @@ if (terraformAvailable && !terraformAuthoritative) {
     'build-platform-manifest: terraform output holds no sites — preserving committed contracts rather than treating state as empty.'
   );
 }
+
+const terraformStack = resolveManifestTerraformStack(registry, terraformSites);
 
 /** @type {Record<string, string>} */
 const platformMeta = {
@@ -104,7 +109,6 @@ const mergedPlatform = mergePlatformMeta(
   /** @type {Record<string, string> | undefined} */ (preservedManifest?.platform)
 );
 
-const registry = loadSitesYaml(sitesYamlPath);
 /** @type {Record<string, object>} */
 const sites = {};
 let preservedContractCount = 0;
@@ -117,7 +121,7 @@ for (const [siteId, meta] of Object.entries(registry)) {
     meta,
     terraformSites,
     /** @type {Record<string, { contract?: unknown }> | undefined} */ (preservedManifest?.sites),
-    { terraformAvailable: terraformAuthoritative }
+    { terraformAvailable: terraformAuthoritative, terraformStack }
   );
   if (contract && !terraformSites[siteId]) {
     preservedContractCount += 1;
@@ -164,7 +168,7 @@ writeFileSync(outPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 const tfSiteCount = Object.keys(terraformSites).length;
 console.log(
-  `Wrote ${outPath} (${Object.keys(sites).length} sites, terraform=${terraformAvailable ? tfSiteCount : 'unavailable'}, preservedContracts=${preservedContractCount})`
+  `Wrote ${outPath} (${Object.keys(sites).length} sites, terraform=${terraformAvailable ? tfSiteCount : 'unavailable'}, stack=${terraformStack ?? 'unknown'}, preservedContracts=${preservedContractCount})`
 );
 if (droppedContractSites.length > 0) {
   console.log(
@@ -271,4 +275,23 @@ function runTerraform(args) {
   } catch {
     return null;
   }
+}
+
+/**
+ * @param {Record<string, Record<string, unknown>>} registry
+ * @param {Record<string, unknown>} sitesFromTerraform
+ * @returns {string | null}
+ */
+function resolveManifestTerraformStack(registry, sitesFromTerraform) {
+  const fromEnv = process.env.TF_VAR_terraform_stack?.trim() || process.env.TERRAFORM_STACK?.trim();
+  if (isTerraformStack(fromEnv)) return fromEnv;
+
+  const fromOutput = runTerraform(['output', '-raw', 'terraform_stack'])?.trim();
+  if (isTerraformStack(fromOutput)) return fromOutput;
+
+  const stacks = new Set(
+    Object.keys(sitesFromTerraform).map((siteId) => terraformStackForSite(siteId, registry[siteId]))
+  );
+  if (stacks.size === 1) return [...stacks][0];
+  return null;
 }

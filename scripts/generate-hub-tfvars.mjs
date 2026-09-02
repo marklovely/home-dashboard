@@ -22,6 +22,7 @@ import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
 import { terraformStringMap, parseTerraformJsonOutput, parseHubProxySecretsFromTerraformState } from './lib/terraform-output-json.mjs';
 import { parseSiteOwnerEmailsEnv, resolveSiteOwnerEmails } from './lib/site-owner-emails.mjs';
+import { isTerraformStack } from './lib/terraform-stack.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sitesYamlPath = join(root, 'platform/sites.yaml');
@@ -58,6 +59,13 @@ const provisionSiteId = process.env.PROVISION_SITE_ID?.trim() || '';
 const provisionPhase = process.env.PROVISION_PHASE?.trim() || '';
 const deprovisionSiteId = process.env.DEPROVISION_SITE_ID?.trim() || '';
 const applySiteId = provisionSiteId || deprovisionSiteId;
+const terraformStack = process.env.TF_VAR_terraform_stack?.trim() || process.env.TERRAFORM_STACK?.trim();
+if (!isTerraformStack(terraformStack)) {
+  console.error(
+    'Set TERRAFORM_STACK or TF_VAR_terraform_stack to "platform" or "customers" before generating tfvars.'
+  );
+  process.exit(1);
+}
 
 // Customer owner emails come from the platform billing database at provision
 // time, so they are never written to platform/sites.yaml in a public repo.
@@ -101,6 +109,7 @@ const lines = [
   `workers_subdomain     = "${escapeHcl(workersSubdomain)}"`,
   `access_team_domain    = "${escapeHcl(accessTeamDomain)}"`,
   `zone_name             = "${escapeHcl(zoneName)}"`,
+  `terraform_stack       = "${terraformStack}"`,
   ''
 ];
 
