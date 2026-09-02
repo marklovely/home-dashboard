@@ -40,6 +40,7 @@
 - Access login titles use the household name (`Wagtail Home`, not `wagtail Pages`); unauthorised emails get a public deny page and login-footer copy because Cloudflare still will not send a code
 - Stripe Test/Live switch on platform admin (typed `GO LIVE` / `USE TEST`); both key sets stay in Terraform, D1 holds the active mode
 - On-demand Playwright lifecycle (`npm run test:lifecycle`, workflow_dispatch) covers test-mode signup, hub ready, trial cancel, and teardown
+- Local `npm run test:lifecycle` loads the test Stripe key and operator email from hub.tfvars when those env vars are unset
 
 ## 2.4.0
 

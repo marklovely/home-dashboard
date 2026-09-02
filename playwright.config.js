@@ -1,4 +1,9 @@
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from '@playwright/test';
+import { loadLifecycleEnv } from './e2e/lib/loadLifecycleEnv.js';
+
+loadLifecycleEnv(process.env, join(dirname(fileURLToPath(import.meta.url)), 'terraform/environments/hub.tfvars'));
 
 export default defineConfig({
   testDir: './e2e',

@@ -4,6 +4,7 @@ import {
   findTrialingSubscription,
   uniqueOwnerEmail
 } from './lib/stripeApi.js';
+import { isStripeTestSecret, stripeTestSecretProblem } from './lib/loadLifecycleEnv.js';
 
 const PLATFORM_API_ORIGIN = (process.env.PLATFORM_API_ORIGIN || 'https://platform.lovely-home.co.uk').replace(
   /\/$/,
@@ -59,8 +60,8 @@ function assertTestModeOnly() {
     throw new Error('Refusing to run the hub lifecycle test while GitHub STRIPE_MODE is live.');
   }
   const secretKey = process.env.STRIPE_SECRET_KEY?.trim() || '';
-  if (!secretKey.startsWith('sk_test') && !secretKey.startsWith('rk_test')) {
-    throw new Error('STRIPE_SECRET_KEY must be a test key (sk_test_ / rk_test_).');
+  if (!isStripeTestSecret(secretKey)) {
+    throw new Error(stripeTestSecretProblem(secretKey));
   }
 }
 

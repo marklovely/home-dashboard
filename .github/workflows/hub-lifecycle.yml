@@ -37,8 +37,16 @@ jobs:
           fi
           case "${STRIPE_SECRET_KEY:-}" in
             sk_test_*|rk_test_*) ;;
+            sk_live_*|rk_live_*)
+              echo "::error::STRIPE_SECRET_KEY is a live key. This workflow only runs against Stripe test mode."
+              exit 1
+              ;;
+            "")
+              echo "::error::STRIPE_SECRET_KEY is missing. Add the test-mode GitHub secret."
+              exit 1
+              ;;
             *)
-              echo "::error::STRIPE_SECRET_KEY must be a Stripe test key."
+              echo "::error::STRIPE_SECRET_KEY must be a Stripe test key (sk_test_ / rk_test_)."
               exit 1
               ;;
           esac

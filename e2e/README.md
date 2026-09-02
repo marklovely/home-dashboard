@@ -10,6 +10,14 @@ Provisioning plus teardown often takes **25–80 minutes**.
 
 ```bash
 npx playwright install chromium
+npm run test:lifecycle
+```
+
+If `STRIPE_SECRET_KEY` and `E2E_OWNER_EMAIL` are not exported, the test loads `stripe_secret_key` and the first platform operator email from `terraform/environments/hub.tfvars` (the same file other local scripts use). It still refuses a live key.
+
+You can still override:
+
+```bash
 export STRIPE_SECRET_KEY=sk_test_...
 export E2E_OWNER_EMAIL=you@example.com
 export STRIPE_MODE=test
