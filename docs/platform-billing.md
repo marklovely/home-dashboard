@@ -131,7 +131,7 @@ node scripts/apply-platform-billing-migration.mjs
 When Stripe sends **`customer.subscription.deleted`** or **`customer.subscription.updated`** with status **canceled** (includes `unpaid`):
 
 1. Platform D1 billing row is updated to `canceled`.
-2. If the site was live (provisioned or had `trialing`/`active`/`past_due` billing), the platform dispatches [`platform-site-billing-deprovision.yml`](../.github/workflows/platform-site-billing-deprovision.yml) via `PLATFORM_GITHUB_TOKEN`.
+2. If the site was live (provisioned or had `trialing`/`active`/`past_due` billing), the platform dispatches [`platform-site-billing-deprovision.yml`](../.github/workflows/platform-site-billing-deprovision.yml) via `PLATFORM_GITHUB_TOKEN`. A stale `platform-manifest.json` (the post-provision follow-up PR has not deployed yet) does not block that dispatch.
 3. The workflow: **archive** hub JSON to platform R2 (while the hub is still live) → open a **registry removal PR** (auto-merge when CI passes) → merge triggers [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) for Terraform destroy + Worker delete + manifest rebuild.
 4. `site_billing.deprovision_dispatched_at` is set on success; `deprovision_last_error` on dispatch failure (webhook returns **503** for Stripe retry).
 5. `invoice.payment_failed` sets **`past_due` only** — hub stays live while Stripe retries billing.

@@ -42,6 +42,7 @@
 - On-demand Playwright lifecycle (`npm run test:lifecycle`, workflow_dispatch) covers test-mode signup, hub ready, trial cancel, and teardown
 - Local `npm run test:lifecycle` loads the test Stripe key and operator email from hub.tfvars when those env vars are unset
 - Lifecycle Checkout types the test card and waits for the Stripe session to complete; if Onelink stays on Processing, the spec starts the same test trial via the Stripe API so provision still runs
+- Billing cancel still tears the hub down when platform-manifest.json has not picked up the new site yet (the follow-up PR lags the live hostname)
 
 ## 2.4.0
 

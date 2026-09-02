@@ -59,6 +59,28 @@ describe('billing deprovision helpers', () => {
     expect(decision.reason).toBe('already_dispatched');
   });
 
+  it('dispatches when billing was trialing even if platform-manifest is stale', () => {
+    const decision = shouldDispatchBillingDeprovision({
+      eventType: 'customer.subscription.deleted',
+      status: 'canceled',
+      siteId: 'e2e-abc',
+      existingBilling: { status: 'trialing' },
+      manifestSite: null
+    });
+    expect(decision).toEqual({ dispatch: true, reason: 'canceled_needs_deprovision' });
+  });
+
+  it('skips a cancel with no billing history and no registry entry', () => {
+    const decision = shouldDispatchBillingDeprovision({
+      eventType: 'customer.subscription.deleted',
+      status: 'canceled',
+      siteId: 'e2e-abc',
+      existingBilling: null,
+      manifestSite: null
+    });
+    expect(decision.reason).toBe('site_not_in_manifest');
+  });
+
   it('dispatches again when hub was live after a prior deprovision dispatch', () => {
     const decision = shouldDispatchBillingDeprovision({
       eventType: 'customer.subscription.deleted',

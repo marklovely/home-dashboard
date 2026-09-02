@@ -44,9 +44,6 @@ export function shouldDispatchBillingDeprovision(input) {
   if (priorDeprovisionBlocksDispatch({ existingBilling })) {
     return { dispatch: false, reason: 'already_dispatched' };
   }
-  if (!manifestSite) {
-    return { dispatch: false, reason: 'site_not_in_manifest' };
-  }
   if (
     eventType === 'customer.subscription.updated' &&
     existingBilling?.status === 'canceled'
@@ -58,7 +55,10 @@ export function shouldDispatchBillingDeprovision(input) {
     Boolean(existingBilling?.provision_dispatched_at) ||
     ['trialing', 'active', 'past_due'].includes(String(existingBilling?.status ?? ''));
   if (!wasLive) {
-    return { dispatch: false, reason: 'never_provisioned' };
+    return {
+      dispatch: false,
+      reason: manifestSite ? 'never_provisioned' : 'site_not_in_manifest'
+    };
   }
   return { dispatch: true, reason: 'canceled_needs_deprovision' };
 }
