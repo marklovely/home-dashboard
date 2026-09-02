@@ -78,6 +78,8 @@ jobs:
       TF_VAR_terraform_stack: ${{ needs.resolve-stack.outputs.terraform_stack }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Validate site_id
         id: validate
@@ -126,7 +128,14 @@ jobs:
           KEY=$(grep 'Archived to r2://' /tmp/archive.log | head -1 | sed 's/.*r2:\/\/[^/]*\///')
           echo "archive_r2_key=$KEY" >> "$GITHUB_OUTPUT"
 
+      - name: Refresh main before registry delete
+        id: sync_main
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+        run: node scripts/sync-git-main-before-site-delete.mjs "$SITE_ID"
+
       - name: Remove site from registry (local)
+        if: steps.sync_main.outputs.site_present != 'false'
         env:
           SITE_ID: ${{ inputs.site_id }}
           HOSTNAME: ${{ steps.validate.outputs.hostname }}
@@ -153,6 +162,7 @@ jobs:
           fi
 
       - name: Open registry removal pull request
+        if: steps.sync_main.outputs.site_present != 'false'
         id: open_pr
         uses: peter-evans/create-pull-request@v7
         with:
@@ -170,7 +180,7 @@ jobs:
             Triggered by Stripe billing webhook or manual **Platform site billing deprovision** workflow.
 
       - name: Require pull request
-        if: steps.open_pr.outputs.pull-request-number == ''
+        if: steps.sync_main.outputs.site_present != 'false' && steps.open_pr.outputs.pull-request-number == ''
         run: |
           echo "::error::No registry changes to commit — is ${{ inputs.site_id }} already removed from platform/sites.yaml?"
           exit 1

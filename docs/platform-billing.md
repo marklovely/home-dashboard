@@ -132,7 +132,7 @@ When Stripe sends **`customer.subscription.deleted`** or **`customer.subscriptio
 
 1. Platform D1 billing row is updated to `canceled`.
 2. If the site was live (provisioned or had `trialing`/`active`/`past_due` billing), the platform dispatches [`platform-site-billing-deprovision.yml`](../.github/workflows/platform-site-billing-deprovision.yml) via `PLATFORM_GITHUB_TOKEN`. A stale `platform-manifest.json` (the post-provision follow-up PR has not deployed yet) does not block that dispatch.
-3. The workflow: **archive** hub JSON to platform R2 (while the hub is still live) → open a **registry removal PR** (auto-merge when CI passes) → merge triggers [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) for Terraform destroy + Worker delete + manifest rebuild.
+3. The workflow: **archive** hub JSON to platform R2 (while the hub is still live) → **refresh `origin/main`** (wait until `attach_hub_api_binding: true` so the provision follow-up is not still in flight) → open a **registry removal PR** (auto-merge when CI passes) → merge triggers [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) for Terraform destroy + Worker delete + manifest rebuild. A stale checkout of `main` from job start conflicts with the “mark provisioned” PR on the same yaml/toml blocks.
 4. `site_billing.deprovision_dispatched_at` is set on success; `deprovision_last_error` on dispatch failure (webhook returns **503** for Stripe retry).
 5. `invoice.payment_failed` sets **`past_due` only** — hub stays live while Stripe retries billing.
 
