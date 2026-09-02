@@ -4,6 +4,10 @@ import { join } from 'node:path';
 import {
   ACCESS_LOGIN_FOOTER_TEXT,
   ACCESS_LOGIN_LOGO_URL,
+  ACCESS_UNAUTHORISED_URL,
+  accessAppLoginFields,
+  accessLoginAppName,
+  hubAccessAppFromLegacyName,
   mergeAccessLoginDesign
 } from '../scripts/sync-access-login-design.mjs';
 
@@ -34,6 +38,18 @@ describe('Access login naming and deny page', () => {
     expect(merged.login_design.background_color).toBe('#123456');
     expect(merged.login_design.logo_path).toBe(ACCESS_LOGIN_LOGO_URL);
     expect(merged.login_design.footer_text).toBe(ACCESS_LOGIN_FOOTER_TEXT);
+  });
+
+  it('renames legacy hub Access apps to the household title', () => {
+    expect(accessLoginAppName('wagtail')).toBe('Wagtail Home');
+    expect(hubAccessAppFromLegacyName('Lovely Home — wagtail Pages')).toEqual({
+      siteId: 'wagtail',
+      kind: 'pages',
+      name: 'Wagtail Home'
+    });
+    expect(hubAccessAppFromLegacyName('Lovely Home — wagtail Worker')?.name).toBe('Wagtail Home API');
+    expect(hubAccessAppFromLegacyName('Lovely Home — Marketing site')).toBeNull();
+    expect(accessAppLoginFields('Wagtail Home').custom_deny_url).toBe(ACCESS_UNAUTHORISED_URL);
   });
 
   it('explains that a missing login code means the email is not authorised', () => {
