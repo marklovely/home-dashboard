@@ -10,6 +10,14 @@ Provisioning plus teardown often takes **25–80 minutes**.
 
 ```bash
 npx playwright install chromium
+npm run test:lifecycle
+```
+
+If `STRIPE_SECRET_KEY` and `E2E_OWNER_EMAIL` are not exported, the test loads `stripe_secret_key` and the first platform operator email from `terraform/environments/hub.tfvars` (the same file other local scripts use). It still refuses a live key.
+
+You can still override:
+
+```bash
 export STRIPE_SECRET_KEY=sk_test_...
 export E2E_OWNER_EMAIL=you@example.com
 export STRIPE_MODE=test
@@ -21,7 +29,7 @@ Optional:
 - `PLATFORM_API_ORIGIN` (default `https://platform.lovely-home.co.uk`)
 - `MARKETING_ORIGIN` (default `https://lovely-home.co.uk`)
 
-The spec posts to `/api/public/signup` (Access-bypassed) then drives hosted Checkout in the browser. Marketing-site OTP is not required. Hub Access OTP is not attempted.
+The spec posts to `/api/public/signup` (Access-bypassed) then drives hosted Checkout in the browser. It types the test card and waits for the Stripe Checkout session to become `complete`. The success-page redirect is optional — Access or a stuck Processing spinner must not fail the run. If Onelink Checkout stays `open` (Playwright often cannot finish that hosted form), the spec expires the session and starts the same 7-day trial via the Stripe API with `metadata.site_id`, so provision still runs. Then it polls hub-status. Hub Access OTP is not attempted.
 
 `e2e-…` slugs skip Turnstile and are rejected while the platform Stripe mode is **live**.
 
