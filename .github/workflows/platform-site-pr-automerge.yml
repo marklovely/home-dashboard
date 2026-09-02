@@ -49,6 +49,48 @@ jobs:
             exit 1
           fi
 
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Merge main into a dirty billing-deprovision PR
+        if: contains(github.event.pull_request.head.ref, '-billing-deprovision-')
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          mergeable="$(gh pr view "$PR_NUMBER" --json mergeable --jq .mergeable)"
+          for attempt in $(seq 1 8); do
+            if [ "$mergeable" != "UNKNOWN" ]; then
+              break
+            fi
+            sleep 5
+            mergeable="$(gh pr view "$PR_NUMBER" --json mergeable --jq .mergeable)"
+          done
+          if [ "$mergeable" != "CONFLICTING" ]; then
+            echo "mergeable=$mergeable; no conflict replay needed."
+            exit 0
+          fi
+          SITE_ID="${PR_TITLE#platform: billing deprovision }"
+          if [ -z "$SITE_ID" ] || [ "$SITE_ID" = "$PR_TITLE" ]; then
+            echo "::error::Could not parse site id from title: $PR_TITLE"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          gh pr checkout "$PR_NUMBER"
+          git fetch origin main
+          git merge origin/main -X ours -m "Merge main into billing deprovision for ${SITE_ID}."
+          if git grep -E "^  ${SITE_ID}:" -- platform/sites.yaml; then
+            echo "::error::Merging main resurrected ${SITE_ID} in platform/sites.yaml"
+            exit 1
+          fi
+          git push
+
       - name: Enable auto-merge (retry while GitHub registers checks)
         env:
           GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
