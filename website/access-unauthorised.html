@@ -6,102 +6,107 @@
   <meta name="color-scheme" content="light">
   <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="You are not authorised to access this Lovely Home hub. Ask the owner to add your email, or contact support.">
-  <meta name="lovely-platform-api" content="https://platform.lovely-home.co.uk">
   <title>Not authorised — Lovely Home</title>
-  <link rel="canonical" href="https://lovely-home.co.uk/access-unauthorised.html">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Lovely Home">
-  <meta property="og:title" content="Not authorised — Lovely Home">
-  <meta property="og:description" content="You are not authorised to access this Lovely Home hub. Ask the owner to add your email, or contact support.">
-  <meta property="og:url" content="https://lovely-home.co.uk/access-unauthorised.html">
-  <meta property="og:image" content="https://lovely-home.co.uk/lovely-home-og.png">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Not authorised — Lovely Home">
-  <meta name="twitter:description" content="You are not authorised to access this Lovely Home hub. Ask the owner to add your email, or contact support.">
-  <link rel="icon" href="lovely-home-icon.svg" type="image/svg+xml">
-  <link rel="icon" href="favicon.png" type="image/png">
-  <link rel="apple-touch-icon" href="favicon.png">
-  <link rel="stylesheet" href="site.css">
+  <link rel="canonical" href="https://lovely-home.co.uk/access-unauthorised">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f1ea;
+      --text: #1c241e;
+      --muted: #5a6258;
+      --accent: #2f5a43;
+      --card: #fbfaf6;
+      --border: rgba(28, 36, 30, 0.1);
+      --font: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      line-height: 1.5;
+      background: radial-gradient(ellipse 60% 45% at 92% 8%, rgba(47, 90, 67, 0.1), transparent 58%),
+        linear-gradient(180deg, #f7f4ee 0%, var(--bg) 42%, #efebe3 100%);
+      color: var(--text);
+    }
+    main {
+      max-width: 38rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 3rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      color: inherit;
+      text-decoration: none;
+    }
+    .brand svg { display: block; }
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+    .brand-tag {
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 4vw, 2.35rem);
+      line-height: 1.2;
+      margin: 0 0 0.75rem;
+    }
+    .lead, p { color: var(--muted); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.35rem;
+      margin-top: 1.5rem;
+    }
+    .card h2 {
+      margin: 0 0 0.65rem;
+      font-size: 1.05rem;
+    }
+    a { color: var(--accent); }
+  </style>
 </head>
 <body>
-  <div class="landing-wrap">
-    <div class="landing-bg" aria-hidden="true"></div>
-
-    <div class="site-banner">
-      <div class="site-banner-inner">
-        <span><a href="https://demo.lovely-home.co.uk/sign-in">Try the live demo</a> — sign in with <strong>demo</strong> / <strong>lovely-demo</strong></span>
-      </div>
-    </div>
-
-    <header class="site-header">
-      <a class="site-header-brand" href="/" aria-label="Lovely Home home">
-        <img class="brand-mark" src="lovely-home-mark.svg" width="40" height="40" alt="">
-        <span class="brand-text">
-          <span class="brand-name">Lovely Home</span>
-          <span class="brand-tagline">Home hub</span>
-        </span>
-      </a>
-      <nav id="site-nav" class="site-nav" aria-label="Main" aria-hidden="true">
-        <a href="/">Home</a>
-        <a href="included.html">What's included</a>
-        <a href="pricing.html">Pricing</a>
-        <a href="signup.html">Start trial</a>
-        <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
-        <a href="app.html">See the hub</a>
-        <a href="account.html">Account</a>
-        <a href="help.html">Help</a>
-        <a href="support.html">Support</a>
-      </nav>
-      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
-        <span class="nav-toggle-bar" aria-hidden="true"></span>
-        <span class="nav-toggle-bar" aria-hidden="true"></span>
-        <span class="nav-toggle-bar" aria-hidden="true"></span>
-      </button>
-    </header>
-    <div class="nav-backdrop" hidden></div>
-
-    <main class="landing inner-page">
-      <header class="page-hero">
-        <p class="hero-eyebrow"><span></span> Access</p>
-        <h1>You are not authorised to access this home</h1>
-        <p class="hero-lead">This household hub is private. Only emails the owner has invited can sign in.</p>
-      </header>
-
-      <div class="content-stack">
-        <section class="content-card">
-          <h2>If you were expecting a login code</h2>
-          <p>
-            Cloudflare does not send a code when the email is not on the household list — the login screen
-            can still look as if it is waiting. That means this address is not authorised, not that the
-            email is delayed.
-          </p>
-          <p>
-            Ask the home owner to add you as an owner or house sitter, then try again.
-            If you are the owner, email
-            <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>.
-          </p>
-        </section>
-      </div>
-    </main>
-
-    <footer class="site-footer">
-      <p>© 2026 Mark Lovely. All rights reserved. <span class="site-version" data-site-version></span></p>
-      <nav class="site-footer-nav" aria-label="Footer">
-        <a href="included.html">What's included</a>
-        <a href="pricing.html">Pricing</a>
-        <a href="signup.html">Start trial</a>
-        <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
-        <a href="account.html">Account</a>
-        <a href="help.html">Help</a>
-        <a href="support.html">Support</a>
-        <a href="security.html">Security</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>
-      </nav>
-    </footer>
-  </div>
-
-  <script src="site.js" defer></script>
+  <main>
+    <a class="brand" href="mailto:support@lovely-home.co.uk">
+      <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true">
+        <rect width="64" height="64" rx="16" fill="#2F5A43"/>
+        <path fill="#F4F1EA" d="M12.4 34.6 32 13.8 51.6 34.6l-1.8 2.2H14.2z"/>
+        <rect x="17.2" y="35" width="29.6" height="20.6" fill="#F4F1EA"/>
+        <circle cx="32" cy="24.4" r="2.55" fill="#2F5A43"/>
+        <path fill="#C45C4A" d="M21.4 55.6V45.8c0-3.6 7-3.6 7 0v9.8z"/>
+      </svg>
+      <span>
+        <span class="brand-name">Lovely Home</span>
+        <span class="brand-tag">Home hub</span>
+      </span>
+    </a>
+    <h1>You are not authorised to access this home</h1>
+    <p class="lead">This household hub is private. Only emails the owner has invited can sign in.</p>
+    <section class="card">
+      <h2>If you were expecting a login code</h2>
+      <p>
+        Cloudflare does not send a code when the email is not on the household list — the login screen
+        can still look as if it is waiting. That means this address is not authorised, not that the
+        email is delayed.
+      </p>
+      <p>
+        Ask the home owner to add you as an owner or house sitter, then try again.
+        If you are the owner, email
+        <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>.
+      </p>
+    </section>
+  </main>
 </body>
 </html>

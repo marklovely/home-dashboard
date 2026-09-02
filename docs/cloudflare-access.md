@@ -78,8 +78,8 @@ Cloudflare One-time PIN **will not send a code** when the address is not on an A
 What we do instead:
 
 - Footer copy on the Access login page: if no code arrives, the email is not authorised.
-- After someone submits a PIN (or Access otherwise denies identity), they are sent to [`access-unauthorised.html`](../website/access-unauthorised.html).
-- Hub Access application names are the household title (`Wagtail Home`), not `Lovely Home — wagtail Pages`. The logo is the team Access login design (`node scripts/sync-access-login-design.mjs`).
+- After someone submits a PIN (or Access otherwise denies identity), they are sent to [`access-unauthorised.html`](../website/access-unauthorised.html) (`https://lovely-home.co.uk/access-unauthorised`). That page is self-contained so CSS and images are not blocked by the marketing Access app.
+- Hub Access application names are the household title (`Wagtail Home`), not `Lovely Home — wagtail Pages`. The left-hand login logo is the team Access login design (`node scripts/sync-access-login-design.mjs`, needs a token that can edit the Zero Trust organisation).
 
 On Terraform-managed hubs, owners can also edit the **House sitters** allow-list from **Settings → House sitter mode → Sitter login emails** or **Scheduled stays**. The hub Worker stores the list in D1 and updates Cloudflare Access via API (requires `CF_ACCESS_MANAGEMENT_TOKEN`, `ACCESS_PAGES_APP_ID`, and `ACCESS_WORKER_APP_ID` on the Worker).
 

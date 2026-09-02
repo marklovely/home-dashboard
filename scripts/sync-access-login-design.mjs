@@ -18,10 +18,9 @@ export const ACCESS_LOGIN_LOGO_URL =
 export const ACCESS_LOGIN_FOOTER_TEXT =
   'If you do not receive a code, this email is not authorised for this home. Ask the owner to add you.';
 
-export const ACCESS_UNAUTHORISED_URL = 'https://lovely-home.co.uk/access-unauthorised.html';
+export const ACCESS_UNAUTHORISED_URL = 'https://lovely-home.co.uk/access-unauthorised';
 
-export const ACCESS_UNAUTHORISED_MESSAGE =
-  'You are not authorised to access this home. If you did not receive a login code, this email is not on the household list.';
+export const ACCESS_UNAUTHORISED_MESSAGE = 'You are not authorised to access this home.';
 
 const ACCESS_LOGIN_GENERIC_NAMES = {
   production: 'Lovely Home',
@@ -142,14 +141,21 @@ async function main() {
     return body.result;
   }
 
-  const current = await cf('/access/organizations');
-  const next = mergeAccessLoginDesign(current);
-  await cf('/access/organizations', 'PUT', {
-    name: next.name,
-    auth_domain: next.auth_domain,
-    login_design: next.login_design
-  });
-  console.log('Updated Access login design (logo + unauthorised-email footer).');
+  try {
+    const current = await cf('/access/organizations');
+    const next = mergeAccessLoginDesign(current);
+    await cf('/access/organizations', 'PUT', {
+      name: next.name,
+      auth_domain: next.auth_domain,
+      login_design: next.login_design
+    });
+    console.log('Updated Access login design (logo + unauthorised-email footer).');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `Could not update team login design (${message}). Access app names and deny URLs will still update. Set login_design.logo_path in Zero Trust if the old house icon remains.`
+    );
+  }
 
   /** @type {unknown[]} */
   const apps = (await cf('/access/apps?per_page=100')) ?? [];
@@ -173,6 +179,37 @@ async function main() {
       ...fields
     });
     console.log(`Renamed Access app ${record.name} → ${rename.name} (${record.domain ?? record.id}).`);
+  }
+
+  const unauthorisedExists = apps.some((app) => {
+    const record = /** @type {{ domain?: string, destinations?: { uri?: string }[] }} */ (app);
+    const uris = [
+      String(record.domain ?? ''),
+      ...(Array.isArray(record.destinations) ? record.destinations.map((destination) => String(destination?.uri ?? '')) : [])
+    ];
+    return uris.some((uri) => uri.includes('access-unauthorised.html'));
+  });
+  if (!unauthorisedExists) {
+    await cf('/access/apps', 'POST', {
+      name: 'Lovely Home — Access unauthorised page',
+      type: 'self_hosted',
+      domain: 'lovely-home.co.uk/access-unauthorised',
+      destinations: [
+        { type: 'public', uri: 'lovely-home.co.uk/access-unauthorised' },
+        { type: 'public', uri: 'lovely-home.co.uk/access-unauthorised.html' },
+        { type: 'public', uri: 'www.lovely-home.co.uk/access-unauthorised' },
+        { type: 'public', uri: 'www.lovely-home.co.uk/access-unauthorised.html' }
+      ],
+      policies: [
+        {
+          name: 'Bypass access unauthorised page',
+          decision: 'bypass',
+          precedence: 1,
+          include: [{ everyone: {} }]
+        }
+      ]
+    });
+    console.log('Created Access bypass for /access-unauthorised.html.');
   }
 }
 

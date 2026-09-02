@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const website = join(root, 'website');
 const pages = readdirSync(website).filter((name) => name.endsWith('.html'));
+/** Access deny page is self-contained (no CSS/JS/images) so unauthorised visitors can load it. */
+const marketingPages = pages.filter((name) => name !== 'access-unauthorised.html');
 
 /**
  * @param {string} name
@@ -25,7 +27,7 @@ describe('marketing site pages', () => {
     ]));
   });
 
-  it.each(pages)('%s has canonical, Open Graph, and a terms link', (name) => {
+  it.each(marketingPages)('%s has canonical, Open Graph, and a terms link', (name) => {
     const html = readPage(name);
     const expectedPath = name === 'index.html' ? '/' : `/${name}`;
     expect(html).toMatch(/<link rel="canonical" href="https:\/\/lovely-home\.co\.uk/);
@@ -136,7 +138,7 @@ describe('marketing site pages', () => {
   });
 
   it('every page has a footer nav that sits above the landing background', () => {
-    for (const name of pages) {
+    for (const name of marketingPages) {
       expect(readPage(name)).toContain('site-footer-nav');
     }
     const css = readFileSync(join(website, 'site.css'), 'utf8');
@@ -144,7 +146,7 @@ describe('marketing site pages', () => {
   });
 
   it('every page shows the release version from version.json', () => {
-    for (const name of pages) {
+    for (const name of marketingPages) {
       const html = readPage(name);
       expect(html, name).toContain('data-site-version');
       expect(html, name).toContain('src="site.js"');
@@ -179,7 +181,7 @@ describe('marketing site pages', () => {
     expect(css).toMatch(/@media \(min-width: 1280px\) \{[\s\S]*?\.nav-toggle/);
     expect(css).toMatch(/\.nav-toggle \{[\s\S]*?display:\s*inline-flex/);
     expect(css).toMatch(/padding:\s*calc\(7\.25rem/);
-    for (const name of pages) {
+    for (const name of marketingPages) {
       const html = readPage(name);
       expect(html, name).toContain('lovely-home-mark.svg');
       expect(html, name).toContain('lovely-home-og.png');

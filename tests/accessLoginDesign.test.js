@@ -17,14 +17,14 @@ describe('Access login naming and deny page', () => {
   it('Terraform Access apps use the household login title, not site_id Pages', () => {
     const tf = readFileSync(join(root, 'terraform/modules/hub_environment/access.tf'), 'utf8');
     expect(tf).toMatch(/name\s+=\s+local\.access_home_name/);
-    expect(tf).toMatch(/custom_deny_url\s+=\s+local\.access_unauthorised_url/);
-    expect(tf).toMatch(/custom_non_identity_deny_url\s+=\s+local\.access_unauthorised_url/);
+    expect(tf).toContain('https://lovely-home.co.uk/access-unauthorised');
+    expect(tf).not.toContain('https://lovely-home.co.uk/access-unauthorised.html');
     expect(tf).not.toMatch(/Lovely Home — \$\{var\.site_id\} Pages/);
   });
 
   it('marketing Access bypasses the unauthorised page so denied users can load it', () => {
     const tf = readFileSync(join(root, 'terraform/modules/marketing_site/access.tf'), 'utf8');
-    expect(tf).toContain('access-unauthorised.html');
+    expect(tf).toContain('access-unauthorised');
     expect(tf).toMatch(/decision\s*=\s*"bypass"/);
   });
 
@@ -50,6 +50,7 @@ describe('Access login naming and deny page', () => {
     expect(hubAccessAppFromLegacyName('Lovely Home — wagtail Worker')?.name).toBe('Wagtail Home API');
     expect(hubAccessAppFromLegacyName('Lovely Home — Marketing site')).toBeNull();
     expect(accessAppLoginFields('Wagtail Home').custom_deny_url).toBe(ACCESS_UNAUTHORISED_URL);
+    expect(accessAppLoginFields('Wagtail Home').custom_deny_message.length).toBeLessThanOrEqual(75);
   });
 
   it('explains that a missing login code means the email is not authorised', () => {
@@ -57,5 +58,8 @@ describe('Access login naming and deny page', () => {
     expect(html).toMatch(/not authorised to access this home/i);
     expect(html).toMatch(/does not send a code/i);
     expect(html).toContain('noindex');
+    expect(html).not.toMatch(/href="site\.css"/);
+    expect(html).not.toMatch(/src="site\.js"/);
+    expect(html).not.toMatch(/src="lovely-home-mark\.svg"/);
   });
 });

@@ -50,8 +50,8 @@ locals {
     endswith(lower(local.access_site_title), " home") ? local.access_site_title : "${local.access_site_title} Home"
   )
   access_login_logo_url       = "https://raw.githubusercontent.com/marklovely/home-dashboard/main/website/favicon.png"
-  access_unauthorised_url     = "https://lovely-home.co.uk/access-unauthorised.html"
-  access_unauthorised_message = "You are not authorised to access this home. If you did not receive a login code, this email is not on the household list."
+  access_unauthorised_url     = "https://lovely-home.co.uk/access-unauthorised"
+  access_unauthorised_message = "You are not authorised to access this home."
 }
 
 resource "cloudflare_zero_trust_access_application" "pages" {
