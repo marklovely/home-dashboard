@@ -48,7 +48,7 @@ if (isTerraformStack(envStack) && registry[siteId] && envStack !== siteStack) {
 const terraformStack = isTerraformStack(envStack) ? envStack : siteStack;
 process.env.TERRAFORM_STACK = terraformStack;
 process.env.TF_VAR_terraform_stack = terraformStack;
-const skipPlatformAdminEffective = skipPlatformAdmin || terraformStack === 'customers';
+const skipPlatformAdminEffective = skipPlatformAdmin;
 
 const tfDir = join(root, 'terraform');
 const hubTfvarsPath = join(tfDir, 'environments/hub.tfvars');
@@ -181,6 +181,8 @@ deleteWorker(workerName);
 
 run('node', [join(root, 'scripts/build-platform-manifest.mjs')]);
 
+// Hub-status and platform admin read the live Pages manifest, not git. Customer
+// teardowns must still publish it or the site looks registered after destroy.
 if (!skipPlatformAdminEffective) {
   run('bash', [join(root, 'scripts/deploy-platform-admin.sh')], {
     env: {
