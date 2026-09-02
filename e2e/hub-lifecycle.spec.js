@@ -64,10 +64,11 @@ test('signup, wait for hub, cancel trial, confirm teardown', async ({ page }) =>
     if (status.state === 'failed') {
       throw new Error(`Provisioning failed for ${siteId}: ${status.message ?? 'unknown'}`);
     }
-    return status.ready === true && status.looksLikeHub === true;
+    return status.ready === true && status.looksLikeHub === true && status.registered === true;
   });
   expect(live.ready).toBe(true);
   expect(live.looksLikeHub).toBe(true);
+  expect(live.registered).toBe(true);
 
   const subscription = await waitForSubscription(secretKey, ownerEmail, siteId);
   expect(subscription?.id).toMatch(/^sub_/);
