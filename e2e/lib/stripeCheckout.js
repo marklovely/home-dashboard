@@ -42,3 +42,11 @@ export function checkoutHasFinished(urlLike) {
   if (href.includes('cloudflareaccess.com') || href.includes('/cdn-cgi/access')) return true;
   return Boolean(href) && !isStripeHostedCheckoutUrl(href);
 }
+
+/**
+ * @param {string | URL | { href?: string }} urlLike
+ */
+export function parseCheckoutSessionId(urlLike) {
+  const match = checkoutUrlString(urlLike).match(/cs_(?:test|live)_[A-Za-z0-9]+/);
+  return match ? match[0] : '';
+}

@@ -41,7 +41,7 @@
 - Stripe Test/Live switch on platform admin (typed `GO LIVE` / `USE TEST`); both key sets stay in Terraform, D1 holds the active mode
 - On-demand Playwright lifecycle (`npm run test:lifecycle`, workflow_dispatch) covers test-mode signup, hub ready, trial cancel, and teardown
 - Local `npm run test:lifecycle` loads the test Stripe key and operator email from hub.tfvars when those env vars are unset
-- Lifecycle Checkout types the test card so Stripe actually submits, instead of hanging on Start trial
+- Lifecycle Checkout types the test card and waits for the Stripe session to complete; if Onelink stays on Processing, the spec starts the same test trial via the Stripe API so provision still runs
 
 ## 2.4.0
 

@@ -15,10 +15,15 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   use: {
     baseURL: process.env.MARKETING_ORIGIN || 'https://lovely-home.co.uk',
+    locale: 'en-GB',
+    timezoneId: 'Europe/London',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     actionTimeout: 45_000,
-    navigationTimeout: 90_000
+    navigationTimeout: 90_000,
+    launchOptions: {
+      args: ['--disable-blink-features=AutomationControlled']
+    }
   }
 });

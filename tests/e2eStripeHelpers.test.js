@@ -2,8 +2,8 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { uniqueOwnerEmail } from '../e2e/lib/stripeApi.js';
-import { checkoutHasFinished, isStripeHostedCheckoutUrl } from '../e2e/lib/stripeCheckout.js';
+import { encodeStripeFormEntries, priceIdFromCheckoutSession, uniqueOwnerEmail } from '../e2e/lib/stripeApi.js';
+import { checkoutHasFinished, isStripeHostedCheckoutUrl, parseCheckoutSessionId } from '../e2e/lib/stripeCheckout.js';
 import {
   isStripeLiveSecret,
   isStripeTestSecret,
@@ -78,5 +78,19 @@ platform_operator_emails = ["ops@example.com"]
     expect(checkoutHasFinished('https://checkout.stripe.com/c/pay/cs_test_abc')).toBe(false);
     expect(checkoutHasFinished('https://lovely-home.co.uk/signup-success.html?site=e2e-abc')).toBe(true);
     expect(checkoutHasFinished('https://lovely-home.cloudflareaccess.com/cdn-cgi/access/login')).toBe(true);
+    expect(parseCheckoutSessionId('https://checkout.stripe.com/c/pay/cs_test_abcDEF123')).toBe('cs_test_abcDEF123');
+    expect(parseCheckoutSessionId('https://lovely-home.co.uk/signup.html')).toBe('');
+  });
+
+  it('encodes nested Stripe form fields and reads a Checkout price id', () => {
+    expect(encodeStripeFormEntries({ items: [{ price: 'price_123' }], metadata: { site_id: 'e2e-abc' } })).toEqual([
+      ['items[0][price]', 'price_123'],
+      ['metadata[site_id]', 'e2e-abc']
+    ]);
+    expect(priceIdFromCheckoutSession({ line_items: { data: [{ price: { id: 'price_from_session' } }] } })).toBe(
+      'price_from_session'
+    );
+    expect(priceIdFromCheckoutSession({ line_items: { data: [{ price: 'price_string' }] } })).toBe('price_string');
+    expect(priceIdFromCheckoutSession({})).toBe('');
   });
 });
