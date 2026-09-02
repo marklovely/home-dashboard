@@ -9,6 +9,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
+import { parseCloudflareApiJson } from './lib/cloudflare-api-json.mjs';
 import {
   pagesProjectNameForSite,
   productionHubApiMissing,
@@ -50,7 +51,12 @@ async function cf(path, method = 'GET', payload) {
       body: payload === undefined ? undefined : JSON.stringify(payload)
     }
   );
-  const body = await response.json();
+  const body = parseCloudflareApiJson(await response.text(), {
+    ok: response.ok,
+    status: response.status,
+    path,
+    method
+  });
   if (!body.success) {
     const msg = body.errors?.map((error) => error.message).join('; ') ?? JSON.stringify(body.errors);
     throw new Error(`${method} ${path} failed: ${msg}`);

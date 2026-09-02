@@ -99,7 +99,7 @@ describe('deploy-cloudflare-pages-site', () => {
     const script = deployScript();
     const deployFn = pagesDeployFn(script);
     expect(deployFn).toMatch(/cd "\$HUB_FUNCTIONS_CWD"/);
-    expect(deployFn).toMatch(/npx wrangler pages deploy "\$ROOT\/dist"/);
+    expect(deployFn).toMatch(/pages deploy "\$ROOT\/dist"/);
     expect(deployFn).not.toMatch(/functions-directory|functionsDirectory/);
     expect(script).toContain('prune-hub-pages-functions.mjs');
     expect(script).toContain('--out "$HUB_FUNCTIONS_CWD/functions"');

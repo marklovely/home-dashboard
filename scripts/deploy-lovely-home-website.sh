@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-if command -v wrangler >/dev/null 2>&1; then
+if [[ -x "$ROOT/worker/node_modules/.bin/wrangler" ]]; then
+  WRANGLER=("$ROOT/worker/node_modules/.bin/wrangler")
+elif command -v wrangler >/dev/null 2>&1; then
   WRANGLER=(wrangler)
 else
   WRANGLER=(npx wrangler)

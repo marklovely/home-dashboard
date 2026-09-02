@@ -16,6 +16,11 @@ fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PAGES_PROJECT="home-dashboard-${SITE_ID}"
 BRANCH="${PAGES_BRANCH:-main}"
+if [[ -x "$ROOT/worker/node_modules/.bin/wrangler" ]]; then
+  WRANGLER=("$ROOT/worker/node_modules/.bin/wrangler")
+else
+  WRANGLER=(npx wrangler)
+fi
 
 if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
   echo "Using CLOUDFLARE_API_TOKEN for Pages deploy."
@@ -42,7 +47,7 @@ echo "==> Deploying dist/ to Cloudflare Pages (branch=$BRANCH)"
 pages_deploy() {
   (
     cd "$HUB_FUNCTIONS_CWD"
-    npx wrangler pages deploy "$ROOT/dist" \
+    "${WRANGLER[@]}" pages deploy "$ROOT/dist" \
       --project-name="$PAGES_PROJECT" \
       --branch="$BRANCH" \
       --commit-dirty=true

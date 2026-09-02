@@ -33,6 +33,9 @@
 - Public contact form on Support (`POST /api/public/contact`) emails `support@lovely-home.co.uk` via Resend
 - Re-attach production `HUB_API` Pages bindings after main deploys (sandbox was losing the Worker link on every marketing merge)
 - Hub Pages deploy stages pruned Functions as `./functions` for Wrangler 4 (`--functions-directory` was removed and blocked new-hub provision)
+- Platform admin no longer says a healthy hub is “not provisioned” when only the served manifest is stale
+- HUB_API repair survives an empty Cloudflare deployments response (new hub with no Pages upload yet)
+- Launch-path Wrangler flags are checked against live `wrangler --help` so the next removed CLI option fails CI, not signup
 
 ## 2.4.0
 

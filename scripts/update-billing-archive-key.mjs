@@ -22,7 +22,7 @@ const sql = `UPDATE site_billing SET archive_r2_key = '${archiveR2Key.replace(/'
 
 execFileSync(
   'npx',
-  ['wrangler', 'd1', 'execute', databaseName, '--remote', '--command', sql],
+  ['wrangler', 'd1', 'execute', databaseName, '--remote', '--yes', '--command', sql],
   { cwd: root, stdio: 'inherit' }
 );
 

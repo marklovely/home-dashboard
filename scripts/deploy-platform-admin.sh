@@ -7,6 +7,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PAGES_PROJECT="${PLATFORM_PAGES_PROJECT:-home-dashboard-platform}"
 BRANCH="${PAGES_BRANCH:-main}"
+if [[ -x "$ROOT/worker/node_modules/.bin/wrangler" ]]; then
+  WRANGLER=("$ROOT/worker/node_modules/.bin/wrangler")
+else
+  WRANGLER=(npx wrangler)
+fi
 
 if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
   echo "Note: unset CLOUDFLARE_API_TOKEN so wrangler uses OAuth (recommended for pages deploy)." >&2
@@ -34,7 +39,7 @@ cp functions/api/stripe/[[path]].js dist-platform/functions/api/stripe/
 cp functions/api/public/[[path]].js dist-platform/functions/api/public/
 
 echo "==> Deploying dist-platform/ to $PAGES_PROJECT (branch=$BRANCH)"
-npx wrangler pages deploy dist-platform \
+"${WRANGLER[@]}" pages deploy dist-platform \
   --project-name="$PAGES_PROJECT" \
   --branch="$BRANCH" \
   --commit-dirty=true
