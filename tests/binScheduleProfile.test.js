@@ -43,6 +43,30 @@ describe('binScheduleProfile', () => {
     expect(schedule.validUntil).toBe('2026-10-31');
   });
 
+  it('extends validUntil when later collection dates are added', () => {
+    const schedule = inferBinSchedulePeriod(
+      normalizeBinSchedule({
+        validUntil: '2026-08-22',
+        household: [
+          { date: '2026-08-07', type: 'rubbish' },
+          { date: '2026-09-04', type: 'rubbish' }
+        ]
+      })
+    );
+    expect(schedule.validFrom).toBe('2026-08-07');
+    expect(schedule.validUntil).toBe('2026-09-04');
+  });
+
+  it('keeps validUntil when it already runs later than the last date', () => {
+    const schedule = inferBinSchedulePeriod(
+      normalizeBinSchedule({
+        validUntil: '2026-12-31',
+        household: [{ date: '2026-10-09', type: 'recycling' }]
+      })
+    );
+    expect(schedule.validUntil).toBe('2026-12-31');
+  });
+
   it('allows empty schedule during setup', () => {
     const schedule = normalizeBinSchedule({});
     expect(validateBinSchedule(schedule)).toEqual({ ok: true });

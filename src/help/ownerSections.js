@@ -421,6 +421,48 @@ export const OWNER_HELP_SECTIONS = [
     ]
   },
   {
+    id: 'bins',
+    title: 'Bin reminders',
+    keywords: [
+      'bins',
+      'rubbish',
+      'recycling',
+      'garden waste',
+      'collection',
+      'calendar',
+      'valid until',
+      'outdated'
+    ],
+    blocks: [
+      {
+        type: 'p',
+        text: 'Bin reminders live in Settings → Bin reminders. Dates you add there drive the Bins app, home-screen alerts, and sitter banners — not a PDF in the House Guide.'
+      },
+      {
+        type: 'h4',
+        text: 'Add a new council calendar'
+      },
+      {
+        type: 'ol',
+        items: [
+          'Open Settings → Bin reminders.',
+          'Under Add collection dates, enter the first date and bin type from the council PDF.',
+          'Choose Repeat (every 2 weeks is typical) and Repeat until the last date on the PDF.',
+          'Tap Add dates to list. Do the same for recycling and garden waste.',
+          'Scroll down and tap Save bin reminders. The list on this page is a draft until you save.'
+        ]
+      },
+      {
+        type: 'h4',
+        text: 'If new dates do not show in the Bins app'
+      },
+      {
+        type: 'p',
+        text: 'Confirm the dates are in the list and that you tapped Save. An old “Schedule valid until” date no longer hides collections that are still ahead — save once after this update and the timeline should return. You can leave that field blank; the hub uses your last collection date.'
+      }
+    ]
+  },
+  {
     id: 'settings',
     title: 'Settings',
     keywords: [
@@ -455,7 +497,10 @@ export const OWNER_HELP_SECTIONS = [
             'Weather location',
             'Forecasts follow the home postcode from Home details. Use this panel only to override that location on this device.'
           ],
-          ['Bin reminders', 'Collection dates, colours, and where sitters should leave the bins'],
+          [
+            'Bin reminders',
+            'Collection dates, colours, and where sitters leave the bins. Add dates, then save — see the Bin reminders topic in this guide.'
+          ],
           ['Cameras', 'Owner-only live view via go2rtc on your home network — not shown to sitters'],
           ['Utilities', 'Reopen the setup wizard, download an encrypted backup, or factory-reset this hub']
         ]

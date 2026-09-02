@@ -590,7 +590,7 @@ function createBinReminderFields(context, onRefresh) {
 
   wrap.append(
     createSetupIntro(
-      'Sitters see a prominent reminder on the home screen before each bin collection. Reminders count down from 6am on collection day — the same time bins are normally put out.'
+      'Sitters see a prominent reminder on the home screen before each bin collection. Reminders count down from 6am on collection day — the same time bins are normally put out. Add dates below, then tap Save bin reminders; the list is a draft until you save.'
     )
   );
 
@@ -616,7 +616,13 @@ function createBinReminderFields(context, onRefresh) {
 
   const dateEditor = createBinScheduleDateEditor({
     schedule,
-    getRepeatUntilFallback: () => validUntilField.input.value.trim()
+    getRepeatUntilFallback: () => validUntilField.input.value.trim(),
+    onLastDateChange: (lastDate) => {
+      const current = validUntilField.input.value.trim();
+      if (lastDate && (!current || lastDate > current)) {
+        validUntilField.input.value = lastDate;
+      }
+    }
   });
 
   const colorFields = createBinColorFields(schedule);

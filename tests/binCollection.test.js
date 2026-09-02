@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { resetSiteProfileStateForTests, setSiteProfileStateForTests } from '../src/services/siteProfileService.js';
+import { normalizeBinSchedule } from '../src/lib/binScheduleProfile.js';
 import {
   GARDEN_WASTE_ACCEPTED,
   GARDEN_WASTE_NOT_ACCEPTED,
@@ -20,6 +22,7 @@ import {
   getNextHouseholdCollection,
   getUpcomingCollections,
   isScheduleExpired,
+  isCollectionCalendarExpired,
   parseLocalDate,
   getUpcomingBinCollection,
   gardenWasteCollections,
@@ -156,11 +159,49 @@ describe('binCollectionService scheduling', () => {
 });
 
 describe('schedule expiry', () => {
-  it('marks schedule expired after October 2026', () => {
+  it('marks the bundled fallback expired after October 2026', () => {
     expect(isScheduleExpired(parseLocalDate('2026-10-30'))).toBe(false);
     expect(isScheduleExpired(parseLocalDate('2026-11-01'))).toBe(true);
     expect(getNextCollection(parseLocalDate('2026-11-05'))).toBeNull();
     expect(getUpcomingCollections(parseLocalDate('2026-11-05'), 3)).toEqual([]);
+  });
+
+  it('does not hide upcoming dates when validUntil is earlier than those dates', () => {
+    expect(isCollectionCalendarExpired('2026-09-02', '2026-08-22', '2026-10-09')).toBe(false);
+    expect(isCollectionCalendarExpired('2026-11-01', '2026-08-22', '2026-10-09')).toBe(true);
+    expect(isCollectionCalendarExpired('2026-09-02', '2026-08-22', '')).toBe(true);
+  });
+});
+
+describe('owner schedule with a leftover validUntil', () => {
+  afterEach(() => {
+    resetSiteProfileStateForTests();
+  });
+
+  it('still returns upcoming collections when the stored until date is in the past', () => {
+    setSiteProfileStateForTests({
+      profile: {
+        binSchedule: normalizeBinSchedule({
+          validUntil: '2026-08-22',
+          household: [
+            { date: '2026-08-22', type: 'rubbish' },
+            { date: '2026-09-04', type: 'rubbish' },
+            { date: '2026-09-11', type: 'recycling' },
+            { date: '2026-10-09', type: 'recycling' }
+          ]
+        })
+      }
+    });
+
+    const asOf = parseLocalDate('2026-09-02');
+    expect(isScheduleExpired(asOf)).toBe(false);
+    expect(getNextCollection(asOf)?.date).toBe('2026-09-04');
+    expect(getUpcomingCollections(asOf, 3).map((event) => event.date)).toEqual([
+      '2026-09-04',
+      '2026-09-11',
+      '2026-10-09'
+    ]);
+    expect(getBinCollectionHomeSummary(asOf).title).not.toBe('Bin Collection');
   });
 });
 
