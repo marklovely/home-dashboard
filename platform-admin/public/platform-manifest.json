@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T13:12:23.179Z",
+  "generatedAt": "2026-09-02T14:38:16.550Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -437,6 +437,72 @@
         "worker_api_origin": "https://lovely-home-hub-api-wagtail.mark-lovely67.workers.dev",
         "worker_hostname": "lovely-home-hub-api-wagtail.mark-lovely67.workers.dev",
         "worker_name": "lovely-home-hub-api-wagtail"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
+    },
+    "e2e-qm7pegno": {
+      "siteId": "e2e-qm7pegno",
+      "hostname": "e2e-qm7pegno.lovely-hub.com",
+      "hubEnvironment": "e2e-qm7pegno",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "hasOwnerEmails": false,
+      "demoPublic": false,
+      "accessEnabled": true,
+      "pagesProject": "home-dashboard-e2e-qm7pegno",
+      "workerName": "lovely-home-hub-api-e2e-qm7pegno",
+      "pagesUrl": "https://e2e-qm7pegno.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-e2e-qm7pegno.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "3219c485d66c4443595205c6159880f5a08b2ae519b4e03f9d7e040100c73196,167625b0d84a4d98fe06cddf3b167b76d9a08966702d5f5fe5f9c48a82cc6bf7",
+        "access_enabled": true,
+        "access_pages_app_id": "8f1d1126-be04-43c2-9cf2-a188905855f7",
+        "access_pages_aud": "167625b0d84a4d98fe06cddf3b167b76d9a08966702d5f5fe5f9c48a82cc6bf7",
+        "access_worker_app_id": "4a19a36c-0d50-442c-bfc0-69190a3e42be",
+        "access_worker_aud": "3219c485d66c4443595205c6159880f5a08b2ae519b4e03f9d7e040100c73196",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "09bbe273-ae07-4196-82f8-feb5474b138a",
+        "d1_database_name": "lovely-home-appliance-manuals-e2e-qm7pegno",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "e2e-qm7pegno.lovely-hub.com",
+        "hub_environment": "e2e-qm7pegno",
+        "pages_project": "home-dashboard-e2e-qm7pegno",
+        "pages_url": "https://e2e-qm7pegno.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-e2e-qm7pegno",
+        "r2_media_bucket": "lovely-home-guide-media-e2e-qm7pegno",
+        "site_id": "e2e-qm7pegno",
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-e2e-qm7pegno.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-e2e-qm7pegno.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-e2e-qm7pegno"
       },
       "provisioning": [
         {
