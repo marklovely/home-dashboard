@@ -21,6 +21,7 @@ describe('public help catalog', () => {
     expect(ownerText).toMatch(/home postcode/);
     expect(ownerText).toMatch(/Sun\/moon in the header/);
     expect(OWNER_HELP_SECTIONS.some((section) => section.id === 'house-sitter-mode')).toBe(true);
+    expect(OWNER_HELP_SECTIONS.some((section) => section.id === 'bins')).toBe(true);
   });
 
   it('starts owner help with Set it up: URL first, no hardware to buy', () => {

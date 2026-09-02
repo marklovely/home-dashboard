@@ -188,16 +188,26 @@ export const HUB_SETUP_HELP_SECTIONS = [
       },
       {
         type: 'h4',
-        text: 'How to add dates'
+        text: 'How to add a year of dates'
       },
       {
-        type: 'ul',
+        type: 'ol',
         items: [
-          'Open your council bin calendar (PDF or website) and add every date — do not guess from an alternating-week pattern.',
-          'Choose rubbish, recycling, or garden waste for each date.',
-          'Tick changed day for bank-holiday weeks when collection moves off the usual weekday.',
-          'You can skip this step and return via Settings → Utilities → Open setup wizard.'
+          'Open your council bin calendar (PDF or website). Do not guess from an alternating-week pattern.',
+          'Enter the first collection date and choose rubbish, recycling, or garden waste.',
+          'Set Repeat to match the council (often every 2 weeks) and Repeat until the last date on the PDF.',
+          'Tap Add dates to list. Repeat those steps for each bin type.',
+          'Tick changed day only for bank-holiday weeks when collection moves off the usual weekday.',
+          'Save. Until you save, the Bins app still uses the previous calendar — adding dates to the list is not enough.'
         ]
+      },
+      {
+        type: 'h4',
+        text: 'If the Bins app still says the calendar is out of date'
+      },
+      {
+        type: 'p',
+        text: 'Check that new dates appear in the list, then save. A leftover “Schedule valid until” date from last year no longer hides collections you have already added. You can leave that field blank and the hub will use your last collection date.'
       },
       {
         type: 'p',
@@ -344,7 +354,8 @@ export const HUB_SETUP_FIELD_HELP = {
     helpText: 'First date this council calendar applies. Leave blank to infer from your earliest collection date.'
   },
   binValidUntil: {
-    helpText: 'Last date in this calendar period. After this date the app asks for an updated schedule.'
+    helpText:
+      'Optional end of this council calendar. The Bins app still shows any dates you have added, even if this field is in the past.\n\nWhen you add later dates, this field moves forward automatically. Tap Save bin reminders after adding dates.'
   },
   binAlertHours: {
     helpText:
