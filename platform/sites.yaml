@@ -54,11 +54,3 @@ sites:
     terraform: true
     zone_name: lovely-hub.com
     attach_hub_api_binding: true
-
-  e2e-c5ajyxnu:
-    hostname: e2e-c5ajyxnu.lovely-hub.com
-    hub_environment: e2e-c5ajyxnu
-    vanilla: false
-    terraform: true
-    zone_name: lovely-hub.com
-    attach_hub_api_binding: true
