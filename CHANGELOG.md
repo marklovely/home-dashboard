@@ -38,6 +38,8 @@
 - HUB_API repair survives an empty Cloudflare deployments response (new hub with no Pages upload yet)
 - Launch-path Wrangler flags are checked against live `wrangler --help` so the next removed CLI option fails CI, not signup
 - Access login titles use the household name (`Wagtail Home`, not `wagtail Pages`); unauthorised emails get a public deny page and login-footer copy because Cloudflare still will not send a code
+- Stripe Test/Live switch on platform admin (typed `GO LIVE` / `USE TEST`); both key sets stay in Terraform, D1 holds the active mode
+- On-demand Playwright lifecycle (`npm run test:lifecycle`, workflow_dispatch) covers test-mode signup, hub ready, trial cancel, and teardown
 
 ## 2.4.0
 

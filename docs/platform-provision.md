@@ -214,12 +214,17 @@ Optional (strongly recommended — required for wizard PRs unless you enable Act
 | `SUPPORT_OWNER_EMAILS` | Operator access to customer hubs (`*.lovely-hub.com`). Required before provisioning a customer hub whose owner email is not yet in the billing database |
 | `SITTER_EMAILS` | Optional fallback when a site has no `sitter_emails` in the registry |
 | `CF_ACCESS_MANAGEMENT_TOKEN` | Optional dedicated token for hub Settings sitter-email sync (defaults to `CLOUDFLARE_API_TOKEN` in CI) |
-| `PLATFORM_GITHUB_TOKEN` | Same PAT as platform admin Pages env — **must also be a GitHub Actions repo secret** so site-manage can open PRs, provision can open the post-provision follow-up PR, and deprovision can prune `HUB_PROXY_SECRETS_JSON` (needs **repo secrets** write) |
+| `PLATFORM_GITHUB_TOKEN` | Same PAT as platform admin Pages env — **must also be a GitHub Actions repo secret** so site-manage can open PRs, provision can open the post-provision follow-up PR, and deprovision can prune `HUB_PROXY_SECRETS_JSON` (needs **repo secrets** write). For the Stripe Test/Live switch, also needs Actions **variables** write |
 | `PLATFORM_CF_API_TOKEN` | Same token as platform admin Pages env (optional — usage, preview toggles, marketing OTP guests). Needs **Access: Apps and Policies Edit** for the guest list |
-| `STRIPE_SECRET_KEY` | Same as `stripe_secret_key` in hub.tfvars — **required for billing** or CI terraform apply strips Stripe vars from platform Pages |
-| `STRIPE_WEBHOOK_SECRET` | Same as `stripe_webhook_secret` in hub.tfvars |
-| `STRIPE_PRICE_ID` | Same as `stripe_price_id` in hub.tfvars (monthly, e.g. £9.99/month) |
-| `STRIPE_PRICE_ID_YEARLY` | Same as `stripe_price_id_yearly` in hub.tfvars (yearly, e.g. £99/year) |
+| `STRIPE_SECRET_KEY` | Test-mode key — same as `stripe_secret_key` in hub.tfvars — **required for billing** or CI terraform apply strips Stripe vars from platform Pages |
+| `STRIPE_WEBHOOK_SECRET` | Test webhook signing secret — same as `stripe_webhook_secret` |
+| `STRIPE_PRICE_ID` | Test monthly price — same as `stripe_price_id` |
+| `STRIPE_PRICE_ID_YEARLY` | Test yearly price — same as `stripe_price_id_yearly` |
+| `STRIPE_SECRET_KEY_LIVE` | Optional live key — same as `stripe_secret_key_live`. Store before public launch; mode is switched from platform admin |
+| `STRIPE_WEBHOOK_SECRET_LIVE` | Optional live webhook signing secret |
+| `STRIPE_PRICE_ID_LIVE` / `STRIPE_PRICE_ID_YEARLY_LIVE` | Optional live Price ids |
+
+Repo **variable** (not a secret): `STRIPE_MODE` (`test` | `live`). Platform admin updates it on go-live. Provision workflows always pass both Stripe key sets into Terraform; they do not swap secrets based on this variable.
 | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Bot check on public signup. Both must be set, or CI terraform apply leaves the check off |
 | `RESEND_API_KEY` | Same as `resend_api_key` in hub.tfvars — customer lifecycle emails. Without it, billing still works but owners get no hub-URL mail |
 | `CUSTOMER_EMAIL_FROM` | Optional. Same as `customer_email_from`. Default is `Lovely Home <support@lovely-home.co.uk>` |

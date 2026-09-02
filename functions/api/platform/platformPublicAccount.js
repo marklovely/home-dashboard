@@ -7,9 +7,9 @@
 
 import {
   listSiteBillingByOwnerEmail,
-  stripeApiRequest,
-  stripeBillingConfigured
+  stripeApiRequest
 } from './platformBilling.js';
+import { getActiveStripeCredentials } from './platformStripeMode.js';
 import { customerEmailConfigured, customerHubUrl, sendResendEmail } from './platformCustomerEmail.js';
 import { marketingSiteOrigin } from './platformPublicSignup.js';
 import { consumeSignupAttempt, hashSignupClientKey } from './platformSignupGuards.js';
@@ -340,7 +340,8 @@ export async function handleAccountVerify(env, db, input, deps = {}) {
  * @param {{ nowMs?: number; stripeRequest?: typeof stripeApiRequest }} [deps]
  */
 export async function handleAccountPortal(env, db, input, deps = {}) {
-  if (!stripeBillingConfigured(env)) {
+  const stripe = await getActiveStripeCredentials(env, db ?? null);
+  if (!stripe.configured) {
     return {
       status: 503,
       body: { error: 'STRIPE_NOT_CONFIGURED', message: 'Billing is not available right now.' }
@@ -383,7 +384,7 @@ export async function handleAccountPortal(env, db, input, deps = {}) {
 
   const stripeRequest = deps.stripeRequest ?? stripeApiRequest;
   try {
-    const portal = await stripeRequest(String(env.STRIPE_SECRET_KEY ?? '').trim(), 'POST', '/billing_portal/sessions', {
+    const portal = await stripeRequest(stripe.credentials.secretKey, 'POST', '/billing_portal/sessions', {
       customer: customerId,
       return_url: accountPageUrl(env)
     });

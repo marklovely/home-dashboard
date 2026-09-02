@@ -41,9 +41,9 @@ import {
   getSiteBilling,
   listSiteBilling,
   platformBillingDbConfigured,
-  stripeBillingConfigured,
   validateBillingSiteId
 } from './platformBilling.js';
+import { applyStripeMode, describeStripeMode } from './platformStripeMode.js';
 
 /**
  * Platform operator API — /api/platform/*
@@ -83,6 +83,7 @@ export async function onRequest(context) {
         billingBySite[row.site_id] = row;
       }
     }
+    const stripe = await describeStripeMode(pagesEnv, billingDb);
 
     return Response.json({
       generatedAt: manifest.generatedAt,
@@ -92,8 +93,9 @@ export async function onRequest(context) {
       cloudflareUsageConfigured: cloudflareUsageApiConfigured(pagesEnv),
       cloudflarePagesConfigured: cloudflarePagesApiConfigured(pagesEnv),
       githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
-      stripeBillingConfigured: stripeBillingConfigured(pagesEnv),
+      stripeBillingConfigured: stripe.stripeBillingConfigured,
       platformBillingDbConfigured: platformBillingDbConfigured(pagesEnv),
+      stripeMode: stripe,
       billingBySite,
       sites: manifest.sites
     });
@@ -111,13 +113,15 @@ export async function onRequest(context) {
   }
 
   if (suffix === 'config' && request.method === 'GET') {
+    const stripe = await describeStripeMode(pagesEnv, getPlatformBillingDb(env));
     return Response.json({
       healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
       cloudflareUsageConfigured: cloudflareUsageApiConfigured(pagesEnv),
       cloudflarePagesConfigured: cloudflarePagesApiConfigured(pagesEnv),
       githubAutomationConfigured: githubAutomationConfigured(pagesEnv),
-      stripeBillingConfigured: stripeBillingConfigured(pagesEnv),
+      stripeBillingConfigured: stripe.stripeBillingConfigured,
       platformBillingDbConfigured: platformBillingDbConfigured(pagesEnv),
+      stripeMode: stripe,
       githubRepo: githubRepo(pagesEnv),
       hints: {
         healthServiceAuth:
@@ -129,11 +133,22 @@ export async function onRequest(context) {
         marketingAccess:
           'Set PLATFORM_CF_API_TOKEN with Access: Apps and Policies Edit to add OTP emails for lovely-home.co.uk from this dashboard.',
         githubAutomation:
-          'Set PLATFORM_GITHUB_TOKEN (contents:write, actions:write) and PLATFORM_GITHUB_REPO on the platform Pages project to enable site wizard automation.',
+          'Set PLATFORM_GITHUB_TOKEN (contents:write, actions:write, plus Variables write) and PLATFORM_GITHUB_REPO on the platform Pages project to enable site wizard automation.',
         stripeBilling:
-          'Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID on the platform Pages project. Bind PLATFORM_BILLING_DB and apply platform/migrations/0001_site_billing.sql. Webhook URL: POST /api/stripe/webhook (Access bypass on platform hostname).'
+          'Set STRIPE_SECRET_KEY (test) and optional STRIPE_*_LIVE vars on the platform Pages project. Switch Test/Live from this dashboard. Bind PLATFORM_BILLING_DB and apply platform/migrations (including 0007_platform_settings.sql). Webhook URL: POST /api/stripe/webhook (Access bypass on platform hostname).'
       }
     });
+  }
+
+  if (suffix === 'stripe/mode' && request.method === 'GET') {
+    const stripe = await describeStripeMode(pagesEnv, getPlatformBillingDb(env));
+    return Response.json(stripe);
+  }
+
+  if (suffix === 'stripe/mode' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await applyStripeMode(pagesEnv, getPlatformBillingDb(env), body);
+    return Response.json(result.body, { status: result.status });
   }
 
   if (suffix === 'billing' && request.method === 'GET') {
@@ -148,7 +163,9 @@ export async function onRequest(context) {
   }
 
   if (suffix === 'billing/checkout' && request.method === 'POST') {
-    if (!stripeBillingConfigured(pagesEnv)) {
+    const billingDb = getPlatformBillingDb(env);
+    const stripe = await describeStripeMode(pagesEnv, billingDb);
+    if (!stripe.stripeBillingConfigured) {
       return Response.json(
         { error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe keys and price id are not set.' },
         { status: 503 }
@@ -174,9 +191,8 @@ export async function onRequest(context) {
       return Response.json({ error: 'NOT_FOUND', message: `Unknown site: ${siteId}` }, { status: 404 });
     }
 
-    const db = getPlatformBillingDb(env);
-    if (db) {
-      const existing = await getSiteBilling(db, siteId);
+    if (billingDb) {
+      const existing = await getSiteBilling(billingDb, siteId);
       if (existing && (existing.status === 'trialing' || existing.status === 'active')) {
         return Response.json(
           {
@@ -199,7 +215,8 @@ export async function onRequest(context) {
         siteId,
         customerEmail,
         successUrl,
-        cancelUrl
+        cancelUrl,
+        mode: stripe.mode
       });
       if (!session.ok) {
         return Response.json(session, { status: 503 });

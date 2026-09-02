@@ -1,3 +1,4 @@
+import { getStripeMode } from './platformStripeMode.js';
 import {
   createBillingCheckoutSession,
   getSiteBilling,
@@ -35,7 +36,8 @@ export const PUBLIC_SIGNUP_BLOCKED_SITE_IDS = new Set([
   'status',
   'billing',
   'signup',
-  'app'
+  'app',
+  'e2e'
 ]);
 
 const CUSTOMER_HUB_ZONE_NAME = 'lovely-hub.com';
@@ -43,13 +45,14 @@ const DEFAULT_MARKETING_ORIGIN = 'https://lovely-home.co.uk';
 
 /**
  * @param {Record<string, string | undefined>} env
+ * @param {'test' | 'live'} [mode]
  */
-export function publicSignupConfigured(env) {
+export function publicSignupConfigured(env, mode = 'test') {
   const enabled = String(env.PUBLIC_SIGNUP_ENABLED ?? '').trim().toLowerCase();
   if (enabled !== '1' && enabled !== 'true' && enabled !== 'yes') {
     return false;
   }
-  return stripeBillingConfigured(env) && githubAutomationConfigured(env);
+  return stripeBillingConfigured(env, mode) && githubAutomationConfigured(env);
 }
 
 /**
@@ -173,7 +176,8 @@ export async function handlePublicHubSignup(env, input) {
     nowMs = Date.now()
   } = input;
 
-  if (!publicSignupConfigured(env)) {
+  const stripeMode = await getStripeMode(billingDb);
+  if (!publicSignupConfigured(env, stripeMode)) {
     return {
       ok: false,
       status: 503,
@@ -193,7 +197,19 @@ export async function handlePublicHubSignup(env, input) {
     };
   }
 
-  if (turnstileConfigured(env)) {
+  const isLifecycleSlug = /^e2e-[a-z0-9-]+$/.test(siteId);
+  if (isLifecycleSlug && stripeMode === 'live') {
+    return {
+      ok: false,
+      status: 403,
+      body: {
+        error: 'E2E_NOT_ALLOWED',
+        message: 'Lifecycle test hubs can only be created while Stripe is in test mode.'
+      }
+    };
+  }
+
+  if (turnstileConfigured(env) && !isLifecycleSlug) {
     const verdict = await verifyTurnstileToken(env, { token: turnstileToken, clientIp, fetchImpl });
     if (!verdict.ok) {
       return {
@@ -256,7 +272,8 @@ export async function handlePublicHubSignup(env, input) {
     customerEmail,
     successUrl: urls.successUrl,
     cancelUrl: urls.cancelUrl,
-    billingInterval: billingInterval ?? 'month'
+    billingInterval: billingInterval ?? 'month',
+    mode: stripeMode
   });
 
   if (!checkout.ok) {

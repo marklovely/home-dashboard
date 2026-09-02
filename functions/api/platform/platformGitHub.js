@@ -80,7 +80,7 @@ export async function dispatchSiteManageWorkflow(env, action, payload) {
       ok: false,
       error: 'GITHUB_NOT_CONFIGURED',
       message:
-        'Set PLATFORM_GITHUB_TOKEN and PLATFORM_GITHUB_REPO on the platform Pages project (repo scope: actions:write, contents:write).'
+        'Set PLATFORM_GITHUB_TOKEN and PLATFORM_GITHUB_REPO on the platform Pages project (repo scope: actions:write, contents:write, plus Actions variables write).'
     };
   }
 
@@ -325,4 +325,87 @@ export async function dispatchSiteBillingDeprovisionWorkflow(env, siteId) {
     workflow: 'platform-site-billing-deprovision.yml',
     message: `Billing deprovision started for ${siteId} (archive → registry removal PR → deprovision on merge). Track progress in GitHub Actions.`
   };
+}
+
+export const GITHUB_STRIPE_MODE_VARIABLE = 'STRIPE_MODE';
+
+/**
+ * Create or update a repository Actions variable (not a secret).
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {string} name
+ * @param {string} value
+ */
+export async function setGithubActionsVariable(env, name, value) {
+  if (!githubAutomationConfigured(env)) {
+    return {
+      ok: false,
+      error: 'GITHUB_NOT_CONFIGURED',
+      message: 'GitHub automation is not configured on this platform project.'
+    };
+  }
+
+  const variableName = String(name ?? '').trim();
+  const variableValue = String(value ?? '').trim();
+  if (!variableName || !variableValue) {
+    return { ok: false, error: 'INVALID_VARIABLE', message: 'Variable name and value are required.' };
+  }
+
+  const repo = githubRepo(env);
+  const [owner, repoName] = repo.split('/');
+  if (!owner || !repoName) {
+    return { ok: false, error: 'GITHUB_REPO_INVALID', message: 'PLATFORM_GITHUB_REPO is not owner/name.' };
+  }
+
+  const encodedName = encodeURIComponent(variableName);
+  const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repoName}/actions/variables/${encodedName}`, {
+    headers: githubHeaders(env)
+  });
+
+  if (getResponse.status === 404) {
+    const createResponse = await fetch(`https://api.github.com/repos/${owner}/${repoName}/actions/variables`, {
+      method: 'POST',
+      headers: {
+        ...githubHeaders(env),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: variableName, value: variableValue })
+    });
+    if (!createResponse.ok) {
+      const detail = await createResponse.text().catch(() => '');
+      return {
+        ok: false,
+        error: 'GITHUB_VARIABLE_FAILED',
+        message: `Could not create GitHub variable ${variableName} (${createResponse.status}). ${detail.slice(0, 200)}`
+      };
+    }
+    return { ok: true, name: variableName, created: true };
+  }
+
+  if (!getResponse.ok) {
+    const detail = await getResponse.text().catch(() => '');
+    return {
+      ok: false,
+      error: 'GITHUB_VARIABLE_FAILED',
+      message: `Could not read GitHub variable ${variableName} (${getResponse.status}). ${detail.slice(0, 200)}`
+    };
+  }
+
+  const patchResponse = await fetch(`https://api.github.com/repos/${owner}/${repoName}/actions/variables/${encodedName}`, {
+    method: 'PATCH',
+    headers: {
+      ...githubHeaders(env),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name: variableName, value: variableValue })
+  });
+  if (!patchResponse.ok) {
+    const detail = await patchResponse.text().catch(() => '');
+    return {
+      ok: false,
+      error: 'GITHUB_VARIABLE_FAILED',
+      message: `Could not update GitHub variable ${variableName} (${patchResponse.status}). ${detail.slice(0, 200)}`
+    };
+  }
+  return { ok: true, name: variableName, created: false };
 }

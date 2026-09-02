@@ -58,6 +58,20 @@ console.log(
   secretConfigured(webhook) ? '(set — API hides secret values)' : 'MISSING'
 );
 console.log('STRIPE_PRICE_ID:', price ? price : 'MISSING');
+const liveId = env.STRIPE_SECRET_KEY_LIVE;
+const liveWebhook = env.STRIPE_WEBHOOK_SECRET_LIVE;
+const livePrice = env.STRIPE_PRICE_ID_LIVE?.value;
+const livePriceYearly = env.STRIPE_PRICE_ID_YEARLY_LIVE?.value;
+console.log(
+  'STRIPE_SECRET_KEY_LIVE:',
+  secretConfigured(liveId) ? '(set — API hides secret values)' : 'not set'
+);
+console.log(
+  'STRIPE_WEBHOOK_SECRET_LIVE:',
+  secretConfigured(liveWebhook) ? '(set — API hides secret values)' : 'not set'
+);
+console.log('STRIPE_PRICE_ID_LIVE:', livePrice ? livePrice : 'not set');
+console.log('STRIPE_PRICE_ID_YEARLY_LIVE:', livePriceYearly ? livePriceYearly : 'not set');
 if (!secretConfigured(id) || !secretConfigured(webhook) || !price) {
   console.error('');
   console.error('Add stripe_* to terraform/environments/hub.tfvars and run:');

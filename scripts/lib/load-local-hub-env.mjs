@@ -15,6 +15,10 @@ const STRING_FIELD_TO_ENV = {
   stripe_webhook_secret: 'STRIPE_WEBHOOK_SECRET',
   stripe_price_id: 'STRIPE_PRICE_ID',
   stripe_price_id_yearly: 'STRIPE_PRICE_ID_YEARLY',
+  stripe_secret_key_live: 'STRIPE_SECRET_KEY_LIVE',
+  stripe_webhook_secret_live: 'STRIPE_WEBHOOK_SECRET_LIVE',
+  stripe_price_id_live: 'STRIPE_PRICE_ID_LIVE',
+  stripe_price_id_yearly_live: 'STRIPE_PRICE_ID_YEARLY_LIVE',
   resend_api_key: 'RESEND_API_KEY',
   customer_email_from: 'CUSTOMER_EMAIL_FROM'
 };

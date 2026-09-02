@@ -119,26 +119,52 @@ variable "stripe_secret_key" {
   type        = string
   default     = ""
   sensitive   = true
-  description = "Stripe secret API key for platform billing (sk_test_… or sk_live_…). Must be set in hub.tfvars or CI secrets or terraform apply wipes dashboard-only vars."
+  description = "Stripe TEST secret API key (sk_test_… / rk_test_…). Must be set in hub.tfvars or CI secrets or terraform apply wipes dashboard-only vars."
 }
 
 variable "stripe_webhook_secret" {
   type        = string
   default     = ""
   sensitive   = true
-  description = "Stripe webhook signing secret (whsec_…) for platform /api/stripe/webhook."
+  description = "Stripe TEST webhook signing secret (whsec_…) for platform /api/stripe/webhook."
 }
 
 variable "stripe_price_id" {
   type        = string
   default     = ""
-  description = "Stripe Price id for the monthly hub subscription (price_…, e.g. £9.99/month)."
+  description = "Stripe TEST Price id for the monthly hub subscription (price_…)."
 }
 
 variable "stripe_price_id_yearly" {
   type        = string
   default     = ""
-  description = "Stripe Price id for the yearly hub subscription (price_…, e.g. £99/year)."
+  description = "Stripe TEST Price id for the yearly hub subscription (price_…)."
+}
+
+variable "stripe_secret_key_live" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Stripe LIVE secret API key (sk_live_… / rk_live_…). Optional until public launch."
+}
+
+variable "stripe_webhook_secret_live" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Stripe LIVE webhook signing secret (whsec_…) for the same /api/stripe/webhook URL."
+}
+
+variable "stripe_price_id_live" {
+  type        = string
+  default     = ""
+  description = "Stripe LIVE monthly Price id (price_…)."
+}
+
+variable "stripe_price_id_yearly_live" {
+  type        = string
+  default     = ""
+  description = "Stripe LIVE yearly Price id (price_…)."
 }
 
 variable "marketing_site_origin" {

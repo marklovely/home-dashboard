@@ -5,6 +5,7 @@ import { releaseSignupReservation } from './platformSignupGuards.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platformBillingLifecycle.js';
 import { maybeSendCustomerLifecycleEmail } from './platformCustomerEmail.js';
+import { getStripeMode, stripeCredentialsForMode, stripeSetConfigured } from './platformStripeMode.js';
 
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
 
@@ -50,27 +51,26 @@ export const BILLING_STATUSES = ['trialing', 'active', 'past_due', 'canceled', '
 
 /**
  * @param {Record<string, string | undefined>} env
+ * @param {'test' | 'live'} [mode]
  */
-export function stripeBillingConfigured(env) {
-  return Boolean(
-    env.STRIPE_SECRET_KEY?.trim() &&
-      env.STRIPE_WEBHOOK_SECRET?.trim() &&
-      (env.STRIPE_PRICE_ID?.trim() || env.STRIPE_PRICE_ID_YEARLY?.trim())
-  );
+export function stripeBillingConfigured(env, mode = 'test') {
+  return stripeSetConfigured(stripeCredentialsForMode(env, mode));
 }
 
 /**
  * @param {Record<string, string | undefined>} env
  * @param {'month' | 'year' | string | undefined | null} billingInterval
+ * @param {'test' | 'live'} [mode]
  */
-export function resolveStripePriceId(env, billingInterval) {
+export function resolveStripePriceId(env, billingInterval, mode = 'test') {
+  const creds = stripeCredentialsForMode(env, mode);
   const interval = String(billingInterval ?? 'month')
     .trim()
     .toLowerCase();
   if (interval === 'year' || interval === 'yearly' || interval === 'annual') {
-    return env.STRIPE_PRICE_ID_YEARLY?.trim() || null;
+    return creds.priceIdYearly || null;
   }
-  return env.STRIPE_PRICE_ID?.trim() || null;
+  return creds.priceId || null;
 }
 
 /**
@@ -204,12 +204,16 @@ export function defaultCheckoutUrls(env, platformHostname) {
  *   cancelUrl: string;
  *   billingInterval?: string;
  *   priceId?: string;
+ *   mode?: 'test' | 'live';
  * }} input
  */
 export async function createBillingCheckoutSession(env, input) {
-  const secretKey = env.STRIPE_SECRET_KEY?.trim();
+  const db = getPlatformBillingDb(env);
+  const mode = input.mode ?? (await getStripeMode(db));
+  const creds = stripeCredentialsForMode(env, mode);
+  const secretKey = creds.secretKey;
   const billingInterval = input.billingInterval ?? 'month';
-  const priceId = input.priceId?.trim() || resolveStripePriceId(env, billingInterval);
+  const priceId = input.priceId?.trim() || resolveStripePriceId(env, billingInterval, mode);
   if (!secretKey) {
     return { ok: false, error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe billing is not configured.' };
   }
@@ -681,7 +685,9 @@ export function timingSafeEqualHex(left, right) {
  * @param {Record<string, string | undefined>} env
  */
 export async function readVerifiedStripeEvent(request, env) {
-  const webhookSecret = env.STRIPE_WEBHOOK_SECRET?.trim();
+  const db = getPlatformBillingDb(env);
+  const mode = await getStripeMode(db);
+  const webhookSecret = stripeCredentialsForMode(env, mode).webhookSecret;
   if (!webhookSecret) {
     return { ok: false, response: Response.json({ error: 'STRIPE_NOT_CONFIGURED' }, { status: 503 }) };
   }

@@ -1,5 +1,6 @@
 import { loadPlatformManifest } from '../platform/platformApi.js';
 import { getPlatformBillingDb, getSiteBilling } from '../platform/platformBilling.js';
+import { getStripeMode } from '../platform/platformStripeMode.js';
 import {
   checkPublicSignupSlug,
   handlePublicHubSignup,
@@ -88,9 +89,10 @@ export async function onRequest(context) {
   }
 
   if (suffix === 'signup/status' && request.method === 'GET') {
+    const mode = await getStripeMode(getPlatformBillingDb(env));
     return Response.json(
       {
-        enabled: publicSignupConfigured(pagesEnv),
+        enabled: publicSignupConfigured(pagesEnv, mode),
         marketingOrigin: pagesEnv.MARKETING_SITE_ORIGIN?.trim() || 'https://lovely-home.co.uk',
         turnstileSiteKey: turnstileSiteKey(pagesEnv)
       },

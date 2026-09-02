@@ -78,6 +78,30 @@ locals {
         value = var.stripe_price_id_yearly
       }
     } : {},
+    var.stripe_secret_key_live != "" ? {
+      STRIPE_SECRET_KEY_LIVE = {
+        type  = "secret_text"
+        value = var.stripe_secret_key_live
+      }
+    } : {},
+    var.stripe_webhook_secret_live != "" ? {
+      STRIPE_WEBHOOK_SECRET_LIVE = {
+        type  = "secret_text"
+        value = var.stripe_webhook_secret_live
+      }
+    } : {},
+    var.stripe_price_id_live != "" ? {
+      STRIPE_PRICE_ID_LIVE = {
+        type  = "plain_text"
+        value = var.stripe_price_id_live
+      }
+    } : {},
+    var.stripe_price_id_yearly_live != "" ? {
+      STRIPE_PRICE_ID_YEARLY_LIVE = {
+        type  = "plain_text"
+        value = var.stripe_price_id_yearly_live
+      }
+    } : {},
     var.stripe_checkout_success_url != "" ? {
       STRIPE_CHECKOUT_SUCCESS_URL = {
         type  = "plain_text"

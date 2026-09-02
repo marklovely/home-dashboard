@@ -3,6 +3,34 @@ const API_BASE = '/api/platform';
 /**
  * @returns {Promise<object>}
  */
+export async function fetchStripeMode() {
+  const response = await fetch(`${API_BASE}/stripe/mode`, { cache: 'no-store' });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.message ?? `Stripe mode failed (${response.status})`);
+  }
+  return body;
+}
+
+/**
+ * @param {{ mode: 'test' | 'live', confirmation: string, acknowledgeOpenSubscriptions?: boolean }} payload
+ */
+export async function setStripeMode(payload) {
+  const response = await fetch(`${API_BASE}/stripe/mode`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.message ?? `Stripe mode update failed (${response.status})`);
+  }
+  return body;
+}
+
+/**
+ * @returns {Promise<object>}
+ */
 export async function fetchMarketingAccess() {
   const response = await fetch(`${API_BASE}/marketing-access`, { cache: 'no-store' });
   return response.json();

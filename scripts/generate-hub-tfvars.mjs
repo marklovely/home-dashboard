@@ -50,6 +50,10 @@ const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim() || '';
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim() || '';
 const stripePriceId = process.env.STRIPE_PRICE_ID?.trim() || '';
 const stripePriceIdYearly = process.env.STRIPE_PRICE_ID_YEARLY?.trim() || '';
+const stripeSecretKeyLive = process.env.STRIPE_SECRET_KEY_LIVE?.trim() || '';
+const stripeWebhookSecretLive = process.env.STRIPE_WEBHOOK_SECRET_LIVE?.trim() || '';
+const stripePriceIdLive = process.env.STRIPE_PRICE_ID_LIVE?.trim() || '';
+const stripePriceIdYearlyLive = process.env.STRIPE_PRICE_ID_YEARLY_LIVE?.trim() || '';
 const provisionSiteId = process.env.PROVISION_SITE_ID?.trim() || '';
 const provisionPhase = process.env.PROVISION_PHASE?.trim() || '';
 const deprovisionSiteId = process.env.DEPROVISION_SITE_ID?.trim() || '';
@@ -149,6 +153,22 @@ if (stripePriceId) {
 
 if (stripePriceIdYearly) {
   lines.push(`stripe_price_id_yearly = "${escapeHcl(stripePriceIdYearly)}"`, '');
+}
+
+if (stripeSecretKeyLive) {
+  lines.push(`stripe_secret_key_live = "${escapeHcl(stripeSecretKeyLive)}"`, '');
+}
+
+if (stripeWebhookSecretLive) {
+  lines.push(`stripe_webhook_secret_live = "${escapeHcl(stripeWebhookSecretLive)}"`, '');
+}
+
+if (stripePriceIdLive) {
+  lines.push(`stripe_price_id_live = "${escapeHcl(stripePriceIdLive)}"`, '');
+}
+
+if (stripePriceIdYearlyLive) {
+  lines.push(`stripe_price_id_yearly_live = "${escapeHcl(stripePriceIdYearlyLive)}"`, '');
 }
 
 const marketingSiteOrigin = process.env.MARKETING_SITE_ORIGIN?.trim() || 'https://lovely-home.co.uk';

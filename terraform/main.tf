@@ -91,6 +91,10 @@ module "platform_admin" {
   stripe_webhook_secret             = var.stripe_webhook_secret
   stripe_price_id                   = var.stripe_price_id
   stripe_price_id_yearly            = var.stripe_price_id_yearly
+  stripe_secret_key_live            = var.stripe_secret_key_live
+  stripe_webhook_secret_live        = var.stripe_webhook_secret_live
+  stripe_price_id_live              = var.stripe_price_id_live
+  stripe_price_id_yearly_live       = var.stripe_price_id_yearly_live
   marketing_site_origin             = var.marketing_site_origin
   marketing_access_app_id           = try(module.marketing_site[0].marketing_site_contract.access_app_id, "")
   public_signup_enabled             = var.public_signup_enabled
