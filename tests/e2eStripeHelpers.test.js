@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { uniqueOwnerEmail } from '../e2e/lib/stripeApi.js';
+import { checkoutHasFinished, isStripeHostedCheckoutUrl } from '../e2e/lib/stripeCheckout.js';
 import {
   isStripeLiveSecret,
   isStripeTestSecret,
@@ -69,5 +70,13 @@ platform_operator_emails = ["ops@example.com"]
     loadLifecycleEnv(env, path);
     expect(env.STRIPE_SECRET_KEY).toBe('sk_test_explicit');
     expect(env.E2E_OWNER_EMAIL).toBe('e2e@example.com');
+  });
+
+  it('treats Stripe hosted checkout as unfinished until we leave it', () => {
+    expect(isStripeHostedCheckoutUrl('https://checkout.stripe.com/c/pay/cs_test_abc')).toBe(true);
+    expect(isStripeHostedCheckoutUrl('https://checkout.link.com/c/pay/cs_test_abc')).toBe(true);
+    expect(checkoutHasFinished('https://checkout.stripe.com/c/pay/cs_test_abc')).toBe(false);
+    expect(checkoutHasFinished('https://lovely-home.co.uk/signup-success.html?site=e2e-abc')).toBe(true);
+    expect(checkoutHasFinished('https://lovely-home.cloudflareaccess.com/cdn-cgi/access/login')).toBe(true);
   });
 });

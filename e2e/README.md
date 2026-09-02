@@ -29,7 +29,7 @@ Optional:
 - `PLATFORM_API_ORIGIN` (default `https://platform.lovely-home.co.uk`)
 - `MARKETING_ORIGIN` (default `https://lovely-home.co.uk`)
 
-The spec posts to `/api/public/signup` (Access-bypassed) then drives hosted Checkout in the browser. Marketing-site OTP is not required. Hub Access OTP is not attempted.
+The spec posts to `/api/public/signup` (Access-bypassed) then drives hosted Checkout in the browser. It types the test card (a single `.fill()` often leaves Stripe hung on **Start trial** / Processing). After Checkout it does not need to complete marketing-site OTP — Access on the success page still counts as leaving Checkout, then it polls hub-status.
 
 `e2e-…` slugs skip Turnstile and are rejected while the platform Stripe mode is **live**.
 
