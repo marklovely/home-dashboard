@@ -71,6 +71,16 @@ Example: household owners on production + sandbox; Airbnb trial guest on sandbox
 
 **Do not** add testers manually in Zero Trust → Access → Applications; Terraform owns those policies. Edit `hub.tfvars`, run `terraform apply`, then `node scripts/set-worker-secrets-from-terraform.mjs <site_id>`. See [platform-terraform.md — Add a tester](./platform-terraform.md#add-a-tester-sandbox--test-only).
 
+### Unauthorised emails (no login code)
+
+Cloudflare One-time PIN **will not send a code** when the address is not on an Allow policy, and the hosted login screen still says a code was emailed. That is Cloudflare’s design (it avoids revealing who is on the list). We cannot replace that screen with our own form.
+
+What we do instead:
+
+- Footer copy on the Access login page: if no code arrives, the email is not authorised.
+- After someone submits a PIN (or Access otherwise denies identity), they are sent to [`access-unauthorised.html`](../website/access-unauthorised.html) (`https://lovely-home.co.uk/access-unauthorised`). That page is self-contained so CSS and images are not blocked by the marketing Access app.
+- Hub Access application names are the household title (`Wagtail Home`), not `Lovely Home — wagtail Pages`. The left-hand login logo is the team Access login design (`node scripts/sync-access-login-design.mjs`, needs a token that can edit the Zero Trust organisation).
+
 On Terraform-managed hubs, owners can also edit the **House sitters** allow-list from **Settings → House sitter mode → Sitter login emails** or **Scheduled stays**. The hub Worker stores the list in D1 and updates Cloudflare Access via API (requires `CF_ACCESS_MANAGEMENT_TOKEN`, `ACCESS_PAGES_APP_ID`, and `ACCESS_WORKER_APP_ID` on the Worker).
 
 ### Production dashboard (`dashboard.lovely-home.co.uk`)

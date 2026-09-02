@@ -16,6 +16,7 @@
 - Common questions on Help use the same heading/paragraph blocks as the rest of the guide so the answers actually show
 - Support is the contact form, billing, and links into those guides
 - Cookie bar on every marketing page: necessary cookies only, no analytics or ads
+- Public “not authorised” page when Cloudflare Access denies a hub login
 
 ### Hub
 
@@ -36,6 +37,7 @@
 - Platform admin no longer says a healthy hub is “not provisioned” when only the served manifest is stale
 - HUB_API repair survives an empty Cloudflare deployments response (new hub with no Pages upload yet)
 - Launch-path Wrangler flags are checked against live `wrangler --help` so the next removed CLI option fails CI, not signup
+- Access login titles use the household name (`Wagtail Home`, not `wagtail Pages`); unauthorised emails get a public deny page and login-footer copy because Cloudflare still will not send a code
 
 ## 2.4.0
 

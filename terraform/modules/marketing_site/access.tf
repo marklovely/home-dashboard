@@ -41,3 +41,46 @@ resource "cloudflare_zero_trust_access_application" "marketing_site" {
     ignore_changes = [policies]
   }
 }
+
+# Public page shown when Access denies a login (and as a fallback if someone
+# lands here after a missing OTP). Must bypass the marketing-site Access app.
+# Pages 308s *.html to the extensionless path on the custom domain.
+resource "cloudflare_zero_trust_access_application" "access_unauthorised" {
+  account_id       = var.account_id
+  name             = "Lovely Home — Access unauthorised page"
+  type             = "self_hosted"
+  domain           = "${var.hostname}/access-unauthorised"
+  session_duration = var.access_session_duration
+
+  destinations = concat(
+    [
+      {
+        type = "public"
+        uri  = "${var.hostname}/access-unauthorised"
+      },
+      {
+        type = "public"
+        uri  = "${var.hostname}/access-unauthorised.html"
+      }
+    ],
+    var.include_www ? [
+      {
+        type = "public"
+        uri  = "${local.www_hostname}/access-unauthorised"
+      },
+      {
+        type = "public"
+        uri  = "${local.www_hostname}/access-unauthorised.html"
+      }
+    ] : []
+  )
+
+  policies = [{
+    name       = "Bypass access unauthorised page"
+    decision   = "bypass"
+    precedence = 1
+    include = [{
+      everyone = {}
+    }]
+  }]
+}
