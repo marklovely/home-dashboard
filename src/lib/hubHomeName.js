@@ -64,3 +64,29 @@ export function formatHubHomeName(rawName, environmentId = getHubEnvironmentSync
   if (/\bhome$/i.test(base)) return base;
   return `${base} Home`;
 }
+
+/** Operator Access login titles for platform hubs (not a household slug). */
+export const ACCESS_LOGIN_GENERIC_NAMES = {
+  production: 'Lovely Home',
+  prod: 'Lovely Home',
+  sandbox: 'Sandbox Home',
+  test: 'Test Home',
+  demo: 'Demo Home',
+  dev: 'Dev Home',
+  staging: 'Staging Home'
+};
+
+/**
+ * Cloudflare Access application name shown as “Log in to {name}”.
+ * Keep in sync with terraform/modules/hub_environment/access.tf locals.
+ *
+ * @param {unknown} siteId
+ * @param {'pages' | 'worker'} [kind]
+ */
+export function accessLoginAppName(siteId, kind = 'pages') {
+  const id = String(siteId ?? '')
+    .trim()
+    .toLowerCase();
+  const label = ACCESS_LOGIN_GENERIC_NAMES[id] || formatHubHomeName('', id);
+  return kind === 'worker' ? `${label} API` : label;
+}

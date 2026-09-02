@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   formatHubHomeName,
   isPlaceholderHubName,
-  titleCaseHubName
+  titleCaseHubName,
+  accessLoginAppName
 } from '../src/lib/hubHomeName.js';
 import { resetHubEnvironmentForTests } from '../src/auth/hubEnvironment.js';
 import { resetUserModeForTests, setUserMode, UserMode } from '../src/auth/userMode.js';
@@ -42,6 +43,15 @@ describe('hub home name', () => {
     setSiteProfileStateForTests({ profile: { hubName: '' } });
     expect(getHubDisplayName()).toBe('Powell Home');
     expect(getHubEyebrow()).toBe('POWELL HOME HUB');
+  });
+
+  it('names the Cloudflare Access login after the household, not the site_id slug', () => {
+    expect(accessLoginAppName('wagtail')).toBe('Wagtail Home');
+    expect(accessLoginAppName('rose-cottage')).toBe('Rose Cottage Home');
+    expect(accessLoginAppName('kitchen-home')).toBe('Kitchen Home');
+    expect(accessLoginAppName('production')).toBe('Lovely Home');
+    expect(accessLoginAppName('sandbox')).toBe('Sandbox Home');
+    expect(accessLoginAppName('wagtail', 'worker')).toBe('Wagtail Home API');
   });
 
   it('drops the HUB suffix in sitter mode', () => {
