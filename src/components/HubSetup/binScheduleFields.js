@@ -6,6 +6,7 @@ import {
   BIN_ALERT_HOURS_OPTIONS,
   DEFAULT_BIN_ALERT_HOURS_BEFORE,
   inferBinSchedulePeriod,
+  latestBinScheduleDate,
   normalizeBinSchedule,
   readBinScheduleFromProfile
 } from '../../lib/binScheduleProfile.js';
@@ -18,7 +19,7 @@ import { renderWheelieBinIcon } from '../icons/renderWheelieBinIcon.js';
 import {
   BIN_REPEAT_PRESETS,
   buildBinScheduleEntriesFromRepeat,
-  defaultRepeatUntilDate
+  resolveRepeatUntilDate
 } from '../../lib/binScheduleRepeat.js';
 import {
   getBinScheduleFieldHelp,
@@ -107,9 +108,20 @@ function typeLabel(type) {
 }
 
 /**
+ * @param {import('../../lib/binScheduleProfile.js').BinScheduleProfile} schedule
+ */
+function initialRepeatUntilValue(schedule) {
+  const last = latestBinScheduleDate(schedule);
+  const until = String(schedule.validUntil ?? '').trim();
+  if (last && until) return last >= until ? last : until;
+  return last || until;
+}
+
+/**
  * @param {Object} [options]
  * @param {import('../../lib/binScheduleProfile.js').BinScheduleProfile} [options.schedule]
  * @param {() => string} [options.getRepeatUntilFallback] Called when repeat-until is blank on add.
+ * @param {(lastDate: string) => void} [options.onLastDateChange] When the latest collection date changes.
  */
 export function createBinScheduleDateEditor(options = {}) {
   const schedule = options.schedule ?? normalizeBinSchedule({});
@@ -124,10 +136,18 @@ export function createBinScheduleDateEditor(options = {}) {
   entryPanel.innerHTML =
     '<legend class="hub-setup-bin-entry-legend">Add collection dates</legend>';
 
-  const entryIntro = document.createElement('p');
+  const entryIntro = document.createElement('ol');
   entryIntro.className = 'settings-help subtle hub-setup-bin-entry-intro';
-  entryIntro.textContent =
-    'Choose a date and bin type below, then tap Add to collection list. Repeating patterns add a full year of dates in one go — you can remove any you do not need.';
+  for (const step of [
+    'Pick the first collection date and which bin it is.',
+    'Choose Repeat (every 2 weeks is typical for household bins) and how far ahead to generate.',
+    'Tap Add to collection list — dates appear below. Repeat for each bin type.',
+    'Save bin reminders at the bottom of this page. Until you save, the Bins app still uses the previous calendar.'
+  ]) {
+    const item = document.createElement('li');
+    item.textContent = step;
+    entryIntro.append(item);
+  }
   entryPanel.append(entryIntro);
 
   const entryDate = createSetupField('First collection date', '', { type: 'date', required: true });
@@ -148,9 +168,9 @@ export function createBinScheduleDateEditor(options = {}) {
   customWeeksWrap.wrap.hidden = true;
   customWeeksWrap.wrap.classList.add('hub-setup-bin-custom-weeks');
 
-  const repeatUntil = createSetupField('Repeat until', schedule.validUntil || '', {
+  const repeatUntil = createSetupField('Repeat until', initialRepeatUntilValue(schedule), {
     type: 'date',
-    hint: 'Defaults to one year after the first date if left blank.'
+    hint: 'How far ahead to generate. If this is in the past, the hub uses one year from the first date instead.'
   });
   repeatUntil.wrap.hidden = true;
   repeatUntil.wrap.classList.add('hub-setup-bin-repeat-until');
@@ -194,22 +214,26 @@ export function createBinScheduleDateEditor(options = {}) {
     repeatUntil.wrap.hidden = !repeating;
     customWeeksWrap.wrap.hidden = entryRepeat.select.value !== 'custom';
     addButton.textContent = repeating ? 'Add dates to list' : 'Add to collection list';
-    if (repeating && !repeatUntil.input.value.trim()) {
-      const start = entryDate.input.value.trim();
-      if (start) {
-        repeatUntil.input.value =
-          options.getRepeatUntilFallback?.() || schedule.validUntil || defaultRepeatUntilDate(start);
-      }
+    const start = entryDate.input.value.trim();
+    if (repeating && start) {
+      repeatUntil.input.value = resolveRepeatUntilDate(
+        start,
+        repeatUntil.input.value.trim(),
+        options.getRepeatUntilFallback?.() || latestBinScheduleDate(schedule) || schedule.validUntil
+      );
     }
   }
 
   entryRepeat.select.addEventListener('change', syncRepeatFields);
   entryDate.input.addEventListener('change', () => {
-    if (entryRepeat.select.value !== 'none' && !repeatUntil.input.value.trim()) {
+    if (entryRepeat.select.value !== 'none') {
       const start = entryDate.input.value.trim();
       if (start) {
-        repeatUntil.input.value =
-          options.getRepeatUntilFallback?.() || schedule.validUntil || defaultRepeatUntilDate(start);
+        repeatUntil.input.value = resolveRepeatUntilDate(
+          start,
+          repeatUntil.input.value.trim(),
+          options.getRepeatUntilFallback?.() || latestBinScheduleDate(schedule) || schedule.validUntil
+        );
       }
     }
   });
@@ -223,10 +247,12 @@ export function createBinScheduleDateEditor(options = {}) {
         'No dates yet — add your first collection above, or skip this step and come back later in Settings.';
       listHost.append(empty);
       listSummary.textContent = 'No collection dates added yet.';
+      options.onLastDateChange?.('');
       return;
     }
 
     listSummary.textContent = `${entries.length} collection date${entries.length === 1 ? '' : 's'} added. Continue below when you are ready.`;
+    options.onLastDateChange?.(entries[entries.length - 1]?.date ?? '');
 
     for (const entry of entries) {
       const row = document.createElement('div');
@@ -262,11 +288,14 @@ export function createBinScheduleDateEditor(options = {}) {
     const type = /** @type {'rubbish' | 'recycling' | 'gardenWaste'} */ (entryType.select.value);
     const repeatId = entryRepeat.select.value;
     const customWeeks = Number(customWeeksWrap.input.value);
-    const untilDate =
-      repeatUntil.input.value.trim() ||
-      options.getRepeatUntilFallback?.() ||
-      schedule.validUntil ||
-      defaultRepeatUntilDate(startDate);
+    const untilDate = resolveRepeatUntilDate(
+      startDate,
+      repeatUntil.input.value.trim(),
+      options.getRepeatUntilFallback?.() || latestBinScheduleDate(schedule) || schedule.validUntil
+    );
+    if (repeatUntil.input.value.trim() !== untilDate) {
+      repeatUntil.input.value = untilDate;
+    }
 
     const generated = buildBinScheduleEntriesFromRepeat({
       startDate,
@@ -370,7 +399,13 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
 
   const dateEditor = createBinScheduleDateEditor({
     schedule,
-    getRepeatUntilFallback: () => validUntil.input.value.trim()
+    getRepeatUntilFallback: () => validUntil.input.value.trim(),
+    onLastDateChange: (lastDate) => {
+      const current = validUntil.input.value.trim();
+      if (lastDate && (!current || lastDate > current)) {
+        validUntil.input.value = lastDate;
+      }
+    }
   });
 
   const colorFields = createBinColorFields(schedule);

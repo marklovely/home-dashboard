@@ -194,13 +194,32 @@ function getScheduleValidUntil() {
   return activeHouseholdScheduleMeta().validUntil;
 }
 
+function lastScheduledCollectionDate() {
+  const events = getAllEvents();
+  return events[events.length - 1]?.date ?? '';
+}
+
+/**
+ * True only when nothing remains to show. A stale validUntil must not hide
+ * collection dates that are still ahead (owners often add a new year without
+ * clearing the old "schedule valid until" field).
+ *
+ * @param {string} asOfIso YYYY-MM-DD
+ * @param {string} validUntilIso
+ * @param {string} lastEventIso
+ */
+export function isCollectionCalendarExpired(asOfIso, validUntilIso, lastEventIso) {
+  if (lastEventIso && asOfIso <= lastEventIso) return false;
+  if (validUntilIso && asOfIso <= validUntilIso) return false;
+  return Boolean(validUntilIso || lastEventIso);
+}
+
 /**
  * @param {Date} [asOfDate]
  */
 export function isScheduleExpired(asOfDate = new Date()) {
-  const asOf = startOfLocalDay(asOfDate);
-  const until = parseLocalDate(getScheduleValidUntil());
-  return asOf > until;
+  const asOfIso = formatIsoFromDate(startOfLocalDay(asOfDate));
+  return isCollectionCalendarExpired(asOfIso, getScheduleValidUntil(), lastScheduledCollectionDate());
 }
 
 export function getScheduleMetadata() {

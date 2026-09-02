@@ -11,6 +11,7 @@ import { isHouseSitterMode } from '../../modes/modeConfig.js';
 import { storeSettingsPanel } from '../Settings/settingsNavigation.js';
 import {
   describeCollectionEvent,
+  formatCollectionDateLabel,
   getBinCollectionHomeSummary,
   getNextGardenWasteCollection,
   getNextHouseholdCollection,
@@ -220,13 +221,17 @@ function mountBinsApp(viewport, context) {
   if (isScheduleExpired(asOf)) {
     const expiry = document.createElement('div');
     expiry.className = 'bins-expiry-panel';
-    expiry.innerHTML =
-      '<h2>A newer collection calendar is needed</h2><p>The stored schedule ends after October 2026. Replace the calendar data to show upcoming collections again.</p>';
-    const hint = document.createElement('p');
-    hint.className = 'subtle';
-    hint.textContent = `Last known period: ${meta.household.validFrom} to ${meta.validUntil} (Calendar ${meta.household.calendar}, Round ${meta.gardenWaste.round}). See docs/bin-collection-maintenance.md.`;
-    expiry.append(hint);
-    appendBinsEmptyState(page, context, 'Update the bin schedule to restore collection reminders.', { extra: expiry });
+    const heading = document.createElement('h2');
+    heading.textContent = 'Collection calendar needs updating';
+    const body = document.createElement('p');
+    const lastDate = meta.lastHouseholdDate || meta.lastGardenWasteDate || meta.validUntil;
+    body.textContent = lastDate
+      ? `There are no upcoming collection dates after ${formatCollectionDateLabel(lastDate)}. Add the next council calendar in Bin reminders to restore the timeline.`
+      : 'Add collection dates in Bin reminders to restore the timeline.';
+    expiry.append(heading, body);
+    appendBinsEmptyState(page, context, 'Update the bin schedule to restore collection reminders.', {
+      extra: expiry
+    });
     viewport.append(page);
     return;
   }

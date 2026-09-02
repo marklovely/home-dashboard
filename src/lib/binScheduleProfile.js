@@ -215,7 +215,9 @@ export function validateBinSchedule(schedule) {
 }
 
 /**
- * Fill validFrom/validUntil from entries when blank.
+ * Fill validFrom when blank, and extend validUntil when collection dates run later.
+ * A leftover earlier validUntil must not keep hiding newly added dates.
+ *
  * @param {BinScheduleProfile} schedule
  */
 export function inferBinSchedulePeriod(schedule) {
@@ -226,9 +228,27 @@ export function inferBinSchedulePeriod(schedule) {
 
   if (!dates.length) return schedule;
 
+  const first = dates[0];
+  const last = dates[dates.length - 1];
+  const validUntil =
+    schedule.validUntil && schedule.validUntil >= last ? schedule.validUntil : last;
+
   return {
     ...schedule,
-    validFrom: schedule.validFrom || dates[0],
-    validUntil: schedule.validUntil || dates[dates.length - 1]
+    validFrom: schedule.validFrom || first,
+    validUntil
   };
+}
+
+/**
+ * Latest ISO date in the configured schedule, or ''.
+ *
+ * @param {BinScheduleProfile} schedule
+ */
+export function latestBinScheduleDate(schedule) {
+  const dates = [
+    ...schedule.household.map((entry) => entry.date),
+    ...schedule.gardenWaste.map((entry) => entry.date)
+  ].sort();
+  return dates[dates.length - 1] ?? '';
 }

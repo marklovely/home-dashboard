@@ -55,6 +55,13 @@ describe('field help', () => {
 describe('hub help guides integration', () => {
   it('still opens owner guide with hub setup section available', () => {
     expect(OWNER_HELP_SECTIONS.some((section) => section.id === 'hub-setup')).toBe(true);
+    expect(OWNER_HELP_SECTIONS.some((section) => section.id === 'bins')).toBe(true);
+    const binsHelp = HUB_SETUP_HELP_SECTIONS.find((section) => section.id === 'step-bins');
+    expect(JSON.stringify(binsHelp)).toMatch(/Add dates to list/);
+    expect(JSON.stringify(binsHelp)).toMatch(/Save/);
+    expect(JSON.stringify(OWNER_HELP_SECTIONS.find((section) => section.id === 'bins'))).toMatch(
+      /Save bin reminders/
+    );
 
     openHelpGuide({
       title: 'Owner guide',

@@ -136,6 +136,24 @@ export function buildBinScheduleEntriesFromRepeat({
 }
 
 /**
+ * Repeat-until must not be before the first generated date. Stale "schedule
+ * valid until" values (already in the past) are ignored so a new year of dates
+ * still expands.
+ *
+ * @param {string} startDate
+ * @param {string} [explicitUntil]
+ * @param {string} [fallbackUntil]
+ */
+export function resolveRepeatUntilDate(startDate, explicitUntil = '', fallbackUntil = '') {
+  if (!ISO_DATE.test(startDate)) return '';
+  for (const candidate of [explicitUntil, fallbackUntil]) {
+    const value = String(candidate ?? '').trim();
+    if (ISO_DATE.test(value) && value >= startDate) return value;
+  }
+  return defaultRepeatUntilDate(startDate);
+}
+
+/**
  * Default repeat-until date: one year after start (matches typical council calendars).
  * @param {string} startDate
  */

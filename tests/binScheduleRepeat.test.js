@@ -4,7 +4,8 @@ import {
   buildBinScheduleEntriesFromRepeat,
   defaultRepeatUntilDate,
   expandBinRepeatDates,
-  repeatIntervalDays
+  repeatIntervalDays,
+  resolveRepeatUntilDate
 } from '../src/lib/binScheduleRepeat.js';
 
 describe('binScheduleRepeat', () => {
@@ -89,5 +90,11 @@ describe('binScheduleRepeat', () => {
   it('defaults repeat-until to one year after start', () => {
     expect(defaultRepeatUntilDate('2026-06-10')).toBe('2027-06-10');
     expect(addMonthsIso('2026-01-31', 1)).toBe('2026-03-03');
+  });
+
+  it('ignores a stale validUntil that is before the first generated date', () => {
+    expect(resolveRepeatUntilDate('2026-09-04', '2026-08-22', '')).toBe('2027-09-04');
+    expect(resolveRepeatUntilDate('2026-09-04', '', '2026-08-22')).toBe('2027-09-04');
+    expect(resolveRepeatUntilDate('2026-09-04', '2026-10-09', '2026-08-22')).toBe('2026-10-09');
   });
 });

@@ -296,7 +296,7 @@ Household and garden waste dates come from **static data**, not runtime council 
 | `gardenWasteCollections.js` | Round **G2** — `{ date }` only |
 | `collectionTypes.js` | Display names, bin descriptions, icons, garden-waste allowed/not lists |
 
-Metadata on each schedule includes `validFrom`, `validUntil`, `source`, and calendar/round id. After `validUntil`, the UI shows that a newer calendar is needed and does not extrapolate dates.
+Metadata on each schedule includes `validFrom`, `validUntil`, `source`, and calendar/round id. The UI treats the calendar as expired only when no collection dates remain on or after today — a stale `validUntil` must not hide dates the owner has already added.
 
 ### Service
 
