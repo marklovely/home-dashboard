@@ -14,6 +14,14 @@ describe('hub API Pages binding helpers', () => {
     expect(workerNameForSite('sandbox')).toBe('lovely-home-hub-api-sandbox');
   });
 
+  it('allows production in attach-hub-api-pages-binding (worker deploy guard is separate)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const script = readFileSync(join(process.cwd(), 'scripts/attach-hub-api-pages-binding.mjs'), 'utf8');
+    expect(script).toContain('validateSiteId');
+    expect(script).not.toContain('validateDeploySiteId');
+  });
+
   it('detects a missing or wrong production HUB_API binding', () => {
     expect(productionHubApiService({})).toBe('');
     expect(
