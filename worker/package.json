@@ -39,7 +39,10 @@
     "secrets:e2e-nqnrfvy8": "bash scripts/print-env-secrets-checklist.sh e2e-nqnrfvy8",
     "deploy:e2e-dy940psa": "node scripts/check-env-provisioned.mjs e2e-dy940psa && wrangler deploy --env e2e-dy940psa",
     "d1:migrate:e2e-dy940psa": "node scripts/check-env-provisioned.mjs e2e-dy940psa && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-dy940psa --remote --env e2e-dy940psa",
-    "secrets:e2e-dy940psa": "bash scripts/print-env-secrets-checklist.sh e2e-dy940psa"
+    "secrets:e2e-dy940psa": "bash scripts/print-env-secrets-checklist.sh e2e-dy940psa",
+    "deploy:e2e-cr5648bt": "node scripts/check-env-provisioned.mjs e2e-cr5648bt && wrangler deploy --env e2e-cr5648bt",
+    "d1:migrate:e2e-cr5648bt": "node scripts/check-env-provisioned.mjs e2e-cr5648bt && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-cr5648bt --remote --env e2e-cr5648bt",
+    "secrets:e2e-cr5648bt": "bash scripts/print-env-secrets-checklist.sh e2e-cr5648bt"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.19.0",
