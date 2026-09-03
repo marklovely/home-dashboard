@@ -3,7 +3,7 @@
  */
 import { parseCloudflareApiJson } from './cloudflare-api-json.mjs';
 
-const DEFAULT_PER_PAGE = 100;
+const DEFAULT_PER_PAGE = 25;
 const DEFAULT_DELETE_CONCURRENCY = 20;
 const MAX_DELETE_ATTEMPTS = 5;
 
