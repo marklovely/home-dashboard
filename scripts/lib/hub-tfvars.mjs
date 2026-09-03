@@ -153,6 +153,6 @@ export function deprovisionSiteMissingError(deprovisionSiteId, writtenSiteIds) {
   const siteId = deprovisionSiteId?.trim();
   if (!siteId || writtenSiteIds.has(siteId)) return null;
   return (
-    `DEPROVISION_SITE_ID="${siteId}" must appear in generated tfvars but could not be resolved from terraform output.`
+    `DEPROVISION_SITE_ID="${siteId}" must appear in generated tfvars but could not be resolved from terraform state, manifest, or registry.`
   );
 }
