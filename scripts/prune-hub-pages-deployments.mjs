@@ -29,9 +29,9 @@ try {
     onProgress: (message) => console.log(message)
   });
   console.log(
-    `Pruned Pages deployments for ${siteId}: ${result.pagesProject} (${result.deleted} deleted, ${result.remaining} remaining; source=${source}).`
+    `Pruned Pages deployments for ${siteId}: ${result.pagesProject} (${result.deleted} deleted, ${result.skippedActiveProduction ?? 0} active production skipped, ${result.remaining} remaining; source=${source}).`
   );
-  if (result.remaining > 0) {
+  if (result.remaining > 1) {
     console.error(
       `Pages project ${result.pagesProject} still has ${result.remaining} deployment(s); terraform destroy may fail with Cloudflare 8000076.`
     );

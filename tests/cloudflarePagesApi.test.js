@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import {
+  isActiveProductionDeploymentDeleteError,
   listAllPagesDeployments,
   prunePagesProjectDeployments
 } from '../scripts/lib/cloudflare-pages-api.mjs';
@@ -7,6 +8,14 @@ import {
 describe('cloudflarePagesApi', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it('detects active production delete errors', () => {
+    expect(
+      isActiveProductionDeploymentDeleteError(
+        new Error('You cannot delete the active production deployment.')
+      )
+    ).toBe(true);
   });
 
   it('lists deployments across pages', async () => {
@@ -71,7 +80,53 @@ describe('cloudflarePagesApi', () => {
     expect(result).toEqual({
       projectName: 'home-dashboard-smith',
       deleted: 1,
+      skippedActiveProduction: 0,
       remaining: 0
+    });
+  });
+
+  it('skips active production deployment deletes', async () => {
+    const remaining = new Set(['dep-prod', 'dep-preview']);
+    const fetchMock = vi.fn(async (url, init) => {
+      const parsed = new URL(url);
+      if (parsed.pathname.endsWith('/deployments') && init?.method !== 'DELETE') {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            result: [...remaining].map((id) => ({ id })),
+            result_info: { total_pages: 1, page: 1, per_page: 25 }
+          }),
+          { status: 200 }
+        );
+      }
+      if (init?.method === 'DELETE') {
+        const deploymentId = parsed.pathname.split('/').pop();
+        if (deploymentId === 'dep-prod') {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              errors: [{ message: 'You cannot delete the active production deployment.' }]
+            }),
+            { status: 400 }
+          );
+        }
+        remaining.delete(deploymentId);
+        return new Response(JSON.stringify({ success: true, result: {} }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ success: true, result: [] }), { status: 200 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await prunePagesProjectDeployments('home-dashboard-smith', {
+      accountId: 'acct',
+      token: 'token'
+    });
+
+    expect(result).toEqual({
+      projectName: 'home-dashboard-smith',
+      deleted: 1,
+      skippedActiveProduction: 1,
+      remaining: 1
     });
   });
 });
