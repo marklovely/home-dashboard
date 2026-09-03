@@ -112,3 +112,31 @@ export async function emptyR2Bucket(bucketName, options) {
 
   return deleted;
 }
+
+/**
+ * @param {string} bucketName
+ * @param {string} objectKey
+ * @param {{ accountId: string, token: string }} options
+ */
+export async function getR2ObjectText(bucketName, objectKey, options) {
+  const accountId = options.accountId.trim();
+  const token = options.token.trim();
+  const bucket = bucketName.trim();
+  const key = objectKey.trim();
+  const encodedKey = encodeURIComponent(key).replace(/%2F/g, '/');
+  const url = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/r2/buckets/${encodeURIComponent(bucket)}/objects/${encodedKey}`;
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const message =
+      body?.errors?.map((entry) => entry.message).filter(Boolean).join('; ') ||
+      `HTTP ${response.status}`;
+    throw new Error(`R2 get failed for bucket "${bucket}" key "${key}": ${message}`);
+  }
+  return response.text();
+}

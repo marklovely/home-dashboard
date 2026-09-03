@@ -16,19 +16,30 @@ export async function handlePlatformSiteArchive(request, env, correlationId) {
     return jsonError(403, 'FORBIDDEN', 'Forbidden.', { correlationId });
   }
 
-  const payload = await buildSiteBackupPayload(env, { scope: 'full' });
-  return Response.json(
-    {
-      ...payload,
-      archiveSource: 'platform-pre-deprovision',
-      archivedAt: new Date().toISOString()
-    },
-    {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
+  try {
+    const payload = await buildSiteBackupPayload(env, { scope: 'full' });
+    return Response.json(
+      {
+        ...payload,
+        archiveSource: 'platform-pre-deprovision',
+        archivedAt: new Date().toISOString()
+      },
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store'
+        }
       }
-    }
-  );
+    );
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'platform_site_archive_failed',
+        correlationId,
+        detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+      })
+    );
+    return jsonError(500, 'INTERNAL_ERROR', 'Site archive export failed.', { correlationId });
+  }
 }

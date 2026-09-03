@@ -398,7 +398,7 @@ flowchart TD
 
 **Already handled by the delete PR:** `hub.tfvars.example` is removed when the wizard opens the delete PR (step 1), before deprovision runs.
 
-**Per-site customer state:** Per-hub Terraform backends may lack root `sites` / `hub_proxy_secrets` outputs until a full apply refreshes them. Deprovision scripts fall back to `terraform state list`, platform manifest, and `HUB_PROXY_SECRETS_JSON` when generating tfvars or reading site contracts. Before `terraform destroy`, `empty-hub-site-r2-buckets.mjs` deletes all objects from the hub guides/media buckets (Cloudflare returns 409 if a bucket is not empty).
+**Per-site customer state:** Per-hub Terraform backends may lack root `sites` / `hub_proxy_secrets` outputs until a full apply refreshes them. Deprovision scripts fall back to `terraform state list`, platform manifest, and `HUB_PROXY_SECRETS_JSON` when generating tfvars or reading site contracts. Archive uses the same manifest fallback for the live worker URL (split state does not block archive). If the worker returns 5xx, archive retries, tries the Pages hostname, then reuses a recent backup in platform R2. Before `terraform destroy`, `empty-hub-site-r2-buckets.mjs` deletes all objects from the hub guides/media buckets (Cloudflare returns 409 if a bucket is not empty).
 
 ### Manual deprovision (local)
 

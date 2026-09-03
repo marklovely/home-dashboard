@@ -8,6 +8,7 @@ import {
   PLATFORM_ARCHIVE_R2_BUCKET_NAME,
   uploadSiteArchiveToR2
 } from './lib/platform-archive-storage.mjs';
+import { readRecentSiteArchivePointer } from './lib/platform-archive-reuse.mjs';
 import { resolveHubArchiveUrl } from './lib/hub-archive-url.mjs';
 import { resolveSiteArchiveContract } from './lib/resolve-site-archive-contract.mjs';
 
@@ -19,6 +20,8 @@ if (!siteId) {
 
 const archiveSecret = process.env.PLATFORM_SITE_ARCHIVE_SECRET?.trim();
 const bucket = process.env.PLATFORM_ARCHIVE_R2_BUCKET?.trim() || PLATFORM_ARCHIVE_R2_BUCKET_NAME;
+const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim() ?? '';
+const cfToken = process.env.CLOUDFLARE_API_TOKEN?.trim() ?? '';
 
 if (!archiveSecret) {
   console.error(
@@ -26,6 +29,9 @@ if (!archiveSecret) {
   );
   process.exit(1);
 }
+
+const ARCHIVE_FETCH_RETRIES = 3;
+const ARCHIVE_FETCH_RETRY_DELAY_MS = 5000;
 
 /**
  * @param {string} url
@@ -54,11 +60,58 @@ async function fetchArchivePayload(url) {
 
   if (!response.ok) {
     const body = await response.text();
-    console.error(`Archive fetch failed (${response.status}): ${body.slice(0, 500)}`);
-    process.exit(1);
+    const error = new Error(`Archive fetch failed (${response.status}): ${body.slice(0, 500)}`);
+    error.status = response.status;
+    throw error;
   }
 
   return /** @type {Record<string, unknown>} */ (await response.json());
+}
+
+/**
+ * @param {string} url
+ * @param {string} via
+ */
+async function fetchArchivePayloadWithRetries(url, via) {
+  /** @type {Error | null} */
+  let lastError = null;
+  for (let attempt = 1; attempt <= ARCHIVE_FETCH_RETRIES; attempt += 1) {
+    try {
+      return await fetchArchivePayload(url);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const retryable =
+        lastError.status === undefined ||
+        lastError.status >= 500 ||
+        lastError.status === 429;
+      if (!retryable || attempt >= ARCHIVE_FETCH_RETRIES) {
+        throw lastError;
+      }
+      console.warn(
+        `Archive fetch via ${via} failed (attempt ${attempt}/${ARCHIVE_FETCH_RETRIES}): ${lastError.message}`
+      );
+      await new Promise((resolve) => setTimeout(resolve, ARCHIVE_FETCH_RETRY_DELAY_MS));
+    }
+  }
+  throw lastError ?? new Error('Archive fetch failed.');
+}
+
+/**
+ * @param {Record<string, unknown>} site
+ * @returns {{ url: string, via: string }[]}
+ */
+function archiveFetchTargets(site) {
+  const primary = resolveHubArchiveUrl(site);
+  /** @type {{ url: string, via: string }[]} */
+  const targets = [];
+  if (primary.url) targets.push({ url: primary.url, via: primary.via });
+
+  const hostname = String(site.hostname ?? '').trim();
+  const pages = resolveHubArchiveUrl({ hostname });
+  if (pages.url && !targets.some((target) => target.url === pages.url)) {
+    targets.push({ url: pages.url, via: pages.via });
+  }
+  return targets;
 }
 
 console.log(`\n=== Archiving hub site backup: ${siteId} ===`);
@@ -74,14 +127,54 @@ if (resolved.source !== 'terraform') {
   );
 }
 
-const archive = resolveHubArchiveUrl(resolved.site);
-if (!archive.url) {
+const targets = archiveFetchTargets(resolved.site);
+if (targets.length === 0) {
   console.error(`No worker_api_origin or hostname available for "${siteId}".`);
   process.exit(1);
 }
 
-console.log(`Fetching archive via ${archive.via}: ${archive.url}`);
-const payload = await fetchArchivePayload(archive.url);
+/** @type {Record<string, unknown> | null} */
+let payload = null;
+/** @type {Error | null} */
+let fetchError = null;
+
+for (const target of targets) {
+  console.log(`Fetching archive via ${target.via}: ${target.url}`);
+  try {
+    payload = await fetchArchivePayloadWithRetries(target.url, target.via);
+    fetchError = null;
+    break;
+  } catch (error) {
+    fetchError = error instanceof Error ? error : new Error(String(error));
+    console.warn(`Archive fetch via ${target.via} failed: ${fetchError.message}`);
+  }
+}
+
+if (!payload) {
+  if (accountId && cfToken) {
+    const existing = await readRecentSiteArchivePointer(siteId, {
+      bucket,
+      accountId,
+      token: cfToken
+    });
+    if (existing) {
+      console.warn(
+        `Reusing recent platform archive from ${existing.archivedAt} (${existing.backupKey}) after live fetch failed.`
+      );
+      console.log(`Archived to r2://${bucket}/${existing.backupKey}`);
+      console.log(`Latest pointer: r2://${bucket}/${existing.latestKey}`);
+      console.log(`\n=== Archive complete (reused): ${siteId} ===`);
+      process.exit(0);
+    }
+  }
+
+  console.error(
+    fetchError?.message ??
+      'Archive fetch failed and no recent platform archive was available to reuse.'
+  );
+  process.exit(1);
+}
+
 const { backupKey, latestKey } = uploadSiteArchiveToR2(siteId, payload, {
   bucket,
   accountId: process.env.CLOUDFLARE_ACCOUNT_ID
