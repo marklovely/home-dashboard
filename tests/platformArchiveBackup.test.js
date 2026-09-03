@@ -122,6 +122,13 @@ describe('deploy-cloudflare-pages-site', () => {
     }
     expect(helpText).not.toMatch(/--functions-directory/);
   });
+
+  it('maps production to the legacy home-dashboard Pages project name', () => {
+    const script = deployScript();
+    expect(script).toContain('hub-site-resource-names.sh');
+    expect(script).toContain('PAGES_PROJECT="$PAGES_NAME"');
+    expect(script).not.toContain('PAGES_PROJECT="home-dashboard-${SITE_ID}"');
+  });
 });
 
 describe('prune-hub-pages-functions', () => {

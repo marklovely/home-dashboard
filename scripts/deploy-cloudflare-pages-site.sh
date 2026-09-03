@@ -14,7 +14,8 @@ if [[ -z "$SITE_ID" ]]; then
 fi
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PAGES_PROJECT="home-dashboard-${SITE_ID}"
+eval "$(bash "$ROOT/scripts/lib/hub-site-resource-names.sh" "$SITE_ID")"
+PAGES_PROJECT="$PAGES_NAME"
 BRANCH="${PAGES_BRANCH:-main}"
 if [[ -x "$ROOT/worker/node_modules/.bin/wrangler" ]]; then
   WRANGLER=("$ROOT/worker/node_modules/.bin/wrangler")
