@@ -241,6 +241,8 @@ describe('registry jobs replay onto origin/main before opening a PR', () => {
     expect(registry).toContain('node scripts/validate-registry-site-id.mjs');
     expect(registry).not.toContain('validate-deploy-site-id.mjs');
     expect(registry).toContain('group: platform-hub-registry-git');
+    expect(registry.indexOf('Checkout main')).toBeLessThan(registry.indexOf('Checkout snapshot'));
+    expect(registry.indexOf('validate-registry-site-id.mjs')).toBeLessThan(registry.indexOf('Checkout snapshot'));
     const validate = readFileSync(join(root, 'scripts/validate-registry-site-id.mjs'), 'utf8');
     expect(validate).toContain('validateSiteId');
     expect(validate).not.toContain('validate-deploy-site-id');

@@ -36,11 +36,11 @@ jobs:
     env:
       TZ: Europe/London
     steps:
-      - name: Checkout snapshot
+      # Validate with scripts from main. The snapshot branch is older than
+      # this workflow and will not have validate-registry-site-id.mjs.
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_ref }}
-          fetch-depth: 0
           persist-credentials: false
 
       - uses: actions/setup-node@v4
@@ -51,6 +51,13 @@ jobs:
         env:
           SITE_ID: ${{ inputs.site_id }}
         run: node scripts/validate-registry-site-id.mjs
+
+      - name: Checkout snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Overlay site onto origin/main
         env:
