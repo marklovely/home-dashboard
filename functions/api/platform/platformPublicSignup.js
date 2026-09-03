@@ -16,7 +16,7 @@ import {
   releaseSignupReservation,
   reserveSignupSlug
 } from './platformSignupGuards.js';
-import { isHubNameHeld, hubNameHeldReason } from './platformHubNameHold.js';
+import { isHubNameHeld, hubNameHeldReason, ownerEmailMatchesBilling } from './platformHubNameHold.js';
 import { turnstileConfigured, verifyTurnstileToken } from './platformSignupTurnstile.js';
 
 /** Reserved slugs — internal hubs and common DNS names. */
@@ -130,9 +130,10 @@ export function publicSignupUrls(env, siteId) {
  * @param {object} manifest
  * @param {string} siteId
  * @param {D1Database | null | undefined} billingDb
- * @param {number} [nowMs]
+ * @param {{ nowMs?: number, ownerEmail?: string, skipHold?: boolean }} [options]
  */
-export async function checkPublicSignupSlug(manifest, siteId, billingDb, nowMs = Date.now()) {
+export async function checkPublicSignupSlug(manifest, siteId, billingDb, options = {}) {
+  const nowMs = options.nowMs ?? Date.now();
   const base = isPublicSignupSlugAvailable(manifest, siteId);
   if (!base.available) return base;
 
@@ -144,9 +145,12 @@ export async function checkPublicSignupSlug(manifest, siteId, billingDb, nowMs =
     };
   }
 
-  if (billingDb) {
+  if (billingDb && !options.skipHold) {
     const billing = await getSiteBilling(billingDb, siteId);
     if (isHubNameHeld(billing, nowMs)) {
+      if (ownerEmailMatchesBilling(options.ownerEmail, billing?.owner_email)) {
+        return { available: true, reason: null };
+      }
       return {
         available: false,
         reason: hubNameHeldReason(siteId, /** @type {number} */ (billing?.slug_held_until))
@@ -254,7 +258,10 @@ export async function handlePublicHubSignup(env, input) {
     await pruneExpiredSignupData(billingDb, nowMs);
   }
 
-  const slugCheck = await checkPublicSignupSlug(manifest, siteId, billingDb, nowMs);
+  const slugCheck = await checkPublicSignupSlug(manifest, siteId, billingDb, {
+    nowMs,
+    ownerEmail: customerEmail
+  });
   if (!slugCheck.available) {
     return {
       ok: false,

@@ -69,7 +69,13 @@ export async function resetBillingCycleFlags(db, siteId, flags) {
   const values = [Date.now()];
 
   if (flags.clearDeprovision) {
-    sets.push('deprovision_dispatched_at = NULL', 'deprovision_last_error = NULL', 'slug_held_until = NULL');
+    sets.push(
+      'deprovision_dispatched_at = NULL',
+      'deprovision_last_error = NULL',
+      'slug_held_until = NULL',
+      'registry_dispatched_at = NULL',
+      'registry_last_error = NULL'
+    );
   }
   if (flags.clearProvision) {
     sets.push('provision_dispatched_at = NULL', 'provision_last_error = NULL');

@@ -102,6 +102,9 @@ export const PUBLIC_HELP_CATALOG = {
         "price",
         "cancel",
         "billing",
+        "resubscribe",
+        "recreate",
+        "backup",
         "demo",
         "public",
         "stay",
@@ -131,6 +134,18 @@ export const PUBLIC_HELP_CATALOG = {
         {
           "type": "p",
           "text": "Cancel before the trial ends and you pay nothing. If you cancel later, access continues until the end of the paid period, then the hub is taken down and archived. Cancel from your account page or by emailing support."
+        },
+        {
+          "type": "h4",
+          "text": "Can I get the same hub back after cancel?"
+        },
+        {
+          "type": "p",
+          "text": "Yes — start a new 7-day trial at lovely-home.co.uk/signup.html (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning usually takes about 10 minutes, then sign in at your-name.lovely-hub.com with a one-time email code."
+        },
+        {
+          "type": "p",
+          "text": "Before you cancel, download an encrypted full backup from Settings → Utilities if you want to restore photos, the house guide, or appliance manuals. Automated restore from our archive is not available yet — you re-enter content in the setup wizard or from your backup file. The account page (lovely-home.co.uk/account.html) is only for invoices and card details; it does not recreate a hub."
         },
         {
           "type": "h4",

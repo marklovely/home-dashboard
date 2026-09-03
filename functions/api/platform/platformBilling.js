@@ -501,7 +501,12 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     billingForDispatch = {
       ...existingBilling,
       ...(cycleReset.clearDeprovision
-        ? { deprovision_dispatched_at: null, deprovision_last_error: null }
+        ? {
+            deprovision_dispatched_at: null,
+            deprovision_last_error: null,
+            registry_dispatched_at: null,
+            registry_last_error: null
+          }
         : {}),
       ...(cycleReset.clearProvision
         ? { provision_dispatched_at: null, provision_last_error: null }

@@ -18,6 +18,16 @@ export function isHubNameHeld(billingRow, nowMs = Date.now()) {
 }
 
 /**
+ * @param {string | null | undefined} a
+ * @param {string | null | undefined} b
+ */
+export function ownerEmailMatchesBilling(a, b) {
+  const left = String(a ?? '').trim().toLowerCase();
+  const right = String(b ?? '').trim().toLowerCase();
+  return Boolean(left && right && left === right);
+}
+
+/**
  * @param {string} siteId
  * @param {number} heldUntilMs
  */
