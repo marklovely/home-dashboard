@@ -4,8 +4,6 @@
  *
  * Usage: node scripts/archive-hub-site-backup.mjs <site_id>
  */
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   PLATFORM_ARCHIVE_R2_BUCKET_NAME,
   uploadSiteArchiveToR2
