@@ -8,6 +8,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyLocalHubEnv, missingProvisionEnvKeys } from './lib/load-local-hub-env.mjs';
+import { terraformCloudflareRetryDecision } from './lib/terraform-cloudflare-retry.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { suggestedWorkerName, validateDeprovisionSiteId } from './lib/site-registry.mjs';
 import { hubSiteModuleInState } from './lib/terraform-state.mjs';
@@ -114,15 +115,9 @@ function runTerraformDestroy() {
     if (result.status === 0) return;
 
     const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
-    if (/\b401\b.*Unauthorized|Unauthorized.*\b401\b/i.test(output)) {
-      console.error(
-        '\nTerraform destroy failed with Cloudflare 401 Unauthorized — fix CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID. Not retrying.'
-      );
-      process.exit(result.status ?? 1);
-    }
-
-    if (/\b400\b Bad Request/i.test(output) && !/429|rate limit/i.test(output)) {
-      console.error('\nTerraform destroy failed with Cloudflare 400 Bad Request. Not retrying.');
+    const retry = terraformCloudflareRetryDecision(output);
+    if (!retry.retry) {
+      console.error(`\nTerraform destroy failed: ${retry.message}. Not retrying.`);
       process.exit(result.status ?? 1);
     }
 

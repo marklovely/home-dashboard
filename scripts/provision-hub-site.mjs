@@ -8,6 +8,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyLocalHubEnv, missingProvisionEnvKeys } from './lib/load-local-hub-env.mjs';
+import { terraformCloudflareRetryDecision } from './lib/terraform-cloudflare-retry.mjs';
 import { validateDeploySiteId } from './lib/site-registry.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import {
@@ -96,29 +97,9 @@ function runTerraformApply() {
     if (result.status === 0) return;
 
     const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
-    if (/\b401\b.*Unauthorized|Unauthorized.*\b401\b/i.test(output)) {
-      console.error(
-        '\nTerraform apply failed with Cloudflare 401 Unauthorized — fix CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID in GitHub secrets (see scripts/verify-cloudflare-api-token.sh). Not retrying.'
-      );
-      process.exit(result.status ?? 1);
-    }
-
-    if (/8000022|Invalid Service name \(\)/i.test(output)) {
-      console.error(
-        '\nTerraform apply failed updating Pages HUB_API binding (8000022). Check terraform/modules/hub_environment/variables.tf entrypoint = "default". Not retrying.'
-      );
-      process.exit(result.status ?? 1);
-    }
-
-    if (/Credential access key has length|InvalidArgument.*access key/i.test(output)) {
-      console.error(
-        '\nTerraform state backend failed — R2 credentials look wrong. Export Cloudflare R2 API token keys (32-char access key), not AWS IAM keys:\n  export AWS_ACCESS_KEY_ID="..."\n  export AWS_SECRET_ACCESS_KEY="..."\nSee docs/platform-provision.md § Remote Terraform state (R2). Not retrying.'
-      );
-      process.exit(result.status ?? 1);
-    }
-
-    if (/\b400\b Bad Request/i.test(output) && !/429|rate limit/i.test(output)) {
-      console.error('\nTerraform apply failed with Cloudflare 400 Bad Request. Not retrying.');
+    const retry = terraformCloudflareRetryDecision(output);
+    if (!retry.retry) {
+      console.error(`\nTerraform apply failed: ${retry.message}. Not retrying.`);
       process.exit(result.status ?? 1);
     }
 
