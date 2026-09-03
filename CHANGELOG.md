@@ -2,6 +2,62 @@
 
 ## Unreleased
 
+## 3.0.0
+
+Major release: hub reclaim after cancel, full backup restore with media, queued billing lifecycle, and hardened deprovision.
+
+### Hub backup and restore
+
+- Full site backup zip includes House Guide photos and appliance manual PDFs; Settings encrypts the zip before download
+- Restore from an encrypted full backup zip puts photos and manual PDFs back automatically (setup wizard and Settings → Backup & restore)
+- JSON-only backups still work; zip backups are required for media round-trip
+
+### Signup, billing, and reclaim
+
+- After cancel, a hub name stays reserved for 12 months so the same `{name}.lovely-hub.com` address can be reclaimed on resubscribe
+- Original owner can reclaim a held hub name with a new trial (same email at signup — not the account login page)
+- Signup success page shows welcome-back copy when reinstating a deprovisioned hub
+- Owners manage billing from lovely-home.co.uk/account.html (email code, then Stripe Customer Portal)
+- Account stays signed in when returning from Stripe; expired sessions ask for a new code
+- Cancelled hubs say so on the account page; Stripe’s portal only has invoices and the saved card after the plan ends
+- Hub addresses must be DNS-safe (letters, numbers, hyphens); invalid names fail fast on the success page
+- Signup success page stops on a recorded setup failure and no longer shows a QR after 30 minutes if the hub never answered
+
+### Deprovision and archive
+
+- Pre-deprovision archive retries worker errors, falls back to Pages hostname, and reuses a recent R2 backup when needed
+- Split Terraform state fallbacks for deprovision tfvars, archive URL, and R2 bucket names when per-site outputs are missing
+- Empty hub R2 buckets before destroy; skip buckets already deleted on retry
+- Prune Pages deployments before terraform destroy; skip the active production deployment Cloudflare will not delete
+- Billing deprovision stops if archive does not land in R2, so a failed backup cannot remove the site from git
+- Re-running deprovision skips archive and destroy when the hub is already gone from Terraform
+- Billing cycle reset clears deprovision/registry flags so a reclaimed hub can provision again
+- Automated restore from R2 archive when a cancelled hub re-subscribes (platform-side)
+
+### Platform and infrastructure
+
+- Paid signup and cancel go through Cloudflare Queues (`lovely-home-hub-provision` concurrency 4, `lovely-home-hub-registry` concurrency 1) instead of racing GitHub create-PRs
+- Hub-jobs Worker dispatches GitHub Actions; git is the ledger written after the hub is live (or after teardown), not the mutex
+- Platform admin Terraform workflow applies `module.platform_admin` (queues + hub-jobs Worker) without touching hub sites
+- GitHub Actions HTTP-push to hub queues sends a JSON object body (Cloudflare rejects a stringified `body` with 400)
+- Signup lifecycle mail claims the D1 sent-at column before Resend so duplicate Stripe events cannot double-send
+- Stripe Test/Live switch on platform admin (typed `GO LIVE` / `USE TEST`); both key sets stay in Terraform, D1 holds the active mode
+- On-demand Playwright lifecycle (`npm run test:lifecycle`, workflow_dispatch) covers test-mode signup, hub ready, trial cancel, and teardown
+- Public hub-status `registered` follows billing (trialing/active/canceled), not a lagging `platform-manifest.json` on platform Pages
+- Registry overlay validates the site id on `main` before checking out the snapshot, so older drop branches still overlay
+- Registry drop no longer fails for missing `deploy:<site>` worker scripts
+- Hub Pages production git deploys are off; provision wrangler-deploys, and app-code changes on `main` roll out via Deploy hub Pages
+- Re-attach production `HUB_API` Pages bindings after main deploys
+- Hub Pages deploy stages pruned Functions as `./functions` for Wrangler 4
+- Platform admin no longer says a healthy hub is “not provisioned” when only the served manifest is stale
+- HUB_API repair survives an empty Cloudflare deployments response
+- Launch-path Wrangler flags are checked against live `wrangler --help` so the next removed CLI option fails CI, not signup
+- Stripe and marketing-site access panels on the operator dashboard collapse behind twisties
+- Marketing site access panel sits at the top of the dashboard, above the site cards
+- Add extra marketing-site OTP emails from the platform dashboard (guests, not operators)
+- Public contact form on Support (`POST /api/public/contact`) emails `support@lovely-home.co.uk` via Resend
+- Access login titles use the household name (`Wagtail Home`, not `wagtail Pages`); unauthorised emails get a public deny page
+
 ### Marketing site
 
 - Forest-and-stone palette in place of purple; cottage mark with climbing rose, chimney smoke, and serif wordmark
@@ -10,52 +66,20 @@
 - Fluid type, wrapping, and safe-area padding for phone, tablet, and desktop
 - Product brand and marketing screenshots sync to the `lovely-home-media` R2 bucket
 - Home page brand lockup is larger in the header and hero; satellite pages stay compact
-- Home hero is the cottage mark only (name stays in the header), and opening the menu no longer blurs the page
 - Owner and guest hub guides on Help, starting with Set it up; `/setup.html` redirects there
-- Common questions (trial, billing, booking sits) live in Help and Support, not only on Pricing
-- Common questions on Help use the same heading/paragraph blocks as the rest of the guide so the answers actually show
+- Common questions (trial, billing, booking sits, hub reclaim) live in Help and Support, not only on Pricing
 - Support is the contact form, billing, and links into those guides
 - Cookie bar on every marketing page: necessary cookies only, no analytics or ads
 - Public “not authorised” page when Cloudflare Access denies a hub login
+- Scheduled sitter stays: guide 7 days before, home-access details on sit dates, login removed after checkout
 
-### Hub
+### Hub app
 
-- Full site backup zip includes House Guide photos and appliance manual PDFs; Settings encrypts the zip before download
 - Default accents follow the same forest/sage palette
 - Light appearance uses a cream forest palette, a dark wordmark, and a header sun/moon toggle for owners and guests
 - Owner and guest help covers scheduled stays, weather from the home address, and the header theme toggle
 - Set it up is the first owner help topic (trial, sending the hub URL, optional wall tablet)
 - Common questions is the second owner help topic, shared with the marketing site
-
-### Platform
-
-- After cancel, a hub name stays reserved for 12 months so the same `{name}.lovely-hub.com` address can be reclaimed on resubscribe
-- Registry overlay validates the site id on `main` before checking out the snapshot, so older drop branches still overlay
-- Registry overlay validates the site id only — drop snapshots no longer fail for missing `deploy:<site>` worker scripts
-- GitHub Actions HTTP-push to hub queues sends a JSON object body (Cloudflare rejects a stringified `body` with 400)
-- Signup lifecycle mail claims the D1 sent-at column before Resend so `checkout.session.completed` and `customer.subscription.created` cannot double-send
-- Stripe and marketing-site access panels on the operator dashboard collapse behind twisties
-- Paid signup and cancel go through Terraformed Cloudflare Queues (`lovely-home-hub-provision` concurrency 4, `lovely-home-hub-registry` concurrency 1) instead of racing GitHub create-PRs
-- Platform admin Terraform workflow applies `module.platform_admin` (queues + hub-jobs Worker) without touching hub sites
-- Worker queue consumers omit `visibility_timeout_ms` (HTTP-pull only); generated tfvars keep the pre-launch marketing Access gate on
-- Hub-jobs Worker dispatches GitHub Actions; git is the ledger written after the hub is live (or after teardown), not the mutex
-- Automated restore from R2 archive when a cancelled hub re-subscribes
-- Add extra marketing-site OTP emails from the platform dashboard (guests, not operators)
-- Marketing site access panel sits at the top of the dashboard, above the site cards
-- Public contact form on Support (`POST /api/public/contact`) emails `support@lovely-home.co.uk` via Resend
-- Public hub-status `registered` follows billing (trialing/active/canceled), not a lagging `platform-manifest.json` on platform Pages
-- Hub Pages production git deploys are off; provision wrangler-deploys, and app-code changes on `main` roll out via Deploy hub Pages
-- Re-attach production `HUB_API` Pages bindings after main deploys (sandbox was losing the Worker link on every marketing merge)
-- Hub Pages deploy stages pruned Functions as `./functions` for Wrangler 4 (`--functions-directory` was removed and blocked new-hub provision)
-- Platform admin no longer says a healthy hub is “not provisioned” when only the served manifest is stale
-- HUB_API repair survives an empty Cloudflare deployments response (new hub with no Pages upload yet)
-- Launch-path Wrangler flags are checked against live `wrangler --help` so the next removed CLI option fails CI, not signup
-- Access login titles use the household name (`Wagtail Home`, not `wagtail Pages`); unauthorised emails get a public deny page and login-footer copy because Cloudflare still will not send a code
-- Stripe Test/Live switch on platform admin (typed `GO LIVE` / `USE TEST`); both key sets stay in Terraform, D1 holds the active mode
-- On-demand Playwright lifecycle (`npm run test:lifecycle`, workflow_dispatch) covers test-mode signup, hub ready, trial cancel, and teardown
-- Local `npm run test:lifecycle` loads the test Stripe key and operator email from hub.tfvars when those env vars are unset
-- Lifecycle Checkout types the test card and waits for the Stripe session to complete; if Onelink stays on Processing, the spec starts the same test trial via the Stripe API so provision still runs
-- Billing cancel still tears the hub down when platform-manifest.json has not picked up the new site yet (the follow-up PR lags the live hostname)
 
 ## 2.4.0
 
