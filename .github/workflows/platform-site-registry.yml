@@ -50,7 +50,7 @@ jobs:
       - name: Validate site_id
         env:
           SITE_ID: ${{ inputs.site_id }}
-        run: node scripts/validate-deploy-site-id.mjs
+        run: node scripts/validate-registry-site-id.mjs
 
       - name: Overlay site onto origin/main
         env:

@@ -28,6 +28,7 @@
 
 ### Platform
 
+- Registry overlay validates the site id only — drop snapshots no longer fail for missing `deploy:<site>` worker scripts
 - GitHub Actions HTTP-push to hub queues sends a JSON object body (Cloudflare rejects a stringified `body` with 400)
 - Signup lifecycle mail claims the D1 sent-at column before Resend so `checkout.session.completed` and `customer.subscription.created` cannot double-send
 - Stripe and marketing-site access panels on the operator dashboard collapse behind twisties
