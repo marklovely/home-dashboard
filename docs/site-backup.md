@@ -64,9 +64,9 @@ Guide-only exports omit `siteProfile` and `hubSecrets` and set `"backupScope": "
 
 Encrypted files remain JSON with `"encrypted": true`, AES-GCM ciphertext, and PBKDF2-SHA256 key derivation (310k iterations). The inner payload matches the backup format below once decrypted.
 
-### Uploaded photos
+### Uploaded photos and appliance manuals
 
-CMS images stored in **R2** are listed in `uploadedMedia` but **binary files are not embedded**. After restore, re-upload those images in **Guide Editor → Photo library**. Bundled assets referenced by `media.*.file` round-trip without re-upload.
+Full **zip** backups include photo files and appliance-manual PDFs. After restore, those files are written back to the hub automatically. JSON-only backups still list uploaded photos in `uploadedMedia` — re-upload those in **Guide Editor → Photo library**.
 
 ### Draft state
 

@@ -82,6 +82,7 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
     isDemoHubWorker(env) &&
     (url.pathname === '/api/site/reset' ||
       url.pathname === '/api/site/restore' ||
+      url.pathname === '/api/site/restore-media' ||
       url.pathname === '/api/site/backup' ||
       url.pathname === '/api/house-settings/sitter-emails' ||
       url.pathname === '/api/house-settings/sitter-stays' ||
@@ -152,7 +153,11 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleSitterStayItem(request, env, url, fetchBound);
     } else if (url.pathname === '/api/platform/site-archive') {
       response = await handlePlatformSiteArchive(request, env, correlationId);
-    } else if (url.pathname === '/api/site/backup' || url.pathname === '/api/site/restore') {
+    } else if (
+      url.pathname === '/api/site/backup' ||
+      url.pathname === '/api/site/restore' ||
+      url.pathname === '/api/site/restore-media'
+    ) {
       response = await handleSiteBackup(request, url, env, correlationId);
     } else if (
       url.pathname === '/api/site/profile' ||

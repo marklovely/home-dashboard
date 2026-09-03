@@ -345,20 +345,21 @@ function createEditorShell(context) {
     void (async () => {
       try {
         const raw = await readJsonFile(file);
-        const decrypted = await resolveBackupDocument(raw, () =>
+        const resolved = await resolveBackupDocument(raw, () =>
           showPasswordDialog({
             title: 'Decrypt guide export',
             message: 'Enter the password used when this file was exported.',
             confirmLabel: 'Continue'
           })
         );
-        const backup = normalizeBackupForRestore(decrypted);
+        const backup = normalizeBackupForRestore(resolved.backup);
         const uploaded = /** @type {{ id: string, alt: string }[]} */ (
           backup.guide?.uploadedMedia ?? []
         );
+        const includesArchiveMedia = Boolean(resolved.mediaZip?.byteLength);
         const confirmed = await showConfirmDialog({
           title: 'Import House Guide?',
-          message: `${backupRestoreSummary(backup)}${uploadedMediaRestoreHint(uploaded)}`,
+          message: `${backupRestoreSummary(backup)}${uploadedMediaRestoreHint(uploaded, includesArchiveMedia)}`,
           confirmLabel: 'Import',
           danger: true
         });
@@ -366,7 +367,7 @@ function createEditorShell(context) {
 
         await withAsyncButtonFeedback(importButton, 'Importing…', async () => {
           showToast(context.toast, 'Importing guide…', 120000);
-          const result = await restoreSiteBackup(backup);
+          const result = await restoreSiteBackup(backup, { mediaZip: resolved.mediaZip });
           if (!result.ok) {
             showToast(context.toast, result.message || 'Import failed.');
             return;
