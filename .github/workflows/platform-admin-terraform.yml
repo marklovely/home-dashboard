@@ -83,6 +83,9 @@ jobs:
             echo "::error::Configure CLOUDFLARE_API_TOKEN (needs Workers Scripts Write and Queues Edit)."
             exit 1
           fi
+          if [ -z "${{ secrets.PLATFORM_CF_API_TOKEN }}" ]; then
+            echo "::warning::PLATFORM_CF_API_TOKEN is empty — storage usage, PR preview toggles, and marketing guest OTP will stay off on platform Pages."
+          fi
 
       - name: Terraform init (R2 backend)
         run: bash scripts/terraform-init-r2.sh platform

@@ -122,6 +122,16 @@ describe('generate-hub-tfvars owner emails', () => {
     expect(result.tfvars).toContain('provision_site_id     = "smith"');
   });
 
+  it('emits platform_cf_api_token from the GitHub secret env', () => {
+    const result = generate({
+      OWNER_EMAILS: 'platform@lovely-home.co.uk',
+      SUPPORT_OWNER_EMAILS: 'support@lovely-home.co.uk',
+      PLATFORM_CF_API_TOKEN: 'cf-platform-token'
+    });
+    expect(result.ok).toBe(true);
+    expect(result.tfvars).toContain('platform_cf_api_token = "cf-platform-token"');
+  });
+
   it('keeps the pre-launch marketing Access gate on unless explicitly disabled', () => {
     const onByDefault = generate({
       OWNER_EMAILS: 'platform@lovely-home.co.uk',

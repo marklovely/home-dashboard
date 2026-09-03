@@ -56,6 +56,10 @@ describe('terraform stack workflows', () => {
     expect(workflow).toContain("-target='module.marketing_site[0]'");
     expect(workflow).toContain("MARKETING_SITE_ACCESS_PROTECTED: 'true'");
     expect(workflow).toContain('import-marketing-access-unauthorised.sh');
+    expect(readWorkflow('scripts/import-marketing-access-unauthorised.sh')).toContain('grep -Fqx');
+    expect(readWorkflow('scripts/import-marketing-access-unauthorised.sh')).toContain(
+      'Resource already managed by Terraform'
+    );
     expect(workflow).toContain('group: platform-terraform-state-platform');
     expect(workflow).not.toContain('module.hub_site');
   });
