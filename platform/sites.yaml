@@ -63,14 +63,6 @@ sites:
     zone_name: lovely-hub.com
     attach_hub_api_binding: false
 
-  e2e-96003tp0:
-    hostname: e2e-96003tp0.lovely-hub.com
-    hub_environment: e2e-96003tp0
-    vanilla: false
-    terraform: true
-    zone_name: lovely-hub.com
-    attach_hub_api_binding: true
-
   e2e-k89qubql:
     hostname: e2e-k89qubql.lovely-hub.com
     hub_environment: e2e-k89qubql
