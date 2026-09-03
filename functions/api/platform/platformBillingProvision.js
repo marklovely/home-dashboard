@@ -67,6 +67,39 @@ export function shouldDispatchBillingProvision(input) {
 }
 
 /**
+ * @param {{ meta?: { changes?: number | null } } | null | undefined} result
+ */
+function d1UpdateChangedRow(result) {
+  return Number(result?.meta?.changes ?? 0) > 0;
+}
+
+/**
+ * Claim the provision-dispatch lock before talking to GitHub.
+ * Stripe sends checkout.session.completed and customer.subscription.created
+ * together; a read of provision_dispatched_at is not enough.
+ *
+ * Clearing deprovision_dispatched_at in the same UPDATE makes a reprovision
+ * claim exclusive: the second concurrent webhook sees no remaining claim.
+ *
+ * @param {D1Database} db
+ * @param {string} siteId
+ */
+export async function claimProvisionDispatch(db, siteId) {
+  const now = Date.now();
+  const result = await db
+    .prepare(
+      `UPDATE site_billing
+       SET provision_dispatched_at = ?, provision_last_error = NULL,
+           deprovision_dispatched_at = NULL, deprovision_last_error = NULL, updated_at = ?
+       WHERE site_id = ?
+         AND (provision_dispatched_at IS NULL OR deprovision_dispatched_at IS NOT NULL)`
+    )
+    .bind(now, now, siteId)
+    .run();
+  return d1UpdateChangedRow(result);
+}
+
+/**
  * @param {D1Database} db
  * @param {string} siteId
  */
@@ -90,7 +123,7 @@ export async function markProvisionFailed(db, siteId, message) {
   await db
     .prepare(
       `UPDATE site_billing
-       SET provision_last_error = ?, updated_at = ?
+       SET provision_dispatched_at = NULL, provision_last_error = ?, updated_at = ?
        WHERE site_id = ?`
     )
     .bind(message.slice(0, 500), Date.now(), siteId)
@@ -122,6 +155,11 @@ export async function maybeDispatchBillingProvision(env, db, manifest, input) {
     return { ok: true, action: `provision_${decision.reason}` };
   }
 
+  const claimed = await claimProvisionDispatch(db, input.siteId);
+  if (!claimed) {
+    return { ok: true, action: 'provision_already_dispatched' };
+  }
+
   const dispatch = await dispatchSiteProvisionWorkflow(
     /** @type {Record<string, string | undefined>} */ (env),
     input.siteId
@@ -138,7 +176,6 @@ export async function maybeDispatchBillingProvision(env, db, manifest, input) {
     };
   }
 
-  await markProvisionDispatched(db, input.siteId);
   return {
     ok: true,
     action: 'provision_dispatched',
