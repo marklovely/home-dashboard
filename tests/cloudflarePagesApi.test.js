@@ -37,6 +37,7 @@ describe('cloudflarePagesApi', () => {
     const ids = await listAllPagesDeployments('acct', 'token', 'home-dashboard-smith');
     expect(ids).toEqual(['dep-1', 'dep-2', 'dep-3']);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(new URL(String(fetchMock.mock.calls[0][0])).searchParams.get('per_page')).toBe('25');
   });
 
   it('deletes every deployment with force=true', async () => {
