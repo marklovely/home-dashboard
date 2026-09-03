@@ -22,7 +22,8 @@ fi
 
 cd "$TF_DIR"
 
-if terraform state list 2>/dev/null | grep -q "^${ADDRESS}$"; then
+# grep -F: ADDRESS contains [0], which otherwise matches as a character class.
+if terraform state list 2>/dev/null | grep -Fqx "$ADDRESS"; then
   echo "Already in state: ${ADDRESS}"
   exit 0
 fi
@@ -54,4 +55,16 @@ fi
 IMPORT_ID="accounts/${ACCOUNT_ID}/${APP_ID}"
 echo "Importing ${ADDRESS}"
 echo "  id=${IMPORT_ID}"
-terraform import "${TF_ARGS[@]}" "$ADDRESS" "$IMPORT_ID"
+set +e
+import_out="$(terraform import "${TF_ARGS[@]}" "$ADDRESS" "$IMPORT_ID" 2>&1)"
+import_status=$?
+set -e
+printf '%s\n' "$import_out"
+if [[ "$import_status" -eq 0 ]]; then
+  exit 0
+fi
+if grep -Fq 'Resource already managed by Terraform' <<<"$import_out"; then
+  echo "Already in state; continuing."
+  exit 0
+fi
+exit "$import_status"
