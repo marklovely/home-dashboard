@@ -209,14 +209,7 @@ sites = {
 
 
 
-  e2e-40unn9j1 = {
-    hostname        = "e2e-40unn9j1.lovely-hub.com"
-    hub_environment = "e2e-40unn9j1"
-    vanilla         = false
-    terraform       = true
-    zone_name       = "lovely-hub.com"
-    attach_hub_api_binding = false # first apply only; set true after Worker deploy
-  }
+
 
 
 
