@@ -69,7 +69,7 @@ sites:
     vanilla: false
     terraform: true
     zone_name: lovely-hub.com
-    attach_hub_api_binding: false
+    attach_hub_api_binding: true
 
   e2e-k89qubql:
     hostname: e2e-k89qubql.lovely-hub.com
