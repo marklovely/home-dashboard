@@ -6,11 +6,8 @@ import {
 import { handleStripeBillingEvent } from '../functions/api/platform/platformBilling.js';
 
 vi.mock('../functions/api/platform/platformGitHub.js', () => ({
-  dispatchSiteProvisionWorkflow: vi.fn(),
-  dispatchSiteBillingDeprovisionWorkflow: vi.fn()
+  dispatchSiteProvisionWorkflow: vi.fn()
 }));
-
-import { dispatchSiteBillingDeprovisionWorkflow } from '../functions/api/platform/platformGitHub.js';
 
 describe('billing deprovision helpers', () => {
   it('dispatches for subscription.deleted when site was live', () => {
@@ -194,18 +191,19 @@ function createBillingDbMock() {
 }
 
 describe('handleStripeBillingEvent deprovision dispatch', () => {
+  /** @type {{ sent: unknown[], send: ReturnType<typeof vi.fn> }} */
+  let queue;
+
   beforeEach(() => {
-    vi.mocked(dispatchSiteBillingDeprovisionWorkflow).mockReset();
+    queue = {
+      sent: [],
+      send: vi.fn(async (body) => {
+        queue.sent.push(body);
+      })
+    };
   });
 
-  it('dispatches billing deprovision on subscription.deleted', async () => {
-    vi.mocked(dispatchSiteBillingDeprovisionWorkflow).mockResolvedValue({
-      ok: true,
-      siteId: 'practice',
-      workflow: 'platform-site-billing-deprovision.yml',
-      message: 'started'
-    });
-
+  it('enqueues hub teardown on subscription.deleted', async () => {
     const db = /** @type {D1Database} */ (createBillingDbMock());
     db.siteBilling.set('practice', {
       site_id: 'practice',
@@ -234,25 +232,15 @@ describe('handleStripeBillingEvent deprovision dispatch', () => {
           }
         }
       },
-      { env: { PLATFORM_GITHUB_TOKEN: 'token' }, manifest }
+      { env: { HUB_PROVISION_QUEUE: queue }, manifest }
     );
 
     expect(result.ok).toBe(true);
     expect(result.deprovision).toMatchObject({ action: 'deprovision_dispatched' });
-    expect(dispatchSiteBillingDeprovisionWorkflow).toHaveBeenCalledWith(
-      expect.objectContaining({ PLATFORM_GITHUB_TOKEN: 'token' }),
-      'practice'
-    );
+    expect(queue.sent).toEqual([{ siteId: 'practice', action: 'teardown' }]);
   });
 
-  it('dispatches deprovision after re-trial when prior deprovision flag is stale', async () => {
-    vi.mocked(dispatchSiteBillingDeprovisionWorkflow).mockResolvedValue({
-      ok: true,
-      siteId: 'practice',
-      workflow: 'platform-site-billing-deprovision.yml',
-      message: 'started'
-    });
-
+  it('enqueues teardown after re-trial when prior deprovision flag is stale', async () => {
     const db = /** @type {D1Database} */ (createBillingDbMock());
     db.siteBilling.set('practice', {
       site_id: 'practice',
@@ -283,15 +271,12 @@ describe('handleStripeBillingEvent deprovision dispatch', () => {
           }
         }
       },
-      { env: { PLATFORM_GITHUB_TOKEN: 'token' }, manifest }
+      { env: { HUB_PROVISION_QUEUE: queue }, manifest }
     );
 
     expect(result.ok).toBe(true);
     expect(result.deprovision).toMatchObject({ action: 'deprovision_dispatched' });
-    expect(dispatchSiteBillingDeprovisionWorkflow).toHaveBeenCalledWith(
-      expect.objectContaining({ PLATFORM_GITHUB_TOKEN: 'token' }),
-      'practice'
-    );
+    expect(queue.sent).toEqual([{ siteId: 'practice', action: 'teardown' }]);
   });
 
   it('does not deprovision on invoice.payment_failed', async () => {
@@ -315,11 +300,11 @@ describe('handleStripeBillingEvent deprovision dispatch', () => {
           }
         }
       },
-      { env: { PLATFORM_GITHUB_TOKEN: 'token' }, manifest: { sites: { practice: {} } } }
+      { env: { HUB_PROVISION_QUEUE: queue }, manifest: { sites: { practice: {} } } }
     );
 
     expect(result.ok).toBe(true);
     expect(result.deprovision).toMatchObject({ action: 'deprovision_not_canceled' });
-    expect(dispatchSiteBillingDeprovisionWorkflow).not.toHaveBeenCalled();
+    expect(queue.send).not.toHaveBeenCalled();
   });
 });

@@ -6,15 +6,9 @@ import {
   shouldDispatchSignupRegistry
 } from '../functions/api/platform/platformBillingRegistry.js';
 
-vi.mock('../functions/api/platform/platformGitHub.js', () => ({
-  dispatchSiteManageWorkflow: vi.fn(),
-  githubAutomationConfigured: vi.fn(() => true)
-}));
-
 const { maybeDispatchSignupRegistry } = await import(
   '../functions/api/platform/platformBillingRegistry.js'
 );
-const { dispatchSiteManageWorkflow } = await import('../functions/api/platform/platformGitHub.js');
 
 const emptyManifest = { sites: {}, platform: { customerZoneName: 'lovely-hub.com' } };
 
@@ -35,6 +29,17 @@ function fakeDb(claimChanges = 1) {
       };
       return api;
     }
+  };
+}
+
+function fakeProvisionQueue() {
+  /** @type {unknown[]} */
+  const sent = [];
+  return {
+    sent,
+    send: vi.fn(async (body) => {
+      sent.push(body);
+    })
   };
 }
 
@@ -74,7 +79,7 @@ describe('signup registry gating', () => {
     expect(decision).toMatchObject({ dispatch: false, reason: 'already_registered' });
   });
 
-  it('does not open a second pull request on webhook replay', () => {
+  it('does not enqueue a second job on webhook replay', () => {
     const decision = shouldDispatchSignupRegistry({
       eventType: 'customer.subscription.created',
       status: 'trialing',
@@ -106,21 +111,18 @@ describe('signup registry gating', () => {
   });
 });
 
-describe('signup registry dispatch', () => {
+describe('signup provision enqueue', () => {
+  /** @type {ReturnType<typeof fakeProvisionQueue>} */
+  let queue;
+
   beforeEach(() => {
-    vi.mocked(dispatchSiteManageWorkflow).mockReset();
+    queue = fakeProvisionQueue();
   });
 
-  it('never sends the customer email to the registry workflow', async () => {
-    vi.mocked(dispatchSiteManageWorkflow).mockResolvedValue({
-      ok: true,
-      workflow: 'platform-site-manage.yml',
-      message: 'started'
-    });
+  it('never sends the customer email onto the provision queue', async () => {
     const db = fakeDb();
-
     const result = await maybeDispatchSignupRegistry(
-      /** @type {never} */ ({}),
+      { HUB_PROVISION_QUEUE: queue },
       /** @type {never} */ (db),
       emptyManifest,
       {
@@ -132,26 +134,15 @@ describe('signup registry dispatch', () => {
     );
 
     expect(result).toMatchObject({ ok: true, action: 'registry_dispatched' });
-    const payload = vi.mocked(dispatchSiteManageWorkflow).mock.calls[0][2];
-    expect(payload).toMatchObject({
-      siteId: 'rose-cottage',
-      hostname: 'rose-cottage.lovely-hub.com',
-      terraform: true
-    });
-    expect(JSON.stringify(payload)).not.toMatch(/@/);
+    expect(queue.sent[0]).toEqual({ siteId: 'rose-cottage', action: 'provision' });
+    expect(JSON.stringify(queue.sent[0])).not.toMatch(/@/);
     expect(db.statements.join(' ')).toContain('registry_dispatched_at IS NULL');
   });
 
-  it('lets only one of two concurrent Stripe events call GitHub', async () => {
-    vi.mocked(dispatchSiteManageWorkflow).mockResolvedValue({
-      ok: true,
-      workflow: 'platform-site-manage.yml',
-      message: 'started'
-    });
+  it('lets only one of two concurrent Stripe events enqueue', async () => {
     const db = fakeDb(0);
-
     const result = await maybeDispatchSignupRegistry(
-      /** @type {never} */ ({}),
+      { HUB_PROVISION_QUEUE: queue },
       /** @type {never} */ (db),
       emptyManifest,
       {
@@ -163,19 +154,13 @@ describe('signup registry dispatch', () => {
     );
 
     expect(result).toEqual({ ok: true, action: 'registry_already_dispatched' });
-    expect(dispatchSiteManageWorkflow).not.toHaveBeenCalled();
+    expect(queue.send).not.toHaveBeenCalled();
   });
 
   it('records the failure so the operator can retry', async () => {
-    vi.mocked(dispatchSiteManageWorkflow).mockResolvedValue({
-      ok: false,
-      error: 'GITHUB_DISPATCH_FAILED',
-      message: 'token missing'
-    });
     const db = fakeDb();
-
     const result = await maybeDispatchSignupRegistry(
-      /** @type {never} */ ({}),
+      {},
       /** @type {never} */ (db),
       emptyManifest,
       {
@@ -186,7 +171,7 @@ describe('signup registry dispatch', () => {
       }
     );
 
-    expect(result).toMatchObject({ ok: false, error: 'REGISTRY_DISPATCH_FAILED' });
+    expect(result).toMatchObject({ ok: false, error: 'QUEUE_NOT_CONFIGURED' });
     expect(db.statements.join(' ')).toContain('registry_last_error');
     expect(db.statements.join(' ')).toMatch(/registry_dispatched_at = NULL/);
   });

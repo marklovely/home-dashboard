@@ -28,7 +28,7 @@ jobs:
         env:
           SITE_ID: ${{ inputs.site_id }}
         run: |
-          STACK=$(node scripts/terraform-stack-for-site.mjs "$SITE_ID")
+          STACK=$(node scripts/terraform-stack-for-site.mjs "$SITE_ID" --guess)
           echo "terraform_stack=$STACK" >> "$GITHUB_OUTPUT"
 
   billing-deprovision:
@@ -144,53 +144,38 @@ jobs:
             --site-id "$SITE_ID" \
             --confirm-hostname "$HOSTNAME"
 
-      - name: Validate Terraform
-        run: |
-          cd terraform
-          terraform fmt -check -recursive
-          terraform init -backend=false
-          terraform validate
+      - name: Install worker dependencies
+        run: npm ci --prefix worker
 
-      - name: Run tests
-        run: npm run test
+      - name: Deprovision hub site
+        run: node scripts/deprovision-hub-site.mjs "${{ inputs.site_id }}"
 
-      - name: Replay registry delete onto origin/main
-        if: steps.sync_main.outputs.site_present != 'false'
+      - name: Snapshot deprovisioned registry files
+        id: snapshot
         env:
-          SITE_ID: ${{ inputs.site_id }}
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
           PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
-        run: node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"
-
-      - name: Check PR token
+          SITE_ID: ${{ inputs.site_id }}
         run: |
-          if [ -z "${{ secrets.PLATFORM_GITHUB_TOKEN }}" ]; then
-            echo "::error title=Missing PLATFORM_GITHUB_TOKEN::Add repo secret PLATFORM_GITHUB_TOKEN (PAT with contents:write + pull_requests:write). Use the same token as platform admin."
+          if [ -z "$PLATFORM_GITHUB_TOKEN" ]; then
+            echo "::error::PLATFORM_GITHUB_TOKEN is required to record the registry drop."
             exit 1
           fi
+          node scripts/push-hub-registry-snapshot.mjs drop "$SITE_ID"
 
-      - name: Open registry removal pull request
-        if: steps.sync_main.outputs.site_present != 'false'
-        id: open_pr
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
-          branch: platform/site-${{ inputs.site_id }}-billing-deprovision-${{ github.run_id }}
-          delete-branch: true
-          title: "platform: billing deprovision ${{ inputs.site_id }}"
-          body: |
-            Automated billing deprovision from **Platform billing** (Stripe cancel/delete).
-
-            **Site:** `${{ inputs.site_id }}`
-
-            Hub archive (if configured) completed before this PR. **After merge**, [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) tears down Terraform + Worker and redeploys platform admin.
-
-            Triggered by Stripe billing webhook or manual **Platform site billing deprovision** workflow.
-
-      - name: Require pull request
-        if: steps.sync_main.outputs.site_present != 'false' && steps.open_pr.outputs.pull-request-number == ''
-        run: |
-          echo "::error::No registry changes to commit — is ${{ inputs.site_id }} already removed from platform/sites.yaml?"
-          exit 1
+      - name: Enqueue registry drop
+        if: steps.snapshot.outputs.source_ref != ''
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SITE_ID: ${{ inputs.site_id }}
+          SOURCE_REF: ${{ steps.snapshot.outputs.source_ref }}
+        run: >
+          node scripts/enqueue-hub-job.mjs
+          --queue registry
+          --action drop
+          --site-id "$SITE_ID"
+          --ref "$SOURCE_REF"
 
       - name: Record archive pointer in platform billing D1
         if: steps.archive.outputs.archive_r2_key != ''
@@ -200,3 +185,11 @@ jobs:
           ARCHIVE_R2_KEY: ${{ steps.archive.outputs.archive_r2_key }}
         run: |
           node scripts/update-billing-archive-key.mjs "$SITE_ID" "$ARCHIVE_R2_KEY"
+
+      - name: Prune HUB_PROXY_SECRETS_JSON
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          SITE_ID: ${{ inputs.site_id }}
+        run: node scripts/prune-hub-proxy-secrets-github-secret.mjs

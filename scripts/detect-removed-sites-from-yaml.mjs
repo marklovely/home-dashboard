@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { detectRemovedTerraformSites } from './lib/detect-site-yaml-changes.mjs';
+import { isHubRegistryLedgerCommit } from './lib/hub-registry-ledger.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { partitionSiteIdsByStack } from './lib/terraform-stack.mjs';
 
@@ -36,7 +37,9 @@ try {
   process.exit(1);
 }
 
-const removed = detectRemovedTerraformSites(before, after);
+const removed = isHubRegistryLedgerCommit(commitSubject())
+  ? []
+  : detectRemovedTerraformSites(before, after);
 const partitioned = partitionSiteIdsByStack(removed, before);
 
 const githubOutput = process.env.GITHUB_OUTPUT;
@@ -50,3 +53,7 @@ const label = removed.length
   ? removed.map((id) => `${id} (${partitioned.customers.includes(id) ? 'customers' : 'platform'})`).join(', ')
   : '(none)';
 console.log(`Removed terraform sites: ${label}`);
+
+function commitSubject() {
+  return execFileSync('git', ['log', '-1', '--pretty=%s'], { cwd: root, encoding: 'utf8' }).trim();
+}

@@ -1,26 +1,30 @@
 # Platform site provisioning (v4)
 
-Fully automated hub creation after the site registry PR merges to `main`.
+Paid customer hubs are created from a Cloudflare Queue after Stripe confirms payment. Git (`platform/sites.yaml`) is recorded after the hub is live. Operator wizard creates still open a registry PR.
 
 ## Flow
 
 ```mermaid
 flowchart TD
-  A[Wizard: Create PR] --> B[Merge to main]
-  B --> C[platform-site-provision.yml]
-  C --> D[terraform apply - pre-worker]
-  D --> E[sync wrangler + Worker secrets]
-  E --> F[D1 migrate + Worker deploy]
-  F --> G[terraform apply - post-worker HUB_API]
-  G --> H[Pages deploy + platform manifest]
+  A[Stripe checkout.session.completed] --> B[HUB_PROVISION_QUEUE]
+  B --> C[hub-jobs Worker]
+  C --> D[platform-site-provision.yml]
+  D --> E[ensure yaml locally]
+  E --> F[terraform apply + Worker + Pages]
+  F --> G[HUB_REGISTRY_QUEUE]
+  G --> H[hub-jobs waits for git write]
+  H --> I[platform-site-registry.yml overlays onto main]
 ```
 
-1. **Wizard** dispatches `platform-site-manage.yml` → opens PR (registry + wrangler stubs).
-2. **Merge PR** to `main`.
-3. **Auto-trigger**: push to `main` changing `platform/sites.yaml` starts `platform-site-provision.yml` for each new site.
-4. **Manual retry**: site card **Provision** button or workflow dispatch with `site_id`.
+1. **Signup webhook** enqueues `{ siteId, action: provision }` (no GitHub create-PR).
+2. **hub-jobs Worker** (Terraform: `lovely-home-hub-jobs`) dispatches `platform-site-provision.yml` with concurrency 4.
+3. **Provision** writes the yaml/wrangler stubs locally, applies Terraform, deploys Worker/Pages, then enqueues a registry **record**.
+4. **Registry queue** (concurrency 1) overlays that site onto `origin/main` and pushes. Yaml-push auto-provision ignores those ledger commits.
+5. **Cancel** enqueues `{ action: teardown }` → archive + destroy → registry **drop**.
+6. **Operator wizard** still dispatches `platform-site-manage.yml` → PR → merge → yaml-push provision.
 
 ## One-time setup
+
 
 ### 1. Remote Terraform state (R2)
 
@@ -163,6 +167,8 @@ In GitHub → repo → **Settings** → **Secrets and variables** → **Actions*
 
 CI uses these instead of `backend.hcl` (see `platform-site-provision-reusable.yml`).
 
+Hub job queues and the hub-jobs Worker live in `module.platform_admin`. After those Terraform files land on `main`, run **Actions → Platform admin Terraform** and type `apply-platform-admin`. That job inits `platform.tfstate` and applies `-target=module.platform_admin[0]` so production/demo/sandbox hubs are not touched.
+
 ---
 
 #### After migration — day-to-day use
@@ -195,7 +201,7 @@ You no longer maintain a separate “CI only” state file — laptop and GitHub
 
 | Secret | Purpose |
 |--------|---------|
-| `CLOUDFLARE_API_TOKEN` | Terraform + Wrangler (D1, R2, Pages, Workers, Access, DNS, **Workers Scripts** for deploy + secrets) |
+| `CLOUDFLARE_API_TOKEN` | Terraform + Wrangler (D1, R2, Pages, Workers, Access, DNS, **Workers Scripts**, **Queues Edit** for hub job enqueue) |
 | `CLOUDFLARE_ACCOUNT_ID` | Account ID |
 | `CLOUDFLARE_ZONE_ID` | Zone ID for `lovely-home.co.uk` |
 | `WORKERS_SUBDOMAIN` | e.g. `mark-lovely67` |

@@ -71,6 +71,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Ensure customer site registry exists locally
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+        run: node scripts/ensure-customer-site-yaml.mjs "$SITE_ID"
+
       - name: Validate site_id
         env:
           SITE_ID: ${{ inputs.site_id }}
@@ -129,42 +134,32 @@ jobs:
           if [ "${{ inputs.skip_platform_admin }}" = "true" ]; then ARGS+=( --skip-platform-admin ); fi
           node scripts/provision-hub-site.mjs "${ARGS[@]}"
 
-      - name: Commit provisioned site registry flag
+      - name: Snapshot provisioned registry files
+        id: snapshot
         env:
           GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
           SITE_ID: ${{ inputs.site_id }}
         run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::warning::PLATFORM_GITHUB_TOKEN not set — skipping sites.yaml commit (set repo secret or open a PR for attach_hub_api_binding manually)."
+          if [ -z "$PLATFORM_GITHUB_TOKEN" ]; then
+            echo "::warning::PLATFORM_GITHUB_TOKEN not set — skipping registry snapshot."
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"
-          git add platform/sites.yaml worker/wrangler.toml platform-admin/public/platform-manifest.json
-          if git diff --staged --quiet; then
-            echo "No provision follow-up changes to commit."
-            exit 0
-          fi
-          BRANCH="platform/provision-${SITE_ID}-${GITHUB_RUN_ID}"
-          git checkout -b "$BRANCH"
-          git commit -m "platform: mark ${SITE_ID} provisioned (attach HUB_API, sync D1 ids, manifest contract)"
-          git config --unset-all http.https://github.com/.extraheader || true
-          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${BRANCH}"
-          gh pr create \
-            --title "platform: mark ${SITE_ID} provisioned (attach HUB_API, sync D1 ids, manifest contract)" \
-            --body "$(cat <<EOF
-          Automated provision follow-up from **Platform site provision**.
+          node scripts/push-hub-registry-snapshot.mjs record "$SITE_ID"
 
-          Site \`${SITE_ID}\` finished Terraform, Worker deploy, and Pages. This PR sets \`attach_hub_api_binding: true\` in \`platform/sites.yaml\`, syncs D1 ids in \`worker/wrangler.toml\`, and commits the site's Terraform contract into \`platform-admin/public/platform-manifest.json\`.
-
-          The manifest commit matters: Cloudflare Pages rebuilds platform admin from git with no Terraform state, so contracts are only preserved from the committed manifest. Without it the site shows "not provisioned" again after the next platform-admin deploy.
-
-          Auto-merge runs when required checks pass (see \`platform-site-pr-automerge.yml\`).
-          EOF
-          )" \
-            --base main \
-            --head "$BRANCH"
+      - name: Enqueue registry record
+        if: steps.snapshot.outputs.source_ref != ''
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SITE_ID: ${{ inputs.site_id }}
+          SOURCE_REF: ${{ steps.snapshot.outputs.source_ref }}
+        run: >
+          node scripts/enqueue-hub-job.mjs
+          --queue registry
+          --action record
+          --site-id "$SITE_ID"
+          --ref "$SOURCE_REF"
 
       - name: Record setup failure for the signup page
         if: failure()

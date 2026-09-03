@@ -205,10 +205,7 @@ export function validateBillingDeprovisionSiteId(siteId, registrySites) {
     return `Site "${siteId}" is protected and cannot be billing-deprovisioned.`;
   }
   const entry = registrySites[siteId];
-  if (!entry) {
-    return `Site "${siteId}" is not in platform/sites.yaml — nothing to billing-deprovision.`;
-  }
-  if (entry.terraform === false) {
+  if (entry?.terraform === false) {
     return `Site "${siteId}" is not Terraform-managed.`;
   }
   return null;

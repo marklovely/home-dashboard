@@ -28,7 +28,7 @@ export default [
     }
   },
   {
-    files: ['functions/**/*.js'],
+    files: ['functions/**/*.js', 'workers/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
@@ -58,7 +58,7 @@ export default [
     }
   },
   {
-    files: ['tests/**/*.js', 'e2e/**/*.js', 'playwright.config.js', 'vitest.config.js', 'scripts/**/*.js', 'scripts/**/*.mjs', 'scripts/lib/**/*.mjs', 'worker/scripts/**/*.mjs'],
+    files: ['tests/**/*.js', 'e2e/**/*.js', 'playwright.config.js', 'vitest.config.js', 'scripts/**/*.js', 'scripts/**/*.mjs', 'scripts/lib/**/*.mjs', 'worker/scripts/**/*.mjs', 'workers/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',

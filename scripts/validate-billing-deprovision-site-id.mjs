@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Validate site_id before billing-triggered deprovision in GitHub Actions.
- * Site must still be present in platform/sites.yaml.
+ * The site may still be in yaml, or provisioned without a registry record yet.
  */
 import { appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -19,7 +19,7 @@ if (billingError) {
   process.exit(1);
 }
 
-const hostname = String(registry[siteId]?.hostname ?? '').trim();
+const hostname = String(registry[siteId]?.hostname ?? `${siteId}.lovely-hub.com`).trim();
 const githubOutput = process.env.GITHUB_OUTPUT;
 if (githubOutput) {
   appendFileSync(githubOutput, `site_id=${siteId}\n`);

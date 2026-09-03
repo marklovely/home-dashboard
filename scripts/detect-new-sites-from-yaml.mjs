@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { detectAddedTerraformSites } from './lib/detect-site-yaml-changes.mjs';
+import { isHubRegistryLedgerCommit } from './lib/hub-registry-ledger.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { partitionSiteIdsByStack } from './lib/terraform-stack.mjs';
 
@@ -36,7 +37,9 @@ try {
   process.exit(1);
 }
 
-const added = detectAddedTerraformSites(before, after);
+const added = isHubRegistryLedgerCommit(commitSubject())
+  ? []
+  : detectAddedTerraformSites(before, after);
 const partitioned = partitionSiteIdsByStack(added, after);
 
 const githubOutput = process.env.GITHUB_OUTPUT;
@@ -50,3 +53,7 @@ const label = added.length
   ? added.map((id) => `${id} (${partitioned.customers.includes(id) ? 'customers' : 'platform'})`).join(', ')
   : '(none)';
 console.log(`New terraform sites: ${label}`);
+
+function commitSubject() {
+  return execFileSync('git', ['log', '-1', '--pretty=%s'], { cwd: root, encoding: 'utf8' }).trim();
+}

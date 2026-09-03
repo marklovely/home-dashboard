@@ -11,7 +11,7 @@ Related: [roadmap](./roadmap.md) §3 · [platform provision](./platform-provisio
 | Checkout + billing API | Platform Pages Functions — `/api/platform/billing/*` |
 | Stripe webhooks | `/api/stripe/webhook` (no Cloudflare Access) |
 | Billing mirror | D1 `lovely-home-platform-billing` → binding `PLATFORM_BILLING_DB` |
-| Provision / deprovision | `trialing` webhook → **Platform site provision**; `subscription.deleted` / canceled → **Platform site billing deprovision** |
+| Provision / deprovision | `trialing` webhook → **hub-provision queue** → Platform site provision; `subscription.deleted` / canceled → **hub-provision queue** (teardown) → registry drop |
 
 ## One-time setup (test mode)
 

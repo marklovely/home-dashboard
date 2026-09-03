@@ -1,5 +1,5 @@
 import { validateBillingSiteId } from './platformBilling.js';
-import { dispatchSiteBillingDeprovisionWorkflow } from './platformGitHub.js';
+import { enqueueHubProvisionJob } from './platformHubQueues.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { siteHasTerraformContract } from './platformBillingProvision.js';
 import { priorDeprovisionBlocksDispatch } from './platformBillingLifecycle.js';
@@ -112,7 +112,7 @@ export async function markBillingArchiveKey(db, siteId, archiveR2Key) {
 }
 
 /**
- * @param {Record<string, string | undefined>} env
+ * @param {Record<string, unknown>} env
  * @param {D1Database} db
  * @param {object} manifest
  * @param {{
@@ -140,17 +140,17 @@ export async function maybeDispatchBillingDeprovision(env, db, manifest, input) 
     return { ok: true, action: `deprovision_${decision.reason}` };
   }
 
-  const dispatch = await dispatchSiteBillingDeprovisionWorkflow(
-    /** @type {Record<string, string | undefined>} */ (env),
-    input.siteId
-  );
+  const enqueue = await enqueueHubProvisionJob(env, {
+    siteId: input.siteId,
+    action: 'teardown'
+  });
 
-  if (!dispatch.ok) {
-    const message = dispatch.message ?? dispatch.error ?? 'Deprovision dispatch failed.';
+  if (!enqueue.ok) {
+    const message = enqueue.message ?? enqueue.error ?? 'Deprovision enqueue failed.';
     await markDeprovisionFailed(db, input.siteId, message);
     return {
       ok: false,
-      error: 'DEPROVISION_DISPATCH_FAILED',
+      error: enqueue.error ?? 'DEPROVISION_DISPATCH_FAILED',
       message,
       deprovisionReason: decision.reason
     };
@@ -160,7 +160,7 @@ export async function maybeDispatchBillingDeprovision(env, db, manifest, input) 
   return {
     ok: true,
     action: 'deprovision_dispatched',
-    workflow: dispatch.workflow,
-    message: dispatch.message
+    queue: enqueue.queue,
+    message: `Enqueued hub teardown for ${input.siteId}.`
   };
 }

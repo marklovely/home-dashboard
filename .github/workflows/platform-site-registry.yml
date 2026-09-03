@@ -1,0 +1,66 @@
+name: Platform site registry
+
+# Single git writer for paid hub signup/teardown. The hub-registry queue
+# (max_concurrency = 1) waits for this workflow to finish before the next
+# record/drop is dispatched.
+
+on:
+  workflow_dispatch:
+    inputs:
+      site_id:
+        description: Site id to overlay onto main
+        required: true
+        type: string
+      action:
+        description: record (after provision) or drop (after teardown)
+        required: true
+        type: choice
+        options:
+          - record
+          - drop
+      source_ref:
+        description: Snapshot branch with this site's registry files
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: platform-hub-registry-git
+  cancel-in-progress: false
+
+jobs:
+  overlay:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/London
+    steps:
+      - name: Checkout snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Validate site_id
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+        run: node scripts/validate-deploy-site-id.mjs
+
+      - name: Overlay site onto origin/main
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          SITE_ID: ${{ inputs.site_id }}
+          ACTION: ${{ inputs.action }}
+        run: |
+          if [ -z "$PLATFORM_GITHUB_TOKEN" ]; then
+            echo "::error::PLATFORM_GITHUB_TOKEN is required to write the site registry."
+            exit 1
+          fi
+          node scripts/commit-site-registry-onto-main.mjs "$ACTION" "$SITE_ID"

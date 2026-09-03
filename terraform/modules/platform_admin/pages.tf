@@ -164,19 +164,30 @@ locals {
     compatibility_flags = ["nodejs_compat"]
   }
 
+  platform_queue_producers = {
+    HUB_PROVISION_QUEUE = {
+      name = cloudflare_queue.hub_provision.queue_name
+    }
+    HUB_REGISTRY_QUEUE = {
+      name = cloudflare_queue.hub_registry.queue_name
+    }
+  }
+
   pages_production_config = merge(
     local.pages_runtime_base,
     {
-      env_vars     = local.platform_production_env_vars
-      d1_databases = local.platform_d1_binding
+      env_vars        = local.platform_production_env_vars
+      d1_databases    = local.platform_d1_binding
+      queue_producers = local.platform_queue_producers
     }
   )
 
   pages_preview_config = merge(
     local.pages_runtime_base,
     {
-      env_vars     = local.platform_production_env_vars
-      d1_databases = local.platform_d1_binding
+      env_vars        = local.platform_production_env_vars
+      d1_databases    = local.platform_d1_binding
+      queue_producers = local.platform_queue_producers
     }
   )
 }

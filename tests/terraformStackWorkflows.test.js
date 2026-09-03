@@ -16,7 +16,8 @@ describe('terraform stack workflows', () => {
     '.github/workflows/platform-site-provision-reusable.yml',
     '.github/workflows/platform-site-deprovision-reusable.yml',
     '.github/workflows/platform-site-billing-deprovision.yml',
-    '.github/workflows/platform-sync-archive-github-secrets.yml'
+    '.github/workflows/platform-sync-archive-github-secrets.yml',
+    '.github/workflows/platform-admin-terraform.yml'
   ];
 
   it('does not apply against the legacy combined hub.tfstate', () => {
@@ -46,6 +47,14 @@ describe('terraform stack workflows', () => {
     expect(readWorkflow('.github/workflows/platform-site-provision.yml')).toContain(
       "format('push-{0}', github.sha)"
     );
+  });
+
+  it('applies platform admin without touching hub sites', () => {
+    const workflow = readWorkflow('.github/workflows/platform-admin-terraform.yml');
+    expect(workflow).toContain("bash scripts/terraform-init-r2.sh platform");
+    expect(workflow).toContain("-target='module.platform_admin[0]'");
+    expect(workflow).toContain('group: platform-terraform-state-platform');
+    expect(workflow).not.toContain('module.hub_site');
   });
 
   it('keeps hub.tfstate as the migration source only', () => {
