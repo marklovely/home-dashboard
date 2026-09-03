@@ -55,6 +55,17 @@ export function terraformCloudflareRetryDecision(output) {
     };
   }
 
+  if (
+    /\b409\b Conflict/i.test(text) &&
+    (/10008|"code"\s*:\s*10008|bucket.*is not empty|not empty \(account/i.test(text))
+  ) {
+    return {
+      retry: false,
+      message:
+        'Cloudflare R2 bucket is not empty — empty hub R2 buckets before terraform destroy (scripts/empty-hub-site-r2-buckets.mjs)'
+    };
+  }
+
   if (/\b400\b Bad Request/i.test(text) && !/\b429\b|rate limit/i.test(text)) {
     return { retry: false, message: 'Cloudflare 400 Bad Request' };
   }

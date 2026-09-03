@@ -34,6 +34,14 @@ describe('terraformCloudflareRetryDecision', () => {
     ).toBe(false);
   });
 
+  it('does not retry non-empty R2 bucket delete conflicts', () => {
+    const decision = terraformCloudflareRetryDecision(
+      '409 Conflict {"errors":[{"code":10008,"message":"The bucket you tried to delete (lovely-home-guide-media-smith) is not empty (account abc)."}]}'
+    );
+    expect(decision.retry).toBe(false);
+    expect(decision.message).toMatch(/not empty/i);
+  });
+
   it('retries other apply failures so transient HTTP can recover', () => {
     expect(terraformCloudflareRetryDecision('Error: failed to make http request').retry).toBe(true);
   });

@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
  * Read terraform output -json sites / hub_proxy_secrets for shell scripts.
+ * Falls back to platform manifest, registry naming, and state pull when root
+ * outputs are missing (per-site customer Terraform state).
+ *
  * Usage:
  *   node scripts/lib/terraform-site-output.mjs site sandbox
  *   node scripts/lib/terraform-site-output.mjs hub-environment sandbox
  *   node scripts/lib/terraform-site-output.mjs hub-proxy-secret sandbox
  */
-import { execFileSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { parseTerraformJsonOutput, terraformStringMap } from './terraform-output-json.mjs';
+import { readHubProxySecret, readSiteContract } from './read-site-contract.mjs';
 
 const mode = process.argv[2]?.trim();
 const siteId = process.argv[3]?.trim();
@@ -21,37 +21,25 @@ if (!mode || !siteId) {
   process.exit(1);
 }
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
-const tfDir = join(root, 'terraform');
-
-function readTerraformOutput(name) {
-  const raw = execFileSync('terraform', ['output', '-json', name], {
-    cwd: tfDir,
-    encoding: 'utf8'
-  });
-  return parseTerraformJsonOutput(raw);
-}
-
 try {
   if (mode === 'site') {
-    const sites = /** @type {Record<string, { hub_environment?: string }>} */ (
-      readTerraformOutput('sites') ?? {}
-    );
-    const site = sites[siteId];
-    if (!site) {
-      console.error(`Site not in terraform output: ${siteId}`);
+    const resolved = readSiteContract(siteId);
+    if (!resolved) {
+      console.error(`Site not in terraform output or manifest: ${siteId}`);
       process.exit(1);
     }
-    console.log(JSON.stringify(site));
+    if (resolved.source !== 'terraform') {
+      console.warn(
+        `terraform-site-output: using ${resolved.source} contract for "${siteId}" (terraform output "sites" unavailable).`
+      );
+    }
+    console.log(JSON.stringify(resolved.site));
   } else if (mode === 'hub-environment') {
-    const sites = /** @type {Record<string, { hub_environment?: string }>} */ (
-      readTerraformOutput('sites') ?? {}
-    );
-    const site = sites[siteId];
-    console.log(site?.hub_environment ?? siteId);
+    const resolved = readSiteContract(siteId);
+    const hubEnvironment = String(resolved?.site?.hub_environment ?? siteId).trim();
+    console.log(hubEnvironment || siteId);
   } else if (mode === 'hub-proxy-secret') {
-    const secrets = terraformStringMap(readTerraformOutput('hub_proxy_secrets'));
-    console.log(secrets[siteId] ?? '');
+    console.log(readHubProxySecret(siteId));
   } else {
     console.error(`Unknown mode: ${mode}`);
     process.exit(1);

@@ -11,6 +11,7 @@ import { suggestedWorkerName } from './site-registry.mjs';
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
 const root = join(moduleDir, '../..');
+const TERRAFORM_SUBPROCESS_TIMEOUT_MS = 5000;
 
 /**
  * @param {string} siteId
@@ -42,7 +43,7 @@ function readTerraformSiteContract(siteId) {
     const raw = execFileSync(
       'node',
       [join(root, 'scripts/lib/terraform-site-output.mjs'), 'site', siteId],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: TERRAFORM_SUBPROCESS_TIMEOUT_MS }
     );
     const contract = JSON.parse(raw);
     return contractHasArchiveTarget(contract) ? contract : null;
