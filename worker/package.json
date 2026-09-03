@@ -36,7 +36,10 @@
     "secrets:wagtail": "bash scripts/print-env-secrets-checklist.sh wagtail",
     "deploy:e2e-nqnrfvy8": "node scripts/check-env-provisioned.mjs e2e-nqnrfvy8 && wrangler deploy --env e2e-nqnrfvy8",
     "d1:migrate:e2e-nqnrfvy8": "node scripts/check-env-provisioned.mjs e2e-nqnrfvy8 && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-nqnrfvy8 --remote --env e2e-nqnrfvy8",
-    "secrets:e2e-nqnrfvy8": "bash scripts/print-env-secrets-checklist.sh e2e-nqnrfvy8"
+    "secrets:e2e-nqnrfvy8": "bash scripts/print-env-secrets-checklist.sh e2e-nqnrfvy8",
+    "deploy:e2e-dy940psa": "node scripts/check-env-provisioned.mjs e2e-dy940psa && wrangler deploy --env e2e-dy940psa",
+    "d1:migrate:e2e-dy940psa": "node scripts/check-env-provisioned.mjs e2e-dy940psa && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-dy940psa --remote --env e2e-dy940psa",
+    "secrets:e2e-dy940psa": "bash scripts/print-env-secrets-checklist.sh e2e-dy940psa"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.19.0",
