@@ -450,9 +450,18 @@ name = "lovely-home-hub-api-e2e-dy940psa"
 
 [env.e2e-dy940psa.vars]
 HUB_ENVIRONMENT = "e2e-dy940psa"
+
 ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://e2e-dy940psa.lovely-hub.com,https://home-dashboard-e2e-dy940psa.pages.dev,https://*.home-dashboard-e2e-dy940psa.pages.dev,https://*.pages.dev"
+
 HOME_LATITUDE = "51.5074"
+
 HOME_LONGITUDE = "-0.1278"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
+ACCESS_PAGES_APP_ID = "1d4c6a89-21b0-4be8-86c4-51eaaba9c7c1"
+
+ACCESS_WORKER_APP_ID = "812e7ad6-b469-430f-acf7-7964b2c1c2db"
 
 [[env.e2e-dy940psa.durable_objects.bindings]]
 name = "OWNER_AUTH_LIMITER"
@@ -469,13 +478,13 @@ bucket_name = "lovely-home-appliance-guides-e2e-dy940psa"
 [[env.e2e-dy940psa.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-e2e-dy940psa"
-database_id = "REPLACE_AFTER_PROVISION_E2E-DY940PSA"
+database_id = "244f8252-d4ae-458b-84f4-87ae1e743698"
 migrations_dir = "migrations"
 
 [[env.e2e-dy940psa.d1_databases]]
 binding = "HOUSE_GUIDE_DB"
 database_name = "lovely-home-appliance-manuals-e2e-dy940psa"
-database_id = "REPLACE_AFTER_PROVISION_E2E-DY940PSA"
+database_id = "244f8252-d4ae-458b-84f4-87ae1e743698"
 migrations_dir = "migrations"
 
 [[env.e2e-dy940psa.r2_buckets]]
@@ -485,7 +494,6 @@ bucket_name = "lovely-home-guide-media-e2e-dy940psa"
 [[env.e2e-dy940psa.r2_buckets]]
 binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
-
 # ---------------------------------------------------------------------------
 # E2e-cr5648bt environment — Terraform-managed (see docs/platform-terraform.md)
 # Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs e2e-cr5648bt
