@@ -17,7 +17,8 @@ const tfDir = join(root, 'terraform');
 function readTerraformOutput(name) {
   const raw = execFileSync('terraform', ['output', '-json', name], {
     cwd: tfDir,
-    encoding: 'utf8'
+    encoding: 'utf8',
+    timeout: 5000
   });
   return parseTerraformJsonOutput(raw);
 }
@@ -62,7 +63,8 @@ export function readHubProxySecret(siteId) {
     const raw = execFileSync('terraform', ['state', 'pull'], {
       cwd: tfDir,
       encoding: 'utf8',
-      maxBuffer: 32 * 1024 * 1024
+      maxBuffer: 32 * 1024 * 1024,
+      timeout: 5000
     });
     const fromState = parseHubProxySecretsFromTerraformState(raw)[siteId]?.trim();
     if (fromState) return fromState;
