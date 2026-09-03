@@ -236,6 +236,10 @@ describe('registry jobs replay onto origin/main before opening a PR', () => {
     expect(yml).toContain('node scripts/replay-dirty-platform-pr.mjs');
     expect(yml).not.toContain('git merge origin/main -X ours');
     expect(yml).toContain("cron: '*/1 * * * *'");
+    const replay = readFileSync(join(root, 'scripts/replay-dirty-platform-pr.mjs'), 'utf8');
+    expect(replay).toContain('mergeStateStatus');
+    expect(replay).toContain('platformPrNeedsRegistryOverlay');
+    expect(replay).toContain('merge-base');
     expect(yml).toContain('closed');
     expect(yml).toContain('github.event.pull_request.merged');
   });

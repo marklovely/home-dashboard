@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CI helper: replay a dirty automated platform registry PR onto origin/main.
+ * CI helper: replay a dirty or behind automated platform registry PR onto origin/main.
  *
  * Reads the PR's registry files with `git show` and writes the overlay from a
  * trusted main checkout — it never checks out the PR branch (that would run
@@ -9,9 +9,10 @@
  * Usage:
  *   node scripts/replay-dirty-platform-pr.mjs <pr_number>
  */
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { siteIdFromPlatformPrTitle } from './lib/platform-pr-site-id.mjs';
+import { platformPrNeedsRegistryOverlay } from './lib/platform-pr-needs-overlay.mjs';
 import {
   overlaySiteRegistryFiles,
   REGISTRY_OVERLAY_FILES
@@ -26,7 +27,7 @@ if (!/^\d+$/.test(pr)) {
 const payload = JSON.parse(
   execFileSync(
     'gh',
-    ['pr', 'view', pr, '--json', 'title,headRefName,mergeable,url'],
+    ['pr', 'view', pr, '--json', 'title,headRefName,mergeable,mergeStateStatus,url'],
     { encoding: 'utf8' }
   )
 );
@@ -44,15 +45,33 @@ if (!headRef.startsWith('platform/')) {
 }
 
 let mergeable = payload.mergeable;
-for (let attempt = 0; attempt < 8 && mergeable === 'UNKNOWN'; attempt += 1) {
+let mergeStateStatus = payload.mergeStateStatus;
+for (let attempt = 0; attempt < 8 && (mergeable === 'UNKNOWN' || mergeStateStatus === 'UNKNOWN'); attempt += 1) {
   execFileSync('sleep', ['5']);
-  mergeable = JSON.parse(
-    execFileSync('gh', ['pr', 'view', pr, '--json', 'mergeable'], { encoding: 'utf8' })
-  ).mergeable;
+  const next = JSON.parse(
+    execFileSync('gh', ['pr', 'view', pr, '--json', 'mergeable,mergeStateStatus'], { encoding: 'utf8' })
+  );
+  mergeable = next.mergeable;
+  mergeStateStatus = next.mergeStateStatus;
 }
 
-if (mergeable !== 'CONFLICTING') {
-  console.log(`PR #${pr} is ${mergeable}; no overlay needed.`);
+execFileSync('git', ['fetch', 'origin', 'main'], { stdio: 'inherit' });
+execFileSync('git', ['fetch', 'origin', `pull/${pr}/head:refs/tmp-overlay-pr-${pr}`], { stdio: 'inherit' });
+
+const prRef = `refs/tmp-overlay-pr-${pr}`;
+const ancestor = spawnSync('git', ['merge-base', '--is-ancestor', 'origin/main', prRef]);
+const baseIsAncestorOfHead = ancestor.status === 0;
+
+if (
+  !platformPrNeedsRegistryOverlay({
+    mergeable,
+    mergeStateStatus,
+    baseIsAncestorOfHead
+  })
+) {
+  console.log(
+    `PR #${pr} is ${mergeable}/${mergeStateStatus} and up to date with origin/main; no overlay needed.`
+  );
   process.exit(0);
 }
 
@@ -60,11 +79,7 @@ execFileSync('git', ['config', 'user.name', 'github-actions[bot]'], { stdio: 'in
 execFileSync('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], {
   stdio: 'inherit'
 });
-execFileSync('git', ['fetch', 'origin', 'main'], { stdio: 'inherit' });
-execFileSync('git', ['fetch', 'origin', `pull/${pr}/head:refs/tmp-overlay-pr-${pr}`], { stdio: 'inherit' });
 execFileSync('git', ['checkout', '--detach', 'origin/main'], { stdio: 'inherit' });
-
-const prRef = `refs/tmp-overlay-pr-${pr}`;
 
 /** @param {string} ref @param {string} relative */
 function gitShow(ref, relative) {
