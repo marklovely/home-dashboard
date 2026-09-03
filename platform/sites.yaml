@@ -62,3 +62,11 @@ sites:
     terraform: true
     zone_name: lovely-hub.com
     attach_hub_api_binding: false
+
+  e2e-dy940psa:
+    hostname: e2e-dy940psa.lovely-hub.com
+    hub_environment: e2e-dy940psa
+    vanilla: false
+    terraform: true
+    zone_name: lovely-hub.com
+    attach_hub_api_binding: false
