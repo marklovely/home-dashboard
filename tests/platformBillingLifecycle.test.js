@@ -64,4 +64,18 @@ describe('platform billing lifecycle', () => {
       })
     ).toBe(true);
   });
+
+  it('clears registry dispatch when clearing deprovision for a re-trial', async () => {
+    /** @type {string[]} */
+    const statements = [];
+    const db = /** @type {D1Database} */ ({
+      prepare(sql) {
+        statements.push(sql);
+        return { bind: () => ({ run: async () => ({}) }) };
+      }
+    });
+    await resetBillingCycleFlags(db, 'smith', { clearDeprovision: true, clearProvision: false });
+    expect(statements.join(' ')).toMatch(/registry_dispatched_at = NULL/);
+    expect(statements.join(' ')).toMatch(/slug_held_until = NULL/);
+  });
 });
