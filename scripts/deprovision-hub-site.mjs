@@ -72,6 +72,7 @@ const tfvarsPath = join(tfDir, 'environments/hub.generated.tfvars');
 const generatedTfvars = join(root, 'scripts/generate-hub-tfvars.mjs');
 const deleteWorkerScript = join(root, 'scripts/delete-worker-script.mjs');
 const emptyR2Script = join(root, 'scripts/empty-hub-site-r2-buckets.mjs');
+const prunePagesScript = join(root, 'scripts/prune-hub-pages-deployments.mjs');
 
 function readWorkerName() {
   try {
@@ -173,6 +174,7 @@ if (inState) {
     env: { ...process.env, DEPROVISION_SITE_ID: siteId }
   });
   run('node', [emptyR2Script, siteId]);
+  run('node', [prunePagesScript, siteId]);
   runTerraformDestroy();
 } else {
   console.log(`No module.hub_site["${siteId}"] in terraform state — skipping terraform destroy.`);

@@ -33,15 +33,18 @@ describe('deprovision manifest follow-up', () => {
     expect(script).toMatch(/Skipping archive — \$\{siteId\} is not in terraform state/);
   });
 
-  it('empties hub R2 buckets before terraform destroy', () => {
+  it('empties hub R2 buckets and prunes Pages deployments before terraform destroy', () => {
     const script = readFileSync(resolve(root, 'scripts/deprovision-hub-site.mjs'), 'utf8');
     expect(script).toContain('empty-hub-site-r2-buckets.mjs');
+    expect(script).toContain('prune-hub-pages-deployments.mjs');
     const tfvarsIdx = script.indexOf('generate-hub-tfvars.mjs');
     const emptyIdx = script.indexOf('empty-hub-site-r2-buckets.mjs');
+    const pruneIdx = script.indexOf('prune-hub-pages-deployments.mjs');
     const destroyIdx = script.indexOf('runTerraformDestroy()');
     expect(tfvarsIdx).toBeGreaterThan(-1);
     expect(emptyIdx).toBeGreaterThan(tfvarsIdx);
-    expect(destroyIdx).toBeGreaterThan(emptyIdx);
+    expect(pruneIdx).toBeGreaterThan(emptyIdx);
+    expect(destroyIdx).toBeGreaterThan(pruneIdx);
   });
 
   it('redeploys platform admin after a customer hub teardown', () => {
