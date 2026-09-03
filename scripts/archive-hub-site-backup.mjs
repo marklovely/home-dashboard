@@ -4,7 +4,6 @@
  *
  * Usage: node scripts/archive-hub-site-backup.mjs <site_id>
  */
-import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -12,6 +11,7 @@ import {
   uploadSiteArchiveToR2
 } from './lib/platform-archive-storage.mjs';
 import { resolveHubArchiveUrl } from './lib/hub-archive-url.mjs';
+import { resolveSiteArchiveContract } from './lib/resolve-site-archive-contract.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
@@ -27,23 +27,6 @@ if (!archiveSecret) {
     'PLATFORM_SITE_ARCHIVE_SECRET is not set — refusing to deprovision without a hub backup.'
   );
   process.exit(1);
-}
-
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-
-/** @returns {{ hostname?: string }} */
-function readTerraformSite() {
-  try {
-    const raw = execFileSync(
-      'node',
-      [join(root, 'scripts/lib/terraform-site-output.mjs'), 'site', siteId],
-      { encoding: 'utf8' }
-    );
-    return JSON.parse(raw);
-  } catch (error) {
-    console.error(`Could not read terraform output for site "${siteId}":`, error.message);
-    process.exit(1);
-  }
 }
 
 /**
@@ -82,10 +65,20 @@ async function fetchArchivePayload(url) {
 
 console.log(`\n=== Archiving hub site backup: ${siteId} ===`);
 
-const site = readTerraformSite();
-const archive = resolveHubArchiveUrl(site);
+const resolved = resolveSiteArchiveContract(siteId);
+if (!resolved) {
+  console.error(`Could not resolve archive target for site "${siteId}" (terraform, manifest, or registry).`);
+  process.exit(1);
+}
+if (resolved.source !== 'terraform') {
+  console.warn(
+    `Using ${resolved.source} fallback for archive target (terraform output sites missing or incomplete).`
+  );
+}
+
+const archive = resolveHubArchiveUrl(resolved.site);
 if (!archive.url) {
-  console.error(`No worker_api_origin or hostname in terraform output for "${siteId}".`);
+  console.error(`No worker_api_origin or hostname available for "${siteId}".`);
   process.exit(1);
 }
 
