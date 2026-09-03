@@ -52,21 +52,76 @@ export function hubSecretsForRestore(hubSecrets) {
 export async function buildSiteBackupPayload(env, options = {}) {
   const scope = options.scope === 'guide' ? 'guide' : 'full';
   const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
-  const seeded = await isHouseGuideSeeded(db);
-  const sitterSecretsManual = await getSitterSecretsManual(env);
-  const sitterAccessEmailsManual = await resolveSitterAccessEmailsManual(env);
-  const sitterStays = (await listSitterStays(env)).map(serializeSitterStayForApi);
+  let seeded = false;
+  try {
+    seeded = await isHouseGuideSeeded(db);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'backup_guide_seed_check_failed',
+        detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+      })
+    );
+  }
+
+  let sitterSecretsManual = false;
+  try {
+    sitterSecretsManual = await getSitterSecretsManual(env);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'backup_sitter_secrets_failed',
+        detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+      })
+    );
+  }
+
+  /** @type {string[]} */
+  let sitterAccessEmailsManual = [];
+  try {
+    sitterAccessEmailsManual = await resolveSitterAccessEmailsManual(env);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'backup_sitter_emails_failed',
+        detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+      })
+    );
+  }
+
+  /** @type {ReturnType<typeof serializeSitterStayForApi>[]} */
+  let sitterStays = [];
+  try {
+    sitterStays = (await listSitterStays(env)).map(serializeSitterStayForApi);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'backup_sitter_stays_failed',
+        detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+      })
+    );
+  }
 
   /** @type {{ seeded: boolean, catalog: object | null, uploadedMedia: { id: string, alt: string }[] }} */
   let guide = { seeded: false, catalog: null, uploadedMedia: [] };
 
   if (seeded) {
-    const exported = await loadImportableGuideCatalog(db);
-    guide = {
-      seeded: true,
-      catalog: exported?.catalog ?? null,
-      uploadedMedia: exported?.uploadedMedia ?? []
-    };
+    try {
+      const exported = await loadImportableGuideCatalog(db);
+      guide = {
+        seeded: true,
+        catalog: exported?.catalog ?? null,
+        uploadedMedia: exported?.uploadedMedia ?? []
+      };
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: 'backup_guide_export_failed',
+          detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+        })
+      );
+      guide = { seeded: true, catalog: null, uploadedMedia: [] };
+    }
   }
 
   /** @type {Record<string, unknown>} */
@@ -85,13 +140,45 @@ export async function buildSiteBackupPayload(env, options = {}) {
   };
 
   if (scope === 'full') {
-    payload.siteProfile = await getSiteProfile(env);
-    payload.hubSecrets = exportHubSecretsForBackup(await getHubSecretsForBackup(env));
-    const manualRows = await listApplianceManuals(db);
-    payload.applianceManuals = manualRows.map((row) => ({
-      ...toPublicManual(row),
-      archivePath: `media/appliance-manuals/${row.id}-${String(row.original_filename ?? `${row.id}.pdf`).replace(/[^\w.-]+/g, '-')}`
-    }));
+    try {
+      payload.siteProfile = await getSiteProfile(env);
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: 'backup_site_profile_failed',
+          detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+        })
+      );
+      payload.siteProfile = null;
+    }
+
+    try {
+      payload.hubSecrets = exportHubSecretsForBackup(await getHubSecretsForBackup(env));
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: 'backup_hub_secrets_failed',
+          detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+        })
+      );
+      payload.hubSecrets = {};
+    }
+
+    try {
+      const manualRows = await listApplianceManuals(db);
+      payload.applianceManuals = manualRows.map((row) => ({
+        ...toPublicManual(row),
+        archivePath: `media/appliance-manuals/${row.id}-${String(row.original_filename ?? `${row.id}.pdf`).replace(/[^\w.-]+/g, '-')}`
+      }));
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: 'backup_appliance_manuals_failed',
+          detail: error instanceof Error ? error.message.slice(0, 200) : 'unknown'
+        })
+      );
+      payload.applianceManuals = [];
+    }
   }
 
   return payload;

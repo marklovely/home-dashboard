@@ -102,4 +102,44 @@ describe('siteBackupPayload', () => {
       wifi_password: 'x'
     });
   });
+
+  it('returns partial full backup when appliance manual export fails', async () => {
+    const db = /** @type {D1Database} */ ({
+      prepare(sql) {
+        const normalized = sql.replace(/\s+/g, ' ').trim();
+        return {
+          bind() {
+            return this;
+          },
+          async first() {
+            if (normalized.includes('FROM guide_settings')) return { id: 'default' };
+            if (normalized.includes('FROM site_profile')) return null;
+            if (normalized.includes('FROM house_settings')) return null;
+            return null;
+          },
+          async all() {
+            if (normalized.includes('FROM appliance_manuals')) {
+              throw new Error('no such table: appliance_manuals');
+            }
+            if (normalized.includes('FROM sitter_stays')) return { results: [] };
+            if (normalized.includes('FROM guide_categories')) return { results: [] };
+            if (normalized.includes('FROM guide_topics')) return { results: [] };
+            if (normalized.includes('FROM guide_media')) return { results: [] };
+            if (normalized.includes('FROM hub_secrets')) return { results: [] };
+            return { results: [] };
+          }
+        };
+      }
+    });
+
+    const env = withTestLimiters({
+      ...createAccessTestEnv(),
+      HOUSE_GUIDE_DB: db
+    });
+
+    const payload = await buildSiteBackupPayload(env, { scope: 'full' });
+    expect(payload.backupScope).toBe('full');
+    expect(payload.applianceManuals).toEqual([]);
+    expect(payload.formatVersion).toBe(2);
+  });
 });
