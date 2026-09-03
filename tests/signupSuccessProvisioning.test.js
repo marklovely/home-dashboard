@@ -70,6 +70,32 @@ describe('signup success provisioning status', () => {
     );
   });
 
+  it('shows welcome-back copy when returning=1 is in the URL', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(provisioning)));
+    mountPage('?site=smith&returning=1');
+
+    runPageScript();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Welcome back');
+    expect(document.getElementById('success-heading').textContent).toBe("Thank you — we're reinstating your hub");
+    expect(document.getElementById('success-lead').textContent).toMatch(/active again/i);
+    expect(document.getElementById('hub-progress-title').textContent).toMatch(/Reinstating your hub now/i);
+  });
+
+  it('switches to welcome-back copy when hub-status reports returning', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse({ ...provisioning, siteId: 'smith', returning: true }))
+    );
+    mountPage('?site=smith');
+
+    runPageScript();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(document.getElementById('success-heading').textContent).toBe("Thank you — we're reinstating your hub");
+  });
+
   it('reveals the open button and a logo QR code once the hub answers', async () => {
     const fetchMock = vi
       .fn()

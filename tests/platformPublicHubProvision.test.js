@@ -6,6 +6,7 @@ import {
   hubIsRegistered,
   hubProbeIsLive,
   hubProvisionHostname,
+  isHubReclaimProvision,
   probeHubHostname
 } from '../functions/api/platform/platformPublicHubProvision.js';
 
@@ -66,6 +67,29 @@ describe('hub provision status', () => {
     expect(status.registered).toBe(false);
     expect(status.typicalMinutes).toBe(10);
     expect(status.message).toMatch(/about 10 minutes/i);
+  });
+
+  it('marks a rebuild after deprovision as returning', () => {
+    expect(
+      isHubReclaimProvision({}, 'smith', {
+        status: 'trialing',
+        archive_r2_key: 'smith/site-backup-test.json'
+      })
+    ).toBe(true);
+    expect(
+      isHubReclaimProvision(manifest, 'smith', {
+        status: 'trialing',
+        archive_r2_key: 'smith/site-backup-test.json'
+      })
+    ).toBe(false);
+
+    const status = buildHubProvisionStatus({
+      siteId: 'smith',
+      returning: true,
+      probe: { status: null, error: 'ENOTFOUND' }
+    });
+    expect(status.returning).toBe(true);
+    expect(status.message).toMatch(/reinstating/i);
   });
 
   it('keeps an Access login redirect in the provisioning state', () => {

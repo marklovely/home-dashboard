@@ -61,7 +61,8 @@ export function hubProbeIsLive(probe) {
  *     looksLikeHub?: boolean | null
  *   } | null,
  *   registryLastError?: string | null,
- *   provisionLastError?: string | null
+ *   provisionLastError?: string | null,
+ *   returning?: boolean
  * }} input
  */
 export function buildHubProvisionStatus(input) {
@@ -76,6 +77,8 @@ export function buildHubProvisionStatus(input) {
   const failed = !ready && (registryFailed || Boolean(provisionLastError));
   const failureKind = failed ? (siteId.includes('_') ? 'invalid_hostname' : 'setup_failed') : null;
 
+  const returning = Boolean(input.returning);
+
   return {
     siteId,
     hostname,
@@ -83,11 +86,12 @@ export function buildHubProvisionStatus(input) {
     state: ready ? 'ready' : failed ? 'failed' : 'provisioning',
     ready,
     registered: Boolean(input.registered),
+    returning,
     probeStatus: probe && Number.isFinite(Number(probe.status)) ? Number(probe.status) : null,
     looksLikeHub: Boolean(probe?.looksLikeHub),
     typicalMinutes: HUB_PROVISION_TYPICAL_MINUTES,
     failureKind,
-    message: hubProvisionMessage({ ready, failed, hostname, siteId })
+    message: hubProvisionMessage({ ready, failed, hostname, siteId, returning })
   };
 }
 
@@ -96,18 +100,45 @@ export function buildHubProvisionStatus(input) {
  *   ready: boolean,
  *   failed: boolean,
  *   hostname: string,
- *   siteId: string
+ *   siteId: string,
+ *   returning?: boolean
  * }} input
  */
 function hubProvisionMessage(input) {
-  if (input.ready) return 'Your hub is live — open it and run the setup wizard.';
+  if (input.ready) {
+    return input.returning
+      ? 'Your hub is live again — open it and pick up where you left off.'
+      : 'Your hub is live — open it and run the setup wizard.';
+  }
   if (input.failed && input.siteId.includes('_')) {
     return `We could not create ${input.hostname} because underscores are not allowed in web addresses. Sign up again using hyphens, for example ${input.siteId.replaceAll('_', '-')}.`;
   }
   if (input.failed) {
     return `We could not finish building ${input.hostname}. Email support@lovely-home.co.uk with this address and we will complete it. You have not been charged.`;
   }
+  if (input.returning) {
+    return `We are reinstating your hub. This usually takes about ${HUB_PROVISION_TYPICAL_MINUTES} minutes.`;
+  }
   return `We are still building your hub. This usually takes about ${HUB_PROVISION_TYPICAL_MINUTES} minutes.`;
+}
+
+/**
+ * Live billing on a hub that is no longer in the registry — a reclaim rebuild.
+ *
+ * @param {object} manifest
+ * @param {string} siteId
+ * @param {{
+ *   status?: string | null;
+ *   archive_r2_key?: string | null;
+ *   deprovision_dispatched_at?: number | null;
+ * } | null | undefined} billing
+ */
+export function isHubReclaimProvision(manifest, siteId, billing) {
+  if (!billing || !isLiveBillingStatus(billing?.status)) return false;
+  if (getSiteFromManifest(manifest, siteId)) return false;
+  if (String(billing.archive_r2_key ?? '').trim()) return true;
+  if (billing.deprovision_dispatched_at) return true;
+  return false;
 }
 
 /**
@@ -188,12 +219,14 @@ export async function getPublicHubProvisionStatus(
   }
 
   const probe = await probeHubHostname(hubProvisionHostname(id), fetchImpl, env);
+  const returning = isHubReclaimProvision(manifest, id, billing);
   return {
     ok: true,
     status: 200,
     body: buildHubProvisionStatus({
       siteId: id,
       registered: hubIsRegistered(manifest, id, billing),
+      returning,
       probe,
       registryLastError: billing?.registry_last_error ?? '',
       provisionLastError: billing?.provision_last_error ?? ''
