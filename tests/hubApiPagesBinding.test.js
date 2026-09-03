@@ -20,6 +20,8 @@ describe('hub API Pages binding helpers', () => {
     const script = readFileSync(join(process.cwd(), 'scripts/attach-hub-api-pages-binding.mjs'), 'utf8');
     expect(script).toContain('validateSiteId');
     expect(script).not.toContain('validateDeploySiteId');
+    expect(script).toContain("siteId === 'production'");
+    expect(script).toContain('workerNameForSite');
   });
 
   it('detects a missing or wrong production HUB_API binding', () => {
