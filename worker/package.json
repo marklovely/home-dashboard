@@ -34,9 +34,6 @@
     "deploy:wagtail": "node scripts/check-env-provisioned.mjs wagtail && wrangler deploy --env wagtail",
     "d1:migrate:wagtail": "node scripts/check-env-provisioned.mjs wagtail && wrangler d1 migrations apply lovely-home-appliance-manuals-wagtail --remote --env wagtail",
     "secrets:wagtail": "bash scripts/print-env-secrets-checklist.sh wagtail",
-    "deploy:e2e-38orhb68": "node scripts/check-env-provisioned.mjs e2e-38orhb68 && wrangler deploy --env e2e-38orhb68",
-    "d1:migrate:e2e-38orhb68": "node scripts/check-env-provisioned.mjs e2e-38orhb68 && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-38orhb68 --remote --env e2e-38orhb68",
-    "secrets:e2e-38orhb68": "bash scripts/print-env-secrets-checklist.sh e2e-38orhb68",
     "deploy:e2e-4b8t4bqf": "node scripts/check-env-provisioned.mjs e2e-4b8t4bqf && wrangler deploy --env e2e-4b8t4bqf",
     "d1:migrate:e2e-4b8t4bqf": "node scripts/check-env-provisioned.mjs e2e-4b8t4bqf && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-4b8t4bqf --remote --env e2e-4b8t4bqf",
     "secrets:e2e-4b8t4bqf": "bash scripts/print-env-secrets-checklist.sh e2e-4b8t4bqf"
