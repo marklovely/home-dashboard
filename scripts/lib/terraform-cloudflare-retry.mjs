@@ -48,6 +48,13 @@ export function terraformCloudflareRetryDecision(output) {
     };
   }
 
+  if (/application_already_exists|access\.api\.error\.application_already_exists/i.test(text)) {
+    return {
+      retry: false,
+      message: 'Cloudflare Access app already exists — import it into Terraform state instead of retrying create'
+    };
+  }
+
   if (/\b400\b Bad Request/i.test(text) && !/\b429\b|rate limit/i.test(text)) {
     return { retry: false, message: 'Cloudflare 400 Bad Request' };
   }

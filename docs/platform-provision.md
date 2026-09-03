@@ -167,7 +167,7 @@ In GitHub → repo → **Settings** → **Secrets and variables** → **Actions*
 
 CI uses these instead of `backend.hcl` (see `platform-site-provision-reusable.yml`).
 
-Hub job queues and the hub-jobs Worker live in `module.platform_admin`. After those Terraform files land on `main`, run **Actions → Platform admin Terraform** and type `apply-platform-admin`. That job inits `platform.tfstate` and applies `-target=module.platform_admin[0]` so production/demo/sandbox hubs are not touched.
+Hub job queues and the hub-jobs Worker live in `module.platform_admin`. After those Terraform files land on `main`, run **Actions → Platform admin Terraform** and type `apply-platform-admin`. That job inits `platform.tfstate` and applies `-target=module.platform_admin[0]` and `-target=module.marketing_site[0]` so production/demo/sandbox hubs are not touched. It keeps the pre-launch marketing Access gate on.
 
 ---
 

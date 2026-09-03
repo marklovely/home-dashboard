@@ -122,6 +122,23 @@ describe('generate-hub-tfvars owner emails', () => {
     expect(result.tfvars).toContain('provision_site_id     = "smith"');
   });
 
+  it('keeps the pre-launch marketing Access gate on unless explicitly disabled', () => {
+    const onByDefault = generate({
+      OWNER_EMAILS: 'platform@lovely-home.co.uk',
+      SUPPORT_OWNER_EMAILS: 'support@lovely-home.co.uk'
+    });
+    expect(onByDefault.ok).toBe(true);
+    expect(onByDefault.tfvars).toContain('marketing_site_access_protected = true');
+
+    const off = generate({
+      OWNER_EMAILS: 'platform@lovely-home.co.uk',
+      SUPPORT_OWNER_EMAILS: 'support@lovely-home.co.uk',
+      MARKETING_SITE_ACCESS_PROTECTED: 'false'
+    });
+    expect(off.ok).toBe(true);
+    expect(off.tfvars).toContain('marketing_site_access_protected = false');
+  });
+
   it('rejects a malformed billing owner payload', () => {
     const result = generate({
       OWNER_EMAILS: 'platform@lovely-home.co.uk',
