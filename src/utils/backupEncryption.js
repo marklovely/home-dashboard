@@ -60,10 +60,18 @@ export function isEncryptedBackupDocument(doc) {
 }
 
 /**
+ * @param {Record<string, unknown>} doc
+ */
+export function isEncryptedBackupZipEnvelope(doc) {
+  return isEncryptedBackupDocument(doc) && doc.payloadType === 'zip';
+}
+
+/**
  * @param {Record<string, unknown>} backup
  * @param {string} password
+ * @param {{ payloadType?: 'json' | 'zip' }} [options]
  */
-export async function encryptBackupDocument(backup, password) {
+export async function encryptBackupDocument(backup, password, options = {}) {
   const trimmed = password.trim();
   if (!trimmed) {
     throw new Error('Enter a backup password.');
@@ -72,7 +80,10 @@ export async function encryptBackupDocument(backup, password) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveBackupKey(trimmed, salt, BACKUP_KDF_ITERATIONS);
-  const plaintext = new TextEncoder().encode(`${JSON.stringify(backup)}\n`);
+  const plaintext =
+    backup instanceof Uint8Array
+      ? backup
+      : new TextEncoder().encode(`${JSON.stringify(backup)}\n`);
   const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
 
   return {
@@ -81,10 +92,19 @@ export async function encryptBackupDocument(backup, password) {
     cipher: 'AES-GCM',
     kdf: 'PBKDF2-SHA256',
     kdfIterations: BACKUP_KDF_ITERATIONS,
+    ...(options.payloadType ? { payloadType: options.payloadType } : {}),
     salt: bytesToBase64(salt),
     iv: bytesToBase64(iv),
     ciphertext: bytesToBase64(new Uint8Array(encrypted))
   };
+}
+
+/**
+ * @param {Uint8Array} bytes
+ * @param {string} password
+ */
+export async function encryptBackupBytes(bytes, password) {
+  return encryptBackupDocument(bytes, password, { payloadType: 'zip' });
 }
 
 /**
@@ -111,6 +131,9 @@ export async function decryptBackupDocument(envelope, password) {
     const ciphertext = base64ToBytes(/** @type {string} */ (envelope.ciphertext));
     const key = await deriveBackupKey(trimmed, salt, iterations);
     const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+    if (envelope.payloadType === 'zip') {
+      return new Uint8Array(decrypted);
+    }
     const parsed = JSON.parse(new TextDecoder().decode(decrypted));
     if (!parsed || typeof parsed !== 'object') {
       throw new Error('Decrypted backup is not a JSON object.');

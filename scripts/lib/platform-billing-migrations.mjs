@@ -6,7 +6,8 @@ export const PLATFORM_BILLING_MIGRATION_FILES = [
   '0004_signup_guards.sql',
   '0005_customer_emails.sql',
   '0006_account_otp.sql',
-  '0007_platform_settings.sql'
+  '0007_platform_settings.sql',
+  '0008_slug_held_until.sql'
 ];
 
 export const PLATFORM_BILLING_MIGRATIONS_TABLE_SQL = `
@@ -47,6 +48,9 @@ export function inferAppliedMigrationNames(schema) {
   }
   if (schema.columns.has('signup_email_sent_at')) {
     applied.push('0005_customer_emails.sql');
+  }
+  if (schema.columns.has('slug_held_until')) {
+    applied.push('0008_slug_held_until.sql');
   }
   return applied;
 }

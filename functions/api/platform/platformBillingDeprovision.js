@@ -3,6 +3,7 @@ import { enqueueHubProvisionJob } from './platformHubQueues.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { siteHasTerraformContract } from './platformBillingProvision.js';
 import { priorDeprovisionBlocksDispatch } from './platformBillingLifecycle.js';
+import { applyHubNameHoldAfterCancel } from './platformHubNameHold.js';
 
 /** Sites that must never be auto-deprovisioned from billing webhooks. */
 export const BILLING_DEPROVISION_BLOCKED_SITE_IDS = new Set(['production', 'demo']);
@@ -68,14 +69,16 @@ export function shouldDispatchBillingDeprovision(input) {
  * @param {string} siteId
  */
 export async function markDeprovisionDispatched(db, siteId) {
+  const now = Date.now();
   await db
     .prepare(
       `UPDATE site_billing
        SET deprovision_dispatched_at = ?, deprovision_last_error = NULL, updated_at = ?
        WHERE site_id = ?`
     )
-    .bind(Date.now(), Date.now(), siteId)
+    .bind(now, now, siteId)
     .run();
+  await applyHubNameHoldAfterCancel(db, siteId, now);
 }
 
 /**

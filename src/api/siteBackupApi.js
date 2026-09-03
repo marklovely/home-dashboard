@@ -223,6 +223,43 @@ async function fetchHouseGuideExportFromLegacyApis(fetchImpl) {
 }
 
 /**
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function fetchSiteBackupZip({ fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Backup is temporarily unavailable.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl('/api/site/backup?format=zip&scope=full'),
+      withApiCredentials({
+        headers: { Accept: 'application/zip' },
+        cache: 'no-store'
+      })
+    );
+
+    if (response.ok) {
+      return { ok: true, status: 200, message: '', data: await response.arrayBuffer() };
+    }
+
+    if (response.status === 404) {
+      return {
+        ok: false,
+        status: 404,
+        message: 'Full zip backup requires a hub worker update. Try again after the hub is updated.',
+        data: null
+      };
+    }
+
+    return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+  } catch {
+    return { ok: false, status: 503, message: 'Backup is temporarily unavailable.', data: null };
+  }
+}
+
+/**
  * @param {{ fetchImpl?: typeof fetch, scope?: 'full' | 'guide' }} [options]
  */
 export async function fetchSiteBackup({ fetchImpl = fetch, scope = 'full' } = {}) {

@@ -2,13 +2,16 @@
 
 Export and import **House Guide content**, **site profile** (home details, bins, pets), **hub secrets** (Wi‑Fi, PIN, lockbox, calendar), and **sitter settings** stored in D1.
 
-**Not included:** uploaded photo binaries (R2), appliance manual PDFs, or Cloudflare Worker platform secrets (`HUB_PROXY_SECRET`, Access AUD).
+**Not included:** Cloudflare Worker platform secrets (`HUB_PROXY_SECRET`, Access AUD).
+
+Full backups can be downloaded as a **zip** (`GET /api/site/backup?format=zip&scope=full`) containing `backup.json` plus photo and appliance-manual files. The browser encrypts the zip before download.
 
 ## API
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/site/backup` | Full site backup JSON (default) |
+| GET | `/api/site/backup?format=zip&scope=full` | Full site backup zip (JSON + media files) |
 | GET | `/api/site/backup?scope=guide` | Guide + sitter flags only |
 | POST | `/api/site/restore` | Restore from backup JSON |
 | GET | `/api/house-guide/export` | Guide-only export (import-compatible catalog) |
@@ -20,16 +23,16 @@ All routes require Cloudflare Access **owner** identity and **owner** device mod
 
 | Scope | Includes |
 |-------|----------|
-| **full** (default) | Guide, site profile, hub secrets, sitter settings |
+| **full** (default) | Guide, site profile, hub secrets, sitter settings, photo files, appliance manual PDFs (zip download) |
 | **guide** | Guide + sitter settings only |
 
 Restore applies whatever is present in the file — full backups restore everything; older guide-only files still work.
 
-## Backup file format (`formatVersion: 1`)
+## Backup file format (`formatVersion: 2`)
 
 ```json
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "backupScope": "full",
   "exportedAt": "2026-07-31T20:00:00.000Z",
   "siteSettings": {

@@ -5,6 +5,7 @@ import { releaseSignupReservation } from './platformSignupGuards.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platformBillingLifecycle.js';
 import { maybeSendCustomerLifecycleEmail } from './platformCustomerEmail.js';
+import { applyHubNameHoldAfterCancel } from './platformHubNameHold.js';
 import { getStripeMode, stripeCredentialsForMode, stripeSetConfigured } from './platformStripeMode.js';
 
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
@@ -516,6 +517,10 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     trial_end: billingPatch.trialEnd,
     owner_email: billingPatch.ownerEmail ?? existingBilling?.owner_email ?? null
   });
+
+  if (billingPatch.status === 'canceled') {
+    await applyHubNameHoldAfterCancel(db, billingPatch.siteId);
+  }
 
   /** @type {Record<string, unknown> | undefined} */
   let registry;

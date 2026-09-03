@@ -10,8 +10,11 @@ import { listSitterStays, replaceSitterStaysFromBackup, serializeSitterStayForAp
 import { applySitterStaySchedule } from './sitterSchedule.js';
 import { importGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { loadImportableGuideCatalog } from '../houseGuide/exportCatalog.js';
+import { listApplianceManuals } from '../applianceManuals/repository.js';
+import { toPublicManual } from '../applianceManuals/serialize.js';
 
-export const SITE_BACKUP_FORMAT_VERSION = 1;
+export const SITE_BACKUP_FORMAT_VERSION = 2;
+export const SITE_BACKUP_FORMAT_VERSION_LEGACY = 1;
 
 /** @typedef {'full' | 'guide'} SiteBackupScope */
 
@@ -84,6 +87,11 @@ export async function buildSiteBackupPayload(env, options = {}) {
   if (scope === 'full') {
     payload.siteProfile = await getSiteProfile(env);
     payload.hubSecrets = exportHubSecretsForBackup(await getHubSecretsForBackup(env));
+    const manualRows = await listApplianceManuals(db);
+    payload.applianceManuals = manualRows.map((row) => ({
+      ...toPublicManual(row),
+      archivePath: `media/appliance-manuals/${row.id}-${String(row.original_filename ?? `${row.id}.pdf`).replace(/[^\w.-]+/g, '-')}`
+    }));
   }
 
   return payload;

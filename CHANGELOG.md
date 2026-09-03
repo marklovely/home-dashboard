@@ -20,6 +20,7 @@
 
 ### Hub
 
+- Full site backup zip includes House Guide photos and appliance manual PDFs; Settings encrypts the zip before download
 - Default accents follow the same forest/sage palette
 - Light appearance uses a cream forest palette, a dark wordmark, and a header sun/moon toggle for owners and guests
 - Owner and guest help covers scheduled stays, weather from the home address, and the header theme toggle
@@ -28,6 +29,7 @@
 
 ### Platform
 
+- After cancel, a hub name stays reserved for 12 months so the same `{name}.lovely-hub.com` address can be reclaimed on resubscribe
 - Registry overlay validates the site id on `main` before checking out the snapshot, so older drop branches still overlay
 - Registry overlay validates the site id only — drop snapshots no longer fail for missing `deploy:<site>` worker scripts
 - GitHub Actions HTTP-push to hub queues sends a JSON object body (Cloudflare rejects a stringified `body` with 400)

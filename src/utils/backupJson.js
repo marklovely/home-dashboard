@@ -1,6 +1,7 @@
-import { decryptBackupDocument, encryptBackupDocument, isEncryptedBackupDocument } from './backupEncryption.js';
+import { decryptBackupDocument, encryptBackupDocument, isEncryptedBackupDocument, isEncryptedBackupZipEnvelope } from './backupEncryption.js';
 
-export const SITE_BACKUP_FORMAT_VERSION = 1;
+export const SITE_BACKUP_FORMAT_VERSION = 2;
+export const SITE_BACKUP_FORMAT_VERSION_LEGACY = 1;
 
 /** @typedef {'full' | 'guide'} SiteBackupScope */
 
@@ -190,7 +191,18 @@ export async function downloadEncryptedBackupFile(filename, backup, password) {
   downloadJsonFile(filename, envelope);
 }
 
-export { isEncryptedBackupDocument, decryptBackupDocument };
+/**
+ * @param {string} filename
+ * @param {ArrayBuffer | Uint8Array} zipBytes
+ * @param {string} password
+ */
+export async function downloadEncryptedBackupZipFile(filename, zipBytes, password) {
+  const bytes = zipBytes instanceof Uint8Array ? zipBytes : new Uint8Array(zipBytes);
+  const envelope = await encryptBackupDocument(bytes, password, { payloadType: 'zip' });
+  downloadJsonFile(filename, envelope);
+}
+
+export { isEncryptedBackupDocument, isEncryptedBackupZipEnvelope, decryptBackupDocument };
 
 /**
  * @param {File} file
@@ -217,7 +229,13 @@ export async function resolveBackupDocument(parsed, promptPassword) {
   if (!password) {
     throw new Error('Restore cancelled.');
   }
-  return decryptBackupDocument(parsed, password);
+  const decrypted = await decryptBackupDocument(parsed, password);
+  if (decrypted instanceof Uint8Array) {
+    throw new Error(
+      'This full backup includes photos and appliance manuals. Zip restore is not available in the hub yet — contact support if you need help recovering media.'
+    );
+  }
+  return decrypted;
 }
 
 /**

@@ -4,7 +4,8 @@ import {
   hubSecretsForRestore,
   parseSiteBackupScope,
   restoreSiteBackupPayload,
-  buildSiteBackupPayload
+  buildSiteBackupPayload,
+  SITE_BACKUP_FORMAT_VERSION
 } from '../src/lib/siteBackupPayload.js';
 import { getHubSecretsMap } from '../src/lib/hubSecrets.js';
 import { createInMemoryHubSetupDb } from './mocks/hubSetupStorage.js';
@@ -90,6 +91,10 @@ describe('siteBackupPayload', () => {
     expect(parseSiteBackupScope('guide')).toBe('guide');
     expect(parseSiteBackupScope('full')).toBe('full');
     expect(parseSiteBackupScope(null)).toBe('full');
+  });
+
+  it('uses format version 2 for full backups', () => {
+    expect(SITE_BACKUP_FORMAT_VERSION).toBe(2);
   });
 
   it('normalizes hub secret restore patch', () => {

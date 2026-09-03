@@ -16,6 +16,7 @@ import {
   releaseSignupReservation,
   reserveSignupSlug
 } from './platformSignupGuards.js';
+import { isHubNameHeld, hubNameHeldReason } from './platformHubNameHold.js';
 import { turnstileConfigured, verifyTurnstileToken } from './platformSignupTurnstile.js';
 
 /** Reserved slugs — internal hubs and common DNS names. */
@@ -142,6 +143,17 @@ export async function checkPublicSignupSlug(manifest, siteId, billingDb, nowMs =
       reason: `Site id "${siteId}" is being set up by someone else right now. Try another name.`
     };
   }
+
+  if (billingDb) {
+    const billing = await getSiteBilling(billingDb, siteId);
+    if (isHubNameHeld(billing, nowMs)) {
+      return {
+        available: false,
+        reason: hubNameHeldReason(siteId, /** @type {number} */ (billing?.slug_held_until))
+      };
+    }
+  }
+
   return { available: true, reason: null };
 }
 

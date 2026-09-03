@@ -95,7 +95,7 @@ describe('backupJson', () => {
       },
       { sitterSecretsDisclosed: true }
     );
-    expect(payload.formatVersion).toBe(1);
+    expect(payload.formatVersion).toBe(2);
     expect(payload.siteSettings.sitterSecretsDisclosed).toBe(true);
     expect(payload.guide.seeded).toBe(true);
   });
@@ -110,7 +110,7 @@ describe('backupJson', () => {
         categories: []
       }
     });
-    expect(payload.formatVersion).toBe(1);
+    expect(payload.formatVersion).toBe(2);
     expect(payload.backupScope).toBe('guide');
     expect(payload.catalog?.categories).toEqual([]);
     expect(payload.uploadedMedia).toEqual([{ id: 'a', alt: 'A' }]);

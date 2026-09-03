@@ -160,7 +160,9 @@ export function buildCustomerEmail(input) {
     text: [
       `Your subscription for ${hubUrl} has ended. The live hub will be taken down.`,
       '',
-      'If you want to keep your house guide and home details, download a password-encrypted backup from the hub while it is still up. Photos and appliance PDFs are not inside that file.',
+      'If you want to keep your house guide, photos, appliance manuals, and home details, download a password-encrypted full backup from Settings while the hub is still up.',
+      '',
+      `Your hub name (${siteId}.lovely-hub.com) stays reserved for you for 12 months if you resubscribe.`,
       '',
       'Questions: support@lovely-home.co.uk'
     ].join('\n')

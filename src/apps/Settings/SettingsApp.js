@@ -65,9 +65,10 @@ import {
   subscribeToSitterAccessEmails
 } from '../../services/sitterAccessEmailsService.js';
 import { createSetupTextarea } from '../../components/HubSetup/hubSetupFields.js';
-import { fetchSiteBackup } from '../../api/siteBackupApi.js';
+import { fetchSiteBackup, fetchSiteBackupZip } from '../../api/siteBackupApi.js';
 import {
   downloadEncryptedBackupFile,
+  downloadEncryptedBackupZipFile,
   hasFullBackupContent
 } from '../../utils/backupJson.js';
 import {
@@ -280,7 +281,7 @@ function createUtilitiesFields(context) {
   const intro = document.createElement('p');
   intro.className = 'subtle';
   intro.textContent =
-    'Backups are encrypted with a password you choose before download. Full backup includes House Guide, home details, Wi‑Fi, PIN, lockbox, calendar link, and sitter settings. Guide-only backup is smaller and omits secrets. Uploaded photo files are never embedded — re-upload after restore.';
+    'Backups are encrypted with a password you choose before download. Full backup includes House Guide, photos, appliance manual PDFs, home details, Wi‑Fi, PIN, lockbox, calendar link, and sitter settings. Guide-only backup is smaller and omits secrets and media files.';
 
   const exportFullButton = document.createElement('button');
   exportFullButton.type = 'button';
@@ -290,9 +291,24 @@ function createUtilitiesFields(context) {
     void withAsyncButtonFeedback(exportFullButton, 'Preparing…', async () => {
       exportGuideButton.disabled = true;
       try {
+        const zipResult = await fetchSiteBackupZip();
+        if (zipResult.ok && zipResult.data) {
+          const password = await showPasswordDialog({
+            title: 'Encrypt full backup',
+            message:
+              'Choose a password for this backup file. You will need the same password to restore it. Lovely Home cannot recover a forgotten password.',
+            confirmLabel: 'Download',
+            requireConfirmation: true
+          });
+          if (!password) return;
+          await downloadEncryptedBackupZipFile('lovely-home-hub-backup.json', zipResult.data, password);
+          showToast(context.toast, 'Encrypted full site backup downloaded (includes photos and manuals).');
+          return;
+        }
+
         const result = await fetchSiteBackup({ scope: 'full' });
         if (!result.ok || !result.data) {
-          showToast(context.toast, result.message || 'Could not export backup.');
+          showToast(context.toast, zipResult.message || result.message || 'Could not export backup.');
           return;
         }
         const password = await showPasswordDialog({
@@ -306,12 +322,15 @@ function createUtilitiesFields(context) {
         if (!hasFullBackupContent(result.data)) {
           showToast(
             context.toast,
-            'Warning: this backup may only include House Guide content. Update the hub worker, then download again for home details and secrets.',
+            'Warning: this backup may only include House Guide content. Update the hub worker, then download again for home details, secrets, and media.',
             15000
           );
         }
         await downloadEncryptedBackupFile('lovely-home-hub-backup.json', result.data, password);
-        showToast(context.toast, 'Encrypted full site backup downloaded.');
+        showToast(
+          context.toast,
+          'Encrypted full site backup downloaded. Update the hub worker and download again to include photos and manuals.'
+        );
       } catch (error) {
         showToast(context.toast, error instanceof Error ? error.message : 'Could not export backup.');
       } finally {
