@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { emptyR2Bucket } from '../scripts/lib/cloudflare-r2-api.mjs';
+import { emptyR2Bucket, isR2BucketNotFoundError } from '../scripts/lib/cloudflare-r2-api.mjs';
+
+describe('isR2BucketNotFoundError', () => {
+  it('detects missing bucket responses', () => {
+    expect(
+      isR2BucketNotFoundError(404, { errors: [{ message: 'The specified bucket does not exist.' }] }, 'guides-smith')
+    ).toBe(true);
+    expect(isR2BucketNotFoundError(403, { errors: [{ message: 'Forbidden' }] }, 'guides-smith')).toBe(false);
+  });
+});
 
 describe('emptyR2Bucket', () => {
   afterEach(() => {
@@ -40,12 +49,34 @@ describe('emptyR2Bucket', () => {
       })
     );
 
-    const count = await emptyR2Bucket('lovely-home-guide-media-smith', {
+    const result = await emptyR2Bucket('lovely-home-guide-media-smith', {
       accountId: 'acct',
       token: 'token'
     });
 
-    expect(count).toBe(3);
+    expect(result).toEqual({ deleted: 3, missing: false });
     expect(deleted.sort()).toEqual(['manuals/doc.pdf', 'photos/a.jpg', 'photos/b.jpg']);
+  });
+
+  it('skips buckets that were already deleted', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json(
+          {
+            success: false,
+            errors: [{ message: 'The specified bucket does not exist.' }]
+          },
+          { status: 404 }
+        )
+      )
+    );
+
+    const result = await emptyR2Bucket('lovely-home-appliance-guides-smith', {
+      accountId: 'acct',
+      token: 'token'
+    });
+
+    expect(result).toEqual({ deleted: 0, missing: true });
   });
 });
