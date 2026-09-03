@@ -42,7 +42,10 @@
     "secrets:e2e-hrrb8ox9": "bash scripts/print-env-secrets-checklist.sh e2e-hrrb8ox9",
     "deploy:e2e-v5jjy14v": "node scripts/check-env-provisioned.mjs e2e-v5jjy14v && wrangler deploy --env e2e-v5jjy14v",
     "d1:migrate:e2e-v5jjy14v": "node scripts/check-env-provisioned.mjs e2e-v5jjy14v && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-v5jjy14v --remote --env e2e-v5jjy14v",
-    "secrets:e2e-v5jjy14v": "bash scripts/print-env-secrets-checklist.sh e2e-v5jjy14v"
+    "secrets:e2e-v5jjy14v": "bash scripts/print-env-secrets-checklist.sh e2e-v5jjy14v",
+    "deploy:e2e-5tpdo7jp": "node scripts/check-env-provisioned.mjs e2e-5tpdo7jp && wrangler deploy --env e2e-5tpdo7jp",
+    "d1:migrate:e2e-5tpdo7jp": "node scripts/check-env-provisioned.mjs e2e-5tpdo7jp && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-5tpdo7jp --remote --env e2e-5tpdo7jp",
+    "secrets:e2e-5tpdo7jp": "bash scripts/print-env-secrets-checklist.sh e2e-5tpdo7jp"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.19.0",
