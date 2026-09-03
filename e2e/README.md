@@ -2,7 +2,7 @@
 
 On-demand Playwright coverage for the real signup path. **Not part of `npm test` or PR CI.** Never run against live Stripe.
 
-It creates a throwaway hub (`e2e-` + random), pays with the Stripe **test** card `4242…`, waits until `GET /api/public/hub-status/{siteId}` reports a live `hub-shell`, cancels the trial via the Stripe API, then waits until the hub is gone from the registry.
+It creates a throwaway hub (`e2e-` + random), pays with the Stripe **test** card `4242…`, waits until `GET /api/public/hub-status/{siteId}` reports a live `hub-shell`, cancels the trial via the Stripe API, then waits until the hub is gone. Signup provision and cancel teardown are queued (not GitHub create-PRs).
 
 Provisioning plus teardown often takes **25–80 minutes**.
 

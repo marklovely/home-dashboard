@@ -1,24 +1,21 @@
 /**
- * Registry creation for paid signups.
+ * Paid-signup job for a new hub.
  *
- * The public signup endpoint deliberately does not touch the registry: it only
- * opens a Stripe Checkout session. This module creates the `platform/sites.yaml`
- * entry once Stripe confirms the subscription, so provisioning can never run
- * for an abandoned or hostile signup.
+ * The public signup endpoint deliberately does not touch git: it only opens a
+ * Stripe Checkout session. Once Stripe confirms the subscription, this module
+ * enqueues a Cloudflare Queue message. The hub-jobs Worker dispatches
+ * Terraform/Worker/Pages in GitHub Actions. Git (sites.yaml) is recorded after
+ * the hub is live, by the concurrency-1 registry queue.
  *
- * The customer's email is *not* written into the payload. It lives in the
- * platform billing database and is read at provision time, keeping personal
- * data out of the public repository.
+ * The customer's email is *not* written into git. It lives in the platform
+ * billing database and is read at provision time.
  */
 import { validateBillingSiteId } from './platformBilling.js';
-import { buildSiteManagePayload } from './platformSiteMutations.js';
-import { dispatchSiteManageWorkflow } from './platformGitHub.js';
+import { enqueueHubProvisionJob } from './platformHubQueues.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { BILLING_PROVISION_BLOCKED_SITE_IDS } from './platformBillingProvision.js';
 
-const CUSTOMER_HUB_ZONE_NAME = 'lovely-hub.com';
-
-/** Events that prove a subscription exists and may create a registry entry. */
+/** Events that prove a subscription exists and may create a hub. */
 export const REGISTRY_TRIGGER_EVENTS = ['checkout.session.completed', 'customer.subscription.created'];
 
 /**
@@ -62,10 +59,10 @@ export function d1UpdateChangedRow(result) {
 }
 
 /**
- * Claim the registry-dispatch lock before talking to GitHub.
+ * Claim the registry-dispatch lock before enqueueing provision.
  * Stripe sends checkout.session.completed and customer.subscription.created
  * together; a read of registry_dispatched_at is not enough — both handlers
- * would see null and open two PRs. Only one UPDATE can win.
+ * would see null and enqueue twice. Only one UPDATE can win.
  *
  * @param {D1Database} db
  * @param {string} siteId
@@ -100,7 +97,7 @@ export async function markRegistryFailed(db, siteId, message) {
 }
 
 /**
- * @param {Record<string, string | undefined>} env
+ * @param {Record<string, unknown>} env
  * @param {D1Database} db
  * @param {object} manifest
  * @param {{
@@ -129,32 +126,20 @@ export async function maybeDispatchSignupRegistry(env, db, manifest, input) {
     return { ok: true, action: 'registry_already_dispatched' };
   }
 
-  const built = buildSiteManagePayload(manifest, 'create', input.siteId, {
-    hostname: `${input.siteId}.${CUSTOMER_HUB_ZONE_NAME}`,
-    zone_name: CUSTOMER_HUB_ZONE_NAME,
-    hub_environment: input.siteId,
-    vanilla: false,
-    terraform: true,
-    attach_hub_api_binding: true
+  const enqueue = await enqueueHubProvisionJob(env, {
+    siteId: input.siteId,
+    action: 'provision'
   });
-
-  if (!built.ok) {
-    const message = built.message ?? 'Could not build registry payload.';
+  if (!enqueue.ok) {
+    const message = enqueue.message ?? enqueue.error ?? 'Provision enqueue failed.';
     await markRegistryFailed(db, input.siteId, message);
-    return { ok: false, error: built.error ?? 'REGISTRY_PAYLOAD_INVALID', message };
-  }
-
-  const dispatch = await dispatchSiteManageWorkflow(env, 'create', built.payload);
-  if (!dispatch.ok) {
-    const message = dispatch.message ?? dispatch.error ?? 'Registry dispatch failed.';
-    await markRegistryFailed(db, input.siteId, message);
-    return { ok: false, error: 'REGISTRY_DISPATCH_FAILED', message };
+    return { ok: false, error: enqueue.error ?? 'REGISTRY_DISPATCH_FAILED', message };
   }
 
   return {
     ok: true,
     action: 'registry_dispatched',
-    workflow: dispatch.workflow,
-    message: dispatch.message
+    queue: enqueue.queue,
+    message: `Enqueued hub provision for ${input.siteId}.`
   };
 }

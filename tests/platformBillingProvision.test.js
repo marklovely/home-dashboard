@@ -8,8 +8,7 @@ import {
 import { handleStripeBillingEvent } from '../functions/api/platform/platformBilling.js';
 
 vi.mock('../functions/api/platform/platformGitHub.js', () => ({
-  dispatchSiteProvisionWorkflow: vi.fn(),
-  dispatchSiteBillingDeprovisionWorkflow: vi.fn()
+  dispatchSiteProvisionWorkflow: vi.fn()
 }));
 
 import { dispatchSiteProvisionWorkflow } from '../functions/api/platform/platformGitHub.js';

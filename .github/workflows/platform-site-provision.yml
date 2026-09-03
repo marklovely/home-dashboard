@@ -104,7 +104,7 @@ jobs:
         env:
           SITE_ID: ${{ inputs.site_id }}
         run: |
-          STACK=$(node scripts/terraform-stack-for-site.mjs "$SITE_ID")
+          STACK=$(node scripts/terraform-stack-for-site.mjs "$SITE_ID" --guess)
           echo "terraform_stack=$STACK" >> "$GITHUB_OUTPUT"
 
   provision-manual:

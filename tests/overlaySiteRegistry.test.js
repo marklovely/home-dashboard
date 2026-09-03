@@ -209,26 +209,36 @@ describe('siteIdFromPlatformPrTitle', () => {
 });
 
 describe('registry jobs replay onto origin/main before opening a PR', () => {
-  it('replays the site snapshot after tests in billing deprovision and site manage', () => {
-    const billing = readFileSync(
-      join(root, '.github/workflows/platform-site-billing-deprovision.yml'),
-      'utf8'
-    );
+  it('replays the site snapshot after tests in site manage', () => {
     const manage = readFileSync(join(root, '.github/workflows/platform-site-manage.yml'), 'utf8');
-    const provision = readFileSync(
-      join(root, '.github/workflows/platform-site-provision-reusable.yml'),
-      'utf8'
-    );
     const deprovision = readFileSync(
       join(root, '.github/workflows/platform-site-deprovision-reusable.yml'),
       'utf8'
     );
-    expect(billing).toContain('node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"');
     expect(manage).toContain('node scripts/replay-site-registry-onto-main.mjs');
-    expect(provision).toContain('node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"');
     expect(deprovision).toContain('node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"');
     expect(manage).toContain('fromJSON(inputs.payload).siteId');
     expect(manage).not.toMatch(/group: platform-registry-git\n/);
+  });
+
+  it('paid signup writes the registry through the hub-registry queue, not a follow-up PR', () => {
+    const provision = readFileSync(
+      join(root, '.github/workflows/platform-site-provision-reusable.yml'),
+      'utf8'
+    );
+    const billing = readFileSync(
+      join(root, '.github/workflows/platform-site-billing-deprovision.yml'),
+      'utf8'
+    );
+    const registry = readFileSync(join(root, '.github/workflows/platform-site-registry.yml'), 'utf8');
+    expect(provision).toContain('node scripts/enqueue-hub-job.mjs');
+    expect(provision).toContain('--action record');
+    expect(provision).not.toContain('gh pr create');
+    expect(billing).toContain('node scripts/enqueue-hub-job.mjs');
+    expect(billing).toContain('--action drop');
+    expect(billing).not.toContain('peter-evans/create-pull-request');
+    expect(registry).toContain('node scripts/commit-site-registry-onto-main.mjs');
+    expect(registry).toContain('group: platform-hub-registry-git');
   });
 
   it('reconciles dirty platform PRs instead of merging with -X ours', () => {

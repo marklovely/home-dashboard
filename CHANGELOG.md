@@ -28,6 +28,8 @@
 
 ### Platform
 
+- Paid signup and cancel go through Terraformed Cloudflare Queues (`lovely-home-hub-provision` concurrency 4, `lovely-home-hub-registry` concurrency 1) instead of racing GitHub create-PRs
+- Hub-jobs Worker dispatches GitHub Actions; git is the ledger written after the hub is live (or after teardown), not the mutex
 - Automated restore from R2 archive when a cancelled hub re-subscribes
 - Add extra marketing-site OTP emails from the platform dashboard (guests, not operators)
 - Marketing site access panel sits at the top of the dashboard, above the site cards

@@ -163,7 +163,8 @@ Wizard PRs on `platform/site-*` branches are queued for **auto-merge (squash)** 
 [`platform-site-pr-automerge.yml`](../.github/workflows/platform-site-pr-automerge.yml) enables auto-merge when the PR opens (with retries while GitHub registers check runs). It runs on `pull_request_target` (workflow from `main` only) for:
 
 - Wizard PRs: `platform/site-*` branch + Platform Admin body marker
-- Provision follow-up PRs: `platform/provision-*` branch + Platform site provision body marker
+- Operator provision/deprovision follow-up PRs still auto-merge if opened
+- Paid signup/cancel do **not** open those PRs — `platform-site-registry.yml` pushes overlay commits to `main` with `PLATFORM_GITHUB_TOKEN` (allow that PAT to bypass the pull-request rule)
 
 Auto-merge is enabled **before** CI finishes; GitHub merges only after required checks pass.
 

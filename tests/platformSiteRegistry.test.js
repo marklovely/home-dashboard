@@ -111,7 +111,7 @@ describe('site registry validation', () => {
     expect(validateDeprovisionSiteId('removed', {})).toBeNull();
   });
 
-  it('requires billing deprovision site to remain in registry', () => {
+  it('allows billing deprovision when the hub is not in yaml yet', () => {
     const registry = {
       practice: {
         hostname: 'practice.lovely-hub.com',
@@ -120,7 +120,7 @@ describe('site registry validation', () => {
       }
     };
     expect(validateBillingDeprovisionSiteId('practice', registry)).toBeNull();
-    expect(validateBillingDeprovisionSiteId('missing', registry)).toMatch(/not in platform\/sites\.yaml/i);
+    expect(validateBillingDeprovisionSiteId('missing', registry)).toBeNull();
     expect(validateBillingDeprovisionSiteId('production', registry)).toMatch(/protected/i);
   });
 
