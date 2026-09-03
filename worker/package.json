@@ -33,10 +33,7 @@
     "secrets:smith": "bash scripts/print-env-secrets-checklist.sh smith",
     "deploy:wagtail": "node scripts/check-env-provisioned.mjs wagtail && wrangler deploy --env wagtail",
     "d1:migrate:wagtail": "node scripts/check-env-provisioned.mjs wagtail && wrangler d1 migrations apply lovely-home-appliance-manuals-wagtail --remote --env wagtail",
-    "secrets:wagtail": "bash scripts/print-env-secrets-checklist.sh wagtail",
-    "deploy:e2e-t158exbh": "node scripts/check-env-provisioned.mjs e2e-t158exbh && wrangler deploy --env e2e-t158exbh",
-    "d1:migrate:e2e-t158exbh": "node scripts/check-env-provisioned.mjs e2e-t158exbh && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-t158exbh --remote --env e2e-t158exbh",
-    "secrets:e2e-t158exbh": "bash scripts/print-env-secrets-checklist.sh e2e-t158exbh"
+    "secrets:wagtail": "bash scripts/print-env-secrets-checklist.sh wagtail"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.19.0",
