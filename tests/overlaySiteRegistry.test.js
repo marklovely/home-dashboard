@@ -238,7 +238,12 @@ describe('registry jobs replay onto origin/main before opening a PR', () => {
     expect(billing).toContain('--action drop');
     expect(billing).not.toContain('peter-evans/create-pull-request');
     expect(registry).toContain('node scripts/commit-site-registry-onto-main.mjs');
+    expect(registry).toContain('node scripts/validate-registry-site-id.mjs');
+    expect(registry).not.toContain('validate-deploy-site-id.mjs');
     expect(registry).toContain('group: platform-hub-registry-git');
+    const validate = readFileSync(join(root, 'scripts/validate-registry-site-id.mjs'), 'utf8');
+    expect(validate).toContain('validateSiteId');
+    expect(validate).not.toContain('validate-deploy-site-id');
   });
 
   it('reconciles dirty platform PRs instead of merging with -X ours', () => {
