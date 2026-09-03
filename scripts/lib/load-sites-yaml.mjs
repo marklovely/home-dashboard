@@ -4,12 +4,11 @@ import { parseEmailList } from './email-lists.mjs';
 /** @typedef {string | boolean | string[]} SiteFieldValue */
 
 /**
- * Parse platform/sites.yaml (fixed manifest shape used by this repo).
- * @param {string} filePath
+ * Parse platform/sites.yaml text (fixed manifest shape used by this repo).
+ * @param {string} text
  * @returns {Record<string, Record<string, SiteFieldValue>>}
  */
-export function loadSitesYaml(filePath) {
-  const text = readFileSync(filePath, 'utf8');
+export function parseSitesYaml(text) {
   /** @type {Record<string, Record<string, SiteFieldValue>>} */
   const sites = {};
   let current = null;
@@ -61,4 +60,13 @@ export function loadSitesYaml(filePath) {
   }
 
   return sites;
+}
+
+/**
+ * Parse platform/sites.yaml (fixed manifest shape used by this repo).
+ * @param {string} filePath
+ * @returns {Record<string, Record<string, SiteFieldValue>>}
+ */
+export function loadSitesYaml(filePath) {
+  return parseSitesYaml(readFileSync(filePath, 'utf8'));
 }

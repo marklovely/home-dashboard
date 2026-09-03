@@ -12,15 +12,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { registryDeleteSyncState } from './lib/registry-delete-sync.mjs';
+import { gitResetToOriginMain } from './lib/git-reset-origin-main.mjs';
 
 const siteId = String(process.argv[2] ?? '').trim();
 if (!siteId) {
   console.error('Usage: node scripts/sync-git-main-before-site-delete.mjs <site_id>');
-  process.exit(1);
-}
-
-if (!process.env.GITHUB_ACTIONS) {
-  console.error('Refusing to git reset --hard outside GitHub Actions.');
   process.exit(1);
 }
 
@@ -40,8 +36,11 @@ function writeOutput(name, value) {
 }
 
 function fetchMainAndReset() {
-  execFileSync('git', ['fetch', 'origin', 'main'], { stdio: 'inherit' });
-  execFileSync('git', ['reset', '--hard', 'FETCH_HEAD'], { stdio: 'inherit' });
+  gitResetToOriginMain({
+    cwd: root,
+    token: process.env.PLATFORM_GITHUB_TOKEN || process.env.GH_TOKEN,
+    repository: process.env.GITHUB_REPOSITORY
+  });
 }
 
 for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {

@@ -23,6 +23,9 @@ permissions:
 jobs:
   manage-site:
     runs-on: ubuntu-latest
+    concurrency:
+      group: platform-registry-git
+      cancel-in-progress: false
     env:
       TZ: Europe/London
     steps:
@@ -72,6 +75,15 @@ jobs:
           terraform validate
 
       - name: Run registry test
+        run: npm test -- tests/platformSitesYaml.test.js
+
+      - name: Replay registry edit onto origin/main
+        env:
+          SITE_ID: ${{ steps.manage.outputs.site_id }}
+          PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+        run: node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"
+
+      - name: Re-test registry after replay
         run: npm test -- tests/platformSitesYaml.test.js
 
       - name: Check PR token

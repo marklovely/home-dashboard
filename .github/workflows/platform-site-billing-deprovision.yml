@@ -154,6 +154,13 @@ jobs:
       - name: Run tests
         run: npm run test
 
+      - name: Replay registry delete onto origin/main
+        if: steps.sync_main.outputs.site_present != 'false'
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+          PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+        run: node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"
+
       - name: Check PR token
         run: |
           if [ -z "${{ secrets.PLATFORM_GITHUB_TOKEN }}" ]; then

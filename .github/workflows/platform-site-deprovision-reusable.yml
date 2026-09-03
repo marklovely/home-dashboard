@@ -127,6 +127,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"
           git add platform-admin/public/platform-manifest.json
           if git diff --staged --quiet; then
             echo "No manifest changes to commit."
