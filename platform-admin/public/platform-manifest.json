@@ -465,6 +465,72 @@
           "done": null
         }
       ]
+    },
+    "e2e-t158exbh": {
+      "siteId": "e2e-t158exbh",
+      "hostname": "e2e-t158exbh.lovely-hub.com",
+      "hubEnvironment": "e2e-t158exbh",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "hasOwnerEmails": false,
+      "demoPublic": false,
+      "accessEnabled": true,
+      "pagesProject": "home-dashboard-e2e-t158exbh",
+      "workerName": "lovely-home-hub-api-e2e-t158exbh",
+      "pagesUrl": "https://e2e-t158exbh.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-e2e-t158exbh.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "f04546dbf15edafedb7e5f8904cd62f92b46995c99b4cf29bb8fc7fd025e3024,10796dff8601a7aa617892616fd0bca0306f13a028ef1cf37c64c4363b352fc0",
+        "access_enabled": true,
+        "access_pages_app_id": "c00f6f98-c1ea-4d8c-a8e3-2246658fea76",
+        "access_pages_aud": "10796dff8601a7aa617892616fd0bca0306f13a028ef1cf37c64c4363b352fc0",
+        "access_worker_app_id": "e850dcad-0fa3-41ff-9e62-2141cf888610",
+        "access_worker_aud": "f04546dbf15edafedb7e5f8904cd62f92b46995c99b4cf29bb8fc7fd025e3024",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "2cee07e7-9053-44da-8800-94acea221226",
+        "d1_database_name": "lovely-home-appliance-manuals-e2e-t158exbh",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "e2e-t158exbh.lovely-hub.com",
+        "hub_environment": "e2e-t158exbh",
+        "pages_project": "home-dashboard-e2e-t158exbh",
+        "pages_url": "https://e2e-t158exbh.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-e2e-t158exbh",
+        "r2_media_bucket": "lovely-home-guide-media-e2e-t158exbh",
+        "site_id": "e2e-t158exbh",
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-e2e-t158exbh.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-e2e-t158exbh.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-e2e-t158exbh"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
     }
   }
 }
