@@ -221,4 +221,13 @@ sites = {
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
   }
 
+  e2e-k89qubql = {
+    hostname        = "e2e-k89qubql.lovely-hub.com"
+    hub_environment = "e2e-k89qubql"
+    vanilla         = false
+    terraform       = true
+    zone_name       = "lovely-hub.com"
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+  }
+
 }
