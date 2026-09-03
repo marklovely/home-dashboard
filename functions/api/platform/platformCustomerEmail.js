@@ -168,6 +168,18 @@ export function buildCustomerEmail(input) {
 }
 
 /**
+ * @param {{ meta?: { changes?: number | null } } | null | undefined} result
+ */
+function d1UpdateChangedRow(result) {
+  return Number(result?.meta?.changes ?? 0) > 0;
+}
+
+/**
+ * Claim the lifecycle-mail lock before calling Resend.
+ * Stripe sends checkout.session.completed and customer.subscription.created
+ * together; a read of signup_email_sent_at is not enough — both handlers would
+ * send. Only one UPDATE can win.
+ *
  * @param {D1Database} db
  * @param {string} siteId
  * @param {string} column
@@ -177,9 +189,29 @@ export async function markCustomerEmailSent(db, siteId, column) {
     throw new Error(`Unknown customer email column: ${column}`);
   }
   const now = Date.now();
-  await db
-    .prepare(`UPDATE site_billing SET ${column} = ?, updated_at = ? WHERE site_id = ?`)
+  const result = await db
+    .prepare(
+      `UPDATE site_billing SET ${column} = ?, updated_at = ? WHERE site_id = ? AND ${column} IS NULL`
+    )
     .bind(now, now, siteId)
+    .run();
+  return d1UpdateChangedRow(result);
+}
+
+/**
+ * Undo a claim when Resend fails so Stripe can retry the same event.
+ *
+ * @param {D1Database} db
+ * @param {string} siteId
+ * @param {string} column
+ */
+export async function clearCustomerEmailSent(db, siteId, column) {
+  if (!SENT_COLUMN_VALUES.has(column)) {
+    throw new Error(`Unknown customer email column: ${column}`);
+  }
+  await db
+    .prepare(`UPDATE site_billing SET ${column} = NULL, updated_at = ? WHERE site_id = ?`)
+    .bind(Date.now(), siteId)
     .run();
 }
 
@@ -260,6 +292,11 @@ export async function maybeSendCustomerLifecycleEmail(env, db, input, fetchImpl 
     return { ok: true, action: 'email_already_sent' };
   }
 
+  const claimed = await markCustomerEmailSent(db, input.siteId, column);
+  if (!claimed) {
+    return { ok: true, action: 'email_already_sent' };
+  }
+
   const built = buildCustomerEmail({
     kind,
     siteId: input.siteId,
@@ -268,9 +305,9 @@ export async function maybeSendCustomerLifecycleEmail(env, db, input, fetchImpl 
   });
   const sent = await sendResendEmail(env, { to, ...built }, fetchImpl);
   if (!sent.ok) {
+    await clearCustomerEmailSent(db, input.siteId, column);
     return { ok: false, error: sent.error, message: sent.message };
   }
 
-  await markCustomerEmailSent(db, input.siteId, column);
   return { ok: true, action: `email_${kind}_sent` };
 }

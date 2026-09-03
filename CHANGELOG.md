@@ -28,6 +28,8 @@
 
 ### Platform
 
+- GitHub Actions HTTP-push to hub queues sends a JSON object body (Cloudflare rejects a stringified `body` with 400)
+- Signup lifecycle mail claims the D1 sent-at column before Resend so `checkout.session.completed` and `customer.subscription.created` cannot double-send
 - Paid signup and cancel go through Terraformed Cloudflare Queues (`lovely-home-hub-provision` concurrency 4, `lovely-home-hub-registry` concurrency 1) instead of racing GitHub create-PRs
 - Platform admin Terraform workflow applies `module.platform_admin` (queues + hub-jobs Worker) without touching hub sites
 - Worker queue consumers omit `visibility_timeout_ms` (HTTP-pull only); generated tfvars keep the pre-launch marketing Access gate on
