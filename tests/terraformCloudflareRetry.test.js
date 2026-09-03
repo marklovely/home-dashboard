@@ -42,6 +42,14 @@ describe('terraformCloudflareRetryDecision', () => {
     expect(decision.message).toMatch(/not empty/i);
   });
 
+  it('does not retry Pages project delete when deployments must be pruned first', () => {
+    const decision = terraformCloudflareRetryDecision(
+      '400 Bad Request {"errors":[{"code":8000076,"message":"Your project has too many deployments to be deleted"}]}'
+    );
+    expect(decision.retry).toBe(false);
+    expect(decision.message).toMatch(/too many deployments/i);
+  });
+
   it('retries other apply failures so transient HTTP can recover', () => {
     expect(terraformCloudflareRetryDecision('Error: failed to make http request').retry).toBe(true);
   });

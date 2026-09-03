@@ -66,6 +66,14 @@ export function terraformCloudflareRetryDecision(output) {
     };
   }
 
+  if (/8000076|too many deployments to be deleted/i.test(text)) {
+    return {
+      retry: false,
+      message:
+        'Cloudflare Pages project has too many deployments — prune Pages deployments before terraform destroy (scripts/prune-hub-pages-deployments.mjs)'
+    };
+  }
+
   if (/\b400\b Bad Request/i.test(text) && !/\b429\b|rate limit/i.test(text)) {
     return { retry: false, message: 'Cloudflare 400 Bad Request' };
   }
