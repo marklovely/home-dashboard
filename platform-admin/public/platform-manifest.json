@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T16:51:29.911Z",
+  "generatedAt": "2026-09-03T21:17:17.679Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -371,72 +371,6 @@
         "worker_api_origin": "https://lovely-home-hub-api-wagtail.mark-lovely67.workers.dev",
         "worker_hostname": "lovely-home-hub-api-wagtail.mark-lovely67.workers.dev",
         "worker_name": "lovely-home-hub-api-wagtail"
-      },
-      "provisioning": [
-        {
-          "id": "terraform",
-          "label": "Terraform contract in platform manifest",
-          "done": true
-        },
-        {
-          "id": "worker",
-          "label": "Worker deployed (Wrangler)",
-          "done": null
-        },
-        {
-          "id": "pages",
-          "label": "Pages production deployment",
-          "done": null
-        },
-        {
-          "id": "hub-api",
-          "label": "HUB_API Pages binding",
-          "done": null
-        },
-        {
-          "id": "access-probe",
-          "label": "Access + API probe healthy",
-          "done": null
-        }
-      ]
-    },
-    "smith": {
-      "siteId": "smith",
-      "hostname": "smith.lovely-hub.com",
-      "hubEnvironment": "smith",
-      "vanilla": false,
-      "terraform": true,
-      "attachHubApiBinding": true,
-      "hasOwnerEmails": false,
-      "demoPublic": false,
-      "accessEnabled": true,
-      "pagesProject": "home-dashboard-smith",
-      "workerName": "lovely-home-hub-api-smith",
-      "pagesUrl": "https://smith.lovely-hub.com",
-      "workerApiOrigin": "https://lovely-home-hub-api-smith.mark-lovely67.workers.dev",
-      "contract": {
-        "access_aud_combined": "87a9b77bcdb9565688f9c12e71044ee9fa266d3c4ff9cd98b1307af741b9c42e,9dfd73f2298e7343fc039e64d95c38746140c7010879750e1ef54bcce181d89b",
-        "access_enabled": true,
-        "access_pages_app_id": "7c718967-69da-4bd4-9fd0-7caaab1a1111",
-        "access_pages_aud": "9dfd73f2298e7343fc039e64d95c38746140c7010879750e1ef54bcce181d89b",
-        "access_worker_app_id": "deccb5a2-725d-4708-bcd9-b413a81882c9",
-        "access_worker_aud": "87a9b77bcdb9565688f9c12e71044ee9fa266d3c4ff9cd98b1307af741b9c42e",
-        "cf_access_team_domain": "lovely-home",
-        "d1_database_id": "a67135fd-9a7a-4e8c-8910-e7c523fe782c",
-        "d1_database_name": "lovely-home-appliance-manuals-smith",
-        "default_latitude": "51.5074",
-        "default_longitude": "-0.1278",
-        "hostname": "smith.lovely-hub.com",
-        "hub_environment": "smith",
-        "pages_project": "home-dashboard-smith",
-        "pages_url": "https://smith.lovely-hub.com",
-        "r2_guides_bucket": "lovely-home-appliance-guides-smith",
-        "r2_media_bucket": "lovely-home-guide-media-smith",
-        "site_id": "smith",
-        "vanilla": false,
-        "worker_api_origin": "https://lovely-home-hub-api-smith.mark-lovely67.workers.dev",
-        "worker_hostname": "lovely-home-hub-api-smith.mark-lovely67.workers.dev",
-        "worker_name": "lovely-home-hub-api-smith"
       },
       "provisioning": [
         {
