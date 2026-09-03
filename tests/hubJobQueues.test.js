@@ -56,6 +56,7 @@ describe('hub job terraform', () => {
     expect(queues).toContain('queue_name = local.hub_registry_queue_name');
     expect(queues).toMatch(/max_concurrency\s+= 4/);
     expect(queues).toMatch(/max_concurrency\s+= 1/);
+    expect(queues).not.toContain('visibility_timeout_ms');
     expect(worker).toContain('lovely-home-hub-jobs');
     expect(pages).toContain('HUB_PROVISION_QUEUE');
     expect(pages).toContain('HUB_REGISTRY_QUEUE');

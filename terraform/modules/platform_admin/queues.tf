@@ -30,12 +30,11 @@ resource "cloudflare_queue_consumer" "hub_provision" {
   type              = "worker"
   dead_letter_queue = cloudflare_queue.hub_provision_dlq.queue_name
   settings = {
-    batch_size            = 1
-    max_concurrency       = 4
-    max_retries           = 5
-    max_wait_time_ms      = 500
-    retry_delay           = 30
-    visibility_timeout_ms = 60000
+    batch_size       = 1
+    max_concurrency  = 4
+    max_retries      = 5
+    max_wait_time_ms = 500
+    retry_delay      = 30
   }
 }
 
@@ -46,11 +45,10 @@ resource "cloudflare_queue_consumer" "hub_registry" {
   type              = "worker"
   dead_letter_queue = cloudflare_queue.hub_registry_dlq.queue_name
   settings = {
-    batch_size            = 1
-    max_concurrency       = 1
-    max_retries           = 8
-    max_wait_time_ms      = 500
-    retry_delay           = 30
-    visibility_timeout_ms = 900000
+    batch_size       = 1
+    max_concurrency  = 1
+    max_retries      = 8
+    max_wait_time_ms = 500
+    retry_delay      = 30
   }
 }

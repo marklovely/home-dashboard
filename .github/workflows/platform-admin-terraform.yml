@@ -50,6 +50,7 @@ jobs:
       HUB_PROXY_SECRETS_JSON: ${{ secrets.HUB_PROXY_SECRETS_JSON }}
       PLATFORM_SITE_ARCHIVE_SECRET: ${{ secrets.PLATFORM_SITE_ARCHIVE_SECRET }}
       GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+      MARKETING_SITE_ACCESS_PROTECTED: 'true'
       AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_R2_SECRET_ACCESS_KEY }}
       TF_STATE_R2_BUCKET: ${{ secrets.TF_STATE_R2_BUCKET }}
@@ -98,8 +99,17 @@ jobs:
       - name: Apply platform admin
         run: |
           set -euo pipefail
-          terraform -chdir=terraform apply -auto-approve \
-            -var-file=environments/hub.generated.tfvars \
-            -var-file=environments/hub.generated.secrets.tfvars.json \
-            -var=terraform_stack=platform \
+          TF_ARGS=(
+            -var-file=environments/hub.generated.tfvars
+            -var-file=environments/hub.generated.secrets.tfvars.json
+            -var=terraform_stack=platform
             -target='module.platform_admin[0]'
+            -target='module.marketing_site[0]'
+          )
+          terraform -chdir=terraform plan -out=tfplan "${TF_ARGS[@]}"
+          if terraform -chdir=terraform show -no-color tfplan | grep -q 'module.marketing_site\[0\].*will be destroyed'; then
+            echo "::error::Refusing to apply: plan would destroy the marketing-site Access gate."
+            terraform -chdir=terraform show -no-color tfplan
+            exit 1
+          fi
+          terraform -chdir=terraform apply -auto-approve tfplan

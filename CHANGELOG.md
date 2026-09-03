@@ -30,6 +30,7 @@
 
 - Paid signup and cancel go through Terraformed Cloudflare Queues (`lovely-home-hub-provision` concurrency 4, `lovely-home-hub-registry` concurrency 1) instead of racing GitHub create-PRs
 - Platform admin Terraform workflow applies `module.platform_admin` (queues + hub-jobs Worker) without touching hub sites
+- Worker queue consumers omit `visibility_timeout_ms` (HTTP-pull only); generated tfvars keep the pre-launch marketing Access gate on
 - Hub-jobs Worker dispatches GitHub Actions; git is the ledger written after the hub is live (or after teardown), not the mutex
 - Automated restore from R2 archive when a cancelled hub re-subscribes
 - Add extra marketing-site OTP emails from the platform dashboard (guests, not operators)

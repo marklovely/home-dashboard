@@ -188,12 +188,11 @@ const marketingSiteOrigin = process.env.MARKETING_SITE_ORIGIN?.trim() || 'https:
 lines.push(`marketing_site_origin = "${escapeHcl(marketingSiteOrigin)}"`, '');
 
 const marketingAccessFlag = process.env.MARKETING_SITE_ACCESS_PROTECTED?.trim().toLowerCase() ?? '';
-const marketingSiteAccessProtected =
-  marketingAccessFlag === 'true' || marketingAccessFlag === '1' || marketingAccessFlag === 'yes'
-    ? true
-    : marketingAccessFlag === 'false' || marketingAccessFlag === '0' || marketingAccessFlag === 'no'
-      ? false
-      : false;
+// Pre-launch default is on. An unset CI env must not drop the marketing Access
+// gate — that destroy is a dependency of module.platform_admin.
+const marketingSiteAccessProtected = !(
+  marketingAccessFlag === 'false' || marketingAccessFlag === '0' || marketingAccessFlag === 'no'
+);
 lines.push(`marketing_site_access_protected = ${marketingSiteAccessProtected}`, '');
 
 const publicSignupFlag = process.env.PUBLIC_SIGNUP_ENABLED?.trim().toLowerCase() ?? '';

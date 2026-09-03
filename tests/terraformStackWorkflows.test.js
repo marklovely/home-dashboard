@@ -53,6 +53,8 @@ describe('terraform stack workflows', () => {
     const workflow = readWorkflow('.github/workflows/platform-admin-terraform.yml');
     expect(workflow).toContain("bash scripts/terraform-init-r2.sh platform");
     expect(workflow).toContain("-target='module.platform_admin[0]'");
+    expect(workflow).toContain("-target='module.marketing_site[0]'");
+    expect(workflow).toContain("MARKETING_SITE_ACCESS_PROTECTED: 'true'");
     expect(workflow).toContain('group: platform-terraform-state-platform');
     expect(workflow).not.toContain('module.hub_site');
   });
