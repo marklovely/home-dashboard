@@ -207,18 +207,20 @@ sites = {
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
   }
 
-  e2e-4b8t4bqf = {
-    hostname        = "e2e-4b8t4bqf.lovely-hub.com"
-    hub_environment = "e2e-4b8t4bqf"
+
+
+  e2e-n6tr2p60 = {
+    hostname        = "e2e-n6tr2p60.lovely-hub.com"
+    hub_environment = "e2e-n6tr2p60"
     vanilla         = false
     terraform       = true
     zone_name       = "lovely-hub.com"
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
   }
 
-  e2e-n6tr2p60 = {
-    hostname        = "e2e-n6tr2p60.lovely-hub.com"
-    hub_environment = "e2e-n6tr2p60"
+  e2e-4b8t4bqf = {
+    hostname        = "e2e-4b8t4bqf.lovely-hub.com"
+    hub_environment = "e2e-4b8t4bqf"
     vanilla         = false
     terraform       = true
     zone_name       = "lovely-hub.com"
