@@ -121,6 +121,13 @@ export async function listAllPagesDeployments(accountId, token, projectName, opt
 }
 
 /**
+ * @param {Error} error
+ */
+export function isActiveProductionDeploymentDeleteError(error) {
+  return /active production deployment/i.test(error instanceof Error ? error.message : String(error));
+}
+
+/**
  * @param {string} accountId
  * @param {string} token
  * @param {string} projectName
@@ -163,23 +170,39 @@ export async function prunePagesProjectDeployments(projectName, options) {
   });
 
   if (deploymentIds.length === 0) {
-    return { projectName: name, deleted: 0, remaining: 0 };
+    return { projectName: name, deleted: 0, skippedActiveProduction: 0, remaining: 0 };
   }
 
   options.onProgress?.(`Deleting ${deploymentIds.length} deployment(s) from ${name}`);
   let deleted = 0;
+  let skippedActiveProduction = 0;
 
   for (let index = 0; index < deploymentIds.length; index += DEFAULT_DELETE_CONCURRENCY) {
     const batch = deploymentIds.slice(index, index + DEFAULT_DELETE_CONCURRENCY);
-    await Promise.all(
-      batch.map(async (deploymentId) => {
-        await deletePagesDeployment(accountId, token, name, deploymentId);
-        deleted += 1;
-      })
+    const results = await Promise.allSettled(
+      batch.map((deploymentId) => deletePagesDeployment(accountId, token, name, deploymentId))
     );
-    options.onProgress?.(`Deleted ${deleted}/${deploymentIds.length} deployment(s) from ${name}`);
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        deleted += 1;
+        continue;
+      }
+      if (isActiveProductionDeploymentDeleteError(result.reason)) {
+        skippedActiveProduction += 1;
+        continue;
+      }
+      throw result.reason;
+    }
+    options.onProgress?.(
+      `Deleted ${deleted}/${deploymentIds.length} deployment(s) from ${name}${skippedActiveProduction ? ` (${skippedActiveProduction} active production skipped)` : ''}`
+    );
   }
 
   const remaining = await listAllPagesDeployments(accountId, token, name);
-  return { projectName: name, deleted, remaining: remaining.length };
+  return {
+    projectName: name,
+    deleted,
+    skippedActiveProduction,
+    remaining: remaining.length
+  };
 }
