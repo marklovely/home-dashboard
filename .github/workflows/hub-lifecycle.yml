@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: hub-lifecycle
+  group: hub-lifecycle-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:

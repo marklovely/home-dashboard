@@ -104,6 +104,7 @@ export async function dispatchSiteManageWorkflow(env, action, payload) {
         ref,
         inputs: {
           action,
+          site_id: String(payload.siteId ?? ''),
           payload: JSON.stringify(payload)
         }
       })

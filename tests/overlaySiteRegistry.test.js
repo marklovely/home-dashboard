@@ -227,13 +227,16 @@ describe('registry jobs replay onto origin/main before opening a PR', () => {
     expect(manage).toContain('node scripts/replay-site-registry-onto-main.mjs');
     expect(provision).toContain('node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"');
     expect(deprovision).toContain('node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"');
-    expect(manage).toContain('group: platform-registry-git');
+    expect(manage).toContain('fromJSON(inputs.payload).siteId');
+    expect(manage).not.toMatch(/group: platform-registry-git\n/);
   });
 
   it('reconciles dirty platform PRs instead of merging with -X ours', () => {
     const yml = readFileSync(join(root, '.github/workflows/platform-site-pr-automerge.yml'), 'utf8');
     expect(yml).toContain('node scripts/replay-dirty-platform-pr.mjs');
     expect(yml).not.toContain('git merge origin/main -X ours');
-    expect(yml).toContain('cron:');
+    expect(yml).toContain("cron: '*/1 * * * *'");
+    expect(yml).toContain('closed');
+    expect(yml).toContain('github.event.pull_request.merged');
   });
 });

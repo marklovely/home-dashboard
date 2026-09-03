@@ -244,6 +244,8 @@ Provisioning runs **one platform hub at a time** (`max-parallel: 1` + `platform-
 
 Hub names stay unique: signup checks the live manifest, active billing, and an atomic D1 reservation (`signup_slug_reservations`) **before** Stripe Checkout. A second person cannot take a name that is already live or held.
 
+Registry PRs (`platform-site-manage`) lock **per hub**, not globally. GitHub concurrency is not a queue: one shared group keeps a single pending job and **cancels** the rest, which is how four overlapping signups only opened two PRs. Different households run in parallel; overlay onto `origin/main` plus a reconcile when another `platform:` PR merges (and a one-minute cron) replay leftover dirty PRs. A Durable Object or Cloudflare Queue would be a real FIFO if we ever move the registry off git; while `sites.yaml` lives in this repo, GitHub Actions is the right writer and a bad waiter.
+
 ### Split Terraform state (platform vs customers)
 
 CI no longer uses the combined `home-dashboard/hub.tfstate` key. After that change landed, **Split Terraform state stacks** copied it into:
