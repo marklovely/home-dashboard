@@ -393,3 +393,58 @@ bucket_name = "lovely-home-guide-media-wagtail"
 [[env.wagtail.r2_buckets]]
 binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
+
+# ---------------------------------------------------------------------------
+# E2e-4xf0y4hx environment — Terraform-managed (see docs/platform-terraform.md)
+# Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs e2e-4xf0y4hx
+# ---------------------------------------------------------------------------
+
+[env.e2e-4xf0y4hx]
+name = "lovely-home-hub-api-e2e-4xf0y4hx"
+
+[env.e2e-4xf0y4hx.vars]
+HUB_ENVIRONMENT = "e2e-4xf0y4hx"
+
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://e2e-4xf0y4hx.lovely-hub.com,https://home-dashboard-e2e-4xf0y4hx.pages.dev,https://*.home-dashboard-e2e-4xf0y4hx.pages.dev,https://*.pages.dev"
+
+HOME_LATITUDE = "51.5074"
+
+HOME_LONGITUDE = "-0.1278"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
+ACCESS_PAGES_APP_ID = "b7725d18-111c-4ac1-a0ca-53508effe955"
+
+ACCESS_WORKER_APP_ID = "e33c238c-e79c-4412-808c-a5f4623c916c"
+
+[[env.e2e-4xf0y4hx.durable_objects.bindings]]
+name = "OWNER_AUTH_LIMITER"
+class_name = "OwnerAuthLimiter"
+
+[[env.e2e-4xf0y4hx.durable_objects.bindings]]
+name = "CONTROL_ACTION_LIMITER"
+class_name = "ControlActionLimiter"
+
+[[env.e2e-4xf0y4hx.r2_buckets]]
+binding = "APPLIANCE_GUIDES"
+bucket_name = "lovely-home-appliance-guides-e2e-4xf0y4hx"
+
+[[env.e2e-4xf0y4hx.d1_databases]]
+binding = "APPLIANCE_MANUALS_DB"
+database_name = "lovely-home-appliance-manuals-e2e-4xf0y4hx"
+database_id = "99f98349-9ee6-49a9-a2d8-9fdf11fdc3b2"
+migrations_dir = "migrations"
+
+[[env.e2e-4xf0y4hx.d1_databases]]
+binding = "HOUSE_GUIDE_DB"
+database_name = "lovely-home-appliance-manuals-e2e-4xf0y4hx"
+database_id = "99f98349-9ee6-49a9-a2d8-9fdf11fdc3b2"
+migrations_dir = "migrations"
+
+[[env.e2e-4xf0y4hx.r2_buckets]]
+binding = "GUIDE_MEDIA"
+bucket_name = "lovely-home-guide-media-e2e-4xf0y4hx"
+
+[[env.e2e-4xf0y4hx.r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"
