@@ -43,6 +43,15 @@ describe('customer lifecycle email copy', () => {
   it('formats trial end dates in the UK', () => {
     expect(formatUkDate(Date.UTC(2026, 8, 7, 12))).toMatch(/September 2026/);
   });
+
+  it('mentions full backup media and twelve-month hub name hold on cancel', () => {
+    const mail = buildCustomerEmail({ kind: 'canceled', siteId: 'rose-cottage' });
+    expect(mail.text).toMatch(/photos/i);
+    expect(mail.text).toMatch(/appliance manuals/i);
+    expect(mail.text).toMatch(/hub name/i);
+    expect(mail.text).toMatch(/12 months/i);
+    expect(mail.text).not.toMatch(/\bslug\b/i);
+  });
 });
 
 function createBillingDbMock() {

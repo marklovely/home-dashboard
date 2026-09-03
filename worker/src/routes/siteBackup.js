@@ -4,10 +4,12 @@ import { loadImportableGuideCatalog } from '../houseGuide/exportCatalog.js';
 import { jsonError, methodNotAllowed } from '../lib/errors.js';
 import {
   SITE_BACKUP_FORMAT_VERSION,
+  SITE_BACKUP_FORMAT_VERSION_LEGACY,
   buildSiteBackupPayload,
   parseSiteBackupScope,
   restoreSiteBackupPayload
 } from '../lib/siteBackupPayload.js';
+import { buildSiteBackupZipBytes } from '../lib/siteBackupArchive.js';
 
 export { SITE_BACKUP_FORMAT_VERSION };
 
@@ -43,6 +45,25 @@ export async function handleSiteBackupGet(request, env, correlationId) {
 
   const url = new URL(request.url);
   const scope = parseSiteBackupScope(url.searchParams.get('scope'));
+  const format = url.searchParams.get('format')?.trim().toLowerCase() ?? 'json';
+
+  if (format === 'zip') {
+    if (scope !== 'full') {
+      return jsonError(400, 'BAD_REQUEST', 'Zip backup is only available for full site backups.', {
+        correlationId
+      });
+    }
+    const zipBytes = await buildSiteBackupZipBytes(env, { scope });
+    return new Response(zipBytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/zip',
+        'Cache-Control': 'no-store',
+        'Content-Disposition': 'attachment; filename="lovely-home-hub-backup.zip"'
+      }
+    });
+  }
+
   const payload = await buildSiteBackupPayload(env, { scope });
   const filename =
     scope === 'guide' ? 'lovely-home-guide-backup.json' : 'lovely-home-hub-backup.json';
@@ -84,7 +105,10 @@ export async function handleSiteBackupRestore(request, env, correlationId) {
   }
 
   const formatVersion = Number(body.formatVersion ?? SITE_BACKUP_FORMAT_VERSION);
-  if (formatVersion !== SITE_BACKUP_FORMAT_VERSION) {
+  if (
+    formatVersion !== SITE_BACKUP_FORMAT_VERSION &&
+    formatVersion !== SITE_BACKUP_FORMAT_VERSION_LEGACY
+  ) {
     return jsonError(400, 'BAD_REQUEST', `Unsupported backup format version ${formatVersion}.`, { correlationId });
   }
 

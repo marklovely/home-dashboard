@@ -41,4 +41,14 @@ describe('backupEncryption', () => {
     );
     expect(isEncryptedBackupDocument({ formatVersion: 1, backupScope: 'guide' })).toBe(false);
   });
+
+  it('encrypts and decrypts zip backup bytes', async () => {
+    const zipBytes = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
+    const envelope = await encryptBackupDocument(zipBytes, 'zip-pass', { payloadType: 'zip' });
+    expect(envelope.payloadType).toBe('zip');
+
+    const restored = await decryptBackupDocument(envelope, 'zip-pass');
+    expect(restored).toBeInstanceOf(Uint8Array);
+    expect(restored).toEqual(zipBytes);
+  });
 });

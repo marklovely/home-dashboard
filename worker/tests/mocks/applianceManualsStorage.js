@@ -40,7 +40,10 @@ export function createInMemoryR2Bucket() {
       if (!hit) return null;
       return {
         body: hit.data,
-        httpMetadata: hit.httpMetadata
+        httpMetadata: hit.httpMetadata,
+        async arrayBuffer() {
+          return hit.data;
+        }
       };
     },
     async delete(key) {

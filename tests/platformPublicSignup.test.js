@@ -116,6 +116,17 @@ describe('platform public signup', () => {
     expect(result.reason).toMatch(/being set up/i);
   });
 
+  it('blocks a hub name held after cancel', async () => {
+    vi.mocked(getSiteBilling).mockResolvedValue({
+      site_id: 'rose-cottage',
+      slug_held_until: Date.now() + 60_000
+    });
+    const result = await checkPublicSignupSlug(emptyManifest, 'rose-cottage', billingDb);
+    expect(result.available).toBe(false);
+    expect(result.reason).toMatch(/hub name/i);
+    expect(result.reason).toContain('rose-cottage.lovely-hub.com');
+  });
+
   it('builds marketing success and cancel URLs', () => {
     const urls = publicSignupUrls(baseEnv, 'rose-cottage');
     expect(urls.successUrl).toBe('https://lovely-home.co.uk/signup-success.html?site=rose-cottage');
