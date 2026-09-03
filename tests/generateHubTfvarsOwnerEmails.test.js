@@ -88,11 +88,11 @@ describe('generate-hub-tfvars owner emails', () => {
     const result = generate({
       OWNER_EMAILS: 'platform@lovely-home.co.uk',
       SUPPORT_OWNER_EMAILS: 'support@lovely-home.co.uk',
-      SITE_OWNER_EMAILS_JSON: JSON.stringify({ smith: ['household@example.com'] })
+      SITE_OWNER_EMAILS_JSON: JSON.stringify({ wagtail: ['household@example.com'] })
     });
     expect(result.ok).toBe(true);
-    const smithBlock = result.tfvars.slice(result.tfvars.indexOf('  smith = {'));
-    expect(smithBlock).toContain('"household@example.com"');
+    const wagtailBlock = result.tfvars.slice(result.tfvars.indexOf('  wagtail = {'));
+    expect(wagtailBlock).toContain('"household@example.com"');
   });
 
   it('refuses to apply when a customer hub would have no owners at all', () => {
@@ -113,13 +113,13 @@ describe('generate-hub-tfvars owner emails', () => {
   it('emits provision_site_id for a customer hub apply', () => {
     const result = generate({
       TERRAFORM_STACK: 'customers',
-      PROVISION_SITE_ID: 'smith',
+      PROVISION_SITE_ID: 'wagtail',
       OWNER_EMAILS: 'platform@lovely-home.co.uk',
       SUPPORT_OWNER_EMAILS: 'support@lovely-home.co.uk'
     });
     expect(result.ok).toBe(true);
     expect(result.tfvars).toContain('terraform_stack       = "customers"');
-    expect(result.tfvars).toContain('provision_site_id     = "smith"');
+    expect(result.tfvars).toContain('provision_site_id     = "wagtail"');
   });
 
   it('emits platform_cf_api_token from the GitHub secret env', () => {

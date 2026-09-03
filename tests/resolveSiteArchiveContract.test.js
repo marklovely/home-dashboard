@@ -4,10 +4,10 @@ import { resolveHubArchiveUrl } from '../scripts/lib/hub-archive-url.mjs';
 
 describe('resolveSiteArchiveContract', () => {
   it('falls back to platform manifest when terraform output is unavailable', () => {
-    const resolved = resolveSiteArchiveContract('smith');
+    const resolved = resolveSiteArchiveContract('wagtail');
     expect(resolved).not.toBeNull();
     expect(['terraform', 'manifest', 'registry']).toContain(resolved?.source);
-    expect(resolveHubArchiveUrl(resolved?.site ?? {}).url).toMatch(/smith/);
+    expect(resolveHubArchiveUrl(resolved?.site ?? {}).url).toMatch(/wagtail/);
   });
 
   it('falls back to registry naming for an unknown household hub', () => {
