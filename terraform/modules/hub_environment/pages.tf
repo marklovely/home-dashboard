@@ -12,9 +12,9 @@ resource "cloudflare_pages_project" "dashboard" {
   source = {
     type = "github"
     config = {
-      owner                         = var.github_owner
-      repo_name                     = var.github_repo
-      production_branch             = var.github_production_branch
+      owner             = var.github_owner
+      repo_name         = var.github_repo
+      production_branch = var.github_production_branch
       # Wrangler deploys the hub at provision (and CI deploys on app-code changes).
       # Git production deploys on every sites.yaml merge rebuild every hub and starve
       # the platform Pages project that serves signup hub-status.
