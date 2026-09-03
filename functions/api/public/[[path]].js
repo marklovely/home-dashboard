@@ -130,7 +130,9 @@ export async function onRequest(context) {
   const slugMatch = suffix.match(/^signup\/slug\/([^/]+)$/);
   if (slugMatch && request.method === 'GET') {
     const siteId = decodeURIComponent(slugMatch[1]).trim().toLowerCase();
-    const result = await checkPublicSignupSlug(manifest, siteId, getPlatformBillingDb(env));
+    const result = await checkPublicSignupSlug(manifest, siteId, getPlatformBillingDb(env), {
+      skipHold: true
+    });
     return Response.json(
       {
         siteId,

@@ -4,7 +4,8 @@ import {
   applyHubNameHoldAfterCancel,
   hubNameHeldReason,
   hubNameHeldUntil,
-  isHubNameHeld
+  isHubNameHeld,
+  ownerEmailMatchesBilling
 } from '../functions/api/platform/platformHubNameHold.js';
 
 describe('platformHubNameHold', () => {
@@ -26,6 +27,11 @@ describe('platformHubNameHold', () => {
     expect(reason).toContain('hub name');
     expect(reason).toContain('rose-cottage.lovely-hub.com');
     expect(reason).not.toMatch(/\bslug\b/i);
+  });
+
+  it('matches owner emails case-insensitively', () => {
+    expect(ownerEmailMatchesBilling('Owner@Example.com', 'owner@example.com')).toBe(true);
+    expect(ownerEmailMatchesBilling('other@example.com', 'owner@example.com')).toBe(false);
   });
 
   it('does not shorten an existing hold on repeat cancel', async () => {

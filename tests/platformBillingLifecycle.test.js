@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isLiveBillingStatus,
   priorDeprovisionBlocksDispatch,
+  resetBillingCycleFlags,
   shouldResetBillingCycleFlags
 } from '../functions/api/platform/platformBillingLifecycle.js';
 
@@ -62,5 +63,19 @@ describe('platform billing lifecycle', () => {
         existingBilling: { status: 'canceled', deprovision_dispatched_at: Date.now() }
       })
     ).toBe(true);
+  });
+
+  it('clears registry dispatch when clearing deprovision for a re-trial', async () => {
+    /** @type {string[]} */
+    const statements = [];
+    const db = /** @type {D1Database} */ ({
+      prepare(sql) {
+        statements.push(sql);
+        return { bind: () => ({ run: async () => ({}) }) };
+      }
+    });
+    await resetBillingCycleFlags(db, 'smith', { clearDeprovision: true, clearProvision: false });
+    expect(statements.join(' ')).toMatch(/registry_dispatched_at = NULL/);
+    expect(statements.join(' ')).toMatch(/slug_held_until = NULL/);
   });
 });

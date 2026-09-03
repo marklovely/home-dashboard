@@ -4,8 +4,10 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
+import { pickCommittedCustomerHubFixture } from './lib/committedCustomerHubFixture.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const committedCustomerHub = pickCommittedCustomerHubFixture();
 const mainTf = readFileSync(join(root, 'terraform/main.tf'), 'utf8');
 
 /** @type {string[]} */
@@ -85,14 +87,15 @@ describe('generate-hub-tfvars owner emails', () => {
   });
 
   it('injects the billing owner email for the site being provisioned', () => {
+    const { siteId } = committedCustomerHub;
     const result = generate({
       OWNER_EMAILS: 'platform@lovely-home.co.uk',
       SUPPORT_OWNER_EMAILS: 'support@lovely-home.co.uk',
-      SITE_OWNER_EMAILS_JSON: JSON.stringify({ smith: ['household@example.com'] })
+      SITE_OWNER_EMAILS_JSON: JSON.stringify({ [siteId]: ['household@example.com'] })
     });
     expect(result.ok).toBe(true);
-    const smithBlock = result.tfvars.slice(result.tfvars.indexOf('  smith = {'));
-    expect(smithBlock).toContain('"household@example.com"');
+    const siteBlock = result.tfvars.slice(result.tfvars.indexOf(`  ${siteId} = {`));
+    expect(siteBlock).toContain('"household@example.com"');
   });
 
   it('refuses to apply when a customer hub would have no owners at all', () => {
@@ -111,15 +114,16 @@ describe('generate-hub-tfvars owner emails', () => {
   });
 
   it('emits provision_site_id for a customer hub apply', () => {
+    const { siteId } = committedCustomerHub;
     const result = generate({
       TERRAFORM_STACK: 'customers',
-      PROVISION_SITE_ID: 'smith',
+      PROVISION_SITE_ID: siteId,
       OWNER_EMAILS: 'platform@lovely-home.co.uk',
       SUPPORT_OWNER_EMAILS: 'support@lovely-home.co.uk'
     });
     expect(result.ok).toBe(true);
     expect(result.tfvars).toContain('terraform_stack       = "customers"');
-    expect(result.tfvars).toContain('provision_site_id     = "smith"');
+    expect(result.tfvars).toContain(`provision_site_id     = "${siteId}"`);
   });
 
   it('emits platform_cf_api_token from the GitHub secret env', () => {
