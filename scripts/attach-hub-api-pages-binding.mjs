@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateSiteId } from './lib/site-registry.mjs';
 import { extractEnvBlock } from '../worker/scripts/check-env-provisioned.mjs';
-import { pagesProjectNameForSite } from './lib/hub-api-pages-binding.mjs';
+import { pagesProjectNameForSite, workerNameForSite } from './lib/hub-api-pages-binding.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
@@ -59,10 +59,11 @@ function resolveSiteBindingTargets(siteId) {
   }
 
   const toml = readFileSync(join(root, 'worker/wrangler.toml'), 'utf8');
-  const block = extractEnvBlock(toml, siteId);
+  const block =
+    siteId === 'production' ? toml : extractEnvBlock(toml, siteId);
   const nameMatch = block?.match(/^name\s*=\s*"([^"]+)"/m);
-  const workerName = nameMatch?.[1]?.trim() ?? '';
   const pagesProject = pagesProjectNameForSite(siteId);
+  const workerName = nameMatch?.[1]?.trim() || workerNameForSite(siteId);
   if (!workerName) {
     throw new Error(`Could not resolve worker name for ${siteId} (terraform output and wrangler.toml).`);
   }
