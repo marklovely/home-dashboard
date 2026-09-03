@@ -78,3 +78,11 @@ sites:
     terraform: true
     zone_name: lovely-hub.com
     attach_hub_api_binding: false
+
+  e2e-1ndvnzcc:
+    hostname: e2e-1ndvnzcc.lovely-hub.com
+    hub_environment: e2e-1ndvnzcc
+    vanilla: false
+    terraform: true
+    zone_name: lovely-hub.com
+    attach_hub_api_binding: false
