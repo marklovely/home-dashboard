@@ -2,8 +2,9 @@
 # Use for terraform apply / import across sandbox + test.
 #
 # Always pass -var=terraform_stack=platform or customers, and init the matching
-# R2 backend key (platform.tfstate vs customers.tfstate). Defaulting to platform
-# against the customers backend (or the legacy hub.tfstate) can destroy the other estate.
+# R2 backend key (platform.tfstate vs customers/{siteId}.tfstate). Customer applies
+# also need -var=provision_site_id=<siteId>. Defaulting to platform against a
+# customers backend (or the legacy hub.tfstate) can destroy the other estate.
 
 cloudflare_account_id = "YOUR_ACCOUNT_ID"
 cloudflare_zone_id    = "YOUR_ZONE_ID" # lovely-home.co.uk — platform + internal hubs

@@ -47,14 +47,25 @@ function fakeBillingDb() {
             return { success: true };
           }
           if (sql.includes('INSERT INTO signup_slug_reservations')) {
-            reservations.set(String(args[0]), {
-              site_id: args[0],
-              owner_email: args[1],
+            const siteId = String(args[0]);
+            const ownerEmail = String(args[1]);
+            const nowMs = Number(args[3]);
+            const existing = reservations.get(siteId);
+            const heldByOther =
+              existing &&
+              Number(existing.expires_at) > nowMs &&
+              String(existing.owner_email).toLowerCase() !== ownerEmail.toLowerCase();
+            if (heldByOther && sql.includes('WHERE signup_slug_reservations.expires_at')) {
+              return { success: true, meta: { changes: 0 } };
+            }
+            reservations.set(siteId, {
+              site_id: siteId,
+              owner_email: ownerEmail,
               stripe_session_id: args[2],
               created_at: args[3],
               expires_at: args[4]
             });
-            return { success: true };
+            return { success: true, meta: { changes: 1 } };
           }
           if (sql.includes('DELETE FROM signup_slug_reservations WHERE site_id')) {
             reservations.delete(String(args[0]));
@@ -176,6 +187,46 @@ describe('signup slug reservations', () => {
 
     const later = nowMs + SIGNUP_RESERVATION_TTL_MS + 1;
     expect(await getActiveSignupReservation(/** @type {never} */ (db), 'rose-cottage', later)).toBeNull();
+  });
+
+  it('does not let a second owner steal an active reservation', async () => {
+    const db = fakeBillingDb();
+    const nowMs = 1_000_000;
+    const first = await reserveSignupSlug(/** @type {never} */ (db), {
+      siteId: 'rose-cottage',
+      ownerEmail: 'first@example.com',
+      nowMs
+    });
+    const second = await reserveSignupSlug(/** @type {never} */ (db), {
+      siteId: 'rose-cottage',
+      ownerEmail: 'second@example.com',
+      nowMs: nowMs + 1000
+    });
+
+    expect(first.reserved).toBe(true);
+    expect(second.reserved).toBe(false);
+    const held = await getActiveSignupReservation(/** @type {never} */ (db), 'rose-cottage', nowMs + 1000);
+    expect(held?.owner_email).toBe('first@example.com');
+  });
+
+  it('lets the same owner refresh a live reservation', async () => {
+    const db = fakeBillingDb();
+    const nowMs = 1_000_000;
+    await reserveSignupSlug(/** @type {never} */ (db), {
+      siteId: 'rose-cottage',
+      ownerEmail: 'owner@example.com',
+      nowMs
+    });
+    const refresh = await reserveSignupSlug(/** @type {never} */ (db), {
+      siteId: 'rose-cottage',
+      ownerEmail: 'owner@example.com',
+      sessionId: 'cs_retry',
+      nowMs: nowMs + 1000
+    });
+
+    expect(refresh.reserved).toBe(true);
+    const held = await getActiveSignupReservation(/** @type {never} */ (db), 'rose-cottage', nowMs + 1000);
+    expect(held?.stripe_session_id).toBe('cs_retry');
   });
 });
 

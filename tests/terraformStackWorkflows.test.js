@@ -24,15 +24,6 @@ describe('terraform stack workflows', () => {
       expect(readWorkflow(path), path).not.toContain('home-dashboard/hub.tfstate');
       expect(readWorkflow(path), path).toContain('terraform-init-r2.sh');
     }
-  });
-
-  it('locks each stack separately so customer signup cannot block platform applies', () => {
-    expect(readWorkflow('.github/workflows/platform-site-provision-reusable.yml')).toContain(
-      'platform-terraform-state-${{ inputs.terraform_stack }}'
-    );
-    expect(readWorkflow('.github/workflows/platform-site-deprovision-reusable.yml')).toContain(
-      'platform-terraform-state-${{ inputs.terraform_stack }}'
-    );
     expect(readWorkflow('.github/workflows/platform-site-provision.yml')).toContain(
       'terraform_stack: customers'
     );
@@ -41,9 +32,31 @@ describe('terraform stack workflows', () => {
     );
   });
 
+  it('locks customer hubs per site so two households can apply at once', () => {
+    expect(readWorkflow('.github/workflows/platform-site-provision-reusable.yml')).toContain(
+      "format('platform-terraform-state-customers-{0}', inputs.site_id)"
+    );
+    expect(readWorkflow('.github/workflows/platform-site-deprovision-reusable.yml')).toContain(
+      "format('platform-terraform-state-customers-{0}', inputs.site_id)"
+    );
+    expect(readWorkflow('.github/workflows/platform-site-provision-reusable.yml')).toContain(
+      'terraform-init-r2.sh "${{ inputs.terraform_stack }}" "${{ inputs.site_id }}"'
+    );
+    expect(readWorkflow('.github/workflows/platform-site-provision.yml')).toContain('max-parallel: 4');
+    expect(readWorkflow('.github/workflows/platform-site-provision.yml')).toContain(
+      "format('push-{0}', github.sha)"
+    );
+  });
+
   it('keeps hub.tfstate as the migration source only', () => {
     const migrate = readWorkflow('.github/workflows/platform-terraform-migrate-stacks.yml');
     expect(migrate).toContain('migrate-terraform-state-stacks.sh');
     expect(migrate).toContain('split-stacks');
+  });
+
+  it('has a one-shot split for per-site customer state', () => {
+    const migrate = readWorkflow('.github/workflows/platform-terraform-migrate-customer-sites.yml');
+    expect(migrate).toContain('migrate-terraform-state-customer-sites.sh');
+    expect(migrate).toContain('split-sites');
   });
 });

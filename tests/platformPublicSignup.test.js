@@ -31,6 +31,7 @@ vi.mock('../functions/api/platform/platformSignupGuards.js', async (importOrigin
     consumeSignupAttempt: vi.fn(async () => ({ allowed: true, retryAfterSec: 0, attempts: 1 })),
     getActiveSignupReservation: vi.fn(async () => null),
     pruneExpiredSignupData: vi.fn(async () => {}),
+    releaseSignupReservation: vi.fn(async () => {}),
     reserveSignupSlug: vi.fn(async () => ({ ok: true, reserved: true, expiresAt: 1_700_000_000 }))
   };
 });
@@ -40,6 +41,7 @@ import { createBillingCheckoutSession, getSiteBilling } from '../functions/api/p
 import {
   consumeSignupAttempt,
   getActiveSignupReservation,
+  releaseSignupReservation,
   reserveSignupSlug
 } from '../functions/api/platform/platformSignupGuards.js';
 
@@ -82,6 +84,8 @@ describe('platform public signup', () => {
     vi.mocked(consumeSignupAttempt).mockResolvedValue({ allowed: true, retryAfterSec: 0, attempts: 1 });
     vi.mocked(reserveSignupSlug).mockReset();
     vi.mocked(reserveSignupSlug).mockResolvedValue({ ok: true, reserved: true, expiresAt: 1_700_000_000 });
+    vi.mocked(releaseSignupReservation).mockReset();
+    vi.mocked(releaseSignupReservation).mockResolvedValue(undefined);
   });
 
   it('requires PUBLIC_SIGNUP_ENABLED', () => {
@@ -142,7 +146,7 @@ describe('platform public signup', () => {
     );
   });
 
-  it('reserves the slug once checkout starts', async () => {
+  it('reserves the slug before Stripe Checkout starts', async () => {
     vi.mocked(createBillingCheckoutSession).mockResolvedValue({
       ok: true,
       url: 'https://checkout.stripe.com/test',
@@ -151,17 +155,27 @@ describe('platform public signup', () => {
 
     await handlePublicHubSignup(baseEnv, signupInput());
 
-    expect(reserveSignupSlug).toHaveBeenCalledWith(
+    expect(reserveSignupSlug).toHaveBeenNthCalledWith(
+      1,
       billingDb,
       expect.objectContaining({
         siteId: 'rose-cottage',
         ownerEmail: 'owner@example.com',
-        sessionId: 'cs_test'
+        sessionId: null
       })
+    );
+    expect(createBillingCheckoutSession).toHaveBeenCalled();
+    expect(reserveSignupSlug.mock.invocationCallOrder[0]).toBeLessThan(
+      createBillingCheckoutSession.mock.invocationCallOrder[0]
+    );
+    expect(reserveSignupSlug).toHaveBeenNthCalledWith(
+      2,
+      billingDb,
+      expect.objectContaining({ sessionId: 'cs_test' })
     );
   });
 
-  it('does not reserve the slug when checkout fails', async () => {
+  it('releases the reservation when checkout fails', async () => {
     vi.mocked(createBillingCheckoutSession).mockResolvedValue({
       ok: false,
       error: 'STRIPE_CHECKOUT_FAILED',
@@ -171,7 +185,18 @@ describe('platform public signup', () => {
     const result = await handlePublicHubSignup(baseEnv, signupInput());
 
     expect(result.status).toBe(503);
-    expect(reserveSignupSlug).not.toHaveBeenCalled();
+    expect(reserveSignupSlug).toHaveBeenCalled();
+    expect(releaseSignupReservation).toHaveBeenCalledWith(billingDb, 'rose-cottage');
+  });
+
+  it('does not start checkout when another owner already holds the slug', async () => {
+    vi.mocked(reserveSignupSlug).mockResolvedValue({ ok: true, reserved: false, expiresAt: null });
+
+    const result = await handlePublicHubSignup(baseEnv, signupInput());
+
+    expect(result.status).toBe(409);
+    expect(result.body.error).toBe('SLUG_UNAVAILABLE');
+    expect(createBillingCheckoutSession).not.toHaveBeenCalled();
   });
 
   it('rejects throttled clients before creating a checkout session', async () => {

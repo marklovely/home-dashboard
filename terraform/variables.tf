@@ -25,6 +25,12 @@ variable "terraform_stack" {
   }
 }
 
+variable "provision_site_id" {
+  type        = string
+  default     = ""
+  description = "When set on the customers stack, only this hub is in managed_sites. Required for per-site customer state so an apply cannot recreate other households."
+}
+
 variable "workers_subdomain" {
   type        = string
   description = "Workers.dev account subdomain (e.g. mark-lovely67 from lovely-home-hub-api.mark-lovely67.workers.dev)."

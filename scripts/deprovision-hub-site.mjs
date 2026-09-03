@@ -48,6 +48,10 @@ if (isTerraformStack(envStack) && registry[siteId] && envStack !== siteStack) {
 const terraformStack = isTerraformStack(envStack) ? envStack : siteStack;
 process.env.TERRAFORM_STACK = terraformStack;
 process.env.TF_VAR_terraform_stack = terraformStack;
+process.env.DEPROVISION_SITE_ID = siteId;
+if (terraformStack === 'customers') {
+  process.env.TF_VAR_provision_site_id = siteId;
+}
 const skipPlatformAdminEffective = skipPlatformAdmin;
 
 const tfDir = join(root, 'terraform');
@@ -88,7 +92,7 @@ function terraformDestroyArgs() {
     '-auto-approve',
     '-var-file=environments/hub.generated.tfvars',
     '-var-file=environments/hub.generated.secrets.tfvars.json',
-    ...terraformStackVarArgs(terraformStack),
+    ...terraformStackVarArgs(terraformStack, siteId),
     `-target=module.hub_site[${JSON.stringify(siteId)}]`
   ];
 }

@@ -24,7 +24,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: platform-terraform-state-${{ inputs.terraform_stack }}
+  group: ${{ inputs.terraform_stack == 'customers' && format('platform-terraform-state-customers-{0}', inputs.site_id) || format('platform-terraform-state-{0}', inputs.terraform_stack) }}
   cancel-in-progress: false
 
 jobs:
@@ -102,10 +102,10 @@ jobs:
           fi
 
       - name: Terraform init (R2 backend)
-        run: bash scripts/terraform-init-r2.sh "${{ inputs.terraform_stack }}"
+        run: bash scripts/terraform-init-r2.sh "${{ inputs.terraform_stack }}" "${{ inputs.site_id }}"
 
       - name: Assert Terraform state was split
-        run: node scripts/assert-terraform-stack-state.mjs "${{ inputs.terraform_stack }}"
+        run: node scripts/assert-terraform-stack-state.mjs "${{ inputs.terraform_stack }}" "${{ inputs.site_id }}"
 
       - name: Install worker dependencies
         run: npm ci --prefix worker
@@ -140,6 +140,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"
           git add platform/sites.yaml worker/wrangler.toml platform-admin/public/platform-manifest.json
           if git diff --staged --quiet; then
             echo "No provision follow-up changes to commit."

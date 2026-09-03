@@ -18,16 +18,17 @@ Site registry: [`platform/sites.yaml`](../platform/sites.yaml).
 
 ## Terraform stacks (ring-fenced state)
 
-Two remote states share the same R2 bucket:
+Two remote states share the same R2 bucket, and each household hub on the customers stack has its own file so two signups can apply at once:
 
 | Stack | Backend key | What it owns |
 |-------|-------------|--------------|
 | `platform` | `home-dashboard/platform.tfstate` | Platform admin, marketing Access, `*.lovely-home.co.uk` hubs |
-| `customers` | `home-dashboard/customers.tfstate` | `*.lovely-hub.com` household hubs (signup / teardown) |
+| `customers` (combined, backup) | `home-dashboard/customers.tfstate` | Left in place after the per-site split — **do not apply** against it |
+| `customers` (per site) | `home-dashboard/customers/{siteId}.tfstate` | One `*.lovely-hub.com` household hub |
 
-`var.terraform_stack` filters `module.hub_site` (and skips `platform_admin` / `marketing_site` on the customers stack). Always pass `-var=terraform_stack=…` — the Terraform default is `platform`, which would destroy customer hubs if applied against `customers.tfstate`.
+`var.terraform_stack` filters `module.hub_site` (and skips `platform_admin` / `marketing_site` on the customers stack). Customer applies also pass `var.provision_site_id` so that per-site state cannot recreate every other hub from `sites.yaml`. Always pass `-var=terraform_stack=…` — the Terraform default is `platform`, which would destroy customer hubs if applied against a customers backend.
 
-One-time split from the legacy combined `home-dashboard/hub.tfstate`: GitHub Actions **Split Terraform state stacks**, or `bash scripts/migrate-terraform-state-stacks.sh split-stacks`. See [platform-provision.md](./platform-provision.md).
+One-time split from the legacy combined `home-dashboard/hub.tfstate`: GitHub Actions **Split Terraform state stacks**, or `bash scripts/migrate-terraform-state-stacks.sh split-stacks`. Then peel household hubs out of the combined customers file: **Split customer Terraform state**, or `bash scripts/migrate-terraform-state-customer-sites.sh split-sites`. See [platform-provision.md](./platform-provision.md).
 
 ## Prerequisites
 

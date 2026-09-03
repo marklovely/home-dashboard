@@ -52,12 +52,12 @@ describe('billing deprovision refreshes main before registry delete', () => {
 });
 
 describe('platform site PR auto-merge', () => {
-  it('merges main into a dirty billing-deprovision PR instead of leaving it CONFLICTING', () => {
+  it('replays a dirty billing-deprovision PR onto origin/main instead of -X ours', () => {
     const yml = readFileSync(
       join(root, '.github/workflows/platform-site-pr-automerge.yml'),
       'utf8'
     );
-    expect(yml).toContain('git merge origin/main -X ours');
-    expect(yml).toContain('-billing-deprovision-');
+    expect(yml).toContain('node scripts/replay-dirty-platform-pr.mjs');
+    expect(yml).not.toContain('git merge origin/main -X ours');
   });
 });

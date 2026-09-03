@@ -110,6 +110,18 @@ describe('generate-hub-tfvars owner emails', () => {
     expect(result.stderr).toMatch(/TERRAFORM_STACK/);
   });
 
+  it('emits provision_site_id for a customer hub apply', () => {
+    const result = generate({
+      TERRAFORM_STACK: 'customers',
+      PROVISION_SITE_ID: 'smith',
+      OWNER_EMAILS: 'platform@lovely-home.co.uk',
+      SUPPORT_OWNER_EMAILS: 'support@lovely-home.co.uk'
+    });
+    expect(result.ok).toBe(true);
+    expect(result.tfvars).toContain('terraform_stack       = "customers"');
+    expect(result.tfvars).toContain('provision_site_id     = "smith"');
+  });
+
   it('rejects a malformed billing owner payload', () => {
     const result = generate({
       OWNER_EMAILS: 'platform@lovely-home.co.uk',

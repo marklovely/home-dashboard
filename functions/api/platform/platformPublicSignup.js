@@ -13,6 +13,7 @@ import {
   getActiveSignupReservation,
   hashSignupClientKey,
   pruneExpiredSignupData,
+  releaseSignupReservation,
   reserveSignupSlug
 } from './platformSignupGuards.js';
 import { turnstileConfigured, verifyTurnstileToken } from './platformSignupTurnstile.js';
@@ -267,6 +268,23 @@ export async function handlePublicHubSignup(env, input) {
 
   const hostname = `${siteId}.${CUSTOMER_HUB_ZONE_NAME}`;
   const urls = publicSignupUrls(env, siteId);
+  const hold = await reserveSignupSlug(billingDb, {
+    siteId,
+    ownerEmail: customerEmail,
+    sessionId: null,
+    nowMs
+  });
+  if (!hold.reserved) {
+    return {
+      ok: false,
+      status: 409,
+      body: {
+        error: 'SLUG_UNAVAILABLE',
+        message: `Site id "${siteId}" is being set up by someone else right now. Try another name.`
+      }
+    };
+  }
+
   const checkout = await createBillingCheckoutSession(env, {
     siteId,
     customerEmail,
@@ -277,6 +295,7 @@ export async function handlePublicHubSignup(env, input) {
   });
 
   if (!checkout.ok) {
+    await releaseSignupReservation(billingDb, siteId);
     return {
       ok: false,
       status: 503,

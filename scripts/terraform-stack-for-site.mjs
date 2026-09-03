@@ -4,7 +4,7 @@
  *
  * Usage:
  *   node scripts/terraform-stack-for-site.mjs <site_id> [--backend-key] [--guess]
- *   node scripts/terraform-stack-for-site.mjs --stack <platform|customers> [--backend-key]
+ *   node scripts/terraform-stack-for-site.mjs --stack <platform|customers> [--backend-key] [--site-id <id>]
  */
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,11 +24,18 @@ const guess = args.includes('--guess');
 let stackArg = null;
 /** @type {string | null} */
 let siteId = null;
+/** @type {string | null} */
+let siteIdFlag = null;
 
 for (let i = 0; i < args.length; i += 1) {
   const arg = args[i];
   if (arg === '--stack') {
     stackArg = args[i + 1] ?? '';
+    i += 1;
+    continue;
+  }
+  if (arg === '--site-id') {
+    siteIdFlag = args[i + 1] ?? '';
     i += 1;
     continue;
   }
@@ -40,19 +47,26 @@ for (let i = 0; i < args.length; i += 1) {
   siteId = arg;
 }
 
+const backendSiteId = siteIdFlag || siteId || '';
+
 if (stackArg != null && stackArg !== '') {
   if (!isTerraformStack(stackArg)) {
     console.error(' --stack must be platform or customers.');
     process.exit(1);
   }
-  process.stdout.write(`${wantKey ? terraformBackendKey(stackArg) : stackArg}\n`);
+  try {
+    process.stdout.write(`${wantKey ? terraformBackendKey(stackArg, backendSiteId) : stackArg}\n`);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
   process.exit(0);
 }
 
 if (!siteId) {
   console.error(
     'Usage: node scripts/terraform-stack-for-site.mjs <site_id> [--backend-key] [--guess]\n' +
-      '       node scripts/terraform-stack-for-site.mjs --stack <platform|customers> [--backend-key]'
+      '       node scripts/terraform-stack-for-site.mjs --stack <platform|customers> [--backend-key] [--site-id <id>]'
   );
   process.exit(1);
 }
@@ -66,4 +80,9 @@ if (!site && !guess) {
 }
 
 const stack = site ? terraformStackForSite(siteId, site) : guessTerraformStackForMissingSite(siteId);
-process.stdout.write(`${wantKey ? terraformBackendKey(stack) : stack}\n`);
+try {
+  process.stdout.write(`${wantKey ? terraformBackendKey(stack, siteId) : stack}\n`);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}

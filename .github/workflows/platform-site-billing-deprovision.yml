@@ -35,7 +35,7 @@ jobs:
     needs: resolve-stack
     runs-on: ubuntu-latest
     concurrency:
-      group: platform-terraform-state-${{ needs.resolve-stack.outputs.terraform_stack }}
+      group: ${{ needs.resolve-stack.outputs.terraform_stack == 'customers' && format('platform-terraform-state-customers-{0}', inputs.site_id) || format('platform-terraform-state-{0}', needs.resolve-stack.outputs.terraform_stack) }}
       cancel-in-progress: false
     env:
       TZ: Europe/London
@@ -106,10 +106,10 @@ jobs:
           fi
 
       - name: Terraform init (R2 backend)
-        run: bash scripts/terraform-init-r2.sh "${{ needs.resolve-stack.outputs.terraform_stack }}"
+        run: bash scripts/terraform-init-r2.sh "${{ needs.resolve-stack.outputs.terraform_stack }}" "${{ inputs.site_id }}"
 
       - name: Assert Terraform state was split
-        run: node scripts/assert-terraform-stack-state.mjs "${{ needs.resolve-stack.outputs.terraform_stack }}"
+        run: node scripts/assert-terraform-stack-state.mjs "${{ needs.resolve-stack.outputs.terraform_stack }}" "${{ inputs.site_id }}"
 
       - name: Install dependencies
         run: npm ci
@@ -153,6 +153,13 @@ jobs:
 
       - name: Run tests
         run: npm run test
+
+      - name: Replay registry delete onto origin/main
+        if: steps.sync_main.outputs.site_present != 'false'
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+          PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+        run: node scripts/replay-site-registry-onto-main.mjs "$SITE_ID"
 
       - name: Check PR token
         run: |

@@ -131,10 +131,10 @@ export async function getActiveSignupReservation(db, siteId, nowMs = Date.now())
  * @param {{ siteId: string; ownerEmail: string; sessionId?: string | null; nowMs?: number; ttlMs?: number }} input
  */
 export async function reserveSignupSlug(db, input) {
-  if (!db) return { ok: true, reserved: false };
+  if (!db) return { ok: true, reserved: true, skipped: true };
   const nowMs = input.nowMs ?? Date.now();
   const expiresAt = nowMs + (input.ttlMs ?? SIGNUP_RESERVATION_TTL_MS);
-  await db
+  const result = await db
     .prepare(
       `INSERT INTO signup_slug_reservations (site_id, owner_email, stripe_session_id, created_at, expires_at)
        VALUES (?, ?, ?, ?, ?)
@@ -142,11 +142,14 @@ export async function reserveSignupSlug(db, input) {
          owner_email = excluded.owner_email,
          stripe_session_id = excluded.stripe_session_id,
          created_at = excluded.created_at,
-         expires_at = excluded.expires_at`
+         expires_at = excluded.expires_at
+       WHERE signup_slug_reservations.expires_at <= excluded.created_at
+          OR lower(signup_slug_reservations.owner_email) = lower(excluded.owner_email)`
     )
     .bind(input.siteId, input.ownerEmail, input.sessionId ?? null, nowMs, expiresAt)
     .run();
-  return { ok: true, reserved: true, expiresAt };
+  const reserved = Number(result?.meta?.changes ?? 0) > 0;
+  return { ok: true, reserved, expiresAt: reserved ? expiresAt : null };
 }
 
 /**

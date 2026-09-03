@@ -27,7 +27,7 @@ export function terraformOutputIsAuthoritative(terraformAvailable, terraformSite
  * @param {Record<string, unknown>} meta
  * @param {Record<string, unknown>} terraformSites
  * @param {Record<string, { contract?: unknown }> | undefined} preservedSites
- * @param {{ terraformAvailable?: boolean; terraformStack?: string | null }} [options]
+ * @param {{ terraformAvailable?: boolean; terraformStack?: string | null; authoritativeSiteIds?: Iterable<string> | null }} [options]
  */
 export function resolveSiteContract(siteId, meta, terraformSites, preservedSites, options = {}) {
   const fromTerraform = terraformSites[siteId];
@@ -38,6 +38,9 @@ export function resolveSiteContract(siteId, meta, terraformSites, preservedSites
   const preserved = preservedSites?.[siteId]?.contract;
   const siteStack = terraformStackForSite(siteId, meta);
   const currentStack = isTerraformStack(options.terraformStack) ? options.terraformStack : null;
+  const authoritativeSiteIds = options.authoritativeSiteIds
+    ? new Set([...options.authoritativeSiteIds])
+    : null;
 
   // A split-stack apply only owns one estate. Missing output for the other
   // stack must not look like a destroy.
@@ -48,8 +51,17 @@ export function resolveSiteContract(siteId, meta, terraformSites, preservedSites
     return null;
   }
 
-  // Terraform output is authoritative for this stack: a Terraform-managed
-  // site missing from it has been destroyed (or not applied yet).
+  // Per-site customer state only speaks for that hub. Missing output for other
+  // households must keep the committed contract.
+  if (authoritativeSiteIds && !authoritativeSiteIds.has(siteId)) {
+    if (hasTerraformContract(preserved)) {
+      return /** @type {Record<string, unknown>} */ (preserved);
+    }
+    return null;
+  }
+
+  // Terraform output is authoritative for this stack (or this site): a
+  // Terraform-managed site missing from it has been destroyed (or not applied yet).
   if (options.terraformAvailable && meta.terraform === true) {
     return null;
   }

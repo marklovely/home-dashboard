@@ -33,6 +33,17 @@ describe('platform manifest merge', () => {
     expect(contract).toEqual({ d1_database_id: 'from-file' });
   });
 
+  it('keeps other household contracts when this apply only owns one hub', () => {
+    const contract = resolveSiteContract(
+      'powell',
+      { terraform: true, hostname: 'powell.lovely-hub.com', zone_name: 'lovely-hub.com' },
+      { smith: { d1_database_id: 'from-tf' } },
+      { powell: { contract: { d1_database_id: 'kept' } } },
+      { terraformAvailable: true, terraformStack: 'customers', authoritativeSiteIds: ['smith'] }
+    );
+    expect(contract).toEqual({ d1_database_id: 'kept' });
+  });
+
   it('drops the preserved contract when this stack no longer manages the site', () => {
     const contract = resolveSiteContract(
       'powell',

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
   BILLING_PROVISION_BLOCKED_SITE_IDS,
+  maybeDispatchBillingProvision,
   shouldDispatchBillingProvision,
   siteHasTerraformContract
 } from '../functions/api/platform/platformBillingProvision.js';
@@ -113,6 +114,38 @@ function createBillingDbMock() {
               updated_at
             });
           }
+          if (
+            sql.includes('UPDATE site_billing') &&
+            sql.includes('provision_dispatched_at IS NULL')
+          ) {
+            const [provision_dispatched_at, updated_at, site_id] = bound;
+            const existing = siteBilling.get(String(site_id)) ?? { site_id };
+            const canClaim =
+              existing.provision_dispatched_at == null || existing.deprovision_dispatched_at != null;
+            if (canClaim) {
+              siteBilling.set(String(site_id), {
+                ...existing,
+                provision_dispatched_at,
+                provision_last_error: null,
+                deprovision_dispatched_at: null,
+                updated_at
+              });
+            }
+            return { success: true, meta: { changes: canClaim ? 1 : 0 } };
+          }
+          if (sql.includes('UPDATE site_billing') && sql.includes('provision_last_error')) {
+            const [provision_last_error, updated_at, site_id] = bound;
+            const existing = siteBilling.get(String(site_id)) ?? { site_id };
+            siteBilling.set(String(site_id), {
+              ...existing,
+              provision_dispatched_at: sql.includes('provision_dispatched_at = NULL')
+                ? null
+                : existing.provision_dispatched_at,
+              provision_last_error,
+              updated_at
+            });
+            return { success: true };
+          }
           if (sql.includes('UPDATE site_billing') && sql.includes('provision_dispatched_at')) {
             const [provision_dispatched_at, updated_at, site_id] = bound;
             const existing = siteBilling.get(String(site_id)) ?? { site_id };
@@ -120,15 +153,6 @@ function createBillingDbMock() {
               ...existing,
               provision_dispatched_at,
               provision_last_error: null,
-              updated_at
-            });
-          }
-          if (sql.includes('UPDATE site_billing') && sql.includes('provision_last_error')) {
-            const [provision_last_error, updated_at, site_id] = bound;
-            const existing = siteBilling.get(String(site_id)) ?? { site_id };
-            siteBilling.set(String(site_id), {
-              ...existing,
-              provision_last_error,
               updated_at
             });
           }
@@ -201,6 +225,39 @@ describe('handleStripeBillingEvent provision dispatch', () => {
 
     const stored = await db.prepare('SELECT * FROM site_billing WHERE site_id = ?').bind('practice').first();
     expect(stored?.provision_dispatched_at).toBeTruthy();
+  });
+
+  it('claims D1 before GitHub so a second concurrent webhook does not dispatch', async () => {
+    const db = {
+      prepare(sql) {
+        return {
+          bind() {
+            return this;
+          },
+          async run() {
+            if (String(sql).includes('provision_dispatched_at IS NULL')) {
+              return { success: true, meta: { changes: 0 } };
+            }
+            return { success: true, meta: { changes: 1 } };
+          }
+        };
+      }
+    };
+
+    const result = await maybeDispatchBillingProvision(
+      { PLATFORM_GITHUB_TOKEN: 'token' },
+      /** @type {D1Database} */ (db),
+      { sites: { practice: { siteId: 'practice', contract: null } } },
+      {
+        siteId: 'practice',
+        eventType: 'checkout.session.completed',
+        status: 'trialing',
+        existingBilling: null
+      }
+    );
+
+    expect(result).toEqual({ ok: true, action: 'provision_already_dispatched' });
+    expect(dispatchSiteProvisionWorkflow).not.toHaveBeenCalled();
   });
 
   it('does not dispatch when manifest site already has terraform contract', async () => {

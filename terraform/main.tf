@@ -6,9 +6,15 @@ locals {
     )
   }
 
-  managed_sites = {
+  stack_sites = {
     for site_id, site in var.sites : site_id => site if site.terraform && (
       var.terraform_stack == "customers" ? local.site_is_customer[site_id] : !local.site_is_customer[site_id]
+    )
+  }
+
+  managed_sites = {
+    for site_id, site in local.stack_sites : site_id => site if(
+      var.provision_site_id == "" || site_id == var.provision_site_id
     )
   }
 
@@ -112,4 +118,15 @@ module "platform_admin" {
   resend_api_key                    = var.resend_api_key
   customer_email_from               = var.customer_email_from
   pages_preview_deployments_enabled = var.pages_preview_deployments_enabled
+}
+
+resource "terraform_data" "customers_site_scope" {
+  count = var.terraform_stack == "customers" ? 1 : 0
+
+  lifecycle {
+    precondition {
+      condition     = var.provision_site_id != ""
+      error_message = "Set provision_site_id when applying the customers stack so per-site state cannot recreate other household hubs."
+    }
+  }
 }
