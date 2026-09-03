@@ -5,6 +5,7 @@ import {
   customerHubUrl,
   formatUkDate,
   lifecycleEmailKindForEvent,
+  markCustomerEmailSent,
   maybeSendCustomerLifecycleEmail,
   RESEND_EMAILS_URL
 } from '../functions/api/platform/platformCustomerEmail.js';
@@ -90,19 +91,30 @@ function createBillingDbMock() {
             webhookEvents.add(String(bound[0]));
           }
           if (sql.includes('UPDATE site_billing SET') && sql.includes('_email_sent_at')) {
+            const column = sql.includes('signup_email_sent_at')
+              ? 'signup_email_sent_at'
+              : sql.includes('trial_ending_email_sent_at')
+                ? 'trial_ending_email_sent_at'
+                : sql.includes('past_due_email_sent_at')
+                  ? 'past_due_email_sent_at'
+                  : 'canceled_email_sent_at';
+            if (sql.includes(`${column} = NULL`)) {
+              const siteId = String(bound[1]);
+              const row = siteBilling.get(siteId);
+              if (row) {
+                row[column] = null;
+                row.updated_at = bound[0];
+              }
+              return { success: true, meta: { changes: row ? 1 : 0 } };
+            }
             const siteId = String(bound[2]);
             const row = siteBilling.get(siteId);
-            if (row) {
-              const column = sql.includes('signup_email_sent_at')
-                ? 'signup_email_sent_at'
-                : sql.includes('trial_ending_email_sent_at')
-                  ? 'trial_ending_email_sent_at'
-                  : sql.includes('past_due_email_sent_at')
-                    ? 'past_due_email_sent_at'
-                    : 'canceled_email_sent_at';
+            const claimed = Boolean(row) && row[column] == null;
+            if (claimed) {
               row[column] = bound[0];
               row.updated_at = bound[1];
             }
+            return { success: true, meta: { changes: claimed ? 1 : 0 } };
           }
           return { success: true };
         },
@@ -128,6 +140,21 @@ function createBillingDbMock() {
 }
 
 describe('maybeSendCustomerLifecycleEmail', () => {
+  it('claims the sent-at column only once', async () => {
+    const db = /** @type {D1Database} */ (createBillingDbMock());
+    await db
+      .prepare(
+        `INSERT INTO site_billing (
+        site_id, stripe_customer_id, stripe_subscription_id, status,
+        trial_end, archive_r2_key, owner_email, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind('rose', 'cus_1', 'sub_1', 'trialing', null, null, 'owner@example.com', 1, 1)
+      .run();
+    expect(await markCustomerEmailSent(db, 'rose', 'signup_email_sent_at')).toBe(true);
+    expect(await markCustomerEmailSent(db, 'rose', 'signup_email_sent_at')).toBe(false);
+  });
+
   it('is inert without RESEND_API_KEY', async () => {
     expect(customerEmailConfigured({})).toBe(false);
     const result = await maybeSendCustomerLifecycleEmail(
@@ -194,6 +221,102 @@ describe('maybeSendCustomerLifecycleEmail', () => {
     );
     expect(again.action).toBe('email_already_sent');
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets only one of checkout.session.completed and subscription.created send', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: 'email_race' })
+    }));
+    const db = /** @type {D1Database} */ (createBillingDbMock());
+    await db
+      .prepare(
+        `INSERT INTO site_billing (
+        site_id, stripe_customer_id, stripe_subscription_id, status,
+        trial_end, archive_r2_key, owner_email, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind('rose', 'cus_1', 'sub_1', 'trialing', null, null, 'owner@example.com', 1, 1)
+      .run();
+
+    const env = { RESEND_API_KEY: 're_test' };
+    const base = {
+      status: 'trialing',
+      siteId: 'rose',
+      ownerEmail: 'owner@example.com'
+    };
+    const [fromCheckout, fromSubscription] = await Promise.all([
+      maybeSendCustomerLifecycleEmail(
+        env,
+        db,
+        { ...base, eventType: 'checkout.session.completed' },
+        /** @type {typeof fetch} */ (fetchImpl)
+      ),
+      maybeSendCustomerLifecycleEmail(
+        env,
+        db,
+        { ...base, eventType: 'customer.subscription.created' },
+        /** @type {typeof fetch} */ (fetchImpl)
+      )
+    ]);
+
+    expect([fromCheckout.action, fromSubscription.action].sort()).toEqual([
+      'email_already_sent',
+      'email_signup_sent'
+    ]);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears the sent marker when Resend fails so Stripe can retry', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ message: 'Resend down' })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'email_retry' })
+      });
+    const db = /** @type {D1Database} */ (createBillingDbMock());
+    await db
+      .prepare(
+        `INSERT INTO site_billing (
+        site_id, stripe_customer_id, stripe_subscription_id, status,
+        trial_end, archive_r2_key, owner_email, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind('rose', 'cus_1', 'sub_1', 'trialing', null, null, 'owner@example.com', 1, 1)
+      .run();
+
+    const failed = await maybeSendCustomerLifecycleEmail(
+      { RESEND_API_KEY: 're_test' },
+      db,
+      {
+        eventType: 'checkout.session.completed',
+        siteId: 'rose',
+        ownerEmail: 'owner@example.com'
+      },
+      /** @type {typeof fetch} */ (fetchImpl)
+    );
+    expect(failed.ok).toBe(false);
+
+    const stored = await db.prepare('SELECT * FROM site_billing WHERE site_id = ?').bind('rose').first();
+    expect(stored.signup_email_sent_at).toBeFalsy();
+
+    const retried = await maybeSendCustomerLifecycleEmail(
+      { RESEND_API_KEY: 're_test' },
+      db,
+      {
+        eventType: 'checkout.session.completed',
+        siteId: 'rose',
+        ownerEmail: 'owner@example.com'
+      },
+      /** @type {typeof fetch} */ (fetchImpl)
+    );
+    expect(retried).toEqual({ ok: true, action: 'email_signup_sent' });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 });
 

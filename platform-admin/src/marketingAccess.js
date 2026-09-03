@@ -1,3 +1,7 @@
+import { panelFoldOpenAttr, wirePanelFold } from './panelFold.js';
+
+const MARKETING_FOLD_ID = 'marketing-access-fold';
+
 /**
  * @param {Record<string, unknown>} data
  */
@@ -6,8 +10,12 @@ export function renderMarketingAccessPanel(data) {
   if (data.ok === false) {
     return `
       <section class="panel marketing-access" id="marketing-access">
-        <h2>Marketing site access</h2>
-        <p class="muted">${escapeHtml(String(data.message ?? 'Could not load the marketing OTP list.'))}</p>
+        <details class="panel-fold" id="${MARKETING_FOLD_ID}"${panelFoldOpenAttr(MARKETING_FOLD_ID)}>
+          <summary class="panel-fold-summary">Marketing site access</summary>
+          <div class="panel-fold-body">
+            <p class="muted">${escapeHtml(String(data.message ?? 'Could not load the marketing OTP list.'))}</p>
+          </div>
+        </details>
       </section>
     `;
   }
@@ -15,9 +23,13 @@ export function renderMarketingAccessPanel(data) {
   if (data.protected === false) {
     return `
       <section class="panel marketing-access" id="marketing-access">
-        <h2>Marketing site access</h2>
-        <p class="muted">${escapeHtml(String(data.message ?? 'The marketing site is not OTP-gated.'))}</p>
-        <p class="muted">Gate it with <code>marketing_site_access_protected = true</code> in hub.tfvars, then terraform apply.</p>
+        <details class="panel-fold" id="${MARKETING_FOLD_ID}"${panelFoldOpenAttr(MARKETING_FOLD_ID)}>
+          <summary class="panel-fold-summary">Marketing site access</summary>
+          <div class="panel-fold-body">
+            <p class="muted">${escapeHtml(String(data.message ?? 'The marketing site is not OTP-gated.'))}</p>
+            <p class="muted">Gate it with <code>marketing_site_access_protected = true</code> in hub.tfvars, then terraform apply.</p>
+          </div>
+        </details>
       </section>
     `;
   }
@@ -26,26 +38,30 @@ export function renderMarketingAccessPanel(data) {
   const guests = Array.isArray(data.guests) ? data.guests : [];
   return `
     <section class="panel marketing-access" id="marketing-access">
-      <h2>Marketing site access</h2>
-      <p class="muted">OTP allow-list for <a href="${escapeHtml(origin)}" target="_blank" rel="noreferrer">${escapeHtml(origin.replace(/^https?:\/\//, ''))}</a> while the pre-launch gate is on. Extra emails can view the marketing site only — not this dashboard.</p>
-      <ul class="marketing-access-list">
-        ${operators.map((email) => `<li><span>${escapeHtml(String(email))}</span> <span class="badge">operator</span></li>`).join('')}
-        ${guests
-          .map(
-            (email) =>
-              `<li><span>${escapeHtml(String(email))}</span> <span class="badge badge-ok">guest</span> <button type="button" class="btn btn-small btn-ghost" data-marketing-remove="${escapeHtml(String(email))}">Remove</button></li>`
-          )
-          .join('')}
-        ${operators.length + guests.length === 0 ? '<li class="muted">No emails on the Access policy yet.</li>' : ''}
-      </ul>
-      <p class="marketing-access-message" id="marketing-access-message" hidden></p>
-      <form class="marketing-access-form" id="marketing-access-form">
-        <label class="field">
-          <span>Add email</span>
-          <input type="email" name="email" autocomplete="off" required placeholder="name@example.com">
-        </label>
-        <button type="submit" class="btn">Add to marketing site</button>
-      </form>
+      <details class="panel-fold" id="${MARKETING_FOLD_ID}"${panelFoldOpenAttr(MARKETING_FOLD_ID)}>
+        <summary class="panel-fold-summary">Marketing site access</summary>
+        <div class="panel-fold-body">
+          <p class="muted">OTP allow-list for <a href="${escapeHtml(origin)}" target="_blank" rel="noreferrer">${escapeHtml(origin.replace(/^https?:\/\//, ''))}</a> while the pre-launch gate is on. Extra emails can view the marketing site only — not this dashboard.</p>
+          <ul class="marketing-access-list">
+            ${operators.map((email) => `<li><span>${escapeHtml(String(email))}</span> <span class="badge">operator</span></li>`).join('')}
+            ${guests
+              .map(
+                (email) =>
+                  `<li><span>${escapeHtml(String(email))}</span> <span class="badge badge-ok">guest</span> <button type="button" class="btn btn-small btn-ghost" data-marketing-remove="${escapeHtml(String(email))}">Remove</button></li>`
+              )
+              .join('')}
+            ${operators.length + guests.length === 0 ? '<li class="muted">No emails on the Access policy yet.</li>' : ''}
+          </ul>
+          <p class="marketing-access-message" id="marketing-access-message" hidden></p>
+          <form class="marketing-access-form" id="marketing-access-form">
+            <label class="field">
+              <span>Add email</span>
+              <input type="email" name="email" autocomplete="off" required placeholder="name@example.com">
+            </label>
+            <button type="submit" class="btn">Add to marketing site</button>
+          </form>
+        </div>
+      </details>
     </section>
   `;
 }
@@ -55,6 +71,7 @@ export function renderMarketingAccessPanel(data) {
  * @param {() => Promise<void>} reload
  */
 export function wireMarketingAccessPanel(onError, reload) {
+  wirePanelFold(MARKETING_FOLD_ID);
   const messageEl = document.getElementById('marketing-access-message');
 
   /**

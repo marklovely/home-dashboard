@@ -5,6 +5,8 @@
  *   node scripts/enqueue-hub-job.mjs --queue provision --action provision --site-id rose-cottage
  *   node scripts/enqueue-hub-job.mjs --queue registry --action record --site-id rose-cottage --ref platform/hub-record-rose-cottage
  */
+import { hubJobHttpPushPayload } from './lib/hub-job-http-push.mjs';
+
 const SITE_ID_RE = /^[a-z][a-z0-9-]{0,31}$/;
 const QUEUE_NAMES = {
   provision: 'lovely-home-hub-provision',
@@ -47,10 +49,7 @@ try {
         Authorization: `Bearer ${apiToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        body: JSON.stringify(body),
-        content_type: 'json'
-      })
+      body: JSON.stringify(hubJobHttpPushPayload(body))
     }
   );
 

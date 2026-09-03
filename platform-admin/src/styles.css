@@ -442,6 +442,55 @@ h1 {
   margin: 0 0 1.25rem;
 }
 
+.stripe-mode {
+  margin: 0 0 1.25rem;
+}
+
+.panel-fold {
+  margin: 0;
+}
+
+.panel-fold-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  font-size: 1.1rem;
+  font-weight: 650;
+  user-select: none;
+}
+
+.panel-fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel-fold-summary::before {
+  content: '';
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 0.12s ease;
+  flex-shrink: 0;
+}
+
+.panel-fold[open] > .panel-fold-summary::before {
+  transform: rotate(45deg);
+}
+
+.panel-fold-summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.panel-fold-body {
+  margin-top: 0.75rem;
+}
+
 .marketing-access-list {
   list-style: none;
   margin: 0.85rem 0 1rem;

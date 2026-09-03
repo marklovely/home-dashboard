@@ -130,19 +130,30 @@ function createBillingDbMock() {
             webhookEvents.add(String(bound[0]));
           }
           if (sql.includes('UPDATE site_billing SET') && sql.includes('_email_sent_at')) {
+            const column = sql.includes('signup_email_sent_at')
+              ? 'signup_email_sent_at'
+              : sql.includes('trial_ending_email_sent_at')
+                ? 'trial_ending_email_sent_at'
+                : sql.includes('past_due_email_sent_at')
+                  ? 'past_due_email_sent_at'
+                  : 'canceled_email_sent_at';
+            if (sql.includes(`${column} = NULL`)) {
+              const siteId = String(bound[1]);
+              const row = siteBilling.get(siteId);
+              if (row) {
+                row[column] = null;
+                row.updated_at = bound[0];
+              }
+              return { success: true, meta: { changes: row ? 1 : 0 } };
+            }
             const siteId = String(bound[2]);
             const row = siteBilling.get(siteId);
-            if (row) {
-              const column = sql.includes('signup_email_sent_at')
-                ? 'signup_email_sent_at'
-                : sql.includes('trial_ending_email_sent_at')
-                  ? 'trial_ending_email_sent_at'
-                  : sql.includes('past_due_email_sent_at')
-                    ? 'past_due_email_sent_at'
-                    : 'canceled_email_sent_at';
+            const claimed = Boolean(row) && row[column] == null;
+            if (claimed) {
               row[column] = bound[0];
               row.updated_at = bound[1];
             }
+            return { success: true, meta: { changes: claimed ? 1 : 0 } };
           }
           return { success: true };
         },

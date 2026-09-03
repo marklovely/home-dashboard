@@ -5,6 +5,7 @@ import {
   hubRegistryLedgerCommitMessage,
   isHubRegistryLedgerCommit
 } from '../scripts/lib/hub-registry-ledger.mjs';
+import { hubJobHttpPushPayload } from '../scripts/lib/hub-job-http-push.mjs';
 import { enqueueHubProvisionJob } from '../functions/api/platform/platformHubQueues.js';
 
 describe('hub registry ledger commits', () => {
@@ -18,6 +19,17 @@ describe('hub registry ledger commits', () => {
     expect(isHubRegistryLedgerCommit('platform: record rose-cottage in site registry')).toBe(true);
     expect(isHubRegistryLedgerCommit('platform: drop rose-cottage from site registry')).toBe(true);
     expect(isHubRegistryLedgerCommit('platform: add rose-cottage site')).toBe(false);
+  });
+});
+
+describe('hub job HTTP push payload', () => {
+  it('sends the job as a JSON object, not a stringified body', () => {
+    const job = { siteId: 'rose-cottage', action: 'drop', ref: 'platform/hub-drop-rose-cottage' };
+    expect(hubJobHttpPushPayload(job)).toEqual({ body: job });
+    expect(typeof hubJobHttpPushPayload(job).body).toBe('object');
+    const enqueue = readFileSync(resolve(process.cwd(), 'scripts/enqueue-hub-job.mjs'), 'utf8');
+    expect(enqueue).toContain('hubJobHttpPushPayload');
+    expect(enqueue).not.toContain('body: JSON.stringify(body)');
   });
 });
 

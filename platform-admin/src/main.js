@@ -547,6 +547,7 @@ async function loadMarketingAccessPanel() {
       ok: false,
       message: error instanceof Error ? error.message : 'Could not load marketing access.'
     });
+    wireMarketingAccessPanel(showError, loadMarketingAccessPanel);
   }
 }
 
