@@ -190,14 +190,7 @@ sites = {
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
   }
 
-  e2e-dy940psa = {
-    hostname        = "e2e-dy940psa.lovely-hub.com"
-    hub_environment = "e2e-dy940psa"
-    vanilla         = false
-    terraform       = true
-    zone_name       = "lovely-hub.com"
-    attach_hub_api_binding = false # first apply only; set true after Worker deploy
-  }
+
 
   e2e-nqnrfvy8 = {
     hostname        = "e2e-nqnrfvy8.lovely-hub.com"
