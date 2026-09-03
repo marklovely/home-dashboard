@@ -1,4 +1,7 @@
 import { setStripeMode } from './api.js';
+import { panelFoldOpenAttr, wirePanelFold } from './panelFold.js';
+
+const STRIPE_FOLD_ID = 'stripe-mode-fold';
 
 /**
  * @param {Record<string, unknown> | null | undefined} stripe
@@ -8,8 +11,12 @@ export function renderStripeModePanel(stripe, billingDbConfigured) {
   if (!billingDbConfigured) {
     return `
       <section class="panel stripe-mode" id="stripe-mode">
-        <h2>Stripe</h2>
-        <p class="muted">Bind <code>PLATFORM_BILLING_DB</code> and apply billing migrations, including <code>0007_platform_settings.sql</code>.</p>
+        <details class="panel-fold" id="${STRIPE_FOLD_ID}"${panelFoldOpenAttr(STRIPE_FOLD_ID)}>
+          <summary class="panel-fold-summary">Stripe</summary>
+          <div class="panel-fold-body">
+            <p class="muted">Bind <code>PLATFORM_BILLING_DB</code> and apply billing migrations, including <code>0007_platform_settings.sql</code>.</p>
+          </div>
+        </details>
       </section>
     `;
   }
@@ -38,17 +45,21 @@ export function renderStripeModePanel(stripe, billingDbConfigured) {
 
   return `
     <section class="panel stripe-mode" id="stripe-mode">
-      <h2>Stripe <span class="badge ${badgeClass}">${escapeHtml(badgeLabel)}</span></h2>
-      ${banner}
-      <p class="muted">Checkout, webhooks, marketing prices, and the customer portal use this mode. Terraform keeps both key sets; this switch is stored in D1 so an apply cannot silently revert it.</p>
-      <ul class="stripe-mode-facts">
-        <li>Active key prefix: <code>${escapeHtml(keyPrefix || '—')}</code></li>
-        <li>Test keys: ${testConfigured ? 'configured' : 'missing'}</li>
-        <li>Live keys: ${liveConfigured ? 'configured' : 'missing'}</li>
-        <li>Open subscriptions in D1: <strong>${openSubscriptions}</strong></li>
-      </ul>
-      ${!liveConfigured && mode === 'test' ? '<p class="muted">Add live keys in hub.tfvars / GitHub secrets, then terraform apply, before going live.</p>' : ''}
-      <div class="stripe-mode-actions">${nextButton}</div>
+      <details class="panel-fold" id="${STRIPE_FOLD_ID}"${panelFoldOpenAttr(STRIPE_FOLD_ID)}>
+        <summary class="panel-fold-summary">Stripe <span class="badge ${badgeClass}">${escapeHtml(badgeLabel)}</span></summary>
+        <div class="panel-fold-body">
+          ${banner}
+          <p class="muted">Checkout, webhooks, marketing prices, and the customer portal use this mode. Terraform keeps both key sets; this switch is stored in D1 so an apply cannot silently revert it.</p>
+          <ul class="stripe-mode-facts">
+            <li>Active key prefix: <code>${escapeHtml(keyPrefix || '—')}</code></li>
+            <li>Test keys: ${testConfigured ? 'configured' : 'missing'}</li>
+            <li>Live keys: ${liveConfigured ? 'configured' : 'missing'}</li>
+            <li>Open subscriptions in D1: <strong>${openSubscriptions}</strong></li>
+          </ul>
+          ${!liveConfigured && mode === 'test' ? '<p class="muted">Add live keys in hub.tfvars / GitHub secrets, then terraform apply, before going live.</p>' : ''}
+          <div class="stripe-mode-actions">${nextButton}</div>
+        </div>
+      </details>
     </section>
   `;
 }
@@ -59,6 +70,7 @@ export function renderStripeModePanel(stripe, billingDbConfigured) {
  * @param {Record<string, unknown> | null | undefined} stripe
  */
 export function wireStripeModePanel(onError, reload, stripe) {
+  wirePanelFold(STRIPE_FOLD_ID);
   document.querySelectorAll('[data-stripe-mode-open]').forEach((button) => {
     button.addEventListener('click', () => {
       const nextMode = button.getAttribute('data-stripe-mode-open') === 'live' ? 'live' : 'test';

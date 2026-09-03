@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   accessIncludeFromEmails,
   emailsAfterAddingGuest,
@@ -12,6 +12,7 @@ import {
   updateMarketingAccess
 } from '../functions/api/platform/platformMarketingAccess.js';
 import { renderMarketingAccessPanel } from '../platform-admin/src/marketingAccess.js';
+import { resetPanelFoldState } from '../platform-admin/src/panelFold.js';
 
 describe('marketing Access email helpers', () => {
   it('reads emails from Cloudflare include rules', () => {
@@ -226,6 +227,10 @@ describe('marketing Access API', () => {
 });
 
 describe('marketing Access panel', () => {
+  beforeEach(() => {
+    resetPanelFoldState();
+  });
+
   it('renders guests with a remove control', () => {
     const html = renderMarketingAccessPanel({
       ok: true,
@@ -237,6 +242,9 @@ describe('marketing Access panel', () => {
     expect(html).toContain('guest@example.com');
     expect(html).toContain('data-marketing-remove="guest@example.com"');
     expect(html).not.toMatch(/data-marketing-remove="ops@example.com"/);
+    expect(html).toContain('<details class="panel-fold"');
+    expect(html).toContain('Marketing site access');
+    expect(html).not.toMatch(/<details[^>]*\sopen/);
   });
 
   it('explains when the site is not gated', () => {
