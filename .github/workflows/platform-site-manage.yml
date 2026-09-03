@@ -15,6 +15,10 @@ on:
         description: JSON payload from platform admin API
         required: true
         type: string
+      site_id:
+        description: Hub id — used so two households are not queued in the same GitHub concurrency group
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -23,8 +27,11 @@ permissions:
 jobs:
   manage-site:
     runs-on: ubuntu-latest
+    # GitHub keeps one running job and one pending job per group, then cancels
+    # extra pending runs. A shared platform-registry-git group dropped 2 of 4
+    # signups. Lock per hub only; overlay + dirty-PR replay handles yaml races.
     concurrency:
-      group: platform-registry-git
+      group: platform-registry-git-${{ inputs.site_id || fromJSON(inputs.payload).siteId || github.run_id }}
       cancel-in-progress: false
     env:
       TZ: Europe/London

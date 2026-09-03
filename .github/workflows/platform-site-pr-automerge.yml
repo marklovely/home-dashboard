@@ -2,15 +2,15 @@ name: Platform site PR auto-merge
 
 # pull_request_target uses workflow YAML from the base branch (main), not the PR
 # head — so a PR cannot replace this job to exfiltrate PLATFORM_GITHUB_TOKEN.
-# The schedule catches PRs that became dirty after another site PR merged
-# (GitHub does not re-run this workflow on the leftover PR).
+# GitHub does not re-run this workflow on leftover PRs when another site PR
+# merges, so we also reconcile on closed+merged and on a one-minute cron.
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, closed]
     branches:
       - main
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/1 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -94,8 +94,19 @@ jobs:
           exit 1
 
   reconcile-dirty:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'pull_request_target' &&
+        github.event.action == 'closed' &&
+        github.event.pull_request.merged == true &&
+        startsWith(github.event.pull_request.title, 'platform:')
+      )
     runs-on: ubuntu-latest
+    concurrency:
+      group: platform-registry-reconcile
+      cancel-in-progress: true
     steps:
       - name: Check PR token
         run: |
