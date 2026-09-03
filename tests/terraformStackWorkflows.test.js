@@ -55,6 +55,7 @@ describe('terraform stack workflows', () => {
     expect(workflow).toContain("-target='module.platform_admin[0]'");
     expect(workflow).toContain("-target='module.marketing_site[0]'");
     expect(workflow).toContain("MARKETING_SITE_ACCESS_PROTECTED: 'true'");
+    expect(workflow).toContain('import-marketing-access-unauthorised.sh');
     expect(workflow).toContain('group: platform-terraform-state-platform');
     expect(workflow).not.toContain('module.hub_site');
   });

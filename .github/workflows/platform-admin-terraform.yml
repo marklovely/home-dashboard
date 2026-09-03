@@ -96,6 +96,13 @@ jobs:
       - name: Generate hub tfvars
         run: node scripts/generate-hub-tfvars.mjs
 
+      - name: Import marketing Access unauthorised app
+        run: |
+          bash scripts/import-marketing-access-unauthorised.sh \
+            -var-file=environments/hub.generated.tfvars \
+            -var-file=environments/hub.generated.secrets.tfvars.json \
+            -var=terraform_stack=platform
+
       - name: Apply platform admin
         run: |
           set -euo pipefail
@@ -106,10 +113,19 @@ jobs:
             -target='module.platform_admin[0]'
             -target='module.marketing_site[0]'
           )
-          terraform -chdir=terraform plan -out=tfplan "${TF_ARGS[@]}"
-          if terraform -chdir=terraform show -no-color tfplan | grep -q 'module.marketing_site\[0\].*will be destroyed'; then
-            echo "::error::Refusing to apply: plan would destroy the marketing-site Access gate."
-            terraform -chdir=terraform show -no-color tfplan
-            exit 1
-          fi
-          terraform -chdir=terraform apply -auto-approve tfplan
+          for attempt in 1 2 3; do
+            terraform -chdir=terraform plan -out=tfplan "${TF_ARGS[@]}"
+            if terraform -chdir=terraform show -no-color tfplan | grep -q 'module.marketing_site\[0\].*will be destroyed'; then
+              echo "::error::Refusing to apply: plan would destroy the marketing-site Access gate."
+              terraform -chdir=terraform show -no-color tfplan
+              exit 1
+            fi
+            if terraform -chdir=terraform apply -auto-approve tfplan; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "Apply failed (attempt ${attempt}/3, often Pages latest_deployment drift). Retrying in 45s..."
+            sleep 45
+          done

@@ -26,6 +26,14 @@ describe('terraformCloudflareRetryDecision', () => {
     expect(terraformCloudflareRetryDecision('Error: 429 Too Many Requests').retry).toBe(true);
   });
 
+  it('does not retry an Access app that already exists', () => {
+    expect(
+      terraformCloudflareRetryDecision(
+        '409 Conflict {"errors":[{"code":11010,"message":"access.api.error.application_already_exists"}]}'
+      ).retry
+    ).toBe(false);
+  });
+
   it('retries other apply failures so transient HTTP can recover', () => {
     expect(terraformCloudflareRetryDecision('Error: failed to make http request').retry).toBe(true);
   });
