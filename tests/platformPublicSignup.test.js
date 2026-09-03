@@ -154,6 +154,11 @@ describe('platform public signup', () => {
     const urls = publicSignupUrls(baseEnv, 'rose-cottage');
     expect(urls.successUrl).toBe('https://lovely-home.co.uk/signup-success.html?site=rose-cottage');
     expect(urls.cancelUrl).toContain('signup.html?canceled=1');
+
+    const returning = publicSignupUrls(baseEnv, 'smith', { returning: true });
+    expect(returning.successUrl).toBe(
+      'https://lovely-home.co.uk/signup-success.html?site=smith&returning=1'
+    );
   });
 
   it('returns a checkout URL without touching the registry', async () => {
@@ -176,6 +181,31 @@ describe('platform public signup', () => {
         customerEmail: 'owner@example.com',
         billingInterval: 'month',
         successUrl: expect.stringContaining('signup-success.html')
+      })
+    );
+  });
+
+  it('adds returning=1 to the success URL when the original owner reclaims a held hub', async () => {
+    vi.mocked(getSiteBilling).mockResolvedValue({
+      site_id: 'smith',
+      status: 'canceled',
+      owner_email: 'owner@example.com',
+      slug_held_until: Date.now() + 60_000
+    });
+    vi.mocked(createBillingCheckoutSession).mockResolvedValue({
+      ok: true,
+      url: 'https://checkout.stripe.com/test',
+      sessionId: 'cs_test'
+    });
+
+    const result = await handlePublicHubSignup(baseEnv, signupInput({ siteId: 'smith' }));
+
+    expect(result.ok).toBe(true);
+    expect(createBillingCheckoutSession).toHaveBeenCalledWith(
+      baseEnv,
+      expect.objectContaining({
+        siteId: 'smith',
+        successUrl: 'https://lovely-home.co.uk/signup-success.html?site=smith&returning=1'
       })
     );
   });

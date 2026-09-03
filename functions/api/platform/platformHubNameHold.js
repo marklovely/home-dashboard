@@ -1,3 +1,5 @@
+import { getSiteFromManifest } from './platformApi.js';
+
 /** Twelve-month hold on a hub name after subscription cancel (customer-facing: "hub name", not slug). */
 export const HUB_NAME_HOLD_MS = 365 * 24 * 60 * 60 * 1000;
 
@@ -25,6 +27,34 @@ export function ownerEmailMatchesBilling(a, b) {
   const left = String(a ?? '').trim().toLowerCase();
   const right = String(b ?? '').trim().toLowerCase();
   return Boolean(left && right && left === right);
+}
+
+/**
+ * Original owner reclaiming a hub name after cancel/deprovision (not a first-time signup).
+ *
+ * @param {{
+ *   status?: string | null;
+ *   owner_email?: string | null;
+ *   slug_held_until?: number | null;
+ *   deprovision_dispatched_at?: number | null;
+ *   archive_r2_key?: string | null;
+ * } | null | undefined} existingBilling
+ * @param {object} manifest
+ * @param {string} siteId
+ * @param {string | null | undefined} ownerEmail
+ */
+export function isHubReclaimSignup(existingBilling, manifest, siteId, ownerEmail) {
+  if (!existingBilling) return false;
+  if (getSiteFromManifest(manifest, siteId)) return false;
+  if (!ownerEmailMatchesBilling(ownerEmail, existingBilling.owner_email)) return false;
+
+  const status = String(existingBilling.status ?? '');
+  if (status === 'canceled') return true;
+  if (existingBilling.deprovision_dispatched_at) return true;
+  if (isHubNameHeld(existingBilling)) return true;
+  if (String(existingBilling.archive_r2_key ?? '').trim()) return true;
+
+  return false;
 }
 
 /**

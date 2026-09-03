@@ -16,7 +16,12 @@ import {
   releaseSignupReservation,
   reserveSignupSlug
 } from './platformSignupGuards.js';
-import { isHubNameHeld, hubNameHeldReason, ownerEmailMatchesBilling } from './platformHubNameHold.js';
+import {
+  hubNameHeldReason,
+  isHubNameHeld,
+  isHubReclaimSignup,
+  ownerEmailMatchesBilling
+} from './platformHubNameHold.js';
 import { turnstileConfigured, verifyTurnstileToken } from './platformSignupTurnstile.js';
 
 /** Reserved slugs — internal hubs and common DNS names. */
@@ -115,11 +120,12 @@ export function publicSignupCorsHeaders(request, env) {
  * @param {Record<string, string | undefined>} env
  * @param {string} siteId
  */
-export function publicSignupUrls(env, siteId) {
+export function publicSignupUrls(env, siteId, options = {}) {
   const base = marketingSiteOrigin(env);
   const encodedSiteId = encodeURIComponent(siteId);
+  const returningQuery = options.returning ? '&returning=1' : '';
   return {
-    successUrl: `${base}/signup-success.html?site=${encodedSiteId}`,
+    successUrl: `${base}/signup-success.html?site=${encodedSiteId}${returningQuery}`,
     cancelUrl: `${base}/signup.html?canceled=1&site=${encodedSiteId}`
   };
 }
@@ -270,8 +276,9 @@ export async function handlePublicHubSignup(env, input) {
     };
   }
 
+  let existingBilling = null;
   if (billingDb) {
-    const existingBilling = await getSiteBilling(billingDb, siteId);
+    existingBilling = await getSiteBilling(billingDb, siteId);
     if (existingBilling && (existingBilling.status === 'trialing' || existingBilling.status === 'active')) {
       return {
         ok: false,
@@ -286,7 +293,8 @@ export async function handlePublicHubSignup(env, input) {
   }
 
   const hostname = `${siteId}.${CUSTOMER_HUB_ZONE_NAME}`;
-  const urls = publicSignupUrls(env, siteId);
+  const returning = isHubReclaimSignup(existingBilling, manifest, siteId, customerEmail);
+  const urls = publicSignupUrls(env, siteId, { returning });
   const hold = await reserveSignupSlug(billingDb, {
     siteId,
     ownerEmail: customerEmail,

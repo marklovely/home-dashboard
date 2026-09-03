@@ -21,6 +21,10 @@
 
   const params = new URLSearchParams(window.location.search);
   const siteId = (params.get('site') || '').trim().toLowerCase();
+  let returning =
+    params.get('returning') === '1' ||
+    params.get('returning') === 'true' ||
+    params.get('returning') === 'yes';
 
   const hubBlock = document.getElementById('success-hub');
   const hubLink = document.getElementById('hub-link');
@@ -53,10 +57,7 @@
   openBtn.href = hubUrl;
   hubBlock.hidden = false;
   progress.hidden = false;
-  lead.textContent =
-    'Your 7-day trial is active for ' +
-    hostname +
-    '. Building a hub takes about 10 minutes — leave this page open and it will tell you the moment yours is live.';
+  applyIntroCopy();
 
   void poll();
   giveUpTimer = setTimeout(() => {
@@ -85,6 +86,11 @@
 
       const payload = await response.json();
       consecutiveErrors = 0;
+
+      if (payload.returning === true) {
+        returning = true;
+        applyIntroCopy();
+      }
 
       if (payload.ready || payload.state === 'ready') {
         showReady();
@@ -133,9 +139,44 @@
     if (waitBanner) waitBanner.hidden = true;
   }
 
+  function applyIntroCopy() {
+    if (returning) {
+      setPageHeading(
+        'Welcome back',
+        "Thank you — we're reinstating your hub",
+        'Lovely Home — Welcome back'
+      );
+      lead.textContent =
+        'Your 7-day trial is active again for ' +
+        hostname +
+        '. We are rebuilding your hub — usually about 10 minutes. Leave this page open and we will tell you when it is live again.';
+      if (successSteps) {
+        successSteps.innerHTML =
+          '<li>Stripe confirms your trial — you are not charged today.</li>' +
+          '<li>We register your hub again and run the automated build (about 10 minutes).</li>' +
+          '<li>DNS, hosting, and your owner sign-in are provisioned.</li>' +
+          '<li>This page shows an Open button and a QR code as soon as your hub answers.</li>';
+      }
+      return;
+    }
+
+    setPageHeading('Trial started', "Thank you — we're building your hub", 'Lovely Home — Trial started');
+    lead.textContent =
+      'Your 7-day trial is active for ' +
+      hostname +
+      '. Building a hub takes about 10 minutes — leave this page open and it will tell you the moment yours is live.';
+    if (successSteps) {
+      successSteps.innerHTML =
+        '<li>Stripe confirms your trial — you are not charged today.</li>' +
+        '<li>We register your hub and run the automated build (about 10 minutes).</li>' +
+        '<li>DNS, hosting, and your owner sign-in are provisioned.</li>' +
+        '<li>This page shows an Open button and a QR code as soon as your hub answers.</li>';
+    }
+  }
+
   function showProvisioning() {
     progress.dataset.state = 'provisioning';
-    setTitle('Deploying your hub now', true);
+    setTitle(returning ? 'Reinstating your hub now' : 'Deploying your hub now', true);
     progressNote.textContent =
       'Usually ready about 10 minutes after checkout' +
       elapsedSuffix() +
@@ -145,10 +186,19 @@
   function showReady() {
     stopPolling();
     progress.dataset.state = 'ready';
-    setPageHeading('Success', 'Success — your hub is now ready', 'Lovely Home — Your hub is ready');
-    lead.textContent =
-      'Your 7-day trial is active for ' + hostname + '. Your hub finished building — use the trial to set it up before your sitter arrives.';
-    setTitle('Your hub is live', false);
+    setPageHeading(
+      returning ? 'Welcome back' : 'Success',
+      returning ? 'Welcome back — your hub is ready again' : 'Success — your hub is now ready',
+      returning ? 'Lovely Home — Welcome back' : 'Lovely Home — Your hub is ready'
+    );
+    lead.textContent = returning
+      ? 'Your 7-day trial is active again for ' +
+        hostname +
+        '. Your hub is live again — sign in and restore your backup when you are ready.'
+      : 'Your 7-day trial is active for ' +
+        hostname +
+        '. Your hub finished building — use the trial to set it up before your sitter arrives.';
+    setTitle(returning ? 'Your hub is live again' : 'Your hub is live', false);
     progressNote.textContent = 'Open it below and run the setup wizard — or scan the code on the device you want to use.';
     hubLink.href = hubUrl;
     openBtn.hidden = false;

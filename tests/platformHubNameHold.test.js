@@ -5,6 +5,7 @@ import {
   hubNameHeldReason,
   hubNameHeldUntil,
   isHubNameHeld,
+  isHubReclaimSignup,
   ownerEmailMatchesBilling
 } from '../functions/api/platform/platformHubNameHold.js';
 
@@ -32,6 +33,43 @@ describe('platformHubNameHold', () => {
   it('matches owner emails case-insensitively', () => {
     expect(ownerEmailMatchesBilling('Owner@Example.com', 'owner@example.com')).toBe(true);
     expect(ownerEmailMatchesBilling('other@example.com', 'owner@example.com')).toBe(false);
+  });
+
+  it('detects a reclaim signup for the original owner after cancel', () => {
+    const manifest = { sites: {} };
+    const now = Date.now();
+    expect(
+      isHubReclaimSignup(
+        {
+          status: 'canceled',
+          owner_email: 'owner@example.com',
+          slug_held_until: now + 60_000
+        },
+        manifest,
+        'smith',
+        'owner@example.com'
+      )
+    ).toBe(true);
+    expect(
+      isHubReclaimSignup(
+        {
+          status: 'canceled',
+          owner_email: 'owner@example.com',
+          slug_held_until: now + 60_000
+        },
+        manifest,
+        'smith',
+        'other@example.com'
+      )
+    ).toBe(false);
+    expect(
+      isHubReclaimSignup(
+        { status: 'canceled', owner_email: 'owner@example.com' },
+        { sites: { smith: { siteId: 'smith' } } },
+        'smith',
+        'owner@example.com'
+      )
+    ).toBe(false);
   });
 
   it('does not shorten an existing hold on repeat cancel', async () => {
