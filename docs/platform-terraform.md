@@ -113,11 +113,13 @@ bash ../scripts/deploy-cloudflare-pages-site.sh sandbox
 
 ## Pages not deploying (“No production deployment yet”)
 
-Terraform creates the **Pages project** and env vars; it does **not** upload a build. Git-connected projects use:
+Terraform creates the **Pages project** and env vars; it does **not** upload a build.
 
 | Setting | Value | Effect |
 |---------|-------|--------|
-| `production_branch` | `main` | **`main`** gets Production deployments |
+| `production_branch` | `main` | Git source stays connected (previews, dashboard) |
+| Hub `production_deployments_enabled` | `false` | Registry merges do not rebuild every household. Provision wrangler-deploys; app-code changes use [deploy-hub-pages.yml](../.github/workflows/deploy-hub-pages.yml) |
+| Platform admin `production_deployments_enabled` | `true` | `main` still rebuilds `home-dashboard-platform` |
 | Hub `preview_deployment_setting` | `none` in Terraform | Avoids Cloudflare **8000022** when PATCHing Pages with HUB_API bindings |
 | `pages_preview_deployments_enabled` | `true` (platform admin only) | Platform admin project gets preview builds via Terraform |
 | Hub branch previews | `node scripts/enable-hub-pages-previews.mjs` | Run after apply when you want hub site preview URLs |
@@ -140,7 +142,7 @@ bash scripts/deploy-cloudflare-pages-site.sh sandbox
 
 **Option B — dashboard:** Workers & Pages → **home-dashboard-sandbox** → **Create deployment** → branch **`main`**.
 
-**Option C — merge PR to `main`:** triggers Production on sandbox (and your existing production Pages project if it also tracks `main`).
+**Option C — merge an app-code PR to `main`:** [deploy-hub-pages.yml](../.github/workflows/deploy-hub-pages.yml) wrangler-deploys every terraform hub. Registry-only merges do not.
 
 After the first Pages deploy, ensure the **Worker** is up (`npm run deploy:sandbox` + secrets from `post-terraform-site-setup.sh`).
 

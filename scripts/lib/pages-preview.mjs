@@ -37,6 +37,57 @@ export function isPagesPreviewEnabled(project) {
 }
 
 /**
+ * @param {Record<string, unknown>} project
+ */
+export function isPagesGitProductionEnabled(project) {
+  const enabled = /** @type {{ source?: { config?: { production_deployments_enabled?: boolean } } }} */ (
+    project
+  ).source?.config?.production_deployments_enabled;
+  return enabled !== false;
+}
+
+/**
+ * @param {string} accountId
+ * @param {string} token
+ * @param {string} pagesProject
+ * @param {boolean} enabled
+ */
+export async function setPagesGitProductionEnabled(accountId, token, pagesProject, enabled) {
+  const project = await fetchPagesProject(accountId, token, pagesProject);
+  const source = structuredClone(
+    /** @type {{ type?: string, config?: Record<string, unknown> }} */ (project.source ?? {
+      type: 'github',
+      config: {}
+    })
+  );
+  source.config ??= {};
+  source.config.production_deployments_enabled = enabled;
+
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${encodeURIComponent(pagesProject)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ source })
+    }
+  );
+  const body = await response.json();
+  if (!body.success) {
+    const msg = body.errors?.map((error) => error.message).join('; ') ?? JSON.stringify(body.errors);
+    throw new Error(`PATCH Pages project ${pagesProject} failed: ${msg}`);
+  }
+
+  return {
+    enabled: isPagesGitProductionEnabled(body.result),
+    pagesProject
+  };
+}
+
+/**
  * @param {string} accountId
  * @param {string} token
  * @param {string} pagesProject

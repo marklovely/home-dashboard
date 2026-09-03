@@ -20,8 +20,12 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - name: Wait for Cloudflare Git Pages deploys
-        run: sleep 180
+      - run: npm ci
+      - name: Disable git production deploys on hub Pages
+        run: node scripts/disable-hub-pages-git-production.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Re-attach any missing production HUB_API bindings
         run: node scripts/ensure-hub-api-bindings.mjs
         env:

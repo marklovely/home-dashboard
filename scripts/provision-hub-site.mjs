@@ -182,6 +182,14 @@ if (!skipPages) {
   if (siteId !== 'production') {
     run('node', [join(root, 'scripts/enable-hub-pages-previews.mjs'), siteId]);
   }
+
+  run('node', [join(root, 'scripts/disable-hub-pages-git-production.mjs'), siteId], {
+    env: {
+      ...process.env,
+      CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_API_TOKEN ?? '',
+      CLOUDFLARE_ACCOUNT_ID: process.env.CLOUDFLARE_ACCOUNT_ID ?? ''
+    }
+  });
 }
 
 run('node', [join(root, 'scripts/mark-site-provisioned.mjs'), siteId]);

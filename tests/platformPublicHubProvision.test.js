@@ -3,6 +3,7 @@ import {
   buildHubProvisionStatus,
   getPublicHubProvisionStatus,
   hubHtmlLooksLikeLiveHub,
+  hubIsRegistered,
   hubProbeIsLive,
   hubProvisionHostname,
   probeHubHostname
@@ -141,6 +142,20 @@ describe('hub provision status', () => {
       ready: true,
       looksLikeHub: true
     });
+  });
+
+  it('marks a trialing site registered before the Pages manifest catches up', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(hubResponse());
+    const result = await getPublicHubProvisionStatus({}, 'e2e-newhub', fetchImpl, {}, { status: 'trialing' });
+    expect(result.body).toMatchObject({ registered: true, ready: true });
+  });
+
+  it('clears registered as soon as billing is canceled even if the manifest is stale', () => {
+    expect(hubIsRegistered({ sites: { smith: { siteId: 'smith' } } }, 'smith', { status: 'canceled' })).toBe(
+      false
+    );
+    expect(hubIsRegistered({ sites: {} }, 'smith', { status: 'trialing' })).toBe(true);
+    expect(hubIsRegistered({ sites: { demo: { siteId: 'demo' } } }, 'demo', null)).toBe(true);
   });
 
   it('keeps unknown sites in the provisioning state', async () => {
