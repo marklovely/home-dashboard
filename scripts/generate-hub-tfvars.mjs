@@ -109,9 +109,13 @@ const lines = [
   `workers_subdomain     = "${escapeHcl(workersSubdomain)}"`,
   `access_team_domain    = "${escapeHcl(accessTeamDomain)}"`,
   `zone_name             = "${escapeHcl(zoneName)}"`,
-  `terraform_stack       = "${terraformStack}"`,
-  ''
+  `terraform_stack       = "${terraformStack}"`
 ];
+
+if (terraformStack === 'customers' && applySiteId) {
+  lines.push(`provision_site_id     = "${escapeHcl(applySiteId)}"`);
+}
+lines.push('');
 
 if (customerZoneId) {
   lines.push(

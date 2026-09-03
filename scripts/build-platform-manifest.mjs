@@ -54,6 +54,7 @@ if (terraformAvailable && !terraformAuthoritative) {
 }
 
 const terraformStack = resolveManifestTerraformStack(registry, terraformSites);
+const authoritativeSiteIds = resolveAuthoritativeSiteIds(terraformStack);
 
 /** @type {Record<string, string>} */
 const platformMeta = {
@@ -121,7 +122,7 @@ for (const [siteId, meta] of Object.entries(registry)) {
     meta,
     terraformSites,
     /** @type {Record<string, { contract?: unknown }> | undefined} */ (preservedManifest?.sites),
-    { terraformAvailable: terraformAuthoritative, terraformStack }
+    { terraformAvailable: terraformAuthoritative, terraformStack, authoritativeSiteIds }
   );
   if (contract && !terraformSites[siteId]) {
     preservedContractCount += 1;
@@ -294,4 +295,21 @@ function resolveManifestTerraformStack(registry, sitesFromTerraform) {
   );
   if (stacks.size === 1) return [...stacks][0];
   return null;
+}
+
+/**
+ * Per-site customer applies only own one hub. Without this, a willow output
+ * would look like smith had been destroyed.
+ *
+ * @param {string | null} terraformStack
+ * @returns {Set<string> | null}
+ */
+function resolveAuthoritativeSiteIds(terraformStack) {
+  if (terraformStack !== 'customers') return null;
+  const fromEnv =
+    process.env.TF_VAR_provision_site_id?.trim() ||
+    process.env.PROVISION_SITE_ID?.trim() ||
+    process.env.DEPROVISION_SITE_ID?.trim() ||
+    '';
+  return fromEnv ? new Set([fromEnv]) : null;
 }

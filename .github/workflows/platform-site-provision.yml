@@ -27,7 +27,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: platform-site-provision-${{ github.event_name == 'workflow_dispatch' && inputs.site_id || 'auto' }}
+  group: platform-site-provision-${{ github.event_name == 'workflow_dispatch' && format('manual-{0}', inputs.site_id) || format('push-{0}', github.sha) }}
   cancel-in-progress: false
 
 jobs:
@@ -77,7 +77,7 @@ jobs:
       pull-requests: write
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 4
       matrix:
         site_id: ${{ fromJson(needs.detect-new-sites.outputs.customer_site_ids) }}
     uses: ./.github/workflows/platform-site-provision-reusable.yml

@@ -240,21 +240,32 @@ Production was imported with a locally pinned secret that is **not** in `HUB_PRO
 
 CI writes secrets to a separate sensitive var-file (`hub.generated.secrets.tfvars.json`, gitignored) so `hub_proxy_secret` values are not embedded in the main generated tfvars file or CI logs.
 
-Provisioning runs **one site at a time per stack** (`max-parallel: 1` + `platform-terraform-state-platform` / `platform-terraform-state-customers`). Platform hubs (`*.lovely-home.co.uk` + platform admin) and customer hubs (`*.lovely-hub.com`) use separate R2 state files, so a signup apply cannot lock or destroy production. R2 still has no DynamoDB lock, so two applies on the **same** stack must not overlap.
+Provisioning runs **one platform hub at a time** (`max-parallel: 1` + `platform-terraform-state-platform`) because those hubs share `platform.tfstate`. Customer hubs (`*.lovely-hub.com`) each have `home-dashboard/customers/{siteId}.tfstate`, so two household signups can Terraform-apply in parallel. R2 still has no DynamoDB lock, so two applies on the **same** state file must not overlap — CI uses `platform-terraform-state-customers-{siteId}` for that.
+
+Hub names stay unique: signup checks the live manifest, active billing, and an atomic D1 reservation (`signup_slug_reservations`) **before** Stripe Checkout. A second person cannot take a name that is already live or held.
 
 ### Split Terraform state (platform vs customers)
 
-CI no longer uses the combined `home-dashboard/hub.tfstate` key. After this change is on `main`, run **Split Terraform state stacks** once (`confirm` = `split-stacks`). That copies `home-dashboard/hub.tfstate` into:
+CI no longer uses the combined `home-dashboard/hub.tfstate` key. After that change landed, **Split Terraform state stacks** copied it into:
 
 | R2 key | Contents |
 |--------|----------|
 | `home-dashboard/platform.tfstate` | Platform admin, marketing Access, hubs on `lovely-home.co.uk` |
-| `home-dashboard/customers.tfstate` | Household hubs on `lovely-hub.com` |
+| `home-dashboard/customers.tfstate` | Household hubs on `lovely-hub.com` (combined file — backup after the next split) |
 | `home-dashboard/hub.tfstate` | Left in place as a backup — **do not apply** against it |
 
-Provision/deprovision **fail closed** if a backend is still empty while yaml expects sites, or still looks like the combined estate. Do not run a site provision until the migrate workflow is green.
+### Split customer Terraform state (per site)
 
-Local `backend.hcl` must use `platform.tfstate` or `customers.tfstate` and you must pass `-var=terraform_stack=platform` (or `customers`) on every plan/apply.
+After this change is on `main`, run **Split customer Terraform state** once (`confirm` = `split-sites`). That copies each `module.hub_site["id"]` out of `customers.tfstate` into:
+
+| R2 key | Contents |
+|--------|----------|
+| `home-dashboard/customers/{siteId}.tfstate` | One household hub |
+| `home-dashboard/customers.tfstate` | Left in place as a backup — **do not apply** against it |
+
+Provision/deprovision **fail closed** if a platform backend is still empty while yaml expects sites, or a per-site customers backend still looks like the combined estate. Do not run overlapping customer provisions until the per-site migrate workflow is green.
+
+Local `backend.hcl` must use `platform.tfstate` or `customers/{siteId}.tfstate` and you must pass `-var=terraform_stack=platform` (or `customers`) on every plan/apply. Customer applies also need `-var=provision_site_id={siteId}`.
 
 ### 3. Cloudflare API token permissions
 

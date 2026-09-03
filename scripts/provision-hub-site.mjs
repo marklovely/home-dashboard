@@ -46,6 +46,10 @@ if (isTerraformStack(envStack) && envStack !== siteStack) {
 const terraformStack = isTerraformStack(envStack) ? envStack : siteStack;
 process.env.TERRAFORM_STACK = terraformStack;
 process.env.TF_VAR_terraform_stack = terraformStack;
+process.env.PROVISION_SITE_ID = siteId;
+if (terraformStack === 'customers') {
+  process.env.TF_VAR_provision_site_id = siteId;
+}
 const skipPlatformAdminEffective = skipPlatformAdmin || terraformStack === 'customers';
 const tfDir = join(root, 'terraform');
 const hubTfvarsPath = join(tfDir, 'environments/hub.tfvars');
@@ -70,7 +74,7 @@ function terraformApplyArgs() {
     '-auto-approve',
     '-var-file=environments/hub.generated.tfvars',
     '-var-file=environments/hub.generated.secrets.tfvars.json',
-    ...terraformStackVarArgs(terraformStack),
+    ...terraformStackVarArgs(terraformStack, siteId),
     `-target=module.hub_site[${JSON.stringify(siteId)}]`
   ];
 }

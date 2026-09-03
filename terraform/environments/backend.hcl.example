@@ -9,12 +9,14 @@
 #   5. cd terraform && terraform init -reconfigure -backend-config=environments/backend.hcl
 #      then pass -var=terraform_stack=platform or customers on plan/apply
 #
-# Two ring-fenced states (never apply against the legacy combined key):
-#   home-dashboard/platform.tfstate   — platform admin, marketing Access, lovely-home.co.uk hubs
-#   home-dashboard/customers.tfstate  — lovely-hub.com household hubs
-#   home-dashboard/hub.tfstate        — legacy combined backup; do not apply
+# Two ring-fenced states (never apply against the legacy combined keys):
+#   home-dashboard/platform.tfstate            — platform admin, marketing Access, lovely-home.co.uk hubs
+#   home-dashboard/customers/{siteId}.tfstate  — one lovely-hub.com household hub
+#   home-dashboard/customers.tfstate           — combined customers backup; do not apply
+#   home-dashboard/hub.tfstate                 — legacy combined backup; do not apply
 #
-# See docs/platform-provision.md for the split migration.
+# Customer local applies also need -var=provision_site_id=<siteId>.
+# See docs/platform-provision.md for the split migrations.
 #
 # backend.hcl is gitignored — never commit it or the R2 token.
 

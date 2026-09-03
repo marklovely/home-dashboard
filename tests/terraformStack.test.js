@@ -5,6 +5,7 @@ import {
   siteIdsForTerraformStack,
   terraformBackendKey,
   terraformStackForSite,
+  terraformStackVarArgs,
   guessTerraformStackForMissingSite
 } from '../scripts/lib/terraform-stack.mjs';
 
@@ -37,6 +38,10 @@ describe('terraform stacks', () => {
     expect(siteIdsForTerraformStack(registry, 'platform')).toEqual(['demo']);
     expect(siteIdsForTerraformStack(registry, 'customers')).toEqual(['smith']);
     expect(terraformBackendKey('customers')).toBe('home-dashboard/customers.tfstate');
+    expect(terraformBackendKey('customers', 'willow')).toBe(
+      'home-dashboard/customers/willow.tfstate'
+    );
+    expect(terraformBackendKey('platform', 'demo')).toBe('home-dashboard/platform.tfstate');
     expect(terraformBackendKey('platform')).toBe('home-dashboard/platform.tfstate');
     expect(isTerraformStack('customers')).toBe(true);
     expect(isTerraformStack('hubs')).toBe(false);
@@ -57,5 +62,13 @@ describe('terraform stacks', () => {
       platform: ['demo'],
       customers: ['smith']
     });
+  });
+
+  it('pins provision_site_id only on the customers stack', () => {
+    expect(terraformStackVarArgs('platform', 'demo')).toEqual(['-var=terraform_stack=platform']);
+    expect(terraformStackVarArgs('customers', 'willow')).toEqual([
+      '-var=terraform_stack=customers',
+      '-var=provision_site_id=willow'
+    ]);
   });
 });

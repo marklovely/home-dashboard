@@ -73,3 +73,50 @@ function copyState(state, resources, lineage, serial) {
     resources
   };
 }
+
+/**
+ * Peel each hub_site["id"] out of a combined customers.tfstate into its own file.
+ *
+ * @param {Record<string, unknown>} state
+ * @param {{ lineages?: Record<string, string>; serial?: number }} [options]
+ */
+export function splitCustomerSiteStates(state, options = {}) {
+  const resources = Array.isArray(state.resources) ? state.resources : [];
+  /** @type {Map<string, unknown[]>} */
+  const bySite = new Map();
+  /** @type {unknown[]} */
+  const leftover = [];
+
+  for (const resource of resources) {
+    const siteId = hubSiteIdFromModuleAddress(/** @type {{ module?: string }} */ (resource)?.module);
+    if (!siteId) {
+      leftover.push(resource);
+      continue;
+    }
+    const list = bySite.get(siteId) ?? [];
+    list.push(resource);
+    bySite.set(siteId, list);
+  }
+
+  const serial = options.serial ?? Number(state.serial ?? 0) + 1;
+  /** @type {Record<string, ReturnType<typeof copyState>>} */
+  const files = {};
+  for (const [siteId, siteResources] of bySite) {
+    files[siteId] = copyState(
+      state,
+      siteResources,
+      options.lineages?.[siteId] ?? randomUUID(),
+      serial
+    );
+  }
+
+  return {
+    files,
+    leftover,
+    counts: {
+      sites: bySite.size,
+      leftover: leftover.length,
+      total: resources.length
+    }
+  };
+}

@@ -23,6 +23,11 @@ output "terraform_stack" {
   value       = var.terraform_stack
 }
 
+output "provision_site_id" {
+  description = "Hub this apply is scoped to (customers per-site state)."
+  value       = var.provision_site_id
+}
+
 output "sites" {
   description = "Provisioned hub sites (JSON contract for scripts and future platform admin)."
   value = {
