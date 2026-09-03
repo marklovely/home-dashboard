@@ -3,10 +3,10 @@
  * Patch worker/wrangler.toml [env.{site}] from terraform output.
  * Usage: node scripts/sync-wrangler-from-terraform.mjs sandbox
  */
-import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readSiteContract } from './lib/read-site-contract.mjs';
 import { dedupeEnvVarsBlock, upsertEnvVar } from './lib/wrangler-env-vars.mjs';
 import { patchEnvD1FromTerraform } from './lib/wrangler-env-block.mjs';
 
@@ -19,23 +19,19 @@ if (!siteId) {
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const wranglerPath = join(root, 'worker', 'wrangler.toml');
 
-let sites;
-try {
-  const raw = execFileSync('terraform', ['output', '-json', 'sites'], {
-    cwd: join(root, 'terraform'),
-    encoding: 'utf8'
-  });
-  sites = JSON.parse(raw);
-} catch (error) {
-  console.error('Run terraform apply first (from terraform/).', error.message);
+const resolved = readSiteContract(siteId);
+if (!resolved) {
+  console.error(
+    `Site "${siteId}" not found in terraform output, manifest, or registry. Run terraform apply or build-platform-manifest first.`
+  );
   process.exit(1);
 }
-
-const contract = sites[siteId];
-if (!contract) {
-  console.error(`Site "${siteId}" not found in terraform output. Managed sites: ${Object.keys(sites).join(', ')}`);
-  process.exit(1);
+if (resolved.source !== 'terraform') {
+  console.warn(
+    `sync-wrangler-from-terraform: using ${resolved.source} contract for "${siteId}" (terraform output "sites" unavailable).`
+  );
 }
+const contract = resolved.site;
 
 const d1Id = contract.d1_database_id;
 if (!d1Id) {

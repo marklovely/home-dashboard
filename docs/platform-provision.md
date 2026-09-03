@@ -398,6 +398,8 @@ flowchart TD
 
 **Already handled by the delete PR:** `hub.tfvars.example` is removed when the wizard opens the delete PR (step 1), before deprovision runs.
 
+**Per-site customer state:** Per-hub Terraform backends may lack root `sites` / `hub_proxy_secrets` outputs until a full apply refreshes them. Deprovision scripts fall back to `terraform state list`, platform manifest, and `HUB_PROXY_SECRETS_JSON` when generating tfvars or reading site contracts. Before `terraform destroy`, `empty-hub-site-r2-buckets.mjs` deletes all objects from the hub guides/media buckets (Cloudflare returns 409 if a bucket is not empty).
+
 ### Manual deprovision (local)
 
 Same secrets as provision (see [Manual provision](#manual-provision-local)). Site must not appear in `platform/sites.yaml`.
