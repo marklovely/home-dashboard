@@ -1,0 +1,105 @@
+name: Platform admin Terraform
+
+# Creates hub job queues, the hub-jobs Worker, and Pages producer bindings.
+# Targets module.platform_admin only so production/demo/sandbox hubs are untouched.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type apply-platform-admin to apply module.platform_admin[0]
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-terraform-state-platform
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/London
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CUSTOMER_CLOUDFLARE_ZONE_ID: ${{ secrets.CUSTOMER_CLOUDFLARE_ZONE_ID }}
+      CUSTOMER_ZONE_NAME: ${{ secrets.CUSTOMER_ZONE_NAME }}
+      WORKERS_SUBDOMAIN: ${{ secrets.WORKERS_SUBDOMAIN }}
+      ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
+      OWNER_EMAILS: ${{ secrets.OWNER_EMAILS }}
+      SUPPORT_OWNER_EMAILS: ${{ secrets.SUPPORT_OWNER_EMAILS }}
+      PLATFORM_OPERATOR_EMAILS: ${{ secrets.PLATFORM_OPERATOR_EMAILS }}
+      SITTER_EMAILS: ${{ secrets.SITTER_EMAILS }}
+      PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+      PLATFORM_CF_API_TOKEN: ${{ secrets.PLATFORM_CF_API_TOKEN }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
+      STRIPE_PRICE_ID_YEARLY: ${{ secrets.STRIPE_PRICE_ID_YEARLY }}
+      STRIPE_SECRET_KEY_LIVE: ${{ secrets.STRIPE_SECRET_KEY_LIVE }}
+      STRIPE_WEBHOOK_SECRET_LIVE: ${{ secrets.STRIPE_WEBHOOK_SECRET_LIVE }}
+      STRIPE_PRICE_ID_LIVE: ${{ secrets.STRIPE_PRICE_ID_LIVE }}
+      STRIPE_PRICE_ID_YEARLY_LIVE: ${{ secrets.STRIPE_PRICE_ID_YEARLY_LIVE }}
+      TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      CUSTOMER_EMAIL_FROM: ${{ secrets.CUSTOMER_EMAIL_FROM }}
+      HUB_PROXY_SECRETS_JSON: ${{ secrets.HUB_PROXY_SECRETS_JSON }}
+      PLATFORM_SITE_ARCHIVE_SECRET: ${{ secrets.PLATFORM_SITE_ARCHIVE_SECRET }}
+      GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_R2_SECRET_ACCESS_KEY }}
+      TF_STATE_R2_BUCKET: ${{ secrets.TF_STATE_R2_BUCKET }}
+      TF_STATE_R2_ENDPOINT: ${{ secrets.TF_STATE_R2_ENDPOINT }}
+      TERRAFORM_STACK: platform
+      TF_VAR_terraform_stack: platform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+          terraform_wrapper: false
+
+      - name: Confirm
+        run: |
+          if [ "${{ inputs.confirm }}" != "apply-platform-admin" ]; then
+            echo "::error::Type apply-platform-admin in the confirm input to apply module.platform_admin[0]."
+            exit 1
+          fi
+          if [ -z "${{ secrets.TF_STATE_R2_BUCKET }}" ] || [ -z "${{ secrets.TF_STATE_R2_ENDPOINT }}" ]; then
+            echo "::error::Configure TF_STATE_R2_BUCKET and TF_STATE_R2_ENDPOINT repo secrets. See docs/platform-provision.md"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "::error::Configure CLOUDFLARE_API_TOKEN (needs Workers Scripts Write and Queues Edit)."
+            exit 1
+          fi
+
+      - name: Terraform init (R2 backend)
+        run: bash scripts/terraform-init-r2.sh platform
+
+      - name: Assert Terraform state was split
+        run: node scripts/assert-terraform-stack-state.mjs platform
+
+      - name: Verify Cloudflare API token
+        run: bash scripts/verify-cloudflare-api-token.sh
+
+      - name: Generate hub tfvars
+        run: node scripts/generate-hub-tfvars.mjs
+
+      - name: Apply platform admin
+        run: |
+          set -euo pipefail
+          terraform -chdir=terraform apply -auto-approve \
+            -var-file=environments/hub.generated.tfvars \
+            -var-file=environments/hub.generated.secrets.tfvars.json \
+            -var=terraform_stack=platform \
+            -target='module.platform_admin[0]'
