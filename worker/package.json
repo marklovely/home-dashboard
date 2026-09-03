@@ -26,11 +26,8 @@
     "deploy:dev": "node scripts/check-env-provisioned.mjs dev && wrangler deploy --env dev",
     "d1:migrate:dev": "node scripts/check-env-provisioned.mjs dev && wrangler d1 migrations apply lovely-home-appliance-manuals-dev --remote --env dev",
     "secrets:dev": "bash scripts/print-env-secrets-checklist.sh dev",
-    "deploy:smith": "node scripts/check-env-provisioned.mjs smith && wrangler deploy --env smith",
-    "d1:migrate:smith": "node scripts/check-env-provisioned.mjs smith && wrangler d1 migrations apply lovely-home-appliance-manuals-smith --remote --env smith",
     "d1:migrate:all": "node ../scripts/apply-d1-migrations-all.mjs",
     "deploy:all": "node ../scripts/deploy-all-workers.mjs",
-    "secrets:smith": "bash scripts/print-env-secrets-checklist.sh smith",
     "deploy:wagtail": "node scripts/check-env-provisioned.mjs wagtail && wrangler deploy --env wagtail",
     "d1:migrate:wagtail": "node scripts/check-env-provisioned.mjs wagtail && wrangler d1 migrations apply lovely-home-appliance-manuals-wagtail --remote --env wagtail",
     "secrets:wagtail": "bash scripts/print-env-secrets-checklist.sh wagtail"
