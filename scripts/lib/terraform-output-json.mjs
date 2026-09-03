@@ -117,3 +117,35 @@ export function parseHubProxySecretsFromTerraformState(raw) {
   }
   return { ...fromPages, ...fromPassword };
 }
+
+/**
+ * @param {string} raw
+ * @param {string} siteId
+ * @returns {{ guides: string, media: string } | null}
+ */
+export function parseHubSiteR2BucketsFromTerraformState(raw, siteId) {
+  let state;
+  try {
+    state = JSON.parse(String(raw ?? ''));
+  } catch {
+    return null;
+  }
+  const resources = Array.isArray(state?.resources) ? state.resources : [];
+  const modulePrefix = `module.hub_site[${JSON.stringify(siteId)}]`;
+  /** @type {{ guides?: string, media?: string }} */
+  const buckets = {};
+
+  for (const resource of resources) {
+    if (String(resource?.module ?? '') !== modulePrefix) continue;
+    if (resource.type !== 'cloudflare_r2_bucket') continue;
+    const name = String(resource?.instances?.[0]?.attributes?.name ?? '').trim();
+    if (!name) continue;
+    if (resource.name === 'guides') buckets.guides = name;
+    if (resource.name === 'media') buckets.media = name;
+  }
+
+  if (buckets.guides && buckets.media) {
+    return { guides: buckets.guides, media: buckets.media };
+  }
+  return null;
+}

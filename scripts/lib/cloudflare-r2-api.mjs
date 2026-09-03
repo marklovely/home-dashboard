@@ -6,6 +6,23 @@ const DEFAULT_LIST_LIMIT = 1000;
 const DEFAULT_DELETE_BATCH = 1000;
 
 /**
+ * @param {number} status
+ * @param {unknown} body
+ * @param {string} bucketName
+ */
+export function isR2BucketNotFoundError(status, body, bucketName) {
+  if (status !== 404) return false;
+  const message = String(
+    body?.errors?.map((entry) => entry.message).filter(Boolean).join('; ') ?? ''
+  ).toLowerCase();
+  return (
+    message.includes('does not exist') ||
+    message.includes('not found') ||
+    message.includes(`bucket "${bucketName.toLowerCase()}"`)
+  );
+}
+
+/**
  * @param {string} accountId
  * @param {string} token
  * @param {string} bucketName
@@ -26,6 +43,9 @@ async function listR2Objects(accountId, token, bucketName, options = {}) {
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (isR2BucketNotFoundError(response.status, body, bucketName)) {
+      return { bucketMissing: true, result: [], result_info: { is_truncated: false } };
+    }
     const message =
       body?.errors?.map((entry) => entry.message).filter(Boolean).join('; ') ||
       `HTTP ${response.status}`;
@@ -77,7 +97,7 @@ async function deleteR2Objects(accountId, token, bucketName, keys) {
  *
  * @param {string} bucketName
  * @param {{ accountId: string, token: string, onProgress?: (message: string) => void }} options
- * @returns {Promise<number>} number of objects deleted
+ * @returns {Promise<number>} number of objects deleted (0 when bucket is missing)
  */
 export async function emptyR2Bucket(bucketName, options) {
   const accountId = options.accountId.trim();
@@ -89,9 +109,15 @@ export async function emptyR2Bucket(bucketName, options) {
 
   let cursor;
   let deleted = 0;
+  let missing = false;
 
   for (;;) {
     const page = await listR2Objects(accountId, token, name, { cursor });
+    if (page?.bucketMissing === true) {
+      missing = true;
+      options.onProgress?.(`Bucket ${name} does not exist — skipping`);
+      break;
+    }
     const objects = Array.isArray(page?.result) ? page.result : [];
     const keys = objects
       .map((entry) => String(entry?.key ?? '').trim())
@@ -110,7 +136,8 @@ export async function emptyR2Bucket(bucketName, options) {
     cursor = nextCursor;
   }
 
-  return deleted;
+  if (missing) return { deleted: 0, missing: true };
+  return { deleted, missing: false };
 }
 
 /**

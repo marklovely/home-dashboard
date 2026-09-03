@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   parseHubProxySecretsFromTerraformState,
+  parseHubSiteR2BucketsFromTerraformState,
   parseTerraformJsonOutput,
   terraformStringMap,
   unwrapTerraformJsonValue
@@ -43,6 +44,29 @@ describe('terraform JSON output', () => {
         state
       )
     ).toBe('pinned-secret');
+  });
+
+  it('reads hub site R2 bucket names from terraform state pull JSON', () => {
+    const state = {
+      resources: [
+        {
+          module: 'module.hub_site["smith"]',
+          type: 'cloudflare_r2_bucket',
+          name: 'guides',
+          instances: [{ attributes: { name: 'lovely-home-appliance-guides-smith' } }]
+        },
+        {
+          module: 'module.hub_site["smith"]',
+          type: 'cloudflare_r2_bucket',
+          name: 'media',
+          instances: [{ attributes: { name: 'lovely-home-guide-media-smith' } }]
+        }
+      ]
+    };
+    expect(parseHubSiteR2BucketsFromTerraformState(JSON.stringify(state), 'smith')).toEqual({
+      guides: 'lovely-home-appliance-guides-smith',
+      media: 'lovely-home-guide-media-smith'
+    });
   });
 
   it('reads hub proxy secrets from terraform state pull JSON', () => {

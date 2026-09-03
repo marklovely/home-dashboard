@@ -26,7 +26,7 @@ try {
     onProgress: (message) => console.log(message)
   });
   console.log(
-    `Emptied R2 buckets for ${siteId}: ${result.guides}, ${result.media} (${result.deleted} object(s) deleted; source=${result.source}).`
+    `Emptied R2 buckets for ${siteId}: ${result.guides}, ${result.media} (${result.deleted} object(s) deleted${result.skippedMissing.length ? `; skipped missing: ${result.skippedMissing.join(', ')}` : ''}; source=${result.source}).`
   );
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
