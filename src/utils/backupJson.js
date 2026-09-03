@@ -220,10 +220,11 @@ export async function readJsonFile(file) {
 /**
  * @param {Record<string, unknown>} parsed
  * @param {() => Promise<string | null>} promptPassword
+ * @returns {Promise<{ backup: Record<string, unknown>, mediaZip: Uint8Array | null }>}
  */
 export async function resolveBackupDocument(parsed, promptPassword) {
   if (!isEncryptedBackupDocument(parsed)) {
-    return parsed;
+    return { backup: parsed, mediaZip: null };
   }
   const password = await promptPassword();
   if (!password) {
@@ -231,11 +232,10 @@ export async function resolveBackupDocument(parsed, promptPassword) {
   }
   const decrypted = await decryptBackupDocument(parsed, password);
   if (decrypted instanceof Uint8Array) {
-    throw new Error(
-      'This full backup includes photos and appliance manuals. Zip restore is not available in the hub yet — contact support if you need help recovering media.'
-    );
+    const { readBackupJsonFromArchiveZip } = await import('./backupArchive.js');
+    return { backup: readBackupJsonFromArchiveZip(decrypted), mediaZip: decrypted };
   }
-  return decrypted;
+  return { backup: decrypted, mediaZip: null };
 }
 
 /**
@@ -279,8 +279,10 @@ export function normalizeBackupForRestore(payload) {
 
 /**
  * @param {{ id: string, alt: string }[] | undefined} uploadedMedia
+ * @param {boolean} [includesArchiveMedia]
  */
-export function uploadedMediaRestoreHint(uploadedMedia) {
+export function uploadedMediaRestoreHint(uploadedMedia, includesArchiveMedia = false) {
+  if (includesArchiveMedia) return '';
   if (!uploadedMedia?.length) return '';
   return ` ${uploadedMedia.length} uploaded photo(s) are listed in the file — re-upload them in the Photo library after restore.`;
 }

@@ -337,7 +337,7 @@ export async function fetchSiteBackup({ fetchImpl = fetch, scope = 'full' } = {}
  * @param {Record<string, unknown>} backup
  * @param {{ fetchImpl?: typeof fetch }} [options]
  */
-export async function restoreSiteBackup(backup, { fetchImpl = fetch } = {}) {
+export async function restoreSiteBackup(backup, { fetchImpl = fetch, mediaZip = null } = {}) {
   await ensureApiBaseUrl();
   if (!isApiConfigured()) {
     return { ok: false, status: 503, message: 'Restore is temporarily unavailable.', data: null };
@@ -356,6 +356,18 @@ export async function restoreSiteBackup(backup, { fetchImpl = fetch } = {}) {
 
     if (response.ok) {
       const data = await response.json();
+      if (mediaZip?.byteLength) {
+        const mediaResult = await restoreSiteBackupMedia(mediaZip, { fetchImpl });
+        if (!mediaResult.ok) {
+          return {
+            ok: false,
+            status: mediaResult.status,
+            message: mediaResult.message || 'Site data restored, but photos or manuals could not be restored.',
+            data
+          };
+        }
+        return { ok: true, status: 200, message: '', data: { ...data, media: mediaResult.data } };
+      }
       return { ok: true, status: 200, message: '', data };
     }
 
@@ -364,6 +376,47 @@ export async function restoreSiteBackup(backup, { fetchImpl = fetch } = {}) {
     }
 
     return restoreSiteBackupLegacy(backup, fetchImpl);
+  } catch {
+    return { ok: false, status: 503, message: 'Restore is temporarily unavailable.', data: null };
+  }
+}
+
+/**
+ * @param {Uint8Array} zipBytes
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function restoreSiteBackupMedia(zipBytes, { fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Restore is temporarily unavailable.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl('/api/site/restore-media'),
+      withApiCredentials({
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/zip' },
+        body: zipBytes,
+        cache: 'no-store'
+      })
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return { ok: true, status: 200, message: '', data };
+    }
+
+    if (response.status === 404) {
+      return {
+        ok: false,
+        status: 404,
+        message: 'Photo and manual restore requires a hub worker update. Try again after the hub is updated.',
+        data: null
+      };
+    }
+
+    return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
   } catch {
     return { ok: false, status: 503, message: 'Restore is temporarily unavailable.', data: null };
   }

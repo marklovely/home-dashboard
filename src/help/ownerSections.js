@@ -148,7 +148,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Before you cancel, download an encrypted full backup from Settings → Utilities if you want to restore photos, the house guide, or appliance manuals. Automated restore from our archive is not available yet — you re-enter content in the setup wizard or from your backup file. The account page (lovely-home.co.uk/account.html) is only for invoices and card details; it does not recreate a hub.'
+        text: 'Before you cancel, download an encrypted full backup from Settings → Utilities if you want to restore photos, the house guide, or appliance manuals. Restore that file from the setup wizard or Settings → Backup & restore — photos and PDFs in the zip are put back automatically. Automated restore from our platform archive is not available yet. The account page (lovely-home.co.uk/account.html) is only for invoices and card details; it does not recreate a hub.'
       },
       {
         type: 'h4',

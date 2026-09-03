@@ -10,7 +10,8 @@ import { listSitterStays, replaceSitterStaysFromBackup, serializeSitterStayForAp
 import { applySitterStaySchedule } from './sitterSchedule.js';
 import { importGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { loadImportableGuideCatalog } from '../houseGuide/exportCatalog.js';
-import { listApplianceManuals } from '../applianceManuals/repository.js';
+import { listApplianceManuals, insertApplianceManual, requireApplianceManualsDb } from '../applianceManuals/repository.js';
+import { safeDeleteApplianceGuideObject } from '../applianceManuals/r2Storage.js';
 import { toPublicManual } from '../applianceManuals/serialize.js';
 
 export const SITE_BACKUP_FORMAT_VERSION = 2;
@@ -43,6 +44,55 @@ export function hubSecretsForRestore(hubSecrets) {
     patch[key] = String(hubSecrets[key] ?? '');
   }
   return patch;
+}
+
+/**
+ * @param {Record<string, unknown>} env
+ * @param {unknown} manuals
+ */
+async function restoreApplianceManualsFromBackup(env, manuals) {
+  if (!Array.isArray(manuals) || manuals.length === 0) return;
+
+  const db = requireApplianceManualsDb(env.APPLIANCE_MANUALS_DB ?? env.HOUSE_GUIDE_DB);
+  const bucket = env.APPLIANCE_GUIDES;
+  const existing = await listApplianceManuals(db);
+
+  if (bucket) {
+    for (const row of existing) {
+      if (row.object_key) {
+        await safeDeleteApplianceGuideObject(/** @type {R2Bucket} */ (bucket), String(row.object_key));
+      }
+    }
+  }
+
+  await db.prepare(`DELETE FROM appliance_manuals`).run();
+
+  const now = new Date().toISOString();
+  for (const entry of manuals) {
+    if (!entry || typeof entry !== 'object') continue;
+    const manual = /** @type {Record<string, unknown>} */ (entry);
+    const id = String(manual.id ?? '').trim();
+    if (!id) continue;
+
+    await insertApplianceManual(db, {
+      id,
+      title: String(manual.title ?? 'Appliance manual'),
+      applianceName: String(manual.applianceName ?? manual.appliance_name ?? manual.title ?? 'Appliance'),
+      manufacturer: manual.manufacturer != null ? String(manual.manufacturer) : null,
+      model: manual.model != null ? String(manual.model) : null,
+      category: String(manual.category ?? 'other'),
+      location: manual.location != null ? String(manual.location) : null,
+      description: manual.description != null ? String(manual.description) : null,
+      objectKey: `restore-pending/${id}`,
+      originalFilename: String(manual.originalFilename ?? manual.original_filename ?? 'manual.pdf'),
+      mimeType: String(manual.mimeType ?? manual.mime_type ?? 'application/pdf'),
+      fileSize: Number(manual.fileSize ?? manual.file_size ?? 0) || 0,
+      published: manual.published !== false,
+      sortOrder: Number(manual.sortOrder ?? manual.sort_order ?? 0) || 0,
+      createdAt: String(manual.createdAt ?? manual.created_at ?? now),
+      updatedAt: now
+    });
+  }
 }
 
 /**
@@ -220,6 +270,10 @@ export async function restoreSiteBackupPayload(env, payload) {
   );
   if (Object.keys(secretPatch).length > 0) {
     await setHubSecrets(env, secretPatch);
+  }
+
+  if (Array.isArray(payload.applianceManuals) && payload.applianceManuals.length > 0) {
+    await restoreApplianceManualsFromBackup(env, payload.applianceManuals);
   }
 
   if (payload.guide?.catalog && Array.isArray(payload.guide.catalog.categories)) {

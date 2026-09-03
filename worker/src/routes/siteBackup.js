@@ -9,7 +9,7 @@ import {
   parseSiteBackupScope,
   restoreSiteBackupPayload
 } from '../lib/siteBackupPayload.js';
-import { buildSiteBackupZipBytes } from '../lib/siteBackupArchive.js';
+import { buildSiteBackupZipBytes, restoreSiteBackupMediaFromZip } from '../lib/siteBackupArchive.js';
 
 export { SITE_BACKUP_FORMAT_VERSION };
 
@@ -128,6 +128,38 @@ export async function handleSiteBackupRestore(request, env, correlationId) {
  * @param {Record<string, unknown>} env
  * @param {string} correlationId
  */
+export async function handleSiteBackupRestoreMedia(request, env, correlationId) {
+  if (request.method !== 'POST') {
+    return methodNotAllowed(correlationId);
+  }
+
+  const ownerGate = await requireOwnerDeviceMode(request, env);
+  if (!ownerGate.ok) {
+    return ownerGateJsonError(ownerGate, correlationId);
+  }
+
+  const zipBytes = new Uint8Array(await request.arrayBuffer());
+  if (!zipBytes.byteLength) {
+    return jsonError(400, 'BAD_REQUEST', 'Expected a backup zip body.', { correlationId });
+  }
+
+  try {
+    const result = await restoreSiteBackupMediaFromZip(env, zipBytes);
+    return Response.json(
+      { ok: true, ...result },
+      { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
+    );
+  } catch (error) {
+    const detail = error instanceof Error ? error.message.slice(0, 200) : 'unknown';
+    return jsonError(400, 'BAD_REQUEST', `Could not restore backup media: ${detail}`, { correlationId });
+  }
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} correlationId
+ */
 export async function handleGuideExportGet(request, env, correlationId) {
   if (request.method !== 'GET') {
     return methodNotAllowed(correlationId);
@@ -180,6 +212,9 @@ export async function handleSiteBackup(request, url, env, correlationId) {
   }
   if (url.pathname === '/api/site/restore') {
     return handleSiteBackupRestore(request, env, correlationId);
+  }
+  if (url.pathname === '/api/site/restore-media') {
+    return handleSiteBackupRestoreMedia(request, env, correlationId);
   }
   return jsonError(404, 'NOT_FOUND', 'Route not found.', { correlationId });
 }

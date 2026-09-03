@@ -50,7 +50,7 @@ describe('runSiteBackupRestore', () => {
     const result = await runSiteBackupRestore({ backupScope: 'full' });
 
     expect(result).toEqual({ ok: true });
-    expect(restoreSiteBackup).toHaveBeenCalledWith({ backupScope: 'full' });
+    expect(restoreSiteBackup).toHaveBeenCalledWith({ backupScope: 'full' }, { mediaZip: null });
     expect(syncSitterSecretsFromServer).toHaveBeenCalledOnce();
     expect(refreshGuideContent).toHaveBeenCalledWith(fetch, { draft: true, force: true });
     expect(syncSiteProfileFromServer).toHaveBeenCalledOnce();

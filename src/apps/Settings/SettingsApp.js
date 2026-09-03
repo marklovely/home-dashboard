@@ -391,8 +391,8 @@ function createUtilitiesFields(context) {
 
     void (async () => {
       try {
-        const backup = await readAndConfirmSiteBackupRestore(file);
-        if (!backup) return;
+        const restorePayload = await readAndConfirmSiteBackupRestore(file);
+        if (!restorePayload) return;
 
         await withAsyncButtonFeedback(importButton, 'Restoring…', async () => {
           restoreStatus.hidden = false;
@@ -401,7 +401,9 @@ function createUtilitiesFields(context) {
           exportGuideButton.disabled = true;
           showToast(context.toast, 'Restoring backup…', 120000);
           try {
-            const result = await runSiteBackupRestore(backup);
+            const result = await runSiteBackupRestore(restorePayload.backup, {
+              mediaZip: restorePayload.mediaZip
+            });
             if (!result.ok) {
               restoreStatus.textContent = result.message || 'Restore failed.';
               showToast(context.toast, result.message || 'Restore failed.');

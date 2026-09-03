@@ -46,6 +46,7 @@ describe('backupJson', () => {
   it('builds uploaded media restore hint', () => {
     expect(uploadedMediaRestoreHint([])).toBe('');
     expect(uploadedMediaRestoreHint([{ id: 'a', alt: 'A' }])).toContain('re-upload');
+    expect(uploadedMediaRestoreHint([{ id: 'a', alt: 'A' }], true)).toBe('');
   });
 
   it('strips runtime fields from assembled catalogs', () => {

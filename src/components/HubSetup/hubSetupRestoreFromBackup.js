@@ -16,7 +16,7 @@ export function createHubSetupRestoreFromBackupBlock(context, onRestored) {
   const copy = document.createElement('p');
   copy.className = 'hub-setup-restore-copy subtle';
   copy.textContent =
-    'Already have a backup file? Restore it to load your House Guide, home details, and secrets — and skip the setup steps.';
+    'Already have a backup file? Restore it to load your House Guide, home details, photos, appliance manuals, and secrets — and skip the setup steps.';
 
   const restoreButton = document.createElement('button');
   restoreButton.type = 'button';
@@ -42,15 +42,17 @@ export function createHubSetupRestoreFromBackupBlock(context, onRestored) {
 
     void (async () => {
       try {
-        const backup = await readAndConfirmSiteBackupRestore(file);
-        if (!backup) return;
+        const restorePayload = await readAndConfirmSiteBackupRestore(file);
+        if (!restorePayload) return;
 
         await withAsyncButtonFeedback(restoreButton, 'Restoring…', async () => {
           status.hidden = false;
           status.textContent = 'Restoring backup…';
           showToast(context.toast, 'Restoring backup…', 120000);
 
-          const result = await runSiteBackupRestore(backup);
+          const result = await runSiteBackupRestore(restorePayload.backup, {
+            mediaZip: restorePayload.mediaZip
+          });
           if (!result.ok) {
             status.textContent = result.message || 'Restore failed.';
             showToast(context.toast, result.message || 'Restore failed.');
