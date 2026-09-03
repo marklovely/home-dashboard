@@ -395,61 +395,6 @@ binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
 
 # ---------------------------------------------------------------------------
-# E2e-v5jjy14v environment — Terraform-managed (see docs/platform-terraform.md)
-# Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs e2e-v5jjy14v
-# ---------------------------------------------------------------------------
-
-[env.e2e-v5jjy14v]
-name = "lovely-home-hub-api-e2e-v5jjy14v"
-
-[env.e2e-v5jjy14v.vars]
-HUB_ENVIRONMENT = "e2e-v5jjy14v"
-
-ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://e2e-v5jjy14v.lovely-hub.com,https://home-dashboard-e2e-v5jjy14v.pages.dev,https://*.home-dashboard-e2e-v5jjy14v.pages.dev,https://*.pages.dev"
-
-HOME_LATITUDE = "51.5074"
-
-HOME_LONGITUDE = "-0.1278"
-
-CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
-
-ACCESS_PAGES_APP_ID = "8c457d44-de09-468a-8399-e7548b7baabb"
-
-ACCESS_WORKER_APP_ID = "46347431-26e3-48d9-b543-86881d836953"
-
-[[env.e2e-v5jjy14v.durable_objects.bindings]]
-name = "OWNER_AUTH_LIMITER"
-class_name = "OwnerAuthLimiter"
-
-[[env.e2e-v5jjy14v.durable_objects.bindings]]
-name = "CONTROL_ACTION_LIMITER"
-class_name = "ControlActionLimiter"
-
-[[env.e2e-v5jjy14v.r2_buckets]]
-binding = "APPLIANCE_GUIDES"
-bucket_name = "lovely-home-appliance-guides-e2e-v5jjy14v"
-
-[[env.e2e-v5jjy14v.d1_databases]]
-binding = "APPLIANCE_MANUALS_DB"
-database_name = "lovely-home-appliance-manuals-e2e-v5jjy14v"
-database_id = "4c81aecd-be8b-4651-9ad5-135506444a8d"
-migrations_dir = "migrations"
-
-[[env.e2e-v5jjy14v.d1_databases]]
-binding = "HOUSE_GUIDE_DB"
-database_name = "lovely-home-appliance-manuals-e2e-v5jjy14v"
-database_id = "4c81aecd-be8b-4651-9ad5-135506444a8d"
-migrations_dir = "migrations"
-
-[[env.e2e-v5jjy14v.r2_buckets]]
-binding = "GUIDE_MEDIA"
-bucket_name = "lovely-home-guide-media-e2e-v5jjy14v"
-
-[[env.e2e-v5jjy14v.r2_buckets]]
-binding = "BRAND_MEDIA"
-bucket_name = "lovely-home-media"
-
-# ---------------------------------------------------------------------------
 # E2e-5tpdo7jp environment — Terraform-managed (see docs/platform-terraform.md)
 # Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs e2e-5tpdo7jp
 # ---------------------------------------------------------------------------
