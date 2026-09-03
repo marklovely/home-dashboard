@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { resolveSiteArchiveContract } from '../scripts/lib/resolve-site-archive-contract.mjs';
 import { resolveHubArchiveUrl } from '../scripts/lib/hub-archive-url.mjs';
+import { pickCommittedCustomerHubFixture } from './lib/committedCustomerHubFixture.js';
 
 describe('resolveSiteArchiveContract', () => {
   it('falls back to platform manifest when terraform output is unavailable', () => {
-    const resolved = resolveSiteArchiveContract('wagtail');
+    const { siteId } = pickCommittedCustomerHubFixture();
+    const resolved = resolveSiteArchiveContract(siteId);
     expect(resolved).not.toBeNull();
     expect(['terraform', 'manifest', 'registry']).toContain(resolved?.source);
-    expect(resolveHubArchiveUrl(resolved?.site ?? {}).url).toMatch(/wagtail/);
+    expect(resolveHubArchiveUrl(resolved?.site ?? {}).url).toMatch(new RegExp(siteId));
   });
 
   it('falls back to registry naming for an unknown household hub', () => {
