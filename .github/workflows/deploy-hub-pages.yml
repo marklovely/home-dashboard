@@ -1,0 +1,63 @@
+name: Deploy hub Pages
+
+# Hubs are wrangler-deployed, not git-auto-deployed. Registry-only merges
+# must not rebuild every household. App-code changes still roll out here.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'index.html'
+      - 'vite.config.js'
+      - 'package-lock.json'
+      - 'scripts/deploy-cloudflare-pages-site.sh'
+      - 'scripts/prune-hub-pages-functions.mjs'
+      - 'scripts/attach-hub-api-pages-binding.mjs'
+      - 'scripts/lib/hub-api-pages-binding.mjs'
+      - 'scripts/list-terraform-hub-sites.mjs'
+      - '.github/workflows/deploy-hub-pages.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  list-sites:
+    runs-on: ubuntu-latest
+    outputs:
+      site_ids: ${{ steps.list.outputs.site_ids }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - id: list
+        run: node scripts/list-terraform-hub-sites.mjs
+
+  deploy:
+    needs: list-sites
+    if: needs.list-sites.outputs.site_ids != '[]' && needs.list-sites.outputs.site_ids != ''
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/London
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        site_id: ${{ fromJson(needs.list-sites.outputs.site_ids) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            worker/package-lock.json
+      - name: Install worker dependencies
+        run: npm ci --prefix worker
+      - name: Deploy Pages (attach HUB_API + redeploy)
+        run: bash scripts/deploy-cloudflare-pages-site.sh "${{ matrix.site_id }}"

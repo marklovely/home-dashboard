@@ -7,6 +7,7 @@
  */
 
 import { getSiteFromManifest } from './platformApi.js';
+import { isLiveBillingStatus } from './platformBillingLifecycle.js';
 import { platformHealthServiceAuth } from './platformHealthFetch.js';
 
 export const CUSTOMER_HUB_ZONE_NAME = 'lovely-hub.com';
@@ -148,11 +149,28 @@ export async function probeHubHostname(hostname, fetchImpl = fetch, env = {}) {
 }
 
 /**
+ * Signup/e2e must not wait for git-connected platform Pages to serve
+ * platform-manifest.json. Billing is authoritative for customer hubs;
+ * canceled billing wins over a stale manifest. Operator hubs without
+ * billing still use the manifest.
+ *
+ * @param {object} manifest
+ * @param {string} siteId
+ * @param {{ status?: string | null } | null} [billing]
+ */
+export function hubIsRegistered(manifest, siteId, billing = null) {
+  if (isLiveBillingStatus(billing?.status)) return true;
+  if (String(billing?.status ?? '') === 'canceled') return false;
+  return Boolean(getSiteFromManifest(manifest ?? {}, siteId));
+}
+
+/**
  * @param {object} manifest
  * @param {string} siteId
  * @param {typeof fetch} [fetchImpl]
  * @param {Record<string, string | undefined>} [env]
  * @param {{
+ *   status?: string | null,
  *   registry_last_error?: string | null,
  *   provision_last_error?: string | null
  * } | null} [billing]
@@ -175,7 +193,7 @@ export async function getPublicHubProvisionStatus(
     status: 200,
     body: buildHubProvisionStatus({
       siteId: id,
-      registered: Boolean(getSiteFromManifest(manifest ?? {}, id)),
+      registered: hubIsRegistered(manifest, id, billing),
       probe,
       registryLastError: billing?.registry_last_error ?? '',
       provisionLastError: billing?.provision_last_error ?? ''

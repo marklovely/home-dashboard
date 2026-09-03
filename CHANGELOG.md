@@ -32,6 +32,8 @@
 - Add extra marketing-site OTP emails from the platform dashboard (guests, not operators)
 - Marketing site access panel sits at the top of the dashboard, above the site cards
 - Public contact form on Support (`POST /api/public/contact`) emails `support@lovely-home.co.uk` via Resend
+- Public hub-status `registered` follows billing (trialing/active/canceled), not a lagging `platform-manifest.json` on platform Pages
+- Hub Pages production git deploys are off; provision wrangler-deploys, and app-code changes on `main` roll out via Deploy hub Pages
 - Re-attach production `HUB_API` Pages bindings after main deploys (sandbox was losing the Worker link on every marketing merge)
 - Hub Pages deploy stages pruned Functions as `./functions` for Wrangler 4 (`--functions-directory` was removed and blocked new-hub provision)
 - Platform admin no longer says a healthy hub is “not provisioned” when only the served manifest is stale

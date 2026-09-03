@@ -12,10 +12,13 @@ resource "cloudflare_pages_project" "dashboard" {
   source = {
     type = "github"
     config = {
-      owner                          = var.github_owner
-      repo_name                      = var.github_repo
-      production_branch              = var.github_production_branch
-      production_deployments_enabled = true
+      owner             = var.github_owner
+      repo_name         = var.github_repo
+      production_branch = var.github_production_branch
+      # Wrangler deploys the hub at provision (and CI deploys on app-code changes).
+      # Git production deploys on every sites.yaml merge rebuild every hub and starve
+      # the platform Pages project that serves signup hub-status.
+      production_deployments_enabled = false
       # Hub site previews are enabled via scripts/enable-hub-pages-previews.mjs — Terraform
       # PATCH of preview + HUB_API bindings returns Cloudflare 8000022 for non-production Workers.
       preview_deployment_setting = "none"
