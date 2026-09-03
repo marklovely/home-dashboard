@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateDeploySiteId } from './lib/site-registry.mjs';
+import { validateSiteId } from './lib/site-registry.mjs';
 import { extractEnvBlock } from '../worker/scripts/check-env-provisioned.mjs';
 import { pagesProjectNameForSite } from './lib/hub-api-pages-binding.mjs';
 
@@ -20,7 +20,7 @@ if (!siteId) {
   process.exit(1);
 }
 
-const deployError = validateDeploySiteId(siteId);
+const deployError = validateSiteId(siteId);
 if (deployError) {
   console.error(deployError);
   process.exit(1);
