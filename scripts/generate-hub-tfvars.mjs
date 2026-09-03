@@ -20,9 +20,11 @@ import {
 } from './lib/hub-tfvars.mjs';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { parseEmailList } from './lib/email-lists.mjs';
+import { resolveSiteArchiveContract } from './lib/resolve-site-archive-contract.mjs';
 import { terraformStringMap, parseTerraformJsonOutput, parseHubProxySecretsFromTerraformState } from './lib/terraform-output-json.mjs';
 import { parseSiteOwnerEmailsEnv, resolveSiteOwnerEmails } from './lib/site-owner-emails.mjs';
 import { isTerraformStack } from './lib/terraform-stack.mjs';
+import { readTerraformHubSiteIds } from './lib/terraform-state.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sitesYamlPath = join(root, 'platform/sites.yaml');
@@ -329,16 +331,28 @@ for (const [siteId, meta] of Object.entries(registry)) {
   appendSiteBlock(siteId, meta);
 }
 
-if (deprovisionSiteId && !writtenSiteIds.has(deprovisionSiteId) && terraformSiteIds.has(deprovisionSiteId)) {
+if (deprovisionSiteId && !writtenSiteIds.has(deprovisionSiteId)) {
   const tfSites = readTerraformSitesOutput();
   const contract = tfSites[deprovisionSiteId];
-  if (contract) {
+  /** @type {Record<string, unknown> | null} */
+  let siteMeta = contract && typeof contract === 'object' ? contract : null;
+  if (!siteMeta && terraformSiteIds.has(deprovisionSiteId)) {
+    const resolved = resolveSiteArchiveContract(deprovisionSiteId);
+    if (resolved?.site) {
+      siteMeta = resolved.site;
+      console.warn(
+        `generate-hub-tfvars: using ${resolved.source} metadata for deprovision site "${deprovisionSiteId}" (terraform output "sites" unavailable).`
+      );
+    }
+  }
+  if (siteMeta) {
     appendSiteBlock(deprovisionSiteId, {
-      hostname: contract.hostname,
-      hub_environment: contract.hub_environment,
-      vanilla: contract.vanilla,
-      owner_emails: contract.owner_emails,
-      sitter_emails: contract.sitter_emails
+      hostname: String(siteMeta.hostname ?? ''),
+      hub_environment: String(siteMeta.hub_environment ?? deprovisionSiteId),
+      vanilla: siteMeta.vanilla !== false,
+      owner_emails: /** @type {string[] | undefined} */ (siteMeta.owner_emails),
+      sitter_emails: /** @type {string[] | undefined} */ (siteMeta.sitter_emails),
+      access_enabled: siteMeta.access_enabled
     });
   }
 }
@@ -410,7 +424,11 @@ function readTerraformSitesOutput() {
  * @returns {Set<string>}
  */
 function readTerraformSiteIds() {
-  return new Set(Object.keys(readTerraformSitesOutput()));
+  const ids = new Set(Object.keys(readTerraformSitesOutput()));
+  for (const siteId of readTerraformHubSiteIds(tfDir)) {
+    ids.add(siteId);
+  }
+  return ids;
 }
 
 /**
