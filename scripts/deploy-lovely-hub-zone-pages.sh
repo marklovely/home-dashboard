@@ -15,6 +15,9 @@ fi
 PROJECT_NAME="lovely-hub-zone"
 PRODUCTION_BRANCH="main"
 
+cp "$ROOT/website/favicon.png" "$ROOT/zone/favicon.png"
+cp "$ROOT/website/lovely-home-icon.svg" "$ROOT/zone/lovely-home-icon.svg"
+
 if ! "${WRANGLER[@]}" pages project list 2>/dev/null | grep -qE "│ ${PROJECT_NAME}[[:space:]]"; then
   echo "==> Creating Pages project: ${PROJECT_NAME} (production branch: ${PRODUCTION_BRANCH})"
   "${WRANGLER[@]}" pages project create "${PROJECT_NAME}" --production-branch "${PRODUCTION_BRANCH}"

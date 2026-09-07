@@ -11,9 +11,10 @@ describe('not found pages', () => {
     const html = readFileSync(join(root, 'website/404.html'), 'utf8');
     expect(html).toMatch(/Page not found/i);
     expect(html).toContain('noindex');
-    expect(html).toContain('href="site.css"');
-    expect(html).toContain('src="site.js"');
-    expect(html).toContain('lovely-home-mark.svg');
+    expect(html).toContain('href="/site.css"');
+    expect(html).toContain('src="/site.js"');
+    expect(html).toContain('href="/favicon.png"');
+    expect(html).toContain('src="/lovely-home-mark.svg"');
     expect(html).toContain('href="/"');
     expect(html).toContain('{your-name}.lovely-hub.com');
   });
@@ -22,7 +23,8 @@ describe('not found pages', () => {
     const index = readFileSync(join(root, 'zone/index.html'), 'utf8');
     const notFound = readFileSync(join(root, 'zone/404.html'), 'utf8');
     expect(index).toMatch(/Your hub lives on its own address/i);
-    expect(index).toContain('href="site.css"');
+    expect(index).toContain('href="/site.css"');
+    expect(index).toContain('href="/favicon.png"');
     expect(notFound).toMatch(/Page not found/i);
     expect(notFound).toContain('noindex');
     expect(notFound).toContain('smith.lovely-hub.com');
@@ -37,6 +39,7 @@ describe('not found pages', () => {
     expect(hub404).toMatch(/Page not found/i);
     expect(hub404).toContain('noindex');
     expect(hub404).toContain('Back to hub home');
+    expect(hub404).toMatch(/rel="icon"[^>]+href="\.\/assets\/icon-192/);
   });
 
   it('bypasses marketing Access for the 404 page when the site is gated', () => {
@@ -50,5 +53,6 @@ describe('not found pages', () => {
     const script = readFileSync(join(root, 'scripts/deploy-lovely-hub-zone-pages.sh'), 'utf8');
     expect(script).toContain('lovely-hub-zone');
     expect(script).toContain('./zone');
+    expect(script).toContain('favicon.png');
   });
 });
