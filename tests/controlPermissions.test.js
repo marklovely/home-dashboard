@@ -1,14 +1,25 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, afterEach } from 'vitest';
 import {
-  isButtonAllowedForSitter,
-  SITTER_ALLOWED_BUTTON_IDS
-} from '../src/config/controlPermissions.js';
+  applySitterControlsEffective,
+  isSitterControlsDisclosed,
+  resetSitterControlsForTests
+} from '../src/services/sitterControlsService.js';
+import { isButtonAllowedForSitter } from '../src/config/controlPermissions.js';
 
 describe('controlPermissions', () => {
-  it('does not allow any buttons for sitters', () => {
-    expect(SITTER_ALLOWED_BUTTON_IDS).toEqual([]);
-    for (const buttonId of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+  afterEach(() => {
+    resetSitterControlsForTests();
+  });
+
+  it('blocks sitter buttons until controls are disclosed for an active sit', () => {
+    expect(isSitterControlsDisclosed()).toBe(false);
+    for (const buttonId of [1, 2, 8, 10]) {
       expect(isButtonAllowedForSitter(buttonId)).toBe(false);
+    }
+
+    applySitterControlsEffective(true);
+    for (const buttonId of [1, 2, 8, 10]) {
+      expect(isButtonAllowedForSitter(buttonId)).toBe(true);
     }
   });
 });

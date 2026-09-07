@@ -719,6 +719,9 @@ body.is-bins-route .app-viewport > .bins-app {
   min-height: 0;
   height: 100%;
 }
+.settings-app > .settings-unlock-banner {
+  grid-column: 1 / -1;
+}
 .settings-app--loading {
   display: grid;
   place-items: center;

@@ -84,7 +84,7 @@ describe('Cloudflare Access authentication', () => {
 });
 
 describe('control authorization', () => {
-  it('forbids sitter from all home controls', async () => {
+  it('forbids sitter from owner-only controls', async () => {
     const token = await sitterJwt();
     const response = await handleRequest(
       new Request(

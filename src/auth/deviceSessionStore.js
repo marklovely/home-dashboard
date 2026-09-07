@@ -10,6 +10,7 @@ import { completeOwnerUnlock, lockToHouseSitterMode } from './ownerLock.js';
 import { clearMyDayCalendarState } from '../services/myDayCalendarService.js';
 import { clearPrivateConfigSession, refreshPrivateConfig } from '../services/privateConfigService.js';
 import { applySitterSecretsEffective } from '../services/sitterSecretsService.js';
+import { applySitterControlsEffective } from '../services/sitterControlsService.js';
 import { applyPublicHubBranding } from '../services/siteProfileService.js';
 import { clearApplianceManualsState } from '../services/applianceManualsService.js';
 import { clearOwnerAccessToken } from './ownerAccessToken.js';
@@ -76,13 +77,14 @@ export function getMyStay() {
 }
 
 /**
- * @param {{ mode: DeviceMode, ownerSessionExpiresAt?: string | null, hubName?: string, myStay?: { sitStart: string, sitEnd: string } | null }} payload
+ * @param {{ mode: DeviceMode, ownerSessionExpiresAt?: string | null, hubName?: string, myStay?: { sitStart: string, sitEnd: string } | null, sitterSecretsDisclosed?: boolean, sitterControlsDisclosed?: boolean }} payload
  */
 function applyServerSession(payload) {
   mode = payload.mode === 'owner' ? 'owner' : 'sitter';
   ownerSessionExpiresAt = payload.ownerSessionExpiresAt ?? null;
   myStay = payload.myStay ?? null;
   applySitterSecretsEffective(payload.sitterSecretsDisclosed);
+  applySitterControlsEffective(payload.sitterControlsDisclosed);
   applyPublicHubBranding(payload.hubName);
   applyDeviceSessionMode(mode);
   setActiveProfileId(isOwnerUserMode() ? 'owner' : 'housesitter');

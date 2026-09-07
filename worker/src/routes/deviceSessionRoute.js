@@ -36,6 +36,7 @@ export async function handleDeviceSession(request, env, fetchImpl = fetch) {
   /** @type {Record<string, unknown>} */
   const extras = {
     sitterSecretsDisclosed: accessState.effectiveSecrets,
+    sitterControlsDisclosed: accessState.effectiveControls,
     ...hubBranding
   };
 

@@ -8,6 +8,7 @@ import { validateEmailList } from '../lib/emailLists.js';
 import {
   getSitterAccessEmailsRaw,
   setSitterAccessEmails,
+  setSitterControlsManual,
   setSitterSecretsManual
 } from '../lib/houseSettings.js';
 import { applySitterStaySchedule, getEffectiveSitterAccessState } from '../lib/sitterSchedule.js';
@@ -57,6 +58,8 @@ export async function buildHouseSettingsPayload(env) {
   return {
     sitterSecretsManual: state.manualSecrets,
     sitterSecretsDisclosed: state.effectiveSecrets,
+    sitterControlsManual: state.manualControls,
+    sitterControlsDisclosed: state.effectiveControls,
     sitterAccessEmailsManual: state.manualEmails,
     sitterAccessEmails: state.effectiveEmails,
     sitterStays: stays.map(serializeSitterStayForApi),
@@ -112,6 +115,43 @@ export async function handleSitterSecretsSetting(request, env, fetchImpl = fetch
 
   try {
     await setSitterSecretsManual(env, body.disclosed);
+  } catch {
+    return Response.json({ error: 'SETTINGS_UNAVAILABLE' }, { status: 503 });
+  }
+
+  return Response.json(await buildHouseSettingsPayload(env, fetchImpl), {
+    headers: { 'Cache-Control': 'no-store' }
+  });
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, string | undefined>} env
+ * @param {typeof fetch} fetchImpl
+ */
+export async function handleSitterControlsSetting(request, env, fetchImpl = fetch) {
+  if (request.method !== 'POST') {
+    return Response.json({ error: 'Method not allowed' }, { status: 405 });
+  }
+
+  const ownerCheck = await requireOwnerIdentity(request, env, fetchImpl);
+  if (!ownerCheck.ok) {
+    return Response.json({ error: ownerCheck.code }, { status: ownerCheck.status });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid request' }, { status: 400 });
+  }
+
+  if (typeof body?.enabled !== 'boolean') {
+    return Response.json({ error: 'Invalid request' }, { status: 400 });
+  }
+
+  try {
+    await setSitterControlsManual(env, body.enabled);
   } catch {
     return Response.json({ error: 'SETTINGS_UNAVAILABLE' }, { status: 503 });
   }

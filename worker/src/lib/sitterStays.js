@@ -409,6 +409,18 @@ export function computeEffectiveSitterSecrets(manualDisclosed, stays, nowSec) {
 }
 
 /**
+ * Alexa controls for sitters: owner toggle, or automatically during sit dates (not the pre-sit Access window).
+ *
+ * @param {boolean} manualEnabled
+ * @param {SitterStayRecord[]} stays
+ * @param {number} nowSec
+ */
+export function computeEffectiveSitterControls(manualEnabled, stays, nowSec) {
+  if (manualEnabled) return true;
+  return stays.some((stay) => isStaySecretsWindowOpen(stay, nowSec));
+}
+
+/**
  * @param {unknown} value
  * @param {number} fallback
  */

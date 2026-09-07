@@ -1,7 +1,8 @@
 import { syncSitterEmailsToAccess } from './accessSitterPolicy.js';
 import { getSitterAccessEmailsRaw } from './houseSettings.js';
-import { getSitterSecretsManual } from './houseSettings.js';
+import { getSitterControlsManual, getSitterSecretsManual } from './houseSettings.js';
 import {
+  computeEffectiveSitterControls,
   computeEffectiveSitterEmails,
   computeEffectiveSitterSecrets,
   listSitterStays,
@@ -15,14 +16,17 @@ import {
 export async function getEffectiveSitterAccessState(env, nowSec = Math.floor(Date.now() / 1000)) {
   const manualEmails = (await getSitterAccessEmailsRaw(env)) ?? [];
   const manualSecrets = await getSitterSecretsManual(env);
+  const manualControls = await getSitterControlsManual(env);
   const stays = await listSitterStays(env, nowSec);
 
   return {
     manualEmails,
     manualSecrets,
+    manualControls,
     stays,
     effectiveEmails: computeEffectiveSitterEmails(manualEmails, stays, nowSec),
-    effectiveSecrets: computeEffectiveSitterSecrets(manualSecrets, stays, nowSec)
+    effectiveSecrets: computeEffectiveSitterSecrets(manualSecrets, stays, nowSec),
+    effectiveControls: computeEffectiveSitterControls(manualControls, stays, nowSec)
   };
 }
 
