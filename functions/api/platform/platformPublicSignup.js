@@ -36,6 +36,7 @@ export const PUBLIC_SIGNUP_BLOCKED_SITE_IDS = new Set([
   'test',
   'sandbox',
   'dev',
+  'lovely',
   'platform',
   'admin',
   'www',

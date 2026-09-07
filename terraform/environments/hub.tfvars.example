@@ -18,7 +18,13 @@ zone_name             = "lovely-home.co.uk"
 # customer_zone_name          = "lovely-hub.com"
 
 owner_emails = [
-  "owner@example.com", # household owners — Access on every hub (production, test, sandbox, …)
+  "owner@example.com", # household owners — Access on platform-zone hubs only (production, test, sandbox, …)
+]
+
+# Named operator accounts allowed into customer hubs ({site}.lovely-hub.com) without billing.
+# Also set GitHub secret SUPPORT_OWNER_EMAILS (comma-separated) for provision CI.
+support_owner_emails = [
+  "you@example.com",
 ]
 
 sitter_emails = [] # optional — house sitters on every hub unless a site overrides sitter_emails

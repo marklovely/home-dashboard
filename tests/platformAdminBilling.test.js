@@ -12,6 +12,7 @@ describe('platform admin billing UI', () => {
     expect(canStartBillingTrial('practice', null, true)).toBe(true);
     expect(canStartBillingTrial('production', null, true)).toBe(false);
     expect(canStartBillingTrial('demo', null, true)).toBe(false);
+    expect(canStartBillingTrial('lovely', null, true)).toBe(false);
     expect(canStartBillingTrial('practice', { status: 'trialing' }, true)).toBe(false);
     expect(canStartBillingTrial('practice', { status: 'canceled' }, true)).toBe(true);
   });

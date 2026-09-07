@@ -5,6 +5,48 @@ import {
   runSiteBackupRestore
 } from '../../services/siteBackupRestoreFlow.js';
 
+const RESTORE_BUTTON_LABEL = 'Restore from backup file';
+
+/**
+ * @param {HTMLInputElement} input
+ * @returns {Promise<File>}
+ */
+export function pickBackupFile(input) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    /** @param {() => void} fn */
+    const settle = (fn) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      fn();
+    };
+
+    const onChange = () => {
+      const file = input.files?.[0];
+      input.value = '';
+      if (file) settle(() => resolve(file));
+      else settle(() => reject(new Error('cancelled')));
+    };
+
+    const onWindowFocus = () => {
+      window.setTimeout(() => {
+        if (input.files?.length) return;
+        settle(() => reject(new Error('cancelled')));
+      }, 500);
+    };
+
+    const cleanup = () => {
+      input.removeEventListener('change', onChange);
+      window.removeEventListener('focus', onWindowFocus);
+    };
+
+    input.addEventListener('change', onChange);
+    window.addEventListener('focus', onWindowFocus);
+    input.click();
+  });
+}
+
 /**
  * @param {import('../../types/app.js').ShellContext} context
  * @param {() => void} onRestored
@@ -21,7 +63,7 @@ export function createHubSetupRestoreFromBackupBlock(context, onRestored) {
   const restoreButton = document.createElement('button');
   restoreButton.type = 'button';
   restoreButton.className = 'settings-action-button settings-action-button--secondary hub-setup-restore-button';
-  restoreButton.textContent = 'Restore from backup file';
+  restoreButton.textContent = RESTORE_BUTTON_LABEL;
 
   const importInput = document.createElement('input');
   importInput.type = 'file';
@@ -34,19 +76,25 @@ export function createHubSetupRestoreFromBackupBlock(context, onRestored) {
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
 
-  restoreButton.addEventListener('click', () => importInput.click());
-  importInput.addEventListener('change', () => {
-    const file = importInput.files?.[0];
-    importInput.value = '';
-    if (!file) return;
-
+  restoreButton.addEventListener('click', () => {
     void (async () => {
       try {
-        const restorePayload = await readAndConfirmSiteBackupRestore(file);
-        if (!restorePayload) return;
-
-        await withAsyncButtonFeedback(restoreButton, 'Restoring…', async () => {
+        await withAsyncButtonFeedback(restoreButton, 'Choose file…', async () => {
           status.hidden = false;
+          status.textContent = 'Choose a backup file…';
+
+          const file = await pickBackupFile(importInput);
+
+          status.textContent = 'Reading backup…';
+          restoreButton.textContent = 'Reading…';
+
+          const restorePayload = await readAndConfirmSiteBackupRestore(file);
+          if (!restorePayload) {
+            status.textContent = 'Restore cancelled.';
+            return;
+          }
+
+          restoreButton.textContent = 'Restoring…';
           status.textContent = 'Restoring backup…';
           showToast(context.toast, 'Restoring backup…', 120000);
 
@@ -64,6 +112,11 @@ export function createHubSetupRestoreFromBackupBlock(context, onRestored) {
           onRestored();
         });
       } catch (error) {
+        if (error instanceof Error && error.message === 'cancelled') {
+          status.hidden = false;
+          status.textContent = 'No file chosen.';
+          return;
+        }
         const message = error instanceof Error ? error.message : 'Invalid backup file.';
         status.hidden = false;
         status.textContent = message;
