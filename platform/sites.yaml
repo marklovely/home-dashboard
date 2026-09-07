@@ -49,7 +49,7 @@ sites:
 
   lovely:
     hostname: lovely.lovely-hub.com
-    hub_environment: lovely
+    hub_environment: production
     vanilla: false
     terraform: true
     zone_name: lovely-hub.com

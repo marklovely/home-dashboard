@@ -348,13 +348,13 @@ bucket_name = "lovely-home-media"
 name = "lovely-home-hub-api-lovely"
 
 [env.lovely.vars]
-HUB_ENVIRONMENT = "lovely"
+HUB_ENVIRONMENT = "production"
 
 ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://lovely.lovely-hub.com,https://home-dashboard-lovely.pages.dev,https://*.home-dashboard-lovely.pages.dev,https://*.pages.dev"
 
-HOME_LATITUDE = "51.5074"
+HOME_LATITUDE = "50.88"
 
-HOME_LONGITUDE = "-0.1278"
+HOME_LONGITUDE = "-1.03"
 
 CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
 
