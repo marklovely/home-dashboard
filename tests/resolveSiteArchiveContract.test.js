@@ -21,4 +21,17 @@ describe('resolveSiteArchiveContract', () => {
     expect(resolved.site.hostname).toBeTruthy();
     expect(String(resolved.site.worker_api_origin ?? '')).toMatch(/^https:\/\//);
   });
+
+  it('resolves e2e lifecycle slugs by naming convention', () => {
+    const resolved = resolveSiteArchiveContract('e2e-1ndvnzcc');
+    expect(resolved).toEqual({
+      site: {
+        hostname: 'e2e-1ndvnzcc.lovely-hub.com',
+        hub_environment: 'e2e-1ndvnzcc',
+        worker_name: 'lovely-home-hub-api-e2e-1ndvnzcc',
+        worker_api_origin: 'https://lovely-home-hub-api-e2e-1ndvnzcc.mark-lovely67.workers.dev'
+      },
+      source: 'convention'
+    });
+  });
 });
