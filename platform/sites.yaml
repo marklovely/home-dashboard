@@ -46,11 +46,3 @@ sites:
     terraform: true
     zone_name: lovely-hub.com
     attach_hub_api_binding: true
-
-  smith:
-    hostname: smith.lovely-hub.com
-    hub_environment: smith
-    vanilla: false
-    terraform: true
-    zone_name: lovely-hub.com
-    attach_hub_api_binding: true
