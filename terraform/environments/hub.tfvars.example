@@ -234,4 +234,13 @@ sites = {
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
   }
 
+  larchmount = {
+    hostname        = "larchmount.lovely-hub.com"
+    hub_environment = "larchmount"
+    vanilla         = false
+    terraform       = true
+    zone_name       = "lovely-hub.com"
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+  }
+
 }

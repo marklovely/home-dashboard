@@ -48,3 +48,11 @@ sites:
     terraform: true
     zone_name: lovely-hub.com
     attach_hub_api_binding: true
+
+  larchmount:
+    hostname: larchmount.lovely-hub.com
+    hub_environment: larchmount
+    vanilla: false
+    terraform: true
+    zone_name: lovely-hub.com
+    attach_hub_api_binding: true
