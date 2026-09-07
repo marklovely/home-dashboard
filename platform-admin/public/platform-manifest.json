@@ -399,6 +399,72 @@
           "done": null
         }
       ]
+    },
+    "lovely": {
+      "siteId": "lovely",
+      "hostname": "lovely.lovely-hub.com",
+      "hubEnvironment": "lovely",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "hasOwnerEmails": false,
+      "demoPublic": false,
+      "accessEnabled": true,
+      "pagesProject": "home-dashboard-lovely",
+      "workerName": "lovely-home-hub-api-lovely",
+      "pagesUrl": "https://lovely.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-lovely.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "d54b01af61cfb2b0dbfd563c3c0971bcc0bdc72b109bae460350650b00115cda,7b1e925abcce9d7999a87b0c7f3ebf1537633402a0fab037593b08d01e749eae",
+        "access_enabled": true,
+        "access_pages_app_id": "13e6648f-c9f4-460e-956c-5c06373a102c",
+        "access_pages_aud": "7b1e925abcce9d7999a87b0c7f3ebf1537633402a0fab037593b08d01e749eae",
+        "access_worker_app_id": "03805cf2-6c2e-4ae4-925c-af40ed441679",
+        "access_worker_aud": "d54b01af61cfb2b0dbfd563c3c0971bcc0bdc72b109bae460350650b00115cda",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "724ebacc-a253-48fe-ac04-30b0a760e0f1",
+        "d1_database_name": "lovely-home-appliance-manuals-lovely",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "lovely.lovely-hub.com",
+        "hub_environment": "lovely",
+        "pages_project": "home-dashboard-lovely",
+        "pages_url": "https://lovely.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-lovely",
+        "r2_media_bucket": "lovely-home-guide-media-lovely",
+        "site_id": "lovely",
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-lovely.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-lovely.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-lovely"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
     }
   }
 }
