@@ -70,6 +70,9 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/account\.html/);
     expect(html).toMatch(/taken down and archived/);
     expect(html).toMatch(/Photos and appliance PDFs/);
+    expect(html).toMatch(/Refer a friend/);
+    expect(html).toMatch(/£5 off each of their first two months/);
+    expect(html).toMatch(/id="referrals"/);
   });
 
   it('account page signs in with an email code then Stripe billing', () => {

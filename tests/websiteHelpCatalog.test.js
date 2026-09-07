@@ -45,6 +45,8 @@ describe('public help catalog', () => {
     expect(text).toMatch(/When am I charged\?/);
     expect(text).toMatch(/What if I cancel\?/);
     expect(text).toMatch(/Can I book sits in advance\?/);
+    expect(text).toMatch(/How do referrals work\?/);
+    expect(text).toMatch(/How do I get a referral link\?/);
     expect(text).toMatch(/Is this a public app\?/);
     expect(faq.blocks.every((block) => block.type === 'h4' || block.type === 'p')).toBe(true);
   });
