@@ -30,9 +30,9 @@ export function lockToHouseSitterMode(navigateHome = navigateHomeHandler ?? unde
   clearOwnerPinSession();
   clearOwnerAccessToken();
   clearPersistedUiViewingMode();
+  navigateHome?.();
   setUserMode(UserMode.HouseSitter, { skipPersist: true });
   setActiveProfileId('housesitter');
-  navigateHome?.();
 }
 
 /**

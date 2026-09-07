@@ -5,6 +5,8 @@ import { withApiCredentials } from './accessFetch.js';
  * @typedef {{
  *   sitterSecretsManual?: boolean,
  *   sitterSecretsDisclosed: boolean,
+ *   sitterControlsManual?: boolean,
+ *   sitterControlsDisclosed?: boolean,
  *   sitterAccessEmailsManual?: string[],
  *   sitterAccessEmails?: string[],
  *   sitterStays?: import('./sitterStaysApi.js').SitterStayPayload[],
@@ -48,6 +50,31 @@ export async function postSitterSecretsDisclosed(disclosed, fetchImpl = fetch) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ disclosed }),
+        cache: 'no-store'
+      })
+    );
+    if (!response.ok) {
+      return { ok: false, status: response.status };
+    }
+    return { ok: true, data: /** @type {HouseSettingsPayload} */ (await response.json()) };
+  } catch {
+    return { ok: false, status: 503 };
+  }
+}
+
+/**
+ * @param {boolean} enabled
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function postSitterControlsEnabled(enabled, fetchImpl = fetch) {
+  await ensureApiBaseUrl();
+  try {
+    const response = await fetchImpl(
+      buildApiUrl('/api/house-settings/sitter-controls'),
+      withApiCredentials({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
         cache: 'no-store'
       })
     );

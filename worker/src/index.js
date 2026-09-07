@@ -13,6 +13,7 @@ import { handleHouseGuide } from './routes/houseGuide.js';
 import {
   handleHouseSettingsGet,
   handleSitterAccessEmailsSetting,
+  handleSitterControlsSetting,
   handleSitterSecretsSetting
 } from './routes/houseSettingsRoute.js';
 import { handleSitterStayItem, handleSitterStaysCollection } from './routes/sitterStaysRoute.js';
@@ -145,6 +146,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleHouseSettingsGet(request, env, fetchBound);
     } else if (url.pathname === '/api/house-settings/sitter-secrets' && request.method === 'POST') {
       response = await handleSitterSecretsSetting(request, env, fetchBound);
+    } else if (url.pathname === '/api/house-settings/sitter-controls' && request.method === 'POST') {
+      response = await handleSitterControlsSetting(request, env, fetchBound);
     } else if (url.pathname === '/api/house-settings/sitter-emails' && request.method === 'POST') {
       response = await handleSitterAccessEmailsSetting(request, env, fetchBound);
     } else if (url.pathname === '/api/house-settings/sitter-stays' && (request.method === 'POST')) {

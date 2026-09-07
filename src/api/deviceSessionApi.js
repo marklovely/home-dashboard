@@ -3,7 +3,7 @@ import { withApiCredentials } from './accessFetch.js';
 
 /** @typedef {{ sitStart: string, sitEnd: string }} SitterWelcomeStayPayload */
 
-/** @typedef {{ authenticated: boolean, mode: 'owner' | 'sitter', ownerSessionExpiresAt: string | null, sitterSecretsDisclosed?: boolean, hubName?: string, myStay?: SitterWelcomeStayPayload | null }} DeviceSessionPayload */
+/** @typedef {{ authenticated: boolean, mode: 'owner' | 'sitter', ownerSessionExpiresAt: string | null, sitterSecretsDisclosed?: boolean, sitterControlsDisclosed?: boolean, hubName?: string, myStay?: SitterWelcomeStayPayload | null }} DeviceSessionPayload */
 
 const DEVICE_SESSION_FETCH_TIMEOUT_MS = 12_000;
 

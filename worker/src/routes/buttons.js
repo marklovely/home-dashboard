@@ -2,6 +2,7 @@ import { isAllowedButtonCode, BUTTON_CODE_TO_VIRTUAL_ID, normalizeButtonCode } f
 import { jsonError } from '../lib/errors.js';
 import { triggerVirtualButtonUpstream } from '../services/virtualButtons.js';
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
+import { getEffectiveSitterAccessState } from '../lib/sitterSchedule.js';
 import { isControlAllowedForRole } from '../lib/controlPermissions.js';
 import { ensureControlActionAllowed } from '../lib/controlRateLimitClient.js';
 import { identityForLogs } from '../lib/auditLog.js';
@@ -52,15 +53,32 @@ export async function handleButtonPress(request, buttonParam, env, correlationId
   }
 
   if (!isControlAllowedForRole(code, effectiveRole)) {
-    logControlAction({
-      correlationId,
-      action: code,
-      role: effectiveRole,
-      identity: identityForLogs(auth.email),
-      success: false,
-      reason: 'FORBIDDEN'
-    });
-    return jsonError(403, 'FORBIDDEN', 'This control is not available.', { correlationId });
+    if (effectiveRole === 'house-sitter') {
+      const accessState = await getEffectiveSitterAccessState(env);
+      if (!accessState.effectiveControls) {
+        logControlAction({
+          correlationId,
+          action: code,
+          role: effectiveRole,
+          identity: identityForLogs(auth.email),
+          success: false,
+          reason: 'CONTROLS_NOT_DISCLOSED'
+        });
+        return jsonError(403, 'FORBIDDEN', 'Alexa controls are not available until the sit begins.', {
+          correlationId
+        });
+      }
+    } else {
+      logControlAction({
+        correlationId,
+        action: code,
+        role: effectiveRole,
+        identity: identityForLogs(auth.email),
+        success: false,
+        reason: 'FORBIDDEN'
+      });
+      return jsonError(403, 'FORBIDDEN', 'This control is not available.', { correlationId });
+    }
   }
 
   const rate = await ensureControlActionAllowed(request, auth.email, code, env);

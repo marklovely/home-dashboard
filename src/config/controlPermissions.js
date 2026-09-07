@@ -1,13 +1,13 @@
-/**
- * House-sitter allowed Virtual Button IDs — keep in sync with worker/src/lib/controlPermissions.js
- *
- * Sitters and guests must not trigger Alexa routines or other home controls.
- */
-export const SITTER_ALLOWED_BUTTON_IDS = Object.freeze([]);
+import { isSitterControlsDisclosed } from '../services/sitterControlsService.js';
 
 /**
+ * Sitters may use all configured Virtual Buttons only while an active sit has
+ * disclosed controls (owner toggle or scheduled stay dates). Keep worker
+ * button authorization aligned in worker/src/routes/buttons.js.
+ *
  * @param {number} buttonId
  */
 export function isButtonAllowedForSitter(buttonId) {
-  return SITTER_ALLOWED_BUTTON_IDS.includes(buttonId);
+  if (!isSitterControlsDisclosed()) return false;
+  return Number.isFinite(buttonId) && buttonId > 0;
 }

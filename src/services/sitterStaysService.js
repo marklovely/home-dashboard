@@ -10,6 +10,7 @@ import {
 } from '../api/sitterStaysApi.js';
 import { applySitterAccessEmails } from './sitterAccessEmailsService.js';
 import { applySitterSecretsFromPayload } from './sitterSecretsService.js';
+import { applySitterControlsFromPayload } from './sitterControlsService.js';
 
 /** @typedef {import('../api/sitterStaysApi.js').SitterStayPayload} SitterStayPayload */
 
@@ -53,6 +54,7 @@ export async function syncSitterStaysFromServer(fetchImpl = fetch) {
   if (!result.ok) return false;
   applySitterStays(result.data.sitterStays);
   applySitterSecretsFromPayload(result.data);
+  applySitterControlsFromPayload(result.data);
   applySitterAccessEmails(result.data.sitterAccessEmailsManual ?? result.data.sitterAccessEmails, result.data.accessSitterSyncConfigured);
   return true;
 }

@@ -58,6 +58,12 @@ import {
   subscribeToSitterSecrets,
   syncSitterSecretsFromServer
 } from '../../services/sitterSecretsService.js';
+import {
+  getSitterControlsManual,
+  setSitterControlsEnabled,
+  subscribeToSitterControls,
+  syncSitterControlsFromServer
+} from '../../services/sitterControlsService.js';
 import { syncSitterStaysFromServer } from '../../services/sitterStaysService.js';
 import {
   getSitterAccessEmails,
@@ -815,6 +821,71 @@ function createSitterSecretsToggle(context) {
 }
 
 /** @param {import('../../types/app.js').ShellContext} context */
+function createSitterControlsToggle(context) {
+  const subsection = document.createElement('div');
+  subsection.className = 'settings-subsection';
+
+  const title = document.createElement('p');
+  title.className = 'settings-subsection-title';
+  title.textContent = 'Alexa controls during a sit';
+
+  const hint = document.createElement('p');
+  hint.className = 'settings-help subtle';
+  hint.textContent =
+    'Turn this on when a sitter should run lighting and scene buttons. Scheduled stays also enable controls automatically on sit dates (not during the pre-sit login window). Turn off when they leave.';
+
+  const label = document.createElement('label');
+  label.className = 'settings-option settings-option--toggle';
+
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.className = 'settings-toggle-input';
+  input.checked = getSitterControlsManual() === true;
+  input.disabled = getSitterControlsManual() === null;
+
+  const textWrap = document.createElement('span');
+  textWrap.className = 'settings-option-text';
+  const toggleTitle = document.createElement('span');
+  toggleTitle.textContent = 'Show Alexa controls to sitters';
+  const toggleHint = document.createElement('small');
+  toggleHint.className = 'settings-option-hint';
+  toggleHint.textContent =
+    'All Virtual Button routines on the sitter home screen and in the House Guide during an active sit.';
+  textWrap.append(toggleTitle, toggleHint);
+  label.append(input, textWrap);
+
+  input.addEventListener('change', () => {
+    const next = input.checked;
+    input.disabled = true;
+    void setSitterControlsEnabled(next).then((ok) => {
+      input.disabled = false;
+      if (!ok) {
+        input.checked = !next;
+        showToast(context.toast, 'Could not update sitter Alexa controls');
+        return;
+      }
+      context.refreshShell?.();
+      showToast(
+        context.toast,
+        next ? 'Alexa controls shared with sitters' : 'Alexa controls hidden from sitters'
+      );
+    });
+  });
+
+  subscribeToSitterControls(() => {
+    if (getSitterControlsManual() === null) {
+      input.disabled = true;
+      return;
+    }
+    input.disabled = false;
+    input.checked = getSitterControlsManual() === true;
+  });
+
+  subsection.append(title, hint, label);
+  return subsection;
+}
+
+/** @param {import('../../types/app.js').ShellContext} context */
 function createSitterAccessEmailsField(context) {
   const subsection = document.createElement('div');
   subsection.className = 'settings-subsection';
@@ -1005,8 +1076,8 @@ function createSitterUnlockMethodFields(context) {
   return subsection;
 }
 
-/** @param {import('../../types/app.js').ShellContext} context @param {() => void} onRefresh */
-function createHouseSitterModeFields(context, onRefresh) {
+/** @param {import('../../types/app.js').ShellContext} context @param {() => void} _onRefresh */
+function createHouseSitterModeFields(context, _onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
 
@@ -1030,8 +1101,8 @@ function createHouseSitterModeFields(context, onRefresh) {
       if (!confirmed) return;
       await withAsyncButtonFeedback(enableButton, 'Enabling…', async () => {
         const result = await enterSitterMode(() => {
+          storeSettingsPanel('appearance');
           context.navigate('home');
-          onRefresh();
           context.refreshShell?.();
           showToast(context.toast, 'House Sitter Mode enabled');
         });
@@ -1042,6 +1113,7 @@ function createHouseSitterModeFields(context, onRefresh) {
 
   wrap.append(
     createSitterSecretsToggle(context),
+    createSitterControlsToggle(context),
     createSitterStaysSection(context),
     createSitterAccessEmailsField(context),
     createSitterUnlockMethodFields(context),
@@ -1057,8 +1129,8 @@ function createHouseSitterModeFields(context, onRefresh) {
     lockButton.addEventListener('click', () => {
       void withAsyncButtonFeedback(lockButton, 'Locking…', async () => {
         const result = await lockOwner(() => {
+          storeSettingsPanel('appearance');
           context.navigate('home');
-          onRefresh();
           context.refreshShell?.();
         });
         if (!result.ok) showToast(context.toast, houseSitterModeErrorMessage(result.code));
@@ -1515,6 +1587,7 @@ export const settingsApp = defineApp({
       refreshPrivateConfig(),
       syncSitterAccessEmailsFromServer(),
       syncSitterSecretsFromServer(),
+      syncSitterControlsFromServer(),
       syncSitterStaysFromServer()
     ]).finally(() => {
       mountSettingsApp(viewport, context, refreshSettings);
