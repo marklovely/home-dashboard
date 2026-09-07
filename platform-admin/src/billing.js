@@ -1,7 +1,7 @@
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
 
 /** Sites that never show billing checkout in platform admin. */
-export const BILLING_UI_BLOCKED_SITE_IDS = new Set(['production', 'demo']);
+export const BILLING_UI_BLOCKED_SITE_IDS = new Set(['production', 'demo', 'lovely']);
 
 /**
  * @param {string} siteId

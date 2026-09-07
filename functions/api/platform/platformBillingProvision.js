@@ -3,7 +3,7 @@ import { dispatchSiteProvisionWorkflow } from './platformGitHub.js';
 import { getSiteFromManifest } from './platformApi.js';
 
 /** Sites that must never be auto-provisioned from billing webhooks. */
-export const BILLING_PROVISION_BLOCKED_SITE_IDS = new Set(['production', 'demo']);
+export const BILLING_PROVISION_BLOCKED_SITE_IDS = new Set(['production', 'demo', 'lovely']);
 
 /** @type {readonly string[]} */
 export const BILLING_PROVISION_TRIGGER_EVENTS = [

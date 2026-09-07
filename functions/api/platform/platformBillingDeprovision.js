@@ -6,7 +6,7 @@ import { priorDeprovisionBlocksDispatch } from './platformBillingLifecycle.js';
 import { applyHubNameHoldAfterCancel } from './platformHubNameHold.js';
 
 /** Sites that must never be auto-deprovisioned from billing webhooks. */
-export const BILLING_DEPROVISION_BLOCKED_SITE_IDS = new Set(['production', 'demo']);
+export const BILLING_DEPROVISION_BLOCKED_SITE_IDS = new Set(['production', 'demo', 'lovely']);
 
 /** @type {readonly string[]} */
 export const BILLING_DEPROVISION_TRIGGER_EVENTS = [

@@ -95,6 +95,7 @@ describe('platform public signup', () => {
 
   it('blocks reserved slugs', () => {
     expect(validatePublicSignupSiteId('demo')).toMatch(/reserved/i);
+    expect(validatePublicSignupSiteId('lovely')).toMatch(/reserved/i);
     expect(validatePublicSignupSiteId('e2e')).toMatch(/reserved/i);
     expect(validatePublicSignupSiteId('e2e-abc12')).toBeNull();
     expect(validatePublicSignupSiteId('rose-cottage')).toBeNull();
