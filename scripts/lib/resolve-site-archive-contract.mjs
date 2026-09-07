@@ -8,6 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './load-sites-yaml.mjs';
 import { suggestedWorkerName } from './site-registry.mjs';
+import { CUSTOMER_HUB_ZONE_NAME, defaultHostnameForSite } from './hub-zones.mjs';
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
 const root = join(moduleDir, '../..');
@@ -105,7 +106,25 @@ function readRegistrySiteContract(siteId) {
 
 /**
  * @param {string} siteId
- * @returns {{ site: Record<string, unknown>, source: 'terraform' | 'manifest' | 'registry' } | null}
+ */
+function readConventionCustomerSiteContract(siteId) {
+  if (!/^e2e-[a-z0-9-]+$/.test(siteId)) {
+    return null;
+  }
+
+  const workerName = suggestedWorkerName(siteId);
+  const hostname = defaultHostnameForSite(siteId, CUSTOMER_HUB_ZONE_NAME);
+  return {
+    hostname,
+    hub_environment: siteId,
+    worker_name: workerName,
+    worker_api_origin: workerApiOriginFromName(siteId, workerName)
+  };
+}
+
+/**
+ * @param {string} siteId
+ * @returns {{ site: Record<string, unknown>, source: 'terraform' | 'manifest' | 'registry' | 'convention' } | null}
  */
 export function resolveSiteArchiveContract(siteId) {
   const fromTerraform = readTerraformSiteContract(siteId);
@@ -121,6 +140,11 @@ export function resolveSiteArchiveContract(siteId) {
   const fromRegistry = readRegistrySiteContract(siteId);
   if (fromRegistry) {
     return { site: fromRegistry, source: 'registry' };
+  }
+
+  const fromConvention = readConventionCustomerSiteContract(siteId);
+  if (fromConvention) {
+    return { site: fromConvention, source: 'convention' };
   }
 
   return null;

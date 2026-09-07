@@ -152,14 +152,19 @@ console.log(`\n=== Deprovisioning hub site: ${siteId} (terraform_stack=${terrafo
 
 const archiveScript = join(root, 'scripts/archive-hub-site-backup.mjs');
 const inState = hubSiteModuleInState(siteId, tfDir);
+const isE2eSite = /^e2e-[a-z0-9-]+$/.test(siteId);
 
 if (inState) {
   try {
     run('node', [archiveScript, siteId]);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`Pre-deprovision archive failed: ${message}`);
-    process.exit(1);
+    if (isE2eSite) {
+      console.warn(`Pre-deprovision archive skipped for e2e hub (${message}).`);
+    } else {
+      console.error(`Pre-deprovision archive failed: ${message}`);
+      process.exit(1);
+    }
   }
 } else {
   console.log(
