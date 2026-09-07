@@ -18,10 +18,12 @@ import { getPublicHubProvisionStatus } from '../platform/platformPublicHubProvis
 import {
   handleAccountOtpRequest,
   handleAccountPortal,
+  handleAccountReferralCode,
   handleAccountSession,
   handleAccountVerify,
   publicAccountStatus
 } from '../platform/platformPublicAccount.js';
+import { previewReferralCode } from '../platform/platformReferrals.js';
 import { handlePublicContact, publicContactStatus } from '../platform/platformPublicContact.js';
 
 /**
@@ -127,6 +129,13 @@ export async function onRequest(context) {
     });
   }
 
+  const referralMatch = suffix.match(/^signup\/referral\/([^/]+)$/);
+  if (referralMatch && request.method === 'GET') {
+    const code = decodeURIComponent(referralMatch[1]);
+    const preview = await previewReferralCode(getPlatformBillingDb(env), code);
+    return Response.json(preview, { headers: { ...cors, 'Cache-Control': 'no-store' } });
+  }
+
   const slugMatch = suffix.match(/^signup\/slug\/([^/]+)$/);
   if (slugMatch && request.method === 'GET') {
     const siteId = decodeURIComponent(slugMatch[1]).trim().toLowerCase();
@@ -145,9 +154,20 @@ export async function onRequest(context) {
   }
 
   if (suffix === 'account/status' && request.method === 'GET') {
-    return Response.json(publicAccountStatus(pagesEnv), {
+    const db = getPlatformBillingDb(env);
+    return Response.json(await publicAccountStatus(pagesEnv, db), {
       headers: { ...cors, 'Cache-Control': 'no-store' }
     });
+  }
+
+  if (suffix === 'account/referral-code' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handleAccountReferralCode(pagesEnv, getPlatformBillingDb(env), {
+      sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim(),
+      siteId: String(body.siteId ?? body.site_id ?? '').trim(),
+      billingInterval: String(body.billingInterval ?? body.billing_interval ?? 'month').trim()
+    });
+    return Response.json(result.body, { status: result.status, headers: cors });
   }
 
   if (suffix === 'account/otp' && request.method === 'POST') {
@@ -193,6 +213,7 @@ export async function onRequest(context) {
     const siteId = String(body.siteId ?? body.site_id ?? '').trim().toLowerCase();
     const customerEmail = String(body.customerEmail ?? body.email ?? '').trim().toLowerCase();
     const billingInterval = String(body.billingInterval ?? body.billing_interval ?? 'month').trim().toLowerCase();
+    const referralCode = String(body.referralCode ?? body.referral_code ?? body.ref ?? '').trim();
 
     if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
       return Response.json(
@@ -208,6 +229,7 @@ export async function onRequest(context) {
       customerEmail,
       billingDb,
       billingInterval,
+      referralCode,
       clientIp: signupClientIp(request),
       turnstileToken: String(body.turnstileToken ?? body['cf-turnstile-response'] ?? '').trim()
     });

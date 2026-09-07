@@ -6,6 +6,13 @@ import { getSiteFromManifest } from './platformApi.js';
 import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platformBillingLifecycle.js';
 import { maybeSendCustomerLifecycleEmail } from './platformCustomerEmail.js';
 import { applyHubNameHoldAfterCancel } from './platformHubNameHold.js';
+import {
+  fulfillReferrerRewardOnInvoicePaid,
+  markReferralUsedAtCheckout,
+  normalizeReferralBillingInterval,
+  referralCouponIdForInterval,
+  resolveSiteIdFromInvoiceObject
+} from './platformReferrals.js';
 import { getStripeMode, stripeCredentialsForMode, stripeSetConfigured } from './platformStripeMode.js';
 
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
@@ -206,6 +213,8 @@ export function defaultCheckoutUrls(env, platformHostname) {
  *   billingInterval?: string;
  *   priceId?: string;
  *   mode?: 'test' | 'live';
+ *   referralCode?: string;
+ *   referrerSiteId?: string;
  * }} input
  */
 export async function createBillingCheckoutSession(env, input) {
@@ -235,7 +244,13 @@ export async function createBillingCheckoutSession(env, input) {
     return { ok: false, error: 'INVALID_INPUT', message: 'siteId and customerEmail are required.' };
   }
 
-  const session = await stripeApiRequest(secretKey, 'POST', '/checkout/sessions', {
+  const referralCode = String(input.referralCode ?? '').trim();
+  const referrerSiteId = String(input.referrerSiteId ?? '').trim().toLowerCase();
+
+  /** @type {Record<string, string>} */
+  const metadata = { site_id: siteId };
+  /** @type {Record<string, unknown>} */
+  const sessionParams = {
     mode: 'subscription',
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
@@ -244,10 +259,30 @@ export async function createBillingCheckoutSession(env, input) {
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
       trial_period_days: TRIAL_PERIOD_DAYS,
-      metadata: { site_id: siteId }
+      metadata: { ...metadata }
     },
-    metadata: { site_id: siteId }
-  });
+    metadata: { ...metadata }
+  };
+
+  if (referralCode && referrerSiteId) {
+    const interval = normalizeReferralBillingInterval(billingInterval);
+    const couponId = referralCouponIdForInterval(env, mode, interval);
+    if (!couponId) {
+      return {
+        ok: false,
+        error: 'REFERRALS_NOT_CONFIGURED',
+        message: 'Referral discounts are not configured yet.'
+      };
+    }
+    metadata.referral_code = referralCode;
+    metadata.referrer_site_id = referrerSiteId;
+    metadata.referral_interval = interval;
+    sessionParams.subscription_data.metadata = { ...metadata };
+    sessionParams.metadata = { ...metadata };
+    sessionParams.discounts = [{ coupon: couponId }];
+  }
+
+  const session = await stripeApiRequest(secretKey, 'POST', '/checkout/sessions', sessionParams);
 
   return {
     ok: true,
@@ -415,6 +450,27 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     /** @type {{ data?: { object?: unknown } }} */ (event).data?.object ?? {}
   );
 
+  if (eventType === 'invoice.paid') {
+    const env = context.env;
+    /** @type {Record<string, unknown> | undefined} */
+    let referral;
+    const amountPaid = Number(object.amount_paid ?? 0);
+    if (env && amountPaid > 0) {
+      referral = await fulfillReferrerRewardOnInvoicePaid(env, db, {
+        invoiceId: String(object.id ?? ''),
+        refereeSiteId: resolveSiteIdFromInvoiceObject(object),
+        subscriptionId: object.subscription ? String(object.subscription) : null,
+        amountPaid
+      });
+    }
+    await markWebhookEventProcessed(db, eventId, eventType);
+    return {
+      ok: true,
+      action: 'invoice_paid_processed',
+      ...(referral ? { referral } : {})
+    };
+  }
+
   /** @type {{ siteId: string | null; customerId: string | null; subscriptionId: string | null; status: BillingStatus; trialEnd: number | null; ownerEmail?: string | null }} */
   let billingPatch = {
     siteId: null,
@@ -534,6 +590,23 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
   /** @type {Record<string, unknown> | undefined} */
   let deprovision;
   const env = context.env;
+
+  /** @type {Record<string, unknown> | undefined} */
+  let referral;
+  if (eventType === 'checkout.session.completed' && env) {
+    const metadata = /** @type {Record<string, unknown>} */ (object.metadata ?? {});
+    const referralCode = metadata.referral_code ? String(metadata.referral_code) : '';
+    const referrerSiteId = metadata.referrer_site_id ? String(metadata.referrer_site_id) : '';
+    if (referralCode && referrerSiteId && billingPatch.siteId) {
+      referral = await markReferralUsedAtCheckout(db, {
+        sessionId: String(object.id ?? ''),
+        refereeSiteId: billingPatch.siteId,
+        referralCode,
+        referrerSiteId
+      });
+    }
+  }
+
   if (env && manifest) {
     const registryResult = await maybeDispatchSignupRegistry(env, db, manifest, {
       siteId: billingPatch.siteId,
@@ -618,7 +691,8 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     ...(registry ? { registry } : {}),
     ...(provision ? { provision } : {}),
     ...(deprovision ? { deprovision } : {}),
-    ...(email ? { email } : {})
+    ...(email ? { email } : {}),
+    ...(referral ? { referral } : {})
   };
 }
 

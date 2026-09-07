@@ -39,7 +39,7 @@ Related: [roadmap](./roadmap.md) §3 · [platform provision](./platform-provisio
    ```
    https://platform.lovely-home.co.uk/api/stripe/webhook
    ```
-   Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_failed`, `customer.subscription.trial_will_end`.
+   Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.trial_will_end`.
 
    **Cloudflare Access:** Stripe cannot log in via OTP. Add a **Bypass** Access application for `platform.lovely-home.co.uk/api/stripe/webhook` (Terraform: `platform_stripe_webhook` in `terraform/modules/platform_admin/access.tf`), or manually in Zero Trust → Access → Add application → path `/api/stripe/webhook` → Bypass → Everyone. Without this, deliveries fail (302/500) and billing rows are never written.
 
@@ -106,6 +106,52 @@ GET /api/platform/billing/sites/smith
 Use [Stripe test cards](https://docs.stripe.com/testing#cards) — e.g. `4242 4242 4242 4242`, any future expiry, any CVC.
 
 Advance trial billing without waiting 7 days: [Stripe test clocks](https://docs.stripe.com/billing/testing/test-clocks).
+
+## Referral scheme
+
+Single-use opaque links (`LH-XXXX-XXXX`) generated from [account.html](https://lovely-home.co.uk/account.html) after OTP sign-in.
+
+| Plan | Referee (new signup) | Referrer (when checkout completes) |
+|------|----------------------|-------------------------------------|
+| Monthly | £5 off each of the first **two** paid months | **£10** Stripe account credit |
+| Yearly | **£15** off the first year | **£15** Stripe account credit |
+
+Trial length stays **7 days** — referrals never extend the trial.
+
+**Timing:** referee discounts apply on Stripe invoices after the trial (coupon on the subscription). Referrer credit is added on the referee's **first paid invoice** (`invoice.paid`), not at checkout.
+
+Each generated link is **single-use**. Referrers can keep **multiple unused links** active (for inviting several people).
+
+### Stripe coupons (create in Dashboard, test + live)
+
+**Monthly referee coupon**
+
+- Amount off: **£5.00** GBP
+- Duration: **Repeating**, **2** months
+
+**Yearly referee coupon**
+
+- Amount off: **£15.00** GBP
+- Duration: **Once**
+
+Copy each coupon id (`…`) into platform Pages env (via Terraform `hub.tfvars`):
+
+- `STRIPE_REFERRAL_COUPON_MONTHLY` / `STRIPE_REFERRAL_COUPON_MONTHLY_LIVE`
+- `STRIPE_REFERRAL_COUPON_YEARLY` / `STRIPE_REFERRAL_COUPON_YEARLY_LIVE`
+
+Apply migration `0009_referral_codes.sql`:
+
+```bash
+node scripts/apply-platform-billing-migration.mjs
+```
+
+Public API:
+
+- `GET /api/public/signup/referral/{code}` — preview benefit copy for signup page
+- `POST /api/public/signup` — optional `referralCode` (from `?ref=` on signup.html)
+- `POST /api/public/account/referral-code` — generate a new single-use link (requires account session)
+
+Referrer rewards use Stripe **customer balance** credits on the referee's first paid invoice; referee discounts use Checkout `discounts` on the subscription (applied to post-trial invoices).
 
 ## Slice 2 — provision on trialing (shipped)
 

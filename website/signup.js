@@ -16,6 +16,10 @@
 
   const params = new URLSearchParams(window.location.search);
   const planParam = (params.get('plan') || '').trim().toLowerCase();
+  const referralCodeParam = (params.get('ref') || '').trim();
+  let activeReferralCode = referralCodeParam;
+  let activeReferralInterval = null;
+
   if (planParam === 'year') {
     const yearRadio = form.querySelector('input[name="billingInterval"][value="year"]');
     if (yearRadio) yearRadio.checked = true;
@@ -32,6 +36,12 @@
   siteInput.addEventListener('input', () => {
     siteInput.value = siteInput.value.toLowerCase().replace(/_/g, '-').replace(/[^a-z0-9-]/g, '');
     updateSlugHint();
+  });
+
+  form.querySelectorAll('input[name="billingInterval"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      if (activeReferralCode) loadReferralPreview(activeReferralCode);
+    });
   });
 
   form.addEventListener('submit', async (event) => {
@@ -73,7 +83,13 @@
       const response = await fetch(apiBase + '/api/public/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ siteId, customerEmail: email, billingInterval, turnstileToken })
+        body: JSON.stringify({
+          siteId,
+          customerEmail: email,
+          billingInterval,
+          turnstileToken,
+          referralCode: activeReferralCode || undefined
+        })
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -182,8 +198,43 @@
     submitBtn.textContent = loading ? 'Starting checkout…' : 'Continue to secure checkout';
   }
 
+  async function loadReferralPreview(code) {
+    const banner = document.getElementById('signup-referral-banner');
+    if (!banner) return;
+    try {
+      const response = await fetch(apiBase + '/api/public/signup/referral/' + encodeURIComponent(code), {
+        headers: { Accept: 'application/json' }
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!payload.valid) {
+        activeReferralCode = '';
+        activeReferralInterval = null;
+        banner.hidden = true;
+        if (referralCodeParam) {
+          showAlert(payload.message || 'That referral link is not valid.', 'info');
+        }
+        return;
+      }
+      activeReferralCode = payload.code || code;
+      activeReferralInterval = payload.billingInterval || null;
+      banner.hidden = false;
+      banner.className = 'signup-alert signup-alert--info';
+      banner.textContent = payload.message || payload.refereeBenefit || 'Referral discount applied.';
+      if (activeReferralInterval === 'year') {
+        const yearRadio = form.querySelector('input[name="billingInterval"][value="year"]');
+        if (yearRadio) yearRadio.checked = true;
+      } else if (activeReferralInterval === 'month') {
+        const monthRadio = form.querySelector('input[name="billingInterval"][value="month"]');
+        if (monthRadio) monthRadio.checked = true;
+      }
+    } catch {
+      // Signup API validates again on submit.
+    }
+  }
+
   updateSlugHint();
   initChallenge();
+  if (referralCodeParam) loadReferralPreview(referralCodeParam);
 
   document.addEventListener('DOMContentLoaded', function () {
     if (window.LovelyHomePricing) window.LovelyHomePricing.initPricing();

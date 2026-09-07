@@ -23,6 +23,11 @@ import {
   ownerEmailMatchesBilling
 } from './platformHubNameHold.js';
 import { turnstileConfigured, verifyTurnstileToken } from './platformSignupTurnstile.js';
+import {
+  releaseReferralReservationForSite,
+  reserveReferralCodeForCheckout,
+  validateReferralForSignup
+} from './platformReferrals.js';
 
 /** Reserved slugs — internal hubs and common DNS names. */
 export const PUBLIC_SIGNUP_BLOCKED_SITE_IDS = new Set([
@@ -180,6 +185,7 @@ export async function checkPublicSignupSlug(manifest, siteId, billingDb, options
  *   customerEmail: string;
  *   billingDb?: D1Database | null;
  *   billingInterval?: string;
+ *   referralCode?: string;
  *   clientIp?: string;
  *   turnstileToken?: string;
  *   fetchImpl?: typeof fetch;
@@ -193,6 +199,7 @@ export async function handlePublicHubSignup(env, input) {
     customerEmail,
     billingDb = null,
     billingInterval,
+    referralCode: inputReferralCode = '',
     clientIp = '',
     turnstileToken = '',
     fetchImpl,
@@ -312,17 +319,39 @@ export async function handlePublicHubSignup(env, input) {
     };
   }
 
+  const referralValidation = await validateReferralForSignup(billingDb, {
+    code: inputReferralCode,
+    refereeSiteId: siteId,
+    refereeEmail: customerEmail,
+    billingInterval: billingInterval ?? 'month',
+    nowMs
+  });
+  if (!referralValidation.ok) {
+    await releaseSignupReservation(billingDb, siteId);
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        error: referralValidation.error ?? 'INVALID_REFERRAL',
+        message: referralValidation.message ?? 'That referral link is not valid.'
+      }
+    };
+  }
+
   const checkout = await createBillingCheckoutSession(env, {
     siteId,
     customerEmail,
     successUrl: urls.successUrl,
     cancelUrl: urls.cancelUrl,
     billingInterval: billingInterval ?? 'month',
-    mode: stripeMode
+    mode: stripeMode,
+    referralCode: referralValidation.referral?.code,
+    referrerSiteId: referralValidation.referral?.referrerSiteId
   });
 
   if (!checkout.ok) {
     await releaseSignupReservation(billingDb, siteId);
+    await releaseReferralReservationForSite(billingDb, siteId);
     return {
       ok: false,
       status: 503,
@@ -331,6 +360,27 @@ export async function handlePublicHubSignup(env, input) {
         message: checkout.message ?? 'Could not start Stripe Checkout.'
       }
     };
+  }
+
+  if (referralValidation.referral?.code && checkout.sessionId) {
+    const reserved = await reserveReferralCodeForCheckout(billingDb, {
+      code: referralValidation.referral.code,
+      refereeSiteId: siteId,
+      refereeEmail: customerEmail,
+      stripeSessionId: checkout.sessionId,
+      nowMs
+    });
+    if (!reserved.reserved) {
+      await releaseSignupReservation(billingDb, siteId);
+      return {
+        ok: false,
+        status: 409,
+        body: {
+          error: 'REFERRAL_UNAVAILABLE',
+          message: 'That referral link was just used. Ask your friend for a new link.'
+        }
+      };
+    }
   }
 
   const reservation = await reserveSignupSlug(billingDb, {
@@ -350,7 +400,13 @@ export async function handlePublicHubSignup(env, input) {
       trialDays: TRIAL_PERIOD_DAYS,
       checkoutUrl: checkout.url,
       sessionId: checkout.sessionId,
-      reservedUntil: reservation.expiresAt ?? null
+      reservedUntil: reservation.expiresAt ?? null,
+      referral: referralValidation.referral
+        ? {
+            code: referralValidation.referral.code,
+            billingInterval: referralValidation.referral.billingInterval
+          }
+        : null
     }
   };
 }

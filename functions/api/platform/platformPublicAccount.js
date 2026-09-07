@@ -14,6 +14,8 @@ import { customerEmailConfigured, customerHubUrl, sendResendEmail } from './plat
 import { marketingSiteOrigin } from './platformPublicSignup.js';
 import { consumeSignupAttempt, hashSignupClientKey } from './platformSignupGuards.js';
 import { turnstileSiteKey, verifyTurnstileToken } from './platformSignupTurnstile.js';
+import { createReferralCodeForSite, referralsConfigured } from './platformReferrals.js';
+import { getStripeMode } from './platformStripeMode.js';
 
 export const ACCOUNT_OTP_TTL_MS = 10 * 60 * 1000;
 export const ACCOUNT_SESSION_TTL_MS = 30 * 60 * 1000;
@@ -449,9 +451,52 @@ export async function handleAccountSession(env, db, input, deps = {}) {
 
 /**
  * @param {Record<string, string | undefined>} env
+ * @param {D1Database | null | undefined} db
+ * @param {{ sessionToken: string; siteId: string; billingInterval?: string }} input
+ * @param {{ nowMs?: number }} [deps]
  */
-export function publicAccountStatus(env) {
+export async function handleAccountReferralCode(env, db, input, deps = {}) {
+  if (!db) {
+    return {
+      status: 503,
+      body: { error: 'BILLING_DB_NOT_CONFIGURED', message: 'Referrals are not available right now.' }
+    };
+  }
+
+  const nowMs = deps.nowMs ?? Date.now();
+  const session = await loadAccountSession(db, input.sessionToken, nowMs);
+  if (!session) {
+    return {
+      status: 401,
+      body: { error: 'INVALID_SESSION', message: ACCOUNT_SESSION_EXPIRED_MESSAGE }
+    };
+  }
+
+  const siteId = String(input.siteId ?? '').trim().toLowerCase();
+  if (!siteId) {
+    return {
+      status: 400,
+      body: { error: 'INVALID_SITE_ID', message: 'Choose which hub the referral link is for.' }
+    };
+  }
+
+  const result = await createReferralCodeForSite(db, env, {
+    sessionEmail: session.email,
+    siteId,
+    billingInterval: input.billingInterval,
+    nowMs
+  });
+  return { status: result.status, body: result.body };
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {D1Database | null | undefined} [db]
+ */
+export async function publicAccountStatus(env, db = null) {
+  const mode = await getStripeMode(db);
   return {
-    turnstileSiteKey: turnstileSiteKey(env)
+    turnstileSiteKey: turnstileSiteKey(env),
+    referralsEnabled: referralsConfigured(env, mode)
   };
 }
