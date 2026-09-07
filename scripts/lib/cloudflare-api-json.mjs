@@ -10,7 +10,11 @@ export function parseCloudflareApiJson(text, response) {
   const trimmed = String(text ?? '').trim();
   if (!trimmed) {
     if (!response.ok) {
-      throw new Error(`${response.method} ${response.path} failed: empty ${response.status} body`);
+      const error = new Error(
+        `${response.method} ${response.path} failed: empty ${response.status} body`
+      );
+      error.status = response.status;
+      throw error;
     }
     return { success: true, result: [] };
   }

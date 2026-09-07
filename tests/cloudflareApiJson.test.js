@@ -9,9 +9,22 @@ describe('parseCloudflareApiJson', () => {
   });
 
   it('throws on an empty error response', () => {
-    expect(() =>
-      parseCloudflareApiJson('  ', { ok: false, status: 500, path: '/pages/projects/x', method: 'GET' })
-    ).toThrow(/empty 500 body/);
+    try {
+      parseCloudflareApiJson('  ', { ok: false, status: 500, path: '/pages/projects/x', method: 'GET' });
+      expect.unreachable('expected throw');
+    } catch (error) {
+      expect(error).toMatchObject({ status: 500 });
+      expect(String(error)).toMatch(/empty 500 body/);
+    }
+  });
+
+  it('attaches status on empty 429 responses', () => {
+    try {
+      parseCloudflareApiJson('', { ok: false, status: 429, path: '/pages/projects/x/deployments/y', method: 'DELETE' });
+      expect.unreachable('expected throw');
+    } catch (error) {
+      expect(error).toMatchObject({ status: 429 });
+    }
   });
 
   it('parses a normal Cloudflare envelope', () => {
