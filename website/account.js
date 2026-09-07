@@ -223,7 +223,7 @@
         ? '<div class="account-referral" data-referral-site="' +
           escapeHtml(hub.siteId) +
           '">' +
-          '<p class="signup-note"><strong>Refer a friend</strong> — they get a discount after the trial; you get account credit when they complete checkout.</p>' +
+          '<p class="signup-note"><strong>Refer a friend</strong> — they get a discount on their first invoice(s); you get account credit when their first invoice is paid. You can generate multiple links.</p>' +
           '<div class="account-referral-plan">' +
           '<label><input type="radio" name="referral-plan-' +
           escapeHtml(hub.siteId) +

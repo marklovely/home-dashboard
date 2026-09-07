@@ -39,7 +39,7 @@ Related: [roadmap](./roadmap.md) §3 · [platform provision](./platform-provisio
    ```
    https://platform.lovely-home.co.uk/api/stripe/webhook
    ```
-   Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_failed`, `customer.subscription.trial_will_end`.
+   Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.trial_will_end`.
 
    **Cloudflare Access:** Stripe cannot log in via OTP. Add a **Bypass** Access application for `platform.lovely-home.co.uk/api/stripe/webhook` (Terraform: `platform_stripe_webhook` in `terraform/modules/platform_admin/access.tf`), or manually in Zero Trust → Access → Add application → path `/api/stripe/webhook` → Bypass → Everyone. Without this, deliveries fail (302/500) and billing rows are never written.
 
@@ -113,10 +113,14 @@ Single-use opaque links (`LH-XXXX-XXXX`) generated from [account.html](https://l
 
 | Plan | Referee (new signup) | Referrer (when checkout completes) |
 |------|----------------------|-------------------------------------|
-| Monthly | £5 off each of the first **two** paid months (after 7-day trial) | **£10** Stripe account credit |
-| Yearly | **£15** off the first year (after trial) | **£15** Stripe account credit |
+| Monthly | £5 off each of the first **two** paid months | **£10** Stripe account credit |
+| Yearly | **£15** off the first year | **£15** Stripe account credit |
 
 Trial length stays **7 days** — referrals never extend the trial.
+
+**Timing:** referee discounts apply on Stripe invoices after the trial (coupon on the subscription). Referrer credit is added on the referee's **first paid invoice** (`invoice.paid`), not at checkout.
+
+Each generated link is **single-use**. Referrers can keep **multiple unused links** active (for inviting several people).
 
 ### Stripe coupons (create in Dashboard, test + live)
 
@@ -147,7 +151,7 @@ Public API:
 - `POST /api/public/signup` — optional `referralCode` (from `?ref=` on signup.html)
 - `POST /api/public/account/referral-code` — generate a new single-use link (requires account session)
 
-Referrer rewards use Stripe **customer balance** credits; referee discounts use Checkout `discounts` on the subscription.
+Referrer rewards use Stripe **customer balance** credits on the referee's first paid invoice; referee discounts use Checkout `discounts` on the subscription (applied to post-trial invoices).
 
 ## Slice 2 — provision on trialing (shipped)
 

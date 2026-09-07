@@ -6,7 +6,13 @@ import { getSiteFromManifest } from './platformApi.js';
 import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platformBillingLifecycle.js';
 import { maybeSendCustomerLifecycleEmail } from './platformCustomerEmail.js';
 import { applyHubNameHoldAfterCancel } from './platformHubNameHold.js';
-import { fulfillReferralFromCheckoutSession, referralCouponIdForInterval, normalizeReferralBillingInterval } from './platformReferrals.js';
+import {
+  fulfillReferrerRewardOnInvoicePaid,
+  markReferralUsedAtCheckout,
+  normalizeReferralBillingInterval,
+  referralCouponIdForInterval,
+  resolveSiteIdFromInvoiceObject
+} from './platformReferrals.js';
 import { getStripeMode, stripeCredentialsForMode, stripeSetConfigured } from './platformStripeMode.js';
 
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
@@ -444,6 +450,27 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     /** @type {{ data?: { object?: unknown } }} */ (event).data?.object ?? {}
   );
 
+  if (eventType === 'invoice.paid') {
+    const env = context.env;
+    /** @type {Record<string, unknown> | undefined} */
+    let referral;
+    const amountPaid = Number(object.amount_paid ?? 0);
+    if (env && amountPaid > 0) {
+      referral = await fulfillReferrerRewardOnInvoicePaid(env, db, {
+        invoiceId: String(object.id ?? ''),
+        refereeSiteId: resolveSiteIdFromInvoiceObject(object),
+        subscriptionId: object.subscription ? String(object.subscription) : null,
+        amountPaid
+      });
+    }
+    await markWebhookEventProcessed(db, eventId, eventType);
+    return {
+      ok: true,
+      action: 'invoice_paid_processed',
+      ...(referral ? { referral } : {})
+    };
+  }
+
   /** @type {{ siteId: string | null; customerId: string | null; subscriptionId: string | null; status: BillingStatus; trialEnd: number | null; ownerEmail?: string | null }} */
   let billingPatch = {
     siteId: null,
@@ -570,14 +597,12 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     const metadata = /** @type {Record<string, unknown>} */ (object.metadata ?? {});
     const referralCode = metadata.referral_code ? String(metadata.referral_code) : '';
     const referrerSiteId = metadata.referrer_site_id ? String(metadata.referrer_site_id) : '';
-    const referralInterval = metadata.referral_interval ? String(metadata.referral_interval) : 'month';
     if (referralCode && referrerSiteId && billingPatch.siteId) {
-      referral = await fulfillReferralFromCheckoutSession(env, db, {
+      referral = await markReferralUsedAtCheckout(db, {
         sessionId: String(object.id ?? ''),
         refereeSiteId: billingPatch.siteId,
         referralCode,
-        referrerSiteId,
-        billingInterval: referralInterval
+        referrerSiteId
       });
     }
   }

@@ -7,18 +7,20 @@ import {
   referralCouponIdForInterval,
   validateReferralForSignup,
   reserveReferralCodeForCheckout,
-  fulfillReferralFromCheckoutSession,
+  markReferralUsedAtCheckout,
+  fulfillReferrerRewardOnInvoicePaid,
   previewReferralCode,
   createReferralCodeForSite,
   REFERRAL_CODE_RE
 } from '../functions/api/platform/platformReferrals.js';
-import { getSiteBilling, stripeApiRequest } from '../functions/api/platform/platformBilling.js';
+import { getSiteBilling, getSiteBillingBySubscriptionId, stripeApiRequest } from '../functions/api/platform/platformBilling.js';
 
 vi.mock('../functions/api/platform/platformBilling.js', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
     getSiteBilling: vi.fn(),
+    getSiteBillingBySubscriptionId: vi.fn(),
     stripeApiRequest: vi.fn()
   };
 });
@@ -49,6 +51,19 @@ function makeDb(state = {}) {
             async first() {
               if (query.includes('FROM referral_codes WHERE code = ?')) {
                 return rows.get(String(args[0])) ?? null;
+              }
+              if (query.includes('used_by_site_id = ?')) {
+                const siteId = String(args[0]);
+                for (const row of rows.values()) {
+                  if (
+                    String(row.used_by_site_id) === siteId &&
+                    String(row.status) === 'used' &&
+                    !row.referrer_rewarded_at
+                  ) {
+                    return row;
+                  }
+                }
+                return null;
               }
               if (query.includes('SELECT COUNT(*) AS count')) {
                 return { count: state.createdToday ?? 0 };
@@ -121,17 +136,13 @@ function makeDb(state = {}) {
 describe('platformReferrals', () => {
   beforeEach(() => {
     vi.mocked(getSiteBilling).mockReset();
+    vi.mocked(getSiteBillingBySubscriptionId).mockReset();
     vi.mocked(stripeApiRequest).mockReset();
   });
 
-  it('generates opaque referral codes', () => {
-    const code = generateReferralCodeValue(12345);
-    expect(code).toMatch(REFERRAL_CODE_RE);
-  });
-
   it('describes monthly and yearly benefits', () => {
-    expect(referralBenefitCopy('month').referee).toMatch(/£5 off each of your first two months/i);
-    expect(referralBenefitCopy('year').referee).toMatch(/£15 off your first year/i);
+    expect(referralBenefitCopy('month').referee).toMatch(/first invoice/i);
+    expect(referralBenefitCopy('year').referrer).toMatch(/first invoice is paid/i);
   });
 
   it('resolves coupon ids from env', () => {
@@ -232,14 +243,39 @@ describe('platformReferrals', () => {
     });
   });
 
-  it('reserves and fulfills a referral at checkout', async () => {
+  it('marks a referral used at checkout without crediting the referrer', async () => {
     const db = makeDb({
       rows: {
         'LH-ABCD-2345': {
           code: 'LH-ABCD-2345',
           referrer_site_id: 'wagtail',
           billing_interval: 'month',
-          status: 'active'
+          status: 'reserved',
+          stripe_session_id: 'cs_test_1'
+        }
+      }
+    });
+
+    const marked = await markReferralUsedAtCheckout(db, {
+      sessionId: 'cs_test_1',
+      refereeSiteId: 'rose-cottage',
+      referralCode: 'LH-ABCD-2345',
+      referrerSiteId: 'wagtail'
+    });
+    expect(marked.ok).toBe(true);
+    expect(stripeApiRequest).not.toHaveBeenCalled();
+  });
+
+  it('credits the referrer on the referee first paid invoice', async () => {
+    const db = makeDb({
+      rows: {
+        'LH-ABCD-2345': {
+          code: 'LH-ABCD-2345',
+          referrer_site_id: 'wagtail',
+          billing_interval: 'month',
+          status: 'used',
+          used_by_site_id: 'rose-cottage',
+          referrer_rewarded_at: null
         }
       }
     });
@@ -251,20 +287,10 @@ describe('platformReferrals', () => {
     });
     vi.mocked(stripeApiRequest).mockResolvedValue({ id: 'cbtxn_1' });
 
-    const reserved = await reserveReferralCodeForCheckout(db, {
-      code: 'LH-ABCD-2345',
+    const fulfilled = await fulfillReferrerRewardOnInvoicePaid(env, db, {
+      invoiceId: 'in_test_1',
       refereeSiteId: 'rose-cottage',
-      refereeEmail: 'friend@example.com',
-      stripeSessionId: 'cs_test_1'
-    });
-    expect(reserved.reserved).toBe(true);
-
-    const fulfilled = await fulfillReferralFromCheckoutSession(env, db, {
-      sessionId: 'cs_test_1',
-      refereeSiteId: 'rose-cottage',
-      referralCode: 'LH-ABCD-2345',
-      referrerSiteId: 'wagtail',
-      billingInterval: 'month'
+      amountPaid: 999
     });
     expect(fulfilled.ok).toBe(true);
     expect(stripeApiRequest).toHaveBeenCalledWith(

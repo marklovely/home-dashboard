@@ -1,8 +1,8 @@
 /**
- * Single-use referral codes: referee discount at Checkout, referrer account credit
- * when checkout.session.completed fires.
+ * Single-use referral codes: referee discount via Stripe coupon on the subscription;
+ * referrer account credit when the referee's first paid invoice succeeds.
  */
-import { getSiteBilling, stripeApiRequest } from './platformBilling.js';
+import { getSiteBilling, getSiteBillingBySubscriptionId, stripeApiRequest } from './platformBilling.js';
 import { getStripeMode, stripeCredentialsForMode } from './platformStripeMode.js';
 import { marketingSiteOrigin } from './platformPublicSignup.js';
 import { normalizeAccountEmail } from './platformPublicAccount.js';
@@ -39,13 +39,13 @@ export function normalizeReferralBillingInterval(billingInterval) {
 export function referralBenefitCopy(interval) {
   if (interval === 'year') {
     return {
-      referee: '£15 off your first year after the free trial',
-      referrer: '£15 account credit when they complete checkout'
+      referee: '£15 off your first year (applied on your first invoice after the trial)',
+      referrer: '£15 account credit when their first invoice is paid'
     };
   }
   return {
-    referee: '£5 off each of your first two months after the free trial',
-    referrer: '£10 account credit when they complete checkout'
+    referee: '£5 off each of your first two months (starting on your first invoice after the trial)',
+    referrer: '£10 account credit when their first invoice is paid'
   };
 }
 
@@ -143,19 +143,23 @@ async function countReferralCodesCreatedToday(db, referrerSiteId, nowMs = Date.n
 }
 
 /**
- * @param {D1Database} db
- * @param {string} referrerSiteId
+ * @param {Record<string, unknown>} invoice
  */
-async function revokeActiveReferralCodes(db, referrerSiteId) {
-  await db
-    .prepare(
-      `UPDATE referral_codes
-       SET status = 'revoked'
-       WHERE referrer_site_id = ?
-         AND status = 'active'`
-    )
-    .bind(referrerSiteId)
-    .run();
+export function resolveSiteIdFromInvoiceObject(invoice) {
+  const lines = Array.isArray(invoice.lines?.data) ? invoice.lines.data : [];
+  for (const line of lines) {
+    const siteId = /** @type {{ metadata?: { site_id?: string } }} */ (line)?.metadata?.site_id;
+    if (siteId) return String(siteId).trim().toLowerCase();
+  }
+  const subscriptionDetails =
+    /** @type {{ metadata?: { site_id?: string } }} */ (invoice.subscription_details) ??
+    /** @type {{ subscription_details?: { metadata?: { site_id?: string } } }} */ (invoice.parent)
+      ?.subscription_details;
+  const fromSubscription = subscriptionDetails?.metadata?.site_id;
+  if (fromSubscription) return String(fromSubscription).trim().toLowerCase();
+  const fromInvoice = /** @type {{ site_id?: string }} */ (invoice.metadata ?? {}).site_id;
+  if (fromInvoice) return String(fromInvoice).trim().toLowerCase();
+  return null;
 }
 
 /**
@@ -339,24 +343,22 @@ export async function releaseReferralReservationForSite(db, siteId) {
 }
 
 /**
- * @param {Record<string, string | undefined>} env
+ * Mark a referral code used once checkout completes (rewards wait for first invoice).
+ *
  * @param {D1Database} db
  * @param {{
  *   sessionId: string;
  *   refereeSiteId: string;
  *   referralCode?: string | null;
  *   referrerSiteId?: string | null;
- *   billingInterval?: string;
- *   fetchImpl?: typeof fetch;
  *   nowMs?: number;
  * }} input
  */
-export async function fulfillReferralFromCheckoutSession(env, db, input) {
+export async function markReferralUsedAtCheckout(db, input) {
   const sessionId = String(input.sessionId ?? '').trim();
   const refereeSiteId = String(input.refereeSiteId ?? '').trim().toLowerCase();
   const referralCode = normalizeReferralCode(input.referralCode ?? '');
   const referrerSiteId = String(input.referrerSiteId ?? '').trim().toLowerCase();
-  const billingInterval = normalizeReferralBillingInterval(input.billingInterval);
   const nowMs = input.nowMs ?? Date.now();
 
   if (!sessionId || !referralCode || !referrerSiteId || !refereeSiteId) {
@@ -369,7 +371,7 @@ export async function fulfillReferralFromCheckoutSession(env, db, input) {
     return { ok: false, error: 'REFERRAL_NOT_FOUND', message: 'Referral code was not found.' };
   }
   if (String(row.status) === 'used' && String(row.used_by_site_id) === refereeSiteId) {
-    return { ok: true, action: 'referral_already_fulfilled' };
+    return { ok: true, action: 'referral_already_marked_used' };
   }
   if (String(row.status) !== 'reserved' && String(row.status) !== 'active') {
     return { ok: false, error: 'REFERRAL_INVALID_STATE', message: 'Referral code is not redeemable.' };
@@ -400,15 +402,62 @@ export async function fulfillReferralFromCheckoutSession(env, db, input) {
   if (Number(markUsed.meta?.changes ?? 0) === 0) {
     const latest = await getReferralCodeRow(db, referralCode);
     if (String(latest?.status) === 'used' && String(latest?.used_by_site_id) === refereeSiteId) {
-      return { ok: true, action: 'referral_already_fulfilled' };
+      return { ok: true, action: 'referral_already_marked_used' };
     }
     return { ok: false, error: 'REFERRAL_MARK_USED_FAILED', message: 'Could not mark referral code used.' };
   }
 
-  if (Number(row.referrer_rewarded_at) > 0) {
-    return { ok: true, action: 'referral_reward_already_sent' };
+  return { ok: true, action: 'referral_marked_used', referralCode, refereeSiteId, referrerSiteId };
+}
+
+/**
+ * Credit the referrer when the referee's first paid invoice succeeds.
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {D1Database} db
+ * @param {{
+ *   invoiceId: string;
+ *   refereeSiteId?: string | null;
+ *   subscriptionId?: string | null;
+ *   amountPaid?: number;
+ *   nowMs?: number;
+ * }} input
+ */
+export async function fulfillReferrerRewardOnInvoicePaid(env, db, input) {
+  const invoiceId = String(input.invoiceId ?? '').trim();
+  const amountPaid = Number(input.amountPaid ?? 0);
+  const nowMs = input.nowMs ?? Date.now();
+
+  if (!invoiceId || amountPaid <= 0) {
+    return { ok: true, action: 'referral_reward_skipped' };
   }
 
+  let refereeSiteId = String(input.refereeSiteId ?? '').trim().toLowerCase();
+  if (!refereeSiteId && input.subscriptionId) {
+    const billing = await getSiteBillingBySubscriptionId(db, String(input.subscriptionId));
+    refereeSiteId = String(billing?.site_id ?? '').trim().toLowerCase();
+  }
+  if (!refereeSiteId) {
+    return { ok: true, action: 'referral_reward_no_site' };
+  }
+
+  const row = await db
+    .prepare(
+      `SELECT * FROM referral_codes
+       WHERE used_by_site_id = ?
+         AND status = 'used'
+         AND (referrer_rewarded_at IS NULL OR referrer_rewarded_at = 0)
+       ORDER BY used_at ASC
+       LIMIT 1`
+    )
+    .bind(refereeSiteId)
+    .first();
+  if (!row) {
+    return { ok: true, action: 'referral_reward_not_pending' };
+  }
+
+  const referrerSiteId = String(row.referrer_site_id ?? '').trim().toLowerCase();
+  const billingInterval = normalizeReferralBillingInterval(String(row.billing_interval ?? 'month'));
   const referrerBilling = await getSiteBilling(db, referrerSiteId);
   const customerId = String(referrerBilling?.stripe_customer_id ?? '').trim();
   if (!customerId) {
@@ -426,21 +475,29 @@ export async function fulfillReferralFromCheckoutSession(env, db, input) {
   await stripeApiRequest(secretKey, 'POST', `/customers/${customerId}/balance_transactions`, {
     amount: -creditPence,
     currency: 'gbp',
-    description: `Referral reward for ${refereeSiteId} (${billingInterval})`
+    description: `Referral reward for ${refereeSiteId} (${billingInterval}, invoice ${invoiceId})`
   });
 
   await db
     .prepare('UPDATE referral_codes SET referrer_rewarded_at = ? WHERE code = ?')
-    .bind(nowMs, referralCode)
+    .bind(nowMs, String(row.code ?? ''))
     .run();
 
   return {
     ok: true,
-    action: 'referral_fulfilled',
+    action: 'referral_reward_fulfilled',
+    referralCode: String(row.code ?? ''),
     referrerSiteId,
     refereeSiteId,
     creditPence
   };
+}
+
+/** @deprecated Use markReferralUsedAtCheckout + fulfillReferrerRewardOnInvoicePaid */
+export async function fulfillReferralFromCheckoutSession(env, db, input) {
+  const marked = await markReferralUsedAtCheckout(db, input);
+  if (!marked.ok) return marked;
+  return { ...marked, action: marked.action ?? 'referral_marked_used' };
 }
 
 /**
@@ -516,8 +573,6 @@ export async function createReferralCodeForSite(db, env, input) {
       }
     };
   }
-
-  await revokeActiveReferralCodes(db, siteId);
 
   let code = '';
   for (let attempt = 0; attempt < 8; attempt += 1) {
