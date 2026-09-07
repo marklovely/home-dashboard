@@ -108,7 +108,12 @@ export const PUBLIC_HELP_CATALOG = {
         "demo",
         "public",
         "stay",
-        "sitter"
+        "sitter",
+        "referral",
+        "refer",
+        "friend",
+        "credit",
+        "discount"
       ],
       "blocks": [
         {
@@ -154,6 +159,22 @@ export const PUBLIC_HELP_CATALOG = {
         {
           "type": "p",
           "text": "Yes. Add each stay with dates and the sitter’s email under Settings → House sitter mode. They can read the house guide from 7 days before; Wi‑Fi, address, and lockbox appear on the sit dates; their login is removed the day after checkout. Add as many upcoming stays as you need."
+        },
+        {
+          "type": "h4",
+          "text": "How do referrals work?"
+        },
+        {
+          "type": "p",
+          "text": "Refer another household and you both benefit when they subscribe after the trial. On a monthly plan, your friend gets £5 off each of their first two months (starting on the first invoice after the trial) and you get £10 account credit when their first invoice is paid. On a yearly plan, they get £15 off their first year and you get £15 credit when their first invoice is paid. The 7-day trial is unchanged — discounts apply when billing starts, not at signup."
+        },
+        {
+          "type": "h4",
+          "text": "How do I get a referral link?"
+        },
+        {
+          "type": "p",
+          "text": "Sign in at lovely-home.co.uk/account.html with the email you used at signup. Choose monthly or yearly for the link, then generate and share the URL. Each link is single-use — create as many as you need. You cannot refer yourself, and each code matches one billing plan."
         },
         {
           "type": "h4",
