@@ -6,8 +6,10 @@ import { describe, expect, it } from 'vitest';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const website = join(root, 'website');
 const pages = readdirSync(website).filter((name) => name.endsWith('.html'));
-/** Access deny page is self-contained (no CSS/JS/images) so unauthorised visitors can load it. */
-const marketingPages = pages.filter((name) => name !== 'access-unauthorised.html');
+/** Access deny page is self-contained; 404 uses root-absolute asset paths for deep missing URLs. */
+const marketingPages = pages.filter(
+  (name) => name !== 'access-unauthorised.html' && name !== '404.html'
+);
 
 /**
  * @param {string} name
@@ -23,6 +25,11 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/Page not found/i);
     expect(html).toContain('noindex');
     expect(html).toContain('Error 404');
+    expect(html).toContain('href="/terms.html"');
+    expect(html).toContain('src="/site.js"');
+    expect(html).toContain('href="/favicon.png"');
+    expect(html).toMatch(/id="site-nav"[\s\S]*?href="\/account\.html"/);
+    expect(html).toContain('src="/lovely-home-mark.svg"');
   });
 
   it('ships the buying pages from the trial review', () => {
