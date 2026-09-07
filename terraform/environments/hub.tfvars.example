@@ -38,6 +38,10 @@ platform_operator_emails = [
 # stripe_webhook_secret = "whsec_..."
 # stripe_price_id         = "price_..."  # £9.99/month (test)
 # stripe_price_id_yearly  = "price_..."  # £99/year (test)
+# stripe_referral_coupon_monthly = "..." # £5 off × 2 months — create in Stripe (test)
+# stripe_referral_coupon_yearly  = "..." # £15 off first year — create in Stripe (test)
+# stripe_referral_coupon_monthly_live = "..."
+# stripe_referral_coupon_yearly_live  = "..."
 # Live keys — optional until public launch. Mode is switched from platform admin, not Terraform.
 # stripe_secret_key_live     = "sk_live_..."
 # stripe_webhook_secret_live = "whsec_..."

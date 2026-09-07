@@ -18,11 +18,25 @@
 
   let challengeRequired = false;
   let pendingEmail = '';
+  let referralsEnabled = false;
   const SESSION_KEY = 'lovelyAccountSession';
   const SESSION_EXPIRED_MESSAGE = 'You have been signed out. Enter your email for a new code.';
 
   restoreSession();
   initChallenge();
+  loadAccountCapabilities();
+
+  async function loadAccountCapabilities() {
+    try {
+      const response = await fetch(apiBase + '/api/public/account/status', {
+        headers: { Accept: 'application/json' }
+      });
+      const payload = await response.json().catch(() => ({}));
+      referralsEnabled = Boolean(payload.referralsEnabled);
+    } catch {
+      referralsEnabled = false;
+    }
+  }
 
   emailForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -91,6 +105,7 @@
         email: payload.email,
         expiresAt: payload.expiresAt
       });
+      await loadAccountCapabilities();
       showHubs(payload.hubs || [], payload.sessionToken);
     } catch {
       showAlert('Network error — check your connection and try again.', 'error');
@@ -129,6 +144,7 @@
         email: payload.email,
         expiresAt: payload.expiresAt
       });
+      await loadAccountCapabilities();
       showHubs(payload.hubs || [], stored.sessionToken);
     } catch {
       // Leave the sign-in form if the restore request fails.
@@ -172,30 +188,56 @@
     else clearAlert();
   }
 
-  function showHubs(hubs, sessionToken) {
+  async function showHubs(hubs, sessionToken) {
+    await loadAccountCapabilities();
     emailForm.hidden = true;
     codeForm.hidden = true;
     hubsEl.hidden = false;
     if (title) title.textContent = 'Your hub';
     if (lead) {
       lead.textContent = hubs.length
-        ? 'Billing changes open on Stripe. You stay signed in when you come back.'
+        ? 'Billing changes open on Stripe. Generate a single-use referral link below.'
         : 'We could not find a hub for that email.';
     }
     if (!hubs.length) {
       hubsEl.innerHTML = '<p class="signup-note muted">If you just signed up, wait a minute and try again. Otherwise email support@lovely-home.co.uk.</p>';
       return;
     }
+    renderHubCards(hubs, sessionToken);
+  }
+
+  function renderHubCards(hubs, sessionToken) {
     hubsEl.innerHTML = hubs.map((hub) => renderHub(hub)).join('');
     hubsEl.querySelectorAll('[data-portal-site]').forEach((button) => {
       button.addEventListener('click', () => openPortal(sessionToken, button.getAttribute('data-portal-site'), button));
     });
+    bindReferralActions(sessionToken);
   }
 
   function renderHub(hub) {
     const canceled = hub.status === 'canceled';
     const trial = formatTrial(hub.trialEnd);
     const status = statusCopy(hub.status, trial);
+    const referralBlock =
+      referralsEnabled && !canceled && hub.canManageBilling
+        ? '<div class="account-referral" data-referral-site="' +
+          escapeHtml(hub.siteId) +
+          '">' +
+          '<p class="signup-note"><strong>Refer a friend</strong> — they get a discount after the trial; you get account credit when they complete checkout.</p>' +
+          '<div class="account-referral-plan">' +
+          '<label><input type="radio" name="referral-plan-' +
+          escapeHtml(hub.siteId) +
+          '" value="month" checked> Monthly (£5 off × 2 months)</label>' +
+          '<label><input type="radio" name="referral-plan-' +
+          escapeHtml(hub.siteId) +
+          '" value="year"> Yearly (£15 off)</label>' +
+          '</div>' +
+          '<button type="button" class="btn btn-secondary btn-block" data-referral-generate="' +
+          escapeHtml(hub.siteId) +
+          '">Generate referral link</button>' +
+          '<div class="account-referral-result" hidden></div>' +
+          '</div>'
+        : '';
     const manage = hub.canManageBilling
       ? '<button type="button" class="btn ' +
         (canceled ? 'btn-secondary' : 'btn-primary') +
@@ -225,8 +267,78 @@
           openHub +
           manage +
         '</div>' +
+        referralBlock +
       '</article>'
     );
+  }
+
+  function bindReferralActions(sessionToken) {
+    hubsEl.querySelectorAll('[data-referral-generate]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const siteId = button.getAttribute('data-referral-generate');
+        if (!siteId) return;
+        generateReferralLink(sessionToken, siteId, button);
+      });
+    });
+  }
+
+  async function generateReferralLink(sessionToken, siteId, button) {
+    const container = hubsEl.querySelector('[data-referral-site="' + siteId + '"] .account-referral-result');
+    const planInput = hubsEl.querySelector('input[name="referral-plan-' + siteId + '"]:checked');
+    const billingInterval = planInput && planInput.value === 'year' ? 'year' : 'month';
+    clearAlert();
+    setBusy(button, true);
+    try {
+      const response = await fetch(apiBase + '/api/public/account/referral-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ sessionToken, siteId, billingInterval })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        clearStoredSession();
+        showSignIn(SESSION_EXPIRED_MESSAGE);
+        return;
+      }
+      if (!response.ok || !payload.url) {
+        showAlert(payload.message || 'Could not create a referral link.', 'error');
+        return;
+      }
+      if (container) {
+        container.hidden = false;
+        container.innerHTML =
+          '<p class="signup-note">' +
+          escapeHtml(payload.refereeBenefit || 'Share this single-use link:') +
+          '</p>' +
+          '<input class="account-referral-url" type="text" readonly value="' +
+          escapeHtml(payload.url) +
+          '">' +
+          '<button type="button" class="btn btn-secondary btn-block" data-copy-referral="' +
+          escapeHtml(payload.url) +
+          '">Copy link</button>';
+        const copyBtn = container.querySelector('[data-copy-referral]');
+        copyBtn?.addEventListener('click', () => copyReferralUrl(payload.url, copyBtn));
+      }
+    } catch {
+      showAlert('Network error — check your connection and try again.', 'error');
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
+  async function copyReferralUrl(url, button) {
+    try {
+      await navigator.clipboard.writeText(url);
+      if (button) {
+        const original = button.textContent;
+        button.textContent = 'Copied';
+        setTimeout(() => {
+          button.textContent = original;
+        }, 2000);
+      }
+    } catch {
+      showAlert('Could not copy automatically — select the link and copy it manually.', 'info');
+    }
   }
 
   async function openPortal(sessionToken, siteId, button) {
@@ -281,6 +393,7 @@
         headers: { Accept: 'application/json' }
       });
       const payload = await response.json().catch(() => ({}));
+      referralsEnabled = Boolean(payload.referralsEnabled);
       const siteKey = (payload.turnstileSiteKey || '').trim();
       if (!siteKey) return;
       challengeRequired = true;

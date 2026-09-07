@@ -107,6 +107,48 @@ Use [Stripe test cards](https://docs.stripe.com/testing#cards) — e.g. `4242 42
 
 Advance trial billing without waiting 7 days: [Stripe test clocks](https://docs.stripe.com/billing/testing/test-clocks).
 
+## Referral scheme
+
+Single-use opaque links (`LH-XXXX-XXXX`) generated from [account.html](https://lovely-home.co.uk/account.html) after OTP sign-in.
+
+| Plan | Referee (new signup) | Referrer (when checkout completes) |
+|------|----------------------|-------------------------------------|
+| Monthly | £5 off each of the first **two** paid months (after 7-day trial) | **£10** Stripe account credit |
+| Yearly | **£15** off the first year (after trial) | **£15** Stripe account credit |
+
+Trial length stays **7 days** — referrals never extend the trial.
+
+### Stripe coupons (create in Dashboard, test + live)
+
+**Monthly referee coupon**
+
+- Amount off: **£5.00** GBP
+- Duration: **Repeating**, **2** months
+
+**Yearly referee coupon**
+
+- Amount off: **£15.00** GBP
+- Duration: **Once**
+
+Copy each coupon id (`…`) into platform Pages env (via Terraform `hub.tfvars`):
+
+- `STRIPE_REFERRAL_COUPON_MONTHLY` / `STRIPE_REFERRAL_COUPON_MONTHLY_LIVE`
+- `STRIPE_REFERRAL_COUPON_YEARLY` / `STRIPE_REFERRAL_COUPON_YEARLY_LIVE`
+
+Apply migration `0009_referral_codes.sql`:
+
+```bash
+node scripts/apply-platform-billing-migration.mjs
+```
+
+Public API:
+
+- `GET /api/public/signup/referral/{code}` — preview benefit copy for signup page
+- `POST /api/public/signup` — optional `referralCode` (from `?ref=` on signup.html)
+- `POST /api/public/account/referral-code` — generate a new single-use link (requires account session)
+
+Referrer rewards use Stripe **customer balance** credits; referee discounts use Checkout `discounts` on the subscription.
+
 ## Slice 2 — provision on trialing (shipped)
 
 When Stripe sends `checkout.session.completed` or `customer.subscription.created` with status **trialing**:
