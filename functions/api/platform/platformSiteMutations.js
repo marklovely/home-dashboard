@@ -5,7 +5,8 @@ const HOSTNAME_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9
 const PLATFORM_ZONE_NAME = 'lovely-home.co.uk';
 const CUSTOMER_HUB_ZONE_NAME = 'lovely-hub.com';
 const ALLOWED_HUB_ZONES = [PLATFORM_ZONE_NAME, CUSTOMER_HUB_ZONE_NAME];
-const PROTECTED_SITE_IDS = new Set(['production']);
+const PROTECTED_SITE_IDS = new Set();
+const LEGACY_PLATFORM_SITE_IDS = new Set(['production']);
 
 /**
  * @param {string} siteId
@@ -208,7 +209,7 @@ export function validateSiteProvision(siteId, manifest) {
     return { ok: false, error: 'VALIDATION_ERROR', message: idError };
   }
 
-  if (PROTECTED_SITE_IDS.has(siteId)) {
+  if (LEGACY_PLATFORM_SITE_IDS.has(siteId)) {
     return {
       ok: false,
       error: 'VALIDATION_ERROR',
@@ -233,7 +234,7 @@ export function validateSiteDeploy(siteId, manifest) {
     return { ok: false, error: 'VALIDATION_ERROR', message: idError };
   }
 
-  if (PROTECTED_SITE_IDS.has(siteId)) {
+  if (LEGACY_PLATFORM_SITE_IDS.has(siteId)) {
     return {
       ok: false,
       error: 'VALIDATION_ERROR',
