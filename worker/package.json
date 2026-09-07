@@ -30,7 +30,10 @@
     "deploy:all": "node ../scripts/deploy-all-workers.mjs",
     "deploy:wagtail": "node scripts/check-env-provisioned.mjs wagtail && wrangler deploy --env wagtail",
     "d1:migrate:wagtail": "node scripts/check-env-provisioned.mjs wagtail && wrangler d1 migrations apply lovely-home-appliance-manuals-wagtail --remote --env wagtail",
-    "secrets:wagtail": "bash scripts/print-env-secrets-checklist.sh wagtail"
+    "secrets:wagtail": "bash scripts/print-env-secrets-checklist.sh wagtail",
+    "deploy:lovely": "node scripts/check-env-provisioned.mjs lovely && wrangler deploy --env lovely",
+    "d1:migrate:lovely": "node scripts/check-env-provisioned.mjs lovely && wrangler d1 migrations apply lovely-home-appliance-manuals-lovely --remote --env lovely",
+    "secrets:lovely": "bash scripts/print-env-secrets-checklist.sh lovely"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.19.0",
