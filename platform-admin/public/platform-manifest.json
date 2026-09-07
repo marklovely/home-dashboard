@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T16:51:29.911Z",
+  "generatedAt": "2026-09-07T14:18:57.167Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
@@ -403,7 +403,7 @@
     "lovely": {
       "siteId": "lovely",
       "hostname": "lovely.lovely-hub.com",
-      "hubEnvironment": "lovely",
+      "hubEnvironment": "production",
       "vanilla": false,
       "terraform": true,
       "attachHubApiBinding": true,
@@ -427,7 +427,7 @@
         "default_latitude": "51.5074",
         "default_longitude": "-0.1278",
         "hostname": "lovely.lovely-hub.com",
-        "hub_environment": "lovely",
+        "hub_environment": "production",
         "pages_project": "home-dashboard-lovely",
         "pages_url": "https://lovely.lovely-hub.com",
         "r2_guides_bucket": "lovely-home-appliance-guides-lovely",
