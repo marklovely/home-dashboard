@@ -87,6 +87,18 @@ variable "stripe_price_id_yearly" {
   description = "Stripe TEST yearly Price id (price_…)."
 }
 
+variable "stripe_referral_coupon_monthly" {
+  type        = string
+  default     = ""
+  description = "Stripe TEST Coupon id for monthly referral discount (£5 off × 2 months)."
+}
+
+variable "stripe_referral_coupon_yearly" {
+  type        = string
+  default     = ""
+  description = "Stripe TEST Coupon id for yearly referral discount (£15 off first year)."
+}
+
 variable "stripe_secret_key_live" {
   type        = string
   default     = ""
@@ -111,6 +123,18 @@ variable "stripe_price_id_yearly_live" {
   type        = string
   default     = ""
   description = "Stripe LIVE yearly Price id (price_…)."
+}
+
+variable "stripe_referral_coupon_monthly_live" {
+  type        = string
+  default     = ""
+  description = "Stripe LIVE Coupon id for monthly referral discount."
+}
+
+variable "stripe_referral_coupon_yearly_live" {
+  type        = string
+  default     = ""
+  description = "Stripe LIVE Coupon id for yearly referral discount."
 }
 
 variable "stripe_checkout_success_url" {

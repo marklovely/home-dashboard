@@ -90,34 +90,38 @@ module "platform_admin" {
   count  = var.terraform_stack == "platform" && var.platform_admin.enabled ? 1 : 0
   source = "./modules/platform_admin"
 
-  account_id                        = var.cloudflare_account_id
-  zone_id                           = var.cloudflare_zone_id
-  zone_name                         = var.zone_name
-  hostname                          = var.platform_admin.hostname
-  pages_name                        = var.platform_admin.pages_name
-  access_team_domain                = var.access_team_domain
-  operator_emails                   = var.platform_operator_emails
-  github_owner                      = var.github_owner
-  github_repo                       = var.github_repo
-  github_production_branch          = var.github_production_branch
-  platform_github_token             = var.platform_github_token
-  platform_cf_api_token             = var.platform_cf_api_token
-  stripe_secret_key                 = var.stripe_secret_key
-  stripe_webhook_secret             = var.stripe_webhook_secret
-  stripe_price_id                   = var.stripe_price_id
-  stripe_price_id_yearly            = var.stripe_price_id_yearly
-  stripe_secret_key_live            = var.stripe_secret_key_live
-  stripe_webhook_secret_live        = var.stripe_webhook_secret_live
-  stripe_price_id_live              = var.stripe_price_id_live
-  stripe_price_id_yearly_live       = var.stripe_price_id_yearly_live
-  marketing_site_origin             = var.marketing_site_origin
-  marketing_access_app_id           = try(module.marketing_site[0].marketing_site_contract.access_app_id, "")
-  public_signup_enabled             = var.public_signup_enabled
-  turnstile_site_key                = var.turnstile_site_key
-  turnstile_secret_key              = var.turnstile_secret_key
-  resend_api_key                    = var.resend_api_key
-  customer_email_from               = var.customer_email_from
-  pages_preview_deployments_enabled = var.pages_preview_deployments_enabled
+  account_id                          = var.cloudflare_account_id
+  zone_id                             = var.cloudflare_zone_id
+  zone_name                           = var.zone_name
+  hostname                            = var.platform_admin.hostname
+  pages_name                          = var.platform_admin.pages_name
+  access_team_domain                  = var.access_team_domain
+  operator_emails                     = var.platform_operator_emails
+  github_owner                        = var.github_owner
+  github_repo                         = var.github_repo
+  github_production_branch            = var.github_production_branch
+  platform_github_token               = var.platform_github_token
+  platform_cf_api_token               = var.platform_cf_api_token
+  stripe_secret_key                   = var.stripe_secret_key
+  stripe_webhook_secret               = var.stripe_webhook_secret
+  stripe_price_id                     = var.stripe_price_id
+  stripe_price_id_yearly              = var.stripe_price_id_yearly
+  stripe_referral_coupon_monthly      = var.stripe_referral_coupon_monthly
+  stripe_referral_coupon_yearly       = var.stripe_referral_coupon_yearly
+  stripe_secret_key_live              = var.stripe_secret_key_live
+  stripe_webhook_secret_live          = var.stripe_webhook_secret_live
+  stripe_price_id_live                = var.stripe_price_id_live
+  stripe_price_id_yearly_live         = var.stripe_price_id_yearly_live
+  stripe_referral_coupon_monthly_live = var.stripe_referral_coupon_monthly_live
+  stripe_referral_coupon_yearly_live  = var.stripe_referral_coupon_yearly_live
+  marketing_site_origin               = var.marketing_site_origin
+  marketing_access_app_id             = try(module.marketing_site[0].marketing_site_contract.access_app_id, "")
+  public_signup_enabled               = var.public_signup_enabled
+  turnstile_site_key                  = var.turnstile_site_key
+  turnstile_secret_key                = var.turnstile_secret_key
+  resend_api_key                      = var.resend_api_key
+  customer_email_from                 = var.customer_email_from
+  pages_preview_deployments_enabled   = var.pages_preview_deployments_enabled
 }
 
 resource "terraform_data" "customers_site_scope" {
