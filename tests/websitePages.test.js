@@ -17,6 +17,14 @@ function readPage(name) {
 }
 
 describe('marketing site pages', () => {
+  it('ships a custom 404 page for missing marketing URLs', () => {
+    expect(pages).toContain('404.html');
+    const html = readPage('404.html');
+    expect(html).toMatch(/Page not found/i);
+    expect(html).toContain('noindex');
+    expect(html).toContain('Error 404');
+  });
+
   it('ships the buying pages from the trial review', () => {
     expect(pages).toEqual(expect.arrayContaining([
       'included.html',
