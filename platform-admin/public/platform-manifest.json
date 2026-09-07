@@ -427,7 +427,7 @@
         "default_latitude": "51.5074",
         "default_longitude": "-0.1278",
         "hostname": "lovely.lovely-hub.com",
-        "hub_environment": "lovely",
+        "hub_environment": "production",
         "pages_project": "home-dashboard-lovely",
         "pages_url": "https://lovely.lovely-hub.com",
         "r2_guides_bucket": "lovely-home-appliance-guides-lovely",
