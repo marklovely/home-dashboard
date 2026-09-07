@@ -404,6 +404,72 @@
           "done": null
         }
       ]
+    },
+    "larchmount": {
+      "siteId": "larchmount",
+      "hostname": "larchmount.lovely-hub.com",
+      "hubEnvironment": "larchmount",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "hasOwnerEmails": false,
+      "demoPublic": false,
+      "accessEnabled": true,
+      "pagesProject": "home-dashboard-larchmount",
+      "workerName": "lovely-home-hub-api-larchmount",
+      "pagesUrl": "https://larchmount.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-larchmount.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "8a380b51058483474641ab598e0d03726222b848f3bc707d73b12305508314e9,75151313ce11ba40766c4232b71ff8fc8f353d620871e8a84633c27592b56357",
+        "access_enabled": true,
+        "access_pages_app_id": "7b7e2e80-830f-4970-8677-11e99d0da42e",
+        "access_pages_aud": "75151313ce11ba40766c4232b71ff8fc8f353d620871e8a84633c27592b56357",
+        "access_worker_app_id": "efdb8d93-c592-4436-b3e4-1ad6163f7c6c",
+        "access_worker_aud": "8a380b51058483474641ab598e0d03726222b848f3bc707d73b12305508314e9",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "2e8a18f0-9fcb-4900-9c62-39a8b024b054",
+        "d1_database_name": "lovely-home-appliance-manuals-larchmount",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "larchmount.lovely-hub.com",
+        "hub_environment": "larchmount",
+        "pages_project": "home-dashboard-larchmount",
+        "pages_url": "https://larchmount.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-larchmount",
+        "r2_media_bucket": "lovely-home-guide-media-larchmount",
+        "site_id": "larchmount",
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-larchmount.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-larchmount.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-larchmount"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
     }
   }
 }

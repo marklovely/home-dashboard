@@ -393,3 +393,58 @@ bucket_name = "lovely-home-guide-media-lovely"
 [[env.lovely.r2_buckets]]
 binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
+
+# ---------------------------------------------------------------------------
+# Larchmount environment — Terraform-managed (see docs/platform-terraform.md)
+# Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs larchmount
+# ---------------------------------------------------------------------------
+
+[env.larchmount]
+name = "lovely-home-hub-api-larchmount"
+
+[env.larchmount.vars]
+HUB_ENVIRONMENT = "larchmount"
+
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://larchmount.lovely-hub.com,https://home-dashboard-larchmount.pages.dev,https://*.home-dashboard-larchmount.pages.dev,https://*.pages.dev"
+
+HOME_LATITUDE = "51.5074"
+
+HOME_LONGITUDE = "-0.1278"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
+ACCESS_PAGES_APP_ID = "7b7e2e80-830f-4970-8677-11e99d0da42e"
+
+ACCESS_WORKER_APP_ID = "efdb8d93-c592-4436-b3e4-1ad6163f7c6c"
+
+[[env.larchmount.durable_objects.bindings]]
+name = "OWNER_AUTH_LIMITER"
+class_name = "OwnerAuthLimiter"
+
+[[env.larchmount.durable_objects.bindings]]
+name = "CONTROL_ACTION_LIMITER"
+class_name = "ControlActionLimiter"
+
+[[env.larchmount.r2_buckets]]
+binding = "APPLIANCE_GUIDES"
+bucket_name = "lovely-home-appliance-guides-larchmount"
+
+[[env.larchmount.d1_databases]]
+binding = "APPLIANCE_MANUALS_DB"
+database_name = "lovely-home-appliance-manuals-larchmount"
+database_id = "2e8a18f0-9fcb-4900-9c62-39a8b024b054"
+migrations_dir = "migrations"
+
+[[env.larchmount.d1_databases]]
+binding = "HOUSE_GUIDE_DB"
+database_name = "lovely-home-appliance-manuals-larchmount"
+database_id = "2e8a18f0-9fcb-4900-9c62-39a8b024b054"
+migrations_dir = "migrations"
+
+[[env.larchmount.r2_buckets]]
+binding = "GUIDE_MEDIA"
+bucket_name = "lovely-home-guide-media-larchmount"
+
+[[env.larchmount.r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"
