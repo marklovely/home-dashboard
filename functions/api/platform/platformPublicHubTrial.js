@@ -19,7 +19,6 @@ export function siteIdFromHubOrigin(origin) {
     const url = new URL(raw);
     if (url.protocol !== 'https:') return null;
     const host = url.hostname.toLowerCase();
-    if (host === 'dashboard.lovely-home.co.uk') return 'production';
     const match = HUB_ORIGIN_RE.exec(`${url.protocol}//${host}`);
     if (!match) return null;
     return match[1].toLowerCase();

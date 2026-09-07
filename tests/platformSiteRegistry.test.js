@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   defaultSiteEntry,
+  LEGACY_DEPLOY_BLOCKED_SITE_IDS,
   PROTECTED_SITE_IDS,
   validateBillingDeprovisionSiteId,
   validateDeploySiteId,
@@ -62,7 +63,7 @@ describe('site registry validation', () => {
     ).toBeNull();
   });
 
-  it('blocks provision for production and unknown sites', () => {
+  it('blocks provision for legacy production and unknown sites', () => {
     const manifest = {
       sites: {
         demo: { siteId: 'demo', hostname: 'demo.lovely-home.co.uk' }
@@ -73,40 +74,41 @@ describe('site registry validation', () => {
     expect(validateSiteProvision('demo', manifest).ok).toBe(true);
   });
 
-  it('blocks deploy for production and unknown sites', () => {
+  it('blocks deploy for legacy production and unknown sites', () => {
     const manifest = {
       sites: {
         test: { siteId: 'test', hostname: 'test.lovely-home.co.uk' }
       }
     };
     expect(validateDeploySiteId('production')).toMatch(/production/i);
+    expect(LEGACY_DEPLOY_BLOCKED_SITE_IDS.has('production')).toBe(true);
     expect(validateDeploySiteId('bad;id')).toBeTruthy();
     expect(validateSiteDeploy('production', manifest).ok).toBe(false);
     expect(validateSiteDeploy('missing', manifest).ok).toBe(false);
     expect(validateSiteDeploy('test', manifest).ok).toBe(true);
   });
 
-  it('blocks delete for protected sites', () => {
+  it('allows delete for sites that are not protected', () => {
     const existing = {
-      production: {
-        hostname: 'dashboard.lovely-home.co.uk',
-        hub_environment: 'production',
-        vanilla: false
+      demo: {
+        hostname: 'demo.lovely-home.co.uk',
+        hub_environment: 'demo',
+        vanilla: true
       }
     };
-    expect(PROTECTED_SITE_IDS.has('production')).toBe(true);
+    expect(PROTECTED_SITE_IDS.size).toBe(0);
     expect(
-      validateSiteMutation('delete', 'production', {}, existing, {
+      validateSiteMutation('delete', 'demo', {}, existing, {
         zoneName: 'lovely-home.co.uk'
       })
-    ).toMatch(/protected/i);
+    ).toBeNull();
   });
 
-  it('blocks deprovision for protected sites and sites still in registry', () => {
+  it('allows deprovision for removed production and blocks sites still in registry', () => {
     const registry = {
       demo: { hostname: 'demo.lovely-home.co.uk', hub_environment: 'demo', vanilla: true }
     };
-    expect(validateDeprovisionSiteId('production', registry)).toMatch(/protected/i);
+    expect(validateDeprovisionSiteId('production', registry)).toBeNull();
     expect(validateDeprovisionSiteId('demo', registry)).toMatch(/still in platform\/sites\.yaml/i);
     expect(validateDeprovisionSiteId('removed', {})).toBeNull();
   });
@@ -121,7 +123,7 @@ describe('site registry validation', () => {
     };
     expect(validateBillingDeprovisionSiteId('practice', registry)).toBeNull();
     expect(validateBillingDeprovisionSiteId('missing', registry)).toBeNull();
-    expect(validateBillingDeprovisionSiteId('production', registry)).toMatch(/protected/i);
+    expect(validateBillingDeprovisionSiteId('production', registry)).toBeNull();
   });
 
   it('requires owner emails when creating a site via platform API', () => {

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 describe('loadSitesYaml', () => {
   it('loads platform/sites.yaml registry', () => {
     const sites = loadSitesYaml(join(process.cwd(), 'platform/sites.yaml'));
-    expect(sites.production.hostname).toBe('dashboard.lovely-home.co.uk');
+    expect(sites.lovely.hostname).toBe('lovely.lovely-hub.com');
     expect(sites.test.terraform).toBe(true);
     expect(sites.sandbox.vanilla).toBe(true);
   });

@@ -9,67 +9,6 @@
     "marketingSiteOrigin": "https://lovely-home.co.uk"
   },
   "sites": {
-    "production": {
-      "siteId": "production",
-      "hostname": "dashboard.lovely-home.co.uk",
-      "hubEnvironment": "production",
-      "vanilla": false,
-      "terraform": true,
-      "attachHubApiBinding": false,
-      "hasOwnerEmails": false,
-      "demoPublic": false,
-      "accessEnabled": true,
-      "pagesProject": "home-dashboard",
-      "workerName": "lovely-home-hub-api",
-      "pagesUrl": "https://dashboard.lovely-home.co.uk",
-      "workerApiOrigin": "https://lovely-home-hub-api.mark-lovely67.workers.dev",
-      "contract": {
-        "access_aud_combined": "faa8df9dfac167314cb68b9cbc9851c20e2824fbf30666f0323a5d9b14444a9d,6840a5b000cdbbc2403738c3ed4faed72bb7916bd04a96f7bb3aa81809927337",
-        "access_enabled": true,
-        "access_pages_app_id": "c0cd852c-dce6-4855-82bf-3afa83c4a49d",
-        "access_pages_aud": "6840a5b000cdbbc2403738c3ed4faed72bb7916bd04a96f7bb3aa81809927337",
-        "access_worker_app_id": "b644f408-236c-498a-a314-e67b5fa3d76b",
-        "access_worker_aud": "faa8df9dfac167314cb68b9cbc9851c20e2824fbf30666f0323a5d9b14444a9d",
-        "cf_access_team_domain": "lovely-home",
-        "d1_database_id": "6ba7c54d-8804-47c0-8648-77b1aa25e0e0",
-        "d1_database_name": "lovely-home-appliance-manuals",
-        "default_latitude": "51.5074",
-        "default_longitude": "-0.1278",
-        "hostname": "dashboard.lovely-home.co.uk",
-        "hub_environment": "production",
-        "pages_project": "home-dashboard",
-        "pages_url": "https://dashboard.lovely-home.co.uk",
-        "r2_guides_bucket": "lovely-home-appliance-guides",
-        "r2_media_bucket": "lovely-home-guide-media",
-        "site_id": "production",
-        "vanilla": false,
-        "worker_api_origin": "https://lovely-home-hub-api.mark-lovely67.workers.dev",
-        "worker_hostname": "lovely-home-hub-api.mark-lovely67.workers.dev",
-        "worker_name": "lovely-home-hub-api"
-      },
-      "provisioning": [
-        {
-          "id": "terraform",
-          "label": "Terraform contract in platform manifest",
-          "done": true
-        },
-        {
-          "id": "worker",
-          "label": "Worker deployed (Wrangler)",
-          "done": null
-        },
-        {
-          "id": "pages",
-          "label": "Pages production deployment",
-          "done": null
-        },
-        {
-          "id": "hub-api",
-          "label": "HUB_API Pages binding",
-          "done": null
-        }
-      ]
-    },
     "test": {
       "siteId": "test",
       "hostname": "test.lovely-home.co.uk",

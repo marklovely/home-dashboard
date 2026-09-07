@@ -10,7 +10,7 @@ describe('public hub trial status', () => {
     expect(siteIdFromHubOrigin('https://powell.lovely-hub.com')).toBe('powell');
     expect(siteIdFromHubOrigin('https://rose-cottage.lovely-hub.com/')).toBe('rose-cottage');
     expect(siteIdFromHubOrigin('https://demo.lovely-home.co.uk')).toBe('demo');
-    expect(siteIdFromHubOrigin('https://dashboard.lovely-home.co.uk')).toBe('production');
+    expect(siteIdFromHubOrigin('https://dashboard.lovely-home.co.uk')).toBe('dashboard');
     expect(siteIdFromHubOrigin('https://lovely-home.co.uk')).toBeNull();
     expect(siteIdFromHubOrigin('https://evil.example')).toBeNull();
   });

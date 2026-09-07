@@ -44,7 +44,6 @@ function readBuildTimeHubEnvironment() {
  */
 function hubEnvironmentFromHostname(host) {
   const hostname = host.toLowerCase();
-  if (hostname === 'dashboard.lovely-home.co.uk') return 'production';
   const zoneSuffix = '.lovely-home.co.uk';
   if (hostname.endsWith(zoneSuffix)) {
     const sub = hostname.slice(0, -zoneSuffix.length);

@@ -28,7 +28,7 @@ describe('detect site yaml changes', () => {
     expect(detectRemovedTerraformSites(before, after)).toEqual(['demo']);
   });
 
-  it('never deprovisions production', () => {
+  it('detects removed terraform sites including production', () => {
     const withProduction = {
       ...before,
       production: {
@@ -38,7 +38,7 @@ describe('detect site yaml changes', () => {
       }
     };
     const after = { test: before.test };
-    expect(detectRemovedTerraformSites(withProduction, after)).toEqual(['demo']);
+    expect(detectRemovedTerraformSites(withProduction, after)).toEqual(['demo', 'production']);
   });
 
   it('rejects invalid site ids in added/removed lists', () => {

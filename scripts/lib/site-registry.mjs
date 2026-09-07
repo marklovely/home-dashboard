@@ -31,7 +31,10 @@ const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
 export { PLATFORM_ZONE_NAME, CUSTOMER_HUB_ZONE_NAME, ALLOWED_HUB_ZONE_NAMES };
 
 /** Sites that cannot be removed from the platform UI. */
-export const PROTECTED_SITE_IDS = new Set(['production']);
+export const PROTECTED_SITE_IDS = new Set();
+
+/** Legacy site ids that must never be deployed via automated Wrangler workflows. */
+export const LEGACY_DEPLOY_BLOCKED_SITE_IDS = new Set(['production']);
 
 /**
  * @param {string} siteId
@@ -168,7 +171,7 @@ export function suggestedWorkerName(siteId) {
 export function validateDeploySiteId(siteId) {
   const idError = validateSiteId(siteId);
   if (idError) return idError;
-  if (PROTECTED_SITE_IDS.has(siteId)) {
+  if (LEGACY_DEPLOY_BLOCKED_SITE_IDS.has(siteId)) {
     return 'Production worker deploy is not supported via this workflow.';
   }
   return null;
