@@ -39,7 +39,7 @@ describe('not found pages', () => {
     expect(hub404).toMatch(/Page not found/i);
     expect(hub404).toContain('noindex');
     expect(hub404).toContain('Back to hub home');
-    expect(hub404).toContain('href="/icons/icon-192.png"');
+    expect(hub404).toMatch(/rel="icon"[^>]+href="\.\/assets\/icon-192/);
   });
 
   it('bypasses marketing Access for the 404 page when the site is gated', () => {
