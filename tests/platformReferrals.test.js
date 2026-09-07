@@ -1,12 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
-  generateReferralCodeValue,
-  normalizeReferralCode,
   normalizeReferralBillingInterval,
   referralBenefitCopy,
   referralCouponIdForInterval,
   validateReferralForSignup,
-  reserveReferralCodeForCheckout,
   markReferralUsedAtCheckout,
   fulfillReferrerRewardOnInvoicePaid,
   previewReferralCode,

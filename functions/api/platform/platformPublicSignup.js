@@ -24,7 +24,6 @@ import {
 } from './platformHubNameHold.js';
 import { turnstileConfigured, verifyTurnstileToken } from './platformSignupTurnstile.js';
 import {
-  previewReferralCode,
   releaseReferralReservationForSite,
   reserveReferralCodeForCheckout,
   validateReferralForSignup
