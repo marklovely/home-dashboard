@@ -79,6 +79,8 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/cannot be changed later/);
     expect(html).toMatch(/does not charge you today/);
     expect(html).toMatch(/Stripe checkout page when you continue/);
+    const js = readFileSync(join(website, 'signup.js'), 'utf8');
+    expect(js).toMatch(/setReferralBillingIntervalLock/);
   });
 
   it('pricing explains cancel, archive, and backup exclusions', () => {
