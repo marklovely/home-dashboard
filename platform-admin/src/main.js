@@ -428,6 +428,7 @@ async function checkSiteUsage(siteId, options = {}) {
 function renderSiteCard(site, platform, githubConfigured, pagesConfigured, billingBySite, billingOptions) {
   const siteId = String(site.siteId);
   const isProduction = siteId === 'production';
+  const isProtected = site.protected === true;
   const stored = healthBySite.get(siteId);
   const storedUsage = usageBySite.get(siteId);
   const storedPreview = previewsBySite.get(siteId);
@@ -489,7 +490,7 @@ function renderSiteCard(site, platform, githubConfigured, pagesConfigured, billi
         <button type="button" class="btn btn-small" data-check-site="${escapeHtml(siteId)}">Check health</button>
         <button type="button" class="btn btn-small btn-ghost" data-check-usage="${escapeHtml(siteId)}">Check usage</button>
         ${githubConfigured ? `<button type="button" class="btn btn-small btn-ghost" data-edit-site="${escapeHtml(siteId)}">Edit</button>` : ''}
-        ${githubConfigured && !isProduction ? `<button type="button" class="btn btn-small btn-ghost" data-delete-site="${escapeHtml(siteId)}">Delete</button>` : ''}
+        ${githubConfigured && !isProduction && !isProtected ? `<button type="button" class="btn btn-small btn-ghost" data-delete-site="${escapeHtml(siteId)}">Delete</button>` : ''}
         ${githubConfigured && needsProvision ? `<button type="button" class="btn btn-small" data-provision-site="${escapeHtml(siteId)}">Provision</button>` : ''}
         ${githubConfigured && !isProduction ? `<button type="button" class="btn btn-small btn-ghost" data-deploy-site="${escapeHtml(siteId)}">Deploy Worker</button>` : ''}
         <a class="btn btn-small btn-ghost" href="${escapeHtml(String(site.pagesUrl))}/api/access-probe" target="_blank" rel="noopener">Access probe</a>

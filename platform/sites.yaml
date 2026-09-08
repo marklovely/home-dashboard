@@ -15,6 +15,7 @@ sites:
     hub_environment: demo
     vanilla: true
     terraform: true
+    protected: true
     owner_emails: demo@lovely-home.co.uk
     attach_hub_api_binding: true
 

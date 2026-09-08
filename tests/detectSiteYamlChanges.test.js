@@ -25,12 +25,13 @@ describe('detect site yaml changes', () => {
       test: before.test,
       localonly: before.localonly
     };
-    expect(detectRemovedTerraformSites(before, after)).toEqual(['demo']);
+    expect(detectRemovedTerraformSites(before, after)).toEqual([]);
   });
 
-  it('detects removed terraform sites including production', () => {
+  it('detects removed terraform sites including production when not protected', () => {
     const withProduction = {
-      ...before,
+      test: before.test,
+      localonly: before.localonly,
       production: {
         hostname: 'dashboard.lovely-home.co.uk',
         hub_environment: 'production',
@@ -38,7 +39,7 @@ describe('detect site yaml changes', () => {
       }
     };
     const after = { test: before.test };
-    expect(detectRemovedTerraformSites(withProduction, after)).toEqual(['demo', 'production']);
+    expect(detectRemovedTerraformSites(withProduction, after)).toEqual(['production']);
   });
 
   it('rejects invalid site ids in added/removed lists', () => {

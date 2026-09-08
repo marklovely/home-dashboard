@@ -82,6 +82,7 @@
       "vanilla": true,
       "terraform": true,
       "attachHubApiBinding": true,
+      "protected": true,
       "hasOwnerEmails": true,
       "demoPublic": false,
       "accessEnabled": true,

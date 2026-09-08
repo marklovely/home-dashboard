@@ -88,17 +88,28 @@ describe('site registry validation', () => {
     expect(validateSiteDeploy('test', manifest).ok).toBe(true);
   });
 
-  it('allows delete for sites that are not protected', () => {
+  it('blocks delete for protected sites', () => {
     const existing = {
       demo: {
         hostname: 'demo.lovely-home.co.uk',
         hub_environment: 'demo',
+        vanilla: true,
+        protected: true
+      },
+      dev: {
+        hostname: 'dev.lovely-home.co.uk',
+        hub_environment: 'dev',
         vanilla: true
       }
     };
-    expect(PROTECTED_SITE_IDS.size).toBe(0);
+    expect(PROTECTED_SITE_IDS.has('demo')).toBe(true);
     expect(
       validateSiteMutation('delete', 'demo', {}, existing, {
+        zoneName: 'lovely-home.co.uk'
+      })
+    ).toMatch(/protected/i);
+    expect(
+      validateSiteMutation('delete', 'dev', {}, existing, {
         zoneName: 'lovely-home.co.uk'
       })
     ).toBeNull();
@@ -110,6 +121,7 @@ describe('site registry validation', () => {
     };
     expect(validateDeprovisionSiteId('production', registry)).toBeNull();
     expect(validateDeprovisionSiteId('demo', registry)).toMatch(/still in platform\/sites\.yaml/i);
+    expect(validateDeprovisionSiteId('demo', {})).toMatch(/protected/i);
     expect(validateDeprovisionSiteId('removed', {})).toBeNull();
   });
 
@@ -152,6 +164,26 @@ describe('site registry validation', () => {
     expect(customer.ok).toBe(true);
     expect(customer.payload.hostname).toBe('rose-cottage.lovely-hub.com');
     expect(customer.payload.zone_name).toBe('lovely-hub.com');
+  });
+
+  it('blocks delete for protected sites via platform API', () => {
+    const manifest = {
+      platform: { zoneName: 'lovely-home.co.uk' },
+      sites: {
+        demo: {
+          siteId: 'demo',
+          hostname: 'demo.lovely-home.co.uk',
+          hubEnvironment: 'demo',
+          vanilla: true,
+          protected: true
+        }
+      }
+    };
+    const blocked = buildSiteManagePayload(manifest, 'delete', 'demo', {
+      confirmHostname: 'demo.lovely-home.co.uk'
+    });
+    expect(blocked.ok).toBe(false);
+    expect(blocked.message).toMatch(/protected/i);
   });
 
   it('blocks create when site id is still in the platform manifest', () => {

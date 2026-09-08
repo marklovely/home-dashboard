@@ -141,6 +141,7 @@ for (const [siteId, meta] of Object.entries(registry)) {
     vanilla: Boolean(meta.vanilla),
     terraform: Boolean(meta.terraform),
     attachHubApiBinding: meta.attach_hub_api_binding === true,
+    protected: meta.protected === true,
     hasOwnerEmails: parseEmailList(meta.owner_emails).length > 0,
     demoPublic: meta.demo_public === true,
     accessEnabled: meta.access_enabled !== false,
