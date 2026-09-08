@@ -85,15 +85,7 @@ platform_admin = {
 }
 
 sites = {
-  sandbox = {
-    hostname        = "sandbox.lovely-home.co.uk"
-    hub_environment = "sandbox"
-    vanilla         = true
-    terraform       = true
-    tester_emails = [
-      "trial-user@example.com", # sandbox/test only — not production
-    ]
-  }
+
 
   test = {
     hostname         = "test.lovely-home.co.uk"
