@@ -117,7 +117,7 @@ Set `PLATFORM_CF_API_TOKEN` (Account Read, D1 Read, R2 Read, Pages Edit, **Acces
 
 ## Marketing site OTP list
 
-While `marketing_site_access_protected = true`, **Marketing site access** on the dashboard lists who can OTP into `lovely-home.co.uk`.
+While the pre-launch gate is on, **Marketing site access** on the dashboard lists who can OTP into `lovely-home.co.uk`. Use the **OTP gate enabled** toggle to make the marketing site public without a terraform apply (adds or removes a Cloudflare Access bypass policy). Turn it off again at public launch, or set `marketing_site_access_protected = false` in hub.tfvars when you next apply.
 
 - **Operators** (`platform_operator_emails`) always stay on that list and cannot be removed here. They also reach this dashboard.
 - **Guests** are extra emails you add on the panel. They can open the marketing site only.

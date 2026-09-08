@@ -32,6 +32,7 @@ import {
 } from './platformPagesPreviews.js';
 import {
   getMarketingAccess,
+  setMarketingAccessGate,
   updateMarketingAccess
 } from './platformMarketingAccess.js';
 import {
@@ -270,6 +271,20 @@ export async function onRequest(context) {
 
   if (suffix === 'marketing-access' && request.method === 'GET') {
     return Response.json(await getMarketingAccess(pagesEnv, manifest.platform ?? {}));
+  }
+
+  if (suffix === 'marketing-access' && request.method === 'PATCH') {
+    const body = await readJsonBody(request);
+    const enabled = body.enabled === true;
+    const result = await setMarketingAccessGate(pagesEnv, manifest.platform ?? {}, enabled);
+    const status =
+      result.ok === false &&
+      (result.code === 'NOT_CONFIGURED' || result.code === 'NO_OPERATORS' || result.code === 'CLOUDFLARE_ERROR')
+        ? result.code === 'NO_OPERATORS'
+          ? 400
+          : 503
+        : 200;
+    return Response.json(result, { status });
   }
 
   if (suffix === 'marketing-access' && (request.method === 'POST' || request.method === 'DELETE')) {

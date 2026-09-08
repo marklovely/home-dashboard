@@ -7,6 +7,7 @@ import { operatorEmailAllowlist } from './platformApi.js';
 const CF_API_BASE = 'https://api.cloudflare.com/client/v4';
 export const MARKETING_ACCESS_APP_NAME = 'Lovely Home — Marketing site';
 export const MARKETING_ACCESS_POLICY_NAME = 'Platform operators';
+export const MARKETING_PUBLIC_BYPASS_POLICY_NAME = 'Platform dashboard — public access';
 
 /**
  * @param {PlatformEnv} env
@@ -14,6 +15,59 @@ export const MARKETING_ACCESS_POLICY_NAME = 'Platform operators';
  */
 export function marketingAccessApiConfigured(env, platform = {}) {
   return Boolean(resolveCloudflareAccountId(env, platform) && env.PLATFORM_CF_API_TOKEN?.trim());
+}
+
+/**
+ * @param {unknown} policy
+ */
+export function isMarketingGateBypassPolicy(policy) {
+  if (!policy || typeof policy !== 'object') return false;
+  const row = /** @type {Record<string, unknown>} */ (policy);
+  if (row.name === MARKETING_PUBLIC_BYPASS_POLICY_NAME) return true;
+  if (row.decision !== 'bypass') return false;
+  return Array.isArray(row.include) && row.include.some((rule) => Boolean(/** @type {Record<string, unknown>} */ (rule).everyone));
+}
+
+/**
+ * @param {Array<Record<string, unknown>>} policies
+ */
+export function marketingGateEnabledFromPolicies(policies) {
+  return !policies.some((policy) => isMarketingGateBypassPolicy(policy));
+}
+
+/**
+ * @param {PlatformEnv} env
+ * @param {Record<string, unknown>} platform
+ */
+export function resolveMarketingHostname(env, platform = {}) {
+  const origin = String(env.MARKETING_SITE_ORIGIN?.trim() || platform.marketingSiteOrigin || 'https://lovely-home.co.uk');
+  try {
+    return new URL(origin).hostname;
+  } catch {
+    return origin.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  }
+}
+
+/**
+ * @param {PlatformEnv} env
+ * @param {Record<string, unknown>} platform
+ */
+export function marketingAccessDestinations(env, platform = {}) {
+  const hostname = resolveMarketingHostname(env, platform);
+  const pagesName = String(env.MARKETING_SITE_PAGES_NAME?.trim() || platform.marketingSitePagesName || 'lovely-home');
+  const pagesDevHost = String(
+    env.MARKETING_PAGES_DEV_HOST?.trim() || platform.marketingPagesDevHost || `${pagesName}.pages.dev`
+  );
+  const includeWww = env.MARKETING_SITE_INCLUDE_WWW?.trim() !== 'false';
+  const includePagesDev = env.MARKETING_SITE_INCLUDE_PAGES_DEV?.trim() !== 'false';
+
+  /** @type {{ type: string, uri: string }[]} */
+  const destinations = [{ type: 'public', uri: hostname }];
+  if (includeWww) destinations.push({ type: 'public', uri: `www.${hostname}` });
+  if (includePagesDev) {
+    destinations.push({ type: 'public', uri: pagesDevHost }, { type: 'public', uri: `*.${pagesDevHost}` });
+  }
+  return { hostname, destinations };
 }
 
 /**
@@ -108,28 +162,35 @@ export async function getMarketingAccess(env, platform = {}, fetchImpl = fetch) 
       return {
         ok: true,
         protected: false,
+        gateEnabled: false,
+        appExists: false,
         origin,
         operators,
         guests: [],
         emails: operators,
-        message:
-          'No marketing Access app found. The pre-launch gate is off, or terraform has not created Lovely Home — Marketing site yet.'
+        message: 'Marketing site is public — no OTP gate is active.'
       };
     }
 
     const policies = await listAccessPolicies(env, platform, app.id, fetchImpl);
+    const gateEnabled = marketingGateEnabledFromPolicies(policies);
     const policy = findMarketingPolicy(policies);
     const allowed = emailsFromAccessInclude(policy?.include);
     const split = splitMarketingAccessEmails(operators, allowed.length ? allowed : operators);
     return {
       ok: true,
-      protected: true,
+      protected: gateEnabled,
+      gateEnabled,
+      appExists: true,
       origin,
       appId: app.id,
       appName: app.name,
       operators: split.operators,
       guests: split.guests,
-      emails: [...new Set([...split.operators, ...split.guests])].sort()
+      emails: [...new Set([...split.operators, ...split.guests])].sort(),
+      message: gateEnabled
+        ? undefined
+        : 'Marketing site is public. Turn the OTP gate on to require email login again.'
     };
   } catch (error) {
     return {
@@ -164,7 +225,7 @@ export async function updateMarketingAccess(env, platform, action, email, fetchI
       ...current,
       ok: false,
       code: 'NOT_PROTECTED',
-      message: current.message
+      message: 'Enable the OTP gate before adding preview emails.'
     };
   }
 
@@ -188,6 +249,53 @@ export async function updateMarketingAccess(env, platform, action, email, fetchI
 
   await putMarketingPolicyEmails(env, platform, String(current.appId), next, fetchImpl);
   return getMarketingAccess(env, platform, fetchImpl);
+}
+
+/**
+ * @param {PlatformEnv} env
+ * @param {Record<string, unknown>} platform
+ * @param {boolean} enabled
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function setMarketingAccessGate(env, platform, enabled, fetchImpl = fetch) {
+  if (!marketingAccessApiConfigured(env, platform)) {
+    return {
+      ok: false,
+      code: 'NOT_CONFIGURED',
+      message:
+        'Set PLATFORM_CF_API_TOKEN with Access: Apps and Policies Edit (and Account Read) plus CLOUDFLARE_ACCOUNT_ID on the platform Pages project.'
+    };
+  }
+
+  const operators = operatorEmailAllowlist(env);
+  if (enabled && operators.length === 0) {
+    return {
+      ok: false,
+      code: 'NO_OPERATORS',
+      message: 'Set PLATFORM_OPERATOR_EMAILS on the platform Pages project before enabling the marketing OTP gate.'
+    };
+  }
+
+  try {
+    let app = await resolveMarketingAccessApp(env, platform, fetchImpl);
+    if (enabled) {
+      if (!app) {
+        app = await createMarketingAccessApp(env, platform, fetchImpl);
+        await putMarketingPolicyEmails(env, platform, app.id, operators, fetchImpl);
+      } else {
+        await removePublicBypassPolicy(env, platform, app.id, fetchImpl);
+      }
+    } else if (app) {
+      await ensurePublicBypassPolicy(env, platform, app.id, fetchImpl);
+    }
+    return getMarketingAccess(env, platform, fetchImpl);
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'CLOUDFLARE_ERROR',
+      message: error instanceof Error ? error.message : 'Could not update marketing Access gate.'
+    };
+  }
 }
 
 /**
@@ -316,5 +424,101 @@ async function putMarketingPolicyEmails(env, platform, appId, emails, fetchImpl)
   const payload = await response.json();
   if (!response.ok || !payload?.success) {
     throw new Error(`Access policy create failed (${response.status})`);
+  }
+}
+
+/**
+ * @param {PlatformEnv} env
+ * @param {Record<string, unknown>} platform
+ * @param {typeof fetch} fetchImpl
+ */
+async function createMarketingAccessApp(env, platform, fetchImpl) {
+  const accountId = resolveCloudflareAccountId(env, platform);
+  const token = env.PLATFORM_CF_API_TOKEN?.trim();
+  const { hostname, destinations } = marketingAccessDestinations(env, platform);
+  const response = await fetchImpl(`${CF_API_BASE}/accounts/${accountId}/access/apps`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: MARKETING_ACCESS_APP_NAME,
+      type: 'self_hosted',
+      domain: hostname,
+      session_duration: '720h',
+      destinations
+    })
+  });
+  const payload = await response.json();
+  if (!response.ok || !payload?.success) {
+    throw new Error(`Access app create failed (${response.status})`);
+  }
+  const result = /** @type {{ id?: string, name?: string }} */ (payload.result ?? {});
+  if (!result.id) {
+    throw new Error('Access app create did not return an app id.');
+  }
+  return { id: result.id, name: result.name ?? MARKETING_ACCESS_APP_NAME };
+}
+
+/**
+ * @param {PlatformEnv} env
+ * @param {Record<string, unknown>} platform
+ * @param {string} appId
+ * @param {typeof fetch} fetchImpl
+ */
+async function ensurePublicBypassPolicy(env, platform, appId, fetchImpl) {
+  const policies = await listAccessPolicies(env, platform, appId, fetchImpl);
+  if (policies.some((policy) => isMarketingGateBypassPolicy(policy))) return;
+
+  const accountId = resolveCloudflareAccountId(env, platform);
+  const token = env.PLATFORM_CF_API_TOKEN?.trim();
+  const response = await fetchImpl(`${CF_API_BASE}/accounts/${accountId}/access/apps/${appId}/policies`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: MARKETING_PUBLIC_BYPASS_POLICY_NAME,
+      decision: 'bypass',
+      precedence: 0,
+      include: [{ everyone: {} }]
+    })
+  });
+  const payload = await response.json();
+  if (!response.ok || !payload?.success) {
+    throw new Error(`Access bypass policy create failed (${response.status})`);
+  }
+}
+
+/**
+ * @param {PlatformEnv} env
+ * @param {Record<string, unknown>} platform
+ * @param {string} appId
+ * @param {typeof fetch} fetchImpl
+ */
+async function removePublicBypassPolicy(env, platform, appId, fetchImpl) {
+  const accountId = resolveCloudflareAccountId(env, platform);
+  const token = env.PLATFORM_CF_API_TOKEN?.trim();
+  const policies = await listAccessPolicies(env, platform, appId, fetchImpl);
+  const bypass = policies.find((policy) => isMarketingGateBypassPolicy(policy));
+  if (!bypass?.id) return;
+
+  const response = await fetchImpl(
+    `${CF_API_BASE}/accounts/${accountId}/access/apps/${appId}/policies/${bypass.id}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json'
+      }
+    }
+  );
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(`Access bypass policy delete failed (${response.status})`);
   }
 }
