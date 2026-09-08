@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 /** @type {Record<string, string>} */
-const STRING_FIELD_TO_ENV = {
+export const STRING_FIELD_TO_ENV = {
   cloudflare_account_id: 'CLOUDFLARE_ACCOUNT_ID',
   cloudflare_zone_id: 'CLOUDFLARE_ZONE_ID',
   customer_cloudflare_zone_id: 'CUSTOMER_CLOUDFLARE_ZONE_ID',
@@ -19,9 +19,29 @@ const STRING_FIELD_TO_ENV = {
   stripe_webhook_secret_live: 'STRIPE_WEBHOOK_SECRET_LIVE',
   stripe_price_id_live: 'STRIPE_PRICE_ID_LIVE',
   stripe_price_id_yearly_live: 'STRIPE_PRICE_ID_YEARLY_LIVE',
+  stripe_referral_coupon_monthly: 'STRIPE_REFERRAL_COUPON_MONTHLY',
+  stripe_referral_coupon_yearly: 'STRIPE_REFERRAL_COUPON_YEARLY',
+  stripe_referral_coupon_monthly_live: 'STRIPE_REFERRAL_COUPON_MONTHLY_LIVE',
+  stripe_referral_coupon_yearly_live: 'STRIPE_REFERRAL_COUPON_YEARLY_LIVE',
+  stripe_intro_coupon_monthly: 'STRIPE_INTRO_COUPON_MONTHLY',
+  stripe_intro_coupon_yearly: 'STRIPE_INTRO_COUPON_YEARLY',
+  stripe_intro_coupon_monthly_live: 'STRIPE_INTRO_COUPON_MONTHLY_LIVE',
+  stripe_intro_coupon_yearly_live: 'STRIPE_INTRO_COUPON_YEARLY_LIVE',
   resend_api_key: 'RESEND_API_KEY',
   customer_email_from: 'CUSTOMER_EMAIL_FROM'
 };
+
+/** Hub tfvars keys synced by scripts/sync-stripe-coupon-github-secrets.mjs */
+export const STRIPE_COUPON_HUB_TFVAR_FIELDS = [
+  'stripe_referral_coupon_monthly',
+  'stripe_referral_coupon_yearly',
+  'stripe_referral_coupon_monthly_live',
+  'stripe_referral_coupon_yearly_live',
+  'stripe_intro_coupon_monthly',
+  'stripe_intro_coupon_yearly',
+  'stripe_intro_coupon_monthly_live',
+  'stripe_intro_coupon_yearly_live'
+];
 
 /**
  * @param {string} text

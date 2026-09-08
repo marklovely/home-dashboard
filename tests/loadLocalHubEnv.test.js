@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import {
   applyLocalHubEnv,
   missingProvisionEnvKeys,
-  parseHubTfvarsText
+  parseHubTfvarsText,
+  STRIPE_COUPON_HUB_TFVAR_FIELDS
 } from '../scripts/lib/load-local-hub-env.mjs';
 
 describe('load-local-hub-env', () => {
@@ -26,6 +27,17 @@ platform_operator_emails = [
     expect(parsed.strings.workers_subdomain).toBe('mark-lovely67');
     expect(parsed.lists.owner_emails).toEqual(['owner@example.com']);
     expect(parsed.lists.platform_operator_emails).toEqual(['ops@example.com']);
+  });
+
+  it('parses Stripe coupon ids from hub.tfvars text', () => {
+    const parsed = parseHubTfvarsText(`
+stripe_referral_coupon_monthly = "ref_m_test"
+stripe_intro_coupon_yearly_live = "intro_y_live"
+`);
+
+    expect(parsed.strings.stripe_referral_coupon_monthly).toBe('ref_m_test');
+    expect(parsed.strings.stripe_intro_coupon_yearly_live).toBe('intro_y_live');
+    expect(STRIPE_COUPON_HUB_TFVAR_FIELDS).toHaveLength(8);
   });
 
   it('applies values from hub.tfvars without overriding existing exports', () => {
