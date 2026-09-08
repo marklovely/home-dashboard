@@ -10,13 +10,6 @@ sites:
     terraform: true
     attach_hub_api_binding: true
 
-  sandbox:
-    hostname: sandbox.lovely-home.co.uk
-    hub_environment: sandbox
-    vanilla: true
-    terraform: true
-    attach_hub_api_binding: true
-
   demo:
     hostname: demo.lovely-home.co.uk
     hub_environment: demo
