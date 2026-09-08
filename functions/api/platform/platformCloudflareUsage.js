@@ -1,14 +1,80 @@
 import { manifestContractMissingUsageResponse } from './manifestContractCopy.js';
 
 /** @typedef {Record<string, string | undefined>} PlatformEnv */
+/** @typedef {'free' | 'paid'} CloudflareWorkersPlan */
 
 export const FREE_TIER_LIMITS = {
   r2StorageBytes: 10 * 1024 ** 3,
   d1StorageBytes: 5 * 1024 ** 3
 };
 
-/** Workers Free plan — see Cloudflare D1 limits docs. */
+/** @deprecated Use resolveCloudflarePlanLimits().d1DatabaseCountLimit */
 export const D1_DATABASE_COUNT_LIMIT = 10;
+
+/** @type {Record<CloudflareWorkersPlan, {
+ *   workersPlan: CloudflareWorkersPlan,
+ *   workersPlanLabel: string,
+ *   r2PlanLabel: string,
+ *   r2StorageLimitBytes: number | null,
+ *   r2ShowLimit: boolean,
+ *   d1AccountStorageLimitBytes: number,
+ *   d1DatabaseCountLimit: number,
+ *   d1PerDatabaseLimitBytes: number
+ * }>} */
+export const CLOUDFLARE_PLAN_LIMITS = {
+  free: {
+    workersPlan: 'free',
+    workersPlanLabel: 'Workers Free',
+    r2PlanLabel: 'R2 Free',
+    r2StorageLimitBytes: 10 * 1024 ** 3,
+    r2ShowLimit: true,
+    d1AccountStorageLimitBytes: 5 * 1024 ** 3,
+    d1DatabaseCountLimit: 10,
+    d1PerDatabaseLimitBytes: 500 * 1024 ** 2
+  },
+  paid: {
+    workersPlan: 'paid',
+    workersPlanLabel: 'Workers Paid',
+    r2PlanLabel: 'R2 Paid',
+    r2StorageLimitBytes: null,
+    r2ShowLimit: false,
+    d1AccountStorageLimitBytes: 1024 ** 4,
+    d1DatabaseCountLimit: 50_000,
+    d1PerDatabaseLimitBytes: 10 * 1024 ** 3
+  }
+};
+
+/**
+ * @param {unknown} value
+ * @returns {CloudflareWorkersPlan}
+ */
+export function normalizeCloudflareWorkersPlan(value) {
+  return String(value ?? '').trim().toLowerCase() === 'paid' ? 'paid' : 'free';
+}
+
+/**
+ * @param {PlatformEnv} env
+ * @param {Record<string, unknown>} [platform]
+ */
+export function resolveCloudflarePlanLimits(env, platform = {}) {
+  const workersPlan = normalizeCloudflareWorkersPlan(
+    env.PLATFORM_CF_WORKERS_PLAN ?? platform.cloudflareWorkersPlan
+  );
+  const limits = CLOUDFLARE_PLAN_LIMITS[workersPlan];
+  const r2Plan = normalizeCloudflareWorkersPlan(
+    env.PLATFORM_CF_R2_PLAN ?? platform.cloudflareR2Plan ?? workersPlan
+  );
+  if (r2Plan === limits.workersPlan) {
+    return limits;
+  }
+  const r2Limits = CLOUDFLARE_PLAN_LIMITS[r2Plan];
+  return {
+    ...limits,
+    r2PlanLabel: r2Limits.r2PlanLabel,
+    r2StorageLimitBytes: r2Limits.r2StorageLimitBytes,
+    r2ShowLimit: r2Limits.r2ShowLimit
+  };
+}
 
 /**
  * @param {PlatformEnv} env
@@ -144,15 +210,18 @@ export async function fetchR2BucketUsage(accountId, bucketName, env) {
 /**
  * @param {string} accountId
  * @param {PlatformEnv} env
+ * @param {Record<string, unknown>} [platform]
  */
-export async function fetchAccountR2Usage(accountId, env) {
+export async function fetchAccountR2Usage(accountId, env, platform = {}) {
+  const plan = resolveCloudflarePlanLimits(env, platform);
   const result = await cloudflareApiGet(
     `/accounts/${encodeURIComponent(accountId)}/r2/metrics`,
     env
   );
   return {
     totalBytes: extractAccountR2PayloadBytes(result),
-    limitBytes: FREE_TIER_LIMITS.r2StorageBytes
+    limitBytes: plan.r2StorageLimitBytes,
+    showLimit: plan.r2ShowLimit
   };
 }
 
@@ -187,6 +256,7 @@ export async function fetchSiteStorageUsage(site, platform, env) {
   }
 
   try {
+    const plan = resolveCloudflarePlanLimits(env, platform);
     const d1DatabaseId = String(contract.d1_database_id);
     const guidesBucket = contract.r2_guides_bucket ? String(contract.r2_guides_bucket) : '';
     const mediaBucket = contract.r2_media_bucket ? String(contract.r2_media_bucket) : '';
@@ -199,26 +269,29 @@ export async function fetchSiteStorageUsage(site, platform, env) {
 
     const r2GuidesBytes = guides?.payloadSizeBytes ?? 0;
     const r2MediaBytes = media?.payloadSizeBytes ?? 0;
+    const r2LimitBytes = plan.r2StorageLimitBytes;
 
     return {
       ok: true,
       siteId: String(site.siteId ?? ''),
       checkedAt: new Date().toISOString(),
+      plan,
       d1: {
         ...d1,
         databaseId: d1DatabaseId,
         databaseName: String(contract.d1_database_name ?? ''),
-        limitBytes: FREE_TIER_LIMITS.d1StorageBytes
+        limitBytes: plan.d1PerDatabaseLimitBytes
       },
       r2: {
         guides: guides
-          ? { bucket: guidesBucket, ...guides, limitBytes: FREE_TIER_LIMITS.r2StorageBytes }
+          ? { bucket: guidesBucket, ...guides, limitBytes: r2LimitBytes, showLimit: plan.r2ShowLimit }
           : null,
         media: media
-          ? { bucket: mediaBucket, ...media, limitBytes: FREE_TIER_LIMITS.r2StorageBytes }
+          ? { bucket: mediaBucket, ...media, limitBytes: r2LimitBytes, showLimit: plan.r2ShowLimit }
           : null,
         totalBytes: r2GuidesBytes + r2MediaBytes,
-        limitBytes: FREE_TIER_LIMITS.r2StorageBytes
+        limitBytes: r2LimitBytes,
+        showLimit: plan.r2ShowLimit
       },
       freeTier: FREE_TIER_LIMITS
     };
@@ -256,11 +329,12 @@ export async function fetchAccountStorageSummary(manifest, env) {
   }
 
   try {
+    const plan = resolveCloudflarePlanLimits(env, platform);
     const sites = Object.values(manifest.sites ?? {});
     const provisioned = sites.filter((site) => site?.contract?.d1_database_id);
 
     const [accountR2, d1Usages] = await Promise.all([
-      fetchAccountR2Usage(accountId, env),
+      fetchAccountR2Usage(accountId, env, platform),
       Promise.all(
         provisioned.map(async (site) => {
           const contract = site.contract;
@@ -279,10 +353,11 @@ export async function fetchAccountStorageSummary(manifest, env) {
       ok: true,
       checkedAt: new Date().toISOString(),
       accountId,
+      plan,
       r2: accountR2,
       d1: {
         totalBytes: d1TotalBytes,
-        limitBytes: FREE_TIER_LIMITS.d1StorageBytes,
+        limitBytes: plan.d1AccountStorageLimitBytes,
         hubs: d1Usages
       },
       freeTier: FREE_TIER_LIMITS,
@@ -300,8 +375,10 @@ export async function fetchAccountStorageSummary(manifest, env) {
 /**
  * @param {string} accountId
  * @param {PlatformEnv} env
+ * @param {Record<string, unknown>} [platform]
  */
-export async function fetchAccountResourceInventory(accountId, env) {
+export async function fetchAccountResourceInventory(accountId, env, platform = {}) {
+  const plan = resolveCloudflarePlanLimits(env, platform);
   const [d1Result, r2Result, workersResult, pagesResult] = await Promise.allSettled([
     cloudflareApiGet(`/accounts/${encodeURIComponent(accountId)}/d1/database`, env),
     cloudflareApiGet(`/accounts/${encodeURIComponent(accountId)}/r2/buckets`, env),
@@ -343,7 +420,7 @@ export async function fetchAccountResourceInventory(accountId, env) {
     ok: errors.length < 4,
     d1: {
       count: d1Databases.length,
-      limit: D1_DATABASE_COUNT_LIMIT,
+      limit: plan.d1DatabaseCountLimit,
       databases: d1Databases.map((row) => ({
         id: String(row.uuid ?? row.id ?? ''),
         name: String(row.name ?? '')

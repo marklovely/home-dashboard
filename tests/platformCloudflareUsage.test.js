@@ -4,15 +4,19 @@ import {
   siteMissingManifestContract
 } from '../functions/api/platform/manifestContractCopy.js';
 import {
+  CLOUDFLARE_PLAN_LIMITS,
   extractAccountR2PayloadBytes,
   fetchSiteStorageUsage,
+  normalizeCloudflareWorkersPlan,
   normalizeD1DatabaseUsage,
-  normalizeR2BucketUsage
+  normalizeR2BucketUsage,
+  resolveCloudflarePlanLimits
 } from '../functions/api/platform/platformCloudflareUsage.js';
 import { renderSiteUsageSummary } from '../platform-admin/src/usage.js';
 import {
   formatBytes,
   formatUsageLine,
+  formatUsageLineWithLimit,
   FREE_TIER_LIMITS,
   usagePercent,
   usageTone
@@ -32,12 +36,23 @@ describe('platform usage formatting', () => {
     expect(formatUsageLine(0, FREE_TIER_LIMITS.r2StorageBytes)).toBe(
       '0 B / 10 GB (0%)'
     );
+    expect(formatUsageLineWithLimit(1024 ** 3, null, false)).toBe('1 GB used');
   });
 
   it('calculates usage tone against free-tier limits', () => {
     expect(usagePercent(7 * 1024 ** 3, FREE_TIER_LIMITS.r2StorageBytes)).toBe(70);
     expect(usageTone(7 * 1024 ** 3, FREE_TIER_LIMITS.r2StorageBytes)).toBe('warn');
     expect(usageTone(9.5 * 1024 ** 3, FREE_TIER_LIMITS.r2StorageBytes)).toBe('bad');
+  });
+
+  it('resolves paid plan limits from env', () => {
+    expect(normalizeCloudflareWorkersPlan('paid')).toBe('paid');
+    expect(
+      resolveCloudflarePlanLimits({ PLATFORM_CF_WORKERS_PLAN: 'paid' }).d1DatabaseCountLimit
+    ).toBe(CLOUDFLARE_PLAN_LIMITS.paid.d1DatabaseCountLimit);
+    expect(
+      resolveCloudflarePlanLimits({ PLATFORM_CF_WORKERS_PLAN: 'free' }).d1AccountStorageLimitBytes
+    ).toBe(CLOUDFLARE_PLAN_LIMITS.free.d1AccountStorageLimitBytes);
   });
 });
 

@@ -54,6 +54,16 @@ locals {
         value = var.platform_cf_api_token
       }
     } : {},
+    {
+      PLATFORM_CF_WORKERS_PLAN = {
+        type  = "plain_text"
+        value = var.platform_cf_workers_plan
+      }
+      PLATFORM_CF_R2_PLAN = {
+        type  = "plain_text"
+        value = var.platform_cf_r2_plan
+      }
+    },
     var.stripe_secret_key != "" ? {
       STRIPE_SECRET_KEY = {
         type  = "secret_text"

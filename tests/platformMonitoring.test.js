@@ -5,7 +5,7 @@ import {
   matchHubDatabasesToAccount,
   summarizeBillingRows
 } from '../functions/api/platform/platformMonitoring.js';
-import { D1_DATABASE_COUNT_LIMIT } from '../functions/api/platform/platformCloudflareUsage.js';
+import { D1_DATABASE_COUNT_LIMIT, CLOUDFLARE_PLAN_LIMITS } from '../functions/api/platform/platformCloudflareUsage.js';
 import { renderMonitoringView } from '../platform-admin/src/monitoring.js';
 
 describe('platformMonitoring billing summary', () => {
@@ -32,7 +32,8 @@ describe('platformMonitoring D1 inventory match', () => {
       [
         { id: 'db-1', name: 'demo-db' },
         { id: 'db-3', name: 'legacy-db' }
-      ]
+      ],
+      CLOUDFLARE_PLAN_LIMITS.free
     );
 
     expect(match).toEqual({
@@ -93,7 +94,8 @@ describe('platformMonitoring UI', () => {
       },
       cloudflare: {
         storage: { ok: false, message: 'not configured' },
-        d1Match: { hubCount: 2, accountCount: null, limit: 10 }
+        d1Match: { hubCount: 2, accountCount: null, limit: 10 },
+        plan: CLOUDFLARE_PLAN_LIMITS.paid
       },
       billing: {
         openSubscriptions: 1,
@@ -127,7 +129,7 @@ describe('platformMonitoring UI', () => {
     });
 
     expect(html).toMatch(/Hub health matrix/);
-    expect(html).toMatch(/Cloudflare/);
+    expect(html).toMatch(/Workers Paid/);
     expect(html).toMatch(/Billing/);
     expect(html).toMatch(/Marketing & signup/);
     expect(html).toMatch(/demo\.lovely-home\.co\.uk/);

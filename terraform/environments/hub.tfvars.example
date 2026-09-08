@@ -38,6 +38,8 @@ platform_operator_emails = [
 
 # Optional — D1/R2 usage, PR preview toggles, and marketing-site OTP guest list
 # platform_cf_api_token = "..." # Account Read, D1 Read, R2 Read, Pages Edit, Access: Apps and Policies Edit
+# platform_cf_workers_plan = "paid" # free or paid — controls D1/R2 limit display in platform admin monitoring
+# platform_cf_r2_plan = "paid" # free or paid — R2 Paid shows usage without the 10 GB free cap
 
 # Stripe billing on platform admin (required if billing enabled — terraform apply wipes dashboard-only vars)
 # stripe_secret_key     = "sk_test_..."

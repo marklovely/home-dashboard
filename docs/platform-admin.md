@@ -68,6 +68,8 @@ Git-connected Production builds run `npm run build:platform`. The manifest is **
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID` | Access service token client ID (Terraform) |
 | `PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET` | Access service token secret (Terraform) |
 | `PLATFORM_CF_API_TOKEN` | Optional — Cloudflare API token for D1/R2 usage, Pages preview toggles, and marketing OTP guests (Terraform `platform_cf_api_token`). Needs **Access: Apps and Policies Edit** for the marketing list |
+| `PLATFORM_CF_WORKERS_PLAN` | `free` or `paid` — which Cloudflare limits to show in monitoring/usage (default in Terraform: `paid`) |
+| `PLATFORM_CF_R2_PLAN` | `free` or `paid` — whether R2 usage shows the 10 GB free cap or usage-only (default in Terraform: `paid`) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID (Terraform) |
 | `MARKETING_SITE_ORIGIN` | Marketing site origin (default `https://lovely-home.co.uk`) |
 | `MARKETING_ACCESS_APP_ID` | Access application id for the pre-launch marketing gate (set when `marketing_site_access_protected` is true) |
@@ -106,7 +108,7 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 **Monitoring** aggregates a platform-wide snapshot in one request (`GET /api/platform/monitoring/summary`):
 
 - Overview strip — site count, health breakdown, open Stripe subscriptions, account storage
-- **Cloudflare** — account R2/D1 storage, D1 database count vs Workers Free limit (10), R2 bucket / Worker script / Pages project inventory
+- **Cloudflare** — account R2/D1 storage, D1 database count vs plan limit (10 on Workers Free, 50,000 on Workers Paid), R2 bucket / Worker script / Pages project inventory
 - **Billing** — Stripe mode, subscription counts by status
 - **Marketing & signup** — homepage, pricing API, and signup status probes
 - **GitHub automation** — recent `platform-site-manage` workflow runs

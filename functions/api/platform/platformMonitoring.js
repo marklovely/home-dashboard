@@ -5,11 +5,11 @@ import {
 import { getPlatformBillingDb, listSiteBilling, platformBillingDbConfigured } from './platformBilling.js';
 import {
   cloudflareUsageApiConfigured,
-  D1_DATABASE_COUNT_LIMIT,
   fetchAccountResourceInventory,
   fetchAccountStorageSummary,
   FREE_TIER_LIMITS,
-  resolveCloudflareAccountId
+  resolveCloudflareAccountId,
+  resolveCloudflarePlanLimits
 } from './platformCloudflareUsage.js';
 import { githubAutomationConfigured, githubRepo, listRecentWorkflowRuns } from './platformGitHub.js';
 import { getPublicPlanPricing } from './platformPublicPricing.js';
@@ -107,7 +107,7 @@ export function summarizeBillingRows(rows) {
  * @param {Record<string, unknown>[]} hubDatabases
  * @param {Record<string, unknown>[]} accountDatabases
  */
-export function matchHubDatabasesToAccount(hubDatabases, accountDatabases) {
+export function matchHubDatabasesToAccount(hubDatabases, accountDatabases, planLimits) {
   const accountIds = new Set(accountDatabases.map((row) => String(row.id ?? '')));
   const hubIds = hubDatabases.map((row) => String(row.databaseId ?? ''));
   const matched = hubIds.filter((id) => accountIds.has(id)).length;
@@ -120,7 +120,7 @@ export function matchHubDatabasesToAccount(hubDatabases, accountDatabases) {
     accountCount: accountDatabases.length,
     matchedOnAccount: matched,
     orphanOnAccount: orphanAccount,
-    limit: D1_DATABASE_COUNT_LIMIT
+    limit: planLimits.d1DatabaseCountLimit
   };
 }
 
@@ -209,10 +209,11 @@ export async function buildMonitoringSummary(manifest, env) {
   ]);
 
   const accountId = resolveCloudflareAccountId(env, platform);
+  const plan = resolveCloudflarePlanLimits(env, platform);
   let inventory = null;
   if (cloudflareUsageApiConfigured(env) && accountId) {
     try {
-      inventory = await fetchAccountResourceInventory(accountId, env);
+      inventory = await fetchAccountResourceInventory(accountId, env, platform);
     } catch (error) {
       inventory = {
         ok: false,
@@ -250,13 +251,13 @@ export async function buildMonitoringSummary(manifest, env) {
 
   const d1Match =
     inventory?.d1?.databases
-      ? matchHubDatabasesToAccount(hubDatabases, inventory.d1.databases)
+      ? matchHubDatabasesToAccount(hubDatabases, inventory.d1.databases, plan)
       : {
           hubCount: hubDatabases.length,
           accountCount: null,
           matchedOnAccount: null,
           orphanOnAccount: null,
-          limit: D1_DATABASE_COUNT_LIMIT
+          limit: plan.d1DatabaseCountLimit
         };
 
   const healthCounts = { healthy: 0, degraded: 0, bad: 0, unknown: 0 };
@@ -294,6 +295,7 @@ export async function buildMonitoringSummary(manifest, env) {
       storage,
       inventory,
       d1Match,
+      plan,
       freeTier: FREE_TIER_LIMITS,
       dashboardUrl: accountId ? `https://dash.cloudflare.com/${accountId}` : null
     },
