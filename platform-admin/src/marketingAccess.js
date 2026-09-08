@@ -32,10 +32,7 @@ export function renderMarketingAccessPanel(data) {
     return `
       <section class="panel marketing-access" id="marketing-access">
         <details class="panel-fold" id="${MARKETING_FOLD_ID}"${panelFoldOpenAttr(MARKETING_FOLD_ID)}>
-          <summary class="panel-fold-summary">
-            <span>Marketing site access</span>
-            ${gateToggle}
-          </summary>
+          <summary class="panel-fold-summary"><span class="panel-fold-title">Marketing site access</span><span class="panel-fold-summary-trailing">${gateToggle}</span></summary>
           <div class="panel-fold-body">
             <p class="muted">${escapeHtml(String(data.message ?? 'Could not load the marketing OTP list.'))}</p>
           </div>
@@ -48,10 +45,7 @@ export function renderMarketingAccessPanel(data) {
     return `
       <section class="panel marketing-access" id="marketing-access">
         <details class="panel-fold" id="${MARKETING_FOLD_ID}"${panelFoldOpenAttr(MARKETING_FOLD_ID)}>
-          <summary class="panel-fold-summary">
-            <span>Marketing site access</span>
-            ${gateToggle}
-          </summary>
+          <summary class="panel-fold-summary"><span class="panel-fold-title">Marketing site access</span><span class="panel-fold-summary-trailing">${gateToggle}</span></summary>
           <div class="panel-fold-body">
             <p class="muted">${escapeHtml(String(data.message ?? 'Marketing site is public — no OTP gate is active.'))}</p>
             <p class="muted">Turn the gate on to require OTP again. Keep <code>marketing_site_access_protected</code> in hub.tfvars aligned when you next terraform apply.</p>
@@ -66,10 +60,7 @@ export function renderMarketingAccessPanel(data) {
   return `
     <section class="panel marketing-access" id="marketing-access">
       <details class="panel-fold" id="${MARKETING_FOLD_ID}"${panelFoldOpenAttr(MARKETING_FOLD_ID)}>
-        <summary class="panel-fold-summary">
-          <span>Marketing site access</span>
-          ${gateToggle}
-        </summary>
+        <summary class="panel-fold-summary"><span class="panel-fold-title">Marketing site access</span><span class="panel-fold-summary-trailing">${gateToggle}</span></summary>
         <div class="panel-fold-body">
           <p class="muted">OTP allow-list for <a href="${escapeHtml(origin)}" target="_blank" rel="noreferrer">${escapeHtml(origin.replace(/^https?:\/\//, ''))}</a> while the pre-launch gate is on. Extra emails can view the marketing site only — not this dashboard.</p>
           <ul class="marketing-access-list">

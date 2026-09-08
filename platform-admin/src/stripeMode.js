@@ -12,7 +12,7 @@ export function renderStripeModePanel(stripe, billingDbConfigured) {
     return `
       <section class="panel stripe-mode" id="stripe-mode">
         <details class="panel-fold" id="${STRIPE_FOLD_ID}"${panelFoldOpenAttr(STRIPE_FOLD_ID)}>
-          <summary class="panel-fold-summary">Stripe</summary>
+          <summary class="panel-fold-summary"><span class="panel-fold-title">Stripe</span></summary>
           <div class="panel-fold-body">
             <p class="muted">Bind <code>PLATFORM_BILLING_DB</code> and apply billing migrations, including <code>0007_platform_settings.sql</code>.</p>
           </div>
@@ -46,7 +46,7 @@ export function renderStripeModePanel(stripe, billingDbConfigured) {
   return `
     <section class="panel stripe-mode" id="stripe-mode">
       <details class="panel-fold" id="${STRIPE_FOLD_ID}"${panelFoldOpenAttr(STRIPE_FOLD_ID)}>
-        <summary class="panel-fold-summary">Stripe <span class="badge ${badgeClass}">${escapeHtml(badgeLabel)}</span></summary>
+        <summary class="panel-fold-summary"><span class="panel-fold-title">Stripe</span><span class="panel-fold-summary-trailing"><span class="badge ${badgeClass}">${escapeHtml(badgeLabel)}</span></span></summary>
         <div class="panel-fold-body">
           ${banner}
           <p class="muted">Checkout, webhooks, marketing prices, and the customer portal use this mode. Terraform keeps both key sets; this switch is stored in D1 so an apply cannot silently revert it.</p>
