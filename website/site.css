@@ -1245,6 +1245,22 @@ html.nav-open {
   color: var(--text);
 }
 
+.signup-referral-banner {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.signup-referral-banner__benefit {
+  margin: 0;
+  font-weight: 600;
+}
+
+.signup-referral-banner__checkout-note {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .signup-success-page {
   max-width: 42rem;
   margin: 0 auto;
