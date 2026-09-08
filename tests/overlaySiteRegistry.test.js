@@ -257,6 +257,8 @@ describe('registry jobs replay onto origin/main before opening a PR', () => {
     expect(replay).toContain('mergeStateStatus');
     expect(replay).toContain('platformPrNeedsRegistryOverlay');
     expect(replay).toContain('merge-base');
+    expect(replay).toContain('closeEmptyPlatformPr');
+    expect(replay).toContain("state === 'MERGED'");
     expect(yml).toContain('closed');
     expect(yml).toContain('github.event.pull_request.merged');
   });

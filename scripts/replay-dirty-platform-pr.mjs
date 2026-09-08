@@ -18,6 +18,38 @@ import {
   REGISTRY_OVERLAY_FILES
 } from './lib/overlay-site-registry.mjs';
 
+/**
+ * Close an empty platform PR when its registry overlay is already on main.
+ * Treat merged/closed PRs as success (automerge can race with manual merge).
+ *
+ * @param {string} pr
+ */
+function closeEmptyPlatformPr(pr) {
+  const { state } = JSON.parse(
+    execFileSync('gh', ['pr', 'view', pr, '--json', 'state'], { encoding: 'utf8' })
+  );
+  if (state === 'MERGED' || state === 'CLOSED') {
+    console.log(`PR #${pr} is already ${state.toLowerCase()}; nothing to close.`);
+    return;
+  }
+
+  const result = spawnSync(
+    'gh',
+    ['pr', 'close', pr, '--comment', 'Registry change is already on main.'],
+    { encoding: 'utf8' }
+  );
+  if (result.status === 0) return;
+
+  const combined = `${result.stderr ?? ''}${result.stdout ?? ''}`;
+  if (/already merged|can't be closed because it was already merged/i.test(combined)) {
+    console.log(`PR #${pr} was merged while closing; treating as success.`);
+    return;
+  }
+
+  console.error(combined.trim() || `gh pr close ${pr} failed with exit ${result.status ?? 'unknown'}`);
+  process.exit(result.status ?? 1);
+}
+
 const pr = String(process.argv[2] ?? '').trim();
 if (!/^\d+$/.test(pr)) {
   console.error('Usage: node scripts/replay-dirty-platform-pr.mjs <pr_number>');
@@ -105,9 +137,7 @@ execFileSync('git', ['add', '--', ...REGISTRY_OVERLAY_FILES], { stdio: 'inherit'
 const dirty = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim();
 if (!dirty) {
   console.log(`PR #${pr}: overlay matches origin/main; closing empty PR.`);
-  execFileSync('gh', ['pr', 'close', pr, '--comment', 'Registry change is already on main.'], {
-    stdio: 'inherit'
-  });
+  closeEmptyPlatformPr(pr);
   process.exit(0);
 }
 
