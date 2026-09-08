@@ -11,6 +11,10 @@ import {
   resetDeviceSessionStoreForTests,
   setMyStayForTests
 } from '../src/auth/deviceSessionStore.js';
+import {
+  applySitterControlsEffective,
+  resetSitterControlsForTests
+} from '../src/services/sitterControlsService.js';
 
 describe('house sitter home layout', () => {
   afterEach(() => {
@@ -19,11 +23,13 @@ describe('house sitter home layout', () => {
     resetUserModeForTests();
     resetSiteProfileStateForTests();
     resetDeviceSessionStoreForTests();
+    resetSitterControlsForTests();
   });
 
   it('structures the guest home with essentials, useful information, and help', async () => {
     vi.stubEnv('VITE_DEPLOYMENT_MODE', 'house-sitter');
     resetUserModeForTests();
+    applySitterControlsEffective(true);
     setSiteProfileStateForTests({
       profile: { hubName: 'Smith Home', petCare: { hasPets: true, name: 'Bailey' } },
       loaded: true
@@ -52,12 +58,15 @@ describe('house sitter home layout', () => {
     expect(sectionTitles).toEqual(['Essentials', 'Useful information']);
 
     const essentialCards = page?.querySelectorAll('.home-launcher-card--essential') ?? [];
-    expect(essentialCards).toHaveLength(3);
+    expect(essentialCards).toHaveLength(4);
     expect([...essentialCards].map((card) => card.querySelector('.home-launcher-title')?.textContent)).toEqual([
       'Bailey',
       'House Guide',
+      'Controls',
       'Emergency'
     ]);
+
+    expect(page?.querySelector('.sitter-controls-section')).toBeNull();
 
     const infoCards = page?.querySelectorAll('.sitter-info-card') ?? [];
     expect(infoCards).toHaveLength(2);

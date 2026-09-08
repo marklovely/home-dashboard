@@ -48,8 +48,8 @@ export function mountSitterControlsGrid(context) {
 
   const fragment = document.createDocumentFragment();
   const wrapper = document.createElement('section');
-  wrapper.className = 'controls-grid controls-grid--grouped controls-grid--sitter';
-  wrapper.setAttribute('aria-label', 'Home controls');
+  wrapper.className = 'controls-grid controls-grid--grouped';
+  wrapper.setAttribute('aria-label', 'Alexa routines');
 
   renderButtonGroups(
     wrapper,

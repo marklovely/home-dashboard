@@ -12,6 +12,7 @@ import { subscribeToUserMode } from '../auth/userMode.js';
 import { subscribeToDisplayPreferences } from '../services/displayPreferencesService.js';
 import { syncShellClockPlacement } from './shellClockPlacement.js';
 import { syncShellBrandLogoRoute } from './shellBrandLogo.js';
+import { subscribeToSitterControls } from '../services/sitterControlsService.js';
 
 /**
  * @param {Object} options
@@ -159,6 +160,12 @@ export function createAppShell({
   subscribeToUserMode(() => {
     applyShellBranding({ shellEyebrow, shellTagline });
     renderRoute(getCurrentRoute(), { forceRemount: true });
+  });
+  subscribeToSitterControls(() => {
+    const route = getCurrentRoute();
+    if (route === HOME_ROUTE || route === 'controls') {
+      renderRoute(route, { forceRemount: true });
+    }
   });
   subscribeToDisplayPreferences(() => {
     if (getCurrentRoute() === HOME_ROUTE) {
