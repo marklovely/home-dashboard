@@ -22,7 +22,7 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 | `/privacy` | Privacy policy, including cookies |
 | `/terms` | Terms of service |
 
-On-disk files use `.html` extensions; `website/_redirects` serves pretty URLs (e.g. `/pricing`) and 301-redirects legacy `/pricing.html` links.
+On-disk files use `.html` extensions. Cloudflare Pages serves pretty URLs on **lovely-home.co.uk** natively (e.g. `/pricing` from `pricing.html`, and 308 from `/pricing.html` → `/pricing`). Do **not** add `website/_redirects` — it conflicts with that behaviour and causes redirect loops.
 
 Public demo hub: [demo.lovely-home.co.uk/sign-in](https://demo.lovely-home.co.uk/sign-in) — username `demo`, password `lovely-demo`.
 

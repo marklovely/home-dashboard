@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -153,11 +153,8 @@ describe('marketing site pages', () => {
     expect(sitemap).not.toContain('.html</loc>');
   });
 
-  it('ships _redirects for pretty URLs and legacy .html redirects', () => {
-    const redirects = readFileSync(join(website, '_redirects'), 'utf8');
-    expect(redirects).toMatch(/^\/pricing \/pricing\.html 200$/m);
-    expect(redirects).toMatch(/^\/pricing\.html \/pricing 301$/m);
-    expect(redirects).toMatch(/^\/signup-success \/signup-success\.html 200$/m);
+  it('does not ship _redirects (conflicts with Pages pretty URLs on custom domains)', () => {
+    expect(existsSync(join(website, '_redirects'))).toBe(false);
   });
 
   it('uses extensionless internal links on marketing pages', () => {
