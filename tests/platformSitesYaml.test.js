@@ -8,7 +8,7 @@ describe('loadSitesYaml', () => {
     const sites = loadSitesYaml(join(process.cwd(), 'platform/sites.yaml'));
     expect(sites.lovely.hostname).toBe('lovely.lovely-hub.com');
     expect(sites.test.terraform).toBe(true);
-    expect(sites.sandbox.vanilla).toBe(true);
+    expect(sites.test.vanilla).toBe(true);
   });
 
   it('parses comma-separated owner and sitter emails', () => {
