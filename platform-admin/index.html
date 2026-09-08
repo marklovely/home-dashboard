@@ -24,9 +24,14 @@
           <button type="button" id="add-site-btn" class="btn">Add site</button>
           <button type="button" id="check-all-btn" class="btn">Check all health</button>
           <button type="button" id="check-all-usage-btn" class="btn btn-ghost">Check all usage</button>
+          <button type="button" id="refresh-monitoring-btn" class="btn btn-ghost" hidden>Refresh monitoring</button>
           <button type="button" id="refresh-btn" class="btn btn-ghost">Refresh</button>
         </div>
       </header>
+      <nav class="view-tabs" role="tablist" aria-label="Platform views">
+        <button type="button" id="tab-sites" class="view-tab is-active" role="tab" aria-selected="true" aria-controls="main">Sites</button>
+        <button type="button" id="tab-monitoring" class="view-tab" role="tab" aria-selected="false" aria-controls="main">Monitoring</button>
+      </nav>
       <main id="main" class="main" aria-live="polite"></main>
     </div>
     <script type="module" src="/src/main.js"></script>

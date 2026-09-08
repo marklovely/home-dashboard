@@ -7,6 +7,9 @@ export const FREE_TIER_LIMITS = {
   d1StorageBytes: 5 * 1024 ** 3
 };
 
+/** Workers Free plan — see Cloudflare D1 limits docs. */
+export const D1_DATABASE_COUNT_LIMIT = 10;
+
 /**
  * @param {PlatformEnv} env
  */
@@ -292,4 +295,69 @@ export async function fetchAccountStorageSummary(manifest, env) {
       message: error instanceof Error ? error.message : String(error)
     };
   }
+}
+
+/**
+ * @param {string} accountId
+ * @param {PlatformEnv} env
+ */
+export async function fetchAccountResourceInventory(accountId, env) {
+  const [d1Result, r2Result, workersResult, pagesResult] = await Promise.allSettled([
+    cloudflareApiGet(`/accounts/${encodeURIComponent(accountId)}/d1/database`, env),
+    cloudflareApiGet(`/accounts/${encodeURIComponent(accountId)}/r2/buckets`, env),
+    cloudflareApiGet(`/accounts/${encodeURIComponent(accountId)}/workers/scripts`, env),
+    cloudflareApiGet(`/accounts/${encodeURIComponent(accountId)}/pages/projects`, env)
+  ]);
+
+  /** @type {Record<string, unknown>[]} */
+  const d1Databases = d1Result.status === 'fulfilled' && Array.isArray(d1Result.value) ? d1Result.value : [];
+  /** @type {Record<string, unknown>[]} */
+  const r2Buckets =
+    r2Result.status === 'fulfilled'
+      ? Array.isArray(r2Result.value)
+        ? r2Result.value
+        : Array.isArray(/** @type {Record<string, unknown>} */ (r2Result.value)?.buckets)
+          ? /** @type {Record<string, unknown>[]} */ (/** @type {Record<string, unknown>} */ (r2Result.value).buckets)
+          : []
+      : [];
+  /** @type {string[]} */
+  const workerScripts =
+    workersResult.status === 'fulfilled' && Array.isArray(workersResult.value)
+      ? workersResult.value.map((row) => String(row))
+      : [];
+  /** @type {Record<string, unknown>[]} */
+  const pagesProjects =
+    pagesResult.status === 'fulfilled' && Array.isArray(pagesResult.value) ? pagesResult.value : [];
+
+  const errors = [];
+  if (d1Result.status === 'rejected') errors.push({ resource: 'd1', message: String(d1Result.reason) });
+  if (r2Result.status === 'rejected') errors.push({ resource: 'r2', message: String(r2Result.reason) });
+  if (workersResult.status === 'rejected') {
+    errors.push({ resource: 'workers', message: String(workersResult.reason) });
+  }
+  if (pagesResult.status === 'rejected') {
+    errors.push({ resource: 'pages', message: String(pagesResult.reason) });
+  }
+
+  return {
+    ok: errors.length < 4,
+    d1: {
+      count: d1Databases.length,
+      limit: D1_DATABASE_COUNT_LIMIT,
+      databases: d1Databases.map((row) => ({
+        id: String(row.uuid ?? row.id ?? ''),
+        name: String(row.name ?? '')
+      }))
+    },
+    r2: {
+      count: r2Buckets.length,
+      buckets: r2Buckets.map((row) => String(row.name ?? ''))
+    },
+    workers: { count: workerScripts.length, scripts: workerScripts },
+    pages: {
+      count: pagesProjects.length,
+      projects: pagesProjects.map((row) => String(row.name ?? row.subdomain ?? ''))
+    },
+    errors
+  };
 }

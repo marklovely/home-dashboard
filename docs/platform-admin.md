@@ -101,6 +101,18 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 - Direct **Access probe** link per site
 - **Check all usage** / per-site **Check usage** — D1 database size and R2 bucket usage vs Cloudflare free-tier limits (10 GB R2, 5 GB D1 per account)
 
+## Monitoring tab
+
+**Monitoring** aggregates a platform-wide snapshot in one request (`GET /api/platform/monitoring/summary`):
+
+- Overview strip — site count, health breakdown, open Stripe subscriptions, account storage
+- **Cloudflare** — account R2/D1 storage, D1 database count vs Workers Free limit (10), R2 bucket / Worker script / Pages project inventory
+- **Billing** — Stripe mode, subscription counts by status
+- **Marketing & signup** — homepage, pricing API, and signup status probes
+- **GitHub automation** — recent `platform-site-manage` workflow runs
+- **Hub health matrix** — worker, HUB_API binding, and Access probe for every manifest site
+- External dashboard links (Cloudflare, Stripe, GitHub Actions, marketing site)
+
 Set `PLATFORM_CF_API_TOKEN` (Account Read, D1 Read, R2 Read, Pages Edit, **Access: Apps and Policies Edit**) and `CLOUDFLARE_ACCOUNT_ID` on the platform Pages project (`platform_cf_api_token` in Terraform). Usage is fetched server-side via the Cloudflare API when you click Check usage. The same token updates the marketing-site OTP list.
 
 ## Marketing site OTP list

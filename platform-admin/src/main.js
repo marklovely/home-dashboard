@@ -1,4 +1,4 @@
-import { fetchMarketingAccess, fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled, startBillingCheckout } from './api.js';
+import { fetchMarketingAccess, fetchMonitoringSummary, fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled, startBillingCheckout } from './api.js';
 import { renderStripeModePanel, wireStripeModePanel } from './stripeMode.js';
 import { renderIntroOfferPanel, wireIntroOfferPanel } from './introOffer.js';
 import { renderSiteBilling } from './billing.js';
@@ -25,13 +25,21 @@ import {
 } from './links.js';
 import { confirmDeployWorker, confirmProvisionSite, openSiteWizard } from './wizard.js';
 import { renderMarketingAccessPanel, wireMarketingAccessPanel } from './marketingAccess.js';
+import { renderMonitoringView } from './monitoring.js';
 
 const main = document.getElementById('main');
 const refreshBtn = document.getElementById('refresh-btn');
+const refreshMonitoringBtn = document.getElementById('refresh-monitoring-btn');
 const checkAllBtn = document.getElementById('check-all-btn');
 const checkAllUsageBtn = document.getElementById('check-all-usage-btn');
 const addSiteBtn = document.getElementById('add-site-btn');
 const summaryEl = document.getElementById('summary');
+const tabSitesBtn = document.getElementById('tab-sites');
+const tabMonitoringBtn = document.getElementById('tab-monitoring');
+const topbarTitle = document.querySelector('.topbar h1');
+
+/** @type {'sites' | 'monitoring'} */
+let currentView = 'sites';
 
 /** @type {Map<string, Record<string, unknown>>} */
 const sitesById = new Map();
@@ -53,7 +61,27 @@ refreshBtn?.addEventListener('click', () => {
   usageBySite.clear();
   previewsBySite.clear();
   accountUsageSummary = null;
+  if (currentView === 'monitoring') {
+    renderMonitoring().catch(showError);
+  } else {
+    render().catch(showError);
+  }
+});
+
+refreshMonitoringBtn?.addEventListener('click', () => {
+  renderMonitoring().catch(showError);
+});
+
+tabSitesBtn?.addEventListener('click', () => {
+  if (currentView === 'sites') return;
+  setView('sites');
   render().catch(showError);
+});
+
+tabMonitoringBtn?.addEventListener('click', () => {
+  if (currentView === 'monitoring') return;
+  setView('monitoring');
+  renderMonitoring().catch(showError);
 });
 
 checkAllBtn?.addEventListener('click', () => {
@@ -74,7 +102,57 @@ addSiteBtn?.addEventListener('click', () => {
 
 render().catch(showError);
 
+/**
+ * @param {'sites' | 'monitoring'} view
+ */
+function setView(view) {
+  currentView = view;
+  tabSitesBtn?.classList.toggle('is-active', view === 'sites');
+  tabMonitoringBtn?.classList.toggle('is-active', view === 'monitoring');
+  tabSitesBtn?.setAttribute('aria-selected', view === 'sites' ? 'true' : 'false');
+  tabMonitoringBtn?.setAttribute('aria-selected', view === 'monitoring' ? 'true' : 'false');
+  addSiteBtn?.toggleAttribute('hidden', view === 'monitoring');
+  checkAllBtn?.toggleAttribute('hidden', view === 'monitoring');
+  checkAllUsageBtn?.toggleAttribute('hidden', view === 'monitoring');
+  refreshMonitoringBtn?.toggleAttribute('hidden', view !== 'monitoring');
+  if (topbarTitle) {
+    topbarTitle.textContent =
+      view === 'monitoring' ? 'Lovely Home Hub — Monitoring' : 'Lovely Home Hub — Sites';
+  }
+}
+
+async function renderMonitoring() {
+  if (!main) return;
+  setView('monitoring');
+  main.innerHTML = '<p class="muted">Loading monitoring snapshot…</p>';
+  summaryEl && (summaryEl.textContent = 'Loading platform monitoring…');
+
+  const data = await fetchMonitoringSummary();
+  updateMonitoringSummary(data);
+  main.innerHTML = renderMonitoringView(data);
+}
+
+/**
+ * @param {Record<string, unknown>} data
+ */
+function updateMonitoringSummary(data) {
+  if (!summaryEl) return;
+  const overview = /** @type {Record<string, unknown>} */ (data.overview ?? {});
+  const healthCounts = /** @type {Record<string, number>} */ (overview.healthCounts ?? {});
+  const storage = /** @type {Record<string, unknown>} */ (data.cloudflare?.storage ?? {});
+  const d1Match = /** @type {Record<string, unknown>} */ (data.cloudflare?.d1Match ?? {});
+
+  summaryEl.innerHTML = `
+    <span class="summary-item"><strong>${overview.siteCount ?? 0}</strong> sites</span>
+    <span class="summary-item"><strong>${healthCounts.healthy ?? 0}</strong> healthy · <strong>${healthCounts.degraded ?? 0}</strong> degraded · <strong>${healthCounts.bad ?? 0}</strong> unhealthy</span>
+    <span class="summary-item"><strong>${data.billing?.openSubscriptions ?? 0}</strong> open billing</span>
+    ${storage.ok ? renderAccountUsageSummary(storage) : '<span class="summary-item usage-muted">Storage usage unavailable</span>'}
+    <span class="summary-item">D1 databases <strong>${d1Match.accountCount ?? d1Match.hubCount ?? '—'}</strong> / ${d1Match.limit ?? 10}</span>
+  `;
+}
+
 async function render() {
+  setView('sites');
   if (!main) return;
   main.innerHTML = '<p class="muted">Loading sites…</p>';
   const data = await fetchSites();
