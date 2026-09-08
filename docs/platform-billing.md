@@ -190,10 +190,12 @@ node scripts/apply-platform-billing-migration.mjs
 
 Create **separate** coupon ids from referral referee coupons so launch offers can differ.
 
-Copy each coupon id into platform Pages env (via Terraform `hub.tfvars`):
+Copy each coupon id into platform Pages env (via Terraform `hub.tfvars` locally, or GitHub Actions secrets for CI-generated tfvars):
 
 - `STRIPE_INTRO_COUPON_MONTHLY` / `STRIPE_INTRO_COUPON_MONTHLY_LIVE`
 - `STRIPE_INTRO_COUPON_YEARLY` / `STRIPE_INTRO_COUPON_YEARLY_LIVE`
+
+For CI terraform (`generate-hub-tfvars.mjs`), also set matching GitHub repository secrets so hub provision does not drop coupon env vars on the platform Pages project.
 
 Public API:
 

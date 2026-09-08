@@ -106,14 +106,45 @@
   }
 
   /**
+   * Short promo line for banners and the home hero (drops the parenthetical timing detail).
+   * @param {Record<string, unknown> | null | undefined} intro
+   */
+  function buildIntroPromoLine(intro) {
+    const stripTiming = (text) => String(text || '').replace(/\s*\([^)]*\)\s*\.?$/, '').trim();
+    const month = stripTiming(intro?.monthlyBenefit);
+    const year = stripTiming(intro?.yearlyBenefit);
+    if (month && year) {
+      const yearPhrase = year.charAt(0).toLowerCase() + year.slice(1);
+      return month + ' — or ' + yearPhrase + '.';
+    }
+    return month || year || 'Introductory discount for new households.';
+  }
+
+  /**
    * @param {Record<string, unknown>} pricing
    */
   function applyIntroOffer(pricing) {
     const intro = pricing.introOffer && typeof pricing.introOffer === 'object' ? pricing.introOffer : null;
     const active = intro?.active === true;
 
+    const introSections = '.home-intro-offer, .site-banner--intro, .pricing-intro-offer, #signup-intro-banner';
+
+    document.querySelectorAll('[data-intro-offer="promo-line"]').forEach((el) => {
+      const section = el.closest(introSections);
+      const banner = el.closest('#home-intro-banner');
+      if (!active) {
+        if (section instanceof HTMLElement) section.hidden = true;
+        if (banner instanceof HTMLElement) banner.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      el.textContent = buildIntroPromoLine(intro);
+      if (section instanceof HTMLElement) section.hidden = false;
+      if (banner instanceof HTMLElement) banner.hidden = false;
+    });
+
     document.querySelectorAll('[data-intro-offer="headline"]').forEach((el) => {
-      const section = el.closest('.pricing-intro-offer, #signup-intro-banner');
+      const section = el.closest(introSections);
       if (!active) {
         if (section instanceof HTMLElement) section.hidden = true;
         el.textContent = '';
@@ -129,6 +160,19 @@
 
     document.querySelectorAll('[data-intro-offer="checkout-note"]').forEach((el) => {
       el.textContent = active && intro?.checkoutNote ? String(intro.checkoutNote) : '';
+    });
+
+    document.querySelectorAll('[data-intro-offer="pricing-band-note"]').forEach((el) => {
+      if (!active) {
+        el.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      el.hidden = false;
+      el.textContent =
+        'New households: ' +
+        buildIntroPromoLine(intro) +
+        ' Applied at secure checkout after your free trial — not on referrals (friend links keep their own discount).';
     });
   }
 
@@ -259,6 +303,7 @@
     loadPricing,
     applyPricing,
     applyIntroOffer,
+    buildIntroPromoLine,
     initPricing,
     resolveApiBase,
     STATIC_FALLBACK,
