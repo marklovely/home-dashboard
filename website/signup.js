@@ -38,11 +38,38 @@
     updateSlugHint();
   });
 
-  form.querySelectorAll('input[name="billingInterval"]').forEach((input) => {
-    input.addEventListener('change', () => {
-      if (activeReferralCode) loadReferralPreview(activeReferralCode);
-    });
-  });
+  /**
+   * Referral links are tied to monthly or yearly billing — hide the other plan.
+   * @param {'month' | 'year' | null} interval
+   */
+  function setReferralBillingIntervalLock(interval) {
+    const fieldset = form.querySelector('.billing-interval-field');
+    const monthOption = form.querySelector('input[name="billingInterval"][value="month"]')?.closest('label');
+    const yearOption = form.querySelector('input[name="billingInterval"][value="year"]')?.closest('label');
+    const monthRadio = form.querySelector('input[name="billingInterval"][value="month"]');
+    const yearRadio = form.querySelector('input[name="billingInterval"][value="year"]');
+    if (!monthOption || !yearOption || !monthRadio || !yearRadio) return;
+
+    if (interval === 'year') {
+      monthOption.hidden = true;
+      yearOption.hidden = false;
+      yearRadio.checked = true;
+      fieldset?.classList.add('billing-interval-field--locked');
+      return;
+    }
+
+    if (interval === 'month') {
+      monthOption.hidden = false;
+      yearOption.hidden = true;
+      monthRadio.checked = true;
+      fieldset?.classList.add('billing-interval-field--locked');
+      return;
+    }
+
+    monthOption.hidden = false;
+    yearOption.hidden = false;
+    fieldset?.classList.remove('billing-interval-field--locked');
+  }
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -212,6 +239,7 @@
         activeReferralInterval = null;
         banner.hidden = true;
         benefitEl.textContent = '';
+        setReferralBillingIntervalLock(null);
         if (referralCodeParam) {
           showAlert(payload.message || 'That referral link is not valid.', 'info');
         }
@@ -222,13 +250,9 @@
       banner.hidden = false;
       benefitEl.textContent =
         'Referral offer: ' + (payload.message || payload.refereeBenefit || 'discount applied at checkout.');
-      if (activeReferralInterval === 'year') {
-        const yearRadio = form.querySelector('input[name="billingInterval"][value="year"]');
-        if (yearRadio) yearRadio.checked = true;
-      } else if (activeReferralInterval === 'month') {
-        const monthRadio = form.querySelector('input[name="billingInterval"][value="month"]');
-        if (monthRadio) monthRadio.checked = true;
-      }
+      setReferralBillingIntervalLock(
+        activeReferralInterval === 'year' ? 'year' : activeReferralInterval === 'month' ? 'month' : null
+      );
     } catch {
       // Signup API validates again on submit.
     }

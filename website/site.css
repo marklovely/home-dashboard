@@ -1846,6 +1846,10 @@ html:not(.pricing-loaded) [data-pricing="plan-amount"] .pricing-amount--pending 
   gap: 0.65rem;
 }
 
+.billing-interval-field--locked .billing-interval-options {
+  grid-template-columns: 1fr;
+}
+
 .billing-interval-option {
   display: flex;
   align-items: flex-start;
