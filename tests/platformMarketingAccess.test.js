@@ -8,6 +8,9 @@ import {
   emailsAfterRemovingGuest,
   emailsFromAccessInclude,
   getMarketingAccess,
+  isMarketingGateBypassPolicy,
+  marketingGateEnabledFromPolicies,
+  setMarketingAccessGate,
   splitMarketingAccessEmails,
   updateMarketingAccess
 } from '../functions/api/platform/platformMarketingAccess.js';
@@ -55,6 +58,26 @@ describe('marketing Access email helpers', () => {
 
   it('builds Access include payloads', () => {
     expect(accessIncludeFromEmails(['a@example.com'])).toEqual([{ email: { email: 'a@example.com' } }]);
+  });
+
+  it('detects dashboard bypass policies', () => {
+    expect(
+      isMarketingGateBypassPolicy({
+        name: 'Platform dashboard — public access',
+        decision: 'bypass',
+        include: [{ everyone: {} }]
+      })
+    ).toBe(true);
+    expect(
+      marketingGateEnabledFromPolicies([
+        { name: 'Platform operators', decision: 'allow', include: [{ email: { email: 'ops@example.com' } }] }
+      ])
+    ).toBe(true);
+    expect(
+      marketingGateEnabledFromPolicies([
+        { name: 'Platform dashboard — public access', decision: 'bypass', include: [{ everyone: {} }] }
+      ])
+    ).toBe(false);
   });
 });
 
@@ -224,6 +247,108 @@ describe('marketing Access API', () => {
     expect(result.ok).toBe(false);
     expect(result.code).toBe('NOT_PROTECTED');
   });
+
+  it('disables the gate by adding a bypass policy', async () => {
+    /** @type {Record<string, unknown>[]} */
+    let policies = [
+      {
+        id: 'pol-1',
+        name: 'Platform operators',
+        decision: 'allow',
+        include: [{ email: { email: 'ops@example.com' } }]
+      }
+    ];
+    /** @type {string[]} */
+    const posts = [];
+    const fetchImpl = async (url, init = {}) => {
+      const href = String(url);
+      if (href.includes('/access/apps?')) {
+        return jsonOk({
+          result: [{ id: 'app-1', name: 'Lovely Home — Marketing site' }]
+        });
+      }
+      if (href.includes('/policies') && (!init.method || init.method === 'GET')) {
+        return jsonOk({ result: policies });
+      }
+      if (init.method === 'POST' && href.includes('/policies')) {
+        posts.push(String(init.body));
+        policies = [
+          {
+            id: 'pol-bypass',
+            name: 'Platform dashboard — public access',
+            decision: 'bypass',
+            include: [{ everyone: {} }]
+          },
+          ...policies
+        ];
+        return jsonOk({ result: { id: 'pol-bypass' } });
+      }
+      throw new Error(`${init.method} ${href}`);
+    };
+
+    const result = await setMarketingAccessGate(
+      {
+        PLATFORM_OPERATOR_EMAILS: 'ops@example.com',
+        PLATFORM_CF_API_TOKEN: 'token',
+        CLOUDFLARE_ACCOUNT_ID: 'acc'
+      },
+      {},
+      false,
+      fetchImpl
+    );
+    expect(result.ok).toBe(true);
+    expect(result.gateEnabled).toBe(false);
+    expect(posts).toHaveLength(1);
+    expect(posts[0]).toMatch(/Platform dashboard — public access/);
+  });
+
+  it('enables the gate by removing the bypass policy', async () => {
+    /** @type {Record<string, unknown>[]} */
+    let policies = [
+      {
+        id: 'pol-bypass',
+        name: 'Platform dashboard — public access',
+        decision: 'bypass',
+        include: [{ everyone: {} }]
+      },
+      {
+        id: 'pol-1',
+        name: 'Platform operators',
+        decision: 'allow',
+        include: [{ email: { email: 'ops@example.com' } }]
+      }
+    ];
+    const fetchImpl = async (url, init = {}) => {
+      const href = String(url);
+      if (href.includes('/access/apps?')) {
+        return jsonOk({
+          result: [{ id: 'app-1', name: 'Lovely Home — Marketing site' }]
+        });
+      }
+      if (href.includes('/policies') && (!init.method || init.method === 'GET')) {
+        return jsonOk({ result: policies });
+      }
+      if (init.method === 'DELETE') {
+        policies = policies.filter((policy) => policy.id !== 'pol-bypass');
+        return jsonOk({ result: {} });
+      }
+      throw new Error(`${init.method} ${href}`);
+    };
+
+    const result = await setMarketingAccessGate(
+      {
+        PLATFORM_OPERATOR_EMAILS: 'ops@example.com',
+        PLATFORM_CF_API_TOKEN: 'token',
+        CLOUDFLARE_ACCOUNT_ID: 'acc'
+      },
+      {},
+      true,
+      fetchImpl
+    );
+    expect(result.ok).toBe(true);
+    expect(result.gateEnabled).toBe(true);
+    expect(result.protected).toBe(true);
+  });
 });
 
 describe('marketing Access panel', () => {
@@ -241,6 +366,7 @@ describe('marketing Access panel', () => {
     });
     expect(html).toContain('guest@example.com');
     expect(html).toContain('data-marketing-remove="guest@example.com"');
+    expect(html).toContain('data-marketing-gate-toggle');
     expect(html).not.toMatch(/data-marketing-remove="ops@example.com"/);
     expect(html).toContain('<details class="panel-fold"');
     expect(html).toContain('Marketing site access');
@@ -251,10 +377,12 @@ describe('marketing Access panel', () => {
     const html = renderMarketingAccessPanel({
       ok: true,
       protected: false,
+      gateEnabled: false,
       origin: 'https://lovely-home.co.uk',
-      message: 'No marketing Access app found.'
+      message: 'Marketing site is public — no OTP gate is active.'
     });
-    expect(html).toContain('marketing_site_access_protected');
+    expect(html).toContain('data-marketing-gate-toggle');
+    expect(html).toContain('Marketing site is public');
     expect(html).not.toContain('marketing-access-form');
   });
 

@@ -5,13 +5,37 @@ const MARKETING_FOLD_ID = 'marketing-access-fold';
 /**
  * @param {Record<string, unknown>} data
  */
+function renderGateToggle(data) {
+  const disabled = data.ok === false;
+  const checked = data.gateEnabled === true || data.protected === true;
+  return `
+    <label class="preview-toggle marketing-gate-toggle">
+      <input
+        type="checkbox"
+        data-marketing-gate-toggle
+        ${checked ? 'checked' : ''}
+        ${disabled ? 'disabled' : ''}
+      />
+      OTP gate enabled
+    </label>
+  `;
+}
+
+/**
+ * @param {Record<string, unknown>} data
+ */
 export function renderMarketingAccessPanel(data) {
   const origin = String(data.origin ?? 'https://lovely-home.co.uk');
+  const gateToggle = renderGateToggle(data);
+
   if (data.ok === false) {
     return `
       <section class="panel marketing-access" id="marketing-access">
         <details class="panel-fold" id="${MARKETING_FOLD_ID}"${panelFoldOpenAttr(MARKETING_FOLD_ID)}>
-          <summary class="panel-fold-summary">Marketing site access</summary>
+          <summary class="panel-fold-summary">
+            <span>Marketing site access</span>
+            ${gateToggle}
+          </summary>
           <div class="panel-fold-body">
             <p class="muted">${escapeHtml(String(data.message ?? 'Could not load the marketing OTP list.'))}</p>
           </div>
@@ -24,10 +48,13 @@ export function renderMarketingAccessPanel(data) {
     return `
       <section class="panel marketing-access" id="marketing-access">
         <details class="panel-fold" id="${MARKETING_FOLD_ID}"${panelFoldOpenAttr(MARKETING_FOLD_ID)}>
-          <summary class="panel-fold-summary">Marketing site access</summary>
+          <summary class="panel-fold-summary">
+            <span>Marketing site access</span>
+            ${gateToggle}
+          </summary>
           <div class="panel-fold-body">
-            <p class="muted">${escapeHtml(String(data.message ?? 'The marketing site is not OTP-gated.'))}</p>
-            <p class="muted">Gate it with <code>marketing_site_access_protected = true</code> in hub.tfvars, then terraform apply.</p>
+            <p class="muted">${escapeHtml(String(data.message ?? 'Marketing site is public — no OTP gate is active.'))}</p>
+            <p class="muted">Turn the gate on to require OTP again. Keep <code>marketing_site_access_protected</code> in hub.tfvars aligned when you next terraform apply.</p>
           </div>
         </details>
       </section>
@@ -39,7 +66,10 @@ export function renderMarketingAccessPanel(data) {
   return `
     <section class="panel marketing-access" id="marketing-access">
       <details class="panel-fold" id="${MARKETING_FOLD_ID}"${panelFoldOpenAttr(MARKETING_FOLD_ID)}>
-        <summary class="panel-fold-summary">Marketing site access</summary>
+        <summary class="panel-fold-summary">
+          <span>Marketing site access</span>
+          ${gateToggle}
+        </summary>
         <div class="panel-fold-body">
           <p class="muted">OTP allow-list for <a href="${escapeHtml(origin)}" target="_blank" rel="noreferrer">${escapeHtml(origin.replace(/^https?:\/\//, ''))}</a> while the pre-launch gate is on. Extra emails can view the marketing site only — not this dashboard.</p>
           <ul class="marketing-access-list">
@@ -86,6 +116,26 @@ export function wireMarketingAccessPanel(onError, reload) {
     messageEl.textContent = error instanceof Error ? error.message : String(error);
   }
 
+  document.querySelectorAll('[data-marketing-gate-toggle]').forEach((input) => {
+    input.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+    input.addEventListener('change', async () => {
+      const checkbox = /** @type {HTMLInputElement} */ (input);
+      const enabled = checkbox.checked;
+      checkbox.disabled = true;
+      try {
+        await setMarketingAccessGate(enabled);
+        await reload();
+      } catch (error) {
+        checkbox.checked = !enabled;
+        showMessage(error);
+      } finally {
+        checkbox.disabled = false;
+      }
+    });
+  });
+
   const form = document.getElementById('marketing-access-form');
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -118,6 +168,22 @@ export function wireMarketingAccessPanel(onError, reload) {
       }
     });
   });
+}
+
+/**
+ * @param {boolean} enabled
+ */
+async function setMarketingAccessGate(enabled) {
+  const response = await fetch('/api/platform/marketing-access', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled })
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.message ?? `Marketing gate update failed (${response.status})`);
+  }
+  return body;
 }
 
 /**

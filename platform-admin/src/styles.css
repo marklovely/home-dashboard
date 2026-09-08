@@ -455,7 +455,9 @@ h1 {
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
   min-height: 1.75rem;
   font-size: 1.1rem;
   font-weight: 650;
@@ -521,6 +523,16 @@ h1 {
   margin: 0;
   min-width: 16rem;
   flex: 1 1 16rem;
+}
+
+.marketing-gate-toggle {
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.panel-fold-summary .marketing-gate-toggle {
+  flex-shrink: 0;
 }
 
 .field.checkbox {
