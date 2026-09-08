@@ -178,7 +178,7 @@ Auto-merge is enabled **before** CI finishes; GitHub merges only after required 
 
 If branch protection requires approving reviews, auto-merge waits until someone approves (or add a ruleset exception for `platform/site-*` branches).
 
-Production is **protected** — cannot be deleted from the wizard. Import existing stacks with `scripts/terraform-import-hub-site.sh`.
+Production is **protected** — cannot be deleted from the wizard. **Demo** is also protected (`protected: true` in `platform/sites.yaml`) because the marketing site links to it for public previews. Import existing stacks with `scripts/terraform-import-hub-site.sh`.
 
 ## v4 — automated provisioning
 

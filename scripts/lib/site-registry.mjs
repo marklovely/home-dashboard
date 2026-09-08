@@ -30,8 +30,16 @@ const SITE_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
 /** Default DNS zone when creating platform sites via CLI. */
 export { PLATFORM_ZONE_NAME, CUSTOMER_HUB_ZONE_NAME, ALLOWED_HUB_ZONE_NAMES };
 
-/** Sites that cannot be removed from the platform UI. */
-export const PROTECTED_SITE_IDS = new Set();
+/** Sites that cannot be removed from the platform UI (also use protected: true in sites.yaml). */
+export const PROTECTED_SITE_IDS = new Set(['demo']);
+
+/**
+ * @param {string} siteId
+ * @param {{ protected?: boolean } | null | undefined} [entry]
+ */
+export function isProtectedSite(siteId, entry) {
+  return PROTECTED_SITE_IDS.has(siteId) || entry?.protected === true;
+}
 
 /** Legacy site ids that must never be deployed via automated Wrangler workflows. */
 export const LEGACY_DEPLOY_BLOCKED_SITE_IDS = new Set(['production']);
@@ -121,7 +129,7 @@ export function validateSiteMutation(action, siteId, payload, existing, options 
 
   if (action === 'delete') {
     if (!existing[siteId]) return `Site "${siteId}" is not in the registry.`;
-    if (PROTECTED_SITE_IDS.has(siteId)) {
+    if (isProtectedSite(siteId, existing[siteId])) {
       return `Site "${siteId}" is protected and cannot be deleted from the platform UI.`;
     }
     return null;
@@ -186,11 +194,11 @@ export function validateDeploySiteId(siteId) {
 export function validateDeprovisionSiteId(siteId, registrySites) {
   const idError = validateSiteId(siteId);
   if (idError) return idError;
-  if (PROTECTED_SITE_IDS.has(siteId)) {
-    return `Site "${siteId}" is protected and cannot be deprovisioned.`;
-  }
   if (registrySites[siteId]) {
     return `Site "${siteId}" is still in platform/sites.yaml — merge the delete PR first.`;
+  }
+  if (isProtectedSite(siteId, registrySites[siteId])) {
+    return `Site "${siteId}" is protected and cannot be deprovisioned.`;
   }
   return null;
 }
@@ -204,7 +212,7 @@ export function validateDeprovisionSiteId(siteId, registrySites) {
 export function validateBillingDeprovisionSiteId(siteId, registrySites) {
   const idError = validateSiteId(siteId);
   if (idError) return idError;
-  if (PROTECTED_SITE_IDS.has(siteId)) {
+  if (isProtectedSite(siteId, registrySites[siteId])) {
     return `Site "${siteId}" is protected and cannot be billing-deprovisioned.`;
   }
   const entry = registrySites[siteId];

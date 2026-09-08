@@ -5,8 +5,28 @@ const HOSTNAME_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9
 const PLATFORM_ZONE_NAME = 'lovely-home.co.uk';
 const CUSTOMER_HUB_ZONE_NAME = 'lovely-hub.com';
 const ALLOWED_HUB_ZONES = [PLATFORM_ZONE_NAME, CUSTOMER_HUB_ZONE_NAME];
-const PROTECTED_SITE_IDS = new Set();
+const PROTECTED_SITE_IDS = new Set(['demo']);
 const LEGACY_PLATFORM_SITE_IDS = new Set(['production']);
+
+/**
+ * @param {string} siteId
+ * @param {{ protected?: boolean } | null | undefined} [entry]
+ */
+function isProtectedSite(siteId, entry) {
+  return PROTECTED_SITE_IDS.has(siteId) || entry?.protected === true;
+}
+
+/**
+ * @param {object} manifest
+ * @returns {string[]}
+ */
+function protectedSiteIdsFromManifest(manifest) {
+  const ids = new Set(PROTECTED_SITE_IDS);
+  for (const [siteId, site] of Object.entries(manifest.sites ?? {})) {
+    if (site?.protected === true) ids.add(siteId);
+  }
+  return [...ids];
+}
 
 /**
  * @param {string} siteId
@@ -90,6 +110,7 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
       hub_environment: String(site.hubEnvironment ?? id),
       vanilla: Boolean(site.vanilla),
       terraform: site.terraform !== false,
+      protected: site.protected === true,
       ...(Array.isArray(site.ownerEmails) && site.ownerEmails.length
         ? { owner_emails: site.ownerEmails }
         : {}),
@@ -175,7 +196,7 @@ export function buildSiteManagePayload(manifest, action, siteId, body) {
     if (!existing[siteId]) {
       return { ok: false, error: 'VALIDATION_ERROR', message: `Site "${siteId}" is not in the registry.` };
     }
-    if (PROTECTED_SITE_IDS.has(siteId)) {
+    if (isProtectedSite(siteId, existing[siteId])) {
       return {
         ok: false,
         error: 'VALIDATION_ERROR',
@@ -259,7 +280,7 @@ export function siteWizardSchema(manifest) {
     zoneName,
     customerZoneName,
     allowedZones: ALLOWED_HUB_ZONES,
-    protectedSiteIds: [...PROTECTED_SITE_IDS],
+    protectedSiteIds: protectedSiteIdsFromManifest(manifest),
     existingSiteIds: Object.keys(manifest.sites ?? {}),
     defaults: {
       vanilla: true,
