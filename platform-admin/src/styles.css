@@ -453,15 +453,26 @@ h1 {
 .panel-fold-summary {
   cursor: pointer;
   list-style: none;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  justify-content: space-between;
+  column-gap: 0.5rem;
   min-height: 1.75rem;
   font-size: 1.1rem;
   font-weight: 650;
   user-select: none;
+}
+
+.panel-fold-title {
+  grid-column: 2;
+  text-align: center;
+}
+
+.panel-fold-summary-trailing {
+  align-items: center;
+  display: flex;
+  grid-column: 3;
+  justify-self: end;
 }
 
 .panel-fold-summary::-webkit-details-marker {
@@ -477,6 +488,8 @@ h1 {
   transform: rotate(-45deg);
   transition: transform 0.12s ease;
   flex-shrink: 0;
+  grid-column: 1;
+  justify-self: center;
 }
 
 .panel-fold[open] > .panel-fold-summary::before {
@@ -528,7 +541,6 @@ h1 {
 .marketing-gate-toggle {
   font-size: 0.88rem;
   font-weight: 500;
-  margin-left: auto;
 }
 
 .panel-fold-summary .marketing-gate-toggle {

@@ -12,7 +12,7 @@ export function renderIntroOfferPanel(introOffer, billingDbConfigured) {
     return `
       <section class="panel intro-offer" id="intro-offer">
         <details class="panel-fold" id="${INTRO_OFFER_FOLD_ID}"${panelFoldOpenAttr(INTRO_OFFER_FOLD_ID)}>
-          <summary class="panel-fold-summary">Introductory offer</summary>
+          <summary class="panel-fold-summary"><span class="panel-fold-title">Introductory offer</span></summary>
           <div class="panel-fold-body">
             <p class="muted">Bind <code>PLATFORM_BILLING_DB</code> and apply billing migrations, including <code>0010_intro_offer_setting.sql</code>.</p>
           </div>
@@ -40,7 +40,7 @@ export function renderIntroOfferPanel(introOffer, billingDbConfigured) {
   return `
     <section class="panel intro-offer" id="intro-offer">
       <details class="panel-fold" id="${INTRO_OFFER_FOLD_ID}"${panelFoldOpenAttr(INTRO_OFFER_FOLD_ID)}>
-        <summary class="panel-fold-summary">Introductory offer ${badgeLabel ? `<span class="badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>` : ''}</summary>
+        <summary class="panel-fold-summary"><span class="panel-fold-title">Introductory offer</span>${badgeLabel ? `<span class="panel-fold-summary-trailing"><span class="badge ${badgeClass}">${escapeHtml(badgeLabel)}</span></span>` : ''}</summary>
         <div class="panel-fold-body">
           ${banner}
           <p class="muted">Automatic discount for <strong>new households</strong> at public signup (email never billed before). Referral links take precedence. Operator billing checkout is never discounted.</p>
