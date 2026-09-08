@@ -1,4 +1,5 @@
 import { defineApp } from '../../components/App/defineApp.js';
+import { getCurrentRoute } from '../../shell/router.js';
 import { canReturnToHouseSitterMode } from '../../auth/ownerSession.js';
 import { promptOwnerPinUnlock } from '../../auth/ownerAccessGesture.js';
 import { isOwnerUserMode } from '../../auth/userMode.js';
@@ -1556,6 +1557,9 @@ function settingsSummary() {
   return { title: 'Configuration', subtitle: themeLabel() };
 }
 
+/** @type {number} */
+let settingsMountGeneration = 0;
+
 export const settingsApp = defineApp({
   id: 'settings',
   title: 'Settings',
@@ -1566,12 +1570,15 @@ export const settingsApp = defineApp({
   profiles: ['owner', 'housesitter'],
   summary: settingsSummary,
   mount(viewport, context) {
+    const mountGeneration = ++settingsMountGeneration;
+
     /** @type {(options?: { soft?: boolean, panelId?: string }) => void} */
     let refreshSettings = () => {};
     refreshSettings = (options = {}) => {
       refreshAboutValues(viewport);
       context.refreshShell?.();
       if (options.soft) return;
+      if (getCurrentRoute() !== 'settings') return;
       const storedPanel = options.panelId ?? getStoredSettingsPanel();
       mountSettingsApp(viewport, context, refreshSettings, storedPanel);
     };
@@ -1590,6 +1597,8 @@ export const settingsApp = defineApp({
       syncSitterControlsFromServer(),
       syncSitterStaysFromServer()
     ]).finally(() => {
+      if (mountGeneration !== settingsMountGeneration) return;
+      if (getCurrentRoute() !== 'settings') return;
       mountSettingsApp(viewport, context, refreshSettings);
     });
   }

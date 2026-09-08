@@ -61,11 +61,17 @@ function selectView(mode, onChange) {
   if (mode === UserMode.Owner) {
     setUserMode(UserMode.Owner);
     setActiveProfileId('owner');
-  } else {
-    setUserMode(UserMode.HouseSitter);
-    setActiveProfileId('housesitter');
+    onChange?.();
+    return;
   }
-  onChange?.();
+
+  // Leave owner-only screens before guest UI renders (Settings loads async and can
+  // overwrite a later navigate-to-home if mode switches first).
+  if (!isHouseSitterExperience()) {
+    onChange?.();
+  }
+  setUserMode(UserMode.HouseSitter);
+  setActiveProfileId('housesitter');
 }
 
 /**

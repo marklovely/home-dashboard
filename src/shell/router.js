@@ -49,12 +49,18 @@ export function getGuideTopicFromRoute() {
 
 /**
  * @param {string} route
- * @param {{ guideTopicId?: string | null }} [options]
+ * @param {{ guideTopicId?: string | null, force?: boolean }} [options]
  */
 export function navigate(route, options = {}) {
   const nextRoute = route || HOME_ROUTE;
   const nextGuideTopicId = options.guideTopicId !== undefined ? options.guideTopicId : null;
-  if (nextRoute === currentRoute && nextGuideTopicId === currentGuideTopicId) return;
+  if (
+    !options.force &&
+    nextRoute === currentRoute &&
+    nextGuideTopicId === currentGuideTopicId
+  ) {
+    return;
+  }
 
   currentRoute = nextRoute;
   currentGuideTopicId = nextGuideTopicId;
