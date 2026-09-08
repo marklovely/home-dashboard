@@ -60,13 +60,14 @@ const houseSitterConfig = {
     documentTitleBase: 'Home Hub',
     homeTagline: null
   },
-  homeAppIds: ['weather', 'scooter', 'house-guide', 'bins', 'emergency'],
-  sitterEssentialAppIds: ['scooter', 'house-guide', 'emergency'],
+  homeAppIds: ['weather', 'scooter', 'house-guide', 'controls', 'bins', 'emergency'],
+  sitterEssentialAppIds: ['scooter', 'house-guide', 'controls', 'emergency'],
   sitterSecondaryAppIds: ['weather', 'bins'],
   routableAppIds: [
     'weather',
     'scooter',
     'house-guide',
+    'controls',
     'bins',
     'emergency',
     'settings'

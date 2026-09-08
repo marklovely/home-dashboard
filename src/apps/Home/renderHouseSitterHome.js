@@ -8,9 +8,6 @@ import { getHubDisplayName, getSiteProfileState, subscribeToSiteProfile } from '
 import { formatStayDate } from '../../services/sitterStaysService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 import { mountBinAlertBannerHost } from '../../services/binAlertBannerSync.js';
-import { isSitterControlsDisclosed } from '../../services/sitterControlsService.js';
-import { subscribeToSitterControls } from '../../services/sitterControlsService.js';
-import { mountSitterControlsGrid } from '../../widgets/Controls/sitterControlsGrid.js';
 
 /** @type {Record<string, { headline: string, teaser?: string, teaserFromSummary?: 'title' | 'subtitle' }>} */
 const ESSENTIAL_CARD_COPY = {
@@ -292,27 +289,6 @@ export async function renderHouseSitterHome(viewport, apps, context) {
   );
   infoSection.querySelector('.sitter-section-title')?.setAttribute('id', 'sitter-info-heading');
 
-  const controlsHost = document.createElement('div');
-  controlsHost.className = 'sitter-controls-host';
-
-  const mountControlsSection = () => {
-    controlsHost.replaceChildren();
-    if (!isSitterControlsDisclosed()) return;
-
-    const controlsSection = document.createElement('section');
-    controlsSection.className = 'sitter-section sitter-controls-section';
-    controlsSection.setAttribute('aria-labelledby', 'sitter-controls-heading');
-    controlsSection.append(
-      createSectionHeading('Home controls', 'Lighting and scene shortcuts for your stay.')
-    );
-    controlsSection.querySelector('.sitter-section-title')?.setAttribute('id', 'sitter-controls-heading');
-    controlsSection.append(mountSitterControlsGrid(context));
-    controlsHost.append(controlsSection);
-  };
-
-  mountControlsSection();
-  subscribeToSitterControls(mountControlsSection);
-
   const infoGrid = document.createElement('div');
   infoGrid.className = 'sitter-secondary-grid';
   infoGrid.setAttribute('role', 'list');
@@ -382,7 +358,6 @@ export async function renderHouseSitterHome(viewport, apps, context) {
     welcome,
     binAlertHost,
     essentialsSection,
-    controlsHost,
     infoSection,
     helpSection
   );

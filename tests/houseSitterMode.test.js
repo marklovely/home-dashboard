@@ -23,7 +23,7 @@ describe('house sitter mode configuration', () => {
     const config = getModeConfig();
     expect(config.branding.eyebrow).toBe('HOME HUB');
     expect(config.branding.homeTagline).toBeNull();
-    expect(config.sitterEssentialAppIds).toEqual(['scooter', 'house-guide', 'emergency']);
+    expect(config.sitterEssentialAppIds).toEqual(['scooter', 'house-guide', 'controls', 'emergency']);
     expect(config.showSitterHeaderWeather).toBe(true);
   });
 

@@ -1,7 +1,10 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { isTestHubEnvironment } from '../../auth/hubEnvironment.js';
-import { isControlsConfigured } from '../../services/environmentAppPolicy.js';
 import { isHouseSitterMode } from '../../modes/modeConfig.js';
+import { isControlsConfigured } from '../../services/environmentAppPolicy.js';
+import { isSitterControlsDisclosed } from '../../services/sitterControlsService.js';
+import { subscribeToSitterControls } from '../../services/sitterControlsService.js';
+import { mountSitterControlsGrid } from '../../widgets/Controls/sitterControlsGrid.js';
 import { getWidgetById } from '../../services/widgetRegistry.js';
 
 /**
@@ -44,21 +47,32 @@ export function mountControlsApp(viewport, context) {
   }
 
   if (isHouseSitterMode()) {
-    const panel = document.createElement('section');
-    panel.className = 'controls-unconfigured';
-    panel.setAttribute('aria-label', 'Controls unavailable');
+    if (!isSitterControlsDisclosed()) {
+      const panel = document.createElement('section');
+      panel.className = 'controls-unconfigured';
+      panel.setAttribute('aria-label', 'Controls unavailable');
 
-    const title = document.createElement('h2');
-    title.textContent = 'Home controls are owner-only';
+      const title = document.createElement('h2');
+      title.textContent = 'Home controls are not available yet';
 
-    const copy = document.createElement('p');
-    copy.className = 'subtle';
-    copy.textContent =
-      'Lighting, heating, and Alexa routines cannot be operated in House Sitter Mode. Owners can unlock the tablet to use controls.';
+      const copy = document.createElement('p');
+      copy.className = 'subtle';
+      copy.textContent =
+        'Lighting and scene controls appear here once your stay begins or the owner enables them for sitters.';
 
-    panel.append(title, copy);
-    page.append(panel);
-    viewport.replaceChildren(page);
+      panel.append(title, copy);
+      page.append(panel);
+      viewport.replaceChildren(page);
+      return;
+    }
+
+    const renderSitterControls = () => {
+      page.replaceChildren(...collectMountedNodes(mountSitterControlsGrid(context)));
+      viewport.replaceChildren(page);
+    };
+
+    renderSitterControls();
+    subscribeToSitterControls(renderSitterControls);
     return;
   }
 
@@ -95,7 +109,7 @@ export const controlsApp = defineApp({
   description: 'Control lighting, heating, and scenes',
   capabilities: ['lighting', 'heating', 'scenes'],
   accent: '#7eab90',
-  profiles: ['owner'],
+  profiles: ['owner', 'housesitter'],
   summary: controlsSummary,
   mount: mountControlsApp
 });

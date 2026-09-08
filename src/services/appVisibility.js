@@ -2,9 +2,10 @@ import { getModeConfig } from '../modes/modeConfig.js';
 import { getAppById, getAppsForProfile } from './appRegistry.js';
 import { filterAppsForEnvironment, isAppEnabledForEnvironment } from './environmentAppPolicy.js';
 import { getActiveProfileId } from './profileService.js';
-import { isOwnerUserMode } from '../auth/userMode.js';
+import { isHouseSitterExperience, isOwnerUserMode } from '../auth/userMode.js';
 import { isCamerasConfigured, readCamerasFromProfile } from '../lib/cameraProfile.js';
 import { getSiteProfileState } from './siteProfileService.js';
+import { isSitterControlsDisclosed } from './sitterControlsService.js';
 
 /**
  * @param {import('../types/app.js').App} app
@@ -13,6 +14,16 @@ function isAppConfiguredForHub(app) {
   if (app.id !== 'cameras') return true;
   const cameras = readCamerasFromProfile(getSiteProfileState()?.profile ?? {});
   return isCamerasConfigured(cameras);
+}
+
+/**
+ * @param {import('../types/app.js').App} app
+ */
+function isAppAvailableForCurrentMode(app) {
+  if (app.id === 'controls' && isHouseSitterExperience()) {
+    return isSitterControlsDisclosed();
+  }
+  return true;
 }
 
 /**
@@ -26,7 +37,7 @@ export function getVisibleApps() {
     : filterAppsForEnvironment(
         getAppsForProfile(getActiveProfileId()).filter((app) => app.id !== 'hub-setup')
       );
-  return baseApps.filter(isAppConfiguredForHub);
+  return baseApps.filter(isAppConfiguredForHub).filter(isAppAvailableForCurrentMode);
 }
 
 /**
@@ -41,6 +52,9 @@ export function isAppVisible(appId) {
     return false;
   }
   if (!isAppConfiguredForHub(app)) {
+    return false;
+  }
+  if (!isAppAvailableForCurrentMode(app)) {
     return false;
   }
   const { homeAppIds, routableAppIds } = getModeConfig();
