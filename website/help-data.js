@@ -59,7 +59,7 @@ export const PUBLIC_HELP_CATALOG = {
           "type": "ol",
           "items": [
             "Schedule the stay. Settings → House sitter mode → add their email and dates (optional label for you). Book as many sits as you need.",
-            "Seven days before. They sign in with a one-time email code and can read the house guide. Wi‑Fi, address, and lockbox stay hidden.",
+            "Two weeks before. They sign in with a one-time email code and can read the house guide. Wi‑Fi, address, and lockbox stay hidden.",
             "On the sit dates. Those home-access details appear automatically. You do not need Sitter is here for a booked remote stay.",
             "After checkout. Their login is removed the day after the stay ends. Edit, extend, cancel, or end a stay early from the same list.",
             "Long-term sitter. Add their email as a permanent sitter login — not for one-off visits."
@@ -113,7 +113,11 @@ export const PUBLIC_HELP_CATALOG = {
         "refer",
         "friend",
         "credit",
-        "discount"
+        "discount",
+        "intro",
+        "introductory",
+        "launch",
+        "offer"
       ],
       "blocks": [
         {
@@ -146,11 +150,11 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Yes — start a new 7-day trial at lovely-home.co.uk/signup.html (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning usually takes about 10 minutes, then sign in at your-name.lovely-hub.com with a one-time email code."
+          "text": "Yes — start a new 7-day trial at lovely-home.co.uk/signup (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning usually takes about 10 minutes, then sign in at your-name.lovely-hub.com with a one-time email code."
         },
         {
           "type": "p",
-          "text": "Before you cancel, download an encrypted full backup from Settings → Utilities if you want to restore photos, the house guide, or appliance manuals. Restore that file from the setup wizard or Settings → Backup & restore — photos and PDFs in the zip are put back automatically. Automated restore from our platform archive is not available yet. The account page (lovely-home.co.uk/account.html) is only for invoices and card details; it does not recreate a hub."
+          "text": "Before you cancel, download an encrypted full backup from Settings → Utilities if you want to restore photos, the house guide, or appliance manuals. Restore that file from the setup wizard or Settings → Backup & restore — photos and PDFs in the zip are put back automatically. Automated restore from our platform archive is not available yet. The account page (lovely-home.co.uk/account) is only for invoices and card details; it does not recreate a hub."
         },
         {
           "type": "h4",
@@ -158,7 +162,23 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Yes. Add each stay with dates and the sitter’s email under Settings → House sitter mode. They can read the house guide from 7 days before; Wi‑Fi, address, and lockbox appear on the sit dates; their login is removed the day after checkout. Add as many upcoming stays as you need."
+          "text": "Yes. Add each stay with dates and the sitter’s email under Settings → House sitter mode. They can read the house guide from two weeks before; Wi‑Fi, address, and lockbox appear on the sit dates; their login is removed the day after checkout. Add as many upcoming stays as you need."
+        },
+        {
+          "type": "h4",
+          "text": "Is there an introductory offer for new households?"
+        },
+        {
+          "type": "p",
+          "text": "When we run a launch offer, new households who have never subscribed before may get 25% off each of their first two months (monthly plan) or 30% off the first year (yearly plan). The discount applies on your first invoice after the free trial — not at signup. Check the home page or pricing page banner when the offer is active."
+        },
+        {
+          "type": "h4",
+          "text": "Can I use a referral link and the introductory offer together?"
+        },
+        {
+          "type": "p",
+          "text": "No — referrals take precedence. If a friend gives you a single-use referral link, that discount applies at checkout instead of the introductory offer. Intro offers are for households signing up without a referral code."
         },
         {
           "type": "h4",
@@ -174,7 +194,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Sign in at lovely-home.co.uk/account.html with the email you used at signup. Choose monthly or yearly for the link, then generate and share the URL. Each link is single-use — create as many as you need. You cannot refer yourself, and each code matches one billing plan."
+          "text": "Sign in at lovely-home.co.uk/account with the email you used at signup. Choose monthly or yearly for the link, then generate and share the URL. Each link is single-use — create as many as you need. You cannot refer yourself, and each code matches one billing plan."
         },
         {
           "type": "h4",
@@ -295,7 +315,7 @@ export const PUBLIC_HELP_CATALOG = {
         {
           "type": "ul",
           "items": [
-            "From 7 days before the stay they can read the House Guide. Wi‑Fi, address, and lockbox stay hidden.",
+            "From two weeks before the stay they can read the House Guide. Wi‑Fi, address, and lockbox stay hidden.",
             "On the sit dates those home-access details appear automatically. You do not need Sitter is here for a booked remote stay.",
             "The day after checkout their login is removed. Edit, extend, cancel, or end a stay early from the same list.",
             "For someone who should keep access (a long-term sitter), add their email as a permanent sitter login instead of a dated stay."

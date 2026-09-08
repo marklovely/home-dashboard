@@ -30,6 +30,12 @@ function createEnv(overrides = {}) {
 }
 
 describe('sitter stay windows', () => {
+  it('defaults access lead to fourteen days before the sit', () => {
+    const windows = computeStayWindowTimestamps('2026-03-12', '2026-03-19');
+    const explicit = computeStayWindowTimestamps('2026-03-12', '2026-03-19', { accessLeadDays: 14 });
+    expect(windows.accessOpensAt).toBe(explicit.accessOpensAt);
+  });
+
   it('opens access lead days before sit and closes after grace', () => {
     const windows = computeStayWindowTimestamps('2026-03-12', '2026-03-19', {
       accessLeadDays: 7,

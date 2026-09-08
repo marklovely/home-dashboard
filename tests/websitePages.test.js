@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -18,6 +18,14 @@ function readPage(name) {
   return readFileSync(join(website, name), 'utf8');
 }
 
+/**
+ * @param {string} name
+ */
+function marketingUrlPath(name) {
+  if (name === 'index.html') return '/';
+  return `/${name.replace(/\.html$/, '')}`;
+}
+
 describe('marketing site pages', () => {
   it('ships a custom 404 page for missing marketing URLs', () => {
     expect(pages).toContain('404.html');
@@ -25,10 +33,10 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/Page not found/i);
     expect(html).toContain('noindex');
     expect(html).toContain('Error 404');
-    expect(html).toContain('href="/terms.html"');
+    expect(html).toContain('href="/terms"');
     expect(html).toContain('src="/site.js"');
     expect(html).toContain('href="/favicon.png"');
-    expect(html).toMatch(/id="site-nav"[\s\S]*?href="\/account\.html"/);
+    expect(html).toMatch(/id="site-nav"[\s\S]*?href="\/account"/);
     expect(html).toContain('src="/lovely-home-mark.svg"');
   });
 
@@ -44,15 +52,15 @@ describe('marketing site pages', () => {
 
   it.each(marketingPages)('%s has canonical, Open Graph, and a terms link', (name) => {
     const html = readPage(name);
-    const expectedPath = name === 'index.html' ? '/' : `/${name}`;
+    const expectedPath = marketingUrlPath(name);
     expect(html).toMatch(/<link rel="canonical" href="https:\/\/lovely-home\.co\.uk/);
     expect(html).toContain(`https://lovely-home.co.uk${expectedPath === '/' ? '/' : expectedPath}`);
     expect(html).toContain('property="og:title"');
     expect(html).toContain('property="og:description"');
     expect(html).toContain('property="og:image"');
     expect(html).toContain('name="twitter:card"');
-    expect(html).toContain('href="terms.html"');
-    expect(html).toContain('href="security.html"');
+    expect(html).toContain('href="/terms"');
+    expect(html).toContain('href="/security"');
     expect(html).toContain("What's included");
   });
 
@@ -75,7 +83,7 @@ describe('marketing site pages', () => {
 
   it('signup agrees to terms and says the hub address cannot change', () => {
     const html = readPage('signup.html');
-    expect(html).toMatch(/agree to our <a href="terms\.html">terms<\/a>/);
+    expect(html).toMatch(/agree to our <a href="\/terms">terms<\/a>/);
     expect(html).toMatch(/cannot be changed later/);
     expect(html).toMatch(/does not charge you today/);
     expect(html).toMatch(/Stripe checkout page when you continue/);
@@ -85,7 +93,7 @@ describe('marketing site pages', () => {
 
   it('pricing explains cancel, archive, and backup exclusions', () => {
     const html = readPage('pricing.html');
-    expect(html).toMatch(/account\.html/);
+    expect(html).toMatch(/\/account/);
     expect(html).toMatch(/taken down and archived/);
     expect(html).toMatch(/Photos and appliance PDFs/);
     expect(html).toMatch(/Refer a friend/);
@@ -119,31 +127,72 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/Wall tablet, mount, or kiosk hardware/);
   });
 
-  it('setup page redirects to Help → Set it up', () => {
+  it('setup page explains trial, sitter sharing, and optional wall tablet', () => {
     const html = readPage('setup.html');
-    expect(html).toMatch(/help\.html#owner\/setup/);
-    expect(html).toMatch(/http-equiv="refresh"/);
-    expect(html).toMatch(/location\.replace\('help\.html#owner\/setup'\)/);
+    expect(html).toMatch(/<link rel="canonical" href="https:\/\/lovely-home\.co\.uk\/setup"/);
+    expect(html).not.toMatch(/http-equiv="refresh"/);
+    expect(html).not.toMatch(/location\.replace/);
+    expect(html).toMatch(/Start free trial/);
+    expect(html).toMatch(/Send it to a sitter/);
+    expect(html).toMatch(/Optional: wall tablet/);
+    expect(html).toMatch(/Two weeks before/);
+    expect(html).toMatch(/No hardware to buy/);
+  });
+
+  it('ships robots.txt and sitemap.xml for search engines', () => {
+    const robots = readFileSync(join(website, 'robots.txt'), 'utf8');
+    expect(robots).toMatch(/Sitemap: https:\/\/lovely-home\.co\.uk\/sitemap\.xml/);
+    expect(robots).toMatch(/Allow: \//);
+
+    const sitemap = readFileSync(join(website, 'sitemap.xml'), 'utf8');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/</loc>');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/setup</loc>');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/for-house-sitters</loc>');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/for-pet-sitters</loc>');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/pricing</loc>');
+    expect(sitemap).not.toContain('.html</loc>');
+  });
+
+  it('does not ship _redirects (conflicts with Pages pretty URLs on custom domains)', () => {
+    expect(existsSync(join(website, '_redirects'))).toBe(false);
+  });
+
+  it('uses extensionless internal links on marketing pages', () => {
+    for (const name of marketingPages) {
+      const html = readPage(name);
+      expect(html, name).not.toMatch(/href="[a-z][a-z0-9-]*\.html/);
+      expect(html, name).not.toMatch(/href="\/[a-z][a-z0-9-]*\.html"/);
+      expect(html, name).not.toMatch(/lovely-home\.co\.uk\/[a-z][a-z0-9-]*\.html/);
+    }
   });
 
   it('explains scheduled stays: guide early, secrets on the sit, access after checkout', () => {
     const home = readPage('index.html');
     expect(home).toMatch(/Book sits in advance/);
-    expect(home).toMatch(/7 days before/);
+    expect(home).toMatch(/2 weeks before/);
     expect(home).toMatch(/House guide, no secrets/);
     expect(home).toMatch(/After checkout/);
+    expect(home).toMatch(/Going away and leaving a sitter/);
 
     const included = readPage('included.html');
-    expect(included).toMatch(/guide 7 days before/);
+    expect(included).toMatch(/guide two weeks before/);
 
     const security = readPage('security.html');
-    expect(security).toMatch(/from 7 days before/);
+    expect(security).toMatch(/from two weeks before/);
     expect(security).toMatch(/day after checkout/);
 
     const pricing = readPage('pricing.html');
     expect(pricing).toMatch(/book several sits in one list/);
     expect(pricing).toMatch(/data-faq-section="common-questions"/);
     expect(pricing).toContain('src="faq.js"');
+  });
+
+  it('pricing page documents introductory offer and referrals when markup is present', () => {
+    const html = readPage('pricing.html');
+    expect(html).toMatch(/Introductory offer &amp; referrals/);
+    expect(html).toMatch(/id="offers" hidden/);
+    expect(html).toMatch(/data-intro-offer="monthly-benefit"/);
+    expect(html).toMatch(/Referral discounts take precedence/);
   });
 
   it('does not claim prices include VAT', () => {
@@ -191,7 +240,7 @@ describe('marketing site pages', () => {
 
   it('gallery includes a trial call to action', () => {
     const html = readPage('app.html');
-    expect(html).toMatch(/href="signup\.html"/);
+    expect(html).toMatch(/href="\/signup"/);
     expect(html).toMatch(/Start free trial/);
   });
 
@@ -208,8 +257,8 @@ describe('marketing site pages', () => {
       expect(html, name).toContain('lovely-home-og.png');
       expect(html, name).toContain('class="nav-toggle"');
       expect(html, name).toContain('id="site-nav"');
-      expect(html, name).toMatch(/id="site-nav"[\s\S]*?href="account\.html"/);
-      expect(html, name).toMatch(/id="site-nav"[\s\S]*?href="help\.html"/);
+      expect(html, name).toMatch(/id="site-nav"[\s\S]*?href="\/account"/);
+      expect(html, name).toMatch(/id="site-nav"[\s\S]*?href="\/help"/);
       expect(html, name).not.toContain('lovely-home-logo-dark.png');
     }
     expect(css).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*2\.75rem/);
@@ -239,10 +288,10 @@ describe('marketing site pages', () => {
     expect(help).toMatch(/Staying as a guest/);
     expect(help).toMatch(/Set it up, Common questions/);
     expect(help).toContain('src="help.js"');
-    expect(readPage('index.html')).toMatch(/help\.html#owner\/setup/);
-    expect(readPage('included.html')).toMatch(/help\.html#owner\/setup/);
-    expect(readPage('support.html')).toMatch(/help\.html#owner\/setup/);
-    expect(readPage('support.html')).toMatch(/help\.html#owner\/common-questions/);
+    expect(readPage('index.html')).toMatch(/\/setup/);
+    expect(readPage('included.html')).toMatch(/\/setup/);
+    expect(readPage('support.html')).toMatch(/\/setup/);
+    expect(readPage('support.html')).toMatch(/\/help#owner\/common-questions/);
     expect(readPage('support.html')).toMatch(/data-faq-section="common-questions"/);
     expect(readPage('support.html')).toContain('src="faq.js"');
     const helpJs = readFileSync(join(website, 'help.js'), 'utf8');
@@ -251,7 +300,7 @@ describe('marketing site pages', () => {
     const support = readPage('support.html');
     expect(support).toMatch(/id="contact-form"/);
     expect(support).toMatch(/mailto:support@lovely-home\.co\.uk/);
-    expect(support).toMatch(/help\.html#owner/);
+    expect(support).toMatch(/\/help#owner/);
     const supportJs = readFileSync(join(website, 'support.js'), 'utf8');
     expect(supportJs).toMatch(/\/api\/public\/contact/);
   });

@@ -76,10 +76,10 @@ platform_operator_emails = ["ops@example.com"]
     expect(isStripeHostedCheckoutUrl('https://checkout.stripe.com/c/pay/cs_test_abc')).toBe(true);
     expect(isStripeHostedCheckoutUrl('https://checkout.link.com/c/pay/cs_test_abc')).toBe(true);
     expect(checkoutHasFinished('https://checkout.stripe.com/c/pay/cs_test_abc')).toBe(false);
-    expect(checkoutHasFinished('https://lovely-home.co.uk/signup-success.html?site=e2e-abc')).toBe(true);
+    expect(checkoutHasFinished('https://lovely-home.co.uk/signup-success?site=e2e-abc')).toBe(true);
     expect(checkoutHasFinished('https://lovely-home.cloudflareaccess.com/cdn-cgi/access/login')).toBe(true);
     expect(parseCheckoutSessionId('https://checkout.stripe.com/c/pay/cs_test_abcDEF123')).toBe('cs_test_abcDEF123');
-    expect(parseCheckoutSessionId('https://lovely-home.co.uk/signup.html')).toBe('');
+    expect(parseCheckoutSessionId('https://lovely-home.co.uk/signup')).toBe('');
   });
 
   it('encodes nested Stripe form fields and reads a Checkout price id', () => {

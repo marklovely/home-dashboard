@@ -82,7 +82,7 @@
     const text = document.createElement('p');
     text.id = 'cookie-notice-text';
     text.innerHTML =
-      'This site uses only the cookies it needs to work — sign-in, security, and remembering this choice. No analytics or ads. <a href="privacy.html#cookies">Privacy</a>.';
+      'This site uses only the cookies it needs to work — sign-in, security, and remembering this choice. No analytics or ads. <a href="/privacy#cookies">Privacy</a>.';
 
     const button = document.createElement('button');
     button.type = 'button';

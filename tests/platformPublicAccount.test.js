@@ -202,7 +202,7 @@ describe('account OTP and portal', () => {
     expect(portal.body.url).toBe('https://billing.stripe.com/session/test');
     expect(stripeRequest).toHaveBeenCalledWith('sk_test', 'POST', '/billing_portal/sessions', {
       customer: 'cus_kitchen',
-      return_url: 'https://lovely-home.co.uk/account.html'
+      return_url: 'https://lovely-home.co.uk/account'
     });
 
     const restored = await handleAccountSession(env, /** @type {D1Database} */ (db), {

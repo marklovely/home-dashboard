@@ -7,18 +7,22 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 | Path | Purpose |
 |------|---------|
 | `/` | Product landing — demo + **Start free trial** + pricing summary |
-| `/included.html` | What the hub includes, what needs your own account, what is not included |
-| `/setup.html` | Redirects to Help → Set it up |
-| `/security.html` | Isolation, sign-in, sitter limits, storage, backup — claims we can stand behind |
-| `/pricing.html` | Full transparent pricing (live amount from platform API); common questions from Help |
-| `/signup.html` | Public trial signup (hub name + email → Stripe Checkout) |
-| `/signup-success.html` | Post-checkout confirmation with live provisioning status |
-| `/account.html` | Owner account: email code, then Stripe Customer Portal |
-| `/help.html` | Owner and guest how-to guides (same copy as the hub), starting with Set it up and Common questions |
-| `/app.html` | Screenshot gallery |
-| `/support.html` | Contact form, common questions, billing links, and entry to Help |
-| `/privacy.html` | Privacy policy, including cookies |
-| `/terms.html` | Terms of service |
+| `/included` | What the hub includes, what needs your own account, what is not included |
+| `/setup` | Set it up — trial, wizard, sending the hub URL to a sitter, optional wall tablet |
+| `/for-house-sitters` | SEO landing — house sitter instructions for homeowners |
+| `/for-pet-sitters` | SEO landing — pet sitter house guide for owners |
+| `/security` | Isolation, sign-in, sitter limits, storage, backup — claims we can stand behind |
+| `/pricing` | Full transparent pricing (live amount from platform API); common questions from Help |
+| `/signup` | Public trial signup (hub name + email → Stripe Checkout) |
+| `/signup-success` | Post-checkout confirmation with live provisioning status |
+| `/account` | Owner account: email code, then Stripe Customer Portal |
+| `/help` | Owner and guest how-to guides (same copy as the hub), starting with Set it up and Common questions |
+| `/app` | Screenshot gallery |
+| `/support` | Contact form, common questions, billing links, and entry to Help |
+| `/privacy` | Privacy policy, including cookies |
+| `/terms` | Terms of service |
+
+On-disk files use `.html` extensions. Cloudflare Pages serves pretty URLs on **lovely-home.co.uk** natively (e.g. `/pricing` from `pricing.html`, and 308 from `/pricing.html` → `/pricing`). Do **not** add `website/_redirects` — it conflicts with that behaviour and causes redirect loops.
 
 Public demo hub: [demo.lovely-home.co.uk/sign-in](https://demo.lovely-home.co.uk/sign-in) — username `demo`, password `lovely-demo`.
 

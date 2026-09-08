@@ -2,7 +2,7 @@ import { PUBLIC_HELP_CATALOG } from './help-data.js';
 
 const FAQ_LINKS = [
   ['the public demo', 'https://demo.lovely-home.co.uk/sign-in'],
-  ['your account page', 'account.html'],
+  ['your account page', '/account'],
   ['emailing support', 'mailto:support@lovely-home.co.uk']
 ];
 
