@@ -8,7 +8,9 @@ Static marketing pages for [lovely-home.co.uk](https://lovely-home.co.uk), deplo
 |------|---------|
 | `/` | Product landing — demo + **Start free trial** + pricing summary |
 | `/included.html` | What the hub includes, what needs your own account, what is not included |
-| `/setup.html` | Redirects to Help → Set it up |
+| `/setup.html` | Set it up — trial, wizard, sending the hub URL to a sitter, optional wall tablet |
+| `/for-house-sitters.html` | SEO landing — house sitter instructions for homeowners |
+| `/for-pet-sitters.html` | SEO landing — pet sitter house guide for owners |
 | `/security.html` | Isolation, sign-in, sitter limits, storage, backup — claims we can stand behind |
 | `/pricing.html` | Full transparent pricing (live amount from platform API); common questions from Help |
 | `/signup.html` | Public trial signup (hub name + email → Stripe Checkout) |

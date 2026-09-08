@@ -1,6 +1,6 @@
 import { addDaysToIsoDate, HOME_TIMEZONE, zonedDateTimeToUtc } from '../calendar/timezone.js';
 
-export const DEFAULT_ACCESS_LEAD_DAYS = 7;
+export const DEFAULT_ACCESS_LEAD_DAYS = 14;
 export const DEFAULT_ACCESS_GRACE_DAYS = 1;
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

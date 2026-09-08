@@ -119,31 +119,60 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/Wall tablet, mount, or kiosk hardware/);
   });
 
-  it('setup page redirects to Help → Set it up', () => {
+  it('setup page explains trial, sitter sharing, and optional wall tablet', () => {
     const html = readPage('setup.html');
-    expect(html).toMatch(/help\.html#owner\/setup/);
-    expect(html).toMatch(/http-equiv="refresh"/);
-    expect(html).toMatch(/location\.replace\('help\.html#owner\/setup'\)/);
+    expect(html).toMatch(/<link rel="canonical" href="https:\/\/lovely-home\.co\.uk\/setup\.html"/);
+    expect(html).not.toMatch(/http-equiv="refresh"/);
+    expect(html).not.toMatch(/location\.replace/);
+    expect(html).toMatch(/Start free trial/);
+    expect(html).toMatch(/Send it to a sitter/);
+    expect(html).toMatch(/Optional: wall tablet/);
+    expect(html).toMatch(/Two weeks before/);
+    expect(html).toMatch(/No hardware to buy/);
+  });
+
+  it('ships robots.txt and sitemap.xml for search engines', () => {
+    const robots = readFileSync(join(website, 'robots.txt'), 'utf8');
+    expect(robots).toMatch(/Sitemap: https:\/\/lovely-home\.co\.uk\/sitemap\.xml/);
+    expect(robots).toMatch(/Allow: \//);
+
+    const sitemap = readFileSync(join(website, 'sitemap.xml'), 'utf8');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/</loc>');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/setup.html</loc>');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/for-house-sitters.html</loc>');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/for-pet-sitters.html</loc>');
+    expect(sitemap).toContain('<loc>https://lovely-home.co.uk/pricing.html</loc>');
+    expect(sitemap).not.toContain('404.html');
+    expect(sitemap).not.toContain('access-unauthorised');
+    expect(sitemap).not.toContain('signup-success.html');
   });
 
   it('explains scheduled stays: guide early, secrets on the sit, access after checkout', () => {
     const home = readPage('index.html');
     expect(home).toMatch(/Book sits in advance/);
-    expect(home).toMatch(/7 days before/);
+    expect(home).toMatch(/2 weeks before/);
     expect(home).toMatch(/House guide, no secrets/);
     expect(home).toMatch(/After checkout/);
+    expect(home).toMatch(/Going away and leaving a sitter/);
 
     const included = readPage('included.html');
-    expect(included).toMatch(/guide 7 days before/);
+    expect(included).toMatch(/guide two weeks before/);
 
     const security = readPage('security.html');
-    expect(security).toMatch(/from 7 days before/);
+    expect(security).toMatch(/from two weeks before/);
     expect(security).toMatch(/day after checkout/);
 
     const pricing = readPage('pricing.html');
     expect(pricing).toMatch(/book several sits in one list/);
     expect(pricing).toMatch(/data-faq-section="common-questions"/);
     expect(pricing).toContain('src="faq.js"');
+  });
+
+  it('pricing page documents introductory offer and referrals', () => {
+    const html = readPage('pricing.html');
+    expect(html).toMatch(/Introductory offer &amp; referrals/);
+    expect(html).toMatch(/25% off each of your first two months/);
+    expect(html).toMatch(/Referral discounts take precedence/);
   });
 
   it('does not claim prices include VAT', () => {
@@ -239,9 +268,9 @@ describe('marketing site pages', () => {
     expect(help).toMatch(/Staying as a guest/);
     expect(help).toMatch(/Set it up, Common questions/);
     expect(help).toContain('src="help.js"');
-    expect(readPage('index.html')).toMatch(/help\.html#owner\/setup/);
-    expect(readPage('included.html')).toMatch(/help\.html#owner\/setup/);
-    expect(readPage('support.html')).toMatch(/help\.html#owner\/setup/);
+    expect(readPage('index.html')).toMatch(/setup\.html/);
+    expect(readPage('included.html')).toMatch(/setup\.html/);
+    expect(readPage('support.html')).toMatch(/setup\.html/);
     expect(readPage('support.html')).toMatch(/help\.html#owner\/common-questions/);
     expect(readPage('support.html')).toMatch(/data-faq-section="common-questions"/);
     expect(readPage('support.html')).toContain('src="faq.js"');

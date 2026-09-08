@@ -30,7 +30,7 @@ describe('public help catalog', () => {
     expect(setupText).toMatch(/No hardware to buy/);
     expect(setupText).toMatch(/Send it to a sitter/);
     expect(setupText).toMatch(/Optional: wall tablet/);
-    expect(setupText).toMatch(/Seven days before/);
+    expect(setupText).toMatch(/Two weeks before/);
     expect(setupText).toMatch(/You do not need Sitter is here for a booked remote stay/);
     expect(setupText).not.toMatch(/A wall mount/);
     expect(setupText).not.toMatch(/Turn on Sitter is here so home-access details appear for that stay/);

@@ -62,7 +62,7 @@ export function createSitterStaysSection(context) {
   const hint = document.createElement('p');
   hint.className = 'settings-help subtle';
   hint.textContent =
-    'For remote sitters and short lets: share the hub URL and add their email here. Login opens 7 days before the sit by default; home access details appear on sit dates and access is removed 1 day after the sit ends.';
+    'For remote sitters and short lets: share the hub URL and add their email here. Login opens 14 days before the sit by default; home access details appear on sit dates and access is removed 1 day after the sit ends.';
 
   const list = document.createElement('div');
   list.className = 'sitter-stays-list';

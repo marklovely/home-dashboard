@@ -176,7 +176,7 @@ Most households use one or both patterns:
 **Settings → House Sitter Mode → Scheduled stays**
 
 - Add sitter email(s), start/end dates, and an optional label.
-- Cloudflare Access sitter login opens **7 days before** the sit by default; home access details appear on sit dates; access is removed **1 day after** the sit ends (Worker cron applies the schedule).
+- Cloudflare Access sitter login opens **two weeks before** the sit by default; home access details appear on sit dates; access is removed **1 day after** the sit ends (Worker cron applies the schedule).
 - Edit, extend, or cancel stays from the same panel.
 
 Use **permanent sitter login emails** only for a long-term sitter who should always be able to sign in — not for one-off visits.

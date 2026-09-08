@@ -32,6 +32,7 @@ echo "==> Deploying ./website to ${PROJECT_NAME} (branch=${PRODUCTION_BRANCH})"
 echo
 echo "Home:     https://lovely-home.co.uk/"
 echo "Included: https://lovely-home.co.uk/included.html"
+echo "Setup:    https://lovely-home.co.uk/setup.html"
 echo "Help:     https://lovely-home.co.uk/help.html"
 echo "Security: https://lovely-home.co.uk/security.html"
 echo "Pricing:  https://lovely-home.co.uk/pricing.html"
