@@ -1,4 +1,4 @@
-import { formatUsageLine, usageTone } from './usageFormat.js';
+import { formatUsageLineWithLimit, usageToneWithLimit } from './usageFormat.js';
 
 /**
  * @param {Record<string, unknown>} usage
@@ -14,18 +14,19 @@ export function renderSiteUsageSummary(usage) {
   const d1Limit = Number(usage.d1?.limitBytes ?? 0);
   const r2Bytes = Number(usage.r2?.totalBytes ?? 0);
   const r2Limit = Number(usage.r2?.limitBytes ?? 0);
+  const r2ShowLimit = usage.r2?.showLimit !== false;
   const guidesCount = Number(usage.r2?.guides?.objectCount ?? 0);
   const mediaCount = Number(usage.r2?.media?.objectCount ?? 0);
 
   return `
     <div class="usage-grid">
-      <div class="usage-metric usage-${usageTone(d1Bytes, d1Limit)}">
+      <div class="usage-metric usage-${usageToneWithLimit(d1Bytes, d1Limit, true)}">
         <span class="usage-label">D1</span>
-        <span class="usage-value">${escapeHtml(formatUsageLine(d1Bytes, d1Limit))}</span>
+        <span class="usage-value">${escapeHtml(formatUsageLineWithLimit(d1Bytes, d1Limit, true))}</span>
       </div>
-      <div class="usage-metric usage-${usageTone(r2Bytes, r2Limit)}">
+      <div class="usage-metric usage-${usageToneWithLimit(r2Bytes, r2Limit, r2ShowLimit)}">
         <span class="usage-label">R2 (hub buckets)</span>
-        <span class="usage-value">${escapeHtml(formatUsageLine(r2Bytes, r2Limit))}</span>
+        <span class="usage-value">${escapeHtml(formatUsageLineWithLimit(r2Bytes, r2Limit, r2ShowLimit))}</span>
         <span class="usage-sub">${escapeHtml(`${guidesCount} guide PDFs · ${mediaCount} media objects`)}</span>
       </div>
     </div>
@@ -42,12 +43,13 @@ export function renderAccountUsageSummary(summary) {
 
   const r2Bytes = Number(summary.r2?.totalBytes ?? 0);
   const r2Limit = Number(summary.r2?.limitBytes ?? 0);
+  const r2ShowLimit = summary.r2?.showLimit !== false;
   const d1Bytes = Number(summary.d1?.totalBytes ?? 0);
   const d1Limit = Number(summary.d1?.limitBytes ?? 0);
 
   return `
-    <span class="summary-item usage-${usageTone(r2Bytes, r2Limit)}">Account R2 <strong>${escapeHtml(formatUsageLine(r2Bytes, r2Limit))}</strong></span>
-    <span class="summary-item usage-${usageTone(d1Bytes, d1Limit)}">Account D1 <strong>${escapeHtml(formatUsageLine(d1Bytes, d1Limit))}</strong></span>
+    <span class="summary-item usage-${usageToneWithLimit(r2Bytes, r2Limit, r2ShowLimit)}">Account R2 <strong>${escapeHtml(formatUsageLineWithLimit(r2Bytes, r2Limit, r2ShowLimit))}</strong></span>
+    <span class="summary-item usage-${usageToneWithLimit(d1Bytes, d1Limit, true)}">Account D1 <strong>${escapeHtml(formatUsageLineWithLimit(d1Bytes, d1Limit, true))}</strong></span>
   `;
 }
 

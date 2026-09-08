@@ -61,6 +61,18 @@ variable "platform_cf_api_token" {
   description = "Cloudflare API token with Account Read, D1 Read, R2 Read, Pages Edit, and Access Apps and Policies Edit (marketing preview emails + usage + preview toggles)."
 }
 
+variable "platform_cf_workers_plan" {
+  type        = string
+  default     = "paid"
+  description = "Cloudflare Workers plan for platform admin usage limits: free or paid."
+}
+
+variable "platform_cf_r2_plan" {
+  type        = string
+  default     = "paid"
+  description = "Cloudflare R2 plan for platform admin usage display: free or paid."
+}
+
 variable "stripe_secret_key" {
   type        = string
   default     = ""

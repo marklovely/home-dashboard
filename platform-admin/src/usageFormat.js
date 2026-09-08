@@ -52,3 +52,27 @@ export function formatUsageLine(value, limit) {
   const percent = usagePercent(value, limit);
   return `${formatBytes(value)} / ${formatBytes(limit)} (${percent}%)`;
 }
+
+/**
+ * @param {number} value
+ * @param {number | null | undefined} limit
+ * @param {boolean} [showLimit]
+ */
+export function formatUsageLineWithLimit(value, limit, showLimit = true) {
+  if (!showLimit || limit == null || !Number.isFinite(limit) || limit <= 0) {
+    return `${formatBytes(value)} used`;
+  }
+  return formatUsageLine(value, limit);
+}
+
+/**
+ * @param {number} value
+ * @param {number | null | undefined} limit
+ * @param {boolean} [showLimit]
+ */
+export function usageToneWithLimit(value, limit, showLimit = true) {
+  if (!showLimit || limit == null || !Number.isFinite(limit) || limit <= 0) {
+    return 'ok';
+  }
+  return usageTone(value, limit);
+}

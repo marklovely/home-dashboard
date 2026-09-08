@@ -1,4 +1,4 @@
-import { formatUsageLine, usageTone } from './usageFormat.js';
+import { formatUsageLineWithLimit, usageToneWithLimit } from './usageFormat.js';
 import { renderLinkChip } from './links.js';
 import { statusLabel } from './health.js';
 
@@ -111,22 +111,24 @@ function renderCloudflarePanel(cloudflare, links) {
   const storage = /** @type {Record<string, unknown>} */ (cloudflare.storage ?? {});
   const inventory = /** @type {Record<string, unknown> | null} */ (cloudflare.inventory ?? null);
   const d1Match = /** @type {Record<string, unknown>} */ (cloudflare.d1Match ?? {});
+  const plan = /** @type {Record<string, unknown>} */ (cloudflare.plan ?? {});
 
   let storageHtml = `<p class="muted">${escapeHtml(String(storage.message ?? 'Storage usage not available'))}</p>`;
   if (storage.ok) {
     const r2Bytes = Number(/** @type {Record<string, unknown>} */ (storage.r2)?.totalBytes ?? 0);
     const r2Limit = Number(/** @type {Record<string, unknown>} */ (storage.r2)?.limitBytes ?? 0);
+    const r2ShowLimit = /** @type {Record<string, unknown>} */ (storage.r2)?.showLimit !== false;
     const d1Bytes = Number(/** @type {Record<string, unknown>} */ (storage.d1)?.totalBytes ?? 0);
     const d1Limit = Number(/** @type {Record<string, unknown>} */ (storage.d1)?.limitBytes ?? 0);
     storageHtml = `
       <div class="usage-grid">
-        <div class="usage-metric usage-${usageTone(r2Bytes, r2Limit)}">
+        <div class="usage-metric usage-${usageToneWithLimit(r2Bytes, r2Limit, r2ShowLimit)}">
           <span class="usage-label">Account R2</span>
-          <span class="usage-value">${escapeHtml(formatUsageLine(r2Bytes, r2Limit))}</span>
+          <span class="usage-value">${escapeHtml(formatUsageLineWithLimit(r2Bytes, r2Limit, r2ShowLimit))}</span>
         </div>
-        <div class="usage-metric usage-${usageTone(d1Bytes, d1Limit)}">
+        <div class="usage-metric usage-${usageToneWithLimit(d1Bytes, d1Limit, true)}">
           <span class="usage-label">Hub D1 total</span>
-          <span class="usage-value">${escapeHtml(formatUsageLine(d1Bytes, d1Limit))}</span>
+          <span class="usage-value">${escapeHtml(formatUsageLineWithLimit(d1Bytes, d1Limit, true))}</span>
         </div>
       </div>
     `;
@@ -140,7 +142,7 @@ function renderCloudflarePanel(cloudflare, links) {
     const pages = /** @type {Record<string, unknown>} */ (inventory.pages ?? {});
     inventoryHtml = `
       <ul class="monitoring-list">
-        <li>D1 databases <strong>${escapeHtml(String(d1.count ?? '—'))}</strong> / ${escapeHtml(String(d1.limit ?? '—'))} (Workers Free limit)</li>
+        <li>D1 databases <strong>${escapeHtml(String(d1.count ?? '—'))}</strong> / ${escapeHtml(String(d1.limit ?? '—'))} (${escapeHtml(String(plan.workersPlanLabel ?? 'Workers'))} limit)</li>
         <li>Hub D1 in manifest <strong>${escapeHtml(String(d1Match.hubCount ?? '—'))}</strong>${d1Match.orphanOnAccount != null ? ` · ${escapeHtml(String(d1Match.orphanOnAccount))} orphan on account` : ''}</li>
         <li>R2 buckets <strong>${escapeHtml(String(r2.count ?? '—'))}</strong></li>
         <li>Worker scripts <strong>${escapeHtml(String(workers.count ?? '—'))}</strong></li>
@@ -162,9 +164,21 @@ function renderCloudflarePanel(cloudflare, links) {
       </div>
       ${storageHtml}
       ${inventoryHtml}
-      <p class="muted monitoring-note">Free tier storage limits: 10 GB R2 and 5 GB D1 per account. D1 database count limit is ${escapeHtml(String(d1Match.limit ?? 10))} on Workers Free.</p>
+      <p class="muted monitoring-note">${escapeHtml(formatPlanLimitsNote(plan))}</p>
     </section>
   `;
+}
+
+/**
+ * @param {Record<string, unknown>} plan
+ */
+function formatPlanLimitsNote(plan) {
+  const workersLabel = String(plan.workersPlanLabel ?? 'Workers Free');
+  const r2Label = String(plan.r2PlanLabel ?? 'R2 Free');
+  if (plan.workersPlan === 'paid') {
+    return `${workersLabel} + ${r2Label}: D1 account storage up to 1 TB, 50,000 databases max (10 GB per database). R2 is usage-based with no 10 GB free cap. Set PLATFORM_CF_WORKERS_PLAN=paid on the platform Pages project.`;
+  }
+  return `${workersLabel}: 10 GB R2 and 5 GB D1 account storage included. Up to 10 D1 databases. Set PLATFORM_CF_WORKERS_PLAN=paid if this account is on Workers Paid.`;
 }
 
 /**
