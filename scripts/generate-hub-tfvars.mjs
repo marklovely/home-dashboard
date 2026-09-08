@@ -57,6 +57,14 @@ const stripeSecretKeyLive = process.env.STRIPE_SECRET_KEY_LIVE?.trim() || '';
 const stripeWebhookSecretLive = process.env.STRIPE_WEBHOOK_SECRET_LIVE?.trim() || '';
 const stripePriceIdLive = process.env.STRIPE_PRICE_ID_LIVE?.trim() || '';
 const stripePriceIdYearlyLive = process.env.STRIPE_PRICE_ID_YEARLY_LIVE?.trim() || '';
+const stripeReferralCouponMonthly = process.env.STRIPE_REFERRAL_COUPON_MONTHLY?.trim() || '';
+const stripeReferralCouponYearly = process.env.STRIPE_REFERRAL_COUPON_YEARLY?.trim() || '';
+const stripeReferralCouponMonthlyLive = process.env.STRIPE_REFERRAL_COUPON_MONTHLY_LIVE?.trim() || '';
+const stripeReferralCouponYearlyLive = process.env.STRIPE_REFERRAL_COUPON_YEARLY_LIVE?.trim() || '';
+const stripeIntroCouponMonthly = process.env.STRIPE_INTRO_COUPON_MONTHLY?.trim() || '';
+const stripeIntroCouponYearly = process.env.STRIPE_INTRO_COUPON_YEARLY?.trim() || '';
+const stripeIntroCouponMonthlyLive = process.env.STRIPE_INTRO_COUPON_MONTHLY_LIVE?.trim() || '';
+const stripeIntroCouponYearlyLive = process.env.STRIPE_INTRO_COUPON_YEARLY_LIVE?.trim() || '';
 const provisionSiteId = process.env.PROVISION_SITE_ID?.trim() || '';
 const provisionPhase = process.env.PROVISION_PHASE?.trim() || '';
 const deprovisionSiteId = process.env.DEPROVISION_SITE_ID?.trim() || '';
@@ -184,6 +192,38 @@ if (stripePriceIdLive) {
 
 if (stripePriceIdYearlyLive) {
   lines.push(`stripe_price_id_yearly_live = "${escapeHcl(stripePriceIdYearlyLive)}"`, '');
+}
+
+if (stripeReferralCouponMonthly) {
+  lines.push(`stripe_referral_coupon_monthly = "${escapeHcl(stripeReferralCouponMonthly)}"`, '');
+}
+
+if (stripeReferralCouponYearly) {
+  lines.push(`stripe_referral_coupon_yearly = "${escapeHcl(stripeReferralCouponYearly)}"`, '');
+}
+
+if (stripeReferralCouponMonthlyLive) {
+  lines.push(`stripe_referral_coupon_monthly_live = "${escapeHcl(stripeReferralCouponMonthlyLive)}"`, '');
+}
+
+if (stripeReferralCouponYearlyLive) {
+  lines.push(`stripe_referral_coupon_yearly_live = "${escapeHcl(stripeReferralCouponYearlyLive)}"`, '');
+}
+
+if (stripeIntroCouponMonthly) {
+  lines.push(`stripe_intro_coupon_monthly = "${escapeHcl(stripeIntroCouponMonthly)}"`, '');
+}
+
+if (stripeIntroCouponYearly) {
+  lines.push(`stripe_intro_coupon_yearly = "${escapeHcl(stripeIntroCouponYearly)}"`, '');
+}
+
+if (stripeIntroCouponMonthlyLive) {
+  lines.push(`stripe_intro_coupon_monthly_live = "${escapeHcl(stripeIntroCouponMonthlyLive)}"`, '');
+}
+
+if (stripeIntroCouponYearlyLive) {
+  lines.push(`stripe_intro_coupon_yearly_live = "${escapeHcl(stripeIntroCouponYearlyLive)}"`, '');
 }
 
 const marketingSiteOrigin = process.env.MARKETING_SITE_ORIGIN?.trim() || 'https://lovely-home.co.uk';
