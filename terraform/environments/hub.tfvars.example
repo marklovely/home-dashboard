@@ -87,16 +87,7 @@ platform_admin = {
 sites = {
 
 
-  test = {
-    hostname         = "test.lovely-home.co.uk"
-    hub_environment  = "test"
-    vanilla          = true
-    terraform        = true
-    hub_proxy_secret = "PASTE_EXISTING_HUB_PROXY_SECRET"
-    tester_emails = [
-      "trial-user@example.com",
-    ]
-  }
+
 
 
 
