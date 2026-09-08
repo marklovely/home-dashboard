@@ -108,12 +108,16 @@ module "platform_admin" {
   stripe_price_id_yearly              = var.stripe_price_id_yearly
   stripe_referral_coupon_monthly      = var.stripe_referral_coupon_monthly
   stripe_referral_coupon_yearly       = var.stripe_referral_coupon_yearly
+  stripe_intro_coupon_monthly         = var.stripe_intro_coupon_monthly
+  stripe_intro_coupon_yearly          = var.stripe_intro_coupon_yearly
   stripe_secret_key_live              = var.stripe_secret_key_live
   stripe_webhook_secret_live          = var.stripe_webhook_secret_live
   stripe_price_id_live                = var.stripe_price_id_live
   stripe_price_id_yearly_live         = var.stripe_price_id_yearly_live
   stripe_referral_coupon_monthly_live = var.stripe_referral_coupon_monthly_live
   stripe_referral_coupon_yearly_live  = var.stripe_referral_coupon_yearly_live
+  stripe_intro_coupon_monthly_live    = var.stripe_intro_coupon_monthly_live
+  stripe_intro_coupon_yearly_live     = var.stripe_intro_coupon_yearly_live
   marketing_site_origin               = var.marketing_site_origin
   marketing_access_app_id             = try(module.marketing_site[0].marketing_site_contract.access_app_id, "")
   public_signup_enabled               = var.public_signup_enabled

@@ -90,6 +90,18 @@ locals {
         value = var.stripe_referral_coupon_yearly
       }
     } : {},
+    var.stripe_intro_coupon_monthly != "" ? {
+      STRIPE_INTRO_COUPON_MONTHLY = {
+        type  = "plain_text"
+        value = var.stripe_intro_coupon_monthly
+      }
+    } : {},
+    var.stripe_intro_coupon_yearly != "" ? {
+      STRIPE_INTRO_COUPON_YEARLY = {
+        type  = "plain_text"
+        value = var.stripe_intro_coupon_yearly
+      }
+    } : {},
     var.stripe_secret_key_live != "" ? {
       STRIPE_SECRET_KEY_LIVE = {
         type  = "secret_text"
@@ -124,6 +136,18 @@ locals {
       STRIPE_REFERRAL_COUPON_YEARLY_LIVE = {
         type  = "plain_text"
         value = var.stripe_referral_coupon_yearly_live
+      }
+    } : {},
+    var.stripe_intro_coupon_monthly_live != "" ? {
+      STRIPE_INTRO_COUPON_MONTHLY_LIVE = {
+        type  = "plain_text"
+        value = var.stripe_intro_coupon_monthly_live
+      }
+    } : {},
+    var.stripe_intro_coupon_yearly_live != "" ? {
+      STRIPE_INTRO_COUPON_YEARLY_LIVE = {
+        type  = "plain_text"
+        value = var.stripe_intro_coupon_yearly_live
       }
     } : {},
     var.stripe_checkout_success_url != "" ? {

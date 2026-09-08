@@ -29,6 +29,22 @@ export async function setStripeMode(payload) {
 }
 
 /**
+ * @param {{ enabled: boolean }} payload
+ */
+export async function setIntroOfferEnabled(payload) {
+  const response = await fetch(`${API_BASE}/intro-offer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.message ?? `Intro offer update failed (${response.status})`);
+  }
+  return body;
+}
+
+/**
  * @returns {Promise<object>}
  */
 export async function fetchMarketingAccess() {

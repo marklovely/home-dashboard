@@ -258,9 +258,40 @@
     }
   }
 
+  async function loadIntroOfferBanner() {
+    if (referralCodeParam) return;
+    const banner = document.getElementById('signup-intro-banner');
+    const benefitEl = document.getElementById('signup-intro-benefit');
+    if (!banner || !benefitEl) return;
+    try {
+      const response = await fetch(apiBase + '/api/public/signup/pricing', {
+        headers: { Accept: 'application/json' }
+      });
+      const pricing = await response.json().catch(() => ({}));
+      if (window.LovelyHomePricing?.applyIntroOffer) {
+        window.LovelyHomePricing.applyIntroOffer(pricing);
+        return;
+      }
+      const intro = pricing.introOffer;
+      if (!intro?.active) {
+        banner.hidden = true;
+        return;
+      }
+      const monthly = intro.monthlyBenefit ? String(intro.monthlyBenefit) : '';
+      const yearly = intro.yearlyBenefit ? String(intro.yearlyBenefit) : '';
+      benefitEl.textContent =
+        'Introductory offer for new households: ' +
+        (monthly && yearly ? monthly + ' (monthly) or ' + yearly + ' (yearly).' : monthly || yearly || 'discount at checkout.');
+      banner.hidden = false;
+    } catch {
+      // Signup still works; server validates eligibility at checkout.
+    }
+  }
+
   updateSlugHint();
   initChallenge();
   if (referralCodeParam) loadReferralPreview(referralCodeParam);
+  else loadIntroOfferBanner();
 
   document.addEventListener('DOMContentLoaded', function () {
     if (window.LovelyHomePricing) window.LovelyHomePricing.initPricing();

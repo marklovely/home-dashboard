@@ -1,4 +1,5 @@
 import { getPlatformBillingDb, stripeApiRequest, TRIAL_PERIOD_DAYS } from './platformBilling.js';
+import { describeIntroOffer } from './platformIntroOffer.js';
 import { getActiveStripeCredentials } from './platformStripeMode.js';
 
 /**
@@ -24,6 +25,12 @@ import { getActiveStripeCredentials } from './platformStripeMode.js';
  *   checkoutSummary: string;
  *   signupSummary: string;
  *   vatNote: string;
+ *   introOffer?: {
+ *     active: boolean;
+ *     monthlyBenefit?: string;
+ *     yearlyBenefit?: string;
+ *     checkoutNote?: string;
+ *   };
  * }} PublicPlanPricing
  */
 
@@ -208,5 +215,17 @@ export async function getPublicPlanPricing(env) {
   }
 
   await Promise.all(fetches);
-  return buildPublicPricingFromPlans(plans, productName);
+  const pricing = buildPublicPricingFromPlans(plans, productName);
+  const intro = await describeIntroOffer(env, db);
+  return {
+    ...pricing,
+    introOffer: intro.active
+      ? {
+          active: true,
+          monthlyBenefit: intro.monthlyBenefit,
+          yearlyBenefit: intro.yearlyBenefit,
+          checkoutNote: intro.checkoutNote
+        }
+      : { active: false }
+  };
 }

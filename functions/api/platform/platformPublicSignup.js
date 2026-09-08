@@ -28,6 +28,7 @@ import {
   reserveReferralCodeForCheckout,
   validateReferralForSignup
 } from './platformReferrals.js';
+import { resolveIntroOfferForSignup } from './platformIntroOffer.js';
 
 /** Reserved slugs — internal hubs and common DNS names. */
 export const PUBLIC_SIGNUP_BLOCKED_SITE_IDS = new Set([
@@ -339,6 +340,12 @@ export async function handlePublicHubSignup(env, input) {
     };
   }
 
+  const introOffer = await resolveIntroOfferForSignup(env, billingDb, {
+    customerEmail,
+    billingInterval: billingInterval ?? 'month',
+    referralCode: inputReferralCode
+  });
+
   const checkout = await createBillingCheckoutSession(env, {
     siteId,
     customerEmail,
@@ -347,7 +354,8 @@ export async function handlePublicHubSignup(env, input) {
     billingInterval: billingInterval ?? 'month',
     mode: stripeMode,
     referralCode: referralValidation.referral?.code,
-    referrerSiteId: referralValidation.referral?.referrerSiteId
+    referrerSiteId: referralValidation.referral?.referrerSiteId,
+    applyIntroOffer: introOffer.apply
   });
 
   if (!checkout.ok) {
@@ -406,6 +414,12 @@ export async function handlePublicHubSignup(env, input) {
         ? {
             code: referralValidation.referral.code,
             billingInterval: referralValidation.referral.billingInterval
+          }
+        : null,
+      introOffer: introOffer.apply
+        ? {
+            billingInterval: introOffer.interval,
+            benefit: introOffer.benefit
           }
         : null
     }

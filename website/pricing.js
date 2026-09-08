@@ -108,6 +108,33 @@
   /**
    * @param {Record<string, unknown>} pricing
    */
+  function applyIntroOffer(pricing) {
+    const intro = pricing.introOffer && typeof pricing.introOffer === 'object' ? pricing.introOffer : null;
+    const active = intro?.active === true;
+
+    document.querySelectorAll('[data-intro-offer="headline"]').forEach((el) => {
+      const section = el.closest('.pricing-intro-offer, #signup-intro-banner');
+      if (!active) {
+        if (section instanceof HTMLElement) section.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      const monthly = intro?.monthlyBenefit ? String(intro.monthlyBenefit) : '';
+      const yearly = intro?.yearlyBenefit ? String(intro.yearlyBenefit) : '';
+      el.textContent =
+        'Introductory offer for new households: ' +
+        (monthly && yearly ? monthly + ' (monthly) or ' + yearly + ' (yearly).' : monthly || yearly || 'discount at checkout.');
+      if (section instanceof HTMLElement) section.hidden = false;
+    });
+
+    document.querySelectorAll('[data-intro-offer="checkout-note"]').forEach((el) => {
+      el.textContent = active && intro?.checkoutNote ? String(intro.checkoutNote) : '';
+    });
+  }
+
+  /**
+   * @param {Record<string, unknown>} pricing
+   */
   function applyPricing(pricing) {
     const normalized = normalizePricing(pricing);
     const trialDays = normalized.trialDays;
@@ -192,6 +219,7 @@
     });
 
     document.documentElement.classList.add('pricing-loaded');
+    applyIntroOffer(pricing);
   }
 
   /**
@@ -227,5 +255,13 @@
     return pricing;
   }
 
-  window.LovelyHomePricing = { loadPricing, applyPricing, initPricing, resolveApiBase, STATIC_FALLBACK, normalizePricing };
+  window.LovelyHomePricing = {
+    loadPricing,
+    applyPricing,
+    applyIntroOffer,
+    initPricing,
+    resolveApiBase,
+    STATIC_FALLBACK,
+    normalizePricing
+  };
 })();

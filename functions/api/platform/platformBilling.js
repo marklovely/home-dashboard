@@ -13,6 +13,7 @@ import {
   referralCouponIdForInterval,
   resolveSiteIdFromInvoiceObject
 } from './platformReferrals.js';
+import { introCouponIdForInterval } from './platformIntroOffer.js';
 import { getStripeMode, stripeCredentialsForMode, stripeSetConfigured } from './platformStripeMode.js';
 
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
@@ -215,6 +216,7 @@ export function defaultCheckoutUrls(env, platformHostname) {
  *   mode?: 'test' | 'live';
  *   referralCode?: string;
  *   referrerSiteId?: string;
+ *   applyIntroOffer?: boolean;
  * }} input
  */
 export async function createBillingCheckoutSession(env, input) {
@@ -277,6 +279,21 @@ export async function createBillingCheckoutSession(env, input) {
     metadata.referral_code = referralCode;
     metadata.referrer_site_id = referrerSiteId;
     metadata.referral_interval = interval;
+    sessionParams.subscription_data.metadata = { ...metadata };
+    sessionParams.metadata = { ...metadata };
+    sessionParams.discounts = [{ coupon: couponId }];
+  } else if (input.applyIntroOffer) {
+    const interval = normalizeReferralBillingInterval(billingInterval);
+    const couponId = introCouponIdForInterval(env, mode, interval);
+    if (!couponId) {
+      return {
+        ok: false,
+        error: 'INTRO_OFFER_NOT_CONFIGURED',
+        message: 'Introductory discounts are not configured yet.'
+      };
+    }
+    metadata.intro_offer = '1';
+    metadata.intro_interval = interval;
     sessionParams.subscription_data.metadata = { ...metadata };
     sessionParams.metadata = { ...metadata };
     sessionParams.discounts = [{ coupon: couponId }];
