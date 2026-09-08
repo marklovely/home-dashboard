@@ -140,19 +140,19 @@
         </div>
       </section>
 
-      <section class="pricing-offers-summary" id="offers" aria-label="Introductory offer and referrals">
+      <section class="pricing-offers-summary" id="offers" hidden aria-label="Introductory offer and referrals">
         <div class="section-head">
           <h2>Introductory offer &amp; referrals</h2>
-          <p>New households may see a launch discount on this page when the introductory offer is running. Friend referral links replace that discount if you use one.</p>
+          <p>New households can use the launch discount below when it is active. Friend referral links replace that discount if you use one.</p>
         </div>
         <div class="referral-grid">
-          <article class="referral-card">
+          <article class="referral-card" id="pricing-intro-offer-card">
             <h3>Introductory offer (new households)</h3>
             <ul class="pricing-list pricing-list--yes">
-              <li><strong>Monthly:</strong> 25% off each of your first two months (first invoice after the trial)</li>
-              <li><strong>Yearly:</strong> 30% off your first year (first invoice after the trial)</li>
+              <li><strong>Monthly:</strong> <span data-intro-offer="monthly-benefit"></span></li>
+              <li><strong>Yearly:</strong> <span data-intro-offer="yearly-benefit"></span></li>
             </ul>
-            <p class="muted">Shown on the home and pricing pages when active. Applied on Stripe checkout — not at signup. For households who have never subscribed before.</p>
+            <p class="muted" data-intro-offer="checkout-note"></p>
           </article>
           <article class="referral-card">
             <h3>Refer a friend (existing customers)</h3>

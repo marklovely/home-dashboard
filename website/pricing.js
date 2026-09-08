@@ -174,6 +174,19 @@
         buildIntroPromoLine(intro) +
         ' Applied at secure checkout after your free trial — not on referrals (friend links keep their own discount).';
     });
+
+    const offersSection = document.getElementById('offers');
+    if (offersSection instanceof HTMLElement) {
+      offersSection.hidden = !active;
+    }
+
+    document.querySelectorAll('[data-intro-offer="monthly-benefit"]').forEach((el) => {
+      el.textContent = active && intro?.monthlyBenefit ? String(intro.monthlyBenefit) : '';
+    });
+
+    document.querySelectorAll('[data-intro-offer="yearly-benefit"]').forEach((el) => {
+      el.textContent = active && intro?.yearlyBenefit ? String(intro.yearlyBenefit) : '';
+    });
   }
 
   /**

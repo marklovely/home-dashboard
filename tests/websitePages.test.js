@@ -190,10 +190,11 @@ describe('marketing site pages', () => {
     expect(pricing).toContain('src="faq.js"');
   });
 
-  it('pricing page documents introductory offer and referrals', () => {
+  it('pricing page documents introductory offer and referrals when markup is present', () => {
     const html = readPage('pricing.html');
     expect(html).toMatch(/Introductory offer &amp; referrals/);
-    expect(html).toMatch(/25% off each of your first two months/);
+    expect(html).toMatch(/id="offers" hidden/);
+    expect(html).toMatch(/data-intro-offer="monthly-benefit"/);
     expect(html).toMatch(/Referral discounts take precedence/);
   });
 
