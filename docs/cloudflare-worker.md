@@ -68,16 +68,19 @@ npm run deploy
 After pulling CMS or house-settings changes, apply D1 migrations once:
 
 ```bash
-# All hub sites (prod, test, sandbox, demo, dev, smith, …)
+# All hub sites (test, sandbox, demo, dev, wagtail, lovely, …)
 npm run d1:migrate:all
 npm run deploy:all
+
+# Legacy top-level Worker (dashboard.lovely-home.co.uk) — only if still in use:
+npm run deploy:all --prefix worker -- --include-prod
 
 # Or one site
 npm run d1:migrate:prod --prefix worker
 npm run deploy:test --prefix worker
 ```
 
-`d1:migrate:all` and `deploy:all` discover scripts from `worker/package.json`. Use `--dry-run`, `--site test`, or `--exclude prod` as needed. Requires `CLOUDFLARE_API_TOKEN` in the environment. Run migrations before deploy when schema changed.
+`d1:migrate:all` and `deploy:all` discover scripts from `worker/package.json`. By default `deploy:all` skips the legacy top-level Worker (`prod` / `lovely-home-hub-api`); pass `--include-prod` only if that script is still live. Use `--dry-run`, `--site test`, or `--exclude demo` as needed. Requires `CLOUDFLARE_API_TOKEN` in the environment. Run migrations before deploy when schema changed.
 
 For the **isolated test stack** (separate D1/R2/Worker), see [cloudflare-test-environment.md](./cloudflare-test-environment.md) and use `npm run d1:migrate:test` / `npm run deploy:test`.
 

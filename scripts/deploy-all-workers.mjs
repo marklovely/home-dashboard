@@ -6,7 +6,7 @@
  *   node scripts/deploy-all-workers.mjs
  *   node scripts/deploy-all-workers.mjs --dry-run
  *   node scripts/deploy-all-workers.mjs --site test --site demo
- *   node scripts/deploy-all-workers.mjs --exclude prod
+ *   node scripts/deploy-all-workers.mjs --include-prod
  *
  * Requires CLOUDFLARE_API_TOKEN (and usually CLOUDFLARE_ACCOUNT_ID) in the
  * environment — same as individual `npm run deploy:<site> --prefix worker`.
@@ -57,10 +57,11 @@ export function deployScriptNameForSite(siteId) {
  * @param {string[]} argv
  */
 function parseArgs(argv) {
-  /** @type {{ dryRun: boolean, continueOnError: boolean, sites: string[], exclude: Set<string> }} */
+  /** @type {{ dryRun: boolean, continueOnError: boolean, includeProd: boolean, sites: string[], exclude: Set<string> }} */
   const options = {
     dryRun: false,
     continueOnError: false,
+    includeProd: false,
     sites: [],
     exclude: new Set()
   };
@@ -73,6 +74,10 @@ function parseArgs(argv) {
     }
     if (arg === '--continue') {
       options.continueOnError = true;
+      continue;
+    }
+    if (arg === '--include-prod') {
+      options.includeProd = true;
       continue;
     }
     if (arg === '--site') {
@@ -108,7 +113,8 @@ Usage:
 Options:
   --dry-run           Print commands without running wrangler
   --site <id>         Only deploy this site (repeatable; prod = default Worker)
-  --exclude <id>      Skip a site (repeatable; e.g. prod)
+  --exclude <id>      Skip a site (repeatable)
+  --include-prod      Also deploy legacy top-level Worker (lovely-home-hub-api)
   --continue          Keep going if one site fails
   -h, --help          Show this help
 
@@ -167,7 +173,11 @@ function main() {
   let targets =
     options.sites.length > 0
       ? options.sites
-      : available.filter((siteId) => !options.exclude.has(siteId));
+      : available.filter((siteId) => {
+          if (options.exclude.has(siteId)) return false;
+          if (siteId === 'prod' && !options.includeProd) return false;
+          return true;
+        });
 
   for (const siteId of targets) {
     if (!available.includes(siteId)) {
