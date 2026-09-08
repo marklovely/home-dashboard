@@ -45,6 +45,7 @@ import {
 } from './platformBilling.js';
 import { applyIntroOfferSetting, describeIntroOffer } from './platformIntroOffer.js';
 import { applyStripeMode, describeStripeMode } from './platformStripeMode.js';
+import { buildMonitoringSummary } from './platformMonitoring.js';
 
 /**
  * Platform operator API — /api/platform/*
@@ -261,6 +262,10 @@ export async function onRequest(context) {
 
   if (suffix === 'usage/summary' && request.method === 'GET') {
     return Response.json(await fetchAccountStorageSummary(manifest, pagesEnv));
+  }
+
+  if (suffix === 'monitoring/summary' && request.method === 'GET') {
+    return Response.json(await buildMonitoringSummary(manifest, pagesEnv));
   }
 
   if (suffix === 'marketing-access' && request.method === 'GET') {

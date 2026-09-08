@@ -124,6 +124,18 @@ export async function fetchSiteUsage(siteId) {
 /**
  * @returns {Promise<object>}
  */
+export async function fetchMonitoringSummary() {
+  const response = await fetch(`${API_BASE}/monitoring/summary`, { cache: 'no-store' });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.message ?? `Monitoring summary failed (${response.status})`);
+  }
+  return body;
+}
+
+/**
+ * @returns {Promise<object>}
+ */
 export async function fetchUsageSummary() {
   const response = await fetch(`${API_BASE}/usage/summary`, { cache: 'no-store' });
   return response.json();
