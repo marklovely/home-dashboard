@@ -200,7 +200,8 @@
 
   async function loadReferralPreview(code) {
     const banner = document.getElementById('signup-referral-banner');
-    if (!banner) return;
+    const benefitEl = document.getElementById('signup-referral-benefit');
+    if (!banner || !benefitEl) return;
     try {
       const response = await fetch(apiBase + '/api/public/signup/referral/' + encodeURIComponent(code), {
         headers: { Accept: 'application/json' }
@@ -210,6 +211,7 @@
         activeReferralCode = '';
         activeReferralInterval = null;
         banner.hidden = true;
+        benefitEl.textContent = '';
         if (referralCodeParam) {
           showAlert(payload.message || 'That referral link is not valid.', 'info');
         }
@@ -218,8 +220,8 @@
       activeReferralCode = payload.code || code;
       activeReferralInterval = payload.billingInterval || null;
       banner.hidden = false;
-      banner.className = 'signup-alert signup-alert--info';
-      banner.textContent = payload.message || payload.refereeBenefit || 'Referral discount applied.';
+      benefitEl.textContent =
+        'Referral offer: ' + (payload.message || payload.refereeBenefit || 'discount applied at checkout.');
       if (activeReferralInterval === 'year') {
         const yearRadio = form.querySelector('input[name="billingInterval"][value="year"]');
         if (yearRadio) yearRadio.checked = true;

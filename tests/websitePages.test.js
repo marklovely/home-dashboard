@@ -78,6 +78,7 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/agree to our <a href="terms\.html">terms<\/a>/);
     expect(html).toMatch(/cannot be changed later/);
     expect(html).toMatch(/does not charge you today/);
+    expect(html).toMatch(/Stripe checkout page when you continue/);
   });
 
   it('pricing explains cancel, archive, and backup exclusions', () => {
