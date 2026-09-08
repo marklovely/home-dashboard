@@ -6,9 +6,20 @@ import { join } from 'node:path';
 describe('loadSitesYaml', () => {
   it('loads platform/sites.yaml registry', () => {
     const sites = loadSitesYaml(join(process.cwd(), 'platform/sites.yaml'));
+    expect(Object.keys(sites).length).toBeGreaterThan(0);
+
     expect(sites.lovely.hostname).toBe('lovely.lovely-hub.com');
-    expect(sites.test.terraform).toBe(true);
-    expect(sites.test.vanilla).toBe(true);
+    expect(sites.lovely.terraform).toBe(true);
+    expect(sites.lovely.vanilla).toBe(false);
+
+    for (const [siteId, entry] of Object.entries(sites)) {
+      expect(entry.hostname, siteId).toMatch(/\./);
+      expect(typeof entry.hub_environment).toBe('string');
+      expect(typeof entry.terraform).toBe('boolean');
+      if (entry.vanilla === true) {
+        expect(entry.terraform, `${siteId} vanilla sites are terraform-managed`).toBe(true);
+      }
+    }
   });
 
   it('parses comma-separated owner and sitter emails', () => {
