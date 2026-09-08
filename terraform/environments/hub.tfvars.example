@@ -103,13 +103,7 @@ sites = {
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
   }
 
-  dev = {
-    hostname               = "dev.lovely-home.co.uk"
-    hub_environment        = "dev"
-    vanilla                = true
-    terraform              = true
-    attach_hub_api_binding = false # first apply only; set true after Worker deploy
-  }
+
 
   # Example customer hub (uncomment after customer_cloudflare_zone_id is set):
   # smith = {
