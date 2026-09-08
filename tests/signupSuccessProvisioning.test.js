@@ -11,7 +11,7 @@ function mountPage(search) {
   const body = /<body[^>]*>([\s\S]*)<\/body>/.exec(html)?.[1] ?? '';
   document.head.innerHTML = '<meta name="lovely-platform-api" content="https://platform.test">';
   document.body.innerHTML = body.replace(/<script[\s\S]*?<\/script>/g, '');
-  window.history.replaceState({}, '', '/signup-success.html' + search);
+  window.history.replaceState({}, '', '/signup-success' + search);
 }
 
 function loadQrBundle() {

@@ -103,8 +103,8 @@ export function buildCustomerEmail(input) {
   const siteId = String(input.siteId);
   const hubUrl = customerHubUrl(siteId);
   const origin = (input.marketingOrigin || DEFAULT_MARKETING_ORIGIN).replace(/\/$/, '');
-  const successUrl = `${origin}/signup-success.html?site=${encodeURIComponent(siteId)}`;
-  const accountUrl = `${origin}/account.html`;
+  const successUrl = `${origin}/signup-success?site=${encodeURIComponent(siteId)}`;
+  const accountUrl = `${origin}/account`;
   const trialDate = formatUkDate(input.trialEnd);
 
   if (input.kind === 'signup') {

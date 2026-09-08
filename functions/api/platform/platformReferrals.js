@@ -506,7 +506,7 @@ export async function fulfillReferralFromCheckoutSession(env, db, input) {
  */
 export function referralSignupUrl(env, code) {
   const base = marketingSiteOrigin(env);
-  return `${base}/signup.html?ref=${encodeURIComponent(code)}`;
+  return `${base}/signup?ref=${encodeURIComponent(code)}`;
 }
 
 /**

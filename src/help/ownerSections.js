@@ -153,11 +153,11 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Yes — start a new 7-day trial at lovely-home.co.uk/signup.html (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning usually takes about 10 minutes, then sign in at your-name.lovely-hub.com with a one-time email code.'
+        text: 'Yes — start a new 7-day trial at lovely-home.co.uk/signup (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning usually takes about 10 minutes, then sign in at your-name.lovely-hub.com with a one-time email code.'
       },
       {
         type: 'p',
-        text: 'Before you cancel, download an encrypted full backup from Settings → Utilities if you want to restore photos, the house guide, or appliance manuals. Restore that file from the setup wizard or Settings → Backup & restore — photos and PDFs in the zip are put back automatically. Automated restore from our platform archive is not available yet. The account page (lovely-home.co.uk/account.html) is only for invoices and card details; it does not recreate a hub.'
+        text: 'Before you cancel, download an encrypted full backup from Settings → Utilities if you want to restore photos, the house guide, or appliance manuals. Restore that file from the setup wizard or Settings → Backup & restore — photos and PDFs in the zip are put back automatically. Automated restore from our platform archive is not available yet. The account page (lovely-home.co.uk/account) is only for invoices and card details; it does not recreate a hub.'
       },
       {
         type: 'h4',
@@ -197,7 +197,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Sign in at lovely-home.co.uk/account.html with the email you used at signup. Choose monthly or yearly for the link, then generate and share the URL. Each link is single-use — create as many as you need. You cannot refer yourself, and each code matches one billing plan.'
+        text: 'Sign in at lovely-home.co.uk/account with the email you used at signup. Choose monthly or yearly for the link, then generate and share the URL. Each link is single-use — create as many as you need. You cannot refer yourself, and each code matches one billing plan.'
       },
       {
         type: 'h4',

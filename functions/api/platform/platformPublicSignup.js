@@ -132,8 +132,8 @@ export function publicSignupUrls(env, siteId, options = {}) {
   const encodedSiteId = encodeURIComponent(siteId);
   const returningQuery = options.returning ? '&returning=1' : '';
   return {
-    successUrl: `${base}/signup-success.html?site=${encodedSiteId}${returningQuery}`,
-    cancelUrl: `${base}/signup.html?canceled=1&site=${encodedSiteId}`
+    successUrl: `${base}/signup-success?site=${encodedSiteId}${returningQuery}`,
+    cancelUrl: `${base}/signup?canceled=1&site=${encodedSiteId}`
   };
 }
 

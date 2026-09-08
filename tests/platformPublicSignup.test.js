@@ -160,12 +160,12 @@ describe('platform public signup', () => {
 
   it('builds marketing success and cancel URLs', () => {
     const urls = publicSignupUrls(baseEnv, 'rose-cottage');
-    expect(urls.successUrl).toBe('https://lovely-home.co.uk/signup-success.html?site=rose-cottage');
-    expect(urls.cancelUrl).toContain('signup.html?canceled=1');
+    expect(urls.successUrl).toBe('https://lovely-home.co.uk/signup-success?site=rose-cottage');
+    expect(urls.cancelUrl).toContain('signup?canceled=1');
 
     const returning = publicSignupUrls(baseEnv, 'smith', { returning: true });
     expect(returning.successUrl).toBe(
-      'https://lovely-home.co.uk/signup-success.html?site=smith&returning=1'
+      'https://lovely-home.co.uk/signup-success?site=smith&returning=1'
     );
   });
 
@@ -188,7 +188,7 @@ describe('platform public signup', () => {
         siteId: 'rose-cottage',
         customerEmail: 'owner@example.com',
         billingInterval: 'month',
-        successUrl: expect.stringContaining('signup-success.html')
+        successUrl: expect.stringContaining('signup-success?')
       })
     );
   });
@@ -213,7 +213,7 @@ describe('platform public signup', () => {
       baseEnv,
       expect.objectContaining({
         siteId: 'smith',
-        successUrl: 'https://lovely-home.co.uk/signup-success.html?site=smith&returning=1'
+        successUrl: 'https://lovely-home.co.uk/signup-success?site=smith&returning=1'
       })
     );
   });

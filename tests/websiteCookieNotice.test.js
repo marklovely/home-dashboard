@@ -24,7 +24,7 @@ describe('marketing cookie notice', () => {
     const notice = document.querySelector('.cookie-notice');
     expect(notice).toBeTruthy();
     expect(notice?.textContent).toMatch(/No analytics or ads/);
-    expect(notice?.querySelector('a')?.getAttribute('href')).toBe('privacy.html#cookies');
+    expect(notice?.querySelector('a')?.getAttribute('href')).toBe('/privacy#cookies');
     expect(document.documentElement.classList.contains('cookie-notice-open')).toBe(true);
 
     document.querySelector('.cookie-notice-accept')?.click();

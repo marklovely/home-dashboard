@@ -47,7 +47,7 @@ export function accountEmailLooksValid(email) {
  * @param {Record<string, string | undefined>} env
  */
 export function accountPageUrl(env) {
-  return `${marketingSiteOrigin(env)}/account.html`;
+  return `${marketingSiteOrigin(env)}/account`;
 }
 
 /**
