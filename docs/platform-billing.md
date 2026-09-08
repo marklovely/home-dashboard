@@ -195,7 +195,13 @@ Copy each coupon id into platform Pages env (via Terraform `hub.tfvars` locally,
 - `STRIPE_INTRO_COUPON_MONTHLY` / `STRIPE_INTRO_COUPON_MONTHLY_LIVE`
 - `STRIPE_INTRO_COUPON_YEARLY` / `STRIPE_INTRO_COUPON_YEARLY_LIVE`
 
-For CI terraform (`generate-hub-tfvars.mjs`), also set matching GitHub repository secrets so hub provision does not drop coupon env vars on the platform Pages project.
+For CI terraform (`generate-hub-tfvars.mjs`), also set matching GitHub repository secrets so hub provision does not drop coupon env vars on the platform Pages project:
+
+```bash
+node scripts/sync-stripe-coupon-github-secrets.mjs
+```
+
+Reads `terraform/environments/hub.tfvars` (or pass a path) and runs `gh secret set` for each coupon id present. Requires `gh auth login`.
 
 Public API:
 
