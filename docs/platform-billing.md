@@ -153,6 +153,53 @@ Public API:
 
 Referrer rewards use Stripe **customer balance** credits on the referee's first paid invoice; referee discounts use Checkout `discounts` on the subscription (applied to post-trial invoices).
 
+## Introductory offer (new households)
+
+Automatic discount for **first-time customers** at public signup on lovely-home.co.uk. An email is eligible only if it has **never** appeared on a `site_billing` row (including canceled hubs). Referral links take precedence — intro offers never stack with referrals. Operator billing checkout from the platform admin is never discounted.
+
+| Plan | Intro benefit (after trial) |
+|------|----------------------------|
+| Monthly | **25% off** each of the first **two** paid months |
+| Yearly | **30% off** the first year |
+
+At list price (£9.99/month, £99/year), that is roughly **£2.50/month × 2** or **~£30 off the first year** — sweeter than the flat referral referee discounts.
+
+Trial length stays **7 days**. Discounts apply on Stripe invoices after the trial (coupon on the subscription), same timing as referrals.
+
+### Operator toggle
+
+Stored in D1 `platform_settings.intro_offer_enabled` (default **off**). Toggle from **Platform admin → Introductory offer** (`POST /api/platform/intro-offer` with `{ "enabled": true }`). Requires intro Stripe coupons to be configured before enabling.
+
+Apply migration `0010_intro_offer_setting.sql`:
+
+```bash
+node scripts/apply-platform-billing-migration.mjs
+```
+
+### Stripe coupons (create in Dashboard, test + live)
+
+**Monthly intro coupon**
+
+- Percent off: **25%**
+- Duration: **Repeating**, **2** months
+
+**Yearly intro coupon**
+
+- Percent off: **30%**
+- Duration: **Once**
+
+Create **separate** coupon ids from referral referee coupons so launch offers can differ.
+
+Copy each coupon id into platform Pages env (via Terraform `hub.tfvars`):
+
+- `STRIPE_INTRO_COUPON_MONTHLY` / `STRIPE_INTRO_COUPON_MONTHLY_LIVE`
+- `STRIPE_INTRO_COUPON_YEARLY` / `STRIPE_INTRO_COUPON_YEARLY_LIVE`
+
+Public API:
+
+- `GET /api/public/signup/pricing` — includes `introOffer.active` and benefit copy when enabled
+- `POST /api/public/signup` — applies intro coupon at checkout when eligible (server-side; not client-controlled)
+
 ## Slice 2 — provision on trialing (shipped)
 
 When Stripe sends `checkout.session.completed` or `customer.subscription.created` with status **trialing**:

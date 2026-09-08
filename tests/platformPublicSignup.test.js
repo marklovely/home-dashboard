@@ -36,6 +36,10 @@ vi.mock('../functions/api/platform/platformSignupGuards.js', async (importOrigin
   };
 });
 
+vi.mock('../functions/api/platform/platformIntroOffer.js', () => ({
+  resolveIntroOfferForSignup: vi.fn(async () => ({ apply: false }))
+}));
+
 import { dispatchSiteManageWorkflow } from '../functions/api/platform/platformGitHub.js';
 import { createBillingCheckoutSession, getSiteBilling } from '../functions/api/platform/platformBilling.js';
 import {
@@ -44,6 +48,7 @@ import {
   releaseSignupReservation,
   reserveSignupSlug
 } from '../functions/api/platform/platformSignupGuards.js';
+import { resolveIntroOfferForSignup } from '../functions/api/platform/platformIntroOffer.js';
 
 const baseEnv = {
   PUBLIC_SIGNUP_ENABLED: 'true',
@@ -86,6 +91,8 @@ describe('platform public signup', () => {
     vi.mocked(reserveSignupSlug).mockResolvedValue({ ok: true, reserved: true, expiresAt: 1_700_000_000 });
     vi.mocked(releaseSignupReservation).mockReset();
     vi.mocked(releaseSignupReservation).mockResolvedValue(undefined);
+    vi.mocked(resolveIntroOfferForSignup).mockReset();
+    vi.mocked(resolveIntroOfferForSignup).mockResolvedValue({ apply: false });
   });
 
   it('requires PUBLIC_SIGNUP_ENABLED', () => {
@@ -333,6 +340,28 @@ describe('platform public signup', () => {
       baseEnv,
       expect.objectContaining({ billingInterval: 'year' })
     );
+  });
+
+  it('applies intro offer at checkout for eligible new signups', async () => {
+    vi.mocked(resolveIntroOfferForSignup).mockResolvedValue({
+      apply: true,
+      interval: 'month',
+      benefit: '25% off each of your first two months (starting on your first invoice after the trial)'
+    });
+    vi.mocked(createBillingCheckoutSession).mockResolvedValue({
+      ok: true,
+      url: 'https://checkout.stripe.com/test',
+      sessionId: 'cs_test'
+    });
+
+    const result = await handlePublicHubSignup(baseEnv, signupInput());
+
+    expect(result.ok).toBe(true);
+    expect(createBillingCheckoutSession).toHaveBeenCalledWith(
+      baseEnv,
+      expect.objectContaining({ applyIntroOffer: true })
+    );
+    expect(result.body.introOffer?.benefit).toMatch(/25%/);
   });
 
   it('refuses lifecycle slugs while Stripe is live', async () => {

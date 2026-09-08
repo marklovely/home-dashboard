@@ -1,5 +1,6 @@
 import { fetchMarketingAccess, fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled, startBillingCheckout } from './api.js';
 import { renderStripeModePanel, wireStripeModePanel } from './stripeMode.js';
+import { renderIntroOfferPanel, wireIntroOfferPanel } from './introOffer.js';
 import { renderSiteBilling } from './billing.js';
 import {
   evaluateSiteHealth,
@@ -100,6 +101,7 @@ async function render() {
     ${data.githubAutomationConfigured === false ? '<div class="banner banner-warn">Site wizard needs <code>PLATFORM_GITHUB_TOKEN</code> (contents:write, actions:write, plus Variables write) and <code>PLATFORM_GITHUB_REPO</code> on the platform Pages project.</div>' : ''}
     <p class="meta">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
     <div id="stripe-mode-slot"></div>
+    <div id="intro-offer-slot"></div>
     <div id="marketing-access-slot"></div>
     <section class="grid">
       ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {}, { stripeConfigured: data.stripeBillingConfigured === true, billingDbConfigured: data.platformBillingDbConfigured === true })).join('')}
@@ -114,6 +116,7 @@ async function render() {
   main.setAttribute('data-platform', JSON.stringify(platform));
   wireSiteActions(sites, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {});
   loadStripeModePanel(data.stripeMode, data.platformBillingDbConfigured === true);
+  loadIntroOfferPanel(data.introOffer, data.platformBillingDbConfigured === true);
   await loadMarketingAccessPanel();
 
   if (data.healthServiceAuthConfigured && healthBySite.size === 0) {
@@ -532,6 +535,17 @@ function loadStripeModePanel(stripe, billingDbConfigured) {
   if (!slot) return;
   slot.innerHTML = renderStripeModePanel(stripe, billingDbConfigured);
   wireStripeModePanel(showError, () => render(), stripe);
+}
+
+/**
+ * @param {Record<string, unknown> | null | undefined} introOffer
+ * @param {boolean} billingDbConfigured
+ */
+function loadIntroOfferPanel(introOffer, billingDbConfigured) {
+  const slot = document.getElementById('intro-offer-slot');
+  if (!slot) return;
+  slot.innerHTML = renderIntroOfferPanel(introOffer, billingDbConfigured);
+  wireIntroOfferPanel(showError, () => render());
 }
 
 async function loadMarketingAccessPanel() {

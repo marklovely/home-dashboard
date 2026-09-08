@@ -43,6 +43,7 @@ import {
   platformBillingDbConfigured,
   validateBillingSiteId
 } from './platformBilling.js';
+import { applyIntroOfferSetting, describeIntroOffer } from './platformIntroOffer.js';
 import { applyStripeMode, describeStripeMode } from './platformStripeMode.js';
 
 /**
@@ -84,6 +85,7 @@ export async function onRequest(context) {
       }
     }
     const stripe = await describeStripeMode(pagesEnv, billingDb);
+    const introOffer = await describeIntroOffer(pagesEnv, billingDb);
 
     return Response.json({
       generatedAt: manifest.generatedAt,
@@ -96,6 +98,7 @@ export async function onRequest(context) {
       stripeBillingConfigured: stripe.stripeBillingConfigured,
       platformBillingDbConfigured: platformBillingDbConfigured(pagesEnv),
       stripeMode: stripe,
+      introOffer,
       billingBySite,
       sites: manifest.sites
     });
@@ -113,7 +116,9 @@ export async function onRequest(context) {
   }
 
   if (suffix === 'config' && request.method === 'GET') {
-    const stripe = await describeStripeMode(pagesEnv, getPlatformBillingDb(env));
+    const billingDb = getPlatformBillingDb(env);
+    const stripe = await describeStripeMode(pagesEnv, billingDb);
+    const introOffer = await describeIntroOffer(pagesEnv, billingDb);
     return Response.json({
       healthServiceAuthConfigured: platformHealthAuthConfigured(pagesEnv),
       cloudflareUsageConfigured: cloudflareUsageApiConfigured(pagesEnv),
@@ -122,6 +127,7 @@ export async function onRequest(context) {
       stripeBillingConfigured: stripe.stripeBillingConfigured,
       platformBillingDbConfigured: platformBillingDbConfigured(pagesEnv),
       stripeMode: stripe,
+      introOffer,
       githubRepo: githubRepo(pagesEnv),
       hints: {
         healthServiceAuth:
@@ -148,6 +154,17 @@ export async function onRequest(context) {
   if (suffix === 'stripe/mode' && request.method === 'POST') {
     const body = await readJsonBody(request);
     const result = await applyStripeMode(pagesEnv, getPlatformBillingDb(env), body);
+    return Response.json(result.body, { status: result.status });
+  }
+
+  if (suffix === 'intro-offer' && request.method === 'GET') {
+    const introOffer = await describeIntroOffer(pagesEnv, getPlatformBillingDb(env));
+    return Response.json(introOffer);
+  }
+
+  if (suffix === 'intro-offer' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await applyIntroOfferSetting(pagesEnv, getPlatformBillingDb(env), body);
     return Response.json(result.body, { status: result.status });
   }
 
