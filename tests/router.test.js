@@ -6,7 +6,8 @@ import {
   getGuideTopicFromRoute,
   initRouter,
   navigate,
-  resetRouterForTests
+  resetRouterForTests,
+  subscribeToRoute
 } from '../src/shell/router.js';
 import { getAppById } from '../src/services/appRegistry.js';
 
@@ -50,5 +51,22 @@ describe('router guide deep links', () => {
     initRouter(getAppById);
     expect(getCurrentRoute()).toBe(HOME_ROUTE);
     expect(getGuideTopicFromRoute()).toBeNull();
+  });
+
+  it('can force navigation to the current route', () => {
+    initRouter(getAppById);
+    let notifications = 0;
+    const unsubscribe = subscribeToRoute(() => {
+      notifications += 1;
+    });
+
+    navigate(HOME_ROUTE);
+    const afterInitial = notifications;
+    navigate(HOME_ROUTE);
+    expect(notifications).toBe(afterInitial);
+
+    navigate(HOME_ROUTE, { force: true });
+    expect(notifications).toBe(afterInitial + 1);
+    unsubscribe();
   });
 });

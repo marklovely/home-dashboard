@@ -46,7 +46,7 @@ export function createAppShell({
   if (shellProfileSwitcher) {
     initProfileSwitcher(shellProfileSwitcher, {
       onChange: () => {
-        shellContext.navigate(HOME_ROUTE);
+        shellContext.navigate(HOME_ROUTE, { force: true });
         shellContext.refreshShell?.();
       }
     });
@@ -99,7 +99,13 @@ export function createAppShell({
     syncShellClockPlacement(route, mode);
     syncShellBrandLogoRoute(isHome);
 
-    mountShellBottomNav(bottomNav, (target) => shellContext.navigate(target));
+    mountShellBottomNav(bottomNav, (target) => {
+      if (target === getCurrentRoute()) {
+        renderRoute(target, { forceRemount: true });
+        return;
+      }
+      shellContext.navigate(target);
+    });
     syncShellBottomNav(bottomNav);
 
     if (isHome) {
