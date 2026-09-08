@@ -3,13 +3,6 @@
 # Platform admin UI reads this manifest — see docs/platform-admin.md.
 
 sites:
-  test:
-    hostname: test.lovely-home.co.uk
-    hub_environment: test
-    vanilla: true
-    terraform: true
-    attach_hub_api_binding: true
-
   demo:
     hostname: demo.lovely-home.co.uk
     hub_environment: demo

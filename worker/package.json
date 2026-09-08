@@ -9,11 +9,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "deploy:test": "node scripts/check-env-provisioned.mjs test && wrangler deploy --env test",
-    "provision:test": "bash ../scripts/provision-hub-site.sh test",
     "d1:migrate:prod": "wrangler d1 migrations apply lovely-home-appliance-manuals --remote",
-    "d1:migrate:test": "node scripts/check-env-provisioned.mjs test && wrangler d1 migrations apply lovely-home-appliance-manuals-test --remote --env test",
-    "secrets:test": "bash scripts/print-env-secrets-checklist.sh test",
     "test": "vitest run",
     "check": "vitest run",
     "deploy:demo": "node scripts/check-env-provisioned.mjs demo && wrangler deploy --env demo",
