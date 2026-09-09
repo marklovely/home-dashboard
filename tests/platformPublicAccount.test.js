@@ -135,8 +135,21 @@ describe('public account helpers', () => {
       hubUrl: 'https://kitchen-home.lovely-hub.com',
       status: 'trialing',
       trialEnd: 1_700_000_000_000,
-      canManageBilling: true
+      canManageBilling: true,
+      canRefer: false
     });
+  });
+
+  it('allows referrals only after the first paid invoice', () => {
+    expect(
+      publicAccountHubFromRow({
+        site_id: 'kitchen-home',
+        status: 'trialing',
+        trial_end: 1_700_000_000_000,
+        stripe_customer_id: 'cus_kitchen',
+        referrer_eligible_at: 1_700_000_000_000
+      }).canRefer
+    ).toBe(true);
   });
 });
 
@@ -187,7 +200,8 @@ describe('account OTP and portal', () => {
         hubUrl: 'https://kitchen-home.lovely-hub.com',
         status: 'trialing',
         trialEnd: 1_700_000_000_000,
-        canManageBilling: true
+        canManageBilling: true,
+        canRefer: false
       }
     ]);
 

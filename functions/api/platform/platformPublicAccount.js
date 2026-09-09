@@ -14,7 +14,7 @@ import { customerEmailConfigured, customerHubUrl, sendResendEmail } from './plat
 import { marketingSiteOrigin } from './platformPublicSignup.js';
 import { consumeSignupAttempt, hashSignupClientKey } from './platformSignupGuards.js';
 import { turnstileSiteKey, verifyTurnstileToken } from './platformSignupTurnstile.js';
-import { createReferralCodeForSite, referralsConfigured } from './platformReferrals.js';
+import { createReferralCodeForSite, isReferrerEligible, referralsConfigured } from './platformReferrals.js';
 import { getStripeMode } from './platformStripeMode.js';
 
 export const ACCOUNT_OTP_TTL_MS = 10 * 60 * 1000;
@@ -94,7 +94,8 @@ export function publicAccountHubFromRow(row) {
     hubUrl: customerHubUrl(siteId),
     status: String(row.status ?? ''),
     trialEnd: Number(row.trial_end) > 0 ? Number(row.trial_end) : null,
-    canManageBilling: Boolean(String(row.stripe_customer_id ?? '').trim())
+    canManageBilling: Boolean(String(row.stripe_customer_id ?? '').trim()),
+    canRefer: isReferrerEligible(row)
   };
 }
 
