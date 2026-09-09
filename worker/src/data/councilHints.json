@@ -1,17 +1,17 @@
 {
   "Havant": {
     "councilName": "Havant Borough Council",
-    "binsUrl": "https://www.havant.gov.uk/bins-waste-recycling",
+    "binsUrl": "https://www.havant.gov.uk/bin-collections/bin-collections-overview",
     "suggestedPattern": "alternating"
   },
   "East Hampshire": {
     "councilName": "East Hampshire District Council",
-    "binsUrl": "https://www.easthants.gov.uk/waste-recycling",
+    "binsUrl": "https://www.easthants.gov.uk/bin-collections/find-your-bin-calendar",
     "suggestedPattern": "alternating"
   },
   "Portsmouth": {
     "councilName": "Portsmouth City Council",
-    "binsUrl": "https://www.portsmouth.gov.uk/services/rubbish-and-recycling",
+    "binsUrl": "https://www.portsmouth.gov.uk/services/recycling-and-rubbish",
     "suggestedPattern": "alternating"
   },
   "Southampton": {
@@ -41,7 +41,7 @@
   },
   "Bristol, City of": {
     "councilName": "Bristol City Council",
-    "binsUrl": "https://www.bristol.gov.uk/residents/streets-travel/recycling-and-rubbish",
+    "binsUrl": "https://www.bristol.gov.uk/residents/bins-and-recycling/bins-and-recycling-collection-dates",
     "suggestedPattern": "alternating"
   },
   "Leeds": {
@@ -56,7 +56,7 @@
   },
   "Birmingham": {
     "councilName": "Birmingham City Council",
-    "binsUrl": "https://www.birmingham.gov.uk/info/500002/recycling_and_rubbish",
+    "binsUrl": "https://www.birmingham.gov.uk/info/50388/check_your_collection_day",
     "suggestedPattern": "alternating"
   },
   "Edinburgh, City of": {

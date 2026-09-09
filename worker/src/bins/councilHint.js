@@ -1,3 +1,7 @@
+/**
+ * Static council bins URLs keyed by postcodes.io admin_district.
+ * Curated manually — verify links when adding councils (council sites move often).
+ */
 import councilHints from '../data/councilHints.json';
 
 /**
