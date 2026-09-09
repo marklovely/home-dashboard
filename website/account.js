@@ -20,6 +20,7 @@
   let pendingEmail = '';
   let referralsEnabled = false;
   const SESSION_KEY = 'lovelyAccountSession';
+  const BACKUP_PROMPT_KEY = 'lovelyAccountBackupPromptDismissed';
   const SESSION_EXPIRED_MESSAGE = 'You have been signed out. Enter your email for a new code.';
 
   restoreSession();
@@ -209,7 +210,12 @@
   function renderHubCards(hubs, sessionToken) {
     hubsEl.innerHTML = hubs.map((hub) => renderHub(hub)).join('');
     hubsEl.querySelectorAll('[data-portal-site]').forEach((button) => {
-      button.addEventListener('click', () => openPortal(sessionToken, button.getAttribute('data-portal-site'), button));
+      button.addEventListener('click', () => {
+        const siteId = button.getAttribute('data-portal-site');
+        if (!siteId) return;
+        const hub = hubs.find((entry) => entry.siteId === siteId);
+        openPortal(sessionToken, siteId, hub, button);
+      });
     });
     bindReferralActions(sessionToken);
   }
@@ -238,6 +244,16 @@
           '<div class="account-referral-result" hidden></div>' +
           '</div>'
         : '';
+    const backupReminder = !canceled
+      ? '<div class="account-backup-reminder" role="note">' +
+        '<p class="account-backup-reminder__title"><strong>Before you cancel on Stripe</strong></p>' +
+        '<p class="account-backup-reminder__body">Download a <strong>full backup</strong> from your hub while it is still live — it includes photos and appliance PDFs. Our platform archive on cancel is guide JSON only.</p>' +
+        '<p class="account-backup-reminder__links">' +
+        '<a href="' + escapeHtml(hub.hubUrl) + '"' + newTabAttrs() + '>Open hub</a>' +
+        ' · <a href="/help#owner/backup-restore"' + newTabAttrs() + '>How to back up</a>' +
+        '</p>' +
+        '</div>'
+      : '';
     const manage = hub.canManageBilling
       ? '<button type="button" class="btn ' +
         (canceled ? 'btn-secondary' : 'btn-primary') +
@@ -249,11 +265,11 @@
       : '<p class="signup-note muted">Billing is not linked yet. Email support@lovely-home.co.uk.</p>';
     const openHub = canceled
       ? ''
-      : '<a class="btn btn-secondary btn-block" href="' + escapeHtml(hub.hubUrl) + '">Open hub</a>';
+      : '<a class="btn btn-secondary btn-block" href="' + escapeHtml(hub.hubUrl) + '"' + newTabAttrs() + '>Open hub</a>';
     const body = canceled
       ? '<p>This subscription is cancelled, so Stripe has no live plan to change — only invoices and the saved card. Start a new trial if you want the hub back.</p>'
-      : '<p>This is your private household hub. Sitters sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
-        '<p>Cancel before the trial ends and you pay nothing. After a paid period, cancel anytime; the hub stays up until that period ends, then we archive the house guide JSON and take the site down. Photos and appliance PDFs are not in the archive.</p>';
+      : '<p>This is your private household hub. Guests sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
+        '<p>Cancel before the trial ends and you pay nothing. After a paid period, cancel anytime; the hub stays up until that period ends, then we archive the house guide JSON and take the site down. Download a full backup from Settings before cancelling if you want photos and PDFs — our platform archive is guide JSON only.</p>';
     return (
       '<article class="account-hub-card">' +
         '<p class="account-hub-status' +
@@ -263,6 +279,7 @@
         '</p>' +
         '<h3>' + escapeHtml(hub.siteId) + '.lovely-hub.com</h3>' +
         body +
+        backupReminder +
         '<div class="account-hub-actions">' +
           openHub +
           manage +
@@ -341,8 +358,15 @@
     }
   }
 
-  async function openPortal(sessionToken, siteId, button) {
+  /**
+   * @param {{ siteId: string, hubUrl?: string, status?: string } | undefined} hub
+   */
+  async function openPortal(sessionToken, siteId, hub, button) {
     clearAlert();
+    if (hub && hub.status !== 'canceled' && !readBackupPromptDismissed()) {
+      const proceed = await confirmBeforeStripe(hub);
+      if (!proceed) return;
+    }
     setBusy(button, true);
     try {
       const response = await fetch(apiBase + '/api/public/account/portal', {
@@ -442,11 +466,104 @@
     button.disabled = Boolean(busy);
   }
 
+  function newTabAttrs() {
+    return ' target="_blank" rel="noopener noreferrer"';
+  }
+
   function escapeHtml(value) {
     return String(value ?? '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function readBackupPromptDismissed() {
+    try {
+      return localStorage.getItem(BACKUP_PROMPT_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function writeBackupPromptDismissed() {
+    try {
+      localStorage.setItem(BACKUP_PROMPT_KEY, '1');
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  /**
+   * Stripe Customer Portal cannot show a custom message before cancellation — only
+   * after (via deep links) or on our site before redirecting.
+   *
+   * @param {{ hubUrl?: string }} hub
+   */
+  function confirmBeforeStripe(hub) {
+    return new Promise((resolve) => {
+      const hubUrl = String(hub.hubUrl || '').trim();
+      const overlay = document.createElement('div');
+      overlay.className = 'account-backup-dialog';
+      overlay.setAttribute('role', 'presentation');
+
+      const dialog = document.createElement('div');
+      dialog.className = 'account-backup-dialog__panel';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-labelledby', 'account-backup-dialog-title');
+
+      dialog.innerHTML =
+        '<h2 id="account-backup-dialog-title" class="account-backup-dialog__title">Opening Stripe billing</h2>' +
+        '<p>Stripe handles card updates and cancellation. Stripe does not let us show a backup reminder inside their portal.</p>' +
+        '<p><strong>Planning to cancel?</strong> Download a full backup from your hub first — it includes photos and appliance PDFs.</p>' +
+        '<p class="account-backup-dialog__links">' +
+        (hubUrl ? '<a href="' + escapeHtml(hubUrl) + '"' + newTabAttrs() + '>Open hub → Settings → Utilities</a> · ' : '') +
+        '<a href="/help#owner/backup-restore"' + newTabAttrs() + '>How to back up</a>' +
+        '</p>' +
+        '<label class="account-backup-dialog__skip">' +
+        '<input type="checkbox" id="account-backup-dialog-skip"> Don\u2019t show this again' +
+        '</label>' +
+        '<div class="account-backup-dialog__actions">' +
+        '<button type="button" class="btn btn-secondary" data-backup-dialog="cancel">Not now</button>' +
+        (hubUrl
+          ? '<a class="btn btn-secondary" href="' + escapeHtml(hubUrl) + '"' + newTabAttrs() + '>Open hub first</a>'
+          : '') +
+        '<button type="button" class="btn btn-primary" data-backup-dialog="continue">Continue to Stripe</button>' +
+        '</div>';
+
+      overlay.appendChild(dialog);
+      document.body.appendChild(overlay);
+
+      const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+      function close(result) {
+        const skip = dialog.querySelector('#account-backup-dialog-skip');
+        if (result && skip instanceof HTMLInputElement && skip.checked) {
+          writeBackupPromptDismissed();
+        }
+        overlay.remove();
+        previouslyFocused?.focus();
+        resolve(Boolean(result));
+      }
+
+      overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) close(false);
+      });
+      dialog.querySelector('[data-backup-dialog="cancel"]')?.addEventListener('click', () => close(false));
+      dialog.querySelector('[data-backup-dialog="continue"]')?.addEventListener('click', () => close(true));
+      document.addEventListener(
+        'keydown',
+        function onKeydown(event) {
+          if (event.key === 'Escape') {
+            document.removeEventListener('keydown', onKeydown);
+            close(false);
+          }
+        },
+        { once: true }
+      );
+
+      dialog.querySelector('[data-backup-dialog="continue"]')?.focus();
+    });
   }
 })();

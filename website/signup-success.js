@@ -149,11 +149,11 @@
       lead.textContent =
         'Your 7-day trial is active again for ' +
         hostname +
-        '. We are rebuilding your hub — usually about 10 minutes. Leave this page open and we will tell you when it is live again.';
+        '. We are rebuilding your hub — up to 10 minutes, often faster. Leave this page open and we will tell you when it is live again.';
       if (successSteps) {
         successSteps.innerHTML =
           '<li>Stripe confirms your trial — you are not charged today.</li>' +
-          '<li>We register your hub again and run the automated build (about 10 minutes).</li>' +
+          '<li>We register your hub again and run the automated build (up to 10 minutes, often faster).</li>' +
           '<li>DNS, hosting, and your owner sign-in are provisioned.</li>' +
           '<li>This page shows an Open button and a QR code as soon as your hub answers.</li>';
       }
@@ -164,11 +164,11 @@
     lead.textContent =
       'Your 7-day trial is active for ' +
       hostname +
-      '. Building a hub takes about 10 minutes — leave this page open and it will tell you the moment yours is live.';
+      '. Building a hub takes up to 10 minutes — often faster — leave this page open and it will tell you the moment yours is live.';
     if (successSteps) {
       successSteps.innerHTML =
         '<li>Stripe confirms your trial — you are not charged today.</li>' +
-        '<li>We register your hub and run the automated build (about 10 minutes).</li>' +
+        '<li>We register your hub and run the automated build (up to 10 minutes, often faster).</li>' +
         '<li>DNS, hosting, and your owner sign-in are provisioned.</li>' +
         '<li>This page shows an Open button and a QR code as soon as your hub answers.</li>';
     }
@@ -178,7 +178,7 @@
     progress.dataset.state = 'provisioning';
     setTitle(returning ? 'Reinstating your hub now' : 'Deploying your hub now', true);
     progressNote.textContent =
-      'Usually ready about 10 minutes after checkout' +
+      'Usually ready within 10 minutes of checkout (often faster)' +
       elapsedSuffix() +
       '. This page checks every few seconds — no need to refresh or retry.';
   }
@@ -197,7 +197,7 @@
         '. Your hub is live again — sign in and restore your backup when you are ready.'
       : 'Your 7-day trial is active for ' +
         hostname +
-        '. Your hub finished building — use the trial to set it up before your sitter arrives.';
+        '. Your hub finished building — use the trial to set it up before guests arrive.';
     setTitle(returning ? 'Your hub is live again' : 'Your hub is live', false);
     progressNote.textContent = 'Open it below and run the setup wizard — or scan the code on the device you want to use.';
     hubLink.href = hubUrl;
@@ -257,7 +257,7 @@
     progress.dataset.state = 'unknown';
     setTitle('Your hub is being built', false);
     progressNote.textContent =
-      'We cannot check the build status from here right now. Your hub is usually ready about 10 minutes after checkout — try the link below then.';
+      'We cannot check the build status from here right now. Your hub is usually ready within 10 minutes of checkout (often faster) — try the link below then.';
     hubLink.href = hubUrl;
     openBtn.hidden = false;
     void renderQr();

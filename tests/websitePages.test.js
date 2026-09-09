@@ -91,11 +91,12 @@ describe('marketing site pages', () => {
     expect(js).toMatch(/setReferralBillingIntervalLock/);
   });
 
-  it('pricing explains cancel, archive, and backup exclusions', () => {
+  it('pricing explains cancel, archive, and full backup contents', () => {
     const html = readPage('pricing.html');
     expect(html).toMatch(/\/account/);
     expect(html).toMatch(/taken down and archived/);
-    expect(html).toMatch(/Photos and appliance PDFs/);
+    expect(html).toMatch(/photos.*PDFs/i);
+    expect(html).toMatch(/guide JSON only/);
     expect(html).toMatch(/Refer a friend/);
     expect(html).toMatch(/£5 off each of their first two months/);
     expect(html).toMatch(/id="referrals"/);
@@ -114,12 +115,18 @@ describe('marketing site pages', () => {
     expect(js).toMatch(/You have been signed out/);
     expect(js).toMatch(/Cancelled — this hub has ended/);
     expect(js).toMatch(/View invoices on Stripe/);
+    expect(js).toMatch(/confirmBeforeStripe/);
+    expect(js).toMatch(/Guests sign in with Cloudflare email codes/);
+    expect(js).not.toMatch(/Sitters sign in with Cloudflare email codes/);
+    expect(js).toMatch(/target="_blank" rel="noopener noreferrer"/);
+    expect(js).toMatch(/How to back up/);
+    expect(html).toMatch(/Stripe cannot show a backup reminder inside their portal/);
   });
 
   it('included page lists ready features and customer-owned extras', () => {
     const html = readPage('included.html');
     expect(html).toMatch(/House guide and editor/);
-    expect(html).toMatch(/Scheduled sitter stays/);
+    expect(html).toMatch(/Scheduled guest stays/);
     expect(html).toMatch(/Password-encrypted backup/);
     expect(html).toMatch(/Alexa routine buttons/);
     expect(html).toMatch(/Virtual Buttons/);
@@ -127,13 +134,13 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/Wall tablet, mount, or kiosk hardware/);
   });
 
-  it('setup page explains trial, sitter sharing, and optional wall tablet', () => {
+  it('setup page explains trial, guest sharing, and optional wall tablet', () => {
     const html = readPage('setup.html');
     expect(html).toMatch(/<link rel="canonical" href="https:\/\/lovely-home\.co\.uk\/setup"/);
     expect(html).not.toMatch(/http-equiv="refresh"/);
     expect(html).not.toMatch(/location\.replace/);
     expect(html).toMatch(/Start free trial/);
-    expect(html).toMatch(/Send it to a sitter/);
+    expect(html).toMatch(/Share with guests/);
     expect(html).toMatch(/Optional: wall tablet/);
     expect(html).toMatch(/Two weeks before/);
     expect(html).toMatch(/No hardware to buy/);
@@ -166,13 +173,13 @@ describe('marketing site pages', () => {
     }
   });
 
-  it('explains scheduled stays: guide early, secrets on the sit, access after checkout', () => {
+  it('explains scheduled stays: guide early, secrets on the stay, access after checkout', () => {
     const home = readPage('index.html');
-    expect(home).toMatch(/Book sits in advance/);
+    expect(home).toMatch(/Schedule stays in advance/);
     expect(home).toMatch(/2 weeks before/);
     expect(home).toMatch(/House guide, no secrets/);
     expect(home).toMatch(/After checkout/);
-    expect(home).toMatch(/Going away and leaving a sitter/);
+    expect(home).toMatch(/Hosting guests at your home/);
 
     const included = readPage('included.html');
     expect(included).toMatch(/guide two weeks before/);
@@ -182,7 +189,7 @@ describe('marketing site pages', () => {
     expect(security).toMatch(/day after checkout/);
 
     const pricing = readPage('pricing.html');
-    expect(pricing).toMatch(/book several sits in one list/);
+    expect(pricing).toMatch(/book several stays in one list/);
     expect(pricing).toMatch(/data-faq-section="common-questions"/);
     expect(pricing).toContain('src="faq.js"');
   });

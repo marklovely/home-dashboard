@@ -86,7 +86,7 @@ describe('platform public pricing', () => {
     expect(pricing.yearlyLabel).toBe('£99.00/year');
     expect(pricing.checkoutSummary).toContain('£9.99/month');
     expect(pricing.checkoutSummary).toContain('£99.00/year');
-    expect(pricing.signupSummary).toContain('sitter');
+    expect(pricing.signupSummary).toContain('guests');
     expect(pricing.checkoutSummary).not.toMatch(/VAT/i);
     expect(pricing.signupSummary).not.toMatch(/VAT/i);
     expect(pricing.vatNote).toBe('');

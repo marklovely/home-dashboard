@@ -3,7 +3,7 @@
  *
  * The marketing success page polls this so buyers watch a live "deploying"
  * state instead of guessing when to retry the hub URL. Provisioning takes
- * roughly ten minutes end to end (registry commit, Terraform, Worker, Pages).
+ * up to ten minutes end to end when queues are busy (registry commit, Terraform, Worker, Pages).
  */
 
 import { getSiteFromManifest } from './platformApi.js';
@@ -117,9 +117,9 @@ function hubProvisionMessage(input) {
     return `We could not finish building ${input.hostname}. Email support@lovely-home.co.uk with this address and we will complete it. You have not been charged.`;
   }
   if (input.returning) {
-    return `We are reinstating your hub. This usually takes about ${HUB_PROVISION_TYPICAL_MINUTES} minutes.`;
+    return `We are reinstating your hub. This can take up to ${HUB_PROVISION_TYPICAL_MINUTES} minutes — often faster when queues are clear.`;
   }
-  return `We are still building your hub. This usually takes about ${HUB_PROVISION_TYPICAL_MINUTES} minutes.`;
+  return `We are still building your hub. This can take up to ${HUB_PROVISION_TYPICAL_MINUTES} minutes — often faster when queues are clear.`;
 }
 
 /**

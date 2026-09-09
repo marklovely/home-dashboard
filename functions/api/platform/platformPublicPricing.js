@@ -144,11 +144,11 @@ export function buildPublicPricingFromPlans(plans, productName) {
 
   let signupSummary = `${trialDays}-day free trial — set up the hub before anyone stays. Card on file.`;
   if (monthlyLabel && yearlyLabel) {
-    signupSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel}. Use the trial to set up before your sitter arrives.`;
+    signupSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel}. Use the trial to set up before guests arrive.`;
   } else if (monthlyLabel) {
-    signupSummary = `£0 today — then ${monthlyLabel}. Use the trial to set up before your sitter arrives.`;
+    signupSummary = `£0 today — then ${monthlyLabel}. Use the trial to set up before guests arrive.`;
   } else if (yearlyLabel) {
-    signupSummary = `£0 today — then ${yearlyLabel}. Use the trial to set up before your sitter arrives.`;
+    signupSummary = `£0 today — then ${yearlyLabel}. Use the trial to set up before guests arrive.`;
   }
 
   return {
