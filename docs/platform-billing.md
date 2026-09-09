@@ -69,6 +69,10 @@ Set secrets in `.dev.vars` on the platform Pages project or export for local tes
 - `STRIPE_PRICE_ID` — monthly subscription price
 - `STRIPE_PRICE_ID_YEARLY` — yearly subscription price (optional but recommended for public signup)
 
+Public signup Checkout always sends `managed_payments[enabled]=false` and `automatic_tax[enabled]=false` so Lovely Home bills directly (not Stripe Managed Payments / merchant-of-record VAT). Use **new** Products whose tax code is **not** labelled “Eligible for Managed Payments”. Once a product has been used with Managed Payments, Stripe will not let you change its tax code — create a replacement product and point the price env vars at the new `price_…` ids.
+
+**Test and live:** repeat product creation in **both** Stripe modes. Update `STRIPE_PRICE_ID` / `STRIPE_PRICE_ID_YEARLY` (test) and `STRIPE_PRICE_ID_LIVE` / `STRIPE_PRICE_ID_YEARLY_LIVE` (live), then apply Terraform / redeploy platform Pages. Cancel old test subscriptions on the legacy MP product; live only needs new prices before you take real signups on the old product.
+
 Local dev API (`scripts/platform-admin-dev-api.mjs`) does not yet mirror billing routes — use deployed preview or `wrangler pages dev` for full billing tests.
 
 ## Operator API (Access-protected)

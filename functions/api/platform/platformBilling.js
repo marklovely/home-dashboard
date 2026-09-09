@@ -259,6 +259,9 @@ export async function createBillingCheckoutSession(env, input) {
     cancel_url: input.cancelUrl,
     customer_email: customerEmail,
     payment_method_collection: 'always',
+    // Direct billing (not Stripe Managed Payments / MoR). Prices must use a non-MP product tax code.
+    managed_payments: { enabled: false },
+    automatic_tax: { enabled: false },
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
       trial_period_days: TRIAL_PERIOD_DAYS,
