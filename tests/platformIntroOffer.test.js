@@ -174,6 +174,8 @@ describe('platform intro offer', () => {
     expect(session.ok).toBe(true);
     const fetchInit = /** @type {RequestInit} */ (vi.mocked(global.fetch).mock.calls[0][1]);
     const params = Object.fromEntries(new URLSearchParams(String(fetchInit.body)));
+    expect(params['managed_payments[enabled]']).toBe('false');
+    expect(params['automatic_tax[enabled]']).toBe('false');
     expect(params['discounts[0][coupon]']).toBe('intro_month_test');
     expect(params['metadata[intro_offer]']).toBe('1');
   });
