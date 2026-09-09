@@ -85,6 +85,9 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
   let councilHintRequest = null;
   /** @type {string | null} */
   let councilHintFetchedForPostcode = null;
+  /** @type {string | null} */
+  let lastAutoFilledCouncilUrl = null;
+  let councilUrlUserEdited = false;
 
   const wrap = document.createElement('div');
   wrap.className = 'hub-setup-bin-schedule hub-setup-bin-schedule--hub';
@@ -102,6 +105,29 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       type: 'url'
     }
   );
+
+  /**
+   * @param {string | null | undefined} url
+   */
+  function normalizeCouncilUrlForCompare(url) {
+    return String(url ?? '')
+      .trim()
+      .replace(/\/$/, '')
+      .toLowerCase();
+  }
+
+  councilUrl.input.addEventListener('input', () => {
+    const current = councilUrl.input.value.trim();
+    if (
+      !current ||
+      (lastAutoFilledCouncilUrl &&
+        normalizeCouncilUrlForCompare(current) === normalizeCouncilUrlForCompare(lastAutoFilledCouncilUrl))
+    ) {
+      councilUrlUserEdited = false;
+      return;
+    }
+    councilUrlUserEdited = true;
+  });
 
   const alertHours = createBinAlertHoursField({ binSchedule: draftSchedule });
 
@@ -148,8 +174,20 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     const councilLabel = councilUrl.wrap.querySelector('.settings-subsection-title');
     if (councilLabel) councilLabel.textContent = locale.councilUrlLabel;
     councilUrl.input.placeholder = locale.councilUrlPlaceholder;
-    if (councilHint?.binsUrl && !councilUrl.input.value.trim()) {
-      councilUrl.input.value = councilHint.binsUrl;
+
+    const nextUrl = councilHint?.binsUrl?.trim();
+    if (!nextUrl) return;
+
+    const current = councilUrl.input.value.trim();
+    const matchesLastAutoFill =
+      lastAutoFilledCouncilUrl &&
+      normalizeCouncilUrlForCompare(current) === normalizeCouncilUrlForCompare(lastAutoFilledCouncilUrl);
+    const shouldApply = !current || matchesLastAutoFill || !councilUrlUserEdited;
+
+    if (shouldApply) {
+      councilUrl.input.value = nextUrl;
+      lastAutoFilledCouncilUrl = nextUrl;
+      councilUrlUserEdited = false;
     }
   }
 
