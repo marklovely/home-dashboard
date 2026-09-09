@@ -14,6 +14,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSitesYaml } from './lib/load-sites-yaml.mjs';
 import { setPagesPreviewEnabled } from './lib/pages-preview.mjs';
+import { ensurePagesPreviewAccessDestinations } from '../functions/api/platform/platformPagesPreviewAccess.js';
 import { validateSiteId } from './lib/site-registry.mjs';
 
 const token = process.env.CLOUDFLARE_API_TOKEN?.trim();
@@ -64,6 +65,25 @@ for (const siteId of siteIds) {
 
   console.log(`Enabling preview deployments on ${pagesProject} (${siteId})`);
   await setPagesPreviewEnabled(accountId, token, pagesProject, true);
+
+  const hostname = String(contract.hostname ?? '').trim();
+  const accessAppId = String(contract.access_pages_app_id ?? '').trim();
+  if (accessAppId && hostname) {
+    const accessSync = await ensurePagesPreviewAccessDestinations({
+      accountId,
+      token,
+      accessAppId,
+      hostname,
+      pagesProject
+    });
+    if (accessSync.ok && accessSync.updated) {
+      console.log(`  Access: ${accessSync.message}`);
+    } else if (!accessSync.ok) {
+      console.warn(`  Access: ${accessSync.message}`);
+    }
+  } else {
+    console.warn(`  Access: skipped (missing access_pages_app_id or hostname in terraform output).`);
+  }
 }
 
 console.log(`Preview deployments enabled for: ${siteIds.join(', ')}`);
@@ -71,5 +91,5 @@ console.log(
   '\nPreview env vars and HUB_API binding were copied from production. Redeploy an open PR preview to pick them up.'
 );
 console.log(
-  'If Access login fails on preview URLs, run terraform apply (see docs/platform-terraform.md#pages-preview-access-invalid-redirect-url).'
+  'Preview Access destinations were synced where access_pages_app_id is in the site contract.'
 );

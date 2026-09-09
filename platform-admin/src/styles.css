@@ -998,6 +998,13 @@ a {
   color: var(--muted);
 }
 
+.preview-warn {
+  display: block;
+  margin-top: 0.35rem;
+  color: #f0b27a;
+  font-size: 0.82rem;
+}
+
 .usage-grid {
   display: grid;
   gap: 0.65rem;
