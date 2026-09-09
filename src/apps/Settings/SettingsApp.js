@@ -662,7 +662,15 @@ function createBinReminderFields(context, onRefresh) {
     applyButton.addEventListener('click', () => {
       scheduleDraft = wizard.finish();
       wizardHost.hidden = true;
+      const count = scheduleDraft.household.length + scheduleDraft.gardenWaste.length;
       onRefresh({ panelId: 'bins', draftSchedule: scheduleDraft });
+      showToast(
+        context.toast,
+        count > 0
+          ? `${count} collection date${count === 1 ? '' : 's'} ready — tap Save bin reminders.`
+          : 'No dates were generated — check your start dates and try again.',
+        6000
+      );
     });
     const cancelButton = document.createElement('button');
     cancelButton.type = 'button';
@@ -700,7 +708,7 @@ function createBinReminderFields(context, onRefresh) {
         return;
       }
       const merged = binScheduleEntriesFromParsed(parsed.entries);
-      scheduleDraft = readBinScheduleFromProfile({
+      scheduleDraft = normalizeBinSchedule({
         ...scheduleDraft,
         household: merged.household,
         gardenWaste: merged.gardenWaste

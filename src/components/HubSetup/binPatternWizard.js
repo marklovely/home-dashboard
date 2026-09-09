@@ -8,7 +8,7 @@ import {
   defaultRepeatUntilDate,
   resolveRepeatUntilDate
 } from '../../lib/binScheduleRepeat.js';
-import { readBinScheduleFromProfile } from '../../lib/binScheduleProfile.js';
+import { normalizeBinSchedule } from '../../lib/binScheduleProfile.js';
 import { createSetupField, createSetupSelect } from './hubSetupFields.js';
 import {
   createBinScheduleReviewList,
@@ -286,7 +286,7 @@ export function createBinPatternWizard(schedule, onDraftChange) {
   function publishDraft() {
     const { household, gardenWaste } = scheduleFromReviewEntries(reviewEntries);
     onDraftChange(
-      readBinScheduleFromProfile({
+      normalizeBinSchedule({
         ...schedule,
         normalCollectionDay: normalDay.select.value,
         validUntil: untilDate.input.value.trim(),
@@ -364,7 +364,7 @@ export function createBinPatternWizard(schedule, onDraftChange) {
     /** Completed pattern wizard — merge into parent */
     finish() {
       publishDraft();
-      return readBinScheduleFromProfile({
+      return normalizeBinSchedule({
         ...schedule,
         normalCollectionDay: normalDay.select.value,
         validUntil: untilDate.input.value.trim(),

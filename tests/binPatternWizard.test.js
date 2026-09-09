@@ -16,6 +16,27 @@ describe('createBinPatternWizard', () => {
     expect(wizard.progressLabel()).toContain('Step 3 of 4');
   });
 
+  it('finish returns generated household dates', () => {
+    let saved = null;
+    const wizard = createBinPatternWizard(readBinScheduleFromProfile({}), (next) => {
+      saved = next;
+    });
+
+    expect(wizard.handleContinue()).toBe(true);
+    expect(wizard.handleContinue()).toBe(true);
+
+    const dateInput = wizard.wrap.querySelector('input[type="date"]');
+    expect(dateInput).toBeTruthy();
+    dateInput.value = '2026-09-12';
+    dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    expect(wizard.handleContinue()).toBe(true);
+    const finished = wizard.finish();
+
+    expect(finished.household.length).toBeGreaterThan(0);
+    expect(saved?.household?.length).toBeGreaterThan(0);
+  });
+
   it('returns pick-stream when no bin types are selected', () => {
     const wizard = createBinPatternWizard(readBinScheduleFromProfile({}), () => {});
     const body = wizard.wrap.querySelector('.hub-setup-bin-stream-list');
