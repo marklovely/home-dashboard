@@ -64,6 +64,8 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
   /** @type {import('../../api/binsCouncilHintApi.js').BinsCouncilHint | null} */
   let councilHint = null;
   let councilHintLoading = false;
+  /** @type {string | null} */
+  let councilHintLookupError = null;
   /** @type {Promise<void> | null} */
   let councilHintRequest = null;
   /** @type {string | null} */
@@ -165,7 +167,10 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     }
 
     if (!councilHint?.adminDistrict) {
-      banner.textContent = 'We could not match a council area for this postcode — you can still add dates manually.';
+      banner.classList.add('hub-setup-bin-council-hint--prompt');
+      banner.textContent =
+        councilHintLookupError ??
+        'We could not match a council area for this postcode — you can still add dates manually.';
       container.append(banner);
       return;
     }
@@ -203,6 +208,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     const locale = readLocale();
     if (!locale.isUnitedKingdom) {
       councilHint = null;
+      councilHintLookupError = null;
       councilHintLoading = false;
       return;
     }
@@ -210,14 +216,27 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     const postcode = readPostcode();
     if (!postcode) {
       councilHint = null;
+      councilHintLookupError = null;
       councilHintLoading = false;
       return;
     }
 
     councilHintLoading = true;
+    councilHintLookupError = null;
     const result = await fetchBinsCouncilHint(postcode);
     councilHintLoading = false;
-    councilHint = result.ok ? result.hint : null;
+    if (result.ok) {
+      councilHint = result.hint;
+      if (!result.hint.adminDistrict) {
+        councilHintLookupError = 'That postcode was not found — check Guest access or add your council website below.';
+      }
+    } else {
+      councilHint = null;
+      councilHintLookupError =
+        result.status === 404
+          ? 'Council area lookup is not available on this hub yet — add your council website below, or paste dates from their calendar.'
+          : result.message || 'Council lookup failed — you can still add dates manually.';
+    }
     applyCouncilHintToFields();
   }
 
@@ -225,6 +244,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     const postcode = readPostcode();
     if (!readLocale().isUnitedKingdom || !postcode) {
       councilHint = null;
+      councilHintLookupError = null;
       councilHintFetchedForPostcode = null;
       return;
     }
