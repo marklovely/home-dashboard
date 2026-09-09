@@ -45,6 +45,8 @@ describe('shellBrandLogo', () => {
     setActiveTheme('light');
     initShellBrandLogo();
 
-    expect(document.querySelector('#shell-logo')?.getAttribute('src')).toMatch(/lockup-light/);
+    const src = document.querySelector('#shell-logo')?.getAttribute('src') ?? '';
+    expect(src).not.toBe('/api/branding/logo');
+    expect(src).toMatch(/^(data:image\/svg\+xml|.*lockup-light)/);
   });
 });

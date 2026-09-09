@@ -387,15 +387,20 @@ describe('marketing Access panel', () => {
   });
 
   it('sits above the site cards on the dashboard', () => {
-    const source = readFileSync(
+    const hubSource = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), '../platform-admin/src/settingsHub.js'),
+      'utf8'
+    );
+    const mainSource = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), '../platform-admin/src/main.js'),
       'utf8'
     );
-    const slot = source.indexOf('id="marketing-access-slot"');
-    const grid = source.indexOf('<section class="grid">');
-    expect(slot).toBeGreaterThan(-1);
+    expect(hubSource).toContain("'marketing-access-slot'");
+    const settingsHub = mainSource.indexOf('renderSettingsHubShell()');
+    const grid = mainSource.indexOf('<section class="grid">');
+    expect(settingsHub).toBeGreaterThan(-1);
     expect(grid).toBeGreaterThan(-1);
-    expect(slot).toBeLessThan(grid);
+    expect(settingsHub).toBeLessThan(grid);
   });
 });
 
