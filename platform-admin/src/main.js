@@ -27,6 +27,7 @@ import { confirmDeployWorker, confirmProvisionSite, openSiteWizard } from './wiz
 import { renderMarketingAccessPanel, wireMarketingAccessPanel } from './marketingAccess.js';
 import { renderMarketingPricingPanel, wireMarketingPricingPanel } from './marketingPricing.js';
 import { renderMonitoringView } from './monitoring.js';
+import { renderSettingsHubShell, wireSettingsHub } from './settingsHub.js';
 
 const main = document.getElementById('main');
 const refreshBtn = document.getElementById('refresh-btn');
@@ -117,8 +118,7 @@ function setView(view) {
   checkAllUsageBtn?.toggleAttribute('hidden', view === 'monitoring');
   refreshMonitoringBtn?.toggleAttribute('hidden', view !== 'monitoring');
   if (topbarTitle) {
-    topbarTitle.textContent =
-      view === 'monitoring' ? 'Lovely Home Hub — Monitoring' : 'Lovely Home Hub — Sites';
+    topbarTitle.textContent = 'Lovely Home Hub';
   }
 }
 
@@ -178,11 +178,12 @@ async function render() {
     ${data.cloudflareUsageConfigured === false ? '<div class="banner banner-warn">Storage usage needs <code>PLATFORM_CF_API_TOKEN</code> (Account → Workers R2 Storage → Read) and <code>CLOUDFLARE_ACCOUNT_ID</code> on the platform Pages project.</div>' : ''}
     ${data.cloudflarePagesConfigured === false ? '<div class="banner banner-warn">PR preview toggles need <code>PLATFORM_CF_API_TOKEN</code> (Account → Cloudflare Pages → Edit) and <code>CLOUDFLARE_ACCOUNT_ID</code> on the platform Pages project.</div>' : ''}
     ${data.githubAutomationConfigured === false ? '<div class="banner banner-warn">Site wizard needs <code>PLATFORM_GITHUB_TOKEN</code> (contents:write, actions:write, plus Variables write) and <code>PLATFORM_GITHUB_REPO</code> on the platform Pages project.</div>' : ''}
-    <p class="meta">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
-    <div id="stripe-mode-slot"></div>
-    <div id="intro-offer-slot"></div>
-    <div id="marketing-pricing-slot"></div>
-    <div id="marketing-access-slot"></div>
+    <p class="meta meta-bar">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
+    ${renderSettingsHubShell()}
+    <header class="section-head">
+      <h2 class="section-head__title">Household hubs</h2>
+      <p class="section-head__lead muted">${sites.length} ${sites.length === 1 ? 'site' : 'sites'} in manifest</p>
+    </header>
     <section class="grid">
       ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {}, { stripeConfigured: data.stripeBillingConfigured === true, billingDbConfigured: data.platformBillingDbConfigured === true })).join('')}
     </section>
@@ -199,6 +200,7 @@ async function render() {
   loadIntroOfferPanel(data.introOffer, data.platformBillingDbConfigured === true);
   await loadMarketingPricingPanel(data.platformBillingDbConfigured === true);
   await loadMarketingAccessPanel();
+  wireSettingsHub();
 
   if (data.healthServiceAuthConfigured && healthBySite.size === 0) {
     runAllHealthChecks().catch(showError);

@@ -13,19 +13,24 @@
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <div id="app">
+    <div id="app" class="app-shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Platform operator</p>
-          <h1>Lovely Home Hub — Sites</h1>
-          <p id="summary" class="summary" aria-live="polite"></p>
+        <div class="topbar-brand">
+          <div class="brand-mark" aria-hidden="true">LH</div>
+          <div class="topbar-copy">
+            <p class="eyebrow">Platform operator</p>
+            <h1>Lovely Home Hub</h1>
+            <p id="summary" class="summary" aria-live="polite"></p>
+          </div>
         </div>
         <div class="topbar-actions">
-          <button type="button" id="add-site-btn" class="btn">Add site</button>
-          <button type="button" id="check-all-btn" class="btn">Check all health</button>
-          <button type="button" id="check-all-usage-btn" class="btn btn-ghost">Check all usage</button>
-          <button type="button" id="refresh-monitoring-btn" class="btn btn-ghost" hidden>Refresh monitoring</button>
-          <button type="button" id="refresh-btn" class="btn btn-ghost">Refresh</button>
+          <button type="button" id="add-site-btn" class="btn btn-primary">Add site</button>
+          <div class="btn-group" role="group" aria-label="Dashboard actions">
+            <button type="button" id="check-all-btn" class="btn btn-ghost">Check all health</button>
+            <button type="button" id="check-all-usage-btn" class="btn btn-ghost">Check all usage</button>
+            <button type="button" id="refresh-monitoring-btn" class="btn btn-ghost" hidden>Refresh monitoring</button>
+            <button type="button" id="refresh-btn" class="btn btn-ghost">Refresh</button>
+          </div>
         </div>
       </header>
       <nav class="view-tabs" role="tablist" aria-label="Platform views">

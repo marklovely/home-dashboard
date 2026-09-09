@@ -53,25 +53,38 @@ export function renderMarketingPricingPanel(data, billingDbConfigured) {
           <p class="muted">Edit what lovely-home.co.uk shows for prices, trials, intro offer, and referrals. <strong>Stripe checkout still uses your configured price IDs and coupons</strong> — change those in Stripe and Terraform. Display-only overrides are stored in D1.</p>
           <p class="marketing-pricing-message" id="marketing-pricing-message" hidden></p>
           <form class="marketing-pricing-form" id="marketing-pricing-form">
-            ${renderField('productName', 'Product name', effective.productName, stripe.productName)}
-            ${renderField('trialDays', 'Trial days (display)', effective.trialDays, stripe.trialDays, 'number')}
-            ${renderField('monthlyLabel', 'Monthly label', effective.monthlyLabel, stripe.monthlyLabel)}
-            ${renderField('yearlyLabel', 'Yearly label', effective.yearlyLabel, stripe.yearlyLabel)}
-            ${renderField('annualSavingsLabel', 'Annual savings line', effective.annualSavingsLabel, stripe.annualSavingsLabel)}
-            ${renderField('checkoutSummary', 'Checkout summary', effective.checkoutSummary, stripe.checkoutSummary, 'textarea')}
-            ${renderField('signupSummary', 'Signup summary', effective.signupSummary, stripe.signupSummary, 'textarea')}
-            <h3 class="marketing-pricing-subhead">Intro offer wording</h3>
-            ${renderField('introOffer.monthlyBenefit', 'Monthly benefit', effectiveIntro.monthlyBenefit, stripeIntro.monthlyBenefit, 'textarea')}
-            ${renderField('introOffer.yearlyBenefit', 'Yearly benefit', effectiveIntro.yearlyBenefit, stripeIntro.yearlyBenefit, 'textarea')}
-            ${renderField('introOffer.checkoutNote', 'Checkout note', effectiveIntro.checkoutNote, stripeIntro.checkoutNote, 'textarea')}
-            <h3 class="marketing-pricing-subhead">Refer a friend wording</h3>
-            ${renderField('referral.monthlyReferee', 'Friend — monthly plan', effectiveReferral.monthlyReferee, stripeReferral.monthlyReferee, 'textarea')}
-            ${renderField('referral.yearlyReferee', 'Friend — yearly plan', effectiveReferral.yearlyReferee, stripeReferral.yearlyReferee, 'textarea')}
-            ${renderField('referral.monthlyReferrer', 'You — monthly referral', effectiveReferral.monthlyReferrer, stripeReferral.monthlyReferrer, 'textarea')}
-            ${renderField('referral.yearlyReferrer', 'You — yearly referral', effectiveReferral.yearlyReferrer, stripeReferral.yearlyReferrer, 'textarea')}
-            <div class="stripe-mode-actions">
-              <button type="submit" class="btn btn-small">Save marketing copy</button>
-              <button type="button" class="btn btn-small btn-ghost" data-marketing-pricing-reset>Reset to Stripe defaults</button>
+            <div class="form-section">
+              <h3 class="form-section__title">Core pricing</h3>
+              <div class="form-grid">
+                ${renderField('productName', 'Product name', effective.productName, stripe.productName)}
+                ${renderField('trialDays', 'Trial days (display)', effective.trialDays, stripe.trialDays, 'number')}
+                ${renderField('monthlyLabel', 'Monthly label', effective.monthlyLabel, stripe.monthlyLabel)}
+                ${renderField('yearlyLabel', 'Yearly label', effective.yearlyLabel, stripe.yearlyLabel)}
+                ${renderField('annualSavingsLabel', 'Annual savings line', effective.annualSavingsLabel, stripe.annualSavingsLabel, 'text', true)}
+                ${renderField('checkoutSummary', 'Checkout summary', effective.checkoutSummary, stripe.checkoutSummary, 'textarea', true)}
+                ${renderField('signupSummary', 'Signup summary', effective.signupSummary, stripe.signupSummary, 'textarea', true)}
+              </div>
+            </div>
+            <div class="form-section">
+              <h3 class="form-section__title">Intro offer wording</h3>
+              <div class="form-grid">
+                ${renderField('introOffer.monthlyBenefit', 'Monthly benefit', effectiveIntro.monthlyBenefit, stripeIntro.monthlyBenefit, 'textarea', true)}
+                ${renderField('introOffer.yearlyBenefit', 'Yearly benefit', effectiveIntro.yearlyBenefit, stripeIntro.yearlyBenefit, 'textarea', true)}
+                ${renderField('introOffer.checkoutNote', 'Checkout note', effectiveIntro.checkoutNote, stripeIntro.checkoutNote, 'textarea', true)}
+              </div>
+            </div>
+            <div class="form-section">
+              <h3 class="form-section__title">Refer a friend wording</h3>
+              <div class="form-grid">
+                ${renderField('referral.monthlyReferee', 'Friend — monthly plan', effectiveReferral.monthlyReferee, stripeReferral.monthlyReferee, 'textarea', true)}
+                ${renderField('referral.yearlyReferee', 'Friend — yearly plan', effectiveReferral.yearlyReferee, stripeReferral.yearlyReferee, 'textarea', true)}
+                ${renderField('referral.monthlyReferrer', 'You — monthly referral', effectiveReferral.monthlyReferrer, stripeReferral.monthlyReferrer, 'textarea', true)}
+                ${renderField('referral.yearlyReferrer', 'You — yearly referral', effectiveReferral.yearlyReferrer, stripeReferral.yearlyReferrer, 'textarea', true)}
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save marketing copy</button>
+              <button type="button" class="btn btn-ghost" data-marketing-pricing-reset>Reset to Stripe defaults</button>
             </div>
           </form>
         </div>
@@ -86,8 +99,9 @@ export function renderMarketingPricingPanel(data, billingDbConfigured) {
  * @param {unknown} value
  * @param {unknown} stripeDefault
  * @param {'text' | 'textarea' | 'number'} [type]
+ * @param {boolean} [wide]
  */
-function renderField(name, label, value, stripeDefault, type = 'text') {
+function renderField(name, label, value, stripeDefault, type = 'text', wide = false) {
   const current = value == null ? '' : String(value);
   const placeholder = stripeDefault == null ? '' : String(stripeDefault);
   const input =
@@ -95,7 +109,7 @@ function renderField(name, label, value, stripeDefault, type = 'text') {
       ? `<textarea id="field-${escapeAttr(name)}" name="${escapeAttr(name)}" rows="2" placeholder="${escapeAttr(placeholder)}" data-stripe-default="${escapeAttr(placeholder)}">${escapeHtml(current)}</textarea>`
       : `<input id="field-${escapeAttr(name)}" name="${escapeAttr(name)}" type="${type}" value="${escapeAttr(current)}" placeholder="${escapeAttr(placeholder)}" data-stripe-default="${escapeAttr(placeholder)}" />`;
   return `
-    <label class="field marketing-pricing-field" for="field-${escapeAttr(name)}">
+    <label class="field marketing-pricing-field${wide ? ' field-wide' : ''}" for="field-${escapeAttr(name)}">
       <span class="field-label">${escapeHtml(label)}</span>
       ${stripeDefault != null && String(stripeDefault).trim() ? `<span class="field-hint">Stripe default: ${escapeHtml(String(stripeDefault))}</span>` : ''}
       ${input}
