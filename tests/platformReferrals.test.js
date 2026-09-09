@@ -32,6 +32,14 @@ vi.mock('../functions/api/platform/platformStripeMode.js', async (importOriginal
   };
 });
 
+vi.mock('../functions/api/platform/platformCustomerEmail.js', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    maybeSendReferrerRewardEmail: vi.fn(async () => ({ ok: true, action: 'referral_email_sent' }))
+  };
+});
+
 const env = {
   STRIPE_SECRET_KEY: 'sk_test',
   STRIPE_REFERRAL_COUPON_MONTHLY: 'coupon_month_test',

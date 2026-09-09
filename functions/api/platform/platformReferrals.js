@@ -4,6 +4,7 @@
  */
 import { getSiteBilling, getSiteBillingBySubscriptionId, stripeApiRequest } from './platformBilling.js';
 import { getStripeMode, stripeCredentialsForMode } from './platformStripeMode.js';
+import { maybeSendReferrerRewardEmail } from './platformCustomerEmail.js';
 import { marketingSiteOrigin } from './platformPublicSignup.js';
 import { normalizeAccountEmail } from './platformPublicAccount.js';
 
@@ -523,18 +524,37 @@ export async function fulfillReferrerRewardOnInvoicePaid(env, db, input) {
     description: `Referral reward for ${refereeSiteId} (${billingInterval}, invoice ${invoiceId})`
   });
 
+  const referralCode = String(row.code ?? '');
   await db
     .prepare('UPDATE referral_codes SET referrer_rewarded_at = ? WHERE code = ?')
-    .bind(nowMs, String(row.code ?? ''))
+    .bind(nowMs, referralCode)
     .run();
+
+  /** @type {Record<string, unknown> | undefined} */
+  let email;
+  try {
+    email = await maybeSendReferrerRewardEmail(env, db, {
+      referralCode,
+      referrerSiteId,
+      ownerEmail: referrerBilling?.owner_email,
+      creditPence
+    });
+  } catch (error) {
+    email = {
+      ok: false,
+      error: 'REFERRAL_EMAIL_FAILED',
+      message: error instanceof Error ? error.message : 'Referral reward email failed.'
+    };
+  }
 
   return {
     ok: true,
     action: 'referral_reward_fulfilled',
-    referralCode: String(row.code ?? ''),
+    referralCode,
     referrerSiteId,
     refereeSiteId,
-    creditPence
+    creditPence,
+    ...(email ? { email } : {})
   };
 }
 

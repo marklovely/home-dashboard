@@ -170,6 +170,101 @@ export function buildCustomerEmail(input) {
 }
 
 /**
+ * @param {number} creditPence
+ */
+export function formatReferralCreditGbp(creditPence) {
+  const pounds = Number(creditPence) / 100;
+  if (!Number.isFinite(pounds) || pounds <= 0) return '£0.00';
+  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(pounds);
+}
+
+/**
+ * @param {{
+ *   referrerSiteId: string;
+ *   creditPence: number;
+ *   marketingOrigin?: string;
+ * }} input
+ */
+export function buildReferrerRewardEmail(input) {
+  const referrerSiteId = String(input.referrerSiteId ?? '').trim();
+  const credit = formatReferralCreditGbp(input.creditPence);
+  const origin = (input.marketingOrigin || DEFAULT_MARKETING_ORIGIN).replace(/\/$/, '');
+  const accountUrl = `${origin}/account`;
+  const hubUrl = customerHubUrl(referrerSiteId);
+
+  return {
+    subject: `You earned ${credit} Lovely Home referral credit`,
+    text: [
+      `Thanks for referring a friend to Lovely Home — we added ${credit} credit to your billing account.`,
+      '',
+      'Stripe applies that balance automatically to your next invoice (you may see “Applied balance” on upcoming payments). Manage billing any time:',
+      accountUrl,
+      '',
+      `Your hub: ${hubUrl}`,
+      '',
+      'Questions: support@lovely-home.co.uk'
+    ].join('\n')
+  };
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {D1Database} db
+ * @param {{
+ *   referralCode: string;
+ *   referrerSiteId: string;
+ *   ownerEmail?: string | null;
+ *   creditPence: number;
+ * }} input
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function maybeSendReferrerRewardEmail(env, db, input, fetchImpl = fetch) {
+  if (!customerEmailConfigured(env)) {
+    return { ok: true, action: 'referral_email_not_configured' };
+  }
+
+  const referralCode = String(input.referralCode ?? '').trim();
+  const to = String(input.ownerEmail ?? '')
+    .trim()
+    .toLowerCase();
+  if (!referralCode || !to.includes('@')) {
+    return { ok: true, action: 'referral_email_missing_recipient' };
+  }
+
+  const now = Date.now();
+  const claimed = await db
+    .prepare(
+      `UPDATE referral_codes
+       SET referrer_reward_email_sent_at = ?
+       WHERE code = ?
+         AND referrer_rewarded_at IS NOT NULL
+         AND referrer_rewarded_at > 0
+         AND (referrer_reward_email_sent_at IS NULL OR referrer_reward_email_sent_at = 0)`
+    )
+    .bind(now, referralCode)
+    .run();
+  if (!d1UpdateChangedRow(claimed)) {
+    return { ok: true, action: 'referral_email_already_sent' };
+  }
+
+  const built = buildReferrerRewardEmail({
+    referrerSiteId: input.referrerSiteId,
+    creditPence: input.creditPence,
+    marketingOrigin: marketingSiteOrigin(env)
+  });
+  const sent = await sendResendEmail(env, { to, ...built }, fetchImpl);
+  if (!sent.ok) {
+    await db
+      .prepare('UPDATE referral_codes SET referrer_reward_email_sent_at = NULL WHERE code = ?')
+      .bind(referralCode)
+      .run();
+    return { ok: false, error: sent.error, message: sent.message };
+  }
+
+  return { ok: true, action: 'referral_email_sent' };
+}
+
+/**
  * @param {{ meta?: { changes?: number | null } } | null | undefined} result
  */
 function d1UpdateChangedRow(result) {

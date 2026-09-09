@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildCustomerEmail,
+  buildReferrerRewardEmail,
   customerEmailConfigured,
   customerHubUrl,
+  formatReferralCreditGbp,
   formatUkDate,
   lifecycleEmailKindForEvent,
   markCustomerEmailSent,
   maybeSendCustomerLifecycleEmail,
+  maybeSendReferrerRewardEmail,
   RESEND_EMAILS_URL
 } from '../functions/api/platform/platformCustomerEmail.js';
 import { handleStripeBillingEvent } from '../functions/api/platform/platformBilling.js';
@@ -51,6 +54,19 @@ describe('customer lifecycle email copy', () => {
     expect(mail.text).toMatch(/hub name/i);
     expect(mail.text).toMatch(/12 months/i);
     expect(mail.text).not.toMatch(/\bslug\b/i);
+  });
+
+  it('formats referral credit and builds a reward email', () => {
+    expect(formatReferralCreditGbp(1000)).toBe('£10.00');
+    const mail = buildReferrerRewardEmail({
+      referrerSiteId: 'wagtail',
+      creditPence: 1500,
+      marketingOrigin: 'https://lovely-home.co.uk'
+    });
+    expect(mail.subject).toContain('£15.00');
+    expect(mail.text).toContain('Applied balance');
+    expect(mail.text).toContain('https://lovely-home.co.uk/account');
+    expect(mail.text).toContain(customerHubUrl('wagtail'));
   });
 });
 
@@ -326,6 +342,73 @@ describe('maybeSendCustomerLifecycleEmail', () => {
     );
     expect(retried).toEqual({ ok: true, action: 'email_signup_sent' });
     expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('referrer reward email', () => {
+  it('sends once per fulfilled referral code', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: 'email_ref_1' })
+    }));
+    /** @type {{ code: string; referrer_rewarded_at: number | null; referrer_reward_email_sent_at: number | null }} */
+    const row = {
+      code: 'LH-ABCD-2345',
+      referrer_rewarded_at: 1_700_000_000_000,
+      referrer_reward_email_sent_at: null
+    };
+    const db = /** @type {D1Database} */ ({
+      prepare(sql) {
+        return {
+          bind(...args) {
+            return {
+              async run() {
+                if (sql.includes('referrer_reward_email_sent_at = ?') && sql.includes('referrer_rewarded_at IS NOT NULL')) {
+                  if (!row.referrer_rewarded_at || row.referrer_reward_email_sent_at) {
+                    return { meta: { changes: 0 } };
+                  }
+                  row.referrer_reward_email_sent_at = Number(args[0]);
+                  return { meta: { changes: 1 } };
+                }
+                if (sql.includes('referrer_reward_email_sent_at = NULL')) {
+                  row.referrer_reward_email_sent_at = null;
+                  return { meta: { changes: 1 } };
+                }
+                return { meta: { changes: 0 } };
+              }
+            };
+          }
+        };
+      }
+    });
+
+    const sent = await maybeSendReferrerRewardEmail(
+      { RESEND_API_KEY: 're_test' },
+      db,
+      {
+        referralCode: 'LH-ABCD-2345',
+        referrerSiteId: 'wagtail',
+        ownerEmail: 'owner@example.com',
+        creditPence: 1000
+      },
+      /** @type {typeof fetch} */ (fetchImpl)
+    );
+    expect(sent).toEqual({ ok: true, action: 'referral_email_sent' });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+
+    const again = await maybeSendReferrerRewardEmail(
+      { RESEND_API_KEY: 're_test' },
+      db,
+      {
+        referralCode: 'LH-ABCD-2345',
+        referrerSiteId: 'wagtail',
+        ownerEmail: 'owner@example.com',
+        creditPence: 1000
+      },
+      /** @type {typeof fetch} */ (fetchImpl)
+    );
+    expect(again).toEqual({ ok: true, action: 'referral_email_already_sent' });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });
 
