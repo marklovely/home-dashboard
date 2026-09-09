@@ -336,3 +336,58 @@ bucket_name = "lovely-home-guide-media-test-cottage"
 [[env.test-cottage.r2_buckets]]
 binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
+
+# ---------------------------------------------------------------------------
+# Test-flat-new environment — Terraform-managed (see docs/platform-terraform.md)
+# Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs test-flat-new
+# ---------------------------------------------------------------------------
+
+[env.test-flat-new]
+name = "lovely-home-hub-api-test-flat-new"
+
+[env.test-flat-new.vars]
+HUB_ENVIRONMENT = "test-flat-new"
+
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://test-flat-new.lovely-hub.com,https://home-dashboard-test-flat-new.pages.dev,https://*.home-dashboard-test-flat-new.pages.dev,https://*.pages.dev"
+
+HOME_LATITUDE = "51.5074"
+
+HOME_LONGITUDE = "-0.1278"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
+ACCESS_PAGES_APP_ID = "4164daa9-7cf7-40af-b7f6-bf61c33c64e1"
+
+ACCESS_WORKER_APP_ID = "c18d4f61-e038-44b7-ba2e-13cc1f093462"
+
+[[env.test-flat-new.durable_objects.bindings]]
+name = "OWNER_AUTH_LIMITER"
+class_name = "OwnerAuthLimiter"
+
+[[env.test-flat-new.durable_objects.bindings]]
+name = "CONTROL_ACTION_LIMITER"
+class_name = "ControlActionLimiter"
+
+[[env.test-flat-new.r2_buckets]]
+binding = "APPLIANCE_GUIDES"
+bucket_name = "lovely-home-appliance-guides-test-flat-new"
+
+[[env.test-flat-new.d1_databases]]
+binding = "APPLIANCE_MANUALS_DB"
+database_name = "lovely-home-appliance-manuals-test-flat-new"
+database_id = "a953d2ad-9505-4192-b9ca-21a98412c484"
+migrations_dir = "migrations"
+
+[[env.test-flat-new.d1_databases]]
+binding = "HOUSE_GUIDE_DB"
+database_name = "lovely-home-appliance-manuals-test-flat-new"
+database_id = "a953d2ad-9505-4192-b9ca-21a98412c484"
+migrations_dir = "migrations"
+
+[[env.test-flat-new.r2_buckets]]
+binding = "GUIDE_MEDIA"
+bucket_name = "lovely-home-guide-media-test-flat-new"
+
+[[env.test-flat-new.r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"

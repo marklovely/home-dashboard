@@ -237,4 +237,13 @@ sites = {
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
   }
 
+  test-flat-new = {
+    hostname        = "test-flat-new.lovely-hub.com"
+    hub_environment = "test-flat-new"
+    vanilla         = false
+    terraform       = true
+    zone_name       = "lovely-hub.com"
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+  }
+
 }
