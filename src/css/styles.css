@@ -3779,8 +3779,94 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   line-height: 1.4;
 }
 .hub-setup-bin-remove-button,
-.hub-setup-bin-add-button {
+.hub-setup-bin-add-button,
+.hub-setup-bin-toggle-changed {
   justify-self: start;
+}
+.hub-setup-bin-choices {
+  display: grid;
+  gap: 10px;
+}
+.hub-setup-bin-choices--settings {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.hub-setup-bin-choice {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+.hub-setup-bin-choice:hover,
+.hub-setup-bin-choice:focus-visible {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+.hub-setup-bin-choice--primary {
+  border-color: rgba(63, 122, 92, 0.45);
+  background: rgba(63, 122, 92, 0.12);
+}
+.hub-setup-bin-subwizard-progress {
+  margin: 0 0 12px;
+  font-weight: 650;
+}
+.hub-setup-bin-subwizard-body {
+  display: grid;
+  gap: 12px;
+}
+.hub-setup-bin-subsection {
+  display: grid;
+  gap: 10px;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--border);
+}
+.hub-setup-bin-stream-list,
+.hub-setup-bin-pattern-options {
+  display: grid;
+  gap: 8px;
+}
+.hub-setup-bin-pattern-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+}
+.hub-setup-bin-paste-input {
+  width: 100%;
+  min-height: 8rem;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+.hub-setup-bin-subwizard-host,
+.hub-setup-bin-paste-host {
+  display: grid;
+  gap: 12px;
+}
+.hub-setup-bin-toggle-changed {
+  font-size: 0.82rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
 }
 .hub-setup-checkbox-field {
   display: flex;

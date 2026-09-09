@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addMonthsIso,
+  buildAlternatingBinScheduleEntries,
   buildBinScheduleEntriesFromRepeat,
   defaultRepeatUntilDate,
   expandBinRepeatDates,
@@ -90,6 +91,21 @@ describe('binScheduleRepeat', () => {
   it('defaults repeat-until to one year after start', () => {
     expect(defaultRepeatUntilDate('2026-06-10')).toBe('2027-06-10');
     expect(addMonthsIso('2026-01-31', 1)).toBe('2026-03-03');
+  });
+
+  it('builds alternating household entries from a start date', () => {
+    expect(
+      buildAlternatingBinScheduleEntries({
+        startDate: '2026-09-12',
+        startType: 'rubbish',
+        intervalWeeks: 2,
+        untilDate: '2026-10-10'
+      })
+    ).toEqual([
+      { date: '2026-09-12', type: 'rubbish', bankHolidayChange: false },
+      { date: '2026-09-26', type: 'recycling', bankHolidayChange: false },
+      { date: '2026-10-10', type: 'rubbish', bankHolidayChange: false }
+    ]);
   });
 
   it('ignores a stale validUntil that is before the first generated date', () => {

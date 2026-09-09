@@ -391,7 +391,7 @@ export function createBinScheduleFields(profile = {}, useCase = 'owner') {
   });
 
   const alertHours = createSetupSelect(
-    'Remind sitters before collection',
+    'Remind guests before collection',
     String(schedule.alertHoursBefore ?? DEFAULT_BIN_ALERT_HOURS_BEFORE),
     BIN_ALERT_HOURS_OPTIONS,
     HUB_SETUP_FIELD_HELP.binAlertHours
@@ -526,7 +526,7 @@ export function createBinColorFields(schedule) {
 export function createBinAlertHoursField(profile = {}) {
   const schedule = readBinScheduleFromProfile(profile);
   const field = createSetupSelect(
-    'Remind sitters before collection',
+    'Remind guests before collection',
     String(schedule.alertHoursBefore ?? DEFAULT_BIN_ALERT_HOURS_BEFORE),
     BIN_ALERT_HOURS_OPTIONS,
     HUB_SETUP_FIELD_HELP.binAlertHours
