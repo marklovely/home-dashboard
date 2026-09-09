@@ -37,6 +37,21 @@ describe('createBinPatternWizard', () => {
     expect(saved?.household?.length).toBeGreaterThan(0);
   });
 
+  it('omits UK alternating pattern outside GB', () => {
+    const wizard = createBinPatternWizard(readBinScheduleFromProfile({}), () => {}, {
+      hubCountryCode: 'US'
+    });
+
+    expect(wizard.handleContinue()).toBe(true);
+    expect(wizard.progressLabel()).toContain('Step 2 of 4');
+
+    const alternating = wizard.wrap.querySelector('input[value="alternating"]');
+    expect(alternating).toBeNull();
+    const weekly = wizard.wrap.querySelector('input[value="weekly"]');
+    expect(weekly).toBeTruthy();
+    expect(weekly.checked).toBe(true);
+  });
+
   it('returns pick-stream when no bin types are selected', () => {
     const wizard = createBinPatternWizard(readBinScheduleFromProfile({}), () => {});
     const body = wizard.wrap.querySelector('.hub-setup-bin-stream-list');
