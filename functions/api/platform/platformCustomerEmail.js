@@ -111,7 +111,7 @@ export function buildCustomerEmail(input) {
     return {
       subject: `Your Lovely Home hub — ${siteId}.lovely-hub.com`,
       text: [
-        'Your 7-day trial has started. We are setting up your private household hub now — it usually takes about 10 minutes.',
+        'Your 7-day trial has started. We are setting up your private household hub now — it can take up to 10 minutes, often faster when queues are clear.',
         '',
         `Your hub: ${hubUrl}`,
         `Watch progress: ${successUrl}`,

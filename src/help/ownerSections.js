@@ -15,6 +15,9 @@ export const OWNER_HELP_SECTIONS = [
       'tablet',
       'fully kiosk',
       'sitter',
+      'guest',
+      'airbnb',
+      'tenant',
       'hardware',
       'pin',
       'home screen'
@@ -22,7 +25,7 @@ export const OWNER_HELP_SECTIONS = [
     blocks: [
       {
         type: 'p',
-        text: 'Your hub is a private web address. Send it to a sitter on their phone, or open it on a wall tablet if you have one. Use the 7-day trial to fill in the House Guide — not a complimentary stay. No hardware to buy.'
+        text: 'Your hub is a private web address. Send it to guests on their phone, or open it on a wall tablet if you have one. Use the 7-day trial to fill in the House Guide — not a complimentary stay. No hardware to buy.'
       },
       {
         type: 'h4',
@@ -31,8 +34,8 @@ export const OWNER_HELP_SECTIONS = [
       {
         type: 'ul',
         items: [
-          'A browser — phone, laptop, or tablet. Sitters use the same hub URL you do. Nothing to buy.',
-          'About 30 minutes for the setup wizard once your hub is live (usually around 10 minutes after checkout).',
+          'A browser — phone, laptop, or tablet. Guests use the same hub URL you do. Nothing to buy.',
+          'About 30 minutes for the setup wizard once your hub is live (up to 10 minutes after checkout, often faster).',
           'Optional: a wall tablet — only if you want a screen in the house. We do not sell mounts, tablets, or kiosk hardware.'
         ]
       },
@@ -43,34 +46,34 @@ export const OWNER_HELP_SECTIONS = [
       {
         type: 'ol',
         items: [
-          'Wait for the hub. The success page watches the build and shows an Open button plus a QR code when it answers — usually around 10 minutes.',
+          'Wait for the hub. The success page watches the build and shows an Open button plus a QR code when it answers — up to 10 minutes, often faster.',
           'Sign in as owner. Open {your-name}.lovely-hub.com. Cloudflare emails a one-time code to the address you used at signup.',
           'Walk through the wizard. Hub name, contacts, Wi‑Fi, lockbox, bins, optional calendar, and a starter house guide.',
           'Set an owner PIN. That unlocks owner tools on any device — phone, laptop, or tablet.',
-          'Share the URL. Send the hub address to your sitter, or open it yourself wherever you like.'
+          'Share the URL. Send the hub address to your guest, or open it yourself wherever you like.'
         ]
       },
       {
         type: 'h4',
-        text: 'Send it to a sitter'
+        text: 'Share with guests'
       },
       {
         type: 'p',
-        text: 'This is the usual way. They open the hub on their own phone or laptop — no wall tablet required. Add every upcoming stay in one list.'
+        text: 'This is the usual way — for Airbnb stays, tenants, sitters, family, or anyone you invite. They open the hub on their own phone or laptop; no wall tablet required. Add every upcoming stay in one list.'
       },
       {
         type: 'ol',
         items: [
-          'Schedule the stay. Settings → House sitter mode → add their email and dates (optional label for you). Book as many sits as you need.',
+          'Schedule the stay. Settings → House sitter mode → add their email and dates (optional label for you). Book as many stays as you need.',
           'Two weeks before. They sign in with a one-time email code and can read the house guide. Wi‑Fi, address, and lockbox stay hidden.',
-          'On the sit dates. Those home-access details appear automatically. You do not need Sitter is here for a booked remote stay.',
+          'During the stay. Those home-access details appear automatically. You do not need Sitter is here for a booked remote stay.',
           'After checkout. Their login is removed the day after the stay ends. Edit, extend, cancel, or end a stay early from the same list.',
-          'Long-term sitter. Add their email as a permanent sitter login — not for one-off visits.'
+          'Long-term access. Add their email as a permanent guest login — for tenants, regular sitters, or anyone who should keep access.'
         ]
       },
       {
         type: 'p',
-        text: 'Sitters never see the guide editor, backups, or home-control buttons. On a wall tablet in the house, use Sitter is here so a guest without their own login can see home-access details. See Security for how access is locked down.'
+        text: 'Guests never see the guide editor, backups, or home-control buttons. On a wall tablet in the house, use Sitter is here so a visitor without their own login can see home-access details. See Security for how access is locked down.'
       },
       {
         type: 'h4',
@@ -129,7 +132,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Yes. Use the public demo with fictional data, or start a free trial for your own private hub. Use the week to fill in the guide before anyone stays — the trial is not a free guest stay. You can send the hub URL to a sitter; a wall tablet is optional.'
+        text: 'Yes. Use the public demo with fictional data, or start a free trial for your own private hub. Use the week to fill in the guide before anyone stays — the trial is not a free guest stay. You can send the hub URL to guests; a wall tablet is optional.'
       },
       {
         type: 'h4',
@@ -153,19 +156,19 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'p',
-        text: 'Yes — start a new 7-day trial at lovely-home.co.uk/signup (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning usually takes about 10 minutes, then sign in at your-name.lovely-hub.com with a one-time email code.'
+        text: 'Yes — start a new 7-day trial at lovely-home.co.uk/signup (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning takes up to 10 minutes (often faster), then sign in at your-name.lovely-hub.com with a one-time email code.'
       },
       {
         type: 'p',
-        text: 'Before you cancel, download an encrypted full backup from Settings → Utilities if you want to restore photos, the house guide, or appliance manuals. Restore that file from the setup wizard or Settings → Backup & restore — photos and PDFs in the zip are put back automatically. Automated restore from our platform archive is not available yet. The account page (lovely-home.co.uk/account) is only for invoices and card details; it does not recreate a hub.'
+        text: 'Before you cancel, download a full backup while the hub is still live — see Backup & restore in this guide for step-by-step instructions. Our platform archive on cancel is guide JSON only and does not include photos or PDFs. The account page (lovely-home.co.uk/account) is for billing only; it does not restore a hub.'
       },
       {
         type: 'h4',
-        text: 'Can I book sits in advance?'
+        text: 'Can I schedule stays in advance?'
       },
       {
         type: 'p',
-        text: 'Yes. Add each stay with dates and the sitter’s email under Settings → House sitter mode. They can read the house guide from two weeks before; Wi‑Fi, address, and lockbox appear on the sit dates; their login is removed the day after checkout. Add as many upcoming stays as you need.'
+        text: 'Yes. Add each stay with dates and the guest’s email under Settings → House sitter mode. They can read the house guide from two weeks before; Wi‑Fi, address, and lockbox appear on the stay dates; their login is removed the day after checkout. Add as many upcoming stays as you need.'
       },
       {
         type: 'h4',
@@ -210,13 +213,120 @@ export const OWNER_HELP_SECTIONS = [
     ]
   },
   {
+    id: 'backup-restore',
+    title: 'Backup & restore',
+    keywords: [
+      'backup',
+      'restore',
+      'download',
+      'encrypt',
+      'password',
+      'cancel',
+      'photos',
+      'pdf',
+      'manuals',
+      'utilities',
+      'zip',
+      'export',
+      'import',
+      'archive',
+      'billing',
+      'stripe'
+    ],
+    blocks: [
+      {
+        type: 'p',
+        text: 'Your hub holds the house guide, photos, appliance PDFs, Wi‑Fi, PIN, lockbox, guest access, and bin dates. Download an encrypted backup while the hub is still live — especially before you cancel billing on Stripe.'
+      },
+      {
+        type: 'h4',
+        text: 'Download a full backup'
+      },
+      {
+        type: 'ol',
+        items: [
+          'Sign in to your hub as owner (your-name.lovely-hub.com — Cloudflare emails a one-time code).',
+          'Open Settings from the bottom navigation.',
+          'Choose Utilities in the left-hand list.',
+          'Under Backup & restore, tap Download full site backup.',
+          'Choose a password and confirm it. The file is encrypted in your browser before download — Lovely Home never sees that password and cannot recover it if you forget it.',
+          'Save the downloaded file somewhere safe you will still have after cancel (password manager, cloud storage, or an offline copy).'
+        ]
+      },
+      {
+        type: 'h4',
+        text: 'What a full backup includes'
+      },
+      {
+        type: 'ul',
+        items: [
+          'House Guide content (published topics and drafts)',
+          'Uploaded guide photos',
+          'Appliance manual PDFs',
+          'Home details — hub name, contacts, address, Wi‑Fi, lockbox, owner PIN, calendar link',
+          'Guest access settings and scheduled stays',
+          'Bin reminder dates and display preferences'
+        ]
+      },
+      {
+        type: 'h4',
+        text: 'Guide-only backup (smaller file)'
+      },
+      {
+        type: 'p',
+        text: 'Utilities also offers Download guide only. That is useful for moving guide text between hubs, but it omits photos, PDFs, Wi‑Fi, PIN, lockbox, and other secrets. Before cancelling billing, always use Download full site backup.'
+      },
+      {
+        type: 'h4',
+        text: 'Restore from a backup'
+      },
+      {
+        type: 'ol',
+        items: [
+          'Sign in to the hub as owner.',
+          'Open Settings → Utilities → Restore from backup file.',
+          'Select your encrypted backup file and enter the password you chose at download.',
+          'Wait for the restore to finish — photos and PDFs from a full backup zip are written back automatically.'
+        ]
+      },
+      {
+        type: 'p',
+        text: 'On a brand-new hub, you can also restore during the setup wizard when it offers to import an existing backup.'
+      },
+      {
+        type: 'h4',
+        text: 'Before you cancel on Stripe'
+      },
+      {
+        type: 'ul',
+        items: [
+          'Download a full backup while the hub is still live — lovely-home.co.uk/account opens Stripe for billing; it does not download backups for you.',
+          'After a paid period ends, we take down the live hub and keep a platform archive of guide JSON only — not your photos or appliance PDFs.',
+          'To use the same hub name again later, start a new trial at lovely-home.co.uk/signup and restore your backup file on the new hub.'
+        ]
+      },
+      {
+        type: 'h4',
+        text: 'If something goes wrong'
+      },
+      {
+        type: 'ul',
+        items: [
+          'Wrong password at restore — the file cannot be opened. There is no reset; you need the original password.',
+          'Backup download fails — sign in as owner, unlock owner mode if you are on a guest-locked tablet, and try again on a stable connection.',
+          'Old backup file without photos — download again with Download full site backup on an updated hub.'
+        ]
+      }
+    ]
+  },
+  {
     id: 'overview',
     title: 'Your home hub',
     keywords: ['home hub', 'dashboard', 'tablet', 'owner', 'lovely home', 'browser'],
     blocks: [
       {
         type: 'p',
-        text: 'This hub is your control centre — on a wall tablet, phone, or laptop. From here you manage the House Guide, appliance manuals, Alexa routines, and settings, then share the hub with sitters when you go away.'
+        text: 'This hub is your control centre — on a wall tablet, phone, or laptop. From here you manage the House Guide, appliance manuals, Alexa routines, and settings, then share the hub with guests when they stay.'
       },
       {
         type: 'p',
@@ -558,7 +668,7 @@ export const OWNER_HELP_SECTIONS = [
             'Collection dates, colours, and where sitters leave the bins. Add dates, then save — see the Bin reminders topic in this guide.'
           ],
           ['Cameras', 'Owner-only live view via go2rtc on your home network — not shown to sitters'],
-          ['Utilities', 'Reopen the setup wizard, download an encrypted backup, or factory-reset this hub']
+          ['Utilities', 'Setup wizard, backup & restore, and factory reset — see Backup & restore in this guide']
         ]
       },
       {

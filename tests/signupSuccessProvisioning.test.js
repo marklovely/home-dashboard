@@ -59,7 +59,7 @@ describe('signup success provisioning status', () => {
     expect(document.getElementById('success-heading').textContent).toBe("Thank you — we're building your hub");
     expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Trial started');
     expect(document.getElementById('hub-progress-title').textContent).toMatch(/Deploying your hub now/i);
-    expect(document.getElementById('hub-progress-note').textContent).toMatch(/about 10 minutes/i);
+    expect(document.getElementById('hub-progress-note').textContent).toMatch(/10 minutes/i);
     expect(document.getElementById('open-hub-btn').hidden).toBe(true);
     expect(document.getElementById('hub-qr').hidden).toBe(true);
     expect(document.getElementById('hub-link').textContent).toBe('blundell.lovely-hub.com');

@@ -28,7 +28,7 @@ describe('public help catalog', () => {
     expect(OWNER_HELP_SECTIONS[0]).toMatchObject({ id: 'setup', title: 'Set it up' });
     const setupText = JSON.stringify(OWNER_HELP_SECTIONS[0]);
     expect(setupText).toMatch(/No hardware to buy/);
-    expect(setupText).toMatch(/Send it to a sitter/);
+    expect(setupText).toMatch(/Share with guests/);
     expect(setupText).toMatch(/Optional: wall tablet/);
     expect(setupText).toMatch(/Two weeks before/);
     expect(setupText).toMatch(/You do not need Sitter is here for a booked remote stay/);
@@ -36,15 +36,27 @@ describe('public help catalog', () => {
     expect(setupText).not.toMatch(/Turn on Sitter is here so home-access details appear for that stay/);
   });
 
+  it('includes a dedicated backup and restore guide for owners', () => {
+    const backup = OWNER_HELP_SECTIONS.find((section) => section.id === 'backup-restore');
+    expect(backup?.title).toBe('Backup & restore');
+    const text = JSON.stringify(backup);
+    expect(text).toMatch(/Download full site backup/);
+    expect(text).toMatch(/Settings → Utilities/);
+    expect(text).toMatch(/photos and PDFs from a full backup zip/);
+    expect(text).toMatch(/Before you cancel on Stripe/);
+    expect(OWNER_HELP_SECTIONS[2].id).toBe('backup-restore');
+  });
+
   it('keeps common questions in the help catalog, not only on Pricing', () => {
     const faq = OWNER_HELP_SECTIONS.find((section) => section.id === 'common-questions');
     expect(faq?.title).toBe('Common questions');
     expect(OWNER_HELP_SECTIONS[1].id).toBe('common-questions');
+    expect(JSON.stringify(faq)).toMatch(/Backup & restore in this guide/);
     const text = JSON.stringify(faq);
     expect(text).toMatch(/Can I try before I pay\?/);
     expect(text).toMatch(/When am I charged\?/);
     expect(text).toMatch(/What if I cancel\?/);
-    expect(text).toMatch(/Can I book sits in advance\?/);
+    expect(text).toMatch(/Can I schedule stays in advance\?/);
     expect(text).toMatch(/How do referrals work\?/);
     expect(text).toMatch(/How do I get a referral link\?/);
     expect(text).toMatch(/Is this a public app\?/);

@@ -30,7 +30,7 @@ Pricing on the marketing site is **£9.99/month or £99/year** (loaded live from
 
 ## Hub provisioning status on the success page
 
-`signup-success.js` polls `GET /api/public/hub-status/<siteId>` on the platform (server-side HTTPS probe of the hub hostname). Until the hub SPA is serving, the page shows "Deploying your hub now" with the address as text only; once the hub HTML is live, it turns the address into a link and reveals the Open button plus a QR code. If billing records `registry_last_error` or `provision_last_error`, the page stops immediately and asks the buyer to email support (no QR). After **30 minutes** without a live hub it also asks for support instead of handing over a QR to an address that never answered. Typical builds take about **10 minutes**.
+`signup-success.js` polls `GET /api/public/hub-status/<siteId>` on the platform (server-side HTTPS probe of the hub hostname). Until the hub SPA is serving, the page shows "Deploying your hub now" with the address as text only; once the hub HTML is live, it turns the address into a link and reveals the Open button plus a QR code. If billing records `registry_last_error` or `provision_last_error`, the page stops immediately and asks the buyer to email support (no QR). After **30 minutes** without a live hub it also asks for support instead of handing over a QR to an address that never answered. Builds take up to **10 minutes** (often faster when queues are clear).
 
 ## Vendored QR bundle
 

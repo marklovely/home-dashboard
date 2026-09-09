@@ -16,7 +16,7 @@
     checkoutSummary:
       '£0 today — then £9.99/month or £99.00/year after your 7-day trial. Cancel anytime before then.',
     signupSummary:
-      '£0 today — then £9.99/month or £99.00/year. Use the trial to set up before your sitter arrives.',
+      '£0 today — then £9.99/month or £99.00/year. Use the trial to set up before guests arrive.',
     vatNote: ''
   };
 

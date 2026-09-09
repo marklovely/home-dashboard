@@ -1381,6 +1381,97 @@ html.nav-open {
   margin-top: 1.1rem;
 }
 
+.account-backup-reminder {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+  box-shadow: var(--shadow);
+}
+
+.account-backup-reminder__title,
+.account-backup-reminder__body,
+.account-backup-reminder__links {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.account-backup-reminder__title {
+  margin-bottom: 0.35rem;
+  color: var(--text);
+}
+
+.account-backup-reminder__body {
+  margin-bottom: 0.45rem;
+}
+
+.account-backup-reminder__links a {
+  font-weight: 600;
+}
+
+.account-backup-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(16, 20, 18, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.account-backup-dialog__panel {
+  width: min(100%, 28rem);
+  padding: 1.25rem 1.35rem 1.1rem;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  background: var(--card);
+  box-shadow: 0 24px 64px rgba(16, 20, 18, 0.22);
+}
+
+.account-backup-dialog__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+}
+
+.account-backup-dialog__panel p {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.account-backup-dialog__links {
+  margin-bottom: 0.85rem !important;
+}
+
+.account-backup-dialog__links a {
+  font-weight: 600;
+}
+
+.account-backup-dialog__skip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.account-backup-dialog__actions {
+  display: grid;
+  gap: 0.55rem;
+}
+
+@media (min-width: 480px) {
+  .account-backup-dialog__actions {
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+}
+
 .success-hostname {
   font-size: 1.15rem;
   font-weight: 600;

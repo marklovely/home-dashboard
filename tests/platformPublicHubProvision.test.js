@@ -66,7 +66,7 @@ describe('hub provision status', () => {
     expect(status.ready).toBe(false);
     expect(status.registered).toBe(false);
     expect(status.typicalMinutes).toBe(10);
-    expect(status.message).toMatch(/about 10 minutes/i);
+    expect(status.message).toMatch(/up to 10 minutes/i);
   });
 
   it('marks a rebuild after deprovision as returning', () => {
