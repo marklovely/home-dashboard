@@ -404,8 +404,15 @@ function updatePreviewRow(siteId, status) {
     return;
   }
 
+  const accessNote =
+    status.enabled && status.accessSync && status.accessSync.ok === false
+      ? `<span class="preview-warn">${escapeHtml(String(status.accessSync.message ?? 'Access preview hostnames not updated'))}</span>`
+      : status.enabled && status.accessSync?.updated
+        ? '<span class="preview-muted">Access includes *.pages.dev previews</span>'
+        : '';
+
   row.innerHTML = status.enabled
-    ? '<span class="preview-on">PR previews enabled</span>'
+    ? `<span class="preview-on">PR previews enabled</span>${accessNote}`
     : '<span class="preview-off">PR previews disabled</span>';
   if (checkbox) /** @type {HTMLInputElement} */ (checkbox).disabled = false;
 }

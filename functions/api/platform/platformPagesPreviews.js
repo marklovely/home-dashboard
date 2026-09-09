@@ -2,6 +2,7 @@ import {
   cloudflareUsageApiConfigured,
   resolveCloudflareAccountId
 } from './platformCloudflareUsage.js';
+import { ensurePagesPreviewAccessDestinations } from './platformPagesPreviewAccess.js';
 
 /** @typedef {Record<string, string | undefined>} PlatformEnv */
 
@@ -82,12 +83,36 @@ export async function setSitePagesPreviewEnabled(site, platform, env, enabled) {
 
   try {
     const result = await setPagesPreviewEnabled(accountId, token, pagesProject, enabled);
+    /** @type {Record<string, unknown> | undefined} */
+    let accessSync;
+    if (enabled) {
+      const hostname = String(site.hostname ?? site.contract?.hostname ?? '').trim();
+      const accessAppId = String(
+        site.contract?.access_pages_app_id ?? site.accessPagesAppId ?? ''
+      ).trim();
+      accessSync = await ensurePagesPreviewAccessDestinations({
+        accountId,
+        token,
+        accessAppId,
+        hostname,
+        pagesProject
+      });
+    }
+
+    const accessNote =
+      enabled && accessSync?.ok === false
+        ? ` Preview builds are on, but Access still needs ${String(accessSync.message ?? 'manual setup')} — preview login may show “Invalid redirect URL”.`
+        : enabled && accessSync?.updated
+          ? ` ${String(accessSync.message ?? '')}`
+          : '';
+
     return {
       ok: true,
       enabled: result.enabled,
       pagesProject: result.pagesProject,
+      accessSync,
       message: enabled
-        ? 'PR preview builds enabled. Redeploy an open PR branch to pick up preview env vars.'
+        ? `PR preview builds enabled. Redeploy an open PR branch to pick up preview env vars.${accessNote}`
         : 'PR preview builds disabled for this site.'
     };
   } catch (error) {

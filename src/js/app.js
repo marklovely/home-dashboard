@@ -22,7 +22,6 @@ import { bootstrapDeviceSession, getDeviceSessionStatus } from '../auth/deviceSe
 import { startDeviceSessionKeepalive } from '../auth/deviceSessionKeepalive.js';
 import { initAccessSessionBanner } from '../shell/accessSessionBanner.js';
 import { initScreensaverOverlay } from '../shell/screensaverOverlay.js';
-import { initTestEnvironmentBanner } from '../shell/testEnvironmentBanner.js';
 import { initTrialWatermark } from '../shell/trialWatermark.js';
 import { initShellBrandLogo } from '../shell/shellBrandLogo.js';
 import { initShellThemeToggle } from '../shell/shellThemeToggle.js';
@@ -56,7 +55,6 @@ function setStartupLoading(active) {
 }
 
 async function initialiseDashboard() {
-  void initTestEnvironmentBanner();
   void initTrialWatermark();
   void preloadPrivateConfig();
   if (!isHouseSitterExperience()) {
