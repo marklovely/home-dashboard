@@ -180,38 +180,35 @@ export const HUB_SETUP_HELP_SECTIONS = [
   {
     id: 'step-bins',
     title: 'Step — Bin collections',
-    keywords: ['bins', 'rubbish', 'recycling', 'garden waste', 'collection', 'council'],
+    keywords: ['bins', 'rubbish', 'recycling', 'garden waste', 'collection', 'council', 'pattern', 'paste'],
     blocks: [
       {
         type: 'p',
-        text: 'Add each collection date from your council calendar. These dates power the home screen bin reminder and the Bins app timeline — not just a PDF in the House Guide.'
+        text: 'Choose how to add collection dates. They power the home-screen bin reminder and the Bins app — not just a PDF in the House Guide.'
       },
       {
         type: 'h4',
-        text: 'How to add a year of dates'
+        text: 'Set up from my collection pattern'
       },
       {
-        type: 'ol',
-        items: [
-          'Open your council bin calendar (PDF or website). Do not guess from an alternating-week pattern.',
-          'Enter the first collection date and choose rubbish, recycling, or garden waste.',
-          'Set Repeat to match the council (often every 2 weeks) and Repeat until the last date on the PDF.',
-          'Tap Add dates to list. Repeat those steps for each bin type.',
-          'Tick changed day only for bank-holiday weeks when collection moves off the usual weekday.',
-          'Save. Until you save, the Bins app still uses the previous calendar — adding dates to the list is not enough.'
-        ]
+        type: 'p',
+        text: 'Best for typical UK fortnightly calendars where rubbish and recycling alternate. You answer four short questions (bin types → pattern → start dates → review), then tap Use these dates.'
       },
       {
         type: 'h4',
-        text: 'If the Bins app still says the calendar is out of date'
+        text: 'Paste dates from my council calendar'
       },
       {
         type: 'p',
-        text: 'Check that new dates appear in the list, then save. A leftover “Schedule valid until” date from last year no longer hides collections you have already added. You can leave that field blank and the hub will use your last collection date.'
+        text: 'Use when the council PDF has irregular dates or bank-holiday moves. Paste one date per line, tap Parse & preview, then check the list.'
+      },
+      {
+        type: 'h4',
+        text: 'Skip for now'
       },
       {
         type: 'p',
-        text: 'Collection location and council website appear in the Bins app for guests on the tablet.'
+        text: 'Tap Continue without adding dates — you can finish setup and add them later in Settings → Bin reminders. Collection location and council website are optional but appear in the Bins app for guests.'
       }
     ]
   },

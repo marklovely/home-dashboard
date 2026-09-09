@@ -282,7 +282,12 @@ function mountHubSetupWizard(viewport, context) {
   hubCountry.select.addEventListener('change', () => {
     guestFields.setHubCountryCode(hubCountry.select.value);
   });
-  let binFields = createBinScheduleHubPanel(profile, String(profile.useCase ?? 'owner'));
+  let binsPanelUseCase = String(profile.useCase ?? 'owner');
+  let binFields = createBinScheduleHubPanel(profile, binsPanelUseCase, {
+    onLayoutChange: () => {
+      nextButton.textContent = syncNextButtonLabel();
+    }
+  });
   let calendarFields = createCalendarConnectionField();
 
   void fetchHubSecretsConfigured().then((result) => {
@@ -460,11 +465,19 @@ function mountHubSetupWizard(viewport, context) {
       body.append(guestFields.wrap);
     } else if (stepId === 'bins') {
       const selectedUseCase = useCase.select.value;
-      const schedule = binFields.readBinSchedule();
-      binFields = createBinScheduleHubPanel(
-        { ...getSiteProfileState()?.profile, binSchedule: schedule },
-        selectedUseCase
-      );
+      if (selectedUseCase !== binsPanelUseCase) {
+        const schedule = binFields.readBinSchedule();
+        binsPanelUseCase = selectedUseCase;
+        binFields = createBinScheduleHubPanel(
+          { ...getSiteProfileState()?.profile, binSchedule: schedule },
+          selectedUseCase,
+          {
+            onLayoutChange: () => {
+              nextButton.textContent = syncNextButtonLabel();
+            }
+          }
+        );
+      }
       body.append(binFields.wrap);
     } else if (stepId === 'calendar') {
       body.append(calendarFields.wrap);

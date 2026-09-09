@@ -26,8 +26,9 @@ import { createBinAlertHoursField } from './binScheduleFields.js';
 /**
  * @param {Record<string, unknown>} profile
  * @param {import('./hubSetupHelpContent.js').HubUseCase} useCase
+ * @param {{ onLayoutChange?: () => void }} [options]
  */
-export function createBinScheduleHubPanel(profile = {}, useCase = 'owner') {
+export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', options = {}) {
   let mode = /** @type {BinHubPanelMode} */ ('entry');
   let draftSchedule = readBinScheduleFromProfile(profile);
   const guestCopy = getBinScheduleGuestCopy(useCase);
@@ -85,6 +86,15 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner') {
     wrap.replaceChildren();
     wrap.append(createSetupIntro(guestCopy.intro));
 
+    const choicesHeading = document.createElement('h3');
+    choicesHeading.className = 'settings-subsection-title';
+    choicesHeading.textContent = 'How do you want to add dates?';
+
+    const choicesHint = document.createElement('p');
+    choicesHint.className = 'settings-help subtle';
+    choicesHint.textContent =
+      'Pick one option below, or tap Continue to skip — you can add dates later in Settings → Bin reminders.';
+
     const choices = document.createElement('div');
     choices.className = 'hub-setup-bin-choices';
 
@@ -113,7 +123,11 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner') {
       choices.append(card);
     }
 
-    wrap.append(choices, location.wrap, councilUrl.wrap, alertHours.wrap);
+    const detailsHeading = document.createElement('h3');
+    detailsHeading.className = 'settings-subsection-title';
+    detailsHeading.textContent = 'Collection day details (optional)';
+
+    wrap.append(choicesHeading, choicesHint, choices, detailsHeading, location.wrap, councilUrl.wrap, alertHours.wrap);
 
     entryReviewList = createBinScheduleReviewList({
       entries: reviewEntriesFromSchedule(draftSchedule),
@@ -172,12 +186,14 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner') {
     if (mode === 'pattern') renderPattern();
     else if (mode === 'paste') renderPaste();
     else renderEntry();
+    options.onLayoutChange?.();
   }
 
   render();
 
   return {
     wrap,
+    getUseCase: () => useCase,
     readBinSchedule() {
       return inferBinSchedulePeriod(
         normalizeBinSchedule({
