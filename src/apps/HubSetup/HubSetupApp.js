@@ -283,7 +283,9 @@ function mountHubSetupWizard(viewport, context) {
     guestFields.setHubCountryCode(hubCountry.select.value);
   });
   let binsPanelUseCase = String(profile.useCase ?? 'owner');
-  let binFields = createBinScheduleHubPanel(profile, binsPanelUseCase, {
+  const binPanelOptions = () => ({
+    getHubCountryCode: () => normalizeHubCountryCode(hubCountry.select.value),
+    getPropertyPostcode: () => guestFields.propertyAddress.readPropertyAddress().postcode,
     onLayoutChange: () => {
       nextButton.textContent = syncNextButtonLabel();
     },
@@ -298,6 +300,7 @@ function mountHubSetupWizard(viewport, context) {
       );
     }
   });
+  let binFields = createBinScheduleHubPanel(profile, binsPanelUseCase, binPanelOptions());
   let calendarFields = createCalendarConnectionField();
 
   void fetchHubSecretsConfigured().then((result) => {
@@ -481,21 +484,7 @@ function mountHubSetupWizard(viewport, context) {
         binFields = createBinScheduleHubPanel(
           { ...getSiteProfileState()?.profile, binSchedule: schedule },
           selectedUseCase,
-          {
-            onLayoutChange: () => {
-              nextButton.textContent = syncNextButtonLabel();
-            },
-            onDatesApplied: ({ count, source }) => {
-              const label = source === 'paste' ? 'Pasted' : 'Generated';
-              showToast(
-                context.toast,
-                count > 0
-                  ? `${label} ${count} collection date${count === 1 ? '' : 's'}. Tap Continue to save and move on.`
-                  : 'No dates were added — check your entries or try again.',
-                6000
-              );
-            }
-          }
+          binPanelOptions()
         );
       }
       body.append(binFields.wrap);

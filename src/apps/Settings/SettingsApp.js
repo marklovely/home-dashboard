@@ -652,9 +652,13 @@ function createBinReminderFields(context, onRefresh) {
     pasteHost.hidden = true;
     wizardHost.hidden = false;
     wizardHost.replaceChildren();
-    const wizard = createBinPatternWizard(scheduleDraft, (next) => {
-      scheduleDraft = next;
-    });
+    const wizard = createBinPatternWizard(
+      scheduleDraft,
+      (next) => {
+        scheduleDraft = next;
+      },
+      { hubCountryCode: normalizeHubCountryCode(profile.hubCountryCode) }
+    );
     const applyButton = document.createElement('button');
     applyButton.type = 'button';
     applyButton.className = 'settings-action-button';

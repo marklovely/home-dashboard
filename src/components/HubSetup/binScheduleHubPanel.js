@@ -12,7 +12,11 @@ import {
   binScheduleEntriesFromParsed,
   parseBinSchedulePaste
 } from '../../lib/binSchedulePaste.js';
-import { getBinScheduleGuestCopy, getBinScheduleFieldHelp } from './hubSetupHelpContent.js';
+import { fetchBinsCouncilHint } from '../../api/binsCouncilHintApi.js';
+import { binScheduleIntroForLocale, getBinScheduleLocale } from '../../lib/binScheduleLocale.js';
+import { normalizeHubCountryCode } from '../../lib/hubCountries.js';
+import { normalizePropertyAddress } from '../../lib/propertyAddress.js';
+import { getBinScheduleFieldHelp } from './hubSetupHelpContent.js';
 import { createSetupField, createSetupIntro } from './hubSetupFields.js';
 import { createBinPatternWizard } from './binPatternWizard.js';
 import {
@@ -27,14 +31,43 @@ import { createBinAlertHoursField } from './binScheduleFields.js';
 /**
  * @param {Record<string, unknown>} profile
  * @param {import('./hubSetupHelpContent.js').HubUseCase} useCase
- * @param {{ onLayoutChange?: () => void, onDatesApplied?: (detail: { count: number, source: 'pattern' | 'paste' }) => void }} [options]
+ * @param {{
+ *   onLayoutChange?: () => void,
+ *   onDatesApplied?: (detail: { count: number, source: 'pattern' | 'paste' }) => void,
+ *   getHubCountryCode?: () => string,
+ *   getPropertyPostcode?: () => string
+ * }} [options]
  */
 export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', options = {}) {
   let draftSchedule = readBinScheduleFromProfile(profile);
   let mode = /** @type {BinHubPanelMode} */ (
     hasConfiguredBinSchedule(draftSchedule) ? 'summary' : 'chooser'
   );
-  const guestCopy = getBinScheduleGuestCopy(useCase);
+  function readCountryCode() {
+    return normalizeHubCountryCode(
+      options.getHubCountryCode?.() ?? /** @type {{ hubCountryCode?: string }} */ (profile).hubCountryCode
+    );
+  }
+
+  function readPostcode() {
+    return String(
+      options.getPropertyPostcode?.() ??
+        normalizePropertyAddress(/** @type {Record<string, unknown>} */ (profile).propertyAddress).postcode ??
+        ''
+    ).trim();
+  }
+
+  function readLocale() {
+    return getBinScheduleLocale(readCountryCode());
+  }
+
+  /** @type {import('../../api/binsCouncilHintApi.js').BinsCouncilHint | null} */
+  let councilHint = null;
+  let councilHintLoading = false;
+  /** @type {Promise<void> | null} */
+  let councilHintRequest = null;
+  /** @type {string | null} */
+  let councilHintFetchedForPostcode = null;
 
   const wrap = document.createElement('div');
   wrap.className = 'hub-setup-bin-schedule hub-setup-bin-schedule--hub';
@@ -44,10 +77,14 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     ...getBinScheduleFieldHelp(useCase)
   });
 
-  const councilUrl = createSetupField('Council bins website (optional)', draftSchedule.councilUrl, {
-    placeholder: 'https://www.example.gov.uk/bins',
-    type: 'url'
-  });
+  const councilUrl = createSetupField(
+    getBinScheduleLocale(readCountryCode()).councilUrlLabel,
+    draftSchedule.councilUrl,
+    {
+      placeholder: getBinScheduleLocale(readCountryCode()).councilUrlPlaceholder,
+      type: 'url'
+    }
+  );
 
   const alertHours = createBinAlertHoursField({ binSchedule: draftSchedule });
 
@@ -89,6 +126,117 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     return draftSchedule.household.length + draftSchedule.gardenWaste.length;
   }
 
+  function applyCouncilHintToFields() {
+    const locale = readLocale();
+    const councilLabel = councilUrl.wrap.querySelector('.settings-subsection-title');
+    if (councilLabel) councilLabel.textContent = locale.councilUrlLabel;
+    councilUrl.input.placeholder = locale.councilUrlPlaceholder;
+    if (councilHint?.binsUrl && !councilUrl.input.value.trim()) {
+      councilUrl.input.value = councilHint.binsUrl;
+    }
+  }
+
+  /**
+   * @param {HTMLElement} container
+   */
+  function renderCouncilHintBanner(container) {
+    container.replaceChildren();
+    const locale = readLocale();
+    if (!locale.isUnitedKingdom) return;
+
+    const banner = document.createElement('div');
+    banner.className = 'hub-setup-bin-council-hint';
+    banner.setAttribute('role', 'status');
+
+    const postcode = readPostcode();
+    if (!postcode) {
+      banner.classList.add('hub-setup-bin-council-hint--prompt');
+      banner.textContent =
+        'Add your postcode in Guest access to see which council area you are in and link your council bins website.';
+      container.append(banner);
+      return;
+    }
+
+    if (councilHintLoading) {
+      banner.classList.add('hub-setup-bin-council-hint--loading');
+      banner.textContent = 'Looking up your council area…';
+      container.append(banner);
+      return;
+    }
+
+    if (!councilHint?.adminDistrict) {
+      banner.textContent = 'We could not match a council area for this postcode — you can still add dates manually.';
+      container.append(banner);
+      return;
+    }
+
+    const title = document.createElement('p');
+    title.className = 'hub-setup-bin-council-hint__title';
+    const district = councilHint.adminDistrict;
+    const region = councilHint.region ? ` (${councilHint.region})` : '';
+    title.textContent = `Looks like ${district}${region}`;
+
+    const detail = document.createElement('p');
+    detail.className = 'hub-setup-bin-council-hint__detail subtle';
+
+    if (councilHint.binsUrl) {
+      detail.textContent = councilHint.councilName
+        ? `${councilHint.councilName} — open the official bins website for your calendar.`
+        : 'Open your council bins website for the official collection calendar.';
+      const link = document.createElement('a');
+      link.href = councilHint.binsUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = 'hub-setup-bin-council-hint__link';
+      link.textContent = 'View council bins website';
+      banner.append(title, detail, link);
+    } else {
+      detail.textContent =
+        'Check your council website for collection dates — paste them below or use the pattern wizard.';
+      banner.append(title, detail);
+    }
+
+    container.append(banner);
+  }
+
+  async function refreshCouncilHint() {
+    const locale = readLocale();
+    if (!locale.isUnitedKingdom) {
+      councilHint = null;
+      councilHintLoading = false;
+      return;
+    }
+
+    const postcode = readPostcode();
+    if (!postcode) {
+      councilHint = null;
+      councilHintLoading = false;
+      return;
+    }
+
+    councilHintLoading = true;
+    const result = await fetchBinsCouncilHint(postcode);
+    councilHintLoading = false;
+    councilHint = result.ok ? result.hint : null;
+    applyCouncilHintToFields();
+  }
+
+  function ensureCouncilHintLoaded() {
+    const postcode = readPostcode();
+    if (!readLocale().isUnitedKingdom || !postcode) {
+      councilHint = null;
+      councilHintFetchedForPostcode = null;
+      return;
+    }
+    if (councilHintFetchedForPostcode === postcode) return;
+    if (councilHintRequest) return;
+    councilHintRequest = refreshCouncilHint().finally(() => {
+      councilHintRequest = null;
+      councilHintFetchedForPostcode = readPostcode();
+      if (mode === 'chooser' || mode === 'summary') render();
+    });
+  }
+
   /**
    * @param {'pattern' | 'paste'} source
    */
@@ -100,7 +248,13 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
 
   function renderChooser() {
     wrap.replaceChildren();
-    wrap.append(createSetupIntro(guestCopy.intro));
+    const locale = readLocale();
+    wrap.append(createSetupIntro(binScheduleIntroForLocale(locale, useCase)));
+
+    const councilHintHost = document.createElement('div');
+    councilHintHost.className = 'hub-setup-bin-council-hint-host';
+    renderCouncilHintBanner(councilHintHost);
+    ensureCouncilHintLoaded();
 
     const choicesHeading = document.createElement('h3');
     choicesHeading.className = 'settings-subsection-title';
@@ -114,20 +268,23 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     const choices = document.createElement('div');
     choices.className = 'hub-setup-bin-choices';
 
-    for (const [title, detail, action, primary] of [
-      [
-        'Set up from my collection pattern',
-        'Answer a few questions — we generate dates for the year.',
-        'pattern',
-        true
-      ],
-      [
-        'Paste dates from my council calendar',
-        'One date per line when the pattern does not fit.',
-        'paste',
-        false
-      ]
-    ]) {
+    const choiceCards = [
+      {
+        title: locale.chooserPatternTitle,
+        detail: locale.chooserPatternDetail,
+        action: 'pattern',
+        primary: !locale.emphasizePaste
+      },
+      {
+        title: locale.chooserPasteTitle,
+        detail: locale.chooserPasteDetail,
+        action: 'paste',
+        primary: locale.emphasizePaste
+      }
+    ];
+    if (locale.emphasizePaste) choiceCards.reverse();
+
+    for (const { title, detail, action, primary } of choiceCards) {
       const card = document.createElement('button');
       card.type = 'button';
       card.className = `hub-setup-bin-choice${primary ? ' hub-setup-bin-choice--primary' : ''}`;
@@ -139,7 +296,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       choices.append(card);
     }
 
-    wrap.append(choicesHeading, choicesHint, choices);
+    wrap.append(councilHintHost, choicesHeading, choicesHint, choices);
   }
 
   function renderSummary() {
@@ -189,8 +346,23 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     detailsHeading.className = 'settings-subsection-title';
     detailsHeading.textContent = 'Collection day details (optional)';
 
+    const councilHintHost = document.createElement('div');
+    councilHintHost.className = 'hub-setup-bin-council-hint-host';
+    renderCouncilHintBanner(councilHintHost);
+    ensureCouncilHintLoaded();
+    applyCouncilHintToFields();
+
     renderSummaryStatus(banner, bannerTitle, bannerDetail);
-    wrap.append(banner, changeMethod, entryReviewList.wrap, detailsHeading, location.wrap, councilUrl.wrap, alertHours.wrap);
+    wrap.append(
+      banner,
+      councilHintHost,
+      changeMethod,
+      entryReviewList.wrap,
+      detailsHeading,
+      location.wrap,
+      councilUrl.wrap,
+      alertHours.wrap
+    );
   }
 
   /**
@@ -213,9 +385,16 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
 
   function renderPattern() {
     wrap.replaceChildren();
-    patternWizard = createBinPatternWizard(draftSchedule, (nextDraft) => {
-      mergeDraft(nextDraft);
-    });
+    patternWizard = createBinPatternWizard(
+      draftSchedule,
+      (nextDraft) => {
+        mergeDraft(nextDraft);
+      },
+      {
+        hubCountryCode: readCountryCode(),
+        suggestedPattern: councilHint?.suggestedPattern
+      }
+    );
     wrap.append(patternWizard.wrap);
   }
 
@@ -223,7 +402,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     wrap.replaceChildren();
     const intro = document.createElement('p');
     intro.className = 'settings-help subtle';
-    intro.textContent = 'Paste dates from a council PDF, email, or spreadsheet.';
+    intro.textContent = readLocale().pasteIntro;
 
     const previewButton = document.createElement('button');
     previewButton.type = 'button';

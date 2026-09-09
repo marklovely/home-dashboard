@@ -3775,6 +3775,32 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .hub-setup-bin-summary-banner__detail {
   margin: 0;
 }
+.hub-setup-bin-council-hint-host {
+  margin: 0 0 12px;
+}
+.hub-setup-bin-council-hint {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  gap: 6px;
+}
+.hub-setup-bin-council-hint--prompt,
+.hub-setup-bin-council-hint--loading {
+  color: var(--text-muted, rgba(255, 255, 255, 0.72));
+}
+.hub-setup-bin-council-hint__title {
+  margin: 0;
+  font-weight: 650;
+}
+.hub-setup-bin-council-hint__detail {
+  margin: 0;
+}
+.hub-setup-bin-council-hint__link {
+  justify-self: start;
+  color: var(--accent);
+}
 .hub-setup-bin-change-method {
   justify-self: start;
   margin: 4px 0 8px;

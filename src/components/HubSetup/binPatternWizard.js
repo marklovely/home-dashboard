@@ -9,6 +9,7 @@ import {
   resolveRepeatUntilDate
 } from '../../lib/binScheduleRepeat.js';
 import { normalizeBinSchedule } from '../../lib/binScheduleProfile.js';
+import { getBinScheduleLocale } from '../../lib/binScheduleLocale.js';
 import { createSetupField, createSetupSelect } from './hubSetupFields.js';
 import {
   createBinScheduleReviewList,
@@ -32,14 +33,21 @@ const PATTERN_SUB_STEPS = ['streams', 'pattern', 'dates', 'review'];
 /**
  * @param {import('../../lib/binScheduleProfile.js').BinScheduleProfile} schedule
  * @param {(draft: import('../../lib/binScheduleProfile.js').BinScheduleProfile) => void} onDraftChange
+ * @param {{ hubCountryCode?: string | null, suggestedPattern?: string | null }} [options]
  */
-export function createBinPatternWizard(schedule, onDraftChange) {
+export function createBinPatternWizard(schedule, onDraftChange, options = {}) {
+  const locale = getBinScheduleLocale(options.hubCountryCode);
+  const suggestedPattern = String(options.suggestedPattern ?? '').trim();
+  const allowedPattern = locale.patternOptions.some((option) => option.value === suggestedPattern)
+    ? /** @type {import('../../lib/binScheduleLocale.js').BinHouseholdPatternId} */ (suggestedPattern)
+    : null;
+
   let subStep = 0;
   let includeRubbish = true;
   let includeRecycling = true;
   let includeGarden = (schedule.gardenWaste ?? []).length > 0;
-  /** @type {'alternating' | 'weekly' | 'fortnight-same'} */
-  let householdPattern = 'alternating';
+  /** @type {import('../../lib/binScheduleLocale.js').BinHouseholdPatternId} */
+  let householdPattern = allowedPattern ?? locale.defaultHouseholdPattern;
   /** @type {ReturnType<typeof reviewEntriesFromSchedule>} */
   let reviewEntries = reviewEntriesFromSchedule(schedule);
 
@@ -56,18 +64,18 @@ export function createBinPatternWizard(schedule, onDraftChange) {
     'Usual collection weekday (optional)',
     schedule.normalCollectionDay,
     WEEKDAY_OPTIONS,
-    { hint: 'Helps guests spot when collection has moved for bank holidays.' }
+    { hint: locale.normalDayHint }
   );
 
-  const nextRubbish = createSetupField('Next general waste date', '', {
+  const nextRubbish = createSetupField(locale.nextHouseholdDateLabel, '', {
     type: 'date',
     required: true,
-    hint: 'From your council calendar — the next rubbish / general waste collection.'
+    hint: locale.nextHouseholdDateHint
   });
 
   const nextRecycling = createSetupField('Next recycling date (optional)', '', {
     type: 'date',
-    hint: 'Only needed if rubbish and recycling are not simply alternating every two weeks.'
+    hint: locale.nextRecyclingHint
   });
 
   const gardenWeekday = createSetupSelect('Garden waste weekday', '', WEEKDAY_OPTIONS);
@@ -94,15 +102,15 @@ export function createBinPatternWizard(schedule, onDraftChange) {
     body.replaceChildren();
     const intro = document.createElement('p');
     intro.className = 'settings-help subtle';
-    intro.textContent = 'Which bins do you put out for collection?';
+    intro.textContent = locale.streamsIntro;
 
     const list = document.createElement('div');
     list.className = 'hub-setup-bin-stream-list';
 
-    for (const [label, key] of /** @type {const} */ ([
-      ['General waste / rubbish', 'rubbish'],
-      ['Recycling & glass', 'recycling'],
-      ['Garden / green waste', 'garden']
+    for (const [key, label] of /** @type {const} */ ([
+      ['rubbish', locale.streamLabels.rubbish],
+      ['recycling', locale.streamLabels.recycling],
+      ['garden', locale.streamLabels.garden]
     ])) {
       const row = document.createElement('label');
       row.className = 'hub-setup-checkbox-field';
@@ -129,16 +137,12 @@ export function createBinPatternWizard(schedule, onDraftChange) {
     body.replaceChildren();
     const intro = document.createElement('p');
     intro.className = 'settings-help subtle';
-    intro.textContent = 'How do household bins (general waste and recycling) usually run?';
+    intro.textContent = locale.patternIntro;
 
     const options = document.createElement('div');
     options.className = 'hub-setup-bin-pattern-options';
 
-    for (const [value, label, hint] of /** @type {const} */ ([
-      ['alternating', 'Every 2 weeks — bins alternate', 'Typical UK council calendar (rubbish one week, recycling the next).'],
-      ['weekly', 'Every week — same bin each time', 'One stream on the same weekday every week.'],
-      ['fortnight-same', 'Every 2 weeks — same bin each time', 'One stream every fortnight.']
-    ])) {
+    for (const { value, label, hint } of locale.patternOptions) {
       const row = document.createElement('label');
       row.className = 'hub-setup-bin-pattern-option';
       const input = document.createElement('input');
@@ -147,7 +151,7 @@ export function createBinPatternWizard(schedule, onDraftChange) {
       input.value = value;
       input.checked = householdPattern === value;
       input.addEventListener('change', () => {
-        if (input.checked) householdPattern = value;
+        if (input.checked) householdPattern = /** @type {typeof householdPattern} */ (value);
       });
       const copy = document.createElement('span');
       copy.innerHTML = `<strong>${label}</strong><br><span class="subtle">${hint}</span>`;
