@@ -7,7 +7,10 @@ import { withApiCredentials } from './accessFetch.js';
  *   adminDistrict: string | null,
  *   region: string | null,
  *   councilName: string | null,
+ *   councilHomepageUrl: string | null,
  *   binsUrl: string | null,
+ *   councilSlug: string | null,
+ *   ukBinDaySupported: boolean,
  *   suggestedPattern: string | null
  * }} BinsCouncilHint
  */

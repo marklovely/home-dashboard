@@ -1,8 +1,5 @@
-/**
- * Static council bins URLs keyed by postcodes.io admin_district.
- * Curated manually — verify links when adding councils (council sites move often).
- */
-import councilHints from '../data/councilHints.json';
+import { fetchGovUkLocalAuthority } from './govUkLocalAuthority.js';
+import { fetchUkBinDayCouncil, isUsableUkBinDayCouncilId } from './ukBinDay.js';
 
 /**
  * @param {string} input
@@ -12,32 +9,12 @@ export function isUkPostcode(input) {
 }
 
 /**
- * @param {string} district
+ * @param {string | null | undefined} tier
  */
-function normalizeDistrictKey(district) {
-  return String(district ?? '')
-    .trim()
-    .toLowerCase();
-}
-
-/**
- * @param {string} adminDistrict
- */
-export function lookupCouncilHint(adminDistrict) {
-  const normalized = normalizeDistrictKey(adminDistrict);
-  if (!normalized) return null;
-
-  const direct = /** @type {Record<string, { councilName?: string, binsUrl?: string, suggestedPattern?: string }>} */ (
-    councilHints
-  )[adminDistrict.trim()];
-  if (direct) return direct;
-
-  for (const [key, value] of Object.entries(councilHints)) {
-    if (normalizeDistrictKey(key) === normalized) {
-      return value;
-    }
+function defaultSuggestedPattern(tier) {
+  if (tier === 'district' || tier === 'unitary' || tier === 'metropolitan') {
+    return 'alternating';
   }
-
   return null;
 }
 
@@ -45,42 +22,21 @@ export function lookupCouncilHint(adminDistrict) {
  * @param {string} postcode
  * @param {typeof fetch} fetchImpl
  */
-export async function lookupUkPostcodeDistrict(postcode, fetchImpl = fetch) {
+async function fetchPostcodeDistrict(postcode, fetchImpl = fetch) {
   const normalized = String(postcode ?? '')
     .replace(/\s+/g, '')
     .toUpperCase();
-  if (!normalized || !isUkPostcode(normalized)) {
-    return { status: 400, body: { error: 'Enter a valid UK postcode.' } };
-  }
-
   const response = await fetchImpl(`https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`);
-  if (response.status === 404) {
-    return { status: 404, body: { error: 'Postcode not found.' } };
-  }
-  if (!response.ok) {
-    return { status: 503, body: { error: 'Postcode lookup is temporarily unavailable.' } };
-  }
+  if (!response.ok) return null;
 
   const data = await response.json();
   const result = data?.result;
-  if (!result) {
-    return { status: 404, body: { error: 'Postcode not found.' } };
-  }
-
-  const adminDistrict = String(result.admin_district ?? '').trim();
-  const region = String(result.region ?? '').trim();
-  const hint = lookupCouncilHint(adminDistrict);
+  if (!result) return null;
 
   return {
-    status: 200,
-    body: {
-      postcode: String(result.postcode ?? normalized),
-      adminDistrict: adminDistrict || null,
-      region: region || null,
-      councilName: hint?.councilName ?? null,
-      binsUrl: hint?.binsUrl ?? null,
-      suggestedPattern: hint?.suggestedPattern ?? null
-    }
+    postcode: String(result.postcode ?? normalized),
+    adminDistrict: String(result.admin_district ?? '').trim() || null,
+    region: String(result.region ?? '').trim() || null
   };
 }
 
@@ -96,5 +52,38 @@ export async function resolveCouncilHint(postcode, fetchImpl = fetch) {
   if (!isUkPostcode(trimmed)) {
     return { status: 400, body: { error: 'Enter a valid UK postcode.' } };
   }
-  return lookupUkPostcodeDistrict(trimmed, fetchImpl);
+
+  const [govUk, ukBinDay, district] = await Promise.all([
+    fetchGovUkLocalAuthority(trimmed, fetchImpl),
+    fetchUkBinDayCouncil(trimmed, fetchImpl),
+    fetchPostcodeDistrict(trimmed, fetchImpl)
+  ]);
+
+  if (!govUk.ok && govUk.status === 404) {
+    return { status: 404, body: { error: govUk.error ?? 'Postcode not found.' } };
+  }
+  if (!govUk.ok) {
+    return { status: govUk.status ?? 503, body: { error: govUk.error ?? 'Council lookup failed.' } };
+  }
+
+  const authority = govUk.authority;
+  const councilName = authority?.name ?? ukBinDay.councilName ?? null;
+  const councilHomepageUrl = authority?.homepageUrl ?? null;
+  const binsUrl =
+    (ukBinDay.ok && ukBinDay.supported && ukBinDay.binsUrl) || councilHomepageUrl || null;
+
+  return {
+    status: 200,
+    body: {
+      postcode: district?.postcode ?? trimmed.replace(/\s+/g, '').toUpperCase(),
+      adminDistrict: district?.adminDistrict ?? councilName,
+      region: district?.region ?? null,
+      councilName,
+      councilHomepageUrl,
+      binsUrl,
+      councilSlug: authority?.slug ?? null,
+      ukBinDaySupported: Boolean(ukBinDay.ok && ukBinDay.supported && isUsableUkBinDayCouncilId(ukBinDay.councilId)),
+      suggestedPattern: defaultSuggestedPattern(authority?.tier)
+    }
+  };
 }

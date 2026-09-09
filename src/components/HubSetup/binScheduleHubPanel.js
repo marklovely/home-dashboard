@@ -185,15 +185,19 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     detail.className = 'hub-setup-bin-council-hint__detail subtle';
 
     if (councilHint.binsUrl) {
-      detail.textContent = councilHint.councilName
-        ? `${councilHint.councilName} — open the official bins website for your calendar.`
-        : 'Open your council bins website for the official collection calendar.';
+      detail.textContent = councilHint.ukBinDaySupported
+        ? `${councilHint.councilName ?? 'Your council'} supports automated bin lookups — open their site for your calendar.`
+        : councilHint.councilName
+          ? `${councilHint.councilName} — open the council website and find your bin collection calendar.`
+          : 'Open your council website and find your bin collection calendar.';
       const link = document.createElement('a');
       link.href = councilHint.binsUrl;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.className = 'hub-setup-bin-council-hint__link';
-      link.textContent = 'View council bins website';
+      link.textContent = councilHint.ukBinDaySupported
+        ? 'View council bin calendar'
+        : 'View council website';
       banner.append(title, detail, link);
     } else {
       detail.textContent =
