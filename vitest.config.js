@@ -4,6 +4,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     testTimeout: 120_000,
+    teardownTimeout: 15_000,
+    maxWorkers: process.env.CI ? 2 : undefined,
     exclude: ['**/node_modules/**', 'worker/**', 'e2e/**'],
     coverage: {
       provider: 'v8',
