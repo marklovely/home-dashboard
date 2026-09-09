@@ -197,7 +197,7 @@
     if (title) title.textContent = 'Your hub';
     if (lead) {
       lead.textContent = hubs.length
-        ? 'Billing changes open on Stripe. Generate a single-use referral link below.'
+        ? 'Billing changes open on Stripe. Referral links appear once your first invoice is paid.'
         : 'We could not find a hub for that email.';
     }
     if (!hubs.length) {
@@ -226,23 +226,27 @@
     const status = statusCopy(hub.status, trial);
     const referralBlock =
       referralsEnabled && !canceled && hub.canManageBilling
-        ? '<div class="account-referral" data-referral-site="' +
-          escapeHtml(hub.siteId) +
-          '">' +
-          '<p class="signup-note"><strong>Refer a friend</strong> — they get a discount on their first invoice(s); you get account credit when their first invoice is paid. You can generate multiple links.</p>' +
-          '<div class="account-referral-plan">' +
-          '<label><input type="radio" name="referral-plan-' +
-          escapeHtml(hub.siteId) +
-          '" value="month" checked> Monthly (£5 off × 2 months)</label>' +
-          '<label><input type="radio" name="referral-plan-' +
-          escapeHtml(hub.siteId) +
-          '" value="year"> Yearly (£15 off)</label>' +
-          '</div>' +
-          '<button type="button" class="btn btn-secondary btn-block" data-referral-generate="' +
-          escapeHtml(hub.siteId) +
-          '">Generate referral link</button>' +
-          '<div class="account-referral-result" hidden></div>' +
-          '</div>'
+        ? hub.canRefer
+          ? '<div class="account-referral" data-referral-site="' +
+            escapeHtml(hub.siteId) +
+            '">' +
+            '<p class="signup-note"><strong>Refer a friend</strong> — they get a discount on their first invoice(s); you get account credit when their first invoice is paid. You can generate multiple links.</p>' +
+            '<div class="account-referral-plan">' +
+            '<label><input type="radio" name="referral-plan-' +
+            escapeHtml(hub.siteId) +
+            '" value="month" checked> Monthly (£5 off × 2 months)</label>' +
+            '<label><input type="radio" name="referral-plan-' +
+            escapeHtml(hub.siteId) +
+            '" value="year"> Yearly (£15 off)</label>' +
+            '</div>' +
+            '<button type="button" class="btn btn-secondary btn-block" data-referral-generate="' +
+            escapeHtml(hub.siteId) +
+            '">Generate referral link</button>' +
+            '<div class="account-referral-result" hidden></div>' +
+            '</div>'
+          : '<div class="account-referral account-referral--locked">' +
+            '<p class="signup-note muted"><strong>Refer a friend</strong> — unlocks after your first paid invoice (when your trial ends). That stops trial-only self-referrals for discounts.</p>' +
+            '</div>'
         : '';
     const backupReminder = !canceled
       ? '<div class="account-backup-reminder" role="note">' +

@@ -8,6 +8,7 @@ import { maybeSendCustomerLifecycleEmail } from './platformCustomerEmail.js';
 import { applyHubNameHoldAfterCancel } from './platformHubNameHold.js';
 import {
   fulfillReferrerRewardOnInvoicePaid,
+  markReferrerEligibleOnFirstPaidInvoice,
   markReferralUsedAtCheckout,
   normalizeReferralBillingInterval,
   referralCouponIdForInterval,
@@ -471,19 +472,28 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     const env = context.env;
     /** @type {Record<string, unknown> | undefined} */
     let referral;
+    /** @type {Record<string, unknown> | undefined} */
+    let referrerEligible;
     const amountPaid = Number(object.amount_paid ?? 0);
-    if (env && amountPaid > 0) {
-      referral = await fulfillReferrerRewardOnInvoicePaid(env, db, {
-        invoiceId: String(object.id ?? ''),
-        refereeSiteId: resolveSiteIdFromInvoiceObject(object),
-        subscriptionId: object.subscription ? String(object.subscription) : null,
-        amountPaid
-      });
+    if (amountPaid > 0) {
+      const payingSiteId = resolveSiteIdFromInvoiceObject(object);
+      if (payingSiteId) {
+        referrerEligible = await markReferrerEligibleOnFirstPaidInvoice(db, payingSiteId);
+      }
+      if (env) {
+        referral = await fulfillReferrerRewardOnInvoicePaid(env, db, {
+          invoiceId: String(object.id ?? ''),
+          refereeSiteId: payingSiteId,
+          subscriptionId: object.subscription ? String(object.subscription) : null,
+          amountPaid
+        });
+      }
     }
     await markWebhookEventProcessed(db, eventId, eventType);
     return {
       ok: true,
       action: 'invoice_paid_processed',
+      ...(referrerEligible ? { referrerEligible } : {}),
       ...(referral ? { referral } : {})
     };
   }

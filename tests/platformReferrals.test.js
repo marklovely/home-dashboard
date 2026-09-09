@@ -8,6 +8,8 @@ import {
   fulfillReferrerRewardOnInvoicePaid,
   previewReferralCode,
   createReferralCodeForSite,
+  isReferrerEligible,
+  markReferrerEligibleOnFirstPaidInvoice,
   REFERRAL_CODE_RE
 } from '../functions/api/platform/platformReferrals.js';
 import { getSiteBilling, getSiteBillingBySubscriptionId, stripeApiRequest } from '../functions/api/platform/platformBilling.js';
@@ -39,6 +41,8 @@ const env = {
 
 function makeDb(state = {}) {
   const rows = new Map(Object.entries(state.rows ?? {}));
+  const billing =
+    state.billing instanceof Map ? state.billing : new Map(Object.entries(state.billing ?? {}));
   return /** @type {D1Database} */ ({
     prepare(sql) {
       const query = sql.replace(/\s+/g, ' ').trim();
@@ -65,9 +69,21 @@ function makeDb(state = {}) {
               if (query.includes('SELECT COUNT(*) AS count')) {
                 return { count: state.createdToday ?? 0 };
               }
+              if (query.includes('FROM site_billing WHERE site_id = ?')) {
+                return billing.get(String(args[0])) ?? null;
+              }
               return null;
             },
             async run() {
+              if (query.startsWith('UPDATE site_billing') && query.includes('referrer_eligible_at')) {
+                const siteId = String(args[2]);
+                const row = billing.get(siteId);
+                if (row && !row.referrer_eligible_at) {
+                  billing.set(siteId, { ...row, referrer_eligible_at: args[0] });
+                  return { meta: { changes: 1 } };
+                }
+                return { meta: { changes: 0 } };
+              }
               if (query.startsWith('UPDATE referral_codes') && query.includes("status = 'reserved'")) {
                 const code = String(args[4]);
                 const row = rows.get(code);
@@ -178,7 +194,8 @@ describe('platformReferrals', () => {
       site_id: 'wagtail',
       status: 'active',
       owner_email: 'owner@example.com',
-      stripe_customer_id: 'cus_ref'
+      stripe_customer_id: 'cus_ref',
+      referrer_eligible_at: 1_700_000_000_000
     });
 
     const selfSite = await validateReferralForSignup(db, {
@@ -221,7 +238,8 @@ describe('platformReferrals', () => {
       site_id: 'wagtail',
       status: 'active',
       owner_email: 'owner@example.com',
-      stripe_customer_id: 'cus_ref'
+      stripe_customer_id: 'cus_ref',
+      referrer_eligible_at: 1_700_000_000_000
     });
 
     const result = await validateReferralForSignup(db, {
@@ -280,7 +298,8 @@ describe('platformReferrals', () => {
       site_id: 'wagtail',
       status: 'active',
       owner_email: 'owner@example.com',
-      stripe_customer_id: 'cus_ref'
+      stripe_customer_id: 'cus_ref',
+      referrer_eligible_at: 1_700_000_000_000
     });
     vi.mocked(stripeApiRequest).mockResolvedValue({ id: 'cbtxn_1' });
 
@@ -304,7 +323,8 @@ describe('platformReferrals', () => {
       site_id: 'wagtail',
       status: 'active',
       owner_email: 'owner@example.com',
-      stripe_customer_id: 'cus_ref'
+      stripe_customer_id: 'cus_ref',
+      referrer_eligible_at: 1_700_000_000_000
     });
 
     const result = await createReferralCodeForSite(db, env, {
@@ -316,5 +336,65 @@ describe('platformReferrals', () => {
     expect(result.body.code).toMatch(REFERRAL_CODE_RE);
     expect(result.body.url).toContain('ref=');
     expect(normalizeReferralBillingInterval(result.body.billingInterval)).toBe('year');
+  });
+
+  it('blocks referral generation during trial before first paid invoice', async () => {
+    const db = makeDb({ createdToday: 0 });
+    vi.mocked(getSiteBilling).mockResolvedValue({
+      site_id: 'wagtail',
+      status: 'trialing',
+      owner_email: 'owner@example.com',
+      stripe_customer_id: 'cus_ref',
+      referrer_eligible_at: null
+    });
+
+    const result = await createReferralCodeForSite(db, env, {
+      sessionEmail: 'owner@example.com',
+      siteId: 'wagtail'
+    });
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(403);
+    expect(result.body.error).toBe('REFERRAL_NOT_ELIGIBLE');
+  });
+
+  it('rejects signup when the referrer has not paid yet', async () => {
+    const db = makeDb({
+      rows: {
+        'LH-ABCD-2345': {
+          code: 'LH-ABCD-2345',
+          referrer_site_id: 'wagtail',
+          billing_interval: 'month',
+          status: 'active'
+        }
+      }
+    });
+    vi.mocked(getSiteBilling).mockResolvedValue({
+      site_id: 'wagtail',
+      status: 'trialing',
+      owner_email: 'owner@example.com',
+      stripe_customer_id: 'cus_ref',
+      referrer_eligible_at: null
+    });
+
+    const result = await validateReferralForSignup(db, {
+      code: 'LH-ABCD-2345',
+      refereeSiteId: 'rose-cottage',
+      refereeEmail: 'friend@example.com',
+      billingInterval: 'month'
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe('REFERRAL_REFERRER_NOT_ELIGIBLE');
+  });
+
+  it('marks referrer eligibility on first paid invoice', async () => {
+    const billing = new Map([
+      ['wagtail', { site_id: 'wagtail', referrer_eligible_at: null }]
+    ]);
+    const db = makeDb({ billing });
+
+    expect(isReferrerEligible(billing.get('wagtail'))).toBe(false);
+    const marked = await markReferrerEligibleOnFirstPaidInvoice(db, 'wagtail', 1_800_000_000_000);
+    expect(marked.action).toBe('referrer_eligible_marked');
+    expect(isReferrerEligible(billing.get('wagtail'))).toBe(true);
   });
 });

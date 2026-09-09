@@ -77,6 +77,41 @@ export function referralsConfigured(env, mode = 'test') {
 }
 
 /**
+ * Referrers may invite others only after their own first paid invoice (not during trial).
+ *
+ * @param {Record<string, unknown> | null | undefined} billing
+ */
+export function isReferrerEligible(billing) {
+  if (!billing) return false;
+  return Number(billing.referrer_eligible_at ?? 0) > 0;
+}
+
+/**
+ * @param {D1Database} db
+ * @param {string} siteId
+ * @param {number} [nowMs]
+ */
+export async function markReferrerEligibleOnFirstPaidInvoice(db, siteId, nowMs = Date.now()) {
+  const normalized = String(siteId ?? '').trim().toLowerCase();
+  if (!normalized) return { ok: true, action: 'referrer_eligible_skipped' };
+
+  const result = await db
+    .prepare(
+      `UPDATE site_billing
+       SET referrer_eligible_at = ?, updated_at = ?
+       WHERE site_id = ?
+         AND (referrer_eligible_at IS NULL OR referrer_eligible_at = 0)`
+    )
+    .bind(nowMs, nowMs, normalized)
+    .run();
+
+  return {
+    ok: true,
+    action: Number(result.meta?.changes ?? 0) > 0 ? 'referrer_eligible_marked' : 'referrer_eligible_already'
+  };
+}
+
+/**
  * @param {number} [randomInt]
  */
 export function generateReferralCodeValue(randomInt) {
@@ -257,6 +292,13 @@ export async function validateReferralForSignup(db, input) {
       ok: false,
       error: 'REFERRAL_REFERRER_INACTIVE',
       message: 'That referral link is no longer valid.'
+    };
+  }
+  if (!isReferrerEligible(referrerBilling)) {
+    return {
+      ok: false,
+      error: 'REFERRAL_REFERRER_NOT_ELIGIBLE',
+      message: 'That referral link is not active yet. Ask your friend to wait until after their first paid invoice.'
     };
   }
 
@@ -459,6 +501,9 @@ export async function fulfillReferrerRewardOnInvoicePaid(env, db, input) {
   const referrerSiteId = String(row.referrer_site_id ?? '').trim().toLowerCase();
   const billingInterval = normalizeReferralBillingInterval(String(row.billing_interval ?? 'month'));
   const referrerBilling = await getSiteBilling(db, referrerSiteId);
+  if (!isReferrerEligible(referrerBilling)) {
+    return { ok: true, action: 'referral_reward_referrer_not_eligible' };
+  }
   const customerId = String(referrerBilling?.stripe_customer_id ?? '').trim();
   if (!customerId) {
     return { ok: false, error: 'REFERRER_CUSTOMER_MISSING', message: 'Referrer billing customer missing.' };
@@ -551,6 +596,17 @@ export async function createReferralCodeForSite(db, env, input) {
       body: {
         error: 'REFERRAL_NOT_ELIGIBLE',
         message: 'Only active hub subscriptions can generate referral links.'
+      }
+    };
+  }
+  if (!isReferrerEligible(billing)) {
+    return {
+      ok: false,
+      status: 403,
+      body: {
+        error: 'REFERRAL_NOT_ELIGIBLE',
+        message:
+          'Referral links unlock after your first paid invoice (when your trial ends). Cancelled or unpaid hubs cannot refer.'
       }
     };
   }

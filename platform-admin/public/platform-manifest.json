@@ -1,11 +1,12 @@
 {
-  "generatedAt": "2026-09-07T14:18:57.167Z",
+  "generatedAt": "2026-09-09T08:52:43.532Z",
   "platform": {
     "githubRepo": "marklovely/home-dashboard",
     "cloudflareAccountId": "2c810bbed7e633623b99ae7c51dd0aa2",
     "accessTeamDomain": "lovely-home",
     "zoneName": "lovely-home.co.uk",
-    "marketingAccessAppId": "c3bf4dd5-2a7d-48d7-8d7f-b8061df2219a",
+    "customerZoneName": "lovely-hub.com",
+    "marketingAccessAppId": "66e716c3-a2e9-440b-89f6-548e03cf8b36",
     "marketingSiteOrigin": "https://lovely-home.co.uk"
   },
   "sites": {
@@ -16,7 +17,7 @@
       "vanilla": true,
       "terraform": true,
       "attachHubApiBinding": true,
-      "protected": true,
+      "protected": false,
       "hasOwnerEmails": true,
       "demoPublic": false,
       "accessEnabled": true,
@@ -83,6 +84,7 @@
       "vanilla": false,
       "terraform": true,
       "attachHubApiBinding": true,
+      "protected": false,
       "hasOwnerEmails": false,
       "demoPublic": false,
       "accessEnabled": true,
@@ -149,6 +151,7 @@
       "vanilla": false,
       "terraform": true,
       "attachHubApiBinding": true,
+      "protected": false,
       "hasOwnerEmails": false,
       "demoPublic": false,
       "accessEnabled": true,
@@ -215,6 +218,7 @@
       "vanilla": false,
       "terraform": true,
       "attachHubApiBinding": true,
+      "protected": false,
       "hasOwnerEmails": false,
       "demoPublic": false,
       "accessEnabled": true,

@@ -105,22 +105,55 @@ GET /api/platform/billing/sites/smith
 
 Use [Stripe test cards](https://docs.stripe.com/testing#cards) — e.g. `4242 4242 4242 4242`, any future expiry, any CVC.
 
-Advance trial billing without waiting 7 days: [Stripe test clocks](https://docs.stripe.com/billing/testing/test-clocks).
+Advance trial billing without waiting 7 days: [Stripe test clocks](https://docs.stripe.com/billing/testing/test-clocks) — see [Testing referrals with Bob and Robert](#testing-referrals-with-bob-and-robert) below.
 
 ## Referral scheme
 
 Single-use opaque links (`LH-XXXX-XXXX`) generated from [account.html](https://lovely-home.co.uk/account.html) after OTP sign-in.
 
-| Plan | Referee (new signup) | Referrer (when checkout completes) |
-|------|----------------------|-------------------------------------|
+| Plan | Referee (new signup) | Referrer (when referee pays) |
+|------|----------------------|------------------------------|
 | Monthly | £5 off each of the first **two** paid months | **£10** Stripe account credit |
 | Yearly | **£15** off the first year | **£15** Stripe account credit |
 
 Trial length stays **7 days** — referrals never extend the trial.
 
-**Timing:** referee discounts apply on Stripe invoices after the trial (coupon on the subscription). Referrer credit is added on the referee's **first paid invoice** (`invoice.paid`), not at checkout.
+**Referrer eligibility:** you can **generate** referral links only after **your own first paid invoice** (`referrer_eligible_at` on `site_billing`). Trial-only accounts cannot refer — that blocks self-referral abuse (second email + referral discount while both hubs are still on trial).
+
+**Timing:** referee discounts apply on Stripe invoices after the trial (coupon on the subscription). Referrer **credit** is added on the referee's **first paid invoice** (`invoice.paid`), not at checkout. A referral link created before the referrer paid is rejected at signup once eligibility is enforced.
 
 Each generated link is **single-use**. Referrers can keep **multiple unused links** active (for inviting several people).
+
+### Testing referrals with Bob and Robert
+
+Typical sandbox setup:
+
+| Role | Customer | What to test |
+|------|----------|--------------|
+| Referrer | Bob B | Becomes eligible to refer after **his** first paid invoice |
+| Referee | Robert R | Signed up with Bob's link; £5 off applies on **Robert's** first paid invoice after trial; Bob gets £10 credit when Robert's first invoice is paid |
+
+**Fast path (existing subscriptions, no test clock):**
+
+1. Stripe Dashboard → **Customers** → Bob B → open his subscription.
+2. **Actions** → **Update subscription** → **End trial now** (or set trial end to now).
+3. Pay the £9.99 invoice with test card `4242 4242 4242 4242`.
+4. Confirm webhook `invoice.paid` with `amount_paid: 999` — platform sets Bob's `referrer_eligible_at` and (if Robert already paid) may credit Bob.
+5. Repeat **End trial now** for Robert R's subscription. His first paid invoice should show the referral coupon (£5 off → **£4.99** on month one).
+6. On Robert's `invoice.paid`, check Bob's Stripe customer **Balance** (+£10).
+
+**Test clock path (new signups):**
+
+1. Dashboard → **Developers** → **Test clocks** → **Create test clock** (frozen at today).
+2. New customers/subscriptions must be created **on that clock** (API: `test_clock` on Customer create). Existing Bob/Robert subs created without a clock cannot be moved — use **End trial now** for those.
+3. Advance the clock **8 days** (past the 7-day trial) → Stripe generates invoices → pay with the default test payment method.
+4. Advance again for the next billing cycle to see the second month's £5-off invoice for monthly referees.
+
+Apply migration `0011_referrer_eligible.sql` after deploy:
+
+```bash
+node scripts/apply-platform-billing-migration.mjs
+```
 
 ### Stripe coupons (create in Dashboard, test + live)
 
