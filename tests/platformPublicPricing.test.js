@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
   buildPlanOptionFromStripePrice,
+  buildPublicDisplayCopy,
   buildPublicPricingFromPlans,
   computeAnnualSavings,
   formatBillingInterval,
@@ -124,5 +125,27 @@ describe('platform public pricing', () => {
     expect(pricing.monthlyLabel).toBe('£9.99/month');
     expect(pricing.yearlyLabel).toBe('£99.00/year');
     expect(pricing.annualSavingsPercent).toBe(17);
+    expect(pricing.billingTrialDays).toBe(7);
+    expect(pricing.displayCopy?.monthlyLabel).toBe('£9.99/month');
+    expect(pricing.displayCopy?.referralMonthlyReferee).toMatch(/£5 off/);
+  });
+
+  it('builds display copy for help and FAQ hydration', () => {
+    const pricing = buildPublicPricingFromPlans(
+      {
+        month: {
+          interval: 'month',
+          label: '£9.99/month',
+          amount: 9.99,
+          unitAmountMinor: 999,
+          currency: 'gbp'
+        }
+      },
+      'Household Hub'
+    );
+    const displayCopy = buildPublicDisplayCopy(pricing, {});
+    expect(displayCopy.billingTrialDays).toBe(7);
+    expect(displayCopy.introMonthlyBenefit).toMatch(/25%/);
+    expect(displayCopy.referralMonthlyReferrer).toMatch(/£10 account credit/);
   });
 });

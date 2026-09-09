@@ -185,7 +185,7 @@
       </div>
 
       <section class="final-cta">
-        <p class="cta-note">7-day trial to get the hub ready before guests arrive — £0 today. No hardware required.</p>
+        <p class="cta-note"><span data-pricing="trial-days">7</span>-day trial to get the hub ready before guests arrive — <strong>£0 today</strong>. No hardware required.</p>
         <div class="cta-row">
           <a class="btn btn-primary" href="/signup">Start free trial</a>
           <a class="btn btn-secondary" href="https://demo.lovely-home.co.uk/sign-in">Try the demo</a>
@@ -211,5 +211,11 @@
     </footer>
   </div>
   <script src="site.js" defer></script>
+  <script src="pricing.js" defer></script>
+  <script defer>
+    window.addEventListener('load', function () {
+      if (window.LovelyHomePricing) window.LovelyHomePricing.initPricing();
+    });
+  </script>
 </body>
 </html>

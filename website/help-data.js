@@ -22,7 +22,7 @@ export const PUBLIC_HELP_CATALOG = {
       "blocks": [
         {
           "type": "p",
-          "text": "Your hub is a private web address. Send it to guests on their phone, or open it on a wall tablet if you have one. Use the 7-day trial to fill in the House Guide — not a complimentary stay. No hardware to buy."
+          "text": "Your hub is a private web address. Send it to guests on their phone, or open it on a wall tablet if you have one. Use the {billingTrialDays}-day trial to fill in the House Guide — not a complimentary stay. No hardware to buy."
         },
         {
           "type": "h4",
@@ -137,7 +137,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Not at signup. The first charge happens when your 7-day trial ends, unless you cancel before then. Stripe shows the exact date during checkout."
+          "text": "Not at signup. The first charge happens when your {billingTrialDays}-day trial ends, unless you cancel before then. Stripe shows the exact date during checkout."
         },
         {
           "type": "h4",
@@ -153,7 +153,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Yes — start a new 7-day trial at lovely-home.co.uk/signup (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning takes up to 10 minutes (often faster), then sign in at your-name.lovely-hub.com with a one-time email code."
+          "text": "Yes — start a new {billingTrialDays}-day trial at lovely-home.co.uk/signup (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning takes up to 10 minutes (often faster), then sign in at your-name.lovely-hub.com with a one-time email code."
         },
         {
           "type": "p",
@@ -173,7 +173,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "When we run a launch offer, new households who have never subscribed before may get 25% off each of their first two months (monthly plan) or 30% off the first year (yearly plan). The discount applies on your first invoice after the free trial — not at signup. Check the home page or pricing page banner when the offer is active."
+          "text": "When we run a launch offer, new households who have never subscribed before may get {introMonthlyBenefit} (monthly plan) or {introYearlyBenefit} (yearly plan). The discount applies on your first invoice after the free trial — not at signup. Check the home page or pricing page banner when the offer is active."
         },
         {
           "type": "h4",
@@ -189,7 +189,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Refer another household and you both benefit when they subscribe after the trial. On a monthly plan, your friend gets £5 off each of their first two months (starting on the first invoice after the trial) and you get £10 account credit when their first invoice is paid. On a yearly plan, they get £15 off their first year and you get £15 credit when their first invoice is paid. The 7-day trial is unchanged — discounts apply when billing starts, not at signup."
+          "text": "Refer another household and you both benefit when they subscribe after the trial. On a monthly plan, your friend gets {referralMonthlyReferee} and you get {referralMonthlyReferrer}. On a yearly plan, they get {referralYearlyReferee} and you get {referralYearlyReferrer}. The {billingTrialDays}-day trial is unchanged — discounts apply when billing starts, not at signup."
         },
         {
           "type": "h4",

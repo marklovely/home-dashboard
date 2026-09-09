@@ -19,6 +19,8 @@
   let challengeRequired = false;
   let pendingEmail = '';
   let referralsEnabled = false;
+  /** @type {Record<string, unknown> | null} */
+  let marketingPricing = null;
   const SESSION_KEY = 'lovelyAccountSession';
   const BACKUP_PROMPT_KEY = 'lovelyAccountBackupPromptDismissed';
   const SESSION_EXPIRED_MESSAGE = 'You have been signed out. Enter your email for a new code.';
@@ -37,6 +39,38 @@
     } catch {
       referralsEnabled = false;
     }
+  }
+
+  async function loadMarketingPricingCopy() {
+    try {
+      const response = await fetch(apiBase + '/api/public/signup/pricing', {
+        headers: { Accept: 'application/json' }
+      });
+      if (response.ok) {
+        marketingPricing = await response.json();
+      }
+    } catch {
+      marketingPricing = null;
+    }
+  }
+
+  /**
+   * @param {'month' | 'year'} interval
+   */
+  function referralPlanRadioLabel(interval) {
+    const referral =
+      marketingPricing?.referral && typeof marketingPricing.referral === 'object'
+        ? marketingPricing.referral
+        : null;
+    const prefix = interval === 'year' ? 'Yearly' : 'Monthly';
+    if (!referral) {
+      return interval === 'year' ? prefix + ' (£15 off)' : prefix + ' (£5 off × 2 months)';
+    }
+    const full = interval === 'year' ? referral.yearlyReferee : referral.monthlyReferee;
+    const short = String(full || '')
+      .split('(')[0]
+      .trim();
+    return prefix + ' (' + (short || full) + ')';
   }
 
   emailForm.addEventListener('submit', async (event) => {
@@ -190,7 +224,7 @@
   }
 
   async function showHubs(hubs, sessionToken) {
-    await loadAccountCapabilities();
+    await Promise.all([loadAccountCapabilities(), loadMarketingPricingCopy()]);
     emailForm.hidden = true;
     codeForm.hidden = true;
     hubsEl.hidden = false;
@@ -234,10 +268,14 @@
             '<div class="account-referral-plan">' +
             '<label><input type="radio" name="referral-plan-' +
             escapeHtml(hub.siteId) +
-            '" value="month" checked> Monthly (£5 off × 2 months)</label>' +
+            '" value="month" checked> ' +
+            escapeHtml(referralPlanRadioLabel('month')) +
+            '</label>' +
             '<label><input type="radio" name="referral-plan-' +
             escapeHtml(hub.siteId) +
-            '" value="year"> Yearly (£15 off)</label>' +
+            '" value="year"> ' +
+            escapeHtml(referralPlanRadioLabel('year')) +
+            '</label>' +
             '</div>' +
             '<button type="button" class="btn btn-secondary btn-block" data-referral-generate="' +
             escapeHtml(hub.siteId) +

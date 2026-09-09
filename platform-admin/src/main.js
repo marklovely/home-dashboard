@@ -1,4 +1,4 @@
-import { fetchMarketingAccess, fetchMonitoringSummary, fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled, startBillingCheckout } from './api.js';
+import { fetchMarketingAccess, fetchMarketingPricing, fetchMonitoringSummary, fetchSiteAccessProbe, fetchSiteHealth, fetchSitePreviewStatus, fetchSites, fetchSiteUsage, fetchUsageSummary, setSitePreviewEnabled, startBillingCheckout } from './api.js';
 import { renderStripeModePanel, wireStripeModePanel } from './stripeMode.js';
 import { renderIntroOfferPanel, wireIntroOfferPanel } from './introOffer.js';
 import { renderSiteBilling } from './billing.js';
@@ -25,6 +25,7 @@ import {
 } from './links.js';
 import { confirmDeployWorker, confirmProvisionSite, openSiteWizard } from './wizard.js';
 import { renderMarketingAccessPanel, wireMarketingAccessPanel } from './marketingAccess.js';
+import { renderMarketingPricingPanel, wireMarketingPricingPanel } from './marketingPricing.js';
 import { renderMonitoringView } from './monitoring.js';
 
 const main = document.getElementById('main');
@@ -180,6 +181,7 @@ async function render() {
     <p class="meta">Manifest ${escapeHtml(formatManifestTime(data.generatedAt))} · signed in as ${escapeHtml(data.operator ?? '—')}</p>
     <div id="stripe-mode-slot"></div>
     <div id="intro-offer-slot"></div>
+    <div id="marketing-pricing-slot"></div>
     <div id="marketing-access-slot"></div>
     <section class="grid">
       ${sites.map((site) => renderSiteCard(site, platform, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {}, { stripeConfigured: data.stripeBillingConfigured === true, billingDbConfigured: data.platformBillingDbConfigured === true })).join('')}
@@ -195,6 +197,7 @@ async function render() {
   wireSiteActions(sites, data.githubAutomationConfigured === true, data.cloudflarePagesConfigured === true, data.billingBySite ?? {});
   loadStripeModePanel(data.stripeMode, data.platformBillingDbConfigured === true);
   loadIntroOfferPanel(data.introOffer, data.platformBillingDbConfigured === true);
+  await loadMarketingPricingPanel(data.platformBillingDbConfigured === true);
   await loadMarketingAccessPanel();
 
   if (data.healthServiceAuthConfigured && healthBySite.size === 0) {
@@ -625,6 +628,27 @@ function loadIntroOfferPanel(introOffer, billingDbConfigured) {
   if (!slot) return;
   slot.innerHTML = renderIntroOfferPanel(introOffer, billingDbConfigured);
   wireIntroOfferPanel(showError, () => render());
+}
+
+async function loadMarketingPricingPanel(billingDbConfigured) {
+  const slot = document.getElementById('marketing-pricing-slot');
+  if (!slot) return;
+  slot.innerHTML =
+    '<section class="panel marketing-pricing"><p class="muted">Loading marketing pricing…</p></section>';
+  try {
+    const data = await fetchMarketingPricing();
+    slot.innerHTML = renderMarketingPricingPanel(data, billingDbConfigured);
+    wireMarketingPricingPanel(showError, () => loadMarketingPricingPanel(billingDbConfigured));
+  } catch (error) {
+    slot.innerHTML = renderMarketingPricingPanel(
+      {
+        ok: false,
+        message: error instanceof Error ? error.message : 'Could not load marketing pricing.'
+      },
+      billingDbConfigured
+    );
+    wireMarketingPricingPanel(showError, () => loadMarketingPricingPanel(billingDbConfigured));
+  }
 }
 
 async function loadMarketingAccessPanel() {

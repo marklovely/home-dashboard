@@ -5,6 +5,7 @@
 import { getSiteBilling, getSiteBillingBySubscriptionId, stripeApiRequest } from './platformBilling.js';
 import { getStripeMode, stripeCredentialsForMode } from './platformStripeMode.js';
 import { maybeSendReferrerRewardEmail } from './platformCustomerEmail.js';
+import { getReferralBenefitCopy } from './platformMarketingPricing.js';
 import { marketingSiteOrigin } from './platformPublicSignup.js';
 import { normalizeAccountEmail } from './platformPublicAccount.js';
 
@@ -223,7 +224,7 @@ export async function previewReferralCode(db, code, options = {}) {
   }
 
   const interval = normalizeReferralBillingInterval(String(row.billing_interval ?? 'month'));
-  const copy = referralBenefitCopy(interval);
+  const copy = await getReferralBenefitCopy(db, interval);
   return {
     valid: true,
     code: normalized,
@@ -677,7 +678,7 @@ export async function createReferralCodeForSite(db, env, input) {
     };
   }
 
-  const copy = referralBenefitCopy(billingInterval);
+  const copy = await getReferralBenefitCopy(db, billingInterval);
   return {
     ok: true,
     status: 200,

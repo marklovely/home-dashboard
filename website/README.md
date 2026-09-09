@@ -26,7 +26,7 @@ On-disk files use `.html` extensions. Cloudflare Pages serves pretty URLs on **l
 
 Public demo hub: [demo.lovely-home.co.uk/sign-in](https://demo.lovely-home.co.uk/sign-in) — username `demo`, password `lovely-demo`.
 
-Pricing on the marketing site is **£9.99/month or £99/year** (loaded live from `GET /api/public/signup/pricing` on the platform Worker, backed by the **active** Stripe mode’s price ids). The trial is **7 days** (`TRIAL_PERIOD_DAYS` in platform billing). Change prices in Stripe + Terraform, then switch Test/Live from platform admin — the website updates after deploy.
+Pricing on the marketing site is loaded live from `GET /api/public/signup/pricing` (Stripe list prices + optional operator display overrides from platform admin). Help/FAQ copy uses the same API via placeholders in `src/help/ownerSections.js`. Change billed amounts in Stripe + Terraform; change marketing wording from **Platform admin → Marketing pricing copy**. Actual trial length stays `TRIAL_PERIOD_DAYS` in platform billing (`billingTrialDays` on the pricing API).
 
 ## Hub provisioning status on the success page
 

@@ -64,7 +64,7 @@
         <h1>Set it up</h1>
         <p class="hero-lead">
           Your hub is a private web address. Send it to guests on their phone, or open it on a wall tablet if you want one.
-          Use the 7-day trial to fill in the House Guide — not a complimentary stay. <strong>No hardware to buy.</strong>
+          Use the <span data-pricing="trial-days">7</span>-day trial to fill in the House Guide — not a complimentary stay. <strong>No hardware to buy.</strong>
         </p>
         <div class="cta-row">
           <a class="btn btn-primary" href="/signup">Start free trial</a>
@@ -158,5 +158,11 @@
     </footer>
   </div>
   <script src="site.js" defer></script>
+  <script src="pricing.js" defer></script>
+  <script defer>
+    window.addEventListener('load', function () {
+      if (window.LovelyHomePricing) window.LovelyHomePricing.initPricing();
+    });
+  </script>
 </body>
 </html>

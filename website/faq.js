@@ -1,4 +1,9 @@
 import { PUBLIC_HELP_CATALOG } from './help-data.js';
+import {
+  fetchMarketingPricingCopy,
+  substituteHelpCatalogPricing,
+  substituteMarketingPlaceholders
+} from './marketingPricingCopy.js';
 
 const FAQ_LINKS = [
   ['the public demo', 'https://demo.lovely-home.co.uk/sign-in'],
@@ -6,19 +11,24 @@ const FAQ_LINKS = [
   ['emailing support', 'mailto:support@lovely-home.co.uk']
 ];
 
+/** @type {{ owner: unknown[] }} */
+let activeCatalog = PUBLIC_HELP_CATALOG;
+
 /**
  * @param {string} sectionId
  */
 function faqSection(sectionId) {
-  return PUBLIC_HELP_CATALOG.owner.find((section) => section.id === sectionId);
+  return activeCatalog.owner.find((section) => section.id === sectionId);
 }
 
 /**
  * @param {string} text
+ * @param {Record<string, unknown> | null | undefined} pricing
  */
-function linkedAnswer(text) {
+function linkedAnswer(text, pricing) {
+  const resolved = substituteMarketingPlaceholders(text, pricing);
   const fragment = document.createDocumentFragment();
-  let remaining = text;
+  let remaining = resolved;
   while (remaining) {
     let earliest = -1;
     let match = null;
@@ -57,7 +67,10 @@ function faqPair(block, next) {
   return null;
 }
 
-function paintFaqLists() {
+/**
+ * @param {Record<string, unknown> | null | undefined} pricing
+ */
+function paintFaqLists(pricing) {
   const roots = document.querySelectorAll('[data-faq-section]');
   for (const root of roots) {
     const section = faqSection(root.getAttribute('data-faq-section') || '');
@@ -70,13 +83,19 @@ function paintFaqLists() {
       index += pair.skip;
       const item = document.createElement('div');
       const dt = document.createElement('dt');
-      dt.textContent = pair.question;
+      dt.textContent = substituteMarketingPlaceholders(pair.question, pricing);
       const dd = document.createElement('dd');
-      dd.append(linkedAnswer(pair.answer));
+      dd.append(linkedAnswer(pair.answer, pricing));
       item.append(dt, dd);
       root.append(item);
     }
   }
 }
 
-paintFaqLists();
+async function init() {
+  const pricing = await fetchMarketingPricingCopy();
+  activeCatalog = substituteHelpCatalogPricing(PUBLIC_HELP_CATALOG, pricing);
+  paintFaqLists(pricing);
+}
+
+init();

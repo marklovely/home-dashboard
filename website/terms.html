@@ -90,7 +90,7 @@
         <section class="content-card">
           <h2>Trial, billing, and cancellation</h2>
           <ul>
-            <li>Stripe collects a card at signup. You are <strong>not charged today</strong>. The first charge is on the date Stripe shows at checkout, after the 7-day trial, unless you cancel first.</li>
+            <li>Stripe collects a card at signup. You are <strong>not charged today</strong>. The first charge is on the date Stripe shows at checkout, after the <span data-pricing="trial-days">7</span>-day trial, unless you cancel first.</li>
             <li>Cancel during the trial and you pay nothing.</li>
             <li>After a charge, you may cancel at any time. Access continues until the end of the paid month or year, then the hub is taken down and archived.</li>
             <li>Cancel from <a href="/account">your account page</a> (we email a one-time code to the address you used at signup), or email support with the hub address.</li>
@@ -151,5 +151,11 @@
     </footer>
   </div>
   <script src="site.js" defer></script>
+  <script src="pricing.js" defer></script>
+  <script defer>
+    window.addEventListener('load', function () {
+      if (window.LovelyHomePricing) window.LovelyHomePricing.initPricing();
+    });
+  </script>
 </body>
 </html>
