@@ -257,6 +257,22 @@ Public API:
 - `GET /api/public/signup/pricing` — includes `introOffer.active` and benefit copy when enabled
 - `POST /api/public/signup` — applies intro coupon at checkout when eligible (server-side; not client-controlled)
 
+## Marketing pricing copy (display only)
+
+Operators can edit what **lovely-home.co.uk** shows for list prices, trial wording, intro-offer lines, and referral benefits from **Platform admin → Marketing pricing copy**. Overrides are stored in D1 (`platform_settings.marketing_pricing_display`) and merged into `GET /api/public/signup/pricing` (and referral preview APIs).
+
+**Does not change Stripe:** checkout still uses Terraform/env price IDs and coupon IDs. If marketing copy says “£8.99/month” but Stripe charges £9.99, the customer sees the real amount on the Stripe page. Change Stripe products/prices in the Dashboard, then update Terraform price env vars when the billed amount should change.
+
+Apply migration `0013_marketing_pricing_display.sql`:
+
+```bash
+node scripts/apply-platform-billing-migration.mjs
+```
+
+Operator API: `GET` / `POST /api/platform/marketing-pricing` (POST `{ "reset": true }` clears overrides).
+
+**Help & FAQ:** owner help source (`src/help/ownerSections.js`) uses placeholders such as `{billingTrialDays}`, `{introMonthlyBenefit}`, and `{referralMonthlyReferee}`. The marketing Help page and embedded FAQ lists load `GET /api/public/signup/pricing` and substitute live copy at runtime. After editing owner help, run `npm run build:website-help` so `website/help-data.js` stays in sync.
+
 ## Slice 2 — provision on trialing (shipped)
 
 When Stripe sends `checkout.session.completed` or `customer.subscription.created` with status **trialing**:

@@ -46,6 +46,7 @@
   const hostname = siteId + '.lovely-hub.com';
   const hubUrl = 'https://' + hostname + '/';
   const startedAt = Date.now();
+  let billingTrialDays = 7;
 
   let timer = null;
   let giveUpTimer = null;
@@ -57,12 +58,35 @@
   openBtn.href = hubUrl;
   hubBlock.hidden = false;
   progress.hidden = false;
-  applyIntroCopy();
 
-  void poll();
-  giveUpTimer = setTimeout(() => {
-    if (!settled) showSlow();
-  }, GIVE_UP_MS);
+  function trialPhrase() {
+    return billingTrialDays + '-day trial';
+  }
+
+  async function loadBillingTrialDays() {
+    try {
+      const response = await fetch(apiBase + '/api/public/signup/pricing', {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) return;
+      const pricing = await response.json();
+      const days = Number(pricing.billingTrialDays ?? pricing.trialDays);
+      if (Number.isFinite(days) && days > 0) billingTrialDays = days;
+    } catch {
+      /* keep default */
+    }
+  }
+
+  async function init() {
+    await loadBillingTrialDays();
+    applyIntroCopy();
+    void poll();
+    giveUpTimer = setTimeout(() => {
+      if (!settled) showSlow();
+    }, GIVE_UP_MS);
+  }
+
+  void init();
 
   document.addEventListener('visibilitychange', () => {
     if (!settled && document.visibilityState === 'visible') {
@@ -147,7 +171,9 @@
         'Lovely Home — Welcome back'
       );
       lead.textContent =
-        'Your 7-day trial is active again for ' +
+        'Your ' +
+        trialPhrase() +
+        ' is active again for ' +
         hostname +
         '. We are rebuilding your hub — up to 10 minutes, often faster. Leave this page open and we will tell you when it is live again.';
       if (successSteps) {
@@ -162,7 +188,9 @@
 
     setPageHeading('Trial started', "Thank you — we're building your hub", 'Lovely Home — Trial started');
     lead.textContent =
-      'Your 7-day trial is active for ' +
+      'Your ' +
+      trialPhrase() +
+      ' is active for ' +
       hostname +
       '. Building a hub takes up to 10 minutes — often faster — leave this page open and it will tell you the moment yours is live.';
     if (successSteps) {
@@ -192,10 +220,14 @@
       returning ? 'Lovely Home — Welcome back' : 'Lovely Home — Your hub is ready'
     );
     lead.textContent = returning
-      ? 'Your 7-day trial is active again for ' +
+      ? 'Your ' +
+        trialPhrase() +
+        ' is active again for ' +
         hostname +
         '. Your hub is live again — sign in and restore your backup when you are ready.'
-      : 'Your 7-day trial is active for ' +
+      : 'Your ' +
+        trialPhrase() +
+        ' is active for ' +
         hostname +
         '. Your hub finished building — use the trial to set it up before guests arrive.';
     setTitle(returning ? 'Your hub is live again' : 'Your hub is live', false);
@@ -219,7 +251,9 @@
     );
     lead.textContent = invalidName
       ? 'Your card was not charged, but this hub address cannot be used. Pick a name with letters, numbers, or hyphens — no underscores.'
-      : 'Your 7-day trial started, but we could not finish building this hub. You have not been charged. Email support@lovely-home.co.uk with this address and we will complete it.';
+      : 'Your ' +
+        trialPhrase() +
+        ' started, but we could not finish building this hub. You have not been charged. Email support@lovely-home.co.uk with this address and we will complete it.';
     setTitle(invalidName ? 'Hub address cannot be used' : 'Hub setup did not finish', false);
     progressNote.textContent =
       (payload?.message || 'We could not finish building your hub.') +
@@ -240,7 +274,9 @@
       'Lovely Home — Hub setup delayed'
     );
     lead.textContent =
-      'Your 7-day trial is active for ' +
+      'Your ' +
+      trialPhrase() +
+      ' is active for ' +
       hostname +
       ', but this page could not confirm the hub is live. Email support@lovely-home.co.uk with this address and we will finish it.';
     setTitle('We could not confirm your hub is live', false);

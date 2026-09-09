@@ -1,5 +1,11 @@
 import { getPlatformBillingDb, stripeApiRequest, TRIAL_PERIOD_DAYS } from './platformBilling.js';
 import { describeIntroOffer } from './platformIntroOffer.js';
+import {
+  applyMarketingPricingOverrides,
+  defaultReferralDisplayCopy,
+  effectiveIntroDisplayCopy,
+  getMarketingPricingOverrides
+} from './platformMarketingPricing.js';
 import { getActiveStripeCredentials } from './platformStripeMode.js';
 
 /**
@@ -31,6 +37,13 @@ import { getActiveStripeCredentials } from './platformStripeMode.js';
  *     yearlyBenefit?: string;
  *     checkoutNote?: string;
  *   };
+ *   referral?: {
+ *     monthlyReferee: string;
+ *     yearlyReferee: string;
+ *     monthlyReferrer: string;
+ *     yearlyReferrer: string;
+ *   };
+ *   marketingDisplayOverrides?: boolean;
  * }} PublicPlanPricing
  */
 
@@ -123,12 +136,13 @@ export function computeAnnualSavings(monthPlan, yearPlan) {
 /**
  * @param {Partial<Record<BillingIntervalKey, PublicPlanOption>>} plans
  * @param {string} productName
+ * @param {{ trialDays?: number }} [options]
  * @returns {PublicPlanPricing}
  */
-export function buildPublicPricingFromPlans(plans, productName) {
+export function buildPublicPricingFromPlans(plans, productName, options = {}) {
   const monthPlan = plans.month ?? null;
   const yearPlan = plans.year ?? null;
-  const trialDays = TRIAL_PERIOD_DAYS;
+  const trialDays = Number.isFinite(Number(options.trialDays)) ? Number(options.trialDays) : TRIAL_PERIOD_DAYS;
   const savings = computeAnnualSavings(monthPlan, yearPlan);
   const monthlyLabel = monthPlan?.label || null;
   const yearlyLabel = yearPlan?.label || null;
@@ -173,7 +187,7 @@ export function buildPublicPricingFromPlans(plans, productName) {
  * @param {Record<string, string | undefined>} env
  * @returns {Promise<PublicPlanPricing>}
  */
-export async function getPublicPlanPricing(env) {
+export async function fetchStripePlanPricing(env) {
   const db = getPlatformBillingDb(env);
   const { credentials } = await getActiveStripeCredentials(env, db);
   const secretKey = credentials.secretKey;
@@ -215,9 +229,18 @@ export async function getPublicPlanPricing(env) {
   }
 
   await Promise.all(fetches);
-  const pricing = buildPublicPricingFromPlans(plans, productName);
+  return buildPublicPricingFromPlans(plans, productName);
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @returns {Promise<PublicPlanPricing>}
+ */
+export async function getPublicPlanPricing(env) {
+  const db = getPlatformBillingDb(env);
+  const pricing = await fetchStripePlanPricing(env);
   const intro = await describeIntroOffer(env, db);
-  return {
+  const withIntro = {
     ...pricing,
     introOffer: intro.active
       ? {
@@ -227,5 +250,35 @@ export async function getPublicPlanPricing(env) {
           checkoutNote: intro.checkoutNote
         }
       : { active: false }
+  };
+  const overrides = await getMarketingPricingOverrides(db);
+  const merged = applyMarketingPricingOverrides(withIntro, overrides);
+  return {
+    ...merged,
+    billingTrialDays: TRIAL_PERIOD_DAYS,
+    displayCopy: buildPublicDisplayCopy(merged, overrides)
+  };
+}
+
+/**
+ * @param {PublicPlanPricing} pricing
+ * @param {import('./platformMarketingPricing.js').MarketingPricingOverrides} overrides
+ */
+export function buildPublicDisplayCopy(pricing, overrides) {
+  const introCopy = effectiveIntroDisplayCopy(overrides);
+  const referral = pricing.referral ?? defaultReferralDisplayCopy(overrides);
+  return {
+    trialDays: pricing.trialDays,
+    billingTrialDays: TRIAL_PERIOD_DAYS,
+    monthlyLabel: pricing.monthlyLabel,
+    yearlyLabel: pricing.yearlyLabel,
+    checkoutSummary: pricing.checkoutSummary,
+    signupSummary: pricing.signupSummary,
+    introMonthlyBenefit: introCopy.monthlyBenefit,
+    introYearlyBenefit: introCopy.yearlyBenefit,
+    referralMonthlyReferee: referral.monthlyReferee,
+    referralYearlyReferee: referral.yearlyReferee,
+    referralMonthlyReferrer: referral.monthlyReferrer,
+    referralYearlyReferrer: referral.yearlyReferrer
   };
 }

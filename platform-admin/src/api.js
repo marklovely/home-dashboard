@@ -47,6 +47,50 @@ export async function setIntroOfferEnabled(payload) {
 /**
  * @returns {Promise<object>}
  */
+export async function fetchMarketingPricing() {
+  const response = await fetch(`${API_BASE}/marketing-pricing`, { cache: 'no-store' });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.message ?? `Marketing pricing failed (${response.status})`);
+  }
+  return body;
+}
+
+/**
+ * @param {{ overrides: Record<string, unknown> }} payload
+ */
+export async function saveMarketingPricing(payload) {
+  const response = await fetch(`${API_BASE}/marketing-pricing`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.message ?? `Marketing pricing update failed (${response.status})`);
+  }
+  return body;
+}
+
+/**
+ * @returns {Promise<object>}
+ */
+export async function resetMarketingPricing() {
+  const response = await fetch(`${API_BASE}/marketing-pricing`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reset: true })
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.message ?? `Marketing pricing reset failed (${response.status})`);
+  }
+  return body;
+}
+
+/**
+ * @returns {Promise<object>}
+ */
 export async function fetchMarketingAccess() {
   const response = await fetch(`${API_BASE}/marketing-access`, { cache: 'no-store' });
   return response.json();

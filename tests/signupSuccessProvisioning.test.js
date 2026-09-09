@@ -26,6 +26,23 @@ function jsonResponse(payload) {
   return { ok: true, status: 200, json: async () => payload };
 }
 
+const pricingResponse = { billingTrialDays: 7, trialDays: 7 };
+
+/**
+ * @param {(url: string, init?: RequestInit) => Promise<{ ok: boolean, status?: number, json?: () => Promise<unknown> }>} hubHandler
+ */
+function stubSignupSuccessFetch(hubHandler) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url, init) => {
+      if (String(url).includes('/api/public/signup/pricing')) {
+        return jsonResponse(pricingResponse);
+      }
+      return hubHandler(url, init);
+    })
+  );
+}
+
 const provisioning = {
   siteId: 'blundell',
   hostname: 'blundell.lovely-hub.com',
@@ -50,7 +67,7 @@ describe('signup success provisioning status', () => {
   });
 
   it('shows the deploying state without an open button or QR while the hub builds', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(provisioning)));
+    stubSignupSuccessFetch(async () => jsonResponse(provisioning));
 
     runPageScript();
     await vi.advanceTimersByTimeAsync(0);
@@ -71,7 +88,7 @@ describe('signup success provisioning status', () => {
   });
 
   it('shows welcome-back copy when returning=1 is in the URL', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(provisioning)));
+    stubSignupSuccessFetch(async () => jsonResponse(provisioning));
     mountPage('?site=smith&returning=1');
 
     runPageScript();
@@ -84,9 +101,8 @@ describe('signup success provisioning status', () => {
   });
 
   it('switches to welcome-back copy when hub-status reports returning', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => jsonResponse({ ...provisioning, siteId: 'smith', returning: true }))
+    stubSignupSuccessFetch(async () =>
+      jsonResponse({ ...provisioning, siteId: 'smith', returning: true })
     );
     mountPage('?site=smith');
 
@@ -97,11 +113,11 @@ describe('signup success provisioning status', () => {
   });
 
   it('reveals the open button and a logo QR code once the hub answers', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse(provisioning))
-      .mockResolvedValue(jsonResponse(ready));
-    vi.stubGlobal('fetch', fetchMock);
+    let hubPolls = 0;
+    stubSignupSuccessFetch(async () => {
+      hubPolls += 1;
+      return hubPolls === 1 ? jsonResponse(provisioning) : jsonResponse(ready);
+    });
 
     runPageScript();
     await vi.advanceTimersByTimeAsync(0);
@@ -128,28 +144,25 @@ describe('signup success provisioning status', () => {
   });
 
   it('stops polling and offers the hub link when the status check keeps failing', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 404 })));
+    stubSignupSuccessFetch(async () => ({ ok: false, status: 404 }));
 
     runPageScript();
     await vi.advanceTimersByTimeAsync(20000);
 
     expect(document.getElementById('hub-progress').dataset.state).toBe('unknown');
     expect(document.getElementById('open-hub-btn').hidden).toBe(false);
-    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(4);
   });
 
   it('stops on a failed registry instead of waiting for a hub that will never exist', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () =>
-        jsonResponse({
-          ...provisioning,
-          siteId: 'kitchen_home',
-          hostname: 'kitchen_home.lovely-hub.com',
-          state: 'failed',
-          message: 'We could not create kitchen_home.lovely-hub.com because underscores are not allowed.'
-        })
-      )
+    stubSignupSuccessFetch(async () =>
+      jsonResponse({
+        ...provisioning,
+        siteId: 'kitchen_home',
+        hostname: 'kitchen_home.lovely-hub.com',
+        state: 'failed',
+        message: 'We could not create kitchen_home.lovely-hub.com because underscores are not allowed.'
+      })
     );
     mountPage('?site=kitchen_home');
 
@@ -167,16 +180,13 @@ describe('signup success provisioning status', () => {
   });
 
   it('stops on a provision failure with support copy and no QR', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () =>
-        jsonResponse({
-          ...provisioning,
-          state: 'failed',
-          failureKind: 'setup_failed',
-          message: 'We could not finish building blundell.lovely-hub.com. Email support@lovely-home.co.uk with this address and we will complete it.'
-        })
-      )
+    stubSignupSuccessFetch(async () =>
+      jsonResponse({
+        ...provisioning,
+        state: 'failed',
+        failureKind: 'setup_failed',
+        message: 'We could not finish building blundell.lovely-hub.com. Email support@lovely-home.co.uk with this address and we will complete it.'
+      })
     );
 
     runPageScript();
@@ -193,7 +203,7 @@ describe('signup success provisioning status', () => {
   });
 
   it('asks for support after 30 minutes instead of showing a QR for a hub that never answered', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(provisioning)));
+    stubSignupSuccessFetch(async () => jsonResponse(provisioning));
 
     runPageScript();
     await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 1000);

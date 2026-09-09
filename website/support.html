@@ -129,7 +129,7 @@
         <section class="content-card">
           <h2>Account and billing</h2>
           <ul>
-            <li><strong>Pricing</strong> — <a href="/pricing">Transparent monthly pricing</a> after a 7-day trial. Cancel before the trial ends to pay nothing.</li>
+            <li><strong>Pricing</strong> — <a href="/pricing">Transparent monthly pricing</a> after a <span data-pricing="trial-days">7</span>-day trial. Cancel before the trial ends to pay nothing.</li>
             <li><strong>Manage your subscription</strong> — <a href="/account">your account page</a> (we email a one-time code to the signup address).</li>
             <li><strong>Refer a friend</strong> — generate a single-use link from your account page after sign-in. Details on <a href="/pricing#referrals">pricing → Refer a friend</a>.</li>
             <li><strong>Try before you buy</strong> — <a href="https://demo.lovely-home.co.uk/sign-in">public demo</a> (username <strong>demo</strong>, password <strong>lovely-demo</strong>). Data resets overnight.</li>
@@ -168,6 +168,12 @@
 
   <script src="site.js" defer></script>
   <script src="support.js" defer></script>
+  <script src="pricing.js" defer></script>
+  <script defer>
+    window.addEventListener('load', function () {
+      if (window.LovelyHomePricing) window.LovelyHomePricing.initPricing();
+    });
+  </script>
   <script type="module" src="faq.js"></script>
 </body>
 </html>

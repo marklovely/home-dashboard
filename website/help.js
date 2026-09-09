@@ -1,18 +1,26 @@
 import { PUBLIC_HELP_CATALOG } from './help-data.js';
-
-const AUDIENCES = {
-  owner: { id: 'owner', label: 'Using the hub', sections: PUBLIC_HELP_CATALOG.owner },
-  guest: { id: 'guest', label: 'Staying as a guest', sections: PUBLIC_HELP_CATALOG.sitter }
-};
+import {
+  fetchMarketingPricingCopy,
+  substituteHelpCatalogPricing
+} from './marketingPricingCopy.js';
 
 const nav = document.querySelector('#help-nav');
 const article = document.querySelector('#help-article');
 const searchInput = document.querySelector('#help-search');
 const tabButtons = [...document.querySelectorAll('[data-audience]')];
 
+/** @type {{ owner: unknown[], sitter: unknown[] }} */
+let activeCatalog = PUBLIC_HELP_CATALOG;
+
 if (!nav || !article || !searchInput || tabButtons.length === 0) {
   /* Help page chrome missing. */
 } else {
+  /** @type {Record<string, { id: string, label: string, sections: unknown[] }>} */
+  const AUDIENCES = {
+    owner: { id: 'owner', label: 'Using the hub', sections: activeCatalog.owner },
+    guest: { id: 'guest', label: 'Staying as a guest', sections: activeCatalog.sitter }
+  };
+
   let audienceId = 'owner';
   let sectionId = AUDIENCES.owner.sections[0]?.id ?? '';
   let query = '';
@@ -42,7 +50,9 @@ if (!nav || !article || !searchInput || tabButtons.length === 0) {
       if (section.keywords.some((word) => word.toLowerCase().includes(trimmed))) return true;
       return section.blocks.some((block) => {
         if (block.type === 'p' || block.type === 'h4') return block.text.toLowerCase().includes(trimmed);
-        if (block.type === 'ul' || block.type === 'ol') return block.items.some((item) => item.toLowerCase().includes(trimmed));
+        if (block.type === 'ul' || block.type === 'ol') {
+          return block.items.some((item) => item.toLowerCase().includes(trimmed));
+        }
         if (block.type === 'qa') {
           return block.question.toLowerCase().includes(trimmed) || block.answer.toLowerCase().includes(trimmed);
         }
@@ -118,6 +128,9 @@ if (!nav || !article || !searchInput || tabButtons.length === 0) {
   }
 
   function paint() {
+    AUDIENCES.owner.sections = activeCatalog.owner;
+    AUDIENCES.guest.sections = activeCatalog.sitter;
+
     const sections = matchingSections();
     const active = sections.find((section) => section.id === sectionId) ?? sections[0];
     sectionId = active?.id ?? '';
@@ -185,7 +198,15 @@ if (!nav || !article || !searchInput || tabButtons.length === 0) {
     paint();
   });
 
-  parseHash();
-  if (!window.location.hash) writeHash();
-  paint();
+  async function init() {
+    const pricing = await fetchMarketingPricingCopy();
+    activeCatalog = substituteHelpCatalogPricing(PUBLIC_HELP_CATALOG, pricing);
+    AUDIENCES.owner.sections = activeCatalog.owner;
+    AUDIENCES.guest.sections = activeCatalog.sitter;
+    parseHash();
+    if (!window.location.hash) writeHash();
+    paint();
+  }
+
+  init();
 }

@@ -45,6 +45,11 @@ import {
   validateBillingSiteId
 } from './platformBilling.js';
 import { applyIntroOfferSetting, describeIntroOffer } from './platformIntroOffer.js';
+import {
+  applyMarketingPricingSetting,
+  describeMarketingPricing
+} from './platformMarketingPricing.js';
+import { fetchStripePlanPricing } from './platformPublicPricing.js';
 import { applyStripeMode, describeStripeMode } from './platformStripeMode.js';
 import { buildMonitoringSummary } from './platformMonitoring.js';
 
@@ -167,6 +172,21 @@ export async function onRequest(context) {
   if (suffix === 'intro-offer' && request.method === 'POST') {
     const body = await readJsonBody(request);
     const result = await applyIntroOfferSetting(pagesEnv, getPlatformBillingDb(env), body);
+    return Response.json(result.body, { status: result.status });
+  }
+
+  if (suffix === 'marketing-pricing' && request.method === 'GET') {
+    const billingDb = getPlatformBillingDb(env);
+    const stripePricing = await fetchStripePlanPricing(pagesEnv);
+    const description = await describeMarketingPricing(pagesEnv, billingDb, stripePricing);
+    return Response.json(description);
+  }
+
+  if (suffix === 'marketing-pricing' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const billingDb = getPlatformBillingDb(env);
+    const stripePricing = await fetchStripePlanPricing(pagesEnv);
+    const result = await applyMarketingPricingSetting(pagesEnv, billingDb, stripePricing, body);
     return Response.json(result.body, { status: result.status });
   }
 

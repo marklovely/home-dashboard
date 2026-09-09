@@ -275,8 +275,53 @@
       el.textContent = plan === 'year' ? yearlyLabel : monthlyLabel;
     });
 
+    applyReferralCopy(normalized);
+    applyMetaDescriptions(normalized);
     document.documentElement.classList.add('pricing-loaded');
     applyIntroOffer(pricing);
+  }
+
+  /**
+   * @param {Record<string, unknown>} pricing
+   */
+  function applyMetaDescriptions(pricing) {
+    const trialDays = Number(pricing.trialDays) || 7;
+    const monthlyLabel = pricing.monthlyLabel ? String(pricing.monthlyLabel) : '';
+    const yearlyLabel = pricing.yearlyLabel ? String(pricing.yearlyLabel) : '';
+    if (!monthlyLabel || !yearlyLabel) return;
+    const description =
+      'Lovely Home pricing — ' +
+      monthlyLabel +
+      ' or ' +
+      yearlyLabel +
+      ' for your private household hub. ' +
+      trialDays +
+      '-day free trial. Cancel anytime.';
+    document.querySelectorAll('meta[name="description"], meta[property="og:description"], meta[name="twitter:description"]').forEach((el) => {
+      el.setAttribute('content', description);
+    });
+  }
+
+  /**
+   * @param {Record<string, unknown>} pricing
+   */
+  function applyReferralCopy(pricing) {
+    const referral =
+      pricing.referral && typeof pricing.referral === 'object' ? pricing.referral : null;
+    if (!referral) return;
+
+    document.querySelectorAll('[data-referral="monthly-referee"]').forEach((el) => {
+      el.textContent = referral.monthlyReferee ? String(referral.monthlyReferee) : '';
+    });
+    document.querySelectorAll('[data-referral="yearly-referee"]').forEach((el) => {
+      el.textContent = referral.yearlyReferee ? String(referral.yearlyReferee) : '';
+    });
+    document.querySelectorAll('[data-referral="monthly-referrer"]').forEach((el) => {
+      el.textContent = referral.monthlyReferrer ? String(referral.monthlyReferrer) : '';
+    });
+    document.querySelectorAll('[data-referral="yearly-referrer"]').forEach((el) => {
+      el.textContent = referral.yearlyReferrer ? String(referral.yearlyReferrer) : '';
+    });
   }
 
   /**
@@ -316,6 +361,7 @@
     loadPricing,
     applyPricing,
     applyIntroOffer,
+    applyReferralCopy,
     buildIntroPromoLine,
     initPricing,
     resolveApiBase,

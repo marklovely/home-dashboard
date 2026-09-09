@@ -97,7 +97,7 @@
 
         <section class="content-card">
           <h2>Simple pricing</h2>
-          <p>One plan per household — <strong>£9.99/month</strong> or <strong>£99/year</strong>, with a <strong>7-day free trial</strong> to fill in the guide before anyone stays. No hardware to buy; guests use their own phone.</p>
+          <p>One plan per household — <span data-pricing="dual-summary"><strong>£9.99/month</strong> or <strong>£99/year</strong></span>, with a <strong><span data-pricing="trial-days">7</span>-day free trial</strong> to fill in the guide before anyone stays. No hardware to buy; guests use their own phone.</p>
           <p><a href="/pricing">Full pricing</a> · <a href="/included">What's included</a> · <a href="/for-pet-sitters">Leaving a pet sitter?</a></p>
         </section>
       </div>
@@ -121,5 +121,11 @@
     </footer>
   </div>
   <script src="site.js" defer></script>
+  <script src="pricing.js" defer></script>
+  <script defer>
+    window.addEventListener('load', function () {
+      if (window.LovelyHomePricing) window.LovelyHomePricing.initPricing();
+    });
+  </script>
 </body>
 </html>

@@ -60,6 +60,9 @@ describe('public help catalog', () => {
     expect(text).toMatch(/How do referrals work\?/);
     expect(text).toMatch(/How do I get a referral link\?/);
     expect(text).toMatch(/Is this a public app\?/);
+    expect(text).toMatch(/\{billingTrialDays\}/);
+    expect(text).toMatch(/\{referralMonthlyReferee\}/);
+    expect(text).toMatch(/\{introMonthlyBenefit\}/);
     expect(faq.blocks.every((block) => block.type === 'h4' || block.type === 'p')).toBe(true);
   });
 
