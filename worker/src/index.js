@@ -7,6 +7,7 @@ import { handleOwnerAuth } from './routes/ownerAuth.js';
 import { handleWeather } from './routes/weather.js';
 import { handleWeatherGeocode } from './routes/weatherGeocode.js';
 import { handleBinsCouncilHint } from './routes/binsCouncilHint.js';
+import { handleBinsImportSchedule, handleBinsParseDates } from './routes/binsImport.js';
 import { handleAddressAutocomplete, handleAddressConfig, handleAddressLookup } from './routes/addressAutocomplete.js';
 import { handleCalendar } from './routes/calendar.js';
 import { handleApplianceManuals } from './routes/applianceManuals.js';
@@ -131,6 +132,10 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleWeatherGeocode(request, env, fetchBound);
     } else if (url.pathname === '/api/bins/council-hint' && request.method === 'GET') {
       response = await handleBinsCouncilHint(request, env, fetchBound);
+    } else if (url.pathname === '/api/bins/import-schedule' && request.method === 'POST') {
+      response = await handleBinsImportSchedule(request, env, fetchBound);
+    } else if (url.pathname === '/api/bins/parse-dates' && request.method === 'POST') {
+      response = await handleBinsParseDates(request, env);
     } else if (url.pathname === '/api/address/config' && request.method === 'GET') {
       response = await handleAddressConfig(request, env);
     } else if (url.pathname === '/api/address/autocomplete' && request.method === 'GET') {

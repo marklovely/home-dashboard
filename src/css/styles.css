@@ -3801,6 +3801,14 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   justify-self: start;
   color: var(--accent);
 }
+.hub-setup-bin-import-button {
+  justify-self: start;
+  margin-top: 4px;
+}
+.hub-setup-bin-pdf-input {
+  width: 100%;
+  max-width: 100%;
+}
 .hub-setup-bin-change-method {
   justify-self: start;
   margin: 4px 0 8px;

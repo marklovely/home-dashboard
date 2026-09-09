@@ -34,7 +34,8 @@ describe('propertyAddress', () => {
       city: '',
       county: '',
       country: '',
-      postcode: 'EX3 4CD'
+      postcode: 'EX3 4CD',
+      uprn: ''
     });
   });
 
@@ -46,7 +47,8 @@ describe('propertyAddress', () => {
       city: '',
       county: '',
       country: '',
-      postcode: ''
+      postcode: '',
+      uprn: ''
     });
   });
 });

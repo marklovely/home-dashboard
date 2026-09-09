@@ -11,6 +11,7 @@ import { withApiCredentials } from './accessFetch.js';
  *   binsUrl: string | null,
  *   councilSlug: string | null,
  *   ukBinDaySupported: boolean,
+ *   ukBinDayCouncilId: string | null,
  *   suggestedPattern: string | null
  * }} BinsCouncilHint
  */

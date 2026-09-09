@@ -13,9 +13,11 @@ import {
   parseBinSchedulePaste
 } from '../../lib/binSchedulePaste.js';
 import { fetchBinsCouncilHint } from '../../api/binsCouncilHintApi.js';
+import { fetchBinsImportSchedule, fetchBinsParseDatesAi } from '../../api/binsImportApi.js';
 import { binScheduleIntroForLocale, getBinScheduleLocale } from '../../lib/binScheduleLocale.js';
+import { extractTextFromPdfFile } from '../../lib/binSchedulePdfExtract.js';
 import { normalizeHubCountryCode } from '../../lib/hubCountries.js';
-import { normalizePropertyAddress } from '../../lib/propertyAddress.js';
+import { formatPropertyAddress, normalizePropertyAddress } from '../../lib/propertyAddress.js';
 import { getBinScheduleFieldHelp } from './hubSetupHelpContent.js';
 import { createSetupField, createSetupIntro } from './hubSetupFields.js';
 import { createBinPatternWizard } from './binPatternWizard.js';
@@ -26,16 +28,18 @@ import {
 } from './binScheduleReviewList.js';
 import { createBinAlertHoursField } from './binScheduleFields.js';
 
-/** @typedef {'chooser' | 'pattern' | 'paste' | 'summary'} BinHubPanelMode */
+/** @typedef {'chooser' | 'pattern' | 'paste' | 'pdf' | 'summary'} BinHubPanelMode */
 
 /**
  * @param {Record<string, unknown>} profile
  * @param {import('./hubSetupHelpContent.js').HubUseCase} useCase
  * @param {{
  *   onLayoutChange?: () => void,
- *   onDatesApplied?: (detail: { count: number, source: 'pattern' | 'paste' }) => void,
+ *   onDatesApplied?: (detail: { count: number, source: 'pattern' | 'paste' | 'pdf' | 'import' }) => void,
+ *   onImportError?: (message: string) => void,
  *   getHubCountryCode?: () => string,
- *   getPropertyPostcode?: () => string
+ *   getPropertyPostcode?: () => string,
+ *   getPropertyAddress?: () => import('../../lib/propertyAddress.js').PropertyAddress
  * }} [options]
  */
 export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', options = {}) {
@@ -49,11 +53,16 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     );
   }
 
+  function readPropertyAddress() {
+    return normalizePropertyAddress(
+      options.getPropertyAddress?.() ??
+        /** @type {Record<string, unknown>} */ (profile).propertyAddress
+    );
+  }
+
   function readPostcode() {
     return String(
-      options.getPropertyPostcode?.() ??
-        normalizePropertyAddress(/** @type {Record<string, unknown>} */ (profile).propertyAddress).postcode ??
-        ''
+      options.getPropertyPostcode?.() ?? readPropertyAddress().postcode ?? ''
     ).trim();
   }
 
@@ -85,6 +94,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
   let councilHintRequest = null;
   /** @type {string | null} */
   let councilHintFetchedForPostcode = null;
+  let importInProgress = false;
   /** @type {string | null} */
   let lastAutoFilledCouncilUrl = null;
   let councilUrlUserEdited = false;
@@ -212,9 +222,11 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       return;
     }
 
-    if (councilHintLoading) {
+    if (councilHintLoading || importInProgress) {
       banner.classList.add('hub-setup-bin-council-hint--loading');
-      banner.textContent = 'Looking up your council area…';
+      banner.textContent = importInProgress
+        ? 'Fetching collection dates from your council…'
+        : 'Looking up your council area…';
       container.append(banner);
       return;
     }
@@ -266,7 +278,88 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       banner.append(title, detail);
     }
 
+    if (councilHint.ukBinDaySupported) {
+      const importButton = document.createElement('button');
+      importButton.type = 'button';
+      importButton.className = 'settings-action-button hub-setup-bin-import-button';
+      importButton.textContent = 'Import dates automatically';
+      importButton.addEventListener('click', () => {
+        void runUkBinDayImport();
+      });
+      banner.append(importButton);
+    }
+
     container.append(banner);
+  }
+
+  async function runUkBinDayImport() {
+    if (importInProgress || !councilHint?.ukBinDaySupported) return;
+
+    const address = readPropertyAddress();
+    const postcode = address.postcode || readPostcode();
+    if (!postcode) {
+      options.onImportError?.('Add your postcode in Guest access before importing dates.');
+      return;
+    }
+
+    importInProgress = true;
+    councilHintLookupError = null;
+    if (mode === 'chooser' || mode === 'summary') render();
+
+    const result = await fetchBinsImportSchedule({
+      postcode,
+      councilId: councilHint.ukBinDayCouncilId,
+      uprn: address.uprn,
+      line1: address.line1,
+      line2: address.line2,
+      city: address.city,
+      address: formatPropertyAddress(address)
+    });
+
+    importInProgress = false;
+    if (!result.ok) {
+      councilHintLookupError = result.message;
+      options.onImportError?.(result.message);
+      if (mode === 'chooser' || mode === 'summary') render();
+      return;
+    }
+
+    mergeDraft({
+      household: result.data.household ?? [],
+      gardenWaste: result.data.gardenWaste ?? []
+    });
+    completeSubWizard('import');
+  }
+
+  /**
+   * @param {string} text
+   * @param {'paste' | 'pdf'} source
+   */
+  async function applyParsedBinText(text, source) {
+    let parsed = parseBinSchedulePaste(text);
+    if (parsed.validCount < 3) {
+      const ai = await fetchBinsParseDatesAi(text);
+      if (ai.ok && ai.entries.length) {
+        parsed = {
+          entries: ai.entries.map((entry) => ({
+            date: entry.date,
+            type: /** @type {import('../../lib/binSchedulePaste.js').ParsedBinType} */ (entry.type),
+            raw: `${entry.date} ${entry.type}`
+          })),
+          validCount: ai.entries.length,
+          unknownCount: 0
+        };
+      }
+    }
+
+    if (!parsed.validCount) {
+      return { ok: false, message: 'Could not parse any collection dates — try editing the text or use the pattern wizard.' };
+    }
+
+    const { household, gardenWaste } = binScheduleEntriesFromParsed(parsed.entries);
+    mergeDraft({ household, gardenWaste });
+    completeSubWizard(source);
+    return { ok: true, count: household.length + gardenWaste.length };
   }
 
   async function refreshCouncilHint(requestedPostcodeKey) {
@@ -350,7 +443,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
   }
 
   /**
-   * @param {'pattern' | 'paste'} source
+   * @param {'pattern' | 'paste' | 'pdf' | 'import'} source
    */
   function completeSubWizard(source) {
     mode = 'summary';
@@ -388,13 +481,22 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
         primary: !locale.emphasizePaste
       },
       {
+        title: 'Upload council PDF',
+        detail: 'Extract dates from your council calendar PDF — we tidy messy text if needed.',
+        action: 'pdf',
+        primary: false
+      },
+      {
         title: locale.chooserPasteTitle,
         detail: locale.chooserPasteDetail,
         action: 'paste',
         primary: locale.emphasizePaste
       }
     ];
-    if (locale.emphasizePaste) choiceCards.reverse();
+    if (locale.emphasizePaste) {
+      const paste = choiceCards.pop();
+      choiceCards.unshift(/** @type {typeof choiceCards[number]} */ (paste));
+    }
 
     for (const { title, detail, action, primary } of choiceCards) {
       const card = document.createElement('button');
@@ -521,24 +623,115 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     previewButton.className = 'settings-action-button hub-setup-bin-add-button';
     previewButton.textContent = 'Parse & preview';
 
+    const aiButton = document.createElement('button');
+    aiButton.type = 'button';
+    aiButton.className = 'settings-action-button settings-action-button--secondary hub-setup-bin-add-button';
+    aiButton.textContent = 'Clean up with AI';
+    aiButton.hidden = true;
+
     previewButton.addEventListener('click', () => {
-      const parsed = parseBinSchedulePaste(pasteInput.value);
-      if (!parsed.validCount) {
-        pastePreview.hidden = false;
-        pastePreview.textContent = `Could not parse any complete lines (${parsed.unknownCount} need attention).`;
-        return;
-      }
-      const { household, gardenWaste } = binScheduleEntriesFromParsed(parsed.entries);
-      mergeDraft({ household, gardenWaste });
-      completeSubWizard('paste');
+      void (async () => {
+        previewButton.disabled = true;
+        aiButton.disabled = true;
+        const result = await applyParsedBinText(pasteInput.value, 'paste');
+        previewButton.disabled = false;
+        aiButton.disabled = false;
+        if (!result.ok) {
+          pastePreview.hidden = false;
+          pastePreview.textContent = result.message ?? 'Could not parse dates.';
+          aiButton.hidden = false;
+        }
+      })();
     });
 
-    wrap.append(intro, pasteWrap, previewButton, pastePreview);
+    aiButton.addEventListener('click', () => {
+      void (async () => {
+        previewButton.disabled = true;
+        aiButton.disabled = true;
+        aiButton.textContent = 'Cleaning up…';
+        const ai = await fetchBinsParseDatesAi(pasteInput.value);
+        previewButton.disabled = false;
+        aiButton.disabled = false;
+        aiButton.textContent = 'Clean up with AI';
+        if (!ai.ok) {
+          pastePreview.hidden = false;
+          pastePreview.textContent = ai.message;
+          return;
+        }
+        pasteInput.value = ai.entries.map((entry) => `${entry.date} ${entry.type}`).join('\n');
+        const result = await applyParsedBinText(pasteInput.value, 'paste');
+        if (!result.ok) {
+          pastePreview.hidden = false;
+          pastePreview.textContent = result.message ?? 'AI cleanup did not produce usable dates.';
+        }
+      })();
+    });
+
+    wrap.append(intro, pasteWrap, previewButton, aiButton, pastePreview);
+  }
+
+  function renderPdf() {
+    wrap.replaceChildren();
+    const intro = document.createElement('p');
+    intro.className = 'settings-help subtle';
+    intro.textContent =
+      'Upload your council bin calendar PDF. Text is extracted on this device — only the extracted text is sent for AI cleanup if needed.';
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'application/pdf,.pdf';
+    fileInput.className = 'hub-setup-bin-pdf-input';
+
+    const status = document.createElement('p');
+    status.className = 'hub-setup-bin-paste-preview subtle';
+    status.hidden = true;
+
+    const extractButton = document.createElement('button');
+    extractButton.type = 'button';
+    extractButton.className = 'settings-action-button hub-setup-bin-add-button';
+    extractButton.textContent = 'Extract dates from PDF';
+    extractButton.disabled = true;
+
+    fileInput.addEventListener('change', () => {
+      extractButton.disabled = !fileInput.files?.length;
+      status.hidden = true;
+    });
+
+    extractButton.addEventListener('click', () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      void (async () => {
+        extractButton.disabled = true;
+        extractButton.textContent = 'Reading PDF…';
+        try {
+          const text = await extractTextFromPdfFile(file);
+          if (!text.trim()) {
+            status.hidden = false;
+            status.textContent = 'No text found in this PDF — try paste instead, or a different export from your council.';
+            return;
+          }
+          const result = await applyParsedBinText(text, 'pdf');
+          if (!result.ok) {
+            status.hidden = false;
+            status.textContent = `${result.message ?? 'Could not parse dates.'} You can copy text from the PDF and use paste instead.`;
+          }
+        } catch {
+          status.hidden = false;
+          status.textContent = 'Could not read this PDF — try paste instead.';
+        } finally {
+          extractButton.disabled = false;
+          extractButton.textContent = 'Extract dates from PDF';
+        }
+      })();
+    });
+
+    wrap.append(intro, fileInput, extractButton, status);
   }
 
   function render() {
     if (mode === 'pattern') renderPattern();
     else if (mode === 'paste') renderPaste();
+    else if (mode === 'pdf') renderPdf();
     else if (mode === 'summary') renderSummary();
     else renderChooser();
     options.onLayoutChange?.();
@@ -559,7 +752,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       );
     },
     isInSubWizard() {
-      return mode === 'pattern' || mode === 'paste';
+      return mode === 'pattern' || mode === 'paste' || mode === 'pdf';
     },
     getFooterState() {
       if (mode === 'pattern' && patternWizard) {
@@ -569,7 +762,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
           nextLabel: onReview ? 'Use these dates' : 'Next'
         };
       }
-      if (mode === 'paste') {
+      if (mode === 'paste' || mode === 'pdf') {
         return { backConsumes: true, nextLabel: 'Back to summary' };
       }
       return { backConsumes: false, nextLabel: '' };
@@ -580,7 +773,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
         patternWizard.render();
         return true;
       }
-      if (mode === 'pattern' || mode === 'paste') {
+      if (mode === 'pattern' || mode === 'paste' || mode === 'pdf') {
         mode = hasConfiguredBinSchedule(draftSchedule) ? 'summary' : 'chooser';
         render();
         return true;
@@ -602,7 +795,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
         completeSubWizard('pattern');
         return true;
       }
-      if (mode === 'paste') {
+      if (mode === 'paste' || mode === 'pdf') {
         mode = hasConfiguredBinSchedule(draftSchedule) ? 'summary' : 'chooser';
         render();
         return true;
