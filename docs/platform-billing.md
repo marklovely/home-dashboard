@@ -186,6 +186,18 @@ Public API:
 
 Referrer rewards use Stripe **customer balance** credits on the referee's first paid invoice; referee discounts use Checkout `discounts` on the subscription (applied to post-trial invoices).
 
+When a reward is credited, the referrer receives email from **Lovely Home** (`support@lovely-home.co.uk` via Resend) with the amount and a link to [account.html](https://lovely-home.co.uk/account.html).
+
+### Where referral credit appears in Stripe
+
+| View | What you see |
+|------|----------------|
+| **Stripe Dashboard** (your platform account) → **Customers** → Bob B | **Credit balance** (e.g. £10.00) and **Balance transactions** (negative amount = credit added) |
+| **Customer Portal** (what Bob sees on “Manage billing”) | **Applied balance** on the next upcoming invoice — often shows **£0.00 due** until credit is used up |
+| **Developers → Events** | `invoice.paid` on the referee’s subscription triggers the platform webhook that adds credit |
+
+The credit is **not** a separate line on your Stripe **Home** dashboard — open the **referrer’s customer record** to see it.
+
 ## Introductory offer (new households)
 
 Automatic discount for **first-time customers** at public signup on lovely-home.co.uk. An email is eligible only if it has **never** appeared on a `site_billing` row (including canceled hubs). Referral links take precedence — intro offers never stack with referrals. Operator billing checkout from the platform admin is never discounted.
