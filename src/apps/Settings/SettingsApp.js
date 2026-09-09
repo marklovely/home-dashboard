@@ -33,7 +33,14 @@ import { showPasswordDialog } from '../../components/PasswordDialog/passwordDial
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { createHubSetupHelpButton } from '../../components/HubSetup/hubSetupHelp.js';
-import { createCalendarConnectionField, createBinAlertHoursField, createBinColorFields, createBinScheduleDateEditor } from '../../components/HubSetup/binScheduleFields.js';
+import {
+  createBinAlertHoursField,
+  createBinColorFields,
+  createBinScheduleDateEditor,
+  createCalendarConnectionField
+} from '../../components/HubSetup/binScheduleFields.js';
+import { createBinPatternWizard } from '../../components/HubSetup/binPatternWizard.js';
+import { binScheduleEntriesFromParsed, parseBinSchedulePaste } from '../../lib/binSchedulePaste.js';
 import { HUB_SETUP_FIELD_HELP, getBinScheduleFieldHelp } from '../../components/HubSetup/hubSetupHelpContent.js';
 import { inferBinSchedulePeriod, normalizeBinSchedule, readBinScheduleFromProfile, validateBinSchedule } from '../../lib/binScheduleProfile.js';
 import {
@@ -614,13 +621,105 @@ function createBinReminderFields(context, onRefresh) {
   wrap.className = 'settings-options settings-options--stacked';
 
   const profile = buildHomeDetailsFormProfile(getSiteProfileState()?.profile ?? {});
-  const schedule = readBinScheduleFromProfile(profile);
+  const schedule = binsPanelDraftSchedule ?? readBinScheduleFromProfile(profile);
+  binsPanelDraftSchedule = null;
 
   wrap.append(
     createSetupIntro(
-      'Sitters see a prominent reminder on the home screen before each bin collection. Reminders count down from 6am on collection day — the same time bins are normally put out. Add dates below, then tap Save bin reminders; the list is a draft until you save.'
+      'Guests see a prominent reminder on the home screen before each bin collection. Reminders count down from 6am on collection day — the same time bins are normally put out. Use the pattern wizard or paste dates below, then tap Save bin reminders.'
     )
   );
+
+  let scheduleDraft = { ...schedule };
+
+  const toolsRow = document.createElement('div');
+  toolsRow.className = 'hub-setup-bin-choices hub-setup-bin-choices--settings';
+
+  const wizardHost = document.createElement('div');
+  wizardHost.className = 'hub-setup-bin-subwizard-host';
+  wizardHost.hidden = true;
+
+  const pasteHost = document.createElement('div');
+  pasteHost.className = 'hub-setup-bin-paste-host';
+  pasteHost.hidden = true;
+
+  const patternButton = document.createElement('button');
+  patternButton.type = 'button';
+  patternButton.className = 'hub-setup-bin-choice hub-setup-bin-choice--primary';
+  patternButton.innerHTML =
+    '<strong>Pattern wizard</strong><span class="subtle">Generate dates from your collection pattern.</span>';
+  patternButton.addEventListener('click', () => {
+    pasteHost.hidden = true;
+    wizardHost.hidden = false;
+    wizardHost.replaceChildren();
+    const wizard = createBinPatternWizard(scheduleDraft, (next) => {
+      scheduleDraft = next;
+    });
+    const applyButton = document.createElement('button');
+    applyButton.type = 'button';
+    applyButton.className = 'settings-action-button';
+    applyButton.textContent = 'Use these dates';
+    applyButton.addEventListener('click', () => {
+      scheduleDraft = wizard.finish();
+      wizardHost.hidden = true;
+      onRefresh({ panelId: 'bins', draftSchedule: scheduleDraft });
+    });
+    const cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.className = 'settings-action-button settings-action-button--secondary';
+    cancelButton.textContent = 'Cancel';
+    cancelButton.addEventListener('click', () => {
+      wizardHost.hidden = true;
+    });
+    wizardHost.append(wizard.wrap, applyButton, cancelButton);
+  });
+
+  const pasteButton = document.createElement('button');
+  pasteButton.type = 'button';
+  pasteButton.className = 'hub-setup-bin-choice';
+  pasteButton.innerHTML =
+    '<strong>Paste dates</strong><span class="subtle">One date per line from your council calendar.</span>';
+  pasteButton.addEventListener('click', () => {
+    wizardHost.hidden = true;
+    pasteHost.hidden = false;
+    pasteHost.replaceChildren();
+    const intro = document.createElement('p');
+    intro.className = 'settings-help subtle';
+    intro.textContent = 'Paste dates, then tap Parse & apply.';
+    const textarea = document.createElement('textarea');
+    textarea.className = 'hub-setup-bin-paste-input';
+    textarea.rows = 8;
+    const parseButton = document.createElement('button');
+    parseButton.type = 'button';
+    parseButton.className = 'settings-action-button';
+    parseButton.textContent = 'Parse & apply';
+    parseButton.addEventListener('click', () => {
+      const parsed = parseBinSchedulePaste(textarea.value);
+      if (!parsed.validCount) {
+        showToast(context.toast, 'Could not parse any complete lines — check the format.');
+        return;
+      }
+      const merged = binScheduleEntriesFromParsed(parsed.entries);
+      scheduleDraft = readBinScheduleFromProfile({
+        ...scheduleDraft,
+        household: merged.household,
+        gardenWaste: merged.gardenWaste
+      });
+      pasteHost.hidden = true;
+      onRefresh({ panelId: 'bins', draftSchedule: scheduleDraft });
+      showToast(context.toast, `Parsed ${parsed.validCount} collection date${parsed.validCount === 1 ? '' : 's'}.`);
+    });
+    const cancelPaste = document.createElement('button');
+    cancelPaste.type = 'button';
+    cancelPaste.className = 'settings-action-button settings-action-button--secondary';
+    cancelPaste.textContent = 'Cancel';
+    cancelPaste.addEventListener('click', () => {
+      pasteHost.hidden = true;
+    });
+    pasteHost.append(intro, textarea, parseButton, cancelPaste);
+  });
+
+  toolsRow.append(patternButton, pasteButton);
 
   const alertField = createBinAlertHoursField(profile);
   const locationField = createSetupField(
@@ -643,7 +742,7 @@ function createBinReminderFields(context, onRefresh) {
   });
 
   const dateEditor = createBinScheduleDateEditor({
-    schedule,
+    schedule: scheduleDraft,
     getRepeatUntilFallback: () => validUntilField.input.value.trim(),
     onLastDateChange: (lastDate) => {
       const current = validUntilField.input.value.trim();
@@ -691,6 +790,9 @@ function createBinReminderFields(context, onRefresh) {
   });
 
   wrap.append(
+    toolsRow,
+    wizardHost,
+    pasteHost,
     alertField.wrap,
     locationField.wrap,
     councilField.wrap,
@@ -1560,6 +1662,9 @@ function settingsSummary() {
 /** @type {number} */
 let settingsMountGeneration = 0;
 
+/** @type {import('../../lib/binScheduleProfile.js').BinScheduleProfile | null} */
+let binsPanelDraftSchedule = null;
+
 export const settingsApp = defineApp({
   id: 'settings',
   title: 'Settings',
@@ -1572,9 +1677,12 @@ export const settingsApp = defineApp({
   mount(viewport, context) {
     const mountGeneration = ++settingsMountGeneration;
 
-    /** @type {(options?: { soft?: boolean, panelId?: string }) => void} */
+    /** @type {(options?: { soft?: boolean, panelId?: string, draftSchedule?: import('../../lib/binScheduleProfile.js').BinScheduleProfile }) => void} */
     let refreshSettings = () => {};
     refreshSettings = (options = {}) => {
+      if (options.draftSchedule) {
+        binsPanelDraftSchedule = options.draftSchedule;
+      }
       refreshAboutValues(viewport);
       context.refreshShell?.();
       if (options.soft) return;

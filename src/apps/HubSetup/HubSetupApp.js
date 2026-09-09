@@ -26,10 +26,8 @@ import {
   getStarterGuideTemplate
 } from '../../content/houseguide/templates/starterGuideTemplates.js';
 import { importHouseGuideCatalog } from '../../api/houseGuideApi.js';
-import {
-  createBinScheduleFields,
-  createCalendarConnectionField
-} from '../../components/HubSetup/binScheduleFields.js';
+import { createCalendarConnectionField } from '../../components/HubSetup/binScheduleFields.js';
+import { createBinScheduleHubPanel } from '../../components/HubSetup/binScheduleHubPanel.js';
 import {
   validateBinSchedule
 } from '../../lib/binScheduleProfile.js';
@@ -284,7 +282,7 @@ function mountHubSetupWizard(viewport, context) {
   hubCountry.select.addEventListener('change', () => {
     guestFields.setHubCountryCode(hubCountry.select.value);
   });
-  let binFields = createBinScheduleFields(profile, String(profile.useCase ?? 'owner'));
+  let binFields = createBinScheduleHubPanel(profile, String(profile.useCase ?? 'owner'));
   let calendarFields = createCalendarConnectionField();
 
   void fetchHubSecretsConfigured().then((result) => {
@@ -320,6 +318,10 @@ function mountHubSetupWizard(viewport, context) {
   }
 
   function syncNextButtonLabel() {
+    if (currentStepId() === 'bins') {
+      const footerLabel = binFields?.getFooterState?.().nextLabel;
+      if (footerLabel) return footerLabel;
+    }
     return isLastWizardStep()
       ? isHubSetupWizardRerunRequested()
         ? 'Done'
@@ -459,7 +461,7 @@ function mountHubSetupWizard(viewport, context) {
     } else if (stepId === 'bins') {
       const selectedUseCase = useCase.select.value;
       const schedule = binFields.readBinSchedule();
-      binFields = createBinScheduleFields(
+      binFields = createBinScheduleHubPanel(
         { ...getSiteProfileState()?.profile, binSchedule: schedule },
         selectedUseCase
       );
@@ -525,6 +527,10 @@ function mountHubSetupWizard(viewport, context) {
   }
 
   backButton.addEventListener('click', () => {
+    if (currentStepId() === 'bins' && binFields.handleBack()) {
+      renderStep();
+      return;
+    }
     if (step > 0) {
       step -= 1;
       setHubSetupWizardStep(step);
@@ -645,6 +651,22 @@ function mountHubSetupWizard(viewport, context) {
         }
 
         if (stepId === 'bins') {
+          const subContinue = binFields.handleContinue();
+          if (subContinue === true) {
+            renderStep();
+            return;
+          }
+          if (typeof subContinue === 'string') {
+            const messages = {
+              'pick-stream': 'Choose at least one bin type to continue.',
+              'pick-pattern': 'Choose a collection pattern.',
+              'missing-start': 'Enter the next general waste collection date.',
+              'missing-garden-start': 'Enter the next garden waste collection date.',
+              'no-dates': 'No dates were generated — check your start dates and range.'
+            };
+            showToast(context.toast, messages[subContinue] ?? 'Complete the pattern setup.');
+            return;
+          }
           const binSchedule = binFields.readBinSchedule();
           const validation = validateBinSchedule(binSchedule);
           if (!validation.ok) {

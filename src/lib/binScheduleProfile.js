@@ -63,7 +63,7 @@ function normalizeBinColors(value) {
  * @property {BinScheduleHouseholdEntry[]} household
  * @property {BinScheduleGardenEntry[]} gardenWaste
  * @property {BinScheduleGardenEntry[]} gardenWaste
- * @property {number} alertHoursBefore Hours before collection day (from 6am) to show sitter reminders; 0 disables
+ * @property {number} alertHoursBefore Hours before collection day (from 6am) to show guest reminders; 0 disables
  * @property {Record<'rubbish' | 'recycling' | 'gardenWaste', string>} [binColors] Preset colour ids for wheelie bins
  */
 

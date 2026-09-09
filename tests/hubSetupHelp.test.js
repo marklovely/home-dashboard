@@ -30,8 +30,10 @@ describe('hub setup help', () => {
   it('uses guest-aware bin schedule copy for each use case', () => {
     expect(getBinScheduleGuestCopy('airbnb').locationHint).toContain('guests');
     expect(getBinScheduleGuestCopy('airbnb').locationHint).not.toContain('sitters');
-    expect(getBinScheduleGuestCopy('housesitter').locationHint).toContain('sitters');
-    expect(getBinScheduleGuestCopy('both').locationHint).toContain('guests and sitters');
+    expect(getBinScheduleGuestCopy('housesitter').locationHint).toContain('guests');
+    expect(getBinScheduleGuestCopy('housesitter').locationHint).not.toContain('sitters');
+    expect(getBinScheduleGuestCopy('both').locationHint).toContain('guests');
+    expect(getBinScheduleGuestCopy('both').locationHint).not.toContain('sitters');
   });
 });
 

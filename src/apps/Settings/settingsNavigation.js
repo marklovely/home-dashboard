@@ -43,7 +43,7 @@ export const OWNER_SETTINGS_SECTIONS = [
   {
     id: 'bins',
     label: 'Bin reminders',
-    description: 'Collection reminders for sitters and where bins are collected from.',
+    description: 'Collection reminders for guests and where bins are collected from.',
     ownerOnly: true
   },
   {

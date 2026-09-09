@@ -136,6 +136,45 @@ export function buildBinScheduleEntriesFromRepeat({
 }
 
 /**
+ * Generate alternating household collection dates (e.g. rubbish one week, recycling the next).
+ *
+ * @param {Object} options
+ * @param {string} options.startDate YYYY-MM-DD — first collection in the cycle
+ * @param {'rubbish' | 'recycling'} options.startType bin type on startDate
+ * @param {number} [options.intervalWeeks] weeks between collections of the same stream (default 2)
+ * @param {string} options.untilDate YYYY-MM-DD inclusive
+ * @returns {{ date: string, type: 'rubbish' | 'recycling', bankHolidayChange: boolean }[]}
+ */
+export function buildAlternatingBinScheduleEntries({
+  startDate,
+  startType,
+  intervalWeeks = 2,
+  untilDate
+}) {
+  if (!ISO_DATE.test(startDate) || !ISO_DATE.test(untilDate) || startDate > untilDate) {
+    return [];
+  }
+
+  const stepDays = Math.min(MAX_BIN_REPEAT_WEEKS, Math.max(MIN_BIN_REPEAT_WEEKS, intervalWeeks)) * 7;
+  /** @type {{ date: string, type: 'rubbish' | 'recycling', bankHolidayChange: boolean }[]} */
+  const entries = [];
+  let cursor = startDate;
+  let type = startType === 'recycling' ? 'recycling' : 'rubbish';
+
+  while (cursor <= untilDate && entries.length < MAX_BIN_REPEAT_OCCURRENCES) {
+    entries.push({ date: cursor, type, bankHolidayChange: false });
+    const nextDate = parseIsoLocalDate(cursor);
+    nextDate.setDate(nextDate.getDate() + stepDays);
+    const nextIso = formatIsoLocalDate(nextDate);
+    if (nextIso <= cursor) break;
+    cursor = nextIso;
+    type = type === 'rubbish' ? 'recycling' : 'rubbish';
+  }
+
+  return entries;
+}
+
+/**
  * Repeat-until must not be before the first generated date. Stale "schedule
  * valid until" values (already in the past) are ignored so a new year of dates
  * still expands.
