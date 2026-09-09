@@ -286,6 +286,16 @@ function mountHubSetupWizard(viewport, context) {
   let binFields = createBinScheduleHubPanel(profile, binsPanelUseCase, {
     onLayoutChange: () => {
       nextButton.textContent = syncNextButtonLabel();
+    },
+    onDatesApplied: ({ count, source }) => {
+      const label = source === 'paste' ? 'Pasted' : 'Generated';
+      showToast(
+        context.toast,
+        count > 0
+          ? `${label} ${count} collection date${count === 1 ? '' : 's'}. Tap Continue to save and move on.`
+          : 'No dates were added — check your entries or try again.',
+        6000
+      );
     }
   });
   let calendarFields = createCalendarConnectionField();
@@ -474,6 +484,16 @@ function mountHubSetupWizard(viewport, context) {
           {
             onLayoutChange: () => {
               nextButton.textContent = syncNextButtonLabel();
+            },
+            onDatesApplied: ({ count, source }) => {
+              const label = source === 'paste' ? 'Pasted' : 'Generated';
+              showToast(
+                context.toast,
+                count > 0
+                  ? `${label} ${count} collection date${count === 1 ? '' : 's'}. Tap Continue to save and move on.`
+                  : 'No dates were added — check your entries or try again.',
+                6000
+              );
             }
           }
         );
@@ -688,6 +708,14 @@ function mountHubSetupWizard(viewport, context) {
           }
           const result = await saveSiteProfile({ binSchedule });
           if (!handleSaveResult(result, 'Could not save bin schedule.')) return;
+          const savedCount = binSchedule.household.length + binSchedule.gardenWaste.length;
+          if (savedCount > 0) {
+            showToast(
+              context.toast,
+              `Bin reminders saved (${savedCount} collection date${savedCount === 1 ? '' : 's'}).`,
+              4000
+            );
+          }
         }
 
         if (stepId === 'calendar') {

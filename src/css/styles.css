@@ -3783,6 +3783,36 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .hub-setup-bin-toggle-changed {
   justify-self: start;
 }
+.hub-setup-bin-summary-banner {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(63, 122, 92, 0.45);
+  background: rgba(63, 122, 92, 0.12);
+  display: grid;
+  gap: 6px;
+}
+.hub-setup-bin-summary-banner--empty {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.hub-setup-bin-summary-banner__title {
+  margin: 0;
+  font-weight: 650;
+}
+.hub-setup-bin-summary-banner__detail {
+  margin: 0;
+}
+.hub-setup-bin-change-method {
+  justify-self: start;
+  margin: 4px 0 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .hub-setup-bin-choices {
   display: grid;
   gap: 10px;

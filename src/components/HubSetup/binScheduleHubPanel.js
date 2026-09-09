@@ -1,8 +1,9 @@
 /**
- * Hub setup bins step — entry chooser + nested pattern/paste flows.
+ * Hub setup bins step — chooser → sub-wizard → summary (dates + optional details).
  */
 
 import {
+  hasConfiguredBinSchedule,
   inferBinSchedulePeriod,
   normalizeBinSchedule,
   readBinScheduleFromProfile
@@ -21,16 +22,18 @@ import {
 } from './binScheduleReviewList.js';
 import { createBinAlertHoursField } from './binScheduleFields.js';
 
-/** @typedef {'entry' | 'pattern' | 'paste'} BinHubPanelMode */
+/** @typedef {'chooser' | 'pattern' | 'paste' | 'summary'} BinHubPanelMode */
 
 /**
  * @param {Record<string, unknown>} profile
  * @param {import('./hubSetupHelpContent.js').HubUseCase} useCase
- * @param {{ onLayoutChange?: () => void }} [options]
+ * @param {{ onLayoutChange?: () => void, onDatesApplied?: (detail: { count: number, source: 'pattern' | 'paste' }) => void }} [options]
  */
 export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', options = {}) {
-  let mode = /** @type {BinHubPanelMode} */ ('entry');
   let draftSchedule = readBinScheduleFromProfile(profile);
+  let mode = /** @type {BinHubPanelMode} */ (
+    hasConfiguredBinSchedule(draftSchedule) ? 'summary' : 'chooser'
+  );
   const guestCopy = getBinScheduleGuestCopy(useCase);
 
   const wrap = document.createElement('div');
@@ -71,7 +74,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
   pastePreview.hidden = true;
 
   function mergeDraft(partial) {
-    draftSchedule = readBinScheduleFromProfile({ ...draftSchedule, ...partial });
+    draftSchedule = normalizeBinSchedule({ ...draftSchedule, ...partial });
   }
 
   function readLocationFields() {
@@ -82,7 +85,20 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     };
   }
 
-  function renderEntry() {
+  function dateCount() {
+    return draftSchedule.household.length + draftSchedule.gardenWaste.length;
+  }
+
+  /**
+   * @param {'pattern' | 'paste'} source
+   */
+  function completeSubWizard(source) {
+    mode = 'summary';
+    render();
+    options.onDatesApplied?.({ count: dateCount(), source });
+  }
+
+  function renderChooser() {
     wrap.replaceChildren();
     wrap.append(createSetupIntro(guestCopy.intro));
 
@@ -93,7 +109,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     const choicesHint = document.createElement('p');
     choicesHint.className = 'settings-help subtle';
     choicesHint.textContent =
-      'Pick one option below, or tap Continue to skip — you can add dates later in Settings → Bin reminders.';
+      'Pick one option to open a short setup flow. Or tap Continue to skip — you can add dates later in Settings → Bin reminders.';
 
     const choices = document.createElement('div');
     choices.className = 'hub-setup-bin-choices';
@@ -123,26 +139,76 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       choices.append(card);
     }
 
-    const detailsHeading = document.createElement('h3');
-    detailsHeading.className = 'settings-subsection-title';
-    detailsHeading.textContent = 'Collection day details (optional)';
+    wrap.append(choicesHeading, choicesHint, choices);
+  }
 
-    wrap.append(choicesHeading, choicesHint, choices, detailsHeading, location.wrap, councilUrl.wrap, alertHours.wrap);
+  function renderSummary() {
+    wrap.replaceChildren();
+
+    const count = dateCount();
+    const banner = document.createElement('div');
+    banner.className = 'hub-setup-bin-summary-banner';
+    banner.setAttribute('role', 'status');
+
+    const bannerTitle = document.createElement('p');
+    bannerTitle.className = 'hub-setup-bin-summary-banner__title';
+    bannerTitle.textContent =
+      count > 0
+        ? `${count} collection date${count === 1 ? '' : 's'} ready`
+        : 'No collection dates yet';
+
+    const bannerDetail = document.createElement('p');
+    bannerDetail.className = 'hub-setup-bin-summary-banner__detail subtle';
+    bannerDetail.textContent =
+      count > 0
+        ? 'Check the list below, add where bins are collected from if you like, then tap Continue to save and move on.'
+        : 'Add dates with the options below, or tap Continue to skip this step for now.';
+
+    banner.append(bannerTitle, bannerDetail);
+
+    const changeMethod = document.createElement('button');
+    changeMethod.type = 'button';
+    changeMethod.className = 'hub-setup-bin-change-method';
+    changeMethod.textContent = count > 0 ? 'Change how dates were added' : 'Add collection dates';
+    changeMethod.addEventListener('click', () => {
+      mode = 'chooser';
+      render();
+    });
 
     entryReviewList = createBinScheduleReviewList({
       entries: reviewEntriesFromSchedule(draftSchedule),
       onChange: (entries) => {
         mergeDraft(scheduleFromReviewEntries(entries));
         entryReviewList?.setEntries(entries);
-      }
+        renderSummaryStatus(banner, bannerTitle, bannerDetail);
+      },
+      emptyMessage: 'No dates yet — tap “Add collection dates” above.'
     });
-    wrap.append(entryReviewList.wrap);
 
-    const skipNote = document.createElement('p');
-    skipNote.className = 'subtle';
-    skipNote.textContent =
-      'You can skip adding dates now and finish setup — open Settings → Bin reminders later, or use the council link in the Bins app.';
-    wrap.append(skipNote);
+    const detailsHeading = document.createElement('h3');
+    detailsHeading.className = 'settings-subsection-title';
+    detailsHeading.textContent = 'Collection day details (optional)';
+
+    renderSummaryStatus(banner, bannerTitle, bannerDetail);
+    wrap.append(banner, changeMethod, entryReviewList.wrap, detailsHeading, location.wrap, councilUrl.wrap, alertHours.wrap);
+  }
+
+  /**
+   * @param {HTMLElement} banner
+   * @param {HTMLElement} title
+   * @param {HTMLElement} detail
+   */
+  function renderSummaryStatus(banner, title, detail) {
+    const count = dateCount();
+    title.textContent =
+      count > 0
+        ? `${count} collection date${count === 1 ? '' : 's'} ready`
+        : 'No collection dates yet';
+    detail.textContent =
+      count > 0
+        ? 'Check the list below, add where bins are collected from if you like, then tap Continue to save and move on.'
+        : 'Add dates with the options below, or tap Continue to skip this step for now.';
+    banner.classList.toggle('hub-setup-bin-summary-banner--empty', count === 0);
   }
 
   function renderPattern() {
@@ -173,10 +239,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       }
       const { household, gardenWaste } = binScheduleEntriesFromParsed(parsed.entries);
       mergeDraft({ household, gardenWaste });
-      pastePreview.hidden = false;
-      pastePreview.textContent = `Added ${parsed.validCount} date${parsed.validCount === 1 ? '' : 's'}${parsed.unknownCount ? ` · ${parsed.unknownCount} line${parsed.unknownCount === 1 ? '' : 's'} skipped` : ''}.`;
-      mode = 'entry';
-      render();
+      completeSubWizard('paste');
     });
 
     wrap.append(intro, pasteWrap, previewButton, pastePreview);
@@ -185,7 +248,8 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
   function render() {
     if (mode === 'pattern') renderPattern();
     else if (mode === 'paste') renderPaste();
-    else renderEntry();
+    else if (mode === 'summary') renderSummary();
+    else renderChooser();
     options.onLayoutChange?.();
   }
 
@@ -214,7 +278,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
         };
       }
       if (mode === 'paste') {
-        return { backConsumes: true, nextLabel: 'Back to options' };
+        return { backConsumes: true, nextLabel: 'Back to summary' };
       }
       return { backConsumes: false, nextLabel: '' };
     },
@@ -225,7 +289,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
         return true;
       }
       if (mode === 'pattern' || mode === 'paste') {
-        mode = 'entry';
+        mode = hasConfiguredBinSchedule(draftSchedule) ? 'summary' : 'chooser';
         render();
         return true;
       }
@@ -243,12 +307,11 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
         }
         if (typeof result === 'string') return result;
         mergeDraft(patternWizard.finish());
-        mode = 'entry';
-        render();
+        completeSubWizard('pattern');
         return true;
       }
       if (mode === 'paste') {
-        mode = 'entry';
+        mode = hasConfiguredBinSchedule(draftSchedule) ? 'summary' : 'chooser';
         render();
         return true;
       }
