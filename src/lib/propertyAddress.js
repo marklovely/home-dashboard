@@ -5,7 +5,8 @@
  *   city?: string,
  *   county?: string,
  *   country?: string,
- *   postcode?: string
+ *   postcode?: string,
+ *   uprn?: string
  * }} PropertyAddress
  */
 
@@ -16,7 +17,8 @@ export const EMPTY_PROPERTY_ADDRESS = Object.freeze({
   city: '',
   county: '',
   country: '',
-  postcode: ''
+  postcode: '',
+  uprn: ''
 });
 
 /**
@@ -35,7 +37,8 @@ export function normalizePropertyAddress(value) {
     city: String(record.city ?? '').trim(),
     county: String(record.county ?? '').trim(),
     country: String(record.country ?? '').trim(),
-    postcode: String(record.postcode ?? '').trim()
+    postcode: String(record.postcode ?? '').trim(),
+    uprn: String(record.uprn ?? '').trim()
   };
 }
 

@@ -286,11 +286,22 @@ function mountHubSetupWizard(viewport, context) {
   const binPanelOptions = () => ({
     getHubCountryCode: () => normalizeHubCountryCode(hubCountry.select.value),
     getPropertyPostcode: () => guestFields.propertyAddress.readPropertyAddress().postcode,
+    getPropertyAddress: () => guestFields.propertyAddress.readPropertyAddress(),
     onLayoutChange: () => {
       nextButton.textContent = syncNextButtonLabel();
     },
+    onImportError: (message) => {
+      showToast(context.toast, message, 6000);
+    },
     onDatesApplied: ({ count, source }) => {
-      const label = source === 'paste' ? 'Pasted' : 'Generated';
+      const label =
+        source === 'paste'
+          ? 'Pasted'
+          : source === 'pdf'
+            ? 'Extracted'
+            : source === 'import'
+              ? 'Imported'
+              : 'Generated';
       showToast(
         context.toast,
         count > 0

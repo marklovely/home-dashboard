@@ -83,6 +83,8 @@ export async function resolveCouncilHint(postcode, fetchImpl = fetch) {
       binsUrl,
       councilSlug: authority?.slug ?? null,
       ukBinDaySupported: Boolean(ukBinDay.ok && ukBinDay.supported && isUsableUkBinDayCouncilId(ukBinDay.councilId)),
+      ukBinDayCouncilId:
+        ukBinDay.ok && isUsableUkBinDayCouncilId(ukBinDay.councilId) ? ukBinDay.councilId : null,
       suggestedPattern: defaultSuggestedPattern(authority?.tier)
     }
   };

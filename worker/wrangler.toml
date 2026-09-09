@@ -54,6 +54,9 @@ bucket_name = "lovely-home-guide-media"
 binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
 
+[ai]
+binding = "AI"
+
 # Hourly sitter stay schedule (Access email sync). Demo env has its own trigger below.
 [triggers]
 crons = ["0 * * * *"]
@@ -336,3 +339,6 @@ bucket_name = "lovely-home-guide-media-test-lovely"
 [[env.test-lovely.r2_buckets]]
 binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
+
+[env.test-lovely.ai]
+binding = "AI"
