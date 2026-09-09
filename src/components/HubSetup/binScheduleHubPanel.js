@@ -57,6 +57,21 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     ).trim();
   }
 
+  function normalizePostcodeKey(postcode) {
+    return String(postcode ?? '')
+      .replace(/\s+/g, '')
+      .toUpperCase();
+  }
+
+  /**
+   * @param {import('../../api/binsCouncilHintApi.js').BinsCouncilHint | null} hint
+   * @param {string} postcode
+   */
+  function isCouncilHintForPostcode(hint, postcode) {
+    if (!hint?.postcode || !postcode) return false;
+    return normalizePostcodeKey(hint.postcode) === normalizePostcodeKey(postcode);
+  }
+
   function readLocale() {
     return getBinScheduleLocale(readCountryCode());
   }
@@ -166,7 +181,16 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       return;
     }
 
-    if (!councilHint?.adminDistrict) {
+    if (!isCouncilHintForPostcode(councilHint, postcode)) {
+      banner.classList.add('hub-setup-bin-council-hint--loading');
+      banner.textContent = 'Updating council area for your postcode…';
+      container.append(banner);
+      ensureCouncilHintLoaded();
+      return;
+    }
+
+    const areaLabel = councilHint.councilName ?? councilHint.adminDistrict;
+    if (!areaLabel) {
       banner.classList.add('hub-setup-bin-council-hint--prompt');
       banner.textContent =
         councilHintLookupError ??
@@ -177,9 +201,8 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
 
     const title = document.createElement('p');
     title.className = 'hub-setup-bin-council-hint__title';
-    const district = councilHint.adminDistrict;
     const region = councilHint.region ? ` (${councilHint.region})` : '';
-    title.textContent = `Looks like ${district}${region}`;
+    title.textContent = `Looks like ${areaLabel}${region}`;
 
     const detail = document.createElement('p');
     detail.className = 'hub-setup-bin-council-hint__detail subtle';
@@ -208,7 +231,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     container.append(banner);
   }
 
-  async function refreshCouncilHint() {
+  async function refreshCouncilHint(requestedPostcodeKey) {
     const locale = readLocale();
     if (!locale.isUnitedKingdom) {
       councilHint = null;
@@ -228,10 +251,15 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     councilHintLoading = true;
     councilHintLookupError = null;
     const result = await fetchBinsCouncilHint(postcode);
+    if (normalizePostcodeKey(readPostcode()) !== requestedPostcodeKey) {
+      councilHintLoading = false;
+      return;
+    }
+
     councilHintLoading = false;
     if (result.ok) {
       councilHint = result.hint;
-      if (!result.hint.adminDistrict) {
+      if (!result.hint.adminDistrict && !result.hint.councilName) {
         councilHintLookupError = 'That postcode was not found — check Guest access or add your council website below.';
       }
     } else {
@@ -246,19 +274,41 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
 
   function ensureCouncilHintLoaded() {
     const postcode = readPostcode();
+    const postcodeKey = normalizePostcodeKey(postcode);
     if (!readLocale().isUnitedKingdom || !postcode) {
       councilHint = null;
       councilHintLookupError = null;
       councilHintFetchedForPostcode = null;
       return;
     }
-    if (councilHintFetchedForPostcode === postcode) return;
+    if (councilHintFetchedForPostcode === postcodeKey && isCouncilHintForPostcode(councilHint, postcode)) {
+      return;
+    }
+    if (councilHint && !isCouncilHintForPostcode(councilHint, postcode)) {
+      councilHint = null;
+      councilHintLookupError = null;
+    }
     if (councilHintRequest) return;
-    councilHintRequest = refreshCouncilHint().finally(() => {
+    councilHintLoading = true;
+    councilHintRequest = refreshCouncilHint(postcodeKey).finally(() => {
       councilHintRequest = null;
-      councilHintFetchedForPostcode = readPostcode();
+      if (normalizePostcodeKey(readPostcode()) === postcodeKey) {
+        councilHintFetchedForPostcode = postcodeKey;
+      }
       if (mode === 'chooser' || mode === 'summary') render();
     });
+  }
+
+  function refreshWhenVisible() {
+    const postcode = readPostcode();
+    const postcodeKey = normalizePostcodeKey(postcode);
+    if (councilHintFetchedForPostcode !== postcodeKey || !isCouncilHintForPostcode(councilHint, postcode)) {
+      councilHint = null;
+      councilHintLookupError = null;
+      councilHintFetchedForPostcode = null;
+    }
+    ensureCouncilHintLoaded();
+    render();
   }
 
   /**
@@ -460,6 +510,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
 
   return {
     wrap,
+    refreshWhenVisible,
     getUseCase: () => useCase,
     readBinSchedule() {
       return inferBinSchedulePeriod(

@@ -488,6 +488,7 @@ function mountHubSetupWizard(viewport, context) {
         );
       }
       body.append(binFields.wrap);
+      binFields.refreshWhenVisible?.();
     } else if (stepId === 'calendar') {
       body.append(calendarFields.wrap);
     } else if (stepId === 'guide') {
