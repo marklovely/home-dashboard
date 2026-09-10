@@ -7,6 +7,7 @@ const APP_DISPLAY_ORDER = [
   'bins',
   'emergency',
   'my-day',
+  'arrival-prep',
   'appliance-manuals',
   'house-guide-editor',
   'settings'

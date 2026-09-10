@@ -2,10 +2,6 @@ import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { mountBinAlertBannerHost } from '../../services/binAlertBannerSync.js';
-import { mountArrivalPrepCard } from '../../components/ArrivalPrep/createArrivalPrepCard.js';
-
-/** @type {(() => void) | null} */
-let activeArrivalPrepUnmount = null;
 
 /**
  * @param {import('../types/app.js').App} app
@@ -59,8 +55,6 @@ function applyCardSummary(card, summary) {
  * @param {import('../types/app.js').ShellContext} context
  */
 export async function renderHomeScreen(viewport, apps, context) {
-  activeArrivalPrepUnmount?.();
-  activeArrivalPrepUnmount = null;
   viewport.replaceChildren();
 
   const page = document.createElement('section');
@@ -82,15 +76,7 @@ export async function renderHomeScreen(viewport, apps, context) {
   binAlertHost.className = 'home-bin-alert-host';
   mountBinAlertBannerHost(binAlertHost, (id) => context.navigate(id), { houseSitter: false });
 
-  const arrivalPrepHost = document.createElement('div');
-  arrivalPrepHost.className = 'home-arrival-prep-host';
-  activeArrivalPrepUnmount = mountArrivalPrepCard(arrivalPrepHost);
-
-  page.append(
-    binAlertHost,
-    arrivalPrepHost,
-    grid
-  );
+  page.append(binAlertHost, grid);
 
   const helpSection = document.createElement('section');
   helpSection.className = 'owner-help-section';

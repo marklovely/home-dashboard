@@ -6,14 +6,20 @@ import { isHouseSitterExperience, isOwnerUserMode } from '../auth/userMode.js';
 import { isCamerasConfigured, readCamerasFromProfile } from '../lib/cameraProfile.js';
 import { getSiteProfileState } from './siteProfileService.js';
 import { isSitterControlsDisclosed } from './sitterControlsService.js';
+import { shouldShowArrivalPrepChecklist } from '../lib/arrivalPrep/buildArrivalPrepChecklist.js';
 
 /**
  * @param {import('../types/app.js').App} app
  */
 function isAppConfiguredForHub(app) {
-  if (app.id !== 'cameras') return true;
-  const cameras = readCamerasFromProfile(getSiteProfileState()?.profile ?? {});
-  return isCamerasConfigured(cameras);
+  const profile = getSiteProfileState()?.profile ?? {};
+  if (app.id === 'cameras') {
+    return isCamerasConfigured(readCamerasFromProfile(profile));
+  }
+  if (app.id === 'arrival-prep') {
+    return shouldShowArrivalPrepChecklist(profile);
+  }
+  return true;
 }
 
 /**

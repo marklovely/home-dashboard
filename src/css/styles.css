@@ -2528,12 +2528,12 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .home-bin-alert-host[hidden] {
   display: none;
 }
-.home-arrival-prep-host:not(:empty) {
-  width: 100%;
-  margin-bottom: clamp(12px, 2vw, 18px);
+.arrival-prep-page {
+  max-width: 720px;
+  margin: 0 auto;
 }
-.home-arrival-prep-host[hidden] {
-  display: none;
+.arrival-prep-page-host:not(:empty) {
+  width: 100%;
 }
 .arrival-prep-card {
   display: grid;
@@ -2543,6 +2543,12 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
   box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
+}
+.arrival-prep-card--app {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
 }
 .arrival-prep-header {
   display: grid;

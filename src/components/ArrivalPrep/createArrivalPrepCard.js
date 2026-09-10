@@ -15,18 +15,30 @@ import {
 /**
  * @param {HTMLElement} host
  * @param {Record<string, unknown>} profile
+ * @param {'card' | 'app'} [variant]
  */
-function renderArrivalPrepCard(host, profile) {
+function renderArrivalPrepChecklist(host, profile, variant = 'card') {
   host.replaceChildren();
 
   if (!shouldShowArrivalPrepChecklist(profile)) {
-    host.hidden = true;
+    host.replaceChildren();
+    if (variant === 'app') {
+      const message = document.createElement('p');
+      message.className = 'settings-help subtle';
+      message.textContent =
+        'Arrival checklists appear when your hub is set up for guests or sitters — not owner-only use.';
+      host.append(message);
+      host.hidden = false;
+    } else {
+      host.hidden = true;
+    }
     return;
   }
 
   const checklist = buildArrivalPrepChecklist(profile);
   if (!checklist || checklist.totalCount === 0) {
-    host.hidden = true;
+    host.replaceChildren();
+    host.hidden = variant !== 'app';
     return;
   }
 
@@ -34,7 +46,8 @@ function renderArrivalPrepCard(host, profile) {
   const arrivalPrep = normalizeArrivalPrepProfile(profile.arrivalPrep);
 
   const card = document.createElement('section');
-  card.className = 'arrival-prep-card';
+  card.className =
+    variant === 'app' ? 'arrival-prep-card arrival-prep-card--app' : 'arrival-prep-card';
   card.setAttribute('aria-label', checklist.title);
 
   const header = document.createElement('div');
@@ -95,7 +108,7 @@ function renderArrivalPrepCard(host, profile) {
       nextChecklist?.taskIds ?? checklist.taskIds
     );
     queueSave({ arrivalPrep: pruned });
-    renderArrivalPrepCard(host, { ...currentProfile, arrivalPrep: pruned });
+    renderArrivalPrepChecklist(host, { ...currentProfile, arrivalPrep: pruned }, variant);
   });
 
   const sectionsWrap = document.createElement('div');
@@ -145,7 +158,7 @@ function renderArrivalPrepCard(host, profile) {
         const currentPrep = normalizeArrivalPrepProfile(currentProfile.arrivalPrep);
         const nextArrivalPrep = withArrivalPrepTaskChecked(currentPrep, task.id, checkbox.checked);
         queueSave({ arrivalPrep: nextArrivalPrep });
-        renderArrivalPrepCard(host, { ...currentProfile, arrivalPrep: nextArrivalPrep });
+        renderArrivalPrepChecklist(host, { ...currentProfile, arrivalPrep: nextArrivalPrep }, variant);
       });
     }
 
@@ -164,7 +177,7 @@ function renderArrivalPrepCard(host, profile) {
     const currentProfile = getSiteProfileState()?.profile ?? profile;
     const nextArrivalPrep = withArrivalPrepReset(normalizeArrivalPrepProfile(currentProfile.arrivalPrep));
     queueSave({ arrivalPrep: nextArrivalPrep });
-    renderArrivalPrepCard(host, { ...currentProfile, arrivalPrep: nextArrivalPrep });
+    renderArrivalPrepChecklist(host, { ...currentProfile, arrivalPrep: nextArrivalPrep }, variant);
   });
 
   actions.append(resetButton);
@@ -174,24 +187,17 @@ function renderArrivalPrepCard(host, profile) {
 }
 
 /**
- * Mount a dynamic arrival prep checklist on the owner home screen.
  * @param {HTMLElement} host
+ * @param {{ variant?: 'card' | 'app' }} [options]
  */
-export function mountArrivalPrepCard(host) {
-  /** @type {(() => void) | null} */
-  let unsubscribe = null;
+export function mountArrivalPrepChecklist(host, options = {}) {
+  const variant = options.variant ?? 'card';
 
   function refresh() {
     const profile = getSiteProfileState()?.profile ?? {};
-    renderArrivalPrepCard(host, profile);
+    renderArrivalPrepChecklist(host, profile, variant);
   }
 
   refresh();
-  unsubscribe = subscribeToSiteProfile(refresh);
-
-  return () => {
-    unsubscribe?.();
-    host.replaceChildren();
-    host.hidden = true;
-  };
+  subscribeToSiteProfile(refresh);
 }
