@@ -39,16 +39,13 @@ else
   KEY="$(node "${ROOT}/scripts/terraform-stack-for-site.mjs" --stack "${STACK}" --backend-key)"
 fi
 
+# shellcheck source=lib/terraform-r2-backend-init-args.sh
+source "${ROOT}/scripts/lib/terraform-r2-backend-init-args.sh"
+
 init_args=(
   -backend-config="bucket=${TF_STATE_R2_BUCKET}"
   -backend-config="key=${KEY}"
-  -backend-config="region=auto"
-  -backend-config="endpoints={s3=\"${TF_STATE_R2_ENDPOINT}\"}"
-  -backend-config="skip_credentials_validation=true"
-  -backend-config="skip_metadata_api_check=true"
-  -backend-config="skip_region_validation=true"
-  -backend-config="skip_requesting_account_id=true"
-  -backend-config="use_path_style=true"
+  "${terraform_r2_backend_init_args[@]}"
 )
 
 if [[ -n "${RECONFIGURE}" ]]; then

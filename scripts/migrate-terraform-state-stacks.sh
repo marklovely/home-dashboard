@@ -21,18 +21,14 @@ if [[ -z "${TF_STATE_R2_BUCKET:-}" || -z "${TF_STATE_R2_ENDPOINT:-}" ]]; then
 fi
 
 legacy_init() {
+  # shellcheck source=lib/terraform-r2-backend-init-args.sh
+  source "${ROOT}/scripts/lib/terraform-r2-backend-init-args.sh"
   cd "${ROOT}/terraform"
   terraform init \
     -reconfigure \
     -backend-config="bucket=${TF_STATE_R2_BUCKET}" \
     -backend-config="key=home-dashboard/hub.tfstate" \
-    -backend-config="region=auto" \
-    -backend-config="endpoints={s3=\"${TF_STATE_R2_ENDPOINT}\"}" \
-    -backend-config="skip_credentials_validation=true" \
-    -backend-config="skip_metadata_api_check=true" \
-    -backend-config="skip_region_validation=true" \
-    -backend-config="skip_requesting_account_id=true" \
-    -backend-config="use_path_style=true"
+    "${terraform_r2_backend_init_args[@]}"
 }
 
 echo "==> Init legacy hub.tfstate (read-only source)"

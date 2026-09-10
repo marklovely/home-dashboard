@@ -30,4 +30,8 @@ skip_credentials_validation = true
 skip_metadata_api_check     = true
 skip_region_validation      = true
 skip_requesting_account_id  = true
+skip_s3_checksum            = true
 use_path_style              = true
+# Separate state keys per stack — not Terraform workspaces. Avoid default "env:"
+# prefix or Terraform ListObjects the bucket on every init/plan (R2 Class A ops).
+workspace_key_prefix        = "workspaces"
