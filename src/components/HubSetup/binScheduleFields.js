@@ -26,6 +26,7 @@ import {
   getBinScheduleGuestCopy,
   HUB_SETUP_FIELD_HELP
 } from './hubSetupHelpContent.js';
+import { showConfirmDialog } from '../ConfirmDialog/confirmDialog.js';
 import { createSetupField, createSetupIntro, createSetupSelect } from './hubSetupFields.js';
 
 const WEEKDAY_OPTIONS = [
@@ -199,9 +200,34 @@ export function createBinScheduleDateEditor(options = {}) {
     addButton
   );
 
+  const listToolbar = document.createElement('div');
+  listToolbar.className = 'hub-setup-bin-list-toolbar';
+
   const listSummary = document.createElement('p');
   listSummary.className = 'hub-setup-bin-list-summary subtle';
   listSummary.setAttribute('aria-live', 'polite');
+
+  const clearAllButton = document.createElement('button');
+  clearAllButton.type = 'button';
+  clearAllButton.className = 'settings-action-button settings-action-button--secondary hub-setup-bin-clear-all-button';
+  clearAllButton.textContent = 'Clear all dates';
+  clearAllButton.addEventListener('click', () => {
+    if (!entries.length) return;
+    const count = entries.length;
+    void showConfirmDialog({
+      title: 'Clear all collection dates?',
+      message: `Remove all ${count} collection date${count === 1 ? '' : 's'} from this list? Tap Save bin reminders below to apply.`,
+      confirmLabel: 'Clear all',
+      cancelLabel: 'Keep dates',
+      danger: true
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      entries = [];
+      renderEntryList();
+    });
+  });
+
+  listToolbar.append(listSummary, clearAllButton);
 
   const listScroll = document.createElement('div');
   listScroll.className = 'hub-setup-bin-entry-list-scroll';
@@ -247,10 +273,12 @@ export function createBinScheduleDateEditor(options = {}) {
         'No dates yet — add your first collection above, or skip this step and come back later in Settings.';
       listHost.append(empty);
       listSummary.textContent = 'No collection dates added yet.';
+      clearAllButton.hidden = true;
       options.onLastDateChange?.('');
       return;
     }
 
+    clearAllButton.hidden = false;
     listSummary.textContent = `${entries.length} collection date${entries.length === 1 ? '' : 's'} added. Continue below when you are ready.`;
     options.onLastDateChange?.(entries[entries.length - 1]?.date ?? '');
 
@@ -329,7 +357,7 @@ export function createBinScheduleDateEditor(options = {}) {
   renderEntryList();
 
   listScroll.append(listHost);
-  wrap.append(entryPanel, listSummary, listScroll);
+  wrap.append(entryPanel, listToolbar, listScroll);
 
   return {
     wrap,

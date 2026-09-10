@@ -65,11 +65,11 @@ describe('address autocomplete routes', () => {
     expect(body.uprnLookupConfigured).toBe(false);
   });
 
-  it('exposes getAddress config for UPRN lookup when configured', async () => {
+  it('exposes OS Places config for UPRN lookup when configured', async () => {
     const env = withTestLimiters(
       createAccessTestEnv({
         GOOGLE_PLACES_API_KEY: 'AIza_test',
-        GETADDRESS_API_KEY: 'ga_test'
+        OS_PLACES_API_KEY: 'os_test'
       })
     );
     const jwt = await signTestAccessJwt('owner@example.com', env);
@@ -79,18 +79,28 @@ describe('address autocomplete routes', () => {
     );
     const body = await response.json();
     expect(body.uprnLookupConfigured).toBe(true);
-    expect(body.getAddressApiKey).toBeUndefined();
+    expect(body.osPlacesApiKey).toBeUndefined();
   });
 
-  it('resolves UPRN via getAddress on the Worker', async () => {
-    const env = withTestLimiters(createAccessTestEnv({ GETADDRESS_API_KEY: 'ga_test' }));
+  it('resolves UPRN via OS Places on the Worker', async () => {
+    const env = withTestLimiters(createAccessTestEnv({ OS_PLACES_API_KEY: 'os_test' }));
     const jwt = await signTestAccessJwt('owner@example.com', env);
     const fetchImpl = vi.fn(async (url) => {
-      if (String(url).includes('getAddress.io/autocomplete')) {
-        return new Response(JSON.stringify({ suggestions: [{ id: 'addr-1' }] }), { status: 200 });
-      }
-      if (String(url).includes('getAddress.io/get/')) {
-        return new Response(JSON.stringify({ uprn: '100012345678' }), { status: 200 });
+      if (String(url).includes('api.os.uk/search/places/v1/postcode')) {
+        return new Response(
+          JSON.stringify({
+            results: [
+              {
+                DPA: {
+                  UPRN: '100012345678',
+                  ADDRESS: '1 High Street, Stratford-upon-Avon, CV37 6NT',
+                  MATCH: 1
+                }
+              }
+            ]
+          }),
+          { status: 200 }
+        );
       }
       throw new Error(`Unexpected fetch: ${url}`);
     });

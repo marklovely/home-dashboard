@@ -18,14 +18,24 @@ describe('bins import routes', () => {
   });
 
   it('imports schedule when UPRN and council are available', async () => {
-    const env = withTestLimiters(createAccessTestEnv({ GETADDRESS_API_KEY: 'test-key' }));
+    const env = withTestLimiters(createAccessTestEnv({ OS_PLACES_API_KEY: 'test-key' }));
     const jwt = await signTestAccessJwt('owner@example.com', env);
     const fetchImpl = vi.fn(async (url) => {
-      if (String(url).includes('getAddress.io/autocomplete')) {
-        return new Response(JSON.stringify({ suggestions: [{ id: 'addr-1' }] }), { status: 200 });
-      }
-      if (String(url).includes('getAddress.io/get/')) {
-        return new Response(JSON.stringify({ uprn: '100022334455' }), { status: 200 });
+      if (String(url).includes('api.os.uk/search/places/v1/postcode')) {
+        return new Response(
+          JSON.stringify({
+            results: [
+              {
+                DPA: {
+                  UPRN: '100022334455',
+                  ADDRESS: '10 Downing Street, London, SW1A 1AA',
+                  MATCH: 1
+                }
+              }
+            ]
+          }),
+          { status: 200 }
+        );
       }
       if (String(url).includes('ukbinday.co.uk')) {
         return new Response(

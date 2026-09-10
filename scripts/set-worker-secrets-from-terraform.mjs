@@ -110,6 +110,15 @@ if (googlePlacesKey) {
   );
 }
 
+const osPlacesKey = process.env.OS_PLACES_API_KEY?.trim();
+if (osPlacesKey) {
+  secrets.OS_PLACES_API_KEY = osPlacesKey;
+} else {
+  console.warn(
+    'OS_PLACES_API_KEY not set — skipping UPRN lookup secret (bin auto-import will need PDF/paste until synced).'
+  );
+}
+
 for (const [name, value] of Object.entries(secrets)) {
   if (!value) {
     console.error(`Missing value for secret ${name}`);
