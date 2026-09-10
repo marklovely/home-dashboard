@@ -1,4 +1,5 @@
 import { hubCountryLabel, normalizeHubCountryCode } from './hubCountries.js';
+import { getPropertyAddressLabels } from './propertyAddressLabels.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UK_POSTCODE_RE = /^([A-Z]{1,2}\d[A-Z\d]?|\d[A-Z]{2})\s*\d[A-Z]{2}$/i;
@@ -126,14 +127,20 @@ export function validateEmailAddresses(emails) {
  * @returns {string | null}
  */
 export function validatePropertyAddress(address, countryCode = 'GB') {
+  const normalizedCountry = normalizeHubCountryCode(countryCode);
+  const labels = getPropertyAddressLabels(normalizedCountry);
   const line1 = String(address?.line1 ?? '').trim();
   const city = String(address?.city ?? '').trim();
   const postcode = String(address?.postcode ?? '').trim();
   if (!line1) return 'Enter address line 1.';
-  if (!city) return 'Enter city or town.';
-  if (!postcode) return 'Enter postcode.';
-  if (!isValidPostcode(postcode, countryCode)) {
-    return 'Postcode looks invalid for the selected country.';
+  if (!city) {
+    return labels.cityLabel.startsWith('City / town')
+      ? 'Enter city or town.'
+      : `Enter ${labels.cityLabel.toLowerCase()}.`;
+  }
+  if (!postcode) return labels.enterPostcodeMessage;
+  if (!isValidPostcode(postcode, normalizedCountry)) {
+    return labels.invalidPostcodeMessage;
   }
   return null;
 }

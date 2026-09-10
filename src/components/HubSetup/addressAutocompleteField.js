@@ -1,5 +1,6 @@
 import { fetchAddressById, fetchAddressSuggestions } from '../../api/addressApi.js';
-import { supportsUkAddressAutocomplete } from '../../lib/hubCountries.js';
+import { getPropertyAddressLabels } from '../../lib/propertyAddressLabels.js';
+import { supportsAddressAutocomplete } from '../../lib/hubCountries.js';
 
 /**
  * @param {Object} options
@@ -7,7 +8,7 @@ import { supportsUkAddressAutocomplete } from '../../lib/hubCountries.js';
  * @param {(address: import('../../lib/propertyAddress.js').PropertyAddress) => void} options.onSelect
  */
 export function createAddressAutocompleteField(options) {
-  const countryCode = options.countryCode ?? 'GB';
+  let countryCode = options.countryCode ?? 'GB';
   const wrap = document.createElement('div');
   wrap.className = 'hub-setup-address-search';
 
@@ -20,7 +21,6 @@ export function createAddressAutocompleteField(options) {
 
   const hint = document.createElement('span');
   hint.className = 'settings-field-hint subtle';
-  hint.textContent = 'Start typing a postcode or street name, then pick your address from the list.';
 
   const inputWrap = document.createElement('div');
   inputWrap.className = 'hub-setup-address-search-input-wrap';
@@ -29,7 +29,6 @@ export function createAddressAutocompleteField(options) {
   input.className = 'hub-setup-input';
   input.type = 'search';
   input.autocomplete = 'off';
-  input.placeholder = 'e.g. SW1A 1AA or 10 Downing Street';
   input.setAttribute('role', 'combobox');
   input.setAttribute('aria-expanded', 'false');
   input.setAttribute('aria-autocomplete', 'list');
@@ -53,6 +52,12 @@ export function createAddressAutocompleteField(options) {
   let activeRequest = null;
   /** @type {string} */
   let sessionToken = '';
+
+  function applyCountryLabels(code) {
+    const labels = getPropertyAddressLabels(code);
+    hint.textContent = labels.searchHint;
+    input.placeholder = labels.searchPlaceholder;
+  }
 
   function ensureSessionToken() {
     if (!sessionToken) {
@@ -157,13 +162,20 @@ export function createAddressAutocompleteField(options) {
     setTimeout(() => hideResults(), 180);
   });
 
-  wrap.hidden = !supportsUkAddressAutocomplete(countryCode);
+  function syncVisibility(code) {
+    wrap.hidden = !supportsAddressAutocomplete(code);
+  }
+
+  applyCountryLabels(countryCode);
+  syncVisibility(countryCode);
 
   return {
     wrap,
     input,
     setCountryCode(code) {
-      wrap.hidden = !supportsUkAddressAutocomplete(code);
+      countryCode = code;
+      applyCountryLabels(code);
+      syncVisibility(code);
       hideResults();
       input.value = '';
       resetSessionToken();

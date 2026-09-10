@@ -7,6 +7,7 @@ import { createFieldInfoHint, createFieldLabelBlock } from '../HelpGuide/fieldHe
 import { HUB_SETUP_FIELD_HELP } from './hubSetupHelpContent.js';
 import { createAddressAutocompleteField } from './addressAutocompleteField.js';
 import { hubCountryLabel, normalizeHubCountryCode, supportsUkAddressAutocomplete } from '../../lib/hubCountries.js';
+import { getPropertyAddressLabels } from '../../lib/propertyAddressLabels.js';
 import { resolvePropertyUprn } from '../../api/addressApi.js';
 import {
   formatPropertyAddress,
@@ -87,6 +88,10 @@ export function createSetupField(label, value = '', options = {}) {
   if (options.autocomplete) input.autocomplete = options.autocomplete;
   if (options.inputMode) input.inputMode = options.inputMode;
   if (options.pattern) input.pattern = options.pattern;
+
+  if (options.fieldKey) {
+    wrap.dataset.addressField = options.fieldKey;
+  }
 
   if (options.revealable) {
     wrap.append(attachRevealToggle(input));
@@ -320,9 +325,22 @@ export function createContactGroup(titleText, contact, options = {}) {
  */
 export function createPropertyAddressFields(profile, options = {}) {
   const address = normalizePropertyAddress(profile?.propertyAddress);
-  const hubCountryCode = normalizeHubCountryCode(
+  let hubCountryCode = normalizeHubCountryCode(
     options.hubCountryCode ?? profile?.hubCountryCode ?? address.country
   );
+
+  /** @param {ReturnType<typeof createSetupField>} field @param {string} text */
+  function setFieldLabel(field, text) {
+    const title = field.wrap.querySelector('.settings-subsection-title');
+    if (title) title.textContent = text;
+  }
+
+  function applyAddressLabels(code) {
+    const labels = getPropertyAddressLabels(code);
+    setFieldLabel(city, labels.cityLabel);
+    setFieldLabel(county, labels.countyLabel);
+    setFieldLabel(postcode, labels.postcodeLabel);
+  }
   const group = document.createElement('fieldset');
   group.className = 'hub-setup-property-address';
 
@@ -344,7 +362,8 @@ export function createPropertyAddressFields(profile, options = {}) {
 
   const line1 = createSetupField('Address line 1', address.line1, {
     autocomplete: 'address-line1',
-    placeholder: 'House name or number and street'
+    placeholder: 'House name or number and street',
+    fieldKey: 'line1'
   });
   const line2 = createSetupField('Address line 2 (optional)', address.line2, {
     autocomplete: 'address-line2',
@@ -353,11 +372,13 @@ export function createPropertyAddressFields(profile, options = {}) {
   const line3 = createSetupField('Address line 3 (optional)', address.line3, {
     autocomplete: 'address-line3'
   });
-  const city = createSetupField('City / town', address.city, {
-    autocomplete: 'address-level2'
+  const city = createSetupField(getPropertyAddressLabels(hubCountryCode).cityLabel, address.city, {
+    autocomplete: 'address-level2',
+    fieldKey: 'city'
   });
-  const county = createSetupField('County (optional)', address.county, {
-    autocomplete: 'address-level1'
+  const county = createSetupField(getPropertyAddressLabels(hubCountryCode).countyLabel, address.county, {
+    autocomplete: 'address-level1',
+    fieldKey: 'county'
   });
 
   const countryNote = document.createElement('p');
@@ -372,8 +393,9 @@ export function createPropertyAddressFields(profile, options = {}) {
         })
       : null;
 
-  const postcode = createSetupField('Postcode', address.postcode, {
-    autocomplete: 'postal-code'
+  const postcode = createSetupField(getPropertyAddressLabels(hubCountryCode).postcodeLabel, address.postcode, {
+    autocomplete: 'postal-code',
+    fieldKey: 'postcode'
   });
 
   let storedUprn = address.uprn ?? '';
@@ -393,7 +415,7 @@ export function createPropertyAddressFields(profile, options = {}) {
       }
       if (!storedUprn && supportsUkAddressAutocomplete(hubCountryCode)) {
         void resolvePropertyUprn(selected).then((result) => {
-          if (result.ok) storedUprn = result.uprn;
+          if (result.ok && supportsUkAddressAutocomplete(hubCountryCode)) storedUprn = result.uprn;
         });
       }
     }
@@ -440,8 +462,10 @@ export function createPropertyAddressFields(profile, options = {}) {
     group,
     readPropertyAddress,
     setHubCountryCode(code) {
-      addressSearch.setCountryCode(normalizeHubCountryCode(code));
-      countryNote.textContent = `Country: ${hubCountryLabel(normalizeHubCountryCode(code)) || 'Other country'}`;
+      hubCountryCode = normalizeHubCountryCode(code);
+      addressSearch.setCountryCode(hubCountryCode);
+      countryNote.textContent = `Country: ${hubCountryLabel(hubCountryCode) || 'Other country'}`;
+      applyAddressLabels(hubCountryCode);
     }
   };
 }

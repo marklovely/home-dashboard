@@ -91,6 +91,17 @@ export function normalizeHubCountryCode(code) {
 }
 
 /**
+ * Google Places address lookup is available for listed ISO countries (not OTHER).
+ * @param {string} code
+ * @returns {boolean}
+ */
+export function supportsAddressAutocomplete(code) {
+  const normalized = normalizeHubCountryCode(code);
+  return normalized !== 'OTHER';
+}
+
+/**
+ * OS Places UPRN resolution is UK-only.
  * @param {string} code
  * @returns {boolean}
  */

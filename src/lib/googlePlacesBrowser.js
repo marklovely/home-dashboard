@@ -1,5 +1,20 @@
+import { hubCountryLabel } from './hubCountries.js';
+
 const GOOGLE_PLACES_AUTOCOMPLETE_URL = 'https://places.googleapis.com/v1/places:autocomplete';
 const GOOGLE_PLACES_DETAILS_FIELD_MASK = 'addressComponents,postalAddress,formattedAddress';
+
+/**
+ * @param {string} countryCode
+ */
+function placesLanguageCode(countryCode) {
+  const code = String(countryCode ?? '').trim().toUpperCase();
+  if (code === 'US') return 'en-US';
+  if (code === 'CA') return 'en-CA';
+  if (code === 'AU') return 'en-AU';
+  if (code === 'NZ') return 'en-NZ';
+  if (code === 'GB' || code === 'IE') return 'en-GB';
+  return 'en';
+}
 
 /**
  * @param {Array<{ types?: string[], longText?: string, shortText?: string }>} components
@@ -47,10 +62,9 @@ export function mapGooglePlaceToPropertyAddress(place, countryCode = 'GB') {
     String(postal?.postalCode ?? '').trim() || componentText(components, 'postal_code');
 
   const countryName =
-    String(postal?.regionCode ?? '').toUpperCase() === 'GB'
-      ? 'United Kingdom'
-      : componentText(components, 'country') ||
-        (countryCode === 'GB' ? 'United Kingdom' : '');
+    componentText(components, 'country') ||
+    hubCountryLabel(String(postal?.regionCode ?? countryCode).toUpperCase()) ||
+    hubCountryLabel(countryCode);
 
   return {
     line1,
@@ -100,7 +114,7 @@ export async function browserPlacesAutocomplete(term, countryCode, apiKey, sessi
   const body = {
     input: term,
     includedPrimaryTypes: ['street_address', 'premise', 'subpremise'],
-    languageCode: 'en-GB',
+    languageCode: placesLanguageCode(countryCode),
     regionCode: countryCode.toLowerCase(),
     includedRegionCodes: [countryCode.toLowerCase()]
   };

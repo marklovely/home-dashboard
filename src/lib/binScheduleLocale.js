@@ -30,6 +30,9 @@ import { normalizeHubCountryCode } from './hubCountries.js';
  *   chooserPatternDetail: string,
  *   chooserPasteTitle: string,
  *   chooserPasteDetail: string,
+ *   chooserPdfTitle: string,
+ *   chooserPdfDetail: string,
+ *   showCouncilPdfUpload: boolean,
  *   pasteIntro: string,
  *   councilUrlLabel: string,
  *   councilUrlPlaceholder: string
@@ -120,6 +123,11 @@ export function getBinScheduleLocale(hubCountryCode) {
     chooserPasteDetail: isUnitedKingdom
       ? 'One date per line when the pattern does not fit.'
       : 'One date per line when a simple pattern does not fit.',
+    chooserPdfTitle: isUnitedKingdom ? 'Upload council PDF' : 'Upload collection calendar PDF',
+    chooserPdfDetail: isUnitedKingdom
+      ? 'Extract dates from your council calendar PDF — we tidy messy text if needed.'
+      : 'Extract dates from a PDF calendar — we tidy messy text if needed.',
+    showCouncilPdfUpload: isUnitedKingdom,
     pasteIntro: isUnitedKingdom
       ? 'Paste dates from a council PDF, email, or spreadsheet.'
       : 'Paste dates from your local service calendar, email, or spreadsheet.',
