@@ -16,6 +16,8 @@ describe('getBinScheduleLocale', () => {
     expect(locale.patternOptions.some((option) => option.value === 'alternating')).toBe(false);
     expect(locale.defaultHouseholdPattern).toBe('weekly');
     expect(locale.councilUrlLabel).toContain('Local');
+    expect(locale.showCouncilPdfUpload).toBe(false);
+    expect(locale.chooserPdfTitle).not.toContain('council');
   });
 
   it('emphasizes paste for OTHER country', () => {

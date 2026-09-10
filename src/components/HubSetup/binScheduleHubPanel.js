@@ -230,6 +230,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
   }
 
   function refreshWhenVisible() {
+    render();
     councilTools.refreshWhenVisible();
   }
 
@@ -268,12 +269,16 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
         action: 'pattern',
         primary: !locale.emphasizePaste
       },
-      {
-        title: 'Upload council PDF',
-        detail: 'Extract dates from your council calendar PDF — we tidy messy text if needed.',
-        action: 'pdf',
-        primary: false
-      },
+      ...(locale.showCouncilPdfUpload
+        ? [
+            {
+              title: locale.chooserPdfTitle,
+              detail: locale.chooserPdfDetail,
+              action: 'pdf',
+              primary: false
+            }
+          ]
+        : []),
       {
         title: locale.chooserPasteTitle,
         detail: locale.chooserPasteDetail,

@@ -5,6 +5,7 @@ import {
   validateContact
 } from './contactValidation.js';
 import { normalizeHubCountryCode } from './hubCountries.js';
+import { getPropertyAddressLabels } from './propertyAddressLabels.js';
 
 /**
  * @param {HTMLElement} fieldWrap
@@ -133,28 +134,17 @@ export function attachContactGroupValidation(group, getCountryCode) {
  * @param {() => string} getCountryCode
  */
 export function attachPropertyAddressValidation(fields, getCountryCode) {
-  const wraps = /** @type {HTMLElement[]} */ ([...fields.group.querySelectorAll('.hub-setup-field')]);
-  const byLabel = new Map(
-    wraps.map((wrap) => {
-      const label = wrap.querySelector('.settings-field-label')?.textContent?.trim() ?? '';
-      const input = wrap.querySelector('input');
-      return [label, { wrap, input }];
-    })
-  );
-
-  /** @param {string} labelPrefix */
-  function fieldForLabel(labelPrefix) {
-    for (const [label, entry] of byLabel.entries()) {
-      if (label.startsWith(labelPrefix) && entry.input instanceof HTMLInputElement) {
-        return entry;
-      }
-    }
-    return null;
+  /** @param {string} fieldKey */
+  function fieldByKey(fieldKey) {
+    const wrap = fields.group.querySelector(`[data-address-field="${fieldKey}"]`);
+    const input = wrap?.querySelector('input');
+    if (!(wrap instanceof HTMLElement) || !(input instanceof HTMLInputElement)) return null;
+    return { wrap, input };
   }
 
-  const line1 = fieldForLabel('Address line 1');
-  const city = fieldForLabel('City / town');
-  const postcode = fieldForLabel('Postcode');
+  const line1 = fieldByKey('line1');
+  const city = fieldByKey('city');
+  const postcode = fieldByKey('postcode');
   if (!line1?.input || !city?.input || !postcode?.input) return;
 
   const line1Error = ensureFieldError(line1.wrap, line1.input);
@@ -163,28 +153,33 @@ export function attachPropertyAddressValidation(fields, getCountryCode) {
 
   function validateAll() {
     const countryCode = normalizeHubCountryCode(getCountryCode());
+    const { enterPostcodeMessage, invalidPostcodeMessage, cityLabel } =
+      getPropertyAddressLabels(countryCode);
     const line1Value = line1.input.value.trim();
     const cityValue = city.input.value.trim();
     const postcodeValue = postcode.input.value.trim();
+    const enterCityMessage = cityLabel.startsWith('City / town')
+      ? 'Enter city or town.'
+      : `Enter ${cityLabel.toLowerCase()}.`;
 
     setFieldValidationState(
       line1.input,
       line1Error,
       line1Value ? null : 'Enter address line 1.'
     );
-    setFieldValidationState(city.input, cityError, cityValue ? null : 'Enter city or town.');
+    setFieldValidationState(city.input, cityError, cityValue ? null : enterCityMessage);
     if (!postcodeValue) {
-      setFieldValidationState(postcode.input, postcodeError, 'Enter postcode.');
+      setFieldValidationState(postcode.input, postcodeError, enterPostcodeMessage);
     } else if (!isValidPostcode(postcodeValue, countryCode)) {
-      setFieldValidationState(postcode.input, postcodeError, 'Postcode looks invalid.');
+      setFieldValidationState(postcode.input, postcodeError, invalidPostcodeMessage);
     } else {
       setFieldValidationState(postcode.input, postcodeError, null);
     }
 
     if (!line1Value) return 'Enter address line 1.';
-    if (!cityValue) return 'Enter city or town.';
-    if (!postcodeValue) return 'Enter postcode.';
-    if (!isValidPostcode(postcodeValue, countryCode)) return 'Postcode looks invalid for this country.';
+    if (!cityValue) return enterCityMessage;
+    if (!postcodeValue) return enterPostcodeMessage;
+    if (!isValidPostcode(postcodeValue, countryCode)) return invalidPostcodeMessage;
     return null;
   }
 
