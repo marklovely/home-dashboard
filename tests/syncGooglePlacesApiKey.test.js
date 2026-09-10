@@ -8,7 +8,7 @@ import {
   resolveSyncArchiveSecretTargets
 } from '../scripts/sync-platform-site-archive-secret.mjs';
 
-describe('sync-google-places-api-key', () => {
+describe('sync worker secret scripts (Google Places + OS Places)', () => {
   it('defaults to all deploy sites', () => {
     const scripts = { deploy: 'x', 'deploy:test': 'x', 'deploy:practice': 'x' };
     expect(resolveSyncArchiveSecretTargets(scripts)).toEqual(['prod', 'practice', 'test']);

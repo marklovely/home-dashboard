@@ -330,7 +330,7 @@ addresses from any source, rather than silently applying a hub nobody can sign i
 1. `generate-hub-tfvars.mjs` — builds tfvars from `platform/sites.yaml` + billing owner emails + secrets (never committed)
 2. `terraform apply` (attach_hub_api_binding=false for new site)
 3. `sync-wrangler-from-terraform.mjs`
-4. `set-worker-secrets-from-terraform.mjs` — HUB_PROXY_SECRET, Access AUD, vanilla dummy secrets, optional `GOOGLE_PLACES_API_KEY` (address lookup)
+4. `set-worker-secrets-from-terraform.mjs` — HUB_PROXY_SECRET, Access AUD, vanilla dummy secrets, optional `GOOGLE_PLACES_API_KEY` (address lookup), optional `OS_PLACES_API_KEY` (UK UPRN / bin auto-import)
 5. `npm run d1:migrate:<site>` + `npm run deploy:<site>`
 6. `terraform apply -refresh-only` (post-worker tfvars)
 7. `deploy-cloudflare-pages-site.sh` — deploy, attach HUB_API, **redeploy** so binding is live
@@ -362,6 +362,7 @@ To override tfvars values, export the usual env vars (`WORKERS_SUBDOMAIN`, `CLOU
 | [`platform-site-deprovision.yml`](../.github/workflows/platform-site-deprovision.yml) | Push to `main` (sites.yaml removal) or manual |
 | [`platform-site-deploy.yml`](../.github/workflows/platform-site-deploy.yml) | Worker-only redeploy |
 | [`platform-sync-google-places-key.yml`](../.github/workflows/platform-sync-google-places-key.yml) | Manual — push `GOOGLE_PLACES_API_KEY` to all hub Workers (or one site) |
+| [`platform-sync-os-places-key.yml`](../.github/workflows/platform-sync-os-places-key.yml) | Manual — push `OS_PLACES_API_KEY` to all hub Workers (or one site) |
 | [`platform-sync-archive-secret.yml`](../.github/workflows/platform-sync-archive-secret.yml) | Manual — push archive secret to Workers |
 | [`platform-site-billing-deprovision.yml`](../.github/workflows/platform-site-billing-deprovision.yml) | Stripe cancel/delete webhook or manual — archive, registry removal PR (auto-merge) → [`platform-site-deprovision.yml`](platform-site-deprovision.yml) |
 
