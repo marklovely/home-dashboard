@@ -178,7 +178,14 @@ export function createAppShell({
   });
   subscribeToSiteProfile(() => {
     applyShellBranding({ shellEyebrow, shellTagline });
-    renderRoute(getCurrentRoute(), { forceRemount: true });
+    const route = getCurrentRoute();
+    if (route === HOME_ROUTE) {
+      // Home launcher visibility (e.g. Getting ready) depends on profile fields loaded async.
+      renderRoute(HOME_ROUTE, { forceRemount: true });
+      return;
+    }
+    const hubName = getHubDisplayName();
+    shellChromeTitle.textContent = getAppDisplayTitle(getAppById(route) ?? { id: '', title: hubName });
   });
   initRouter(getAppById);
 }
