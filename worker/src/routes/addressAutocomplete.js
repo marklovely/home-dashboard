@@ -1,4 +1,5 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
+import { resolveGetAddressConfig } from '../lib/getAddress.js';
 import { resolveGooglePlacesConfig } from '../lib/googlePlaces.js';
 
 /**
@@ -14,19 +15,22 @@ export async function handleAddressConfig(request, env) {
     return Response.json({ error: gate.code }, { status: gate.status });
   }
 
-  const config = resolveGooglePlacesConfig(env);
-  if (!config.configured) {
+  const places = resolveGooglePlacesConfig(env);
+  const getAddress = resolveGetAddressConfig(env);
+  if (!places.configured && !getAddress.configured) {
     return Response.json(
-      { configured: false, lookupVia: 'none' },
+      { configured: false, lookupVia: 'none', uprnLookupConfigured: false },
       { headers: { 'Cache-Control': 'private, no-store' } }
     );
   }
 
   return Response.json(
     {
-      configured: true,
-      lookupVia: 'browser',
-      placesApiKey: config.apiKey
+      configured: places.configured,
+      lookupVia: places.configured ? 'browser' : 'none',
+      placesApiKey: places.configured ? places.apiKey : undefined,
+      uprnLookupConfigured: getAddress.configured,
+      getAddressApiKey: getAddress.configured ? getAddress.apiKey : undefined
     },
     { headers: { 'Cache-Control': 'private, no-store' } }
   );

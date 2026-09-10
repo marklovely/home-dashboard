@@ -23,7 +23,8 @@ export const DEFAULT_LOCAL_PROFILE = {
     city: '',
     county: '',
     country: '',
-    postcode: ''
+    postcode: '',
+    uprn: ''
   }
 };
 
