@@ -445,7 +445,8 @@ export async function handlePublicHubSignup(env, input) {
       stripe_subscription_id: freeSubscription.subscriptionId,
       status: freeSubscription.status,
       trial_end: freeSubscription.trialEnd,
-      owner_email: customerEmail
+      owner_email: customerEmail,
+      plan_tier: 'free'
     });
 
     const registryResult = await maybeDispatchSignupRegistry(env, billingDb, manifest, {

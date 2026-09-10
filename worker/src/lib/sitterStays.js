@@ -202,8 +202,9 @@ export async function refreshSitterStayStatuses(env, nowSec = Math.floor(Date.no
 /**
  * @param {Record<string, string | undefined>} env
  * @param {Record<string, unknown>} input
+ * @param {{ request?: Request, fetchImpl?: typeof fetch }} [options]
  */
-export async function createSitterStay(env, input) {
+export async function createSitterStay(env, input, options = {}) {
   const label = input.label == null || String(input.label).trim() === '' ? null : String(input.label).trim();
   const emails = parseEmailList(/** @type {string | string[]} */ (input.emails));
   const emailError = validateEmailList(emails, { required: true });
@@ -222,6 +223,25 @@ export async function createSitterStay(env, input) {
   const id = crypto.randomUUID();
 
   const db = requireDb(env.HOUSE_GUIDE_DB);
+
+  if (options.request) {
+    const { fetchHubPlanStatus, planLimitExceeded } = await import('./hubPlanLimits.js');
+    const plan = await fetchHubPlanStatus(env, options.request, options.fetchImpl ?? fetch);
+    if (plan.limits?.maxStays != null) {
+      const row = await db
+        .prepare(`SELECT COUNT(*) AS n FROM sitter_stays WHERE status != 'cancelled'`)
+        .first();
+      const stayCount = Number(row?.n ?? 0);
+      if (planLimitExceeded(plan, stayCount, 'stay')) {
+        return {
+          ok: false,
+          code: 'PLAN_LIMIT',
+          message: `Free plan includes up to ${plan.limits.maxStays} scheduled stays. Upgrade to Lovely Home+ for unlimited.`,
+          upgradeUrl: plan.upgradeUrl
+        };
+      }
+    }
+  }
   await db
     .prepare(
       `INSERT INTO sitter_stays (

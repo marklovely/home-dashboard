@@ -107,19 +107,34 @@ export function assembleGuideCatalog(input, settings, categoryRows, topicRows, m
 
 /**
  * @param {D1Database} db
- * @param {{ publishedOnly?: boolean, includeDraftBlocks?: boolean }} [options]
+ * @param {{ publishedOnly?: boolean, includeDraftBlocks?: boolean, guideId?: string }} [options]
  */
 export async function loadAssembledGuideCatalog(db, options = {}) {
-  const settings = await db.prepare(`SELECT * FROM guide_settings WHERE id = ?`).bind('default').first();
+  const guideId = String(options.guideId ?? 'default').trim() || 'default';
+  const settings = await db.prepare(`SELECT * FROM guide_settings WHERE id = ?`).bind(guideId).first();
   if (!settings) {
     return null;
   }
 
-  const categoryRows = (await db.prepare(`SELECT * FROM guide_categories ORDER BY sort_order ASC`).all()).results ?? [];
+  const categoryRows =
+    (
+      await db
+        .prepare(`SELECT * FROM guide_categories WHERE guide_id = ? ORDER BY sort_order ASC`)
+        .bind(guideId)
+        .all()
+    ).results ?? [];
   const topicRows =
-    (await db.prepare(`SELECT * FROM guide_topics ORDER BY category_id ASC, sort_order ASC, title ASC`).all())
-      .results ?? [];
-  const mediaRows = (await db.prepare(`SELECT * FROM guide_media ORDER BY id ASC`).all()).results ?? [];
+    (
+      await db
+        .prepare(
+          `SELECT * FROM guide_topics WHERE guide_id = ? ORDER BY category_id ASC, sort_order ASC, title ASC`
+        )
+        .bind(guideId)
+        .all()
+    ).results ?? [];
+  const mediaRows =
+    (await db.prepare(`SELECT * FROM guide_media WHERE guide_id = ? ORDER BY id ASC`).bind(guideId).all()).results ??
+    [];
 
   return assembleGuideCatalog({}, settings, categoryRows, topicRows, mediaRows, options);
 }

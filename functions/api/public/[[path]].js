@@ -14,6 +14,8 @@ import {
   buildPublicHubTrialStatus,
   publicHubTrialCorsHeaders
 } from '../platform/platformPublicHubTrial.js';
+import { buildPublicHubPlanStatus } from '../platform/platformPlanTier.js';
+import { getSiteBillingWithPlanTier } from '../platform/platformPublicHubPlan.js';
 import { getPublicHubProvisionStatus } from '../platform/platformPublicHubProvision.js';
 import {
   handleAccountOtpRequest,
@@ -39,7 +41,7 @@ export async function onRequest(context) {
   const cors = publicSignupCorsHeaders(request, pagesEnv);
 
   if (request.method === 'OPTIONS') {
-    if (suffix === 'hub-trial-status') {
+    if (suffix === 'hub-trial-status' || suffix === 'hub-plan-status') {
       const hubCors = publicHubTrialCorsHeaders(request);
       if (!hubCors.siteId) {
         return new Response(null, { status: 403, headers: hubCors.headers });
@@ -75,6 +77,22 @@ export async function onRequest(context) {
     const db = getPlatformBillingDb(env);
     const row = db ? await getSiteBilling(db, hubCors.siteId) : null;
     return Response.json(buildPublicHubTrialStatus(row), {
+      headers: { ...hubCors.headers, 'Cache-Control': 'no-store' }
+    });
+  }
+
+  if (suffix === 'hub-plan-status' && request.method === 'GET') {
+    const hubCors = publicHubTrialCorsHeaders(request);
+    if (!hubCors.siteId) {
+      return Response.json(
+        { error: 'ORIGIN_NOT_ALLOWED', plan: 'plus', planLabel: 'Lovely Home+', limits: { maxGuides: null, maxStays: null } },
+        { status: 403, headers: hubCors.headers }
+      );
+    }
+    const db = getPlatformBillingDb(env);
+    const row =
+      db && pagesEnv ? await getSiteBillingWithPlanTier(pagesEnv, db, hubCors.siteId) : null;
+    return Response.json(buildPublicHubPlanStatus(row), {
       headers: { ...hubCors.headers, 'Cache-Control': 'no-store' }
     });
   }
