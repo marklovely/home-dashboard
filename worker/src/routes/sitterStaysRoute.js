@@ -73,9 +73,13 @@ async function handleSitterStayCreate(request, env, fetchImpl) {
     return Response.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  const result = await createSitterStay(env, body ?? {});
+  const result = await createSitterStay(env, body ?? {}, { request, fetchImpl });
   if (!result.ok) {
-    return Response.json({ error: result.code, message: result.message }, { status: 400 });
+    const status = result.code === 'PLAN_LIMIT' ? 403 : 400;
+    return Response.json(
+      { error: result.code, message: result.message, upgradeUrl: result.upgradeUrl },
+      { status }
+    );
   }
 
   const schedule = await applySitterStaySchedule(env, fetchImpl);

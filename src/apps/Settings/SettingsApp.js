@@ -57,6 +57,7 @@ import {
 } from './settingsNavigation.js';
 import { createCameraSettingsFields } from './createCameraSettingsFields.js';
 import { createSitterScheduleBanner, createSitterStaysSection } from './sitterStaysFields.js';
+import { createPlanSummarySection } from './planSummaryFields.js';
 import {
   syncSitterAccessEmailsFromServer
 } from '../../services/sitterAccessEmailsService.js';
@@ -1381,6 +1382,7 @@ function createHouseSitterModeFields(context, _onRefresh) {
   });
 
   wrap.append(
+    createPlanSummarySection(context),
     createSitterSecretsToggle(context),
     createSitterControlsToggle(context),
     createSitterStaysSection(context),

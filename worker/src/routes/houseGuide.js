@@ -176,9 +176,11 @@ async function getCatalog(request, env, url, correlationId) {
   }
 
   const includeDraft = ownerGate.ok && url.searchParams.get('draft') === '1';
+  const guideId = String(url.searchParams.get('guide') ?? 'default').trim() || 'default';
   const catalog = await loadAssembledGuideCatalog(db, {
     publishedOnly: !ownerGate.ok,
-    includeDraftBlocks: includeDraft
+    includeDraftBlocks: includeDraft,
+    guideId
   });
 
   return Response.json(

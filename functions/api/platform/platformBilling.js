@@ -15,6 +15,7 @@ import {
   resolveSiteIdFromInvoiceObject
 } from './platformReferrals.js';
 import { introCouponIdForInterval } from './platformIntroOffer.js';
+import { resolvePlanTierFromSubscription } from './platformPlanTier.js';
 import { getStripeMode, stripeCredentialsForMode, stripeSetConfigured } from './platformStripeMode.js';
 
 /** @typedef {'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete'} BillingStatus */
@@ -27,6 +28,7 @@ import { getStripeMode, stripeCredentialsForMode, stripeSetConfigured } from './
  *   trial_end: number | null;
  *   archive_r2_key: string | null;
  *   owner_email: string | null;
+ *   plan_tier: string | null;
  *   provision_dispatched_at: number | null;
  *   provision_last_error: string | null;
  *   deprovision_dispatched_at: number | null;
@@ -394,8 +396,8 @@ export async function upsertSiteBilling(db, record) {
     .prepare(
       `INSERT INTO site_billing (
         site_id, stripe_customer_id, stripe_subscription_id, status,
-        trial_end, archive_r2_key, owner_email, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        trial_end, archive_r2_key, owner_email, plan_tier, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(site_id) DO UPDATE SET
         stripe_customer_id = excluded.stripe_customer_id,
         stripe_subscription_id = COALESCE(excluded.stripe_subscription_id, site_billing.stripe_subscription_id),
@@ -403,6 +405,7 @@ export async function upsertSiteBilling(db, record) {
         trial_end = COALESCE(excluded.trial_end, site_billing.trial_end),
         archive_r2_key = COALESCE(excluded.archive_r2_key, site_billing.archive_r2_key),
         owner_email = COALESCE(excluded.owner_email, site_billing.owner_email),
+        plan_tier = COALESCE(excluded.plan_tier, site_billing.plan_tier),
         updated_at = excluded.updated_at`
     )
     .bind(
@@ -413,6 +416,7 @@ export async function upsertSiteBilling(db, record) {
       record.trial_end ?? null,
       record.archive_r2_key ?? null,
       record.owner_email ?? null,
+      record.plan_tier ?? null,
       record.created_at ?? now,
       now
     )
@@ -672,13 +676,21 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     };
   }
 
+  const env = context.env;
+  const stripeMode = env ? await getStripeMode(db) : 'test';
+  const planTier =
+    eventType.startsWith('customer.subscription.') && env
+      ? resolvePlanTierFromSubscription(env, stripeMode, object)
+      : null;
+
   await upsertSiteBilling(db, {
     site_id: billingPatch.siteId,
     stripe_customer_id: billingPatch.customerId,
     stripe_subscription_id: billingPatch.subscriptionId,
     status: billingPatch.status,
     trial_end: billingPatch.trialEnd,
-    owner_email: billingPatch.ownerEmail ?? existingBilling?.owner_email ?? null
+    owner_email: billingPatch.ownerEmail ?? existingBilling?.owner_email ?? null,
+    plan_tier: planTier ?? existingBilling?.plan_tier ?? null
   });
 
   if (billingPatch.status === 'canceled') {
@@ -691,7 +703,6 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
   let provision;
   /** @type {Record<string, unknown> | undefined} */
   let deprovision;
-  const env = context.env;
 
   /** @type {Record<string, unknown> | undefined} */
   let referral;
