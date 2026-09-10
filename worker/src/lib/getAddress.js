@@ -7,10 +7,14 @@
  * @param {string | undefined} raw
  */
 export function normalizeGetAddressApiKey(raw) {
-  return String(raw ?? '')
+  let value = String(raw ?? '')
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    .replace(/^["']+|["']+$/g, '')
+    .replace(/\s+/g, '')
     .trim();
+  while (/^["']/.test(value) || /["']$/.test(value)) {
+    value = value.replace(/^["']+|["']+$/g, '');
+  }
+  return value;
 }
 
 /**
