@@ -118,7 +118,7 @@ Terraform creates the **Pages project** and env vars; it does **not** upload a b
 | Setting | Value | Effect |
 |---------|-------|--------|
 | `production_branch` | `main` | Git source stays connected (previews, dashboard) |
-| Hub `production_deployments_enabled` | `false` | Registry merges do not rebuild every household. Provision wrangler-deploys; app-code changes use [deploy-hub-pages.yml](../.github/workflows/deploy-hub-pages.yml) |
+| Hub `production_deployments_enabled` | `false` | Registry merges do not rebuild every household. Provision wrangler-deploys; app-code rollouts use [cd-hub-pages.yml](../.github/workflows/cd-hub-pages.yml) (manual CD) |
 | Platform admin `production_deployments_enabled` | `true` | `main` still rebuilds `home-dashboard-platform` |
 | Hub `preview_deployment_setting` | `none` in Terraform | Avoids Cloudflare **8000022** when PATCHing Pages with HUB_API bindings |
 | `pages_preview_deployments_enabled` | `true` (platform admin only) | Platform admin project gets preview builds via Terraform |
@@ -142,7 +142,7 @@ bash scripts/deploy-cloudflare-pages-site.sh sandbox
 
 **Option B — dashboard:** Workers & Pages → **home-dashboard-sandbox** → **Create deployment** → branch **`main`**.
 
-**Option C — merge an app-code PR to `main`:** [deploy-hub-pages.yml](../.github/workflows/deploy-hub-pages.yml) wrangler-deploys every terraform hub. Registry-only merges do not.
+**Option C — roll out app code:** Actions → **CD — Hub Pages** ([cd-hub-pages.yml](../.github/workflows/cd-hub-pages.yml)) builds once and wrangler-deploys selected hubs (or `all`). Registry-only merges do not deploy.
 
 After the first Pages deploy, ensure the **Worker** is up (`npm run deploy:sandbox` + secrets from `post-terraform-site-setup.sh`).
 

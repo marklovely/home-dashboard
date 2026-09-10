@@ -89,20 +89,23 @@ describe('hubPagesPlatformPathUnavailable', () => {
   });
 });
 
-describe('deploy-cloudflare-pages-site', () => {
+describe('deploy-hub-pages-from-artifact', () => {
   const deployScript = () =>
-    readFileSync(join(process.cwd(), 'scripts/deploy-cloudflare-pages-site.sh'), 'utf8');
+    readFileSync(join(process.cwd(), 'scripts/deploy-hub-pages-from-artifact.sh'), 'utf8');
+
+  const buildScript = () =>
+    readFileSync(join(process.cwd(), 'scripts/build-hub-pages-artifact.sh'), 'utf8');
 
   const pagesDeployFn = (script) => script.match(/pages_deploy\(\) \{[\s\S]*?\n\}/)?.[0] ?? '';
 
   it('does not pass --functions-directory (Wrangler 4 pages deploy rejects it)', () => {
     const script = deployScript();
     const deployFn = pagesDeployFn(script);
-    expect(deployFn).toMatch(/cd "\$HUB_FUNCTIONS_CWD"/);
+    expect(deployFn).toMatch(/cd "\$ROOT\/dist-hub-functions"/);
     expect(deployFn).toMatch(/pages deploy "\$ROOT\/dist"/);
     expect(deployFn).not.toMatch(/functions-directory|functionsDirectory/);
-    expect(script).toContain('prune-hub-pages-functions.mjs');
-    expect(script).toContain('--out "$HUB_FUNCTIONS_CWD/functions"');
+    expect(buildScript()).toContain('prune-hub-pages-functions.mjs');
+    expect(buildScript()).toContain('--out dist-hub-functions/functions');
   });
 
   it('only passes flags wrangler pages deploy still accepts', () => {
@@ -128,6 +131,7 @@ describe('deploy-cloudflare-pages-site', () => {
     expect(script).toContain('hub-site-resource-names.sh');
     expect(script).toContain('PAGES_PROJECT="$PAGES_NAME"');
     expect(script).not.toContain('PAGES_PROJECT="home-dashboard-${SITE_ID}"');
+    expect(script).toContain('write-hub-runtime-config.mjs');
   });
 });
 
