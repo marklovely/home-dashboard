@@ -24,7 +24,8 @@ export const DEFAULT_SITE_PROFILE = {
     city: '',
     county: '',
     country: '',
-    postcode: ''
+    postcode: '',
+    uprn: ''
   },
   binSchedule: {
     collectionLocation: '',

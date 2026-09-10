@@ -61,6 +61,24 @@ describe('address autocomplete routes', () => {
     const body = await response.json();
     expect(body.lookupVia).toBe('browser');
     expect(body.placesApiKey).toBe('AIza_test');
+    expect(body.uprnLookupConfigured).toBe(false);
+  });
+
+  it('exposes getAddress config for UPRN lookup when configured', async () => {
+    const env = withTestLimiters(
+      createAccessTestEnv({
+        GOOGLE_PLACES_API_KEY: 'AIza_test',
+        GETADDRESS_API_KEY: 'ga_test'
+      })
+    );
+    const jwt = await signTestAccessJwt('owner@example.com', env);
+    const response = await handleAddressConfig(
+      new Request('https://worker.test/api/address/config', withAccessJwt(jwt)),
+      env
+    );
+    const body = await response.json();
+    expect(body.uprnLookupConfigured).toBe(true);
+    expect(body.getAddressApiKey).toBe('ga_test');
   });
 
   it('returns USE_BROWSER_LOOKUP for worker autocomplete', async () => {

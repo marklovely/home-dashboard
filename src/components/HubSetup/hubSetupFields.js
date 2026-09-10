@@ -6,7 +6,8 @@ import { Eye, EyeOff, createElement } from 'lucide';
 import { createFieldInfoHint, createFieldLabelBlock } from '../HelpGuide/fieldHelp.js';
 import { HUB_SETUP_FIELD_HELP } from './hubSetupHelpContent.js';
 import { createAddressAutocompleteField } from './addressAutocompleteField.js';
-import { hubCountryLabel, normalizeHubCountryCode } from '../../lib/hubCountries.js';
+import { hubCountryLabel, normalizeHubCountryCode, supportsUkAddressAutocomplete } from '../../lib/hubCountries.js';
+import { resolvePropertyUprn } from '../../api/addressApi.js';
 import {
   formatPropertyAddress,
   hasPropertyAddress,
@@ -375,6 +376,8 @@ export function createPropertyAddressFields(profile, options = {}) {
     autocomplete: 'postal-code'
   });
 
+  let storedUprn = address.uprn ?? '';
+
   const addressSearch = createAddressAutocompleteField({
     countryCode: hubCountryCode,
     onSelect(selected) {
@@ -384,8 +387,14 @@ export function createPropertyAddressFields(profile, options = {}) {
       city.input.value = selected.city ?? '';
       county.input.value = selected.county ?? '';
       postcode.input.value = selected.postcode ?? '';
+      storedUprn = selected.uprn ?? '';
       if (countryField) {
         countryField.input.value = selected.country ?? '';
+      }
+      if (!storedUprn && supportsUkAddressAutocomplete(hubCountryCode)) {
+        void resolvePropertyUprn(selected).then((result) => {
+          if (result.ok) storedUprn = result.uprn;
+        });
       }
     }
   });
@@ -404,6 +413,13 @@ export function createPropertyAddressFields(profile, options = {}) {
   }
   group.append(postcode.wrap);
 
+  function clearStoredUprn() {
+    storedUprn = '';
+  }
+  for (const field of [line1, line2, line3, city, county, postcode]) {
+    field.input.addEventListener('input', clearStoredUprn);
+  }
+
   function readPropertyAddress() {
     return normalizePropertyAddress({
       line1: line1.input.value,
@@ -415,7 +431,8 @@ export function createPropertyAddressFields(profile, options = {}) {
         hubCountryCode === 'OTHER'
           ? countryField?.input.value ?? ''
           : hubCountryLabel(hubCountryCode),
-      postcode: postcode.input.value
+      postcode: postcode.input.value,
+      uprn: storedUprn
     });
   }
 

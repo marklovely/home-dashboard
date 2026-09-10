@@ -18,7 +18,12 @@ export function formatGetAddressSearchTerm(address) {
 export async function resolveUprnFromAddress(address, apiKey, fetchImpl = fetch) {
   const key = String(apiKey ?? '').trim();
   if (!key) {
-    return { ok: false, code: 'NOT_CONFIGURED', error: 'Address lookup is not configured on this hub.' };
+    return {
+      ok: false,
+      code: 'NOT_CONFIGURED',
+      error:
+        'Automatic import needs a property ID (UPRN) for your address. Google address lookup does not provide this — your hub admin needs to set GETADDRESS_API_KEY on the Worker, or use PDF upload / paste instead.'
+    };
   }
 
   const term = formatGetAddressSearchTerm(address);
