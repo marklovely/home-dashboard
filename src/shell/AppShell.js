@@ -13,6 +13,7 @@ import { subscribeToDisplayPreferences } from '../services/displayPreferencesSer
 import { syncShellClockPlacement } from './shellClockPlacement.js';
 import { syncShellBrandLogoRoute } from './shellBrandLogo.js';
 import { subscribeToSitterControls } from '../services/sitterControlsService.js';
+import { renderIcon } from '../components/icons/renderIcon.js';
 
 /**
  * @param {Object} options
@@ -43,6 +44,8 @@ export function createAppShell({
   shellContext
 }) {
   applyShellBranding({ shellEyebrow, shellTagline });
+
+  const shellHomeLink = ensureShellHomeLink(shellContext);
 
   if (shellProfileSwitcher) {
     initProfileSwitcher(shellProfileSwitcher, {
@@ -99,6 +102,7 @@ export function createAppShell({
     }
     syncShellClockPlacement(route, mode);
     syncShellBrandLogoRoute(isHome);
+    syncShellHomeLink(shellHomeLink, isHome);
 
     mountShellBottomNav(bottomNav, (target) => {
       if (target === getCurrentRoute()) {
@@ -174,20 +178,53 @@ export function createAppShell({
   });
   subscribeToSiteProfile(() => {
     applyShellBranding({ shellEyebrow, shellTagline });
-    const route = getCurrentRoute();
-    const hubName = getHubDisplayName();
-    if (route === HOME_ROUTE) {
-      shellChromeTitle.textContent = hubName;
-      document.title = hubName;
-      return;
-    }
-    const app = getAppById(route);
-    if (app) {
-      shellChromeTitle.textContent = getAppDisplayTitle(app);
-      document.title = `${getAppDisplayTitle(app)} · ${hubName}`;
-    }
+    renderRoute(getCurrentRoute(), { forceRemount: true });
   });
   initRouter(getAppById);
+}
+
+/**
+ * @param {import('../types/app.js').ShellContext} shellContext
+ */
+function ensureShellHomeLink(shellContext) {
+  const brandRow = document.querySelector('.shell-chrome-brand-row');
+  let link = document.querySelector('#shell-home-link');
+  if (!(link instanceof HTMLButtonElement) && brandRow) {
+    link = document.createElement('button');
+    link.type = 'button';
+    link.id = 'shell-home-link';
+    link.className = 'shell-home-link';
+    link.hidden = true;
+
+    const icon = document.createElement('span');
+    icon.className = 'shell-home-link-icon';
+    icon.append(renderIcon('home', { size: 18, className: 'shell-home-link-svg' }));
+
+    const label = document.createElement('span');
+    label.className = 'shell-home-link-label';
+    label.textContent = 'Home';
+
+    link.append(icon, label);
+    link.addEventListener('click', () => shellContext.navigate(HOME_ROUTE));
+    brandRow.append(link);
+  }
+  return link instanceof HTMLButtonElement ? link : null;
+}
+
+/**
+ * @param {HTMLButtonElement | null} link
+ * @param {boolean} isHome
+ */
+function syncShellHomeLink(link, isHome) {
+  if (!link) return;
+  link.hidden = isHome;
+  const logoButton = document.querySelector('#shell-logo-button');
+  if (logoButton instanceof HTMLButtonElement) {
+    logoButton.setAttribute(
+      'aria-label',
+      isHome ? 'Home' : 'Logo — tap to go home, or use the Home button'
+    );
+  }
 }
 
 export { navigate, HOME_ROUTE };
