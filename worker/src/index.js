@@ -8,7 +8,12 @@ import { handleWeather } from './routes/weather.js';
 import { handleWeatherGeocode } from './routes/weatherGeocode.js';
 import { handleBinsCouncilHint } from './routes/binsCouncilHint.js';
 import { handleBinsImportSchedule, handleBinsParseDates } from './routes/binsImport.js';
-import { handleAddressAutocomplete, handleAddressConfig, handleAddressLookup } from './routes/addressAutocomplete.js';
+import {
+  handleAddressAutocomplete,
+  handleAddressConfig,
+  handleAddressLookup,
+  handleAddressResolveUprn
+} from './routes/addressAutocomplete.js';
 import { handleCalendar } from './routes/calendar.js';
 import { handleApplianceManuals } from './routes/applianceManuals.js';
 import { handleHouseGuide } from './routes/houseGuide.js';
@@ -142,6 +147,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleAddressAutocomplete(request, env, fetchBound);
     } else if (url.pathname === '/api/address/lookup' && request.method === 'GET') {
       response = await handleAddressLookup(request, env, fetchBound);
+    } else if (url.pathname === '/api/address/resolve-uprn' && request.method === 'POST') {
+      response = await handleAddressResolveUprn(request, env, fetchBound);
     } else if (url.pathname === '/api/weather' && request.method === 'GET') {
       response = await handleWeather(request, env, fetchBound);
     } else if (url.pathname === '/api/auth/owner') {

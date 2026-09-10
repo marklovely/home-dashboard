@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   handleAddressAutocomplete,
   handleAddressConfig,
-  handleAddressLookup
+  handleAddressLookup,
+  handleAddressResolveUprn
 } from '../src/routes/addressAutocomplete.js';
 import { mapGooglePlaceToPropertyAddress, normalizePlacesApiKey } from '../src/lib/googlePlaces.js';
 import {
@@ -78,7 +79,41 @@ describe('address autocomplete routes', () => {
     );
     const body = await response.json();
     expect(body.uprnLookupConfigured).toBe(true);
-    expect(body.getAddressApiKey).toBe('ga_test');
+    expect(body.getAddressApiKey).toBeUndefined();
+  });
+
+  it('resolves UPRN via getAddress on the Worker', async () => {
+    const env = withTestLimiters(createAccessTestEnv({ GETADDRESS_API_KEY: 'ga_test' }));
+    const jwt = await signTestAccessJwt('owner@example.com', env);
+    const fetchImpl = vi.fn(async (url) => {
+      if (String(url).includes('getAddress.io/autocomplete')) {
+        return new Response(JSON.stringify({ suggestions: [{ id: 'addr-1' }] }), { status: 200 });
+      }
+      if (String(url).includes('getAddress.io/get/')) {
+        return new Response(JSON.stringify({ uprn: '100012345678' }), { status: 200 });
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    const response = await handleAddressResolveUprn(
+      new Request(
+        'https://worker.test/api/address/resolve-uprn',
+        withAccessJwt(jwt, {
+          method: 'POST',
+          body: JSON.stringify({
+            line1: '1 High Street',
+            city: 'Stratford-upon-Avon',
+            postcode: 'CV37 6NT'
+          })
+        })
+      ),
+      env,
+      fetchImpl
+    );
+
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.uprn).toBe('100012345678');
   });
 
   it('returns USE_BROWSER_LOOKUP for worker autocomplete', async () => {

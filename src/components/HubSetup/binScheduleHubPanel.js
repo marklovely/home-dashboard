@@ -12,7 +12,6 @@ import {
   binScheduleEntriesFromParsed,
   parseBinSchedulePaste
 } from '../../lib/binSchedulePaste.js';
-import { resolvePropertyUprn } from '../../api/addressApi.js';
 import { fetchBinsCouncilHint } from '../../api/binsCouncilHintApi.js';
 import { fetchBinsImportSchedule, fetchBinsParseDatesAi } from '../../api/binsImportApi.js';
 import { binScheduleIntroForLocale, getBinScheduleLocale } from '../../lib/binScheduleLocale.js';
@@ -307,23 +306,10 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     councilHintLookupError = null;
     if (mode === 'chooser' || mode === 'summary') render();
 
-    let uprn = address.uprn;
-    if (!uprn) {
-      const uprnResult = await resolvePropertyUprn(address);
-      if (!uprnResult.ok) {
-        importInProgress = false;
-        councilHintLookupError = uprnResult.message;
-        options.onImportError?.(uprnResult.message);
-        if (mode === 'chooser' || mode === 'summary') render();
-        return;
-      }
-      uprn = uprnResult.uprn;
-    }
-
     const result = await fetchBinsImportSchedule({
       postcode,
       councilId: councilHint.ukBinDayCouncilId,
-      uprn,
+      uprn: address.uprn,
       line1: address.line1,
       line2: address.line2,
       city: address.city,
