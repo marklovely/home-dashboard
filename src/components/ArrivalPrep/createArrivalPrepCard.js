@@ -186,6 +186,7 @@ function renderArrivalPrepChecklist(host, profile, variant = 'card') {
     const sectionEl = document.createElement('section');
     sectionEl.className = 'arrival-prep-section';
     const isCollapsed = collapsedSections.has(section.id);
+    if (isCollapsed) sectionEl.classList.add('is-collapsed');
 
     const sectionHeader = document.createElement('div');
     sectionHeader.className = 'arrival-prep-section-header';
@@ -194,6 +195,11 @@ function renderArrivalPrepChecklist(host, profile, variant = 'card') {
     sectionToggle.type = 'button';
     sectionToggle.className = 'arrival-prep-section-toggle';
     sectionToggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+    sectionToggle.setAttribute('aria-label', `${isCollapsed ? 'Expand' : 'Collapse'} ${section.title} section`);
+
+    const sectionChevron = document.createElement('span');
+    sectionChevron.className = 'arrival-prep-section-chevron';
+    sectionChevron.setAttribute('aria-hidden', 'true');
 
     const sectionTitle = document.createElement('span');
     sectionTitle.className = 'arrival-prep-section-title';
@@ -203,7 +209,7 @@ function renderArrivalPrepChecklist(host, profile, variant = 'card') {
     sectionProgress.className = 'arrival-prep-section-progress subtle';
     sectionProgress.textContent = `${section.completeCount} / ${section.totalCount}`;
 
-    sectionToggle.append(sectionTitle, sectionProgress);
+    sectionToggle.append(sectionChevron, sectionTitle, sectionProgress);
     sectionToggle.addEventListener('click', () => {
       const currentProfile = getSiteProfileState()?.profile ?? profile;
       const currentPrep = normalizeArrivalPrepProfile(currentProfile.arrivalPrep);

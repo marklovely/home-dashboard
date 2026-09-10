@@ -1315,9 +1315,40 @@ function createSitterUnlockMethodFields(context) {
 }
 
 /** @param {import('../../types/app.js').ShellContext} context @param {() => void} _onRefresh */
+function createHouseSitterModeIntro() {
+  const panel = document.createElement('div');
+  panel.className = 'settings-callout settings-callout--info';
+
+  const title = document.createElement('p');
+  title.className = 'settings-callout-title';
+  title.textContent = 'Visits, sitters, and getting back to owner mode';
+
+  const copy = document.createElement('div');
+  copy.className = 'settings-callout-copy';
+
+  const visits = document.createElement('p');
+  visits.textContent =
+    'Add scheduled stays below for remote sitters or short lets. Use Getting ready on the home screen (owner mode) to prepare before each visit — it links to upcoming stays when dates are set.';
+
+  const returnCopy = document.createElement('p');
+  returnCopy.textContent = `When this tablet is locked for guests, owners return to full access by ${formatOwnerUnlockInstructions().replace(/ then try again$/, '')}. You can change unlock options below.`;
+
+  const previewCopy = document.createElement('p');
+  previewCopy.className = 'subtle';
+  previewCopy.textContent =
+    'The Owner / Guest switch at the top of the screen is a preview only while the tablet is locked — it does not restore owner apps or secrets.';
+
+  copy.append(visits, returnCopy, previewCopy);
+  panel.append(title, copy);
+  return panel;
+}
+
+/** @param {import('../../types/app.js').ShellContext} context @param {() => void} _onRefresh */
 function createHouseSitterModeFields(context, _onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
+
+  wrap.append(createHouseSitterModeIntro());
 
   const enableCopy = document.createElement('p');
   enableCopy.className = 'settings-help subtle';

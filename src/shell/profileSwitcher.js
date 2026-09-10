@@ -5,7 +5,13 @@ import { canReturnToHouseSitterMode } from '../auth/ownerSession.js';
 import { UserMode, isHouseSitterExperience, setUserMode, subscribeToUserMode } from '../auth/userMode.js';
 import { setActiveProfileId } from '../services/profileService.js';
 import { subscribeToDeviceSession } from '../auth/deviceSessionStore.js';
-import { getCurrentRoute, subscribeToRoute } from './router.js';
+import { getCurrentRoute, navigate, subscribeToRoute } from './router.js';
+import { showConfirmDialog } from '../components/ConfirmDialog/confirmDialog.js';
+import {
+  canUseSettingsPinUnlock,
+  formatOwnerUnlockInstructions,
+  isTabletLockedInSitterMode
+} from '../lib/sitterUnlockPreferences.js';
 
 export function shouldShowProfileSwitcher() {
   if (!isHomeDeployment()) return false;
@@ -59,6 +65,10 @@ export function initProfileSwitcher(host, options = {}) {
  */
 function selectView(mode, onChange) {
   if (mode === UserMode.Owner) {
+    if (isTabletLockedInSitterMode()) {
+      void promptReturnToOwnerMode();
+      return;
+    }
     setUserMode(UserMode.Owner);
     setActiveProfileId('owner');
     onChange?.();
@@ -79,6 +89,19 @@ function selectView(mode, onChange) {
  * @param {boolean} active
  * @param {() => void} onSelect
  */
+async function promptReturnToOwnerMode() {
+  const canOpenSettings = canUseSettingsPinUnlock();
+  const confirmed = await showConfirmDialog({
+    title: 'Return to owner mode',
+    message: `This tablet is locked for guests. To restore full access, ${formatOwnerUnlockInstructions().replace(/ then try again$/, '')}.`,
+    confirmLabel: canOpenSettings ? 'Open Settings' : 'Got it',
+    cancelLabel: canOpenSettings ? 'Close' : 'Cancel'
+  });
+  if (confirmed && canOpenSettings) {
+    navigate('settings');
+  }
+}
+
 function createModeButton(label, active, onSelect) {
   const button = document.createElement('button');
   button.type = 'button';
