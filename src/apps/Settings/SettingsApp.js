@@ -40,6 +40,7 @@ import {
   createCalendarConnectionField
 } from '../../components/HubSetup/binScheduleFields.js';
 import { createBinPatternWizard } from '../../components/HubSetup/binPatternWizard.js';
+import { createBinScheduleCouncilTools } from '../../components/HubSetup/binScheduleCouncilTools.js';
 import { binScheduleEntriesFromParsed, parseBinSchedulePaste } from '../../lib/binSchedulePaste.js';
 import { HUB_SETUP_FIELD_HELP, getBinScheduleFieldHelp } from '../../components/HubSetup/hubSetupHelpContent.js';
 import { inferBinSchedulePeriod, normalizeBinSchedule, readBinScheduleFromProfile, validateBinSchedule } from '../../lib/binScheduleProfile.js';
@@ -115,6 +116,7 @@ import {
 } from '../../services/siteProfileService.js';
 import { refreshPrivateConfig } from '../../services/privateConfigService.js';
 import { normalizeHubCountryCode } from '../../lib/hubCountries.js';
+import { normalizePropertyAddress } from '../../lib/propertyAddress.js';
 import { validateEmailAddresses, validateHubContacts, validatePropertyAddress } from '../../lib/contactValidation.js';
 import { attachContactGroupValidation, attachPropertyAddressValidation } from '../../lib/contactFieldValidationUi.js';
 import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
@@ -624,13 +626,50 @@ function createBinReminderFields(context, onRefresh) {
   const schedule = binsPanelDraftSchedule ?? readBinScheduleFromProfile(profile);
   binsPanelDraftSchedule = null;
 
+  function readLivePropertyAddress() {
+    return normalizePropertyAddress(
+      getSiteProfileState()?.profile?.propertyAddress ?? profile.propertyAddress
+    );
+  }
+
   wrap.append(
     createSetupIntro(
-      'Guests see a prominent reminder on the home screen before each bin collection. Reminders count down from 6am on collection day — the same time bins are normally put out. Use the pattern wizard or paste dates below, then tap Save bin reminders.'
+      'Guests see a prominent reminder on the home screen before each bin collection. Reminders count down from 6am on collection day — the same time bins are normally put out. Use automatic import, the pattern wizard, or paste dates below, then tap Save bin reminders.'
     )
   );
 
   let scheduleDraft = { ...schedule };
+
+  const councilTools = createBinScheduleCouncilTools({
+    variant: 'settings',
+    getHubCountryCode: () => normalizeHubCountryCode(getSiteProfileState()?.profile?.hubCountryCode ?? profile.hubCountryCode),
+    getPropertyAddress: readLivePropertyAddress,
+    getPropertyPostcode: () => readLivePropertyAddress().postcode,
+    onImportError: (message) => showToast(context.toast, message, 6000),
+    onImportSuccess: ({ household, gardenWaste, count }) => {
+      scheduleDraft = normalizeBinSchedule({
+        ...scheduleDraft,
+        household,
+        gardenWaste
+      });
+      onRefresh({ panelId: 'bins', draftSchedule: scheduleDraft });
+      showToast(
+        context.toast,
+        count > 0
+          ? `Imported ${count} collection date${count === 1 ? '' : 's'} — tap Save bin reminders.`
+          : 'No dates were returned — try PDF/paste or check your address in Home details.',
+        6000
+      );
+    },
+    onCouncilHintUpdated: (hint) => {
+      const nextUrl = hint?.binsUrl?.trim();
+      if (!nextUrl) return;
+      const current = councilField.input.value.trim();
+      if (!current || current === schedule.councilUrl) {
+        councilField.input.value = nextUrl;
+      }
+    }
+  });
 
   const toolsRow = document.createElement('div');
   toolsRow.className = 'hub-setup-bin-choices hub-setup-bin-choices--settings';
@@ -802,6 +841,7 @@ function createBinReminderFields(context, onRefresh) {
   });
 
   wrap.append(
+    councilTools.host,
     toolsRow,
     wizardHost,
     pasteHost,
@@ -813,6 +853,8 @@ function createBinReminderFields(context, onRefresh) {
     dateEditor.wrap,
     saveButton
   );
+
+  councilTools.refreshWhenVisible();
 
   const dismissedCollectionDate = getDismissedBinCollectionDate();
   if (dismissedCollectionDate) {

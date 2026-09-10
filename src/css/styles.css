@@ -3705,6 +3705,12 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .hub-setup-bin-clear-all-button {
   flex-shrink: 0;
 }
+.hub-setup-bin-address-summary {
+  margin: 0 0 8px;
+}
+.hub-setup-bin-refresh-address-button {
+  margin-bottom: 10px;
+}
 .hub-setup-bin-entry-intro {
   margin: 0 0 12px;
   padding-left: 1.25rem;

@@ -14,6 +14,19 @@ describe('isUsableUkBinDayCouncilId', () => {
 });
 
 describe('mapUkBinDayCollections', () => {
+  it('dedupes duplicate ukbinday collection rows for the same date and type', () => {
+    const mapped = mapUkBinDayCollections([
+      { date: '2026-09-18', type: 'Rubbish' },
+      { date: '2026-09-18', type: 'General waste' },
+      { date: '2026-09-18', type: 'Recycling' },
+      { date: '2026-09-18', type: 'Glass' }
+    ]);
+    expect(mapped.household).toEqual([
+      { date: '2026-09-18', type: 'rubbish', bankHolidayChange: false },
+      { date: '2026-09-18', type: 'recycling', bankHolidayChange: false }
+    ]);
+  });
+
   it('maps rubbish, recycling, and garden waste', () => {
     const mapped = mapUkBinDayCollections([
       { date: '2026-03-10', type: 'Rubbish' },

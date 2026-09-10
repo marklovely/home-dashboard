@@ -94,6 +94,41 @@ export const DEFAULT_BIN_SCHEDULE = /** @type {BinScheduleProfile} */ ({
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
+ * @param {BinScheduleHouseholdEntry[]} entries
+ */
+export function dedupeHouseholdBinEntries(entries) {
+  /** @type {Map<string, BinScheduleHouseholdEntry>} */
+  const byKey = new Map();
+  for (const entry of entries) {
+    const key = `${entry.date}:${entry.type}`;
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, entry);
+      continue;
+    }
+    if (entry.bankHolidayChange && !existing.bankHolidayChange) {
+      byKey.set(key, { ...existing, bankHolidayChange: true });
+    }
+  }
+  return [...byKey.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * @param {BinScheduleGardenEntry[]} entries
+ */
+export function dedupeGardenBinEntries(entries) {
+  const seen = new Set();
+  /** @type {BinScheduleGardenEntry[]} */
+  const out = [];
+  for (const entry of entries) {
+    if (seen.has(entry.date)) continue;
+    seen.add(entry.date);
+    out.push(entry);
+  }
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
  * @param {unknown} value
  * @returns {BinScheduleProfile}
  */
@@ -132,8 +167,8 @@ export function normalizeBinSchedule(value) {
     }
   }
 
-  household.sort((a, b) => a.date.localeCompare(b.date));
-  gardenWaste.sort((a, b) => a.date.localeCompare(b.date));
+  const dedupedHousehold = dedupeHouseholdBinEntries(household);
+  const dedupedGardenWaste = dedupeGardenBinEntries(gardenWaste);
 
   const alertRaw = raw.alertHoursBefore;
   const alertParsed = Number(alertRaw);
@@ -151,8 +186,8 @@ export function normalizeBinSchedule(value) {
     validFrom: String(raw.validFrom ?? '').trim(),
     validUntil: String(raw.validUntil ?? '').trim(),
     normalCollectionDay: String(raw.normalCollectionDay ?? '').trim(),
-    household,
-    gardenWaste,
+    household: dedupedHousehold,
+    gardenWaste: dedupedGardenWaste,
     alertHoursBefore: Number.isFinite(alertParsed) ? alertHoursBefore : DEFAULT_BIN_ALERT_HOURS_BEFORE,
     binColors: normalizeBinColors(raw.binColors)
   };

@@ -12,12 +12,12 @@ import {
   binScheduleEntriesFromParsed,
   parseBinSchedulePaste
 } from '../../lib/binSchedulePaste.js';
-import { fetchBinsCouncilHint } from '../../api/binsCouncilHintApi.js';
-import { fetchBinsImportSchedule, fetchBinsParseDatesAi } from '../../api/binsImportApi.js';
+import { fetchBinsParseDatesAi } from '../../api/binsImportApi.js';
+import { createBinScheduleCouncilTools } from './binScheduleCouncilTools.js';
 import { binScheduleIntroForLocale, getBinScheduleLocale } from '../../lib/binScheduleLocale.js';
 import { extractTextFromPdfFile } from '../../lib/binSchedulePdfExtract.js';
 import { normalizeHubCountryCode } from '../../lib/hubCountries.js';
-import { formatPropertyAddress, normalizePropertyAddress } from '../../lib/propertyAddress.js';
+import { normalizePropertyAddress } from '../../lib/propertyAddress.js';
 import { getBinScheduleFieldHelp } from './hubSetupHelpContent.js';
 import { createSetupField, createSetupIntro } from './hubSetupFields.js';
 import { createBinPatternWizard } from './binPatternWizard.js';
@@ -66,35 +66,10 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     ).trim();
   }
 
-  function normalizePostcodeKey(postcode) {
-    return String(postcode ?? '')
-      .replace(/\s+/g, '')
-      .toUpperCase();
-  }
-
-  /**
-   * @param {import('../../api/binsCouncilHintApi.js').BinsCouncilHint | null} hint
-   * @param {string} postcode
-   */
-  function isCouncilHintForPostcode(hint, postcode) {
-    if (!hint?.postcode || !postcode) return false;
-    return normalizePostcodeKey(hint.postcode) === normalizePostcodeKey(postcode);
-  }
-
   function readLocale() {
     return getBinScheduleLocale(readCountryCode());
   }
 
-  /** @type {import('../../api/binsCouncilHintApi.js').BinsCouncilHint | null} */
-  let councilHint = null;
-  let councilHintLoading = false;
-  /** @type {string | null} */
-  let councilHintLookupError = null;
-  /** @type {Promise<void> | null} */
-  let councilHintRequest = null;
-  /** @type {string | null} */
-  let councilHintFetchedForPostcode = null;
-  let importInProgress = false;
   /** @type {string | null} */
   let lastAutoFilledCouncilUrl = null;
   let councilUrlUserEdited = false;
@@ -139,6 +114,25 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     councilUrlUserEdited = true;
   });
 
+  const councilTools = createBinScheduleCouncilTools({
+    variant: 'hub',
+    getHubCountryCode: readCountryCode,
+    getPropertyAddress: readPropertyAddress,
+    getPropertyPostcode: readPostcode,
+    onImportError: (message) => options.onImportError?.(message),
+    onImportSuccess: ({ household, gardenWaste, count }) => {
+      mergeDraft({ household, gardenWaste });
+      completeSubWizard('import');
+      options.onDatesApplied?.({ count, source: 'import' });
+    },
+    onCouncilHintUpdated: (hint) => {
+      applyCouncilHintToFields(hint);
+    },
+    onRender: () => {
+      if (mode === 'chooser' || mode === 'summary') render();
+    }
+  });
+
   const alertHours = createBinAlertHoursField({ binSchedule: draftSchedule });
 
   /** @type {ReturnType<typeof createBinPatternWizard> | null} */
@@ -179,13 +173,16 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     return draftSchedule.household.length + draftSchedule.gardenWaste.length;
   }
 
-  function applyCouncilHintToFields() {
+  /**
+   * @param {import('../../api/binsCouncilHintApi.js').BinsCouncilHint | null} [hint]
+   */
+  function applyCouncilHintToFields(hint = councilTools.getCouncilHint()) {
     const locale = readLocale();
     const councilLabel = councilUrl.wrap.querySelector('.settings-subsection-title');
     if (councilLabel) councilLabel.textContent = locale.councilUrlLabel;
     councilUrl.input.placeholder = locale.councilUrlPlaceholder;
 
-    const nextUrl = councilHint?.binsUrl?.trim();
+    const nextUrl = hint?.binsUrl?.trim();
     if (!nextUrl) return;
 
     const current = councilUrl.input.value.trim();
@@ -199,136 +196,6 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       lastAutoFilledCouncilUrl = nextUrl;
       councilUrlUserEdited = false;
     }
-  }
-
-  /**
-   * @param {HTMLElement} container
-   */
-  function renderCouncilHintBanner(container) {
-    container.replaceChildren();
-    const locale = readLocale();
-    if (!locale.isUnitedKingdom) return;
-
-    const banner = document.createElement('div');
-    banner.className = 'hub-setup-bin-council-hint';
-    banner.setAttribute('role', 'status');
-
-    const postcode = readPostcode();
-    if (!postcode) {
-      banner.classList.add('hub-setup-bin-council-hint--prompt');
-      banner.textContent =
-        'Add your postcode in Guest access to see which council area you are in and link your council bins website.';
-      container.append(banner);
-      return;
-    }
-
-    if (councilHintLoading || importInProgress) {
-      banner.classList.add('hub-setup-bin-council-hint--loading');
-      banner.textContent = importInProgress
-        ? 'Fetching collection dates from your council…'
-        : 'Looking up your council area…';
-      container.append(banner);
-      return;
-    }
-
-    if (!isCouncilHintForPostcode(councilHint, postcode)) {
-      banner.classList.add('hub-setup-bin-council-hint--loading');
-      banner.textContent = 'Updating council area for your postcode…';
-      container.append(banner);
-      ensureCouncilHintLoaded();
-      return;
-    }
-
-    const areaLabel = councilHint.councilName ?? councilHint.adminDistrict;
-    if (!areaLabel) {
-      banner.classList.add('hub-setup-bin-council-hint--prompt');
-      banner.textContent =
-        councilHintLookupError ??
-        'We could not match a council area for this postcode — you can still add dates manually.';
-      container.append(banner);
-      return;
-    }
-
-    const title = document.createElement('p');
-    title.className = 'hub-setup-bin-council-hint__title';
-    const region = councilHint.region ? ` (${councilHint.region})` : '';
-    title.textContent = `Looks like ${areaLabel}${region}`;
-
-    const detail = document.createElement('p');
-    detail.className = 'hub-setup-bin-council-hint__detail subtle';
-
-    if (councilHint.binsUrl) {
-      detail.textContent = councilHint.ukBinDaySupported
-        ? `${councilHint.councilName ?? 'Your council'} supports automated bin lookups — open their site for your calendar.`
-        : councilHint.councilName
-          ? `${councilHint.councilName} — open the council website and find your bin collection calendar.`
-          : 'Open your council website and find your bin collection calendar.';
-      const link = document.createElement('a');
-      link.href = councilHint.binsUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.className = 'hub-setup-bin-council-hint__link';
-      link.textContent = councilHint.ukBinDaySupported
-        ? 'View council bin calendar'
-        : 'View council website';
-      banner.append(title, detail, link);
-    } else {
-      detail.textContent =
-        'Check your council website for collection dates — paste them below or use the pattern wizard.';
-      banner.append(title, detail);
-    }
-
-    if (councilHint.ukBinDaySupported) {
-      const importButton = document.createElement('button');
-      importButton.type = 'button';
-      importButton.className = 'settings-action-button hub-setup-bin-import-button';
-      importButton.textContent = 'Import dates automatically';
-      importButton.addEventListener('click', () => {
-        void runUkBinDayImport();
-      });
-      banner.append(importButton);
-    }
-
-    container.append(banner);
-  }
-
-  async function runUkBinDayImport() {
-    if (importInProgress || !councilHint?.ukBinDaySupported) return;
-
-    const address = readPropertyAddress();
-    const postcode = address.postcode || readPostcode();
-    if (!postcode) {
-      options.onImportError?.('Add your postcode in Guest access before importing dates.');
-      return;
-    }
-
-    importInProgress = true;
-    councilHintLookupError = null;
-    if (mode === 'chooser' || mode === 'summary') render();
-
-    const result = await fetchBinsImportSchedule({
-      postcode,
-      councilId: councilHint.ukBinDayCouncilId,
-      uprn: address.uprn,
-      line1: address.line1,
-      line2: address.line2,
-      city: address.city,
-      address: formatPropertyAddress(address)
-    });
-
-    importInProgress = false;
-    if (!result.ok) {
-      councilHintLookupError = result.message;
-      options.onImportError?.(result.message);
-      if (mode === 'chooser' || mode === 'summary') render();
-      return;
-    }
-
-    mergeDraft({
-      household: result.data.household ?? [],
-      gardenWaste: result.data.gardenWaste ?? []
-    });
-    completeSubWizard('import');
   }
 
   /**
@@ -362,84 +229,8 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     return { ok: true, count: household.length + gardenWaste.length };
   }
 
-  async function refreshCouncilHint(requestedPostcodeKey) {
-    const locale = readLocale();
-    if (!locale.isUnitedKingdom) {
-      councilHint = null;
-      councilHintLookupError = null;
-      councilHintLoading = false;
-      return;
-    }
-
-    const postcode = readPostcode();
-    if (!postcode) {
-      councilHint = null;
-      councilHintLookupError = null;
-      councilHintLoading = false;
-      return;
-    }
-
-    councilHintLoading = true;
-    councilHintLookupError = null;
-    const result = await fetchBinsCouncilHint(postcode);
-    if (normalizePostcodeKey(readPostcode()) !== requestedPostcodeKey) {
-      councilHintLoading = false;
-      return;
-    }
-
-    councilHintLoading = false;
-    if (result.ok) {
-      councilHint = result.hint;
-      if (!result.hint.adminDistrict && !result.hint.councilName) {
-        councilHintLookupError = 'That postcode was not found — check Guest access or add your council website below.';
-      }
-    } else {
-      councilHint = null;
-      councilHintLookupError =
-        result.status === 404
-          ? 'Council area lookup is not available on this hub yet — add your council website below, or paste dates from their calendar.'
-          : result.message || 'Council lookup failed — you can still add dates manually.';
-    }
-    applyCouncilHintToFields();
-  }
-
-  function ensureCouncilHintLoaded() {
-    const postcode = readPostcode();
-    const postcodeKey = normalizePostcodeKey(postcode);
-    if (!readLocale().isUnitedKingdom || !postcode) {
-      councilHint = null;
-      councilHintLookupError = null;
-      councilHintFetchedForPostcode = null;
-      return;
-    }
-    if (councilHintFetchedForPostcode === postcodeKey && isCouncilHintForPostcode(councilHint, postcode)) {
-      return;
-    }
-    if (councilHint && !isCouncilHintForPostcode(councilHint, postcode)) {
-      councilHint = null;
-      councilHintLookupError = null;
-    }
-    if (councilHintRequest) return;
-    councilHintLoading = true;
-    councilHintRequest = refreshCouncilHint(postcodeKey).finally(() => {
-      councilHintRequest = null;
-      if (normalizePostcodeKey(readPostcode()) === postcodeKey) {
-        councilHintFetchedForPostcode = postcodeKey;
-      }
-      if (mode === 'chooser' || mode === 'summary') render();
-    });
-  }
-
   function refreshWhenVisible() {
-    const postcode = readPostcode();
-    const postcodeKey = normalizePostcodeKey(postcode);
-    if (councilHintFetchedForPostcode !== postcodeKey || !isCouncilHintForPostcode(councilHint, postcode)) {
-      councilHint = null;
-      councilHintLookupError = null;
-      councilHintFetchedForPostcode = null;
-    }
-    ensureCouncilHintLoaded();
-    render();
+    councilTools.refreshWhenVisible();
   }
 
   /**
@@ -456,10 +247,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     const locale = readLocale();
     wrap.append(createSetupIntro(binScheduleIntroForLocale(locale, useCase)));
 
-    const councilHintHost = document.createElement('div');
-    councilHintHost.className = 'hub-setup-bin-council-hint-host';
-    renderCouncilHintBanner(councilHintHost);
-    ensureCouncilHintLoaded();
+    councilTools.render();
 
     const choicesHeading = document.createElement('h3');
     choicesHeading.className = 'settings-subsection-title';
@@ -510,7 +298,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       choices.append(card);
     }
 
-    wrap.append(councilHintHost, choicesHeading, choicesHint, choices);
+    wrap.append(councilTools.host, choicesHeading, choicesHint, choices);
   }
 
   function renderSummary() {
@@ -560,16 +348,13 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
     detailsHeading.className = 'settings-subsection-title';
     detailsHeading.textContent = 'Collection day details (optional)';
 
-    const councilHintHost = document.createElement('div');
-    councilHintHost.className = 'hub-setup-bin-council-hint-host';
-    renderCouncilHintBanner(councilHintHost);
-    ensureCouncilHintLoaded();
+    councilTools.render();
     applyCouncilHintToFields();
 
     renderSummaryStatus(banner, bannerTitle, bannerDetail);
     wrap.append(
       banner,
-      councilHintHost,
+      councilTools.host,
       changeMethod,
       entryReviewList.wrap,
       detailsHeading,
@@ -606,7 +391,7 @@ export function createBinScheduleHubPanel(profile = {}, useCase = 'owner', optio
       },
       {
         hubCountryCode: readCountryCode(),
-        suggestedPattern: councilHint?.suggestedPattern
+        suggestedPattern: councilTools.getCouncilHint()?.suggestedPattern
       }
     );
     wrap.append(patternWizard.wrap);
