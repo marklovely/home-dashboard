@@ -349,6 +349,52 @@ describe('marketing Access API', () => {
     expect(result.gateEnabled).toBe(true);
     expect(result.protected).toBe(true);
   });
+
+  it('recreates the operator allow policy when enabling the gate after manual policy deletion', async () => {
+    /** @type {Record<string, unknown>[]} */
+    let policies = [];
+    /** @type {string[]} */
+    const posts = [];
+    const fetchImpl = async (url, init = {}) => {
+      const href = String(url);
+      if (href.includes('/access/apps?')) {
+        return jsonOk({
+          result: [{ id: 'app-1', name: 'Lovely Home — Marketing site' }]
+        });
+      }
+      if (href.includes('/policies') && (!init.method || init.method === 'GET')) {
+        return jsonOk({ result: policies });
+      }
+      if (init.method === 'POST' && href.includes('/policies')) {
+        posts.push(String(init.body));
+        policies = [
+          {
+            id: 'pol-1',
+            name: 'Platform operators',
+            decision: 'allow',
+            include: [{ email: { email: 'ops@example.com' } }]
+          }
+        ];
+        return jsonOk({ result: { id: 'pol-1' } });
+      }
+      throw new Error(`${init.method} ${href}`);
+    };
+
+    const result = await setMarketingAccessGate(
+      {
+        PLATFORM_OPERATOR_EMAILS: 'ops@example.com',
+        PLATFORM_CF_API_TOKEN: 'token',
+        CLOUDFLARE_ACCOUNT_ID: 'acc'
+      },
+      {},
+      true,
+      fetchImpl
+    );
+    expect(result.ok).toBe(true);
+    expect(result.gateEnabled).toBe(true);
+    expect(posts).toHaveLength(1);
+    expect(posts[0]).toMatch(/Platform operators/);
+  });
 });
 
 describe('marketing Access panel', () => {
@@ -384,6 +430,15 @@ describe('marketing Access panel', () => {
     expect(html).toContain('data-marketing-gate-toggle');
     expect(html).toContain('Marketing site is public');
     expect(html).not.toContain('marketing-access-form');
+  });
+
+  it('keeps the OTP gate toggle visible inside the settings hub tab', () => {
+    const css = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), '../platform-admin/src/styles.css'),
+      'utf8'
+    );
+    expect(css).toContain('.settings-hub .marketing-access .panel-fold-summary');
+    expect(css).toContain('.settings-hub .marketing-access .panel-fold-summary .marketing-gate-toggle');
   });
 
   it('sits above the site cards on the dashboard', () => {

@@ -284,6 +284,10 @@ export async function setMarketingAccessGate(env, platform, enabled, fetchImpl =
         await putMarketingPolicyEmails(env, platform, app.id, operators, fetchImpl);
       } else {
         await removePublicBypassPolicy(env, platform, app.id, fetchImpl);
+        const policies = await listAccessPolicies(env, platform, app.id, fetchImpl);
+        if (!findMarketingPolicy(policies)) {
+          await putMarketingPolicyEmails(env, platform, app.id, operators, fetchImpl);
+        }
       }
     } else if (app) {
       await ensurePublicBypassPolicy(env, platform, app.id, fetchImpl);

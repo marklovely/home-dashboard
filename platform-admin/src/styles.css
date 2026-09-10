@@ -686,6 +686,25 @@ h1 {
   display: none;
 }
 
+/* Site access tab: summary is hidden globally but the OTP gate toggle lives there. */
+.settings-hub .marketing-access .panel-fold-summary {
+  cursor: default;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.85rem;
+  padding: 0;
+  pointer-events: none;
+}
+
+.settings-hub .marketing-access .panel-fold-summary .marketing-gate-toggle {
+  pointer-events: auto;
+}
+
+.settings-hub .marketing-access .panel-fold-title,
+.settings-hub .marketing-access .panel-fold-summary::before {
+  display: none;
+}
+
 .settings-hub .panel-fold-body {
   margin-top: 0;
 }
