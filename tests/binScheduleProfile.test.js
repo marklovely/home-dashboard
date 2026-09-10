@@ -8,6 +8,24 @@ import {
 } from '../src/lib/binScheduleProfile.js';
 
 describe('binScheduleProfile', () => {
+  it('dedupes household entries with the same date and type', () => {
+    const schedule = normalizeBinSchedule({
+      household: [
+        { date: '2026-09-18', type: 'rubbish' },
+        { date: '2026-09-18', type: 'rubbish' },
+        { date: '2026-09-18', type: 'recycling' },
+        { date: '2026-09-18', type: 'recycling', bankHolidayChange: true }
+      ],
+      gardenWaste: [{ date: '2026-09-18' }, { date: '2026-09-18' }]
+    });
+
+    expect(schedule.household).toEqual([
+      { date: '2026-09-18', type: 'rubbish', bankHolidayChange: false },
+      { date: '2026-09-18', type: 'recycling', bankHolidayChange: true }
+    ]);
+    expect(schedule.gardenWaste).toEqual([{ date: '2026-09-18' }]);
+  });
+
   it('normalises household and garden entries', () => {
     const schedule = normalizeBinSchedule({
       collectionLocation: 'End of close',

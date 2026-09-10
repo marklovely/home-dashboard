@@ -68,6 +68,29 @@ export function hasPropertyAddress(address) {
 }
 
 /**
+ * Stable key for detecting Guest access / home-details address changes (import + council UI).
+ *
+ * @param {PropertyAddress | Record<string, unknown> | null | undefined} address
+ */
+export function propertyAddressLookupKey(address) {
+  const normalized = normalizePropertyAddress(address);
+  return [normalized.line1, normalized.line2, normalized.city, normalized.postcode]
+    .map((part) => String(part ?? '').replace(/\s+/g, ' ').trim().toLowerCase())
+    .join('|');
+}
+
+/**
+ * One-line summary for bin setup / settings (line 1 + postcode).
+ *
+ * @param {PropertyAddress | Record<string, unknown> | null | undefined} address
+ */
+export function formatPropertyAddressShort(address) {
+  const normalized = normalizePropertyAddress(address);
+  const parts = [normalized.line1, normalized.postcode].filter(Boolean);
+  return parts.join(', ');
+}
+
+/**
  * Best-effort parse for legacy single secret strings.
  *
  * @param {string | null | undefined} text

@@ -18,10 +18,10 @@ function parseBinTypeToken(token) {
  * @param {Array<{ date?: string, type?: string }>} collections
  */
 export function mapUkBinDayCollections(collections) {
-  /** @type {Array<{ date: string, type: 'rubbish' | 'recycling', bankHolidayChange: boolean }>} */
-  const household = [];
-  /** @type {Array<{ date: string }>} */
-  const gardenWaste = [];
+  /** @type {Map<string, { date: string, type: 'rubbish' | 'recycling', bankHolidayChange: boolean }>} */
+  const householdByKey = new Map();
+  /** @type {Set<string>} */
+  const gardenDates = new Set();
 
   for (const item of collections ?? []) {
     const date = String(item?.date ?? '').trim();
@@ -29,16 +29,21 @@ export function mapUkBinDayCollections(collections) {
 
     const mapped = parseBinTypeToken(String(item?.type ?? ''));
     if (mapped === 'gardenWaste') {
-      gardenWaste.push({ date });
-    } else if (mapped === 'rubbish' || mapped === 'recycling') {
-      household.push({ date, type: mapped, bankHolidayChange: false });
-    } else {
-      household.push({ date, type: 'rubbish', bankHolidayChange: false });
+      gardenDates.add(date);
+      continue;
+    }
+
+    const type = mapped === 'recycling' ? 'recycling' : 'rubbish';
+    const key = `${date}:${type}`;
+    if (!householdByKey.has(key)) {
+      householdByKey.set(key, { date, type, bankHolidayChange: false });
     }
   }
 
-  household.sort((a, b) => a.date.localeCompare(b.date));
-  gardenWaste.sort((a, b) => a.date.localeCompare(b.date));
+  const household = [...householdByKey.values()].sort((a, b) => a.date.localeCompare(b.date));
+  const gardenWaste = [...gardenDates]
+    .sort((a, b) => a.localeCompare(b))
+    .map((date) => ({ date }));
 
   return { household, gardenWaste };
 }
