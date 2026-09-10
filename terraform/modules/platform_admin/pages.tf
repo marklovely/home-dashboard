@@ -88,6 +88,12 @@ locals {
         value = var.stripe_price_id_yearly
       }
     } : {},
+    var.stripe_price_id_free != "" ? {
+      STRIPE_PRICE_ID_FREE = {
+        type  = "plain_text"
+        value = var.stripe_price_id_free
+      }
+    } : {},
     var.stripe_referral_coupon_monthly != "" ? {
       STRIPE_REFERRAL_COUPON_MONTHLY = {
         type  = "plain_text"
@@ -134,6 +140,12 @@ locals {
       STRIPE_PRICE_ID_YEARLY_LIVE = {
         type  = "plain_text"
         value = var.stripe_price_id_yearly_live
+      }
+    } : {},
+    var.stripe_price_id_free_live != "" ? {
+      STRIPE_PRICE_ID_FREE_LIVE = {
+        type  = "plain_text"
+        value = var.stripe_price_id_free_live
       }
     } : {},
     var.stripe_referral_coupon_monthly_live != "" ? {

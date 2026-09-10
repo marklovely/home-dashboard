@@ -170,6 +170,12 @@ variable "stripe_price_id_yearly" {
   description = "Stripe TEST Price id for the yearly hub subscription (price_…)."
 }
 
+variable "stripe_price_id_free" {
+  type        = string
+  default     = ""
+  description = "Stripe TEST Price id for the free (£0) hub subscription (price_…)."
+}
+
 variable "stripe_referral_coupon_monthly" {
   type        = string
   default     = ""
@@ -218,6 +224,12 @@ variable "stripe_price_id_yearly_live" {
   type        = string
   default     = ""
   description = "Stripe LIVE yearly Price id (price_…)."
+}
+
+variable "stripe_price_id_free_live" {
+  type        = string
+  default     = ""
+  description = "Stripe LIVE Price id for the free (£0) hub subscription (price_…)."
 }
 
 variable "stripe_referral_coupon_monthly_live" {

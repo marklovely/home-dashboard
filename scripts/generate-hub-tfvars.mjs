@@ -53,10 +53,12 @@ const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim() || '';
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim() || '';
 const stripePriceId = process.env.STRIPE_PRICE_ID?.trim() || '';
 const stripePriceIdYearly = process.env.STRIPE_PRICE_ID_YEARLY?.trim() || '';
+const stripePriceIdFree = process.env.STRIPE_PRICE_ID_FREE?.trim() || '';
 const stripeSecretKeyLive = process.env.STRIPE_SECRET_KEY_LIVE?.trim() || '';
 const stripeWebhookSecretLive = process.env.STRIPE_WEBHOOK_SECRET_LIVE?.trim() || '';
 const stripePriceIdLive = process.env.STRIPE_PRICE_ID_LIVE?.trim() || '';
 const stripePriceIdYearlyLive = process.env.STRIPE_PRICE_ID_YEARLY_LIVE?.trim() || '';
+const stripePriceIdFreeLive = process.env.STRIPE_PRICE_ID_FREE_LIVE?.trim() || '';
 const stripeReferralCouponMonthly = process.env.STRIPE_REFERRAL_COUPON_MONTHLY?.trim() || '';
 const stripeReferralCouponYearly = process.env.STRIPE_REFERRAL_COUPON_YEARLY?.trim() || '';
 const stripeReferralCouponMonthlyLive = process.env.STRIPE_REFERRAL_COUPON_MONTHLY_LIVE?.trim() || '';
@@ -178,6 +180,10 @@ if (stripePriceIdYearly) {
   lines.push(`stripe_price_id_yearly = "${escapeHcl(stripePriceIdYearly)}"`, '');
 }
 
+if (stripePriceIdFree) {
+  lines.push(`stripe_price_id_free = "${escapeHcl(stripePriceIdFree)}"`, '');
+}
+
 if (stripeSecretKeyLive) {
   lines.push(`stripe_secret_key_live = "${escapeHcl(stripeSecretKeyLive)}"`, '');
 }
@@ -192,6 +198,10 @@ if (stripePriceIdLive) {
 
 if (stripePriceIdYearlyLive) {
   lines.push(`stripe_price_id_yearly_live = "${escapeHcl(stripePriceIdYearlyLive)}"`, '');
+}
+
+if (stripePriceIdFreeLive) {
+  lines.push(`stripe_price_id_free_live = "${escapeHcl(stripePriceIdFreeLive)}"`, '');
 }
 
 if (stripeReferralCouponMonthly) {

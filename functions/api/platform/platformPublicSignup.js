@@ -1,11 +1,15 @@
 import { getStripeMode } from './platformStripeMode.js';
 import {
   createBillingCheckoutSession,
+  createFreeBillingSubscription,
   getSiteBilling,
   stripeBillingConfigured,
+  stripeFreePriceConfigured,
   TRIAL_PERIOD_DAYS,
+  upsertSiteBilling,
   validateBillingSiteId
 } from './platformBilling.js';
+import { maybeDispatchSignupRegistry } from './platformBillingRegistry.js';
 import { githubAutomationConfigured } from './platformGitHub.js';
 import { getSiteFromManifest } from './platformApi.js';
 import {
@@ -56,6 +60,24 @@ export const PUBLIC_SIGNUP_BLOCKED_SITE_IDS = new Set([
 
 const CUSTOMER_HUB_ZONE_NAME = 'lovely-hub.com';
 const DEFAULT_MARKETING_ORIGIN = 'https://lovely-home.co.uk';
+
+/**
+ * @param {unknown} plan
+ * @param {unknown} [billingInterval]
+ * @returns {'free' | 'plus'}
+ */
+export function normalizeSignupPlan(plan, billingInterval) {
+  const normalized = String(plan ?? '')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'free') return 'free';
+  if (normalized === 'plus') return 'plus';
+  const interval = String(billingInterval ?? '')
+    .trim()
+    .toLowerCase();
+  if (interval === 'free') return 'free';
+  return 'plus';
+}
 
 /**
  * @param {Record<string, string | undefined>} env
@@ -186,6 +208,7 @@ export async function checkPublicSignupSlug(manifest, siteId, billingDb, options
  *   siteId: string;
  *   customerEmail: string;
  *   billingDb?: D1Database | null;
+ *   plan?: string;
  *   billingInterval?: string;
  *   referralCode?: string;
  *   clientIp?: string;
@@ -200,6 +223,7 @@ export async function handlePublicHubSignup(env, input) {
     siteId,
     customerEmail,
     billingDb = null,
+    plan: inputPlan,
     billingInterval,
     referralCode: inputReferralCode = '',
     clientIp = '',
@@ -207,6 +231,14 @@ export async function handlePublicHubSignup(env, input) {
     fetchImpl,
     nowMs = Date.now()
   } = input;
+
+  const signupPlan = normalizeSignupPlan(inputPlan, billingInterval);
+  const plusBillingInterval =
+    String(billingInterval ?? 'month')
+      .trim()
+      .toLowerCase() === 'year'
+      ? 'year'
+      : 'month';
 
   const stripeMode = await getStripeMode(billingDb);
   if (!publicSignupConfigured(env, stripeMode)) {
@@ -321,11 +353,23 @@ export async function handlePublicHubSignup(env, input) {
     };
   }
 
+  if (signupPlan === 'free' && inputReferralCode.trim()) {
+    await releaseSignupReservation(billingDb, siteId);
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        error: 'REFERRAL_REQUIRES_PLUS',
+        message: 'Referral discounts apply to Lovely Home+ only. Choose monthly or yearly to continue.'
+      }
+    };
+  }
+
   const referralValidation = await validateReferralForSignup(billingDb, {
     code: inputReferralCode,
     refereeSiteId: siteId,
     refereeEmail: customerEmail,
-    billingInterval: billingInterval ?? 'month',
+    billingInterval: plusBillingInterval,
     nowMs
   });
   if (!referralValidation.ok) {
@@ -340,9 +384,115 @@ export async function handlePublicHubSignup(env, input) {
     };
   }
 
+  if (signupPlan === 'free') {
+    if (!billingDb) {
+      await releaseSignupReservation(billingDb, siteId);
+      return {
+        ok: false,
+        status: 503,
+        body: {
+          error: 'BILLING_DB_NOT_CONFIGURED',
+          message: 'Signup is temporarily unavailable. Try again later or email support.'
+        }
+      };
+    }
+    if (!stripeFreePriceConfigured(env, stripeMode)) {
+      await releaseSignupReservation(billingDb, siteId);
+      return {
+        ok: false,
+        status: 503,
+        body: {
+          error: 'STRIPE_FREE_PRICE_NOT_CONFIGURED',
+          message: 'Free signup is not configured yet. Contact support.'
+        }
+      };
+    }
+
+    let freeSubscription;
+    try {
+      freeSubscription = await createFreeBillingSubscription(env, {
+        siteId,
+        customerEmail,
+        mode: stripeMode
+      });
+    } catch (error) {
+      await releaseSignupReservation(billingDb, siteId);
+      return {
+        ok: false,
+        status: 503,
+        body: {
+          error: 'STRIPE_FREE_SUBSCRIPTION_FAILED',
+          message: error instanceof Error ? error.message : 'Could not start your free home.'
+        }
+      };
+    }
+
+    if (!freeSubscription.ok) {
+      await releaseSignupReservation(billingDb, siteId);
+      return {
+        ok: false,
+        status: 503,
+        body: {
+          error: freeSubscription.error ?? 'STRIPE_FREE_SUBSCRIPTION_FAILED',
+          message: freeSubscription.message ?? 'Could not start your free home.'
+        }
+      };
+    }
+
+    await upsertSiteBilling(billingDb, {
+      site_id: siteId,
+      stripe_customer_id: freeSubscription.customerId,
+      stripe_subscription_id: freeSubscription.subscriptionId,
+      status: freeSubscription.status,
+      trial_end: freeSubscription.trialEnd,
+      owner_email: customerEmail
+    });
+
+    const registryResult = await maybeDispatchSignupRegistry(env, billingDb, manifest, {
+      siteId,
+      eventType: 'customer.subscription.created',
+      status: freeSubscription.status,
+      existingBilling: existingBilling
+    });
+
+    if (!registryResult.ok) {
+      await releaseSignupReservation(billingDb, siteId);
+      return {
+        ok: false,
+        status: 503,
+        body: {
+          error: registryResult.error ?? 'REGISTRY_DISPATCH_FAILED',
+          message: registryResult.message ?? 'Your home was created in billing but setup could not start.'
+        }
+      };
+    }
+
+    const reservation = await reserveSignupSlug(billingDb, {
+      siteId,
+      ownerEmail: customerEmail,
+      sessionId: freeSubscription.subscriptionId ?? null,
+      nowMs
+    });
+    await releaseSignupReservation(billingDb, siteId);
+
+    return {
+      ok: true,
+      status: 200,
+      body: {
+        ok: true,
+        siteId,
+        hostname,
+        plan: 'free',
+        successUrl: urls.successUrl,
+        subscriptionId: freeSubscription.subscriptionId,
+        reservedUntil: reservation.expiresAt ?? null
+      }
+    };
+  }
+
   const introOffer = await resolveIntroOfferForSignup(env, billingDb, {
     customerEmail,
-    billingInterval: billingInterval ?? 'month',
+    billingInterval: plusBillingInterval,
     referralCode: inputReferralCode
   });
 
@@ -351,7 +501,7 @@ export async function handlePublicHubSignup(env, input) {
     customerEmail,
     successUrl: urls.successUrl,
     cancelUrl: urls.cancelUrl,
-    billingInterval: billingInterval ?? 'month',
+    billingInterval: plusBillingInterval,
     mode: stripeMode,
     referralCode: referralValidation.referral?.code,
     referrerSiteId: referralValidation.referral?.referrerSiteId,
@@ -406,6 +556,7 @@ export async function handlePublicHubSignup(env, input) {
       ok: true,
       siteId,
       hostname,
+      plan: 'plus',
       trialDays: TRIAL_PERIOD_DAYS,
       checkoutUrl: checkout.url,
       sessionId: checkout.sessionId,

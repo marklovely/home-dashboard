@@ -20,9 +20,12 @@
   let activeReferralCode = referralCodeParam;
   let activeReferralInterval = null;
 
-  if (planParam === 'year') {
-    const yearRadio = form.querySelector('input[name="billingInterval"][value="year"]');
+  if (planParam === 'year' || planParam === 'plus-year') {
+    const yearRadio = form.querySelector('input[name="signupPlan"][value="year"]');
     if (yearRadio) yearRadio.checked = true;
+  } else if (planParam === 'month' || planParam === 'plus' || planParam === 'plus-month') {
+    const monthRadio = form.querySelector('input[name="signupPlan"][value="month"]');
+    if (monthRadio) monthRadio.checked = true;
   }
 
   if (params.get('canceled') === '1') {
@@ -44,13 +47,15 @@
    */
   function setReferralBillingIntervalLock(interval) {
     const fieldset = form.querySelector('.billing-interval-field');
-    const monthOption = form.querySelector('input[name="billingInterval"][value="month"]')?.closest('label');
-    const yearOption = form.querySelector('input[name="billingInterval"][value="year"]')?.closest('label');
-    const monthRadio = form.querySelector('input[name="billingInterval"][value="month"]');
-    const yearRadio = form.querySelector('input[name="billingInterval"][value="year"]');
+    const freeOption = form.querySelector('input[name="signupPlan"][value="free"]')?.closest('label');
+    const monthOption = form.querySelector('input[name="signupPlan"][value="month"]')?.closest('label');
+    const yearOption = form.querySelector('input[name="signupPlan"][value="year"]')?.closest('label');
+    const monthRadio = form.querySelector('input[name="signupPlan"][value="month"]');
+    const yearRadio = form.querySelector('input[name="signupPlan"][value="year"]');
     if (!monthOption || !yearOption || !monthRadio || !yearRadio) return;
 
     if (interval === 'year') {
+      if (freeOption) freeOption.hidden = true;
       monthOption.hidden = true;
       yearOption.hidden = false;
       yearRadio.checked = true;
@@ -59,6 +64,7 @@
     }
 
     if (interval === 'month') {
+      if (freeOption) freeOption.hidden = true;
       monthOption.hidden = false;
       yearOption.hidden = true;
       monthRadio.checked = true;
@@ -66,9 +72,19 @@
       return;
     }
 
+    if (freeOption) freeOption.hidden = false;
     monthOption.hidden = false;
     yearOption.hidden = false;
     fieldset?.classList.remove('billing-interval-field--locked');
+  }
+
+  function selectedSignupPlan() {
+    return form.querySelector('input[name="signupPlan"]:checked')?.value || 'free';
+  }
+
+  function isPlusSignup() {
+    const selected = selectedSignupPlan();
+    return selected === 'month' || selected === 'year';
   }
 
   form.addEventListener('submit', async (event) => {
@@ -77,8 +93,9 @@
 
     const siteId = siteInput.value.trim().toLowerCase();
     const email = emailInput.value.trim().toLowerCase();
-    const billingInterval =
-      form.querySelector('input[name="billingInterval"]:checked')?.value === 'year' ? 'year' : 'month';
+    const signupPlan = selectedSignupPlan();
+    const plan = signupPlan === 'free' ? 'free' : 'plus';
+    const billingInterval = signupPlan === 'year' ? 'year' : 'month';
 
     if (!SITE_ID_RE.test(siteId)) {
       showAlert('Hub address must start with a letter and use lowercase letters, numbers, or hyphens only.', 'error');
@@ -113,7 +130,8 @@
         body: JSON.stringify({
           siteId,
           customerEmail: email,
-          billingInterval,
+          plan,
+          billingInterval: plan === 'plus' ? billingInterval : undefined,
           turnstileToken,
           referralCode: activeReferralCode || undefined
         })
@@ -128,13 +146,18 @@
       }
 
       const checkoutUrl = payload.checkoutUrl || payload.url;
-      if (!checkoutUrl) {
-        showAlert('Checkout could not be started. Email support@lovely-home.co.uk for help.', 'error');
-        setLoading(false);
+      const successUrl = payload.successUrl;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+        return;
+      }
+      if (successUrl) {
+        window.location.href = successUrl;
         return;
       }
 
-      window.location.href = checkoutUrl;
+      showAlert('Signup could not be completed. Email support@lovely-home.co.uk for help.', 'error');
+      setLoading(false);
     } catch (error) {
       showAlert('Network error — check your connection and try again.', 'error');
       setLoading(false);
@@ -222,8 +245,16 @@
 
   function setLoading(loading) {
     submitBtn.disabled = loading;
-    submitBtn.textContent = loading ? 'Starting checkout…' : 'Continue to secure checkout';
+    if (loading) {
+      submitBtn.textContent = isPlusSignup() ? 'Starting checkout…' : 'Creating your home…';
+      return;
+    }
+    submitBtn.textContent = isPlusSignup() ? 'Continue to secure checkout' : 'Create your free home';
   }
+
+  form.querySelectorAll('input[name="signupPlan"]').forEach((input) => {
+    input.addEventListener('change', () => setLoading(false));
+  });
 
   async function loadReferralPreview(code) {
     const banner = document.getElementById('signup-referral-banner');

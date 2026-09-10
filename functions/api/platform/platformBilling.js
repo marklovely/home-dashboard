@@ -85,6 +85,22 @@ export function resolveStripePriceId(env, billingInterval, mode = 'test') {
 
 /**
  * @param {Record<string, string | undefined>} env
+ * @param {'test' | 'live'} [mode]
+ */
+export function resolveStripeFreePriceId(env, mode = 'test') {
+  return stripeCredentialsForMode(env, mode).priceIdFree || null;
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {'test' | 'live'} [mode]
+ */
+export function stripeFreePriceConfigured(env, mode = 'test') {
+  return Boolean(resolveStripeFreePriceId(env, mode));
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
  */
 export function platformBillingDbConfigured(env) {
   const db = env.PLATFORM_BILLING_DB;
@@ -309,6 +325,62 @@ export async function createBillingCheckoutSession(env, input) {
     ok: true,
     sessionId: String(session.id ?? ''),
     url: String(session.url ?? '')
+  };
+}
+
+/**
+ * Create a Stripe Customer and £0 subscription for the Free plan (no Checkout).
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {{
+ *   siteId: string;
+ *   customerEmail: string;
+ *   mode?: 'test' | 'live';
+ * }} input
+ */
+export async function createFreeBillingSubscription(env, input) {
+  const db = getPlatformBillingDb(env);
+  const mode = input.mode ?? (await getStripeMode(db));
+  const creds = stripeCredentialsForMode(env, mode);
+  const secretKey = creds.secretKey;
+  const priceId = resolveStripeFreePriceId(env, mode);
+  if (!secretKey) {
+    return { ok: false, error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe billing is not configured.' };
+  }
+  if (!priceId) {
+    return {
+      ok: false,
+      error: 'STRIPE_FREE_PRICE_NOT_CONFIGURED',
+      message: 'Free plan billing is not configured yet. Contact support.'
+    };
+  }
+
+  const siteId = input.siteId.trim();
+  const customerEmail = input.customerEmail.trim().toLowerCase();
+  if (!siteId || !customerEmail) {
+    return { ok: false, error: 'INVALID_INPUT', message: 'siteId and customerEmail are required.' };
+  }
+
+  /** @type {Record<string, string>} */
+  const metadata = { site_id: siteId };
+
+  const customer = await stripeApiRequest(secretKey, 'POST', '/customers', {
+    email: customerEmail,
+    metadata: { ...metadata }
+  });
+
+  const subscription = await stripeApiRequest(secretKey, 'POST', '/subscriptions', {
+    customer: String(customer.id ?? ''),
+    items: [{ price: priceId, quantity: 1 }],
+    metadata: { ...metadata }
+  });
+
+  return {
+    ok: true,
+    customerId: String(customer.id ?? ''),
+    subscriptionId: String(subscription.id ?? ''),
+    status: mapStripeSubscriptionStatus(subscription.status),
+    trialEnd: stripeTimestampToMs(subscription.trial_end)
   };
 }
 

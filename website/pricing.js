@@ -3,20 +3,20 @@
 
   const STATIC_FALLBACK = {
     configured: false,
-    trialDays: 7,
-    productName: 'Household Hub',
+    trialDays: 0,
+    productName: 'Lovely Home',
     plans: {
-      month: { interval: 'month', label: '£9.99/month', amount: 9.99, currency: 'gbp' },
-      year: { interval: 'year', label: '£99.00/year', amount: 99, currency: 'gbp' }
+      month: { interval: 'month', label: '£4.99/month', amount: 4.99, currency: 'gbp' },
+      year: { interval: 'year', label: '£44.99/year', amount: 44.99, currency: 'gbp' }
     },
-    monthlyLabel: '£9.99/month',
-    yearlyLabel: '£99.00/year',
-    annualSavingsLabel: 'Save £20.88 vs paying monthly',
-    annualSavingsPercent: 17,
+    monthlyLabel: '£4.99/month',
+    yearlyLabel: '£44.99/year',
+    annualSavingsLabel: 'Save £14.89 vs paying monthly',
+    annualSavingsPercent: 25,
     checkoutSummary:
-      '£0 today — then £9.99/month or £99.00/year after your 7-day trial. Cancel anytime before then.',
+      'Free forever for one home — two guides and two scheduled stays. Lovely Home+ removes limits.',
     signupSummary:
-      '£0 today — then £9.99/month or £99.00/year. Use the trial to set up before guests arrive.',
+      'Free forever — one home, two guides, two scheduled stays. Upgrade to Lovely Home+ anytime for unlimited.',
     vatNote: ''
   };
 
@@ -172,7 +172,7 @@
       el.textContent =
         'New households: ' +
         buildIntroPromoLine(intro) +
-        ' Applied at secure checkout after your free trial — not on referrals (friend links keep their own discount).';
+        ' Applied at secure checkout on Lovely Home+ — not on referrals (friend links keep their own discount).';
     });
 
     const offersSection = document.getElementById('offers');
@@ -242,13 +242,12 @@
     document.querySelectorAll('[data-pricing="hero-note"]').forEach((el) => {
       const demoSuffix = el.getAttribute('data-demo-suffix') || '';
       el.innerHTML =
-        '<strong>' +
-        trialDays +
-        '-day trial</strong> to set up before guests arrive — <strong>£0 today</strong>, then <strong>' +
+        '<strong>Free forever</strong> for one home — two guides and two scheduled stays. ' +
+        '<strong>Lovely Home+</strong> from <strong>' +
         escapeHtml(monthlyLabel) +
         '</strong> or <strong>' +
         escapeHtml(yearlyLabel) +
-        '</strong>. Cancel anytime before billing starts.' +
+        '</strong> removes limits.' +
         (demoSuffix ? ' ' + demoSuffix : '');
     });
 
@@ -290,13 +289,11 @@
     const yearlyLabel = pricing.yearlyLabel ? String(pricing.yearlyLabel) : '';
     if (!monthlyLabel || !yearlyLabel) return;
     const description =
-      'Lovely Home pricing — ' +
+      'Lovely Home pricing — Free forever for one home, or Lovely Home+ from ' +
       monthlyLabel +
       ' or ' +
       yearlyLabel +
-      ' for your private household hub. ' +
-      trialDays +
-      '-day free trial. Cancel anytime.';
+      ' for unlimited guides and scheduled stays.';
     document.querySelectorAll('meta[name="description"], meta[property="og:description"], meta[name="twitter:description"]').forEach((el) => {
       el.setAttribute('content', description);
     });

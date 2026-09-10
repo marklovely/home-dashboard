@@ -101,6 +101,7 @@ export const PUBLIC_HELP_CATALOG = {
       "title": "Common questions",
       "keywords": [
         "faq",
+        "free",
         "trial",
         "price",
         "cancel",
@@ -112,6 +113,13 @@ export const PUBLIC_HELP_CATALOG = {
         "public",
         "stay",
         "sitter",
+        "airbnb",
+        "guest",
+        "tenant",
+        "family",
+        "app",
+        "mobile",
+        "privacy",
         "referral",
         "refer",
         "friend",
@@ -120,32 +128,82 @@ export const PUBLIC_HELP_CATALOG = {
         "intro",
         "introductory",
         "launch",
-        "offer"
+        "offer",
+        "plus",
+        "limits"
       ],
       "blocks": [
         {
           "type": "h4",
-          "text": "Can I try before I pay?"
+          "text": "Is Lovely Home really free?"
         },
         {
           "type": "p",
-          "text": "Yes. Use the public demo with fictional data, or start a free trial for your own private hub. Use the week to fill in the guide before anyone stays — the trial is not a free guest stay. You can send the hub URL to guests; a wall tablet is optional."
+          "text": "Yes. The Free plan is free forever for one home, with up to two guides and two scheduled stays. All audience types — house sitter, pet sitter, guest, Airbnb, tenant, family, and more — are available on Free. Upgrade to Lovely Home+ only when you want unlimited guides and scheduled stays."
         },
         {
           "type": "h4",
-          "text": "When am I charged?"
+          "text": "What can I use Lovely Home for?"
         },
         {
           "type": "p",
-          "text": "Not at signup. The first charge happens when your {billingTrialDays}-day trial ends, unless you cancel before then. Stripe shows the exact date during checkout."
+          "text": "Lovely Home is the digital home hub for your home — guides, bins, weather, routines, and scheduled access for whoever needs the home. Owners keep the full view. House sitters, pet sitters, guests, holiday-let visitors, tenants, and family each get an experience suited to them, from the same hub."
         },
         {
           "type": "h4",
-          "text": "What if I cancel?"
+          "text": "Do I need an app?"
         },
         {
           "type": "p",
-          "text": "Cancel before the trial ends and you pay nothing. If you cancel later, access continues until the end of the paid period, then the hub is taken down and archived. Cancel from your account page or by emailing support."
+          "text": "No app store download is required. Lovely Home runs in the browser on phones, laptops, and optional wall tablets. Owners and guests sign in with a one-time email code. You can add the hub to your home screen on mobile if you like."
+        },
+        {
+          "type": "h4",
+          "text": "Can I use Lovely Home for house sitting?"
+        },
+        {
+          "type": "p",
+          "text": "Yes — it is one of the main use cases. Schedule each stay with dates and the sitter’s email under Settings → House sitter mode. They can read the house guide from two weeks before; Wi‑Fi, address, and lockbox appear on the stay dates; their login is removed the day after checkout."
+        },
+        {
+          "type": "h4",
+          "text": "Can I use it for Airbnb or holiday lets?"
+        },
+        {
+          "type": "p",
+          "text": "Yes. Share one private hub URL with guests — heating, appliances, bins, Wi‑Fi (when unlocked for their stay), and local information in one place. Schedule each booking so home-access details appear at the right time."
+        },
+        {
+          "type": "h4",
+          "text": "What happens after a scheduled stay?"
+        },
+        {
+          "type": "p",
+          "text": "The guest or sitter’s login is removed the day after the stay ends. You can end a stay early in Settings → House sitter mode. Sensitive information stays hidden outside the booked dates."
+        },
+        {
+          "type": "h4",
+          "text": "Is my information private?"
+        },
+        {
+          "type": "p",
+          "text": "Each home is a private hub — only people you invite can sign in. Scheduled stays control when Wi‑Fi, address, lockbox, and similar details appear. See lovely-home.co.uk/security for how access and backups work."
+        },
+        {
+          "type": "h4",
+          "text": "Can I have more than one home?"
+        },
+        {
+          "type": "p",
+          "text": "Not yet. Today each Lovely Home account covers one home. Managing several properties from one dashboard is planned for the future but is not available now."
+        },
+        {
+          "type": "h4",
+          "text": "What if I cancel Lovely Home+?"
+        },
+        {
+          "type": "p",
+          "text": "Your hub stays on the Free plan with its limits — two guides and two scheduled stays. Cancel from your account page or by emailing support. If you cancel the hub entirely, access continues until the end of any paid period, then the hub is taken down and archived."
         },
         {
           "type": "h4",
@@ -153,7 +211,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Yes — start a new {billingTrialDays}-day trial at lovely-home.co.uk/signup (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. After checkout, provisioning takes up to 10 minutes (often faster), then sign in at your-name.lovely-hub.com with a one-time email code."
+          "text": "Yes — create a new home at lovely-home.co.uk/signup (not the account login page). Use the same hub name and the same email you signed up with originally. Your hub name stays reserved for you for 12 months so nobody else can take it. Provisioning takes up to 10 minutes (often faster), then sign in at your-name.lovely-hub.com with a one-time email code."
         },
         {
           "type": "p",
@@ -165,7 +223,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Yes. Add each stay with dates and the guest’s email under Settings → House sitter mode. They can read the house guide from two weeks before; Wi‑Fi, address, and lockbox appear on the stay dates; their login is removed the day after checkout. Add as many upcoming stays as you need."
+          "text": "Yes. Add each stay with dates and the guest’s email under Settings → House sitter mode. They can read the house guide from two weeks before; Wi‑Fi, address, and lockbox appear on the stay dates; their login is removed the day after checkout. Free includes up to two scheduled stays; Lovely Home+ is unlimited."
         },
         {
           "type": "h4",
@@ -173,7 +231,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "When we run a launch offer, new households who have never subscribed before may get {introMonthlyBenefit} (monthly plan) or {introYearlyBenefit} (yearly plan). The discount applies on your first invoice after the free trial — not at signup. Check the home page or pricing page banner when the offer is active."
+          "text": "When we run a launch offer, new Lovely Home+ households may get {introMonthlyBenefit} (monthly plan) or {introYearlyBenefit} (yearly plan). The discount applies on your first paid invoice — check the home page or pricing page banner when the offer is active."
         },
         {
           "type": "h4",
@@ -189,7 +247,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Refer another household and you both benefit when they subscribe after the trial. On a monthly plan, your friend gets {referralMonthlyReferee} and you get {referralMonthlyReferrer}. On a yearly plan, they get {referralYearlyReferee} and you get {referralYearlyReferrer}. The {billingTrialDays}-day trial is unchanged — discounts apply when billing starts, not at signup."
+          "text": "Refer another household and you both benefit when they subscribe to Lovely Home+. On a monthly plan, your friend gets {referralMonthlyReferee} and you get {referralMonthlyReferrer}. On a yearly plan, they get {referralYearlyReferee} and you get {referralYearlyReferrer}. Discounts apply on their first paid invoice."
         },
         {
           "type": "h4",
@@ -205,7 +263,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "No. Each paying household gets a private hub — only people you invite can sign in."
+          "text": "No. Each home gets a private hub — only people you invite can sign in."
         }
       ]
     },

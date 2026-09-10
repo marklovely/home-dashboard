@@ -45,7 +45,7 @@ describe('website marketing pricing copy', () => {
 
   it('builds meta descriptions from live labels', () => {
     expect(buildPricingMetaDescription(pricing)).toBe(
-      'Lovely Home pricing — £8.99/month or £89/year for your private household hub. 7-day free trial. Cancel anytime.'
+      'Lovely Home pricing — Free forever for one home, or Lovely Home+ from £8.99/month or £89/year for unlimited guides and scheduled stays.'
     );
   });
 

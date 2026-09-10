@@ -78,6 +78,7 @@ a { color: var(--accent); }
 
 .home-intro-offer {
   margin-top: 1.35rem;
+  margin-bottom: 1.25rem;
   padding: 1.1rem 1.2rem;
   border-radius: calc(var(--radius) + 2px);
   background: linear-gradient(
@@ -730,6 +731,234 @@ html.nav-open {
   background: color-mix(in srgb, var(--accent) 7%, var(--card));
 }
 
+.contrast-strip--single {
+  grid-template-columns: 1fr;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.audience-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 2.5rem;
+}
+
+.audience-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.15rem 1.2rem;
+  box-shadow: 0 8px 24px rgba(28, 36, 30, 0.04);
+}
+
+.audience-role {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.audience-card h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  line-height: 1.35;
+}
+
+.audience-card p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.questions-strip {
+  margin-bottom: 2.5rem;
+}
+
+.questions-list {
+  list-style: none;
+  margin: 0 auto 1rem;
+  padding: 0;
+  max-width: 28rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.questions-list li {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-style: italic;
+  color: var(--text);
+  text-align: center;
+}
+
+.pricing-tagline {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.pricing-list--compact {
+  text-align: left;
+  margin: 0 0 1.25rem;
+  font-size: 0.92rem;
+}
+
+.pricing-list--compact li {
+  margin-bottom: 0.35rem;
+}
+
+.pricing-plans-grid--home,
+.pricing-plans-grid--tiers {
+  max-width: 52rem;
+}
+
+.pricing-dual-line--small {
+  font-size: 0.95rem;
+  margin: 0 0 0.75rem;
+}
+
+.pricing-plus-ctas {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: auto;
+}
+
+.plan-compare-jump {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.plan-compare-section {
+  margin-bottom: 2.75rem;
+}
+
+.plan-compare-wrap {
+  overflow-x: auto;
+  margin: 0 auto;
+  max-width: 42rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.plan-compare {
+  width: 100%;
+  min-width: 20rem;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.plan-compare thead th {
+  padding: 1rem 0.85rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  vertical-align: bottom;
+}
+
+.plan-compare-col--plus {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+.plan-compare tbody th {
+  padding: 0.65rem 1rem 0.65rem 1.15rem;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  text-align: left;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.plan-compare tbody td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  color: var(--muted);
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+.plan-compare tbody td:last-child {
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.plan-compare-row--highlight th,
+.plan-compare-row--highlight td {
+  background: color-mix(in srgb, var(--accent) 4%, var(--card));
+}
+
+.plan-compare-row--highlight td:last-child {
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+  color: var(--text);
+  font-weight: 600;
+}
+
+.plan-compare-row--price th,
+.plan-compare-row--price td {
+  border-bottom: none;
+  padding-top: 0.85rem;
+  padding-bottom: 1rem;
+  vertical-align: top;
+}
+
+.plan-compare-row--price td {
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.plan-compare-row--price td:last-child {
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+.plan-compare-yes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.plan-compare-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.35rem;
+}
+
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 .contrast-no {
   background: var(--card);
 }
@@ -1012,7 +1241,8 @@ html.nav-open {
 
 @media (max-width: 560px) {
   .contrast-strip,
-  .feature-grid {
+  .feature-grid,
+  .audience-grid {
     grid-template-columns: 1fr;
   }
 

@@ -44,8 +44,9 @@ platform_operator_emails = [
 # Stripe billing on platform admin (required if billing enabled — terraform apply wipes dashboard-only vars)
 # stripe_secret_key     = "sk_test_..."
 # stripe_webhook_secret = "whsec_..."
-# stripe_price_id         = "price_..."  # £9.99/month (test)
-# stripe_price_id_yearly  = "price_..."  # £99/year (test)
+# stripe_price_id         = "price_..."  # Lovely Home+ monthly (test)
+# stripe_price_id_yearly  = "price_..."  # Lovely Home+ yearly (test)
+# stripe_price_id_free    = "price_..."  # Free £0 forever (test)
 # stripe_referral_coupon_monthly = "..." # £5 off × 2 months — create in Stripe (test)
 # stripe_referral_coupon_yearly  = "..." # £15 off first year — create in Stripe (test)
 # stripe_referral_coupon_monthly_live = "..."
@@ -59,6 +60,7 @@ platform_operator_emails = [
 # stripe_webhook_secret_live = "whsec_..."
 # stripe_price_id_live         = "price_..."
 # stripe_price_id_yearly_live  = "price_..."
+# stripe_price_id_free_live    = "price_..."
 
 # Public trial signup on lovely-home.co.uk (Slice 3 — requires Stripe + platform_github_token above)
 # marketing_site_origin  = "https://lovely-home.co.uk"

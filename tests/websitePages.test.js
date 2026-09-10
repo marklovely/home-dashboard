@@ -85,7 +85,7 @@ describe('marketing site pages', () => {
     const html = readPage('signup.html');
     expect(html).toMatch(/agree to our <a href="\/terms">terms<\/a>/);
     expect(html).toMatch(/cannot be changed later/);
-    expect(html).toMatch(/does not charge you today/);
+    expect(html).toMatch(/Create your free home/);
     expect(html).toMatch(/Stripe checkout page when you continue/);
     const js = readFileSync(join(website, 'signup.js'), 'utf8');
     expect(js).toMatch(/setReferralBillingIntervalLock/);
@@ -98,7 +98,7 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/photos.*PDFs/i);
     expect(html).toMatch(/guide JSON only/);
     expect(html).toMatch(/Refer a friend/);
-    expect(html).toMatch(/£5 off each of their first two months/);
+    expect(html).toMatch(/£2\.50 off each of their first two Lovely Home\+ months/);
     expect(html).toMatch(/id="referrals"/);
   });
 
@@ -134,12 +134,12 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/Wall tablet, mount, or kiosk hardware/);
   });
 
-  it('setup page explains trial, guest sharing, and optional wall tablet', () => {
+  it('setup page explains free signup, guest sharing, and optional wall tablet', () => {
     const html = readPage('setup.html');
     expect(html).toMatch(/<link rel="canonical" href="https:\/\/lovely-home\.co\.uk\/setup"/);
     expect(html).not.toMatch(/http-equiv="refresh"/);
     expect(html).not.toMatch(/location\.replace/);
-    expect(html).toMatch(/Start free trial/);
+    expect(html).toMatch(/Create your free home/);
     expect(html).toMatch(/Share with guests/);
     expect(html).toMatch(/Optional: wall tablet/);
     expect(html).toMatch(/Two weeks before/);
@@ -175,11 +175,11 @@ describe('marketing site pages', () => {
 
   it('explains scheduled stays: guide early, secrets on the stay, access after checkout', () => {
     const home = readPage('index.html');
-    expect(home).toMatch(/Schedule stays in advance/);
-    expect(home).toMatch(/2 weeks before/);
-    expect(home).toMatch(/House guide, no secrets/);
-    expect(home).toMatch(/After checkout/);
-    expect(home).toMatch(/Hosting guests at your home/);
+    expect(home).toMatch(/Information at the right time/);
+    expect(home).toMatch(/Before arrival/);
+    expect(home).toMatch(/During the stay/);
+    expect(home).toMatch(/After departure/);
+    expect(home).toMatch(/One home\. Everyone who needs it/);
 
     const included = readPage('included.html');
     expect(included).toMatch(/guide two weeks before/);
@@ -189,7 +189,7 @@ describe('marketing site pages', () => {
     expect(security).toMatch(/day after checkout/);
 
     const pricing = readPage('pricing.html');
-    expect(pricing).toMatch(/book several stays in one list/);
+    expect(pricing).toMatch(/Scheduled stays/);
     expect(pricing).toMatch(/data-faq-section="common-questions"/);
     expect(pricing).toContain('src="faq.js"');
   });
@@ -245,10 +245,10 @@ describe('marketing site pages', () => {
     expect(readPage('privacy.html')).toMatch(/does not use advertising or analytics cookies/);
   });
 
-  it('gallery includes a trial call to action', () => {
+  it('gallery includes a signup call to action', () => {
     const html = readPage('app.html');
     expect(html).toMatch(/href="\/signup"/);
-    expect(html).toMatch(/Start free trial/);
+    expect(html).toMatch(/Create your free home/);
   });
 
   it('uses the forest brand palette and house mark, not purple wordmarks', () => {
@@ -310,6 +310,33 @@ describe('marketing site pages', () => {
     expect(support).toMatch(/\/help#owner/);
     const supportJs = readFileSync(join(website, 'support.js'), 'utf8');
     expect(supportJs).toMatch(/\/api\/public\/contact/);
+  });
+
+  it('pricing page includes a Free vs Lovely Home+ comparison table', () => {
+    const html = readPage('pricing.html');
+    expect(html).toMatch(/id="compare"/);
+    expect(html).toMatch(/class="plan-compare"/);
+    expect(html).toMatch(/House guides/);
+    expect(html).toMatch(/Scheduled stays/);
+    expect(html).toMatch(/Time-controlled access/);
+    expect(html).toMatch(/Smart-home features/);
+    expect(readPage('index.html')).toMatch(/\/pricing#compare/);
+  });
+
+  it('markets Free and Lovely Home+ without legacy list prices', () => {
+    for (const name of marketingPages) {
+      const html = readPage(name);
+      expect(html, name).not.toMatch(/£9\.99/);
+      expect(html, name).not.toMatch(/£99\.00/);
+      expect(html, name).not.toMatch(/£99\/year/);
+    }
+    const home = readPage('index.html');
+    expect(home).toMatch(/Free forever/);
+    expect(home).toMatch(/Lovely Home\+/);
+    expect(home).toMatch(/Create your free home/);
+    const pricingJs = readFileSync(join(website, 'pricing.js'), 'utf8');
+    expect(pricingJs).toMatch(/£4\.99\/month/);
+    expect(pricingJs).toMatch(/£44\.99\/year/);
   });
 
   it('uses support@lovely-home.co.uk for every marketing mailto link', () => {

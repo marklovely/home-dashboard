@@ -108,6 +108,7 @@ module "platform_admin" {
   stripe_webhook_secret               = var.stripe_webhook_secret
   stripe_price_id                     = var.stripe_price_id
   stripe_price_id_yearly              = var.stripe_price_id_yearly
+  stripe_price_id_free                = var.stripe_price_id_free
   stripe_referral_coupon_monthly      = var.stripe_referral_coupon_monthly
   stripe_referral_coupon_yearly       = var.stripe_referral_coupon_yearly
   stripe_intro_coupon_monthly         = var.stripe_intro_coupon_monthly
@@ -116,6 +117,7 @@ module "platform_admin" {
   stripe_webhook_secret_live          = var.stripe_webhook_secret_live
   stripe_price_id_live                = var.stripe_price_id_live
   stripe_price_id_yearly_live         = var.stripe_price_id_yearly_live
+  stripe_price_id_free_live           = var.stripe_price_id_free_live
   stripe_referral_coupon_monthly_live = var.stripe_referral_coupon_monthly_live
   stripe_referral_coupon_yearly_live  = var.stripe_referral_coupon_yearly_live
   stripe_intro_coupon_monthly_live    = var.stripe_intro_coupon_monthly_live

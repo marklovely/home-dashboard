@@ -10,16 +10,16 @@ import { normalizeAccountEmail } from './platformPublicAccount.js';
 export const INTRO_OFFER_SETTING_KEY = 'intro_offer_enabled';
 
 export const INTRO_OFFER_CHECKOUT_NOTE =
-  'Your introductory discount is applied on the secure Stripe checkout page when you continue — not in the prices above, because those apply after your free trial.';
+  'Your introductory discount applies on the Stripe checkout page when you choose Lovely Home+. It does not apply to the Free plan. Referral links replace this offer if you use one.';
 
 /**
  * @param {'month' | 'year'} interval
  */
 export function introOfferBenefitCopy(interval) {
   if (interval === 'year') {
-    return '30% off your first year (applied on your first invoice after the trial)';
+    return '30% off your first Lovely Home+ year (on your first paid invoice)';
   }
-  return '25% off each of your first two months (starting on your first invoice after the trial)';
+  return '25% off each of your first two Lovely Home+ months (on your first paid invoice)';
 }
 
 /**

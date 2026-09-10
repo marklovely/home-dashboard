@@ -212,6 +212,7 @@ export async function onRequest(context) {
     const body = await readJsonBody(request);
     const siteId = String(body.siteId ?? body.site_id ?? '').trim().toLowerCase();
     const customerEmail = String(body.customerEmail ?? body.email ?? '').trim().toLowerCase();
+    const plan = String(body.plan ?? '').trim().toLowerCase();
     const billingInterval = String(body.billingInterval ?? body.billing_interval ?? 'month').trim().toLowerCase();
     const referralCode = String(body.referralCode ?? body.referral_code ?? body.ref ?? '').trim();
 
@@ -228,6 +229,7 @@ export async function onRequest(context) {
       siteId,
       customerEmail,
       billingDb,
+      plan,
       billingInterval,
       referralCode,
       clientIp: signupClientIp(request),

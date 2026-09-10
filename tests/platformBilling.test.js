@@ -4,6 +4,7 @@ import {
   encodeStripeFormEntries,
   handleStripeBillingEvent,
   mapStripeSubscriptionStatus,
+  resolveStripeFreePriceId,
   stripeTimestampToMs,
   timingSafeEqualHex,
   TRIAL_PERIOD_DAYS,
@@ -31,6 +32,15 @@ describe('platform billing helpers', () => {
 
   it('uses a 7-day Stripe trial', () => {
     expect(TRIAL_PERIOD_DAYS).toBe(7);
+  });
+
+  it('resolves the free Stripe price id from env', () => {
+    const env = {
+      STRIPE_PRICE_ID_FREE: 'price_free_test',
+      STRIPE_PRICE_ID_FREE_LIVE: 'price_free_live'
+    };
+    expect(resolveStripeFreePriceId(env, 'test')).toBe('price_free_test');
+    expect(resolveStripeFreePriceId(env, 'live')).toBe('price_free_live');
   });
 
   it('encodes nested Stripe form params', () => {
