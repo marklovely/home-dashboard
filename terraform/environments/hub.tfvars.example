@@ -243,4 +243,13 @@ sites = {
     attach_hub_api_binding = false # first apply only; set true after Worker deploy
   }
 
+  test-cottage-free = {
+    hostname        = "test-cottage-free.lovely-hub.com"
+    hub_environment = "test-cottage-free"
+    vanilla         = false
+    terraform       = true
+    zone_name       = "lovely-hub.com"
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+  }
+
 }
