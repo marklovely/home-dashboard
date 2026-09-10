@@ -1,12 +1,14 @@
 import { subscribeToUserMode, isHouseSitterExperience } from '../auth/userMode.js';
 import {
   fetchHubPlanSummary,
-  formatPlanUsageLine,
   getCachedHubPlanSummary
 } from '../services/hubPlanStatus.js';
 
 const BADGE_ID = 'hub-plan-badge';
 
+/**
+ * @param {import('../services/hubPlanStatus.js').HubPlanSummary | null} summary
+ */
 function renderBadge(summary) {
   let badge = document.getElementById(BADGE_ID);
   if (!summary) {
@@ -14,27 +16,27 @@ function renderBadge(summary) {
     return;
   }
 
+  const trailing =
+    document.querySelector('.shell-chrome-trailing') ||
+    document.querySelector('.shell-chrome-actions') ||
+    document.querySelector('.shell-header');
+
   if (!badge) {
     badge = document.createElement('div');
     badge.id = BADGE_ID;
-    badge.className = 'hub-plan-badge';
-    const header = document.querySelector('.shell-chrome-actions') || document.querySelector('.shell-header');
-    header?.prepend(badge);
+    trailing?.insertBefore(badge, trailing.firstChild);
+  } else if (badge.parentElement !== trailing && trailing) {
+    trailing.insertBefore(badge, trailing.firstChild);
   }
 
   const isPlus = summary.plan === 'plus';
   badge.className = `hub-plan-badge hub-plan-badge--${isPlus ? 'plus' : 'free'}`;
-  badge.innerHTML = '';
+  badge.replaceChildren();
 
   const label = document.createElement('span');
   label.className = 'hub-plan-badge__label';
   label.textContent = summary.planLabel;
-
-  const detail = document.createElement('span');
-  detail.className = 'hub-plan-badge__detail';
-  detail.textContent = formatPlanUsageLine(summary) ?? '';
-
-  badge.append(label, detail);
+  badge.append(label);
 
   if (!isPlus) {
     const link = document.createElement('a');

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildPublicHubPlanStatus,
+  isZeroAmountStripePrice,
   planLimits,
   planTierFromBillingRow,
   resolvePlanTierFromPriceId,
+  resolvePlanTierFromSubscription,
   stripeSubscriptionPriceId
 } from '../functions/api/platform/platformPlanTier.js';
 
@@ -16,6 +18,16 @@ describe('platformPlanTier', () => {
   it('resolves free and plus from Stripe price ids', () => {
     expect(resolvePlanTierFromPriceId(env, 'test', 'price_free_test')).toBe('free');
     expect(resolvePlanTierFromPriceId(env, 'test', 'price_plus_month')).toBe('plus');
+  });
+
+  it('treats zero-amount prices as Free when the free price id env is missing', () => {
+    expect(isZeroAmountStripePrice({ unit_amount: 0 })).toBe(true);
+    expect(resolvePlanTierFromPriceId({}, 'test', 'price_unknown_free', { unit_amount: 0 })).toBe('free');
+    expect(
+      resolvePlanTierFromSubscription({}, 'test', {
+        items: { data: [{ price: { id: 'price_unknown_free', unit_amount: 0 } }] }
+      })
+    ).toBe('free');
   });
 
   it('reads the first subscription item price id', () => {

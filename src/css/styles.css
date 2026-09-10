@@ -4699,41 +4699,50 @@ body.screensaver-active {
 }
 
 .hub-plan-badge {
-  display: grid;
-  gap: 2px;
-  max-width: 12rem;
-  padding: 0.35rem 0.55rem;
-  border-radius: 10px;
-  font-size: 0.78rem;
-  line-height: 1.25;
-  margin-right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  color: var(--text);
+  font-size: 0.76rem;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .hub-plan-badge--free {
-  background: color-mix(in srgb, var(--accent-soft) 85%, #fff);
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
 }
 
 .hub-plan-badge--plus {
-  background: color-mix(in srgb, var(--accent) 12%, #fff);
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 }
 
 .hub-plan-badge__label {
   font-weight: 700;
-}
-
-.hub-plan-badge__detail {
-  color: var(--muted);
+  letter-spacing: 0.01em;
 }
 
 .hub-plan-badge__upgrade {
-  justify-self: start;
-  margin-top: 0.15rem;
   font-weight: 600;
   color: var(--accent);
+  text-decoration: none;
+}
+
+.hub-plan-badge__upgrade:hover {
   text-decoration: underline;
   text-underline-offset: 0.12em;
+}
+
+@media (max-width: 720px) {
+  .hub-plan-badge__upgrade {
+    display: none;
+  }
 }
 
 .settings-plan-card {
@@ -4742,7 +4751,7 @@ body.screensaver-active {
   padding: 0.85rem 0.95rem;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface-elevated, #fff);
+  background: var(--surface-2, var(--surface));
 }
 
 .settings-plan-card__label {

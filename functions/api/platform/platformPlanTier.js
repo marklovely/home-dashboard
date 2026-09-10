@@ -14,25 +14,46 @@ export function normalizePlanTier(tier) {
 
 /**
  * @param {unknown} subscription
+ * @returns {{ id?: string, unit_amount?: number | null } | null}
+ */
+export function stripeSubscriptionPrice(subscription) {
+  const sub = /** @type {{ items?: { data?: Array<{ price?: { id?: string, unit_amount?: number | null } }> } }} */ (
+    subscription ?? {}
+  );
+  return sub.items?.data?.[0]?.price ?? null;
+}
+
+/**
+ * @param {unknown} subscription
  * @returns {string | null}
  */
 export function stripeSubscriptionPriceId(subscription) {
-  const sub = /** @type {{ items?: { data?: Array<{ price?: { id?: string } }> } }} */ (subscription ?? {});
-  const priceId = sub.items?.data?.[0]?.price?.id;
+  const priceId = stripeSubscriptionPrice(subscription)?.id;
   return priceId ? String(priceId) : null;
+}
+
+/**
+ * @param {{ unit_amount?: number | null } | null | undefined} price
+ * @returns {boolean}
+ */
+export function isZeroAmountStripePrice(price) {
+  const unitAmount = Number(price?.unit_amount ?? NaN);
+  return Number.isFinite(unitAmount) && unitAmount === 0;
 }
 
 /**
  * @param {Record<string, string | undefined>} env
  * @param {'test' | 'live'} mode
  * @param {string | null | undefined} priceId
+ * @param {{ unit_amount?: number | null } | null | undefined} [price]
  * @returns {PlanTier | null}
  */
-export function resolvePlanTierFromPriceId(env, mode, priceId) {
+export function resolvePlanTierFromPriceId(env, mode, priceId, price) {
   const id = String(priceId ?? '').trim();
   if (!id) return null;
   const freeId = resolveStripeFreePriceId(env, mode);
   if (freeId && id === freeId) return 'free';
+  if (isZeroAmountStripePrice(price)) return 'free';
   return 'plus';
 }
 
@@ -43,7 +64,8 @@ export function resolvePlanTierFromPriceId(env, mode, priceId) {
  * @returns {PlanTier | null}
  */
 export function resolvePlanTierFromSubscription(env, mode, subscription) {
-  return resolvePlanTierFromPriceId(env, mode, stripeSubscriptionPriceId(subscription));
+  const price = stripeSubscriptionPrice(subscription);
+  return resolvePlanTierFromPriceId(env, mode, price?.id ?? null, price);
 }
 
 /**
