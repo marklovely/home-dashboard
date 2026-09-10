@@ -640,6 +640,9 @@ function createBinReminderFields(context, onRefresh) {
 
   let scheduleDraft = { ...schedule };
 
+  /** @type {ReturnType<typeof createBinScheduleDateEditor> | null} */
+  let dateEditorRef = null;
+
   const councilTools = createBinScheduleCouncilTools({
     variant: 'settings',
     getHubCountryCode: () => normalizeHubCountryCode(getSiteProfileState()?.profile?.hubCountryCode ?? profile.hubCountryCode),
@@ -652,7 +655,7 @@ function createBinReminderFields(context, onRefresh) {
         household,
         gardenWaste
       });
-      onRefresh({ panelId: 'bins', draftSchedule: scheduleDraft });
+      dateEditorRef?.setSchedule(scheduleDraft);
       showToast(
         context.toast,
         count > 0
@@ -802,6 +805,7 @@ function createBinReminderFields(context, onRefresh) {
       }
     }
   });
+  dateEditorRef = dateEditor;
 
   const colorFields = createBinColorFields(schedule);
 
@@ -1738,7 +1742,10 @@ export const settingsApp = defineApp({
         binsPanelDraftSchedule = options.draftSchedule;
       }
       refreshAboutValues(viewport);
-      context.refreshShell?.();
+      // Remounting the whole app clears in-progress bin drafts (e.g. import/paste).
+      if (!options.draftSchedule) {
+        context.refreshShell?.();
+      }
       if (options.soft) return;
       if (getCurrentRoute() !== 'settings') return;
       const storedPanel = options.panelId ?? getStoredSettingsPanel();
