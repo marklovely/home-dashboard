@@ -27,6 +27,18 @@ export function siteIdFromHubRequest(requestOrOrigin) {
 }
 
 /**
+ * @param {Request} request
+ * @param {string} siteId
+ */
+function hubOriginFromRequest(request, siteId) {
+  const origin = request.headers.get('Origin')?.trim().replace(/\/$/, '');
+  if (origin && siteIdFromHubRequest(origin) === siteId) return origin;
+  const host = request.headers.get('Host')?.trim().split(':')[0];
+  if (host) return `https://${host.toLowerCase()}`;
+  return `https://${siteId}.lovely-hub.com`;
+}
+
+/**
  * @param {Record<string, string | undefined>} env
  */
 function platformApiBase(env) {
@@ -49,7 +61,7 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
     };
   }
 
-  const origin = `https://${siteId}.lovely-hub.com`;
+  const origin = hubOriginFromRequest(request, siteId);
   try {
     const response = await fetchImpl(`${platformApiBase(env)}/api/public/hub-plan-status`, {
       headers: { Accept: 'application/json', Origin: origin }
