@@ -86,6 +86,8 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/agree to our <a href="\/terms">terms<\/a>/);
     expect(html).toMatch(/cannot be changed later/);
     expect(html).toMatch(/Create your free home/);
+    expect(html).toMatch(/Add Lovely Home\+ from day one/);
+    expect(html).toMatch(/Stay on Free instead/);
     expect(html).toMatch(/Stripe checkout page when you continue/);
     const js = readFileSync(join(website, 'signup.js'), 'utf8');
     expect(js).toMatch(/setReferralBillingIntervalLock/);

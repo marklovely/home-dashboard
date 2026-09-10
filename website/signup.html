@@ -103,33 +103,44 @@
               <p id="slug-hint" class="field-hint" aria-live="polite">Example: <code>smith</code> → smith.lovely-hub.com. This address cannot be changed later. You name the home itself during hub setup.</p>
             </div>
 
-            <div class="form-field">
-              <fieldset class="billing-interval-field signup-plan-field">
-                <legend>Choose your plan</legend>
+            <div class="form-field signup-plan-field" id="signup-plan-field">
+              <p class="signup-plan-label">Your plan</p>
+
+              <div class="signup-plan-default" id="signup-plan-free">
+                <div class="signup-plan-default__row">
+                  <span class="signup-plan-default__title">Free</span>
+                  <span class="signup-plan-default__price">£0 forever</span>
+                </div>
+                <p class="signup-plan-default__detail">One home, two guides, and two scheduled stays. You can upgrade to Lovely Home+ anytime from your hub.</p>
+              </div>
+
+              <button type="button" class="signup-plus-toggle" id="signup-plus-toggle" aria-expanded="false" aria-controls="signup-plus-panel">
+                Add Lovely Home+ from day one
+                <span class="signup-plus-toggle__hint">Unlimited guides and scheduled stays</span>
+              </button>
+
+              <fieldset id="signup-plus-panel" class="billing-interval-field signup-plus-panel" hidden>
+                <legend class="visually-hidden">Lovely Home+ billing</legend>
+                <div class="signup-plus-panel__header">
+                  <p class="signup-plus-panel__lead">Lovely Home+ — card required at secure Stripe checkout</p>
+                  <button type="button" class="signup-plus-back" id="signup-plus-back">Stay on Free instead</button>
+                </div>
                 <div class="billing-interval-options">
-                  <label class="billing-interval-option">
-                    <input type="radio" name="signupPlan" value="free" checked>
-                    <span class="billing-interval-copy">
-                      <span class="billing-interval-title">Free</span>
-                      <span class="billing-interval-price">£0 forever</span>
-                    </span>
-                  </label>
                   <label class="billing-interval-option">
                     <input type="radio" name="signupPlan" value="month">
                     <span class="billing-interval-copy">
-                      <span class="billing-interval-title">Lovely Home+ monthly</span>
+                      <span class="billing-interval-title">Monthly</span>
                       <span class="billing-interval-price" data-pricing="interval-label" data-plan="month">£4.99/month</span>
                     </span>
                   </label>
                   <label class="billing-interval-option billing-interval-option--featured">
                     <input type="radio" name="signupPlan" value="year">
                     <span class="billing-interval-copy">
-                      <span class="billing-interval-title">Lovely Home+ yearly <span class="pricing-badge pricing-badge--inline" data-pricing="annual-savings">Best value</span></span>
+                      <span class="billing-interval-title">Yearly <span class="pricing-badge pricing-badge--inline" data-pricing="annual-savings">Best value</span></span>
                       <span class="billing-interval-price" data-pricing="interval-label" data-plan="year">£44.99/year</span>
                     </span>
                   </label>
                 </div>
-                <p class="field-hint muted">Free includes one home, two guides, and two scheduled stays. Lovely Home+ adds unlimited guides and stays — card required at Stripe checkout.</p>
               </fieldset>
             </div>
 
