@@ -24,6 +24,10 @@ if [[ ! -d "$ROOT/dist-hub-functions/functions" ]]; then
   echo "Missing dist-hub-functions/functions — run scripts/build-hub-pages-artifact.sh first." >&2
   exit 1
 fi
+if [[ ! -d "$ROOT/node_modules/@cloudflare/pages-plugin-cloudflare-access" ]]; then
+  echo "Missing root npm deps — run npm ci in the repo root (Pages Functions middleware imports @cloudflare/pages-plugin-cloudflare-access)." >&2
+  exit 1
+fi
 
 if [[ -x "$ROOT/worker/node_modules/.bin/wrangler" ]]; then
   WRANGLER=("$ROOT/worker/node_modules/.bin/wrangler")

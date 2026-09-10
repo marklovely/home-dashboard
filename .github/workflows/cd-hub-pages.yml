@@ -74,12 +74,16 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: worker/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            worker/package-lock.json
       - name: Download hub Pages artifact
         uses: actions/download-artifact@v4
         with:
           name: hub-pages-dist
-      - name: Install worker dependencies (wrangler)
-        run: npm ci --prefix worker
+      - name: Install dependencies (wrangler + Pages Functions bundle)
+        run: |
+          npm ci
+          npm ci --prefix worker
       - name: Deploy to hub
         run: bash scripts/deploy-hub-pages-from-artifact.sh "${{ matrix.site_id }}"
