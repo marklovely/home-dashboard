@@ -9,6 +9,12 @@
   const alertBox = document.getElementById('signup-alert');
   const slugHint = document.getElementById('slug-hint');
   const challengeSlot = document.getElementById('signup-challenge');
+  const planField = document.getElementById('signup-plan-field');
+  const plusPanel = document.getElementById('signup-plus-panel');
+  const plusToggle = document.getElementById('signup-plus-toggle');
+  const plusBack = document.getElementById('signup-plus-back');
+  const monthRadio = form?.querySelector('input[name="signupPlan"][value="month"]');
+  const yearRadio = form?.querySelector('input[name="signupPlan"][value="year"]');
 
   if (!form || !siteInput || !emailInput || !submitBtn) return;
 
@@ -20,13 +26,46 @@
   let activeReferralCode = referralCodeParam;
   let activeReferralInterval = null;
 
-  if (planParam === 'year' || planParam === 'plus-year') {
-    const yearRadio = form.querySelector('input[name="signupPlan"][value="year"]');
-    if (yearRadio) yearRadio.checked = true;
-  } else if (planParam === 'month' || planParam === 'plus' || planParam === 'plus-month') {
-    const monthRadio = form.querySelector('input[name="signupPlan"][value="month"]');
-    if (monthRadio) monthRadio.checked = true;
+  function isPlusPanelOpen() {
+    return Boolean(plusPanel && !plusPanel.hidden);
   }
+
+  /**
+   * @param {'month' | 'year'} [interval]
+   */
+  function openPlusPanel(interval) {
+    if (!plusPanel) return;
+    plusPanel.hidden = false;
+    planField?.classList.add('signup-plan-field--plus-open');
+    plusToggle?.setAttribute('aria-expanded', 'true');
+    const pick = interval === 'year' ? yearRadio : monthRadio;
+    if (pick) pick.checked = true;
+    else if (monthRadio) monthRadio.checked = true;
+    updateSignupPlanUi();
+  }
+
+  function closePlusPanel() {
+    if (!plusPanel) return;
+    plusPanel.hidden = true;
+    planField?.classList.remove('signup-plan-field--plus-open');
+    plusToggle?.setAttribute('aria-expanded', 'false');
+    if (monthRadio) monthRadio.checked = false;
+    if (yearRadio) yearRadio.checked = false;
+    updateSignupPlanUi();
+  }
+
+  function updateSignupPlanUi() {
+    setLoading(false);
+  }
+
+  if (planParam === 'year' || planParam === 'plus-year') {
+    openPlusPanel('year');
+  } else if (planParam === 'month' || planParam === 'plus' || planParam === 'plus-month') {
+    openPlusPanel('month');
+  }
+
+  plusToggle?.addEventListener('click', () => openPlusPanel('month'));
+  plusBack?.addEventListener('click', () => closePlusPanel());
 
   if (params.get('canceled') === '1') {
     showAlert('Checkout was canceled. You can try again when ready.', 'info');
@@ -46,45 +85,43 @@
    * @param {'month' | 'year' | null} interval
    */
   function setReferralBillingIntervalLock(interval) {
-    const fieldset = form.querySelector('.billing-interval-field');
-    const freeOption = form.querySelector('input[name="signupPlan"][value="free"]')?.closest('label');
-    const monthOption = form.querySelector('input[name="signupPlan"][value="month"]')?.closest('label');
-    const yearOption = form.querySelector('input[name="signupPlan"][value="year"]')?.closest('label');
-    const monthRadio = form.querySelector('input[name="signupPlan"][value="month"]');
-    const yearRadio = form.querySelector('input[name="signupPlan"][value="year"]');
+    const monthOption = monthRadio?.closest('label');
+    const yearOption = yearRadio?.closest('label');
     if (!monthOption || !yearOption || !monthRadio || !yearRadio) return;
 
     if (interval === 'year') {
-      if (freeOption) freeOption.hidden = true;
+      openPlusPanel('year');
       monthOption.hidden = true;
       yearOption.hidden = false;
-      yearRadio.checked = true;
-      fieldset?.classList.add('billing-interval-field--locked');
+      plusPanel?.classList.add('billing-interval-field--locked');
+      planField?.classList.add('signup-plan-field--referral-locked');
       return;
     }
 
     if (interval === 'month') {
-      if (freeOption) freeOption.hidden = true;
+      openPlusPanel('month');
       monthOption.hidden = false;
       yearOption.hidden = true;
-      monthRadio.checked = true;
-      fieldset?.classList.add('billing-interval-field--locked');
+      plusPanel?.classList.add('billing-interval-field--locked');
+      planField?.classList.add('signup-plan-field--referral-locked');
       return;
     }
 
-    if (freeOption) freeOption.hidden = false;
+    closePlusPanel();
     monthOption.hidden = false;
     yearOption.hidden = false;
-    fieldset?.classList.remove('billing-interval-field--locked');
+    plusPanel?.classList.remove('billing-interval-field--locked');
+    planField?.classList.remove('signup-plan-field--referral-locked');
   }
 
   function selectedSignupPlan() {
-    return form.querySelector('input[name="signupPlan"]:checked')?.value || 'free';
+    if (!isPlusPanelOpen()) return 'free';
+    const checked = form.querySelector('input[name="signupPlan"]:checked')?.value;
+    return checked === 'year' ? 'year' : checked === 'month' ? 'month' : 'month';
   }
 
   function isPlusSignup() {
-    const selected = selectedSignupPlan();
-    return selected === 'month' || selected === 'year';
+    return isPlusPanelOpen();
   }
 
   form.addEventListener('submit', async (event) => {
@@ -253,8 +290,10 @@
   }
 
   form.querySelectorAll('input[name="signupPlan"]').forEach((input) => {
-    input.addEventListener('change', () => setLoading(false));
+    input.addEventListener('change', updateSignupPlanUi);
   });
+
+  updateSignupPlanUi();
 
   async function loadReferralPreview(code) {
     const banner = document.getElementById('signup-referral-banner');
