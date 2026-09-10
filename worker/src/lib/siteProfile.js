@@ -58,6 +58,10 @@ export const DEFAULT_SITE_PROFILE = {
   sitterUnlock: {
     logoHold: true,
     settingsButton: true
+  },
+  arrivalPrep: {
+    gardenEnabled: false,
+    checkedTaskIds: []
   }
 };
 
@@ -94,6 +98,13 @@ function parseProfilePayload(value) {
       sitterUnlock: {
         ...DEFAULT_SITE_PROFILE.sitterUnlock,
         ...(parsed.sitterUnlock && typeof parsed.sitterUnlock === 'object' ? parsed.sitterUnlock : {})
+      },
+      arrivalPrep: {
+        ...DEFAULT_SITE_PROFILE.arrivalPrep,
+        ...(parsed.arrivalPrep && typeof parsed.arrivalPrep === 'object' ? parsed.arrivalPrep : {}),
+        checkedTaskIds: Array.isArray(parsed.arrivalPrep?.checkedTaskIds)
+          ? parsed.arrivalPrep.checkedTaskIds.map((entry) => String(entry ?? '').trim()).filter(Boolean)
+          : DEFAULT_SITE_PROFILE.arrivalPrep.checkedTaskIds
       }
     };
   } catch {
@@ -183,7 +194,16 @@ export async function updateSiteProfile(env, patch) {
           ...current.sitterUnlock,
           ...(patch.sitterUnlock && typeof patch.sitterUnlock === 'object' ? patch.sitterUnlock : {})
         }
-      : current.sitterUnlock
+      : current.sitterUnlock,
+    arrivalPrep: patch.arrivalPrep
+      ? {
+          ...current.arrivalPrep,
+          ...(patch.arrivalPrep && typeof patch.arrivalPrep === 'object' ? patch.arrivalPrep : {}),
+          checkedTaskIds: Array.isArray(patch.arrivalPrep?.checkedTaskIds)
+            ? patch.arrivalPrep.checkedTaskIds.map((entry) => String(entry ?? '').trim()).filter(Boolean)
+            : current.arrivalPrep.checkedTaskIds
+        }
+      : current.arrivalPrep
   };
 
   const now = Math.floor(Date.now() / 1000);

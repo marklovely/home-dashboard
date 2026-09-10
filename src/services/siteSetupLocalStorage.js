@@ -25,6 +25,10 @@ export const DEFAULT_LOCAL_PROFILE = {
     country: '',
     postcode: '',
     uprn: ''
+  },
+  arrivalPrep: {
+    gardenEnabled: false,
+    checkedTaskIds: []
   }
 };
 
@@ -48,6 +52,13 @@ export function loadLocalProfile() {
       secondaryContact: { ...DEFAULT_LOCAL_PROFILE.secondaryContact, ...parsed?.secondaryContact },
       petCare: { ...DEFAULT_LOCAL_PROFILE.petCare, ...parsed?.petCare },
       propertyAddress: { ...DEFAULT_LOCAL_PROFILE.propertyAddress, ...parsed?.propertyAddress },
+      arrivalPrep: {
+        ...DEFAULT_LOCAL_PROFILE.arrivalPrep,
+        ...(parsed?.arrivalPrep && typeof parsed.arrivalPrep === 'object' ? parsed.arrivalPrep : {}),
+        checkedTaskIds: Array.isArray(parsed?.arrivalPrep?.checkedTaskIds)
+          ? parsed.arrivalPrep.checkedTaskIds.map((entry) => String(entry ?? '').trim()).filter(Boolean)
+          : DEFAULT_LOCAL_PROFILE.arrivalPrep.checkedTaskIds
+      },
       _hasLocalRow: true
     };
   } catch {
@@ -73,6 +84,15 @@ export function mergeLocalProfile(patch) {
     propertyAddress: patch.propertyAddress
       ? { ...current.propertyAddress, ...patch.propertyAddress }
       : current.propertyAddress,
+    arrivalPrep: patch.arrivalPrep
+      ? {
+          ...current.arrivalPrep,
+          ...(patch.arrivalPrep && typeof patch.arrivalPrep === 'object' ? patch.arrivalPrep : {}),
+          checkedTaskIds: Array.isArray(patch.arrivalPrep?.checkedTaskIds)
+            ? patch.arrivalPrep.checkedTaskIds.map((entry) => String(entry ?? '').trim()).filter(Boolean)
+            : current.arrivalPrep.checkedTaskIds
+        }
+      : current.arrivalPrep,
     _hasLocalRow: true
   };
   const { _hasLocalRow: hasLocalRow, ...stored } = next;
