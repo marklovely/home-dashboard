@@ -12,6 +12,7 @@ import {
   Home,
   KeyRound,
   Lightbulb,
+  ListChecks,
   MapPin,
   Monitor,
   Moon,
@@ -59,7 +60,8 @@ const ICON_NODES = {
   'heart-pulse': HeartPulse,
   zap: Zap,
   cross: Cross,
-  notebook: NotebookPen
+  notebook: NotebookPen,
+  'list-checks': ListChecks
 };
 
 /**
