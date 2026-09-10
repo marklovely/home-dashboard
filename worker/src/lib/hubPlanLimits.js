@@ -4,26 +4,54 @@ const HUB_ORIGIN_RE =
   /^https:\/\/([a-z][a-z0-9_-]{0,31})\.(lovely-hub\.com|lovely-home\.co\.uk)$/i;
 
 /**
- * @param {Request | string} requestOrOrigin
+ * @param {string} hostname
  * @returns {string | null}
  */
-export function siteIdFromHubRequest(requestOrOrigin) {
-  const raw =
-    typeof requestOrOrigin === 'string'
-      ? requestOrOrigin
-      : requestOrOrigin.headers.get('Origin')?.trim() ||
-        `https://${requestOrOrigin.headers.get('Host') ?? ''}`;
-  const normalized = String(raw ?? '')
+export function siteIdFromHubHostname(hostname) {
+  const host = String(hostname ?? '')
+    .trim()
+    .toLowerCase()
+    .split(':')[0];
+  if (!host) return null;
+  const match = HUB_ORIGIN_RE.exec(`https://${host}`);
+  return match ? match[1].toLowerCase() : null;
+}
+
+/**
+ * @param {string} value
+ * @returns {string | null}
+ */
+function siteIdFromHubUrl(value) {
+  const normalized = String(value ?? '')
     .trim()
     .replace(/\/$/, '');
   if (!normalized) return null;
   try {
     const url = normalized.includes('://') ? new URL(normalized) : new URL(`https://${normalized}`);
-    const match = HUB_ORIGIN_RE.exec(`${url.protocol}//${url.hostname.toLowerCase()}`);
-    return match ? match[1].toLowerCase() : null;
+    return siteIdFromHubHostname(url.hostname);
   } catch {
     return null;
   }
+}
+
+/**
+ * @param {Request | string} requestOrOrigin
+ * @returns {string | null}
+ */
+export function siteIdFromHubRequest(requestOrOrigin) {
+  if (typeof requestOrOrigin !== 'string') {
+    const forwardedHost = requestOrOrigin.headers.get('X-Hub-Pages-Host');
+    const fromForwarded = siteIdFromHubHostname(forwardedHost);
+    if (fromForwarded) return fromForwarded;
+
+    const fromOrigin = siteIdFromHubUrl(requestOrOrigin.headers.get('Origin') ?? '');
+    if (fromOrigin) return fromOrigin;
+
+    const fromHost = siteIdFromHubHostname(requestOrOrigin.headers.get('Host'));
+    if (fromHost) return fromHost;
+  }
+
+  return siteIdFromHubUrl(requestOrOrigin);
 }
 
 /**
@@ -31,10 +59,19 @@ export function siteIdFromHubRequest(requestOrOrigin) {
  * @param {string} siteId
  */
 function hubOriginFromRequest(request, siteId) {
+  const forwardedHost = request.headers.get('X-Hub-Pages-Host')?.trim().toLowerCase();
+  if (forwardedHost) {
+    const fromForwarded = siteIdFromHubHostname(forwardedHost);
+    if (fromForwarded === siteId) return `https://${forwardedHost.split(':')[0]}`;
+  }
+
   const origin = request.headers.get('Origin')?.trim().replace(/\/$/, '');
   if (origin && siteIdFromHubRequest(origin) === siteId) return origin;
+
   const host = request.headers.get('Host')?.trim().split(':')[0];
-  if (host) return `https://${host.toLowerCase()}`;
+  const fromHost = siteIdFromHubHostname(host);
+  if (fromHost === siteId && host) return `https://${host.toLowerCase()}`;
+
   return `https://${siteId}.lovely-hub.com`;
 }
 

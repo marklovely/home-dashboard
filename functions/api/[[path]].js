@@ -78,6 +78,17 @@ async function buildForwardInit(request, env, middlewareData) {
     init.body = request.body;
   }
 
+  // Service-binding proxy uses host hub.internal — pass the public Pages hostname so
+  // the Worker can resolve billing site id and platform plan lookups.
+  const pagesHost = new URL(request.url).hostname.trim().toLowerCase();
+  if (pagesHost) {
+    headers.set('X-Hub-Pages-Host', pagesHost);
+  }
+  const origin = request.headers.get('Origin')?.trim();
+  if (origin) {
+    headers.set('Origin', origin);
+  }
+
   return init;
 }
 
