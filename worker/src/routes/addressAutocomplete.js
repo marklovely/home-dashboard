@@ -1,6 +1,6 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
-import { resolveUprnFromAddress } from '../bins/getAddressUprn.js';
-import { resolveGetAddressConfig } from '../lib/getAddress.js';
+import { resolveUprnFromAddress } from '../bins/osPlacesUprn.js';
+import { resolveOsPlacesConfig } from '../lib/osPlaces.js';
 import { resolveGooglePlacesConfig } from '../lib/googlePlaces.js';
 
 /**
@@ -17,8 +17,8 @@ export async function handleAddressConfig(request, env) {
   }
 
   const places = resolveGooglePlacesConfig(env);
-  const getAddress = resolveGetAddressConfig(env);
-  if (!places.configured && !getAddress.configured) {
+  const osPlaces = resolveOsPlacesConfig(env);
+  if (!places.configured && !osPlaces.configured) {
     return Response.json(
       { configured: false, lookupVia: 'none', uprnLookupConfigured: false },
       { headers: { 'Cache-Control': 'private, no-store' } }
@@ -30,14 +30,14 @@ export async function handleAddressConfig(request, env) {
       configured: places.configured,
       lookupVia: places.configured ? 'browser' : 'none',
       placesApiKey: places.configured ? places.apiKey : undefined,
-      uprnLookupConfigured: getAddress.configured
+      uprnLookupConfigured: osPlaces.configured
     },
     { headers: { 'Cache-Control': 'private, no-store' } }
   );
 }
 
 /**
- * Resolve a UK property UPRN server-side (getAddress.io key stays on the Worker).
+ * Resolve a UK property UPRN server-side (OS Places key stays on the Worker).
  *
  * @param {Request} request
  * @param {Record<string, string | undefined>} env
@@ -60,7 +60,7 @@ export async function handleAddressResolveUprn(request, env, fetchImpl = fetch) 
     return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
   }
 
-  const getAddress = resolveGetAddressConfig(env);
+  const osPlaces = resolveOsPlacesConfig(env);
   const result = await resolveUprnFromAddress(
     {
       line1: String(body?.line1 ?? '').trim(),
@@ -68,7 +68,7 @@ export async function handleAddressResolveUprn(request, env, fetchImpl = fetch) 
       city: String(body?.city ?? '').trim(),
       postcode: String(body?.postcode ?? '').trim()
     },
-    getAddress.apiKey,
+    osPlaces.apiKey,
     fetchImpl
   );
 

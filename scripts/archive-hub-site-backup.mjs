@@ -10,7 +10,7 @@ import {
 } from './lib/platform-archive-storage.mjs';
 import { readRecentSiteArchivePointer } from './lib/platform-archive-reuse.mjs';
 import { resolveHubArchiveUrl } from './lib/hub-archive-url.mjs';
-import { resolveSiteArchiveContract } from './lib/resolve-site-archive-contract.mjs';
+import { readSiteContract } from './lib/read-site-contract.mjs';
 
 const siteId = process.argv[2]?.trim();
 if (!siteId) {
@@ -116,7 +116,7 @@ function archiveFetchTargets(site) {
 
 console.log(`\n=== Archiving hub site backup: ${siteId} ===`);
 
-const resolved = resolveSiteArchiveContract(siteId);
+const resolved = readSiteContract(siteId);
 if (!resolved) {
   console.error(`Could not resolve archive target for site "${siteId}" (terraform, manifest, or registry).`);
   process.exit(1);

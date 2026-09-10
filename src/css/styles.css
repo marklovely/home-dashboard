@@ -3690,9 +3690,20 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
   overflow-y: auto;
   padding-right: 4px;
 }
+.hub-setup-bin-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
 .hub-setup-bin-list-summary {
   margin: 0;
   font-weight: 650;
+}
+.hub-setup-bin-clear-all-button {
+  flex-shrink: 0;
 }
 .hub-setup-bin-entry-intro {
   margin: 0 0 12px;

@@ -8,7 +8,7 @@ describe('resolveSiteArchiveContract', () => {
     const { siteId } = pickCommittedCustomerHubFixture();
     const resolved = resolveSiteArchiveContract(siteId);
     expect(resolved).not.toBeNull();
-    expect(['terraform', 'manifest', 'registry']).toContain(resolved?.source);
+    expect(['manifest', 'registry', 'convention']).toContain(resolved?.source);
     expect(resolveHubArchiveUrl(resolved?.site ?? {}).url).toMatch(new RegExp(siteId));
   });
 

@@ -1,12 +1,14 @@
 /**
- * getAddress.io — UK UPRN resolution for ukbinday import.
- * @see https://documentation.getaddress.io/
+ * Ordnance Survey Places API — UK UPRN resolution for ukbinday import.
+ * @see https://docs.os.uk/os-apis/accessing-os-apis/os-places-api
  */
+
+export const OS_PLACES_API_BASE = 'https://api.os.uk/search/places/v1';
 
 /**
  * @param {string | undefined} raw
  */
-export function normalizeGetAddressApiKey(raw) {
+export function normalizeOsPlacesApiKey(raw) {
   let value = String(raw ?? '')
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
     .replace(/\s+/g, '')
@@ -20,8 +22,8 @@ export function normalizeGetAddressApiKey(raw) {
 /**
  * @param {Record<string, string | undefined>} env
  */
-export function resolveGetAddressConfig(env) {
-  const apiKey = normalizeGetAddressApiKey(env.GETADDRESS_API_KEY);
+export function resolveOsPlacesConfig(env) {
+  const apiKey = normalizeOsPlacesApiKey(env.OS_PLACES_API_KEY);
   return {
     configured: Boolean(apiKey),
     apiKey

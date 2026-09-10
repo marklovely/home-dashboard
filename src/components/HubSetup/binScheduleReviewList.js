@@ -2,6 +2,8 @@
  * Editable bin collection date list (shared by pattern wizard, paste, settings).
  */
 
+import { showConfirmDialog } from '../ConfirmDialog/confirmDialog.js';
+
 /**
  * @param {'rubbish' | 'recycling' | 'gardenWaste'} type
  */
@@ -75,9 +77,35 @@ export function createBinScheduleReviewList({ entries, onChange, emptyMessage })
   const wrap = document.createElement('div');
   wrap.className = 'hub-setup-bin-review';
 
+  const listToolbar = document.createElement('div');
+  listToolbar.className = 'hub-setup-bin-list-toolbar';
+
   const summary = document.createElement('p');
   summary.className = 'hub-setup-bin-list-summary subtle';
   summary.setAttribute('aria-live', 'polite');
+
+  const clearAllButton = document.createElement('button');
+  clearAllButton.type = 'button';
+  clearAllButton.className = 'settings-action-button settings-action-button--secondary hub-setup-bin-clear-all-button';
+  clearAllButton.textContent = 'Clear all dates';
+  clearAllButton.addEventListener('click', () => {
+    if (!entries.length) return;
+    const count = entries.length;
+    void showConfirmDialog({
+      title: 'Clear all collection dates?',
+      message: `Remove all ${count} collection date${count === 1 ? '' : 's'} from this list? Location and reminder settings are kept.`,
+      confirmLabel: 'Clear all',
+      cancelLabel: 'Keep dates',
+      danger: true
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      entries = [];
+      onChange(entries);
+      render();
+    });
+  });
+
+  listToolbar.append(summary, clearAllButton);
 
   const listScroll = document.createElement('div');
   listScroll.className = 'hub-setup-bin-entry-list-scroll';
@@ -95,9 +123,11 @@ export function createBinScheduleReviewList({ entries, onChange, emptyMessage })
         'No dates yet — use the pattern wizard or paste dates from your council calendar.';
       listHost.append(empty);
       summary.textContent = 'No collection dates added yet.';
+      clearAllButton.hidden = true;
       return;
     }
 
+    clearAllButton.hidden = false;
     summary.textContent = `${entries.length} collection date${entries.length === 1 ? '' : 's'}.`;
     for (const entry of entries) {
       const row = document.createElement('div');
@@ -137,7 +167,7 @@ export function createBinScheduleReviewList({ entries, onChange, emptyMessage })
   }
 
   listScroll.append(listHost);
-  wrap.append(summary, listScroll);
+  wrap.append(listToolbar, listScroll);
   render();
 
   return {
