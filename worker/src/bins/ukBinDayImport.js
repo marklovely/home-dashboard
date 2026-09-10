@@ -84,6 +84,7 @@ export async function fetchUkBinDaySchedule(params, fetchImpl = fetch) {
   }
 
   const body = await response.json();
+  const detail = String(body?.detail ?? '').trim();
   const collections = Array.isArray(body?.collections) ? body.collections : [];
   const mapped = mapUkBinDayCollections(collections);
   const count = mapped.household.length + mapped.gardenWaste.length;
@@ -91,7 +92,9 @@ export async function fetchUkBinDaySchedule(params, fetchImpl = fetch) {
     return {
       ok: false,
       status: 422,
-      error: 'No collection dates were returned — try PDF upload or paste instead.'
+      error: detail
+        ? `${detail} Try PDF upload or paste instead.`
+        : 'No collection dates were returned — try PDF upload or paste instead.'
     };
   }
 
