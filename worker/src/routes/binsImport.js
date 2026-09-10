@@ -1,5 +1,6 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
 import { resolveUprnFromAddress } from '../bins/getAddressUprn.js';
+import { resolveGetAddressConfig } from '../lib/getAddress.js';
 import { parseBinDatesWithAi } from '../bins/parseDatesAi.js';
 import { fetchUkBinDaySchedule, isUsableUkBinDayCouncilId } from '../bins/ukBinDayImport.js';
 import { fetchUkBinDayCouncil } from '../bins/ukBinDay.js';
@@ -59,7 +60,7 @@ export async function handleBinsImportSchedule(request, env, fetchImpl = fetch) 
   if (!uprn) {
     const uprnResult = await resolveUprnFromAddress(
       { postcode, line1, line2, city },
-      env.GETADDRESS_API_KEY,
+      resolveGetAddressConfig(env).apiKey,
       fetchImpl
     );
     if (!uprnResult.ok) {

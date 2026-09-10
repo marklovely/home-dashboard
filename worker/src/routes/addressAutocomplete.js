@@ -60,6 +60,7 @@ export async function handleAddressResolveUprn(request, env, fetchImpl = fetch) 
     return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
   }
 
+  const getAddress = resolveGetAddressConfig(env);
   const result = await resolveUprnFromAddress(
     {
       line1: String(body?.line1 ?? '').trim(),
@@ -67,7 +68,7 @@ export async function handleAddressResolveUprn(request, env, fetchImpl = fetch) 
       city: String(body?.city ?? '').trim(),
       postcode: String(body?.postcode ?? '').trim()
     },
-    env.GETADDRESS_API_KEY,
+    getAddress.apiKey,
     fetchImpl
   );
 

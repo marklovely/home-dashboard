@@ -3,6 +3,8 @@
  * @see https://documentation.getaddress.io/
  */
 
+import { normalizeGetAddressApiKey } from '../lib/getAddress.js';
+
 /**
  * @param {{ postcode?: string, line1?: string, line2?: string, city?: string }} address
  */
@@ -141,8 +143,30 @@ async function autocompleteSuggestions(term, apiKey, fetchImpl, options = {}) {
  * @param {string | undefined} apiKey
  * @param {typeof fetch} fetchImpl
  */
+/**
+ * @param {number} status
+ * @param {string} detail
+ */
+function getAddressFailureMessage(status, detail) {
+  const upstream = detail || (status === 401 ? 'Unauthorized' : status === 403 ? 'Forbidden' : '');
+  if (status === 401) {
+    return (
+      `getAddress rejected the API key${upstream ? ` (${upstream})` : ''}. ` +
+      'Use the API key from getAddress.io → API Keys (not the admin key). ' +
+      "Re-set without a trailing newline: echo -n 'YOUR_KEY' | npx wrangler secret put GETADDRESS_API_KEY --env test-lovely"
+    );
+  }
+  if (status === 403) {
+    return (
+      `getAddress blocked this request${upstream ? ` (${upstream})` : ''}. ` +
+      'Server-side Worker calls need an unrestricted API key — remove domain-only or IP whitelists in getAddress.io, or create a separate server key.'
+    );
+  }
+  return upstream || 'Could not match your address for automatic import.';
+}
+
 export async function resolveUprnFromAddress(address, apiKey, fetchImpl = fetch) {
-  const key = String(apiKey ?? '').trim();
+  const key = normalizeGetAddressApiKey(apiKey);
   if (!key) {
     return {
       ok: false,
@@ -173,12 +197,11 @@ export async function resolveUprnFromAddress(address, apiKey, fetchImpl = fetch)
     if (!autocomplete.ok) {
       lastError = autocomplete.error;
       lastStatus = autocomplete.status;
-      if (autocomplete.status === 401) {
+      if (autocomplete.status === 401 || autocomplete.status === 403) {
         return {
           ok: false,
           code: 'LOOKUP_FAILED',
-          error:
-            'The getAddress API key on this hub Worker is invalid or missing — check GETADDRESS_API_KEY on the correct environment.'
+          error: getAddressFailureMessage(autocomplete.status, autocomplete.error)
         };
       }
       continue;
@@ -192,12 +215,11 @@ export async function resolveUprnFromAddress(address, apiKey, fetchImpl = fetch)
     lastError = uprnResult.error;
   }
 
-  if (lastStatus === 401) {
+  if (lastStatus === 401 || lastStatus === 403) {
     return {
       ok: false,
       code: 'LOOKUP_FAILED',
-      error:
-        'The getAddress API key on this hub Worker is invalid or missing — check GETADDRESS_API_KEY on the correct environment.'
+      error: getAddressFailureMessage(lastStatus, lastError)
     };
   }
 
