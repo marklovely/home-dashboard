@@ -28,7 +28,7 @@ describe('pages-preview', () => {
 });
 
 describe('hub Pages git production deploys', () => {
-  it('does not git-auto-deploy hub Pages on every main merge', () => {
+  it('does not auto-deploy the hub fleet on every main merge', () => {
     const tf = readFileSync(join(process.cwd(), 'terraform/modules/hub_environment/pages.tf'), 'utf8');
     expect(tf).toMatch(/production_deployments_enabled\s*=\s*false/);
     const provision = readFileSync(join(process.cwd(), 'scripts/provision-hub-site.mjs'), 'utf8');
@@ -36,8 +36,14 @@ describe('hub Pages git production deploys', () => {
     const ensure = readFileSync(join(process.cwd(), '.github/workflows/ensure-hub-api-bindings.yml'), 'utf8');
     expect(ensure).not.toContain('sleep 180');
     expect(ensure).toContain('disable-hub-pages-git-production.mjs');
-    const deploy = readFileSync(join(process.cwd(), '.github/workflows/deploy-hub-pages.yml'), 'utf8');
-    expect(deploy).toContain("paths:");
-    expect(deploy).toContain('deploy-cloudflare-pages-site.sh');
+    const legacyDeploy = readFileSync(join(process.cwd(), '.github/workflows/deploy-hub-pages.yml'), 'utf8');
+    expect(legacyDeploy).not.toContain("paths:");
+    expect(legacyDeploy).not.toContain('push:');
+    const cd = readFileSync(join(process.cwd(), '.github/workflows/cd-hub-pages.yml'), 'utf8');
+    expect(cd).toContain('workflow_dispatch');
+    expect(cd).toContain('build-hub-pages-artifact.sh');
+    expect(cd).toContain('deploy-hub-pages-from-artifact.sh');
+    const ci = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf8');
+    expect(ci).not.toContain('deploy-hub-pages-from-artifact');
   });
 });

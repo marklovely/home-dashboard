@@ -1,5 +1,6 @@
 name: CI
 
+# Continuous integration only — no hub fleet deploy. Roll out hubs via CD — Hub Pages.
 on:
   push:
   pull_request:
@@ -22,5 +23,7 @@ jobs:
       - run: npm ci --prefix worker
       - run: npm run lint
       - run: npm run test
-      - run: npm run build
+      - name: Build (shared hub artifact smoke)
+        run: VITE_DEPLOYMENT_MODE=home npm run build
+      - run: node scripts/check-dist-secrets.js
       - run: npm run check --prefix worker
