@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.1.0
+
 Changes land here before the next tagged release.
 
 ## 3.0.0
