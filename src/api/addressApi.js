@@ -1,14 +1,12 @@
 import { ensureApiBaseUrl, buildApiUrl, isApiConfigured } from './apiBase.js';
 import { withApiCredentials } from './accessFetch.js';
-import { resolveUprnFromPropertyAddress } from '../lib/getAddressBrowser.js';
 import { browserPlacesAutocomplete, browserPlacesLookup } from '../lib/googlePlacesBrowser.js';
 
 /** @typedef {{
  *   configured: boolean,
  *   lookupVia: 'none' | 'browser',
  *   placesApiKey?: string,
- *   uprnLookupConfigured?: boolean,
- *   getAddressApiKey?: string
+ *   uprnLookupConfigured?: boolean
  * }} AddressLookupConfig */
 
 /** @type {AddressLookupConfig | null} */
@@ -40,8 +38,7 @@ export async function fetchAddressLookupConfig(fetchImpl = fetch) {
     configured: data?.configured === true,
     lookupVia: data.lookupVia === 'browser' ? 'browser' : 'none',
     placesApiKey: typeof data.placesApiKey === 'string' ? data.placesApiKey : undefined,
-    uprnLookupConfigured: data?.uprnLookupConfigured === true,
-    getAddressApiKey: typeof data.getAddressApiKey === 'string' ? data.getAddressApiKey : undefined
+    uprnLookupConfigured: data?.uprnLookupConfigured === true
   };
   return cachedConfig;
 }
@@ -51,16 +48,51 @@ export async function fetchAddressLookupConfig(fetchImpl = fetch) {
  * @param {typeof fetch} [fetchImpl]
  */
 export async function resolvePropertyUprn(address, fetchImpl = fetch) {
-  const config = await fetchAddressLookupConfig(fetchImpl);
-  if (!config.uprnLookupConfigured || !config.getAddressApiKey) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, code: 'NOT_CONFIGURED', message: 'API not configured' };
+  }
+
+  const normalized = {
+    line1: String(address?.line1 ?? '').trim(),
+    line2: String(address?.line2 ?? '').trim(),
+    city: String(address?.city ?? '').trim(),
+    postcode: String(address?.postcode ?? '').trim()
+  };
+
+  try {
+    const response = await fetchImpl(buildApiUrl('/api/address/resolve-uprn'), {
+      ...withApiCredentials({ cache: 'no-store' }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(normalized)
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        ok: false,
+        code: body?.code ?? 'LOOKUP_FAILED',
+        message:
+          body?.error ??
+          'Could not look up your property ID for automatic import — use PDF upload or paste instead.'
+      };
+    }
+    const uprn = String(body?.uprn ?? '').trim();
+    if (!uprn) {
+      return {
+        ok: false,
+        code: 'NO_UPRN',
+        message: 'No property ID was returned — use PDF upload or paste instead.'
+      };
+    }
+    return { ok: true, uprn };
+  } catch {
     return {
       ok: false,
-      code: 'NOT_CONFIGURED',
-      message:
-        'Automatic import needs a property ID (UPRN). Google address lookup does not include this — ask your hub admin to enable UPRN lookup, or use PDF upload / paste instead.'
+      code: 'LOOKUP_FAILED',
+      message: 'Could not look up your property ID right now — try again or use PDF/paste.'
     };
   }
-  return resolveUprnFromPropertyAddress(address, config.getAddressApiKey, fetchImpl);
 }
 
 /** Reset cached lookup mode (tests). */

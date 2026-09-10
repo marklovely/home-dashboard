@@ -11,6 +11,18 @@ export function formatGetAddressSearchTerm(address) {
 }
 
 /**
+ * @param {Response} response
+ */
+async function readGetAddressErrorMessage(response) {
+  try {
+    const body = await response.json();
+    return String(body?.Message ?? body?.message ?? '').trim();
+  } catch {
+    return '';
+  }
+}
+
+/**
  * @param {{ postcode?: string, line1?: string, line2?: string, city?: string }} address
  * @param {string | undefined} apiKey
  * @param {typeof fetch} fetchImpl
@@ -36,7 +48,12 @@ export async function resolveUprnFromAddress(address, apiKey, fetchImpl = fetch)
     headers: { Accept: 'application/json' }
   });
   if (!autocompleteResponse.ok) {
-    return { ok: false, code: 'LOOKUP_FAILED', error: 'Could not match your address for automatic import.' };
+    const detail = await readGetAddressErrorMessage(autocompleteResponse);
+    const hint =
+      autocompleteResponse.status === 401
+        ? 'The getAddress API key on this hub Worker is invalid or missing — check GETADDRESS_API_KEY on the correct environment.'
+        : detail || 'Could not match your address for automatic import.';
+    return { ok: false, code: 'LOOKUP_FAILED', error: hint };
   }
 
   const autocompleteBody = await autocompleteResponse.json();

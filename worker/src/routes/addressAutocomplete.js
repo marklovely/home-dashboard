@@ -1,4 +1,5 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
+import { resolveUprnFromAddress } from '../bins/getAddressUprn.js';
 import { resolveGetAddressConfig } from '../lib/getAddress.js';
 import { resolveGooglePlacesConfig } from '../lib/googlePlaces.js';
 
@@ -29,9 +30,56 @@ export async function handleAddressConfig(request, env) {
       configured: places.configured,
       lookupVia: places.configured ? 'browser' : 'none',
       placesApiKey: places.configured ? places.apiKey : undefined,
-      uprnLookupConfigured: getAddress.configured,
-      getAddressApiKey: getAddress.configured ? getAddress.apiKey : undefined
+      uprnLookupConfigured: getAddress.configured
     },
+    { headers: { 'Cache-Control': 'private, no-store' } }
+  );
+}
+
+/**
+ * Resolve a UK property UPRN server-side (getAddress.io key stays on the Worker).
+ *
+ * @param {Request} request
+ * @param {Record<string, string | undefined>} env
+ * @param {typeof fetch} fetchImpl
+ */
+export async function handleAddressResolveUprn(request, env, fetchImpl = fetch) {
+  const gate = await requireAnyDeviceSession(request, env);
+  if (!gate.ok) {
+    return Response.json({ error: gate.code }, { status: gate.status });
+  }
+
+  if (request.method !== 'POST') {
+    return Response.json({ error: 'Method not allowed' }, { status: 405 });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
+  }
+
+  const result = await resolveUprnFromAddress(
+    {
+      line1: String(body?.line1 ?? '').trim(),
+      line2: String(body?.line2 ?? '').trim(),
+      city: String(body?.city ?? '').trim(),
+      postcode: String(body?.postcode ?? '').trim()
+    },
+    env.GETADDRESS_API_KEY,
+    fetchImpl
+  );
+
+  if (!result.ok) {
+    return Response.json(
+      { error: result.error, code: result.code },
+      { status: result.code === 'NOT_CONFIGURED' ? 503 : 422, headers: { 'Cache-Control': 'private, no-store' } }
+    );
+  }
+
+  return Response.json(
+    { uprn: result.uprn, formatted: result.formatted ?? null },
     { headers: { 'Cache-Control': 'private, no-store' } }
   );
 }
