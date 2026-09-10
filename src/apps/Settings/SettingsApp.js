@@ -79,7 +79,7 @@ import {
   saveSitterAccessEmails,
   subscribeToSitterAccessEmails
 } from '../../services/sitterAccessEmailsService.js';
-import { createSetupTextarea } from '../../components/HubSetup/hubSetupFields.js';
+import { createPetCareFields, createSetupTextarea } from '../../components/HubSetup/hubSetupFields.js';
 import { fetchSiteBackup, fetchSiteBackupZip } from '../../api/siteBackupApi.js';
 import {
   downloadEncryptedBackupFile,
@@ -255,6 +255,8 @@ function renderSettingsPanelContent(panelId, context, onRefresh) {
       return createHouseSitterModeFields(context, onRefresh);
     case 'home-details':
       return createHomeDetailsFields(context);
+    case 'pet-care':
+      return createPetCareSettingsFields(context);
     case 'bins':
       return createBinReminderFields(context, onRefresh);
     case 'weather':
@@ -488,6 +490,40 @@ function createUtilitiesFields(context) {
   });
 
   wrap.append(resetHeading, resetIntro, resetButton);
+  return wrap;
+}
+
+/**
+ * @param {import('../../types/app.js').ShellContext} context
+ */
+function createPetCareSettingsFields(context) {
+  const wrap = document.createElement('div');
+  wrap.className = 'settings-options settings-options--stacked';
+
+  const profile = getSiteProfileState()?.profile ?? {};
+  const petFields = createPetCareFields(profile, {
+    intro:
+      'Add pets whenever you get them — each pet gets their own checklist section in Getting ready. Details also feed the Pets section when you import the starter House Guide.'
+  });
+
+  const saveButton = document.createElement('button');
+  saveButton.type = 'button';
+  saveButton.className = 'settings-action-button';
+  saveButton.textContent = 'Save pet details';
+  saveButton.addEventListener('click', () => {
+    void withAsyncButtonFeedback(saveButton, 'Saving…', async () => {
+      const petCare = petFields.readPetCare();
+      const result = await saveSiteProfile({ petCare });
+      if (!result.ok) {
+        showToast(context.toast, siteProfileSaveErrorMessage(result, 'Could not save pet details.'));
+        return;
+      }
+      context.refreshShell?.();
+      showToast(context.toast, 'Pet details saved.');
+    });
+  });
+
+  wrap.append(petFields.wrap, saveButton);
   return wrap;
 }
 

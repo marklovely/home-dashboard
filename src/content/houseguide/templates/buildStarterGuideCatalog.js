@@ -1,4 +1,5 @@
 import { getStarterGuideCatalog } from './starterGuideTemplates.js';
+import { formatPetNames, normalizePetCare, primaryPet } from '../../../lib/petCare.js';
 
 /** @typedef {{
  *   hasPets?: boolean,
@@ -50,9 +51,11 @@ function findBlock(topic, blockType) {
  */
 function applyPetCareToCatalog(catalog, petCare) {
   const petsCategory = catalog.categories?.find((category) => category.id === 'pets');
-  if (!petsCategory || !petCare?.hasPets) return;
+  const normalized = normalizePetCare(petCare);
+  const pet = primaryPet(normalized);
+  if (!petsCategory || !normalized.hasPets || !pet) return;
 
-  const petName = petCare.name?.trim() || 'Your pet';
+  const petName = formatPetNames(normalized, 'Your pet');
   petsCategory.title = petName;
   petsCategory.cardSubtitle = 'Feeding • Walks • Vet';
   petsCategory.searchTerms = [
@@ -66,30 +69,30 @@ function applyPetCareToCatalog(catalog, petCare) {
   const atGlance = findTopic(petsCategory, 'pet-at-a-glance') ?? findTopic(petsCategory, 'pet-overview');
   if (atGlance) {
     atGlance.title = `${petName} at a glance`;
-    atGlance.subtitle = [petCare.species, petCare.age].filter(Boolean).join(' · ') || atGlance.subtitle;
+    atGlance.subtitle = [pet.species, pet.age].filter(Boolean).join(' · ') || atGlance.subtitle;
     atGlance.summary = `Quick facts about ${petName}`;
     const keyValues = findBlock(atGlance, 'keyValues');
     if (keyValues && 'items' in keyValues && Array.isArray(keyValues.items)) {
       keyValues.items = [
         { label: 'Name', value: petName },
-        { label: 'Species / breed', value: petCare.species?.trim() || 'Add species or breed' },
-        { label: 'Age', value: petCare.age?.trim() || 'Add age' },
+        { label: 'Species / breed', value: pet.species?.trim() || 'Add species or breed' },
+        { label: 'Age', value: pet.age?.trim() || 'Add age' },
         { label: 'Health / medication', value: 'None — or describe in Guide Editor' }
       ];
     }
     const textBlock = atGlance.blocks?.find((block) => block.type === 'text' || block.type === 'tip');
     if (textBlock && 'content' in textBlock) {
       textBlock.content =
-        petCare.temperament?.trim() ||
+        pet.temperament?.trim() ||
         'Describe personality, favourite spots, and whether they are allowed on furniture or beds.';
     }
   }
 
   const feeding = findTopic(petsCategory, 'pet-feeding');
-  if (feeding && petCare.feeding?.trim()) {
+  if (feeding && pet.feeding?.trim()) {
     const stepsBlock = findBlock(feeding, 'steps');
     if (stepsBlock && 'steps' in stepsBlock && Array.isArray(stepsBlock.steps)) {
-      stepsBlock.steps = petCare.feeding
+      stepsBlock.steps = pet.feeding
         .split('\n')
         .map((line) => line.trim())
         .filter(Boolean);
@@ -97,10 +100,10 @@ function applyPetCareToCatalog(catalog, petCare) {
   }
 
   const walks = findTopic(petsCategory, 'pet-walks');
-  if (walks && petCare.walks?.trim()) {
+  if (walks && pet.walks?.trim()) {
     const textBlock = walks.blocks?.find((block) => block.type === 'text');
     if (textBlock && 'content' in textBlock) {
-      textBlock.content = petCare.walks.trim();
+      textBlock.content = pet.walks.trim();
     }
   }
 
@@ -109,9 +112,9 @@ function applyPetCareToCatalog(catalog, petCare) {
     const keyValues = findBlock(vet, 'keyValues');
     if (keyValues && 'items' in keyValues && Array.isArray(keyValues.items)) {
       keyValues.items = [
-        { label: 'Regular vet', value: petCare.vet?.trim() || 'Add clinic name' },
-        { label: 'Phone', value: petCare.vetPhone?.trim() || 'Add phone number' },
-        { label: 'Out-of-hours', value: petCare.vetEmergency?.trim() || 'Add emergency vet' }
+        { label: 'Regular vet', value: pet.vet?.trim() || 'Add clinic name' },
+        { label: 'Phone', value: pet.vetPhone?.trim() || 'Add phone number' },
+        { label: 'Out-of-hours', value: pet.vetEmergency?.trim() || 'Add emergency vet' }
       ];
     }
   }

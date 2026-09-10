@@ -1,6 +1,7 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { mountArrivalPrepChecklist } from '../../components/ArrivalPrep/createArrivalPrepCard.js';
 import { getArrivalPrepHomeSummary } from '../../lib/arrivalPrep/arrivalPrepSummary.js';
+import { syncSitterStaysFromServer } from '../../services/sitterStaysService.js';
 
 /**
  * @param {HTMLElement} viewport
@@ -17,6 +18,7 @@ function mountArrivalPrepApp(viewport) {
   page.append(host);
   viewport.append(page);
 
+  void syncSitterStaysFromServer();
   mountArrivalPrepChecklist(host, { variant: 'app' });
 }
 

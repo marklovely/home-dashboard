@@ -1,3 +1,6 @@
+import { normalizeArrivalPrepProfile } from '../lib/arrivalPrep/arrivalPrepProfile.js';
+import { normalizePetCare } from '../lib/petCare.js';
+
 export const DEFAULT_LOCAL_PROFILE = {
   onboardingComplete: false,
   hubName: '',
@@ -6,15 +9,7 @@ export const DEFAULT_LOCAL_PROFILE = {
   secondaryContact: { name: '', phone: '', email: '' },
   petCare: {
     hasPets: false,
-    name: '',
-    species: '',
-    age: '',
-    temperament: '',
-    feeding: '',
-    walks: '',
-    vet: '',
-    vetPhone: '',
-    vetEmergency: ''
+    pets: []
   },
   propertyAddress: {
     line1: '',
@@ -28,7 +23,11 @@ export const DEFAULT_LOCAL_PROFILE = {
   },
   arrivalPrep: {
     gardenEnabled: false,
-    checkedTaskIds: []
+    checkedTaskIds: [],
+    customTasks: [],
+    collapsedSectionIds: [],
+    activeStayId: null,
+    archivedByStayId: {}
   }
 };
 
@@ -50,15 +49,12 @@ export function loadLocalProfile() {
       ...parsed,
       primaryContact: { ...DEFAULT_LOCAL_PROFILE.primaryContact, ...parsed?.primaryContact },
       secondaryContact: { ...DEFAULT_LOCAL_PROFILE.secondaryContact, ...parsed?.secondaryContact },
-      petCare: { ...DEFAULT_LOCAL_PROFILE.petCare, ...parsed?.petCare },
+      petCare: normalizePetCare({ ...DEFAULT_LOCAL_PROFILE.petCare, ...parsed?.petCare }),
       propertyAddress: { ...DEFAULT_LOCAL_PROFILE.propertyAddress, ...parsed?.propertyAddress },
-      arrivalPrep: {
+      arrivalPrep: normalizeArrivalPrepProfile({
         ...DEFAULT_LOCAL_PROFILE.arrivalPrep,
-        ...(parsed?.arrivalPrep && typeof parsed.arrivalPrep === 'object' ? parsed.arrivalPrep : {}),
-        checkedTaskIds: Array.isArray(parsed?.arrivalPrep?.checkedTaskIds)
-          ? parsed.arrivalPrep.checkedTaskIds.map((entry) => String(entry ?? '').trim()).filter(Boolean)
-          : DEFAULT_LOCAL_PROFILE.arrivalPrep.checkedTaskIds
-      },
+        ...(parsed?.arrivalPrep && typeof parsed.arrivalPrep === 'object' ? parsed.arrivalPrep : {})
+      }),
       _hasLocalRow: true
     };
   } catch {
@@ -80,18 +76,15 @@ export function mergeLocalProfile(patch) {
     secondaryContact: patch.secondaryContact
       ? { ...current.secondaryContact, ...patch.secondaryContact }
       : current.secondaryContact,
-    petCare: patch.petCare ? { ...current.petCare, ...patch.petCare } : current.petCare,
+    petCare: patch.petCare ? normalizePetCare(patch.petCare) : current.petCare,
     propertyAddress: patch.propertyAddress
       ? { ...current.propertyAddress, ...patch.propertyAddress }
       : current.propertyAddress,
     arrivalPrep: patch.arrivalPrep
-      ? {
+      ? normalizeArrivalPrepProfile({
           ...current.arrivalPrep,
-          ...(patch.arrivalPrep && typeof patch.arrivalPrep === 'object' ? patch.arrivalPrep : {}),
-          checkedTaskIds: Array.isArray(patch.arrivalPrep?.checkedTaskIds)
-            ? patch.arrivalPrep.checkedTaskIds.map((entry) => String(entry ?? '').trim()).filter(Boolean)
-            : current.arrivalPrep.checkedTaskIds
-        }
+          ...(patch.arrivalPrep && typeof patch.arrivalPrep === 'object' ? patch.arrivalPrep : {})
+        })
       : current.arrivalPrep,
     _hasLocalRow: true
   };

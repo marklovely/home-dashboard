@@ -1,3 +1,5 @@
+import { formatPetNames, normalizePetCare } from './petCare.js';
+
 /**
  * @param {Date} date
  * @returns {string} YYYY-MM-DD in local time
@@ -18,16 +20,15 @@ export function isSitInProgress(sitStart, referenceDate = new Date()) {
 }
 
 /**
- * @param {{ hasPets?: boolean, name?: string } | null | undefined} petCare
+ * @param {unknown} petCare
  */
 function thankYouLead(petCare) {
-  if (
-    petCare &&
-    typeof petCare === 'object' &&
-    petCare.hasPets &&
-    String(petCare.name ?? '').trim()
-  ) {
-    return `Thank you for looking after our home and ${String(petCare.name).trim()}.`;
+  const normalized = normalizePetCare(petCare);
+  if (normalized.hasPets) {
+    const names = formatPetNames(normalized, '');
+    if (names) {
+      return `Thank you for looking after our home and ${names}.`;
+    }
   }
   return 'Thank you for looking after our home.';
 }

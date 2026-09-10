@@ -24,14 +24,23 @@ describe('buildArrivalPrepChecklist', () => {
     expect(checklist?.sections.some((section) => section.id === 'sitter')).toBe(true);
   });
 
-  it('adds pet section titled with pet name', () => {
+  it('adds one section per pet with scoped task ids', () => {
     const checklist = buildArrivalPrepChecklist({
       useCase: 'housesitter',
-      petCare: { hasPets: true, name: 'Scooter', species: 'Labrador' }
+      petCare: {
+        hasPets: true,
+        pets: [
+          { id: 'dog1', name: 'Scooter', species: 'Labrador' },
+          { id: 'cat1', name: 'Mittens', species: 'Cat' }
+        ]
+      }
     });
-    const petSection = checklist?.sections.find((section) => section.id === 'pet-dog');
-    expect(petSection?.title).toBe('Scooter');
-    expect(petSection?.tasks.some((task) => task.id === 'pet.dog-poo-bags')).toBe(true);
+    const scooterSection = checklist?.sections.find((section) => section.id === 'pet-dog1');
+    const mittensSection = checklist?.sections.find((section) => section.id === 'pet-cat1');
+    expect(scooterSection?.title).toBe('Scooter');
+    expect(mittensSection?.title).toBe('Mittens');
+    expect(scooterSection?.tasks.some((task) => task.id === 'pet.dog-poo-bags@dog1')).toBe(true);
+    expect(mittensSection?.tasks.some((task) => task.id === 'pet.cat-litter@cat1')).toBe(true);
   });
 
   it('adds garden section when enabled', () => {
@@ -40,6 +49,19 @@ describe('buildArrivalPrepChecklist', () => {
       arrivalPrep: { gardenEnabled: true, checkedTaskIds: [] }
     });
     expect(checklist?.sections.some((section) => section.id === 'garden')).toBe(true);
+  });
+
+  it('includes custom tasks in their section', () => {
+    const checklist = buildArrivalPrepChecklist({
+      useCase: 'airbnb',
+      arrivalPrep: {
+        gardenEnabled: false,
+        checkedTaskIds: [],
+        customTasks: [{ id: 'custom.abc', label: 'Buy flowers', sectionId: 'home' }]
+      }
+    });
+    const home = checklist?.sections.find((section) => section.id === 'home');
+    expect(home?.tasks.some((task) => task.id === 'custom.abc' && task.custom)).toBe(true);
   });
 
   it('tracks remaining tasks from saved checks', () => {
