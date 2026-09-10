@@ -162,7 +162,7 @@ describe('platformReferrals', () => {
   });
 
   it('describes monthly and yearly benefits', () => {
-    expect(referralBenefitCopy('month').referee).toMatch(/first invoice/i);
+    expect(referralBenefitCopy('month').referee).toMatch(/first paid invoice/i);
     expect(referralBenefitCopy('year').referrer).toMatch(/first invoice is paid/i);
   });
 

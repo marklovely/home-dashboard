@@ -30,7 +30,7 @@ describe('hub help guides', () => {
       dialogId: 'test-owner-help-faq'
     });
     expect(document.querySelector('.help-guide-content-title')?.textContent).toBe('Common questions');
-    expect(document.querySelector('.help-guide-subheading')?.textContent).toBe('Can I try before I pay?');
+    expect(document.querySelector('.help-guide-subheading')?.textContent).toBe('Is Lovely Home really free?');
     document.querySelector('.help-guide-close')?.dispatchEvent(new Event('click'));
 
     openHelpGuide({
@@ -55,6 +55,7 @@ describe('hub help guides', () => {
   });
 
   it('still opens the guide editor writing guide', () => {
+    document.querySelectorAll('.help-guide-overlay').forEach((el) => el.remove());
     openGuideEditorHelp({ initialSectionId: 'blocks' });
     expect(document.querySelector('.help-guide-title')?.textContent).toBe('Writing guide');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
