@@ -53,14 +53,12 @@ describe('public help catalog', () => {
     expect(OWNER_HELP_SECTIONS[1].id).toBe('common-questions');
     expect(JSON.stringify(faq)).toMatch(/Backup & restore in this guide/);
     const text = JSON.stringify(faq);
-    expect(text).toMatch(/Can I try before I pay\?/);
-    expect(text).toMatch(/When am I charged\?/);
-    expect(text).toMatch(/What if I cancel\?/);
+    expect(text).toMatch(/Is Lovely Home really free\?/);
+    expect(text).toMatch(/What if I cancel Lovely Home\+\?/);
     expect(text).toMatch(/Can I schedule stays in advance\?/);
     expect(text).toMatch(/How do referrals work\?/);
     expect(text).toMatch(/How do I get a referral link\?/);
     expect(text).toMatch(/Is this a public app\?/);
-    expect(text).toMatch(/\{billingTrialDays\}/);
     expect(text).toMatch(/\{referralMonthlyReferee\}/);
     expect(text).toMatch(/\{introMonthlyBenefit\}/);
     expect(faq.blocks.every((block) => block.type === 'h4' || block.type === 'p')).toBe(true);

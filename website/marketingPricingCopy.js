@@ -88,13 +88,11 @@ export function buildPricingMetaDescription(pricing) {
   const map = buildPlaceholderMap(pricing);
   if (!map.monthlyLabel || !map.yearlyLabel) return '';
   return (
-    'Lovely Home pricing — ' +
+    'Lovely Home pricing — Free forever for one home, or Lovely Home+ from ' +
     map.monthlyLabel +
     ' or ' +
     map.yearlyLabel +
-    ' for your private household hub. ' +
-    map.trialDays +
-    '-day free trial. Cancel anytime.'
+    ' for unlimited guides and scheduled stays.'
   );
 }
 

@@ -6,7 +6,8 @@ import { GITHUB_STRIPE_MODE_VARIABLE, setGithubActionsVariable } from './platfor
  *   secretKey: string,
  *   webhookSecret: string,
  *   priceId: string,
- *   priceIdYearly: string
+ *   priceIdYearly: string,
+ *   priceIdFree: string
  * }} StripeCredentials */
 
 export const STRIPE_MODE_SETTING_KEY = 'stripe_mode';
@@ -32,14 +33,16 @@ export function stripeCredentialsForMode(env, mode) {
       secretKey: env.STRIPE_SECRET_KEY_LIVE?.trim() || '',
       webhookSecret: env.STRIPE_WEBHOOK_SECRET_LIVE?.trim() || '',
       priceId: env.STRIPE_PRICE_ID_LIVE?.trim() || '',
-      priceIdYearly: env.STRIPE_PRICE_ID_YEARLY?.trim() || ''
+      priceIdYearly: env.STRIPE_PRICE_ID_YEARLY_LIVE?.trim() || '',
+      priceIdFree: env.STRIPE_PRICE_ID_FREE_LIVE?.trim() || ''
     };
   }
   return {
     secretKey: env.STRIPE_SECRET_KEY?.trim() || '',
     webhookSecret: env.STRIPE_WEBHOOK_SECRET?.trim() || '',
     priceId: env.STRIPE_PRICE_ID?.trim() || '',
-    priceIdYearly: env.STRIPE_PRICE_ID_YEARLY?.trim() || ''
+    priceIdYearly: env.STRIPE_PRICE_ID_YEARLY?.trim() || '',
+    priceIdFree: env.STRIPE_PRICE_ID_FREE?.trim() || ''
   };
 }
 

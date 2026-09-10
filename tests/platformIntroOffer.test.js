@@ -109,9 +109,9 @@ describe('platform intro offer', () => {
 
   it('describes benefit copy for monthly and yearly plans', () => {
     expect(introOfferBenefitCopy('month')).toMatch(/25%/);
-    expect(introOfferBenefitCopy('month')).toMatch(/first two months/i);
+    expect(introOfferBenefitCopy('month')).toMatch(/first two Lovely Home\+ months/i);
     expect(introOfferBenefitCopy('year')).toMatch(/30%/);
-    expect(introOfferBenefitCopy('year')).toMatch(/first year/i);
+    expect(introOfferBenefitCopy('year')).toMatch(/first Lovely Home\+ year/i);
   });
 
   it('treats unknown emails as eligible when they have no billing rows', async () => {
@@ -141,7 +141,7 @@ describe('platform intro offer', () => {
     });
     expect(result.apply).toBe(true);
     expect(result.interval).toBe('year');
-    expect(result.benefit).toMatch(/first year/i);
+    expect(result.benefit).toMatch(/first Lovely Home\+ year/i);
   });
 
   it('skips intro offer when a referral code is present', async () => {

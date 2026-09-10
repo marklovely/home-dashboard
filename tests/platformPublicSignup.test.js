@@ -3,11 +3,12 @@ import {
   checkPublicSignupSlug,
   handlePublicHubSignup,
   isPublicSignupSlugAvailable,
+  normalizeSignupPlan,
   publicSignupConfigured,
   publicSignupUrls,
   validatePublicSignupSiteId
 } from '../functions/api/platform/platformPublicSignup.js';
-import { resolveStripePriceId } from '../functions/api/platform/platformBilling.js';
+import { resolveStripeFreePriceId, resolveStripePriceId } from '../functions/api/platform/platformBilling.js';
 
 vi.mock('../functions/api/platform/platformGitHub.js', () => ({
   dispatchSiteManageWorkflow: vi.fn(),
@@ -19,10 +20,16 @@ vi.mock('../functions/api/platform/platformBilling.js', async (importOriginal) =
   return {
     ...actual,
     createBillingCheckoutSession: vi.fn(),
+    createFreeBillingSubscription: vi.fn(),
     stripeBillingConfigured: vi.fn(() => true),
-    getSiteBilling: vi.fn()
+    getSiteBilling: vi.fn(),
+    upsertSiteBilling: vi.fn(async () => {})
   };
 });
+
+vi.mock('../functions/api/platform/platformBillingRegistry.js', () => ({
+  maybeDispatchSignupRegistry: vi.fn(async () => ({ ok: true, action: 'registry_dispatched' }))
+}));
 
 vi.mock('../functions/api/platform/platformSignupGuards.js', async (importOriginal) => {
   const actual = await importOriginal();
@@ -41,7 +48,13 @@ vi.mock('../functions/api/platform/platformIntroOffer.js', () => ({
 }));
 
 import { dispatchSiteManageWorkflow } from '../functions/api/platform/platformGitHub.js';
-import { createBillingCheckoutSession, getSiteBilling } from '../functions/api/platform/platformBilling.js';
+import {
+  createBillingCheckoutSession,
+  createFreeBillingSubscription,
+  getSiteBilling,
+  upsertSiteBilling
+} from '../functions/api/platform/platformBilling.js';
+import { maybeDispatchSignupRegistry } from '../functions/api/platform/platformBillingRegistry.js';
 import {
   consumeSignupAttempt,
   getActiveSignupReservation,
@@ -56,6 +69,7 @@ const baseEnv = {
   STRIPE_WEBHOOK_SECRET: 'whsec_test',
   STRIPE_PRICE_ID: 'price_month',
   STRIPE_PRICE_ID_YEARLY: 'price_year',
+  STRIPE_PRICE_ID_FREE: 'price_free',
   PLATFORM_GITHUB_TOKEN: 'ghp_test',
   PLATFORM_GITHUB_REPO: 'owner/repo'
 };
@@ -81,6 +95,10 @@ describe('platform public signup', () => {
   beforeEach(() => {
     vi.mocked(dispatchSiteManageWorkflow).mockReset();
     vi.mocked(createBillingCheckoutSession).mockReset();
+    vi.mocked(createFreeBillingSubscription).mockReset();
+    vi.mocked(upsertSiteBilling).mockReset();
+    vi.mocked(maybeDispatchSignupRegistry).mockReset();
+    vi.mocked(maybeDispatchSignupRegistry).mockResolvedValue({ ok: true, action: 'registry_dispatched' });
     vi.mocked(getSiteBilling).mockReset();
     vi.mocked(getSiteBilling).mockResolvedValue(null);
     vi.mocked(getActiveSignupReservation).mockReset();
@@ -169,6 +187,13 @@ describe('platform public signup', () => {
     );
   });
 
+  it('normalizes signup plan from plan or billing interval', () => {
+    expect(normalizeSignupPlan('free')).toBe('free');
+    expect(normalizeSignupPlan('plus')).toBe('plus');
+    expect(normalizeSignupPlan(undefined, 'free')).toBe('free');
+    expect(normalizeSignupPlan(undefined, 'year')).toBe('plus');
+  });
+
   it('returns a checkout URL without touching the registry', async () => {
     vi.mocked(createBillingCheckoutSession).mockResolvedValue({
       ok: true,
@@ -176,12 +201,14 @@ describe('platform public signup', () => {
       sessionId: 'cs_test'
     });
 
-    const result = await handlePublicHubSignup(baseEnv, signupInput());
+    const result = await handlePublicHubSignup(baseEnv, signupInput({ plan: 'plus' }));
 
     expect(result.ok).toBe(true);
     expect(result.body.checkoutUrl).toBe('https://checkout.stripe.com/test');
+    expect(result.body.plan).toBe('plus');
     // Infrastructure must never be triggered before Stripe confirms payment.
     expect(dispatchSiteManageWorkflow).not.toHaveBeenCalled();
+    expect(createFreeBillingSubscription).not.toHaveBeenCalled();
     expect(createBillingCheckoutSession).toHaveBeenCalledWith(
       baseEnv,
       expect.objectContaining({
@@ -191,6 +218,63 @@ describe('platform public signup', () => {
         successUrl: expect.stringContaining('signup-success?')
       })
     );
+  });
+
+  it('provisions Free signups without Stripe Checkout', async () => {
+    vi.mocked(createFreeBillingSubscription).mockResolvedValue({
+      ok: true,
+      customerId: 'cus_free',
+      subscriptionId: 'sub_free',
+      status: 'active',
+      trialEnd: null
+    });
+
+    const result = await handlePublicHubSignup(baseEnv, signupInput({ plan: 'free' }));
+
+    expect(result.ok).toBe(true);
+    expect(result.body.plan).toBe('free');
+    expect(result.body.successUrl).toBe('https://lovely-home.co.uk/signup-success?site=rose-cottage');
+    expect(result.body.checkoutUrl).toBeUndefined();
+    expect(createBillingCheckoutSession).not.toHaveBeenCalled();
+    expect(createFreeBillingSubscription).toHaveBeenCalledWith(
+      baseEnv,
+      expect.objectContaining({
+        siteId: 'rose-cottage',
+        customerEmail: 'owner@example.com'
+      })
+    );
+    expect(upsertSiteBilling).toHaveBeenCalledWith(
+      billingDb,
+      expect.objectContaining({
+        site_id: 'rose-cottage',
+        stripe_customer_id: 'cus_free',
+        stripe_subscription_id: 'sub_free',
+        status: 'active',
+        owner_email: 'owner@example.com'
+      })
+    );
+    expect(maybeDispatchSignupRegistry).toHaveBeenCalledWith(
+      baseEnv,
+      billingDb,
+      emptyManifest,
+      expect.objectContaining({
+        siteId: 'rose-cottage',
+        eventType: 'customer.subscription.created',
+        status: 'active'
+      })
+    );
+    expect(releaseSignupReservation).toHaveBeenCalledWith(billingDb, 'rose-cottage');
+  });
+
+  it('rejects referral links on the Free plan', async () => {
+    const result = await handlePublicHubSignup(
+      baseEnv,
+      signupInput({ plan: 'free', referralCode: 'FRIEND123' })
+    );
+
+    expect(result.status).toBe(400);
+    expect(result.body.error).toBe('REFERRAL_REQUIRES_PLUS');
+    expect(createFreeBillingSubscription).not.toHaveBeenCalled();
   });
 
   it('adds returning=1 to the success URL when the original owner reclaims a held hub', async () => {
@@ -334,7 +418,7 @@ describe('platform public signup', () => {
       sessionId: 'cs_test_year'
     });
 
-    await handlePublicHubSignup(baseEnv, signupInput({ billingInterval: 'year' }));
+    await handlePublicHubSignup(baseEnv, signupInput({ plan: 'plus', billingInterval: 'year' }));
 
     expect(createBillingCheckoutSession).toHaveBeenCalledWith(
       baseEnv,
@@ -387,9 +471,10 @@ describe('platform public signup', () => {
     expect(createBillingCheckoutSession).not.toHaveBeenCalled();
   });
 
-  it('resolves monthly and yearly Stripe price ids', () => {
+  it('resolves monthly, yearly, and free Stripe price ids', () => {
     expect(resolveStripePriceId(baseEnv, 'month')).toBe('price_month');
     expect(resolveStripePriceId(baseEnv, 'year')).toBe('price_year');
     expect(resolveStripePriceId(baseEnv, 'yearly')).toBe('price_year');
+    expect(resolveStripeFreePriceId(baseEnv)).toBe('price_free');
   });
 });

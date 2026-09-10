@@ -142,33 +142,36 @@ export function computeAnnualSavings(monthPlan, yearPlan) {
 export function buildPublicPricingFromPlans(plans, productName, options = {}) {
   const monthPlan = plans.month ?? null;
   const yearPlan = plans.year ?? null;
-  const trialDays = Number.isFinite(Number(options.trialDays)) ? Number(options.trialDays) : TRIAL_PERIOD_DAYS;
+  const trialDays = Number.isFinite(Number(options.trialDays)) ? Number(options.trialDays) : 0;
   const savings = computeAnnualSavings(monthPlan, yearPlan);
   const monthlyLabel = monthPlan?.label || null;
   const yearlyLabel = yearPlan?.label || null;
+  const displayProductName = productName?.trim() ? productName : 'Lovely Home';
 
-  let checkoutSummary = `${trialDays}-day free trial — card on file, no charge today.`;
+  let checkoutSummary =
+    'Free forever for one home — two guides and two scheduled stays.';
   if (monthlyLabel && yearlyLabel) {
-    checkoutSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel} after your ${trialDays}-day trial. Cancel anytime before then.`;
+    checkoutSummary = `Free forever for one home — two guides and two scheduled stays. Lovely Home+ from ${monthlyLabel} or ${yearlyLabel} removes limits.`;
   } else if (monthlyLabel) {
-    checkoutSummary = `£0 today — ${monthlyLabel} after your ${trialDays}-day trial. Cancel anytime before then.`;
+    checkoutSummary = `Free forever for one home — two guides and two scheduled stays. Lovely Home+ from ${monthlyLabel} removes limits.`;
   } else if (yearlyLabel) {
-    checkoutSummary = `£0 today — ${yearlyLabel} after your ${trialDays}-day trial. Cancel anytime before then.`;
+    checkoutSummary = `Free forever for one home — two guides and two scheduled stays. Lovely Home+ from ${yearlyLabel} removes limits.`;
   }
 
-  let signupSummary = `${trialDays}-day free trial — set up the hub before anyone stays. Card on file.`;
+  let signupSummary =
+    'Create your free home — one home, two guides, two scheduled stays, free forever.';
   if (monthlyLabel && yearlyLabel) {
-    signupSummary = `£0 today — then ${monthlyLabel} or ${yearlyLabel}. Use the trial to set up before guests arrive.`;
+    signupSummary = `Create your free home — one home, two guides, two scheduled stays, free forever. Upgrade to Lovely Home+ (${monthlyLabel} or ${yearlyLabel}) anytime for unlimited guides and scheduled stays.`;
   } else if (monthlyLabel) {
-    signupSummary = `£0 today — then ${monthlyLabel}. Use the trial to set up before guests arrive.`;
+    signupSummary = `Create your free home — one home, two guides, two scheduled stays, free forever. Upgrade to Lovely Home+ (${monthlyLabel}) anytime for unlimited guides and scheduled stays.`;
   } else if (yearlyLabel) {
-    signupSummary = `£0 today — then ${yearlyLabel}. Use the trial to set up before guests arrive.`;
+    signupSummary = `Create your free home — one home, two guides, two scheduled stays, free forever. Upgrade to Lovely Home+ (${yearlyLabel}) anytime for unlimited guides and scheduled stays.`;
   }
 
   return {
     configured: Boolean(monthPlan || yearPlan),
     trialDays,
-    productName,
+    productName: displayProductName,
     plans: {
       ...(monthPlan ? { month: monthPlan } : {}),
       ...(yearPlan ? { year: yearPlan } : {})
@@ -193,16 +196,15 @@ export async function fetchStripePlanPricing(env) {
   const secretKey = credentials.secretKey;
   const monthlyPriceId = credentials.priceId;
   const yearlyPriceId = credentials.priceIdYearly;
-  const trialDays = TRIAL_PERIOD_DAYS;
-  const empty = buildPublicPricingFromPlans({}, 'Household Hub');
+  const empty = buildPublicPricingFromPlans({}, 'Lovely Home');
 
   if (!secretKey || (!monthlyPriceId && !yearlyPriceId)) {
-    return { ...empty, configured: false, trialDays };
+    return { ...empty, configured: false, trialDays: 0 };
   }
 
   /** @type {Partial<Record<BillingIntervalKey, PublicPlanOption>>} */
   const plans = {};
-  let productName = 'Household Hub';
+  let productName = 'Lovely Home';
 
   const fetches = [];
   if (monthlyPriceId) {

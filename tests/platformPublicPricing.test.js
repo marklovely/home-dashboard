@@ -82,12 +82,16 @@ describe('platform public pricing', () => {
       recurring: { interval: 'year', interval_count: 1 }
     }).option;
 
-    const pricing = buildPublicPricingFromPlans({ month, year }, 'Household Hub');
+    const pricing = buildPublicPricingFromPlans({ month, year }, 'Lovely Home');
     expect(pricing.monthlyLabel).toBe('£9.99/month');
     expect(pricing.yearlyLabel).toBe('£99.00/year');
+    expect(pricing.trialDays).toBe(0);
+    expect(pricing.checkoutSummary).toContain('Free forever');
+    expect(pricing.checkoutSummary).toContain('Lovely Home+');
     expect(pricing.checkoutSummary).toContain('£9.99/month');
     expect(pricing.checkoutSummary).toContain('£99.00/year');
-    expect(pricing.signupSummary).toContain('guests');
+    expect(pricing.signupSummary).toContain('Create your free home');
+    expect(pricing.signupSummary).toContain('Lovely Home+');
     expect(pricing.checkoutSummary).not.toMatch(/VAT/i);
     expect(pricing.signupSummary).not.toMatch(/VAT/i);
     expect(pricing.vatNote).toBe('');
@@ -97,7 +101,7 @@ describe('platform public pricing', () => {
     const pricing = await getPublicPlanPricing({});
     expect(pricing.configured).toBe(false);
     expect(pricing.monthlyLabel).toBeNull();
-    expect(pricing.trialDays).toBe(7);
+    expect(pricing.trialDays).toBe(0);
   });
 
   it('fetches monthly and yearly Stripe prices when configured', async () => {
@@ -127,7 +131,7 @@ describe('platform public pricing', () => {
     expect(pricing.annualSavingsPercent).toBe(17);
     expect(pricing.billingTrialDays).toBe(7);
     expect(pricing.displayCopy?.monthlyLabel).toBe('£9.99/month');
-    expect(pricing.displayCopy?.referralMonthlyReferee).toMatch(/£5 off/);
+    expect(pricing.displayCopy?.referralMonthlyReferee).toMatch(/£2\.50 off/);
   });
 
   it('builds display copy for help and FAQ hydration', () => {
@@ -146,6 +150,25 @@ describe('platform public pricing', () => {
     const displayCopy = buildPublicDisplayCopy(pricing, {});
     expect(displayCopy.billingTrialDays).toBe(7);
     expect(displayCopy.introMonthlyBenefit).toMatch(/25%/);
-    expect(displayCopy.referralMonthlyReferrer).toMatch(/£10 account credit/);
+    expect(displayCopy.referralMonthlyReferrer).toMatch(/£5 account credit/);
+  });
+
+  it('builds Lovely Home+ copy from £4.99 / £44.99 plans', () => {
+    const month = buildPlanOptionFromStripePrice({
+      currency: 'gbp',
+      unit_amount: 499,
+      recurring: { interval: 'month', interval_count: 1 }
+    }).option;
+    const year = buildPlanOptionFromStripePrice({
+      currency: 'gbp',
+      unit_amount: 4499,
+      recurring: { interval: 'year', interval_count: 1 }
+    }).option;
+
+    const pricing = buildPublicPricingFromPlans({ month, year }, 'Lovely Home');
+    expect(pricing.checkoutSummary).toBe(
+      'Free forever for one home — two guides and two scheduled stays. Lovely Home+ from £4.99/month or £44.99/year removes limits.'
+    );
+    expect(pricing.annualSavingsLabel).toContain('£14.89');
   });
 });

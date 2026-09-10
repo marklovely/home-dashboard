@@ -41,13 +41,13 @@ export function normalizeReferralBillingInterval(billingInterval) {
 export function referralBenefitCopy(interval) {
   if (interval === 'year') {
     return {
-      referee: '£15 off your first year (applied on your first invoice after the trial)',
-      referrer: '£15 account credit when their first invoice is paid'
+      referee: '£10 off their first Lovely Home+ year (on their first paid invoice)',
+      referrer: '£10 account credit when their first invoice is paid'
     };
   }
   return {
-    referee: '£5 off each of your first two months (starting on your first invoice after the trial)',
-    referrer: '£10 account credit when their first invoice is paid'
+    referee: '£2.50 off each of their first two Lovely Home+ months (on their first paid invoice)',
+    referrer: '£5 account credit when their first invoice is paid'
   };
 }
 

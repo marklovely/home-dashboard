@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="Lovely Home pricing — £9.99/month or £99/year for your private household hub. 7-day free trial. Cancel anytime.">
+  <meta name="description" content="Lovely Home pricing — Free forever for one home, or Lovely Home+ from £4.99/month or £44.99/year for unlimited guides and scheduled stays.">
   <meta name="lovely-platform-api" content="https://platform.lovely-home.co.uk">
   <title>Lovely Home — Pricing</title>
   <link rel="canonical" href="https://lovely-home.co.uk/pricing">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Lovely Home">
   <meta property="og:title" content="Lovely Home — Pricing">
-  <meta property="og:description" content="Lovely Home pricing — £9.99/month or £99/year for your private household hub. 7-day free trial. Cancel anytime.">
+  <meta property="og:description" content="Free forever for one home — or Lovely Home+ for unlimited guides and scheduled stays. £4.99/month or £44.99/year.">
   <meta property="og:url" content="https://lovely-home.co.uk/pricing">
   <meta property="og:image" content="https://lovely-home.co.uk/lovely-home-og.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Lovely Home — Pricing">
-  <meta name="twitter:description" content="Lovely Home pricing — £9.99/month or £99/year for your private household hub. 7-day free trial. Cancel anytime.">
+  <meta name="twitter:description" content="Free forever for one home — or Lovely Home+ for unlimited guides and scheduled stays.">
   <link rel="icon" href="lovely-home-icon.svg" type="image/svg+xml">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="favicon.png">
@@ -44,7 +44,7 @@
         <a href="/">Home</a>
         <a href="/included">What's included</a>
         <a href="/pricing">Pricing</a>
-        <a href="/signup">Start trial</a>
+        <a href="/signup">Create free home</a>
         <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
         <a href="/app">See the hub</a>
         <a href="/account">Account</a>
@@ -61,9 +61,9 @@
 
     <main class="landing inner-page pricing-page">
       <header class="page-hero pricing-page-head">
-        <p class="hero-eyebrow"><span></span> Simple &amp; transparent</p>
+        <p class="hero-eyebrow"><span></span> Simple &amp; honest</p>
         <h1>Pricing</h1>
-        <p class="hero-lead">One plan for one household. No tiers, no per-seat fees, no hidden add-ons.</p>
+        <p class="hero-lead">Start on Free — genuinely useful, free forever. Upgrade to Lovely Home+ only when you want unlimited guides and scheduled stays for your home.</p>
       </header>
 
       <section class="pricing-intro-offer" id="intro-offer" hidden aria-label="Introductory offer for new households">
@@ -73,67 +73,181 @@
         </div>
       </section>
 
-      <section class="pricing-plans" aria-label="Choose monthly or yearly">
-        <div class="pricing-plans-grid">
+      <section class="pricing-plans" aria-label="Free and Lovely Home+">
+        <div class="pricing-plans-grid pricing-plans-grid--tiers">
           <article class="pricing-card">
-            <span class="pricing-badge-slot" aria-hidden="true"></span>
-            <p class="pricing-plan-name">Pay monthly</p>
-            <div class="pricing-price" data-pricing="plan-amount" data-plan="month">
-              <span class="pricing-amount">£9.99</span><span class="pricing-interval">/month</span>
+            <p class="pricing-plan-name">Free</p>
+            <div class="pricing-price">
+              <span class="pricing-amount">£0</span><span class="pricing-interval"> forever</span>
             </div>
-            <p class="pricing-trial-tag"><strong>£0 today</strong> — <span data-pricing="trial-days">7</span>-day free trial</p>
-            <p class="pricing-summary muted">Flexible — cancel anytime.</p>
-            <a class="btn btn-primary btn-block pricing-card-cta" href="/signup?plan=month">Start monthly trial</a>
+            <p class="pricing-tagline muted">Everything you need to get started.</p>
+            <ul class="pricing-list pricing-list--yes pricing-list--compact">
+              <li>1 home</li>
+              <li>Up to 2 guides</li>
+              <li>Up to 2 scheduled stays</li>
+              <li>Owner mode and all audience types</li>
+              <li>House sitter, pet sitter, guest, Airbnb, tenant, family</li>
+              <li>Home Hub — weather, bins, guide, Alexa routines</li>
+            </ul>
+            <a class="btn btn-primary btn-block pricing-card-cta" href="/signup">Create your free home</a>
           </article>
 
           <article class="pricing-card pricing-card--featured">
-            <span class="pricing-badge-slot"><span class="pricing-badge" data-pricing="annual-savings">Save 17%</span></span>
-            <p class="pricing-plan-name">Pay yearly</p>
+            <span class="pricing-badge-slot"><span class="pricing-badge" data-pricing="annual-savings">Best value</span></span>
+            <p class="pricing-plan-name">Lovely Home+</p>
             <div class="pricing-price" data-pricing="plan-amount" data-plan="year">
-              <span class="pricing-amount">£99.00</span><span class="pricing-interval">/year</span>
+              <span class="pricing-amount">£44.99</span><span class="pricing-interval">/year</span>
             </div>
-            <p class="pricing-trial-tag"><strong>£0 today</strong> — <span data-pricing="trial-days">7</span>-day free trial</p>
-            <p class="pricing-summary muted">Best value — two months free vs monthly.</p>
-            <a class="btn btn-primary btn-block pricing-card-cta" href="/signup?plan=year">Start yearly trial</a>
+            <p class="pricing-dual-line pricing-dual-line--small">or <span data-pricing="monthly-label">£4.99/month</span></p>
+            <p class="pricing-tagline muted">Your whole home, without limits.</p>
+            <ul class="pricing-list pricing-list--yes pricing-list--compact">
+              <li>1 home</li>
+              <li>Unlimited guides</li>
+              <li>Unlimited scheduled stays</li>
+              <li>Everything in Free, without usage limits</li>
+            </ul>
+            <div class="pricing-plus-ctas">
+              <a class="btn btn-primary btn-block pricing-card-cta" href="/signup?plan=year">Get Lovely Home+ yearly</a>
+              <a class="btn btn-secondary btn-block" href="/signup?plan=month">Monthly instead</a>
+            </div>
           </article>
+        </div>
+        <p class="plan-compare-jump muted"><a href="#compare">Compare all features ↓</a></p>
+      </section>
+
+      <section class="plan-compare-section" id="compare" aria-label="Compare Free and Lovely Home+">
+        <div class="section-head section-head--wide">
+          <h2>Compare plans</h2>
+          <p>The same home hub on both plans — every audience type, every day. Lovely Home+ simply removes the limits on guides and scheduled stays.</p>
+        </div>
+        <div class="plan-compare-wrap">
+          <table class="plan-compare">
+            <thead>
+              <tr>
+                <th scope="col"><span class="visually-hidden">Feature</span></th>
+                <th scope="col" class="plan-compare-col plan-compare-col--free">Free</th>
+                <th scope="col" class="plan-compare-col plan-compare-col--plus">Lovely Home+</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Homes</th>
+                <td>1</td>
+                <td>1</td>
+              </tr>
+              <tr>
+                <th scope="row">Home Hub</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Owner mode</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Guest mode</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr>
+                <th scope="row">House sitter</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Pet sitter</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Airbnb / holiday let</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Tenant</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Family</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr class="plan-compare-row--highlight">
+                <th scope="row">House guides</th>
+                <td>2</td>
+                <td>Unlimited</td>
+              </tr>
+              <tr class="plan-compare-row--highlight">
+                <th scope="row">Scheduled stays</th>
+                <td>2</td>
+                <td>Unlimited</td>
+              </tr>
+              <tr>
+                <th scope="row">Time-controlled access</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Bins / weather / home information</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Smart-home features</th>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+                <td><span class="plan-compare-yes" aria-label="Included">✓</span></td>
+              </tr>
+              <tr class="plan-compare-row--price">
+                <th scope="row">Price</th>
+                <td><strong>Free</strong></td>
+                <td><strong><span data-pricing="monthly-label">£4.99/month</span></strong> or <strong><span data-pricing="yearly-label">£44.99/year</span></strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="plan-compare-ctas">
+          <a class="btn btn-primary" href="/signup">Create your free home</a>
+          <a class="btn btn-secondary" href="/signup?plan=year">Get Lovely Home+</a>
         </div>
       </section>
 
       <section class="pricing-details-panel" aria-label="Plan details">
         <div class="pricing-details">
           <section>
-            <h2>What’s included</h2>
+            <h2>What every plan includes</h2>
             <ul class="pricing-list pricing-list--yes">
               <li>Private hub at <code>{your-name}.lovely-hub.com</code></li>
               <li>Hosting, HTTPS, and platform updates</li>
               <li>House guide with photos and search</li>
               <li>Bin reminders, weather, and guest home screen</li>
-              <li>Scheduled guest stays — book several stays in one list</li>
+              <li>Scheduled stays — timed guide and home-access unlock</li>
               <li>Alexa routine buttons (when you connect Virtual Buttons)</li>
-              <li>Owner sign-in plus guest mode</li>
+              <li>Owner sign-in plus guest / sitter experiences</li>
               <li>Password-encrypted full backup — guide, home details, secrets, photos, and appliance PDFs</li>
               <li>Email support</li>
             </ul>
-            <p class="muted">Full list, including what needs your own account: <a href="/included">What's included</a>.</p>
+            <p class="muted">Full feature list: <a href="/included">What's included</a>.</p>
           </section>
 
           <section>
-            <h2>Not included</h2>
+            <h2>Not included (yet)</h2>
             <ul class="pricing-list pricing-list--no">
+              <li>Multiple homes on one account — coming later; not available today</li>
               <li>Wall tablet or kiosk hardware — optional; we do not sell it</li>
               <li>Alexa devices or smart-home gear</li>
-              <li>Multiple households on one subscription</li>
             </ul>
           </section>
 
           <section>
             <h2>How billing works</h2>
             <ol class="pricing-steps">
-              <li><strong>Sign up</strong> — pick a hub address and email. Stripe Checkout collects your card; you are not charged today. Stripe shows the first charge date before you confirm.</li>
-              <li><strong>Trial</strong> — <span data-pricing="trial-days">7</span> days to get the hub ready before guests arrive. The trial is for setup, not a complimentary stay. A wall tablet is optional.</li>
-              <li><strong>After the trial</strong> — your saved card is charged <span data-pricing="monthly-label">£9.99/month</span> or <span data-pricing="yearly-label">£99/year</span> (whichever you chose), unless you cancel first.</li>
-              <li><strong>Cancel</strong> — use <a href="/account">your account page</a> (we email a code to the signup address), or email <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a> with your hub address. Stop before the trial ends and pay nothing. After a paid period, cancel anytime; access continues until that period ends.</li>
-              <li><strong>When it ends</strong> — the live hub is taken down and archived. Download a password-encrypted full backup from Settings while the hub is still up if you want photos and PDFs — our platform archive on cancel is guide JSON only.</li>
+              <li><strong>Free plan</strong> — create your home at <a href="/signup">/signup</a>. No charge for one home with up to two guides and two scheduled stays. Free forever — no upgrade required unless you hit the limits.</li>
+              <li><strong>Lovely Home+</strong> — upgrade from your hub or choose Plus at signup. Pay <span data-pricing="monthly-label">£4.99/month</span> or <span data-pricing="yearly-label">£44.99/year</span> (yearly is best value). Stripe handles billing securely.</li>
+              <li><strong>Cancel Plus</strong> — use <a href="/account">your account page</a> or email <a href="mailto:support@lovely-home.co.uk">support@lovely-home.co.uk</a>. After a paid period ends, Plus features revert to Free limits unless you renew.</li>
+              <li><strong>When a hub ends</strong> — if you cancel entirely, the live hub is taken down and archived. Download a password-encrypted full backup from Settings while the hub is still up if you want photos and PDFs — our platform archive on cancel is guide JSON only.</li>
             </ol>
             <p class="muted pricing-vat">Prices are as shown. VAT is not charged. <a href="/terms">Terms of service</a>.</p>
           </section>
@@ -143,11 +257,11 @@
       <section class="pricing-offers-summary" id="offers" hidden aria-label="Introductory offer and referrals">
         <div class="section-head">
           <h2>Introductory offer &amp; referrals</h2>
-          <p>New households can use the launch discount below when it is active. Friend referral links replace that discount if you use one.</p>
+          <p>New households may see a launch discount on Lovely Home+ when it is active. Friend referral links replace that discount if you use one.</p>
         </div>
         <div class="referral-grid">
           <article class="referral-card" id="pricing-intro-offer-card">
-            <h3>Introductory offer (new households)</h3>
+            <h3>Introductory offer (Lovely Home+)</h3>
             <ul class="pricing-list pricing-list--yes">
               <li><strong>Monthly:</strong> <span data-intro-offer="monthly-benefit"></span></li>
               <li><strong>Yearly:</strong> <span data-intro-offer="yearly-benefit"></span></li>
@@ -155,7 +269,7 @@
             <p class="muted" data-intro-offer="checkout-note"></p>
           </article>
           <article class="referral-card">
-            <h3>Refer a friend (existing customers)</h3>
+            <h3>Refer a friend (Lovely Home+ customers)</h3>
             <ul class="pricing-list pricing-list--yes">
               <li>Your friend saves on their first invoice(s) — see <a href="#referrals">Refer a friend</a> below</li>
               <li>You get account credit when their first invoice is paid</li>
@@ -168,28 +282,27 @@
       <section class="pricing-referral" id="referrals" aria-label="Refer a friend">
         <div class="section-head">
           <h2>Refer a friend</h2>
-          <p>Share Lovely Home with another household — you both benefit when they subscribe after the trial.</p>
+          <p>Share Lovely Home with another household — you both benefit when they subscribe to Lovely Home+.</p>
         </div>
         <div class="referral-grid">
           <article class="referral-card">
             <h3>For your friend</h3>
             <ul class="pricing-list pricing-list--yes">
-              <li><strong>Monthly plan:</strong> <span data-referral="monthly-referee">£5 off each of their first two months (starting on the first invoice after the trial)</span></li>
-              <li><strong>Yearly plan:</strong> <span data-referral="yearly-referee">£15 off their first year (on the first invoice after the trial)</span></li>
+              <li><strong>Monthly plan:</strong> <span data-referral="monthly-referee">£2.50 off each of their first two Lovely Home+ months</span></li>
+              <li><strong>Yearly plan:</strong> <span data-referral="yearly-referee">£10 off their first Lovely Home+ year</span></li>
             </ul>
-            <p class="muted">They still get the same <span data-pricing="trial-days">7</span>-day trial — the discount applies when billing begins, not at signup.</p>
           </article>
           <article class="referral-card">
             <h3>For you</h3>
             <ul class="pricing-list pricing-list--yes">
-              <li><strong>Monthly referral:</strong> <span data-referral="monthly-referrer">£10 account credit when their first invoice is paid</span></li>
-              <li><strong>Yearly referral:</strong> <span data-referral="yearly-referrer">£15 account credit when their first invoice is paid</span></li>
+              <li><strong>Monthly referral:</strong> <span data-referral="monthly-referrer">£5 account credit when their first invoice is paid</span></li>
+              <li><strong>Yearly referral:</strong> <span data-referral="yearly-referrer">£10 account credit when their first invoice is paid</span></li>
             </ul>
             <p class="muted">Credit is applied to your Stripe account — it comes off your next renewal.</p>
           </article>
         </div>
         <div class="referral-steps">
-          <p><strong>Already a customer?</strong> Sign in at <a href="/account">your account page</a>, pick monthly or yearly for the link, and share the URL. Each link is single-use — generate as many as you need.</p>
+          <p><strong>Already on Lovely Home+?</strong> Sign in at <a href="/account">your account page</a>, pick monthly or yearly for the link, and share the URL. Each link is single-use — generate as many as you need.</p>
           <p class="muted">Got a link from a friend? It opens signup with the discount already applied. You cannot refer yourself, and each code matches one billing plan.</p>
         </div>
       </section>
@@ -203,10 +316,10 @@
       </section>
 
       <section class="final-cta pricing-final-cta">
-        <p class="cta-note" data-pricing="hero-note"><strong>7-day trial</strong> to set up before guests arrive — <strong>£0 today</strong>, then <strong>£9.99/month</strong> or <strong>£99.00/year</strong>. Cancel anytime before billing starts.</p>
+        <p class="cta-note" data-pricing="hero-note"><strong>Free forever</strong> for one home — two guides and two scheduled stays. <strong>Lovely Home+</strong> from <strong>£4.99/month</strong> or <strong>£44.99/year</strong> removes limits.</p>
         <div class="cta-row">
-          <a class="btn btn-primary" href="/signup">Start free trial</a>
-          <a class="btn btn-secondary" href="https://demo.lovely-home.co.uk/sign-in">Try the demo</a>
+          <a class="btn btn-primary" href="/signup">Create your free home</a>
+          <a class="btn btn-secondary" href="https://demo.lovely-home.co.uk/sign-in">See how it works</a>
         </div>
       </section>
     </main>
@@ -216,7 +329,7 @@
       <nav class="site-footer-nav" aria-label="Footer">
         <a href="/included">What's included</a>
         <a href="/pricing">Pricing</a>
-        <a href="/signup">Start trial</a>
+        <a href="/signup">Create free home</a>
         <a href="https://demo.lovely-home.co.uk/sign-in">Try demo</a>
         <a href="/account">Account</a>
         <a href="/help">Help</a>

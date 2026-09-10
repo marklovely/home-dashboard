@@ -78,7 +78,7 @@ describe('platform marketing pricing', () => {
     expect(effective.monthlyLabel).toBe('£8.99/month');
     expect(effective.checkoutSummary).toBe('Custom checkout copy.');
     expect(effective.plans.month?.unitAmountMinor).toBe(999);
-    expect(effective.referral?.monthlyReferee).toMatch(/£5 off/);
+    expect(effective.referral?.monthlyReferee).toMatch(/£2\.50 off/);
   });
 
   it('uses referral copy overrides for previews', () => {
