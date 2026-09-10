@@ -366,6 +366,11 @@ export function createBinScheduleDateEditor(options = {}) {
     },
     readHouseholdAndGarden() {
       return splitDraftEntries(entries);
+    },
+    /** @param {import('../../lib/binScheduleProfile.js').BinScheduleProfile} nextSchedule */
+    setSchedule(nextSchedule) {
+      entries = draftEntriesFromSchedule(normalizeBinSchedule(nextSchedule));
+      renderEntryList();
     }
   };
 }
