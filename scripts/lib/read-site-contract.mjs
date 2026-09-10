@@ -10,24 +10,44 @@ import { parseHubProxySecretsFromTerraformState, parseTerraformJsonOutput, terra
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const tfDir = join(root, 'terraform');
+const TERRAFORM_SUBPROCESS_TIMEOUT_MS = 5000;
+
+/** @type {Map<string, unknown>} */
+const terraformOutputCache = new Map();
+/** @type {Set<string>} */
+const terraformOutputFailures = new Set();
 
 /**
  * @param {string} name
  */
 function readTerraformOutput(name) {
-  const raw = execFileSync('terraform', ['output', '-json', name], {
-    cwd: tfDir,
-    encoding: 'utf8',
-    timeout: 5000
-  });
-  return parseTerraformJsonOutput(raw);
+  if (terraformOutputCache.has(name)) {
+    return terraformOutputCache.get(name);
+  }
+  if (terraformOutputFailures.has(name)) {
+    throw new Error(`terraform output "${name}" unavailable (cached failure).`);
+  }
+
+  try {
+    const raw = execFileSync('terraform', ['output', '-json', name], {
+      cwd: tfDir,
+      encoding: 'utf8',
+      timeout: TERRAFORM_SUBPROCESS_TIMEOUT_MS
+    });
+    const parsed = parseTerraformJsonOutput(raw);
+    terraformOutputCache.set(name, parsed);
+    return parsed;
+  } catch (error) {
+    terraformOutputFailures.add(name);
+    throw error;
+  }
 }
 
 /**
  * @param {string} siteId
- * @returns {{ site: Record<string, unknown>, source: 'terraform' | 'manifest' | 'registry' } | null}
+ * @returns {{ site: Record<string, unknown>, source: 'terraform' } | null}
  */
-export function readSiteContract(siteId) {
+export function readSiteFromTerraformOutput(siteId) {
   try {
     const sites = /** @type {Record<string, Record<string, unknown>>} */ (
       readTerraformOutput('sites') ?? {}
@@ -38,6 +58,18 @@ export function readSiteContract(siteId) {
     }
   } catch {
     // fall through
+  }
+  return null;
+}
+
+/**
+ * @param {string} siteId
+ * @returns {{ site: Record<string, unknown>, source: 'terraform' | 'manifest' | 'registry' } | null}
+ */
+export function readSiteContract(siteId) {
+  const fromTerraform = readSiteFromTerraformOutput(siteId);
+  if (fromTerraform) {
+    return fromTerraform;
   }
 
   const resolved = resolveSiteArchiveContract(siteId);
@@ -64,7 +96,7 @@ export function readHubProxySecret(siteId) {
       cwd: tfDir,
       encoding: 'utf8',
       maxBuffer: 32 * 1024 * 1024,
-      timeout: 5000
+      timeout: TERRAFORM_SUBPROCESS_TIMEOUT_MS
     });
     const fromState = parseHubProxySecretsFromTerraformState(raw)[siteId]?.trim();
     if (fromState) return fromState;

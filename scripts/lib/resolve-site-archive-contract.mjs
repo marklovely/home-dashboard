@@ -1,8 +1,10 @@
 /**
  * Resolve hostname / worker origin for pre-deprovision archive when Terraform
  * output is missing (e.g. per-site customer state before outputs were refreshed).
+ *
+ * Does not shell out to terraform-site-output.mjs — readSiteContract() owns the
+ * terraform output path to avoid recursive subprocess spawning.
  */
-import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,9 +12,7 @@ import { loadSitesYaml } from './load-sites-yaml.mjs';
 import { suggestedWorkerName } from './site-registry.mjs';
 import { CUSTOMER_HUB_ZONE_NAME, defaultHostnameForSite } from './hub-zones.mjs';
 
-const moduleDir = dirname(fileURLToPath(import.meta.url));
-const root = join(moduleDir, '../..');
-const TERRAFORM_SUBPROCESS_TIMEOUT_MS = 5000;
+const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
 /**
  * @param {string} siteId
@@ -34,23 +34,6 @@ function contractHasArchiveTarget(contract) {
   return Boolean(
     String(contract?.worker_api_origin ?? '').trim() || String(contract?.hostname ?? '').trim()
   );
-}
-
-/**
- * @param {string} siteId
- */
-function readTerraformSiteContract(siteId) {
-  try {
-    const raw = execFileSync(
-      'node',
-      [join(root, 'scripts/lib/terraform-site-output.mjs'), 'site', siteId],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: TERRAFORM_SUBPROCESS_TIMEOUT_MS }
-    );
-    const contract = JSON.parse(raw);
-    return contractHasArchiveTarget(contract) ? contract : null;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -124,14 +107,9 @@ function readConventionCustomerSiteContract(siteId) {
 
 /**
  * @param {string} siteId
- * @returns {{ site: Record<string, unknown>, source: 'terraform' | 'manifest' | 'registry' | 'convention' } | null}
+ * @returns {{ site: Record<string, unknown>, source: 'manifest' | 'registry' | 'convention' } | null}
  */
 export function resolveSiteArchiveContract(siteId) {
-  const fromTerraform = readTerraformSiteContract(siteId);
-  if (fromTerraform) {
-    return { site: fromTerraform, source: 'terraform' };
-  }
-
   const fromManifest = readManifestSiteContract(siteId);
   if (fromManifest) {
     return { site: fromManifest, source: 'manifest' };
