@@ -1,5 +1,6 @@
 import { defineApp } from '../../components/App/defineApp.js';
 import { renderIcon } from '../../components/icons/renderIcon.js';
+import { showConfirmDialog } from '../../components/ConfirmDialog/confirmDialog.js';
 import { showToast } from '../../js/modules/toast.js';
 import {
   applyGuestAccessDisplayValues,
@@ -29,8 +30,15 @@ import { importHouseGuideCatalog } from '../../api/houseGuideApi.js';
 import { createCalendarConnectionField } from '../../components/HubSetup/binScheduleFields.js';
 import { createBinScheduleHubPanel } from '../../components/HubSetup/binScheduleHubPanel.js';
 import {
+  readBinScheduleFromProfile,
   validateBinSchedule
 } from '../../lib/binScheduleProfile.js';
+import {
+  buildPropertyAddressChangeConfirmMessage,
+  planPropertyAddressChange,
+  shouldConfirmPropertyAddressChange
+} from '../../lib/propertyAddressChange.js';
+import { clearBinAlertDismissal } from '../../services/binAlertDismissalService.js';
 import {
   fetchHubSecretsConfigured,
   getHubDisplayName,
@@ -668,12 +676,50 @@ function mountHubSetupWizard(viewport, context) {
             showToast(context.toast, addressError);
             return;
           }
+          const liveProfile = getSiteProfileState()?.profile ?? {};
+          const addressPlan = planPropertyAddressChange({
+            previousAddress: liveProfile.propertyAddress,
+            nextAddress: addressPatch.propertyAddress,
+            profile: liveProfile
+          });
+          if (
+            addressPlan.addressChanged &&
+            shouldConfirmPropertyAddressChange(
+              liveProfile.propertyAddress,
+              addressPatch.propertyAddress,
+              liveProfile
+            )
+          ) {
+            const confirmed = await showConfirmDialog({
+              title: 'Change property address?',
+              message: buildPropertyAddressChangeConfirmMessage(
+                readBinScheduleFromProfile(liveProfile)
+              ),
+              confirmLabel: 'Change address',
+              cancelLabel: 'Keep current address',
+              danger: true
+            });
+            if (!confirmed) return;
+          }
           const secretsResult = await saveHubSecrets(readGuestAccessSecrets(guestFields));
           if (!handleSaveResult(secretsResult, 'Could not save guest access details.')) return;
-          const addressResult = await saveSiteProfile(addressPatch);
+          /** @type {Record<string, unknown>} */
+          const addressPayload = { propertyAddress: addressPlan.propertyAddress };
+          if (addressPlan.clearsBinSchedule && addressPlan.binSchedule) {
+            addressPayload.binSchedule = addressPlan.binSchedule;
+          }
+          const addressResult = await saveSiteProfile(addressPayload);
           if (!handleSaveResult(addressResult, 'Could not save property address.')) return;
+          if (addressPlan.clearsBinSchedule) {
+            clearBinAlertDismissal();
+            binFields = createBinScheduleHubPanel(
+              { ...getSiteProfileState()?.profile, binSchedule: addressPlan.binSchedule },
+              binsPanelUseCase,
+              binPanelOptions()
+            );
+          }
           const weatherResult = await syncWeatherLocationFromPropertyAddress(
-            addressPatch.propertyAddress
+            addressPlan.propertyAddress
           );
           if (!weatherResult.ok && !weatherResult.skipped) {
             showToast(

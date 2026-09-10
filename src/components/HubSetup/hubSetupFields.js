@@ -486,7 +486,7 @@ export function createGuestAccessFields(profile, options = {}) {
 
   wrap.append(
     createSetupIntro(
-      'Guest-facing details for this property. They stay on your hub and are only shown when you enable sharing in Settings. Your postcode sets the weather location for this tablet.'
+      'Guest-facing details for this property. They stay on your hub and are only shown when you enable sharing in Settings. Changing the address updates weather for this tablet and clears saved bin collection dates for the previous property.'
     ),
     wifiSsid.wrap,
     wifiPassword.wrap,

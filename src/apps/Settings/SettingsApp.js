@@ -117,6 +117,11 @@ import {
 import { refreshPrivateConfig } from '../../services/privateConfigService.js';
 import { normalizeHubCountryCode } from '../../lib/hubCountries.js';
 import { normalizePropertyAddress } from '../../lib/propertyAddress.js';
+import {
+  buildPropertyAddressChangeConfirmMessage,
+  planPropertyAddressChange,
+  shouldConfirmPropertyAddressChange
+} from '../../lib/propertyAddressChange.js';
 import { validateEmailAddresses, validateHubContacts, validatePropertyAddress } from '../../lib/contactValidation.js';
 import { attachContactGroupValidation, attachPropertyAddressValidation } from '../../lib/contactFieldValidationUi.js';
 import { withAsyncButtonFeedback } from '../../lib/asyncButtonFeedback.js';
@@ -498,7 +503,7 @@ function createHomeDetailsFields(context) {
 
   wrap.append(
     createSetupIntro(
-      'Store Wi-Fi, contacts, address, lockbox code, and owner PIN on your hub — no command line required. Leave a field blank when saving to keep its current value.'
+      'Store Wi-Fi, contacts, address, lockbox code, and owner PIN on your hub — no command line required. Leave a field blank when saving to keep its current value. Changing the property address updates weather and clears saved bin collection dates for the previous address.'
     ),
     createHubSetupHelpButton({
       label: 'Home details & setup help',
@@ -571,17 +576,53 @@ function createHomeDetailsFields(context) {
         return;
       }
 
-      const profileResult = await saveSiteProfile({
+      const addressPlan = planPropertyAddressChange({
+        previousAddress: profileState?.profile?.propertyAddress,
+        nextAddress: addressPatch.propertyAddress,
+        profile: profileState?.profile
+      });
+      if (
+        addressPlan.addressChanged &&
+        shouldConfirmPropertyAddressChange(
+          profileState?.profile?.propertyAddress,
+          addressPatch.propertyAddress,
+          profileState?.profile
+        )
+      ) {
+        const confirmed = await showConfirmDialog({
+          title: 'Change property address?',
+          message: buildPropertyAddressChangeConfirmMessage(
+            readBinScheduleFromProfile(profileState?.profile)
+          ),
+          confirmLabel: 'Change address',
+          cancelLabel: 'Keep current address',
+          danger: true
+        });
+        if (!confirmed) return;
+      }
+
+      /** @type {Record<string, unknown>} */
+      const profilePayload = {
         hubName: hubName.input.value.trim(),
         ...contacts,
-        ...addressPatch
-      });
+        propertyAddress: addressPlan.propertyAddress
+      };
+      if (addressPlan.clearsBinSchedule && addressPlan.binSchedule) {
+        profilePayload.binSchedule = addressPlan.binSchedule;
+      }
+
+      const profileResult = await saveSiteProfile(profilePayload);
       if (!profileResult.ok) {
         showToast(context.toast, profileResult.message || 'Could not save profile.');
         return;
       }
 
-      void syncWeatherLocationFromPropertyAddress(addressPatch.propertyAddress);
+      if (addressPlan.clearsBinSchedule) {
+        clearBinAlertDismissal();
+        binsPanelDraftSchedule = null;
+      }
+
+      void syncWeatherLocationFromPropertyAddress(addressPlan.propertyAddress);
 
       const secretsPatch = {
         ...contactSecretsPatch(contacts),
