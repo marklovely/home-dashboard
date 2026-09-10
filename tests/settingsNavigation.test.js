@@ -9,6 +9,7 @@ describe('settingsNavigation', () => {
   it('returns owner sections including home details, utilities, bins, and cameras', () => {
     const sections = getSettingsSections(true).map((section) => section.id);
     expect(sections).toContain('home-details');
+    expect(sections).toContain('pet-care');
     expect(sections).toContain('utilities');
     expect(sections).toContain('bins');
     expect(sections).toContain('cameras');

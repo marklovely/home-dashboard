@@ -2632,6 +2632,103 @@ h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; }
 .arrival-prep-reset {
   min-height: 40px;
 }
+.arrival-prep-stay-banner {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, #c4a35a 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, #c4a35a 28%, var(--border));
+}
+.arrival-prep-stay-banner-text {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.arrival-prep-section-toggle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 1;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.arrival-prep-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.arrival-prep-section-reset {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  padding: 4px 0;
+}
+.arrival-prep-section-body {
+  display: grid;
+  gap: 10px;
+}
+.arrival-prep-task {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.arrival-prep-task-remove {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  padding: 10px 4px;
+  white-space: nowrap;
+}
+.arrival-prep-add-task {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+.arrival-prep-add-task-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: var(--surface);
+  color: inherit;
+}
+.arrival-prep-add-task-button {
+  min-height: 40px;
+}
+.hub-setup-pet-list {
+  display: grid;
+  gap: 16px;
+}
+.hub-setup-pet-card {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated, var(--surface)) 90%, transparent);
+}
+.hub-setup-pet-card-legend {
+  font-weight: 700;
+  padding: 0 4px;
+}
+.hub-setup-pet-add,
+.hub-setup-pet-remove {
+  justify-self: start;
+}
 .bin-alert-banner:focus-visible,
 .sitter-bin-alert:focus-visible {
   outline: none;

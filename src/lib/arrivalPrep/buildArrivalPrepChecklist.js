@@ -1,10 +1,11 @@
 import {
   ARRIVAL_PREP_MODULE_META,
-  ARRIVAL_PREP_MODULE_ORDER,
   ARRIVAL_PREP_TASKS
 } from './arrivalPrepTasks.js';
 import { normalizeArrivalPrepProfile } from './arrivalPrepProfile.js';
 import { detectPetSpeciesModule } from './petSpeciesKind.js';
+import { listPets } from '../petCare.js';
+import { buildArrivalPrepTaskId } from './arrivalPrepTaskIds.js';
 
 /** @typedef {'owner' | 'housesitter' | 'airbnb' | 'both' | string} HubUseCase */
 
@@ -12,7 +13,8 @@ import { detectPetSpeciesModule } from './petSpeciesKind.js';
  * @typedef {{
  *   id: string,
  *   label: string,
- *   checked: boolean
+ *   checked: boolean,
+ *   custom?: boolean
  * }} ArrivalPrepTask
  */
 
@@ -37,6 +39,7 @@ import { detectPetSpeciesModule } from './petSpeciesKind.js';
  *   taskIds: string[]
  * }} ArrivalPrepChecklist
  */
+
 
 /**
  * @param {HubUseCase} useCase
@@ -65,47 +68,47 @@ export function shouldShowArrivalPrepChecklist(profile) {
 
 /**
  * @param {Record<string, unknown> | null | undefined} profile
- * @returns {import('./arrivalPrepTasks.js').ArrivalPrepModuleId[]}
+ * @returns {boolean}
  */
-export function getActiveArrivalPrepModules(profile) {
+export function profileIncludesSitterPrep(profile) {
+  const useCase = String(profile?.useCase ?? 'owner');
+  return useCase === 'housesitter' || useCase === 'both';
+}
+
+/**
+ * @param {Record<string, unknown> | null | undefined} profile
+ * @returns {string[]}
+ */
+export function getActiveFixedModules(profile) {
   const useCase = String(profile?.useCase ?? 'owner');
   if (useCase === 'owner') return [];
 
-  /** @type {import('./arrivalPrepTasks.js').ArrivalPrepModuleId[]} */
+  /** @type {string[]} */
   const modules = ['home'];
-
-  if (useCase === 'housesitter' || useCase === 'both') {
+  if (profileIncludesSitterPrep(profile)) {
     modules.push('sitter');
   }
-
-  const petCare = /** @type {{ hasPets?: boolean, species?: string, name?: string } | undefined} */ (
-    profile?.petCare
-  );
-  if (petCare?.hasPets) {
-    modules.push(detectPetSpeciesModule(petCare.species));
-  }
-
   const arrivalPrep = normalizeArrivalPrepProfile(profile?.arrivalPrep);
   if (arrivalPrep.gardenEnabled) {
     modules.push('garden');
   }
-
   modules.push('before');
   return modules;
 }
 
+/** @deprecated Use getActiveFixedModules — kept for existing tests. */
+export const getActiveArrivalPrepModules = getActiveFixedModules;
+
 /**
  * @param {import('./arrivalPrepTasks.js').ArrivalPrepModuleId} moduleId
- * @param {Record<string, unknown> | null | undefined} profile
+ * @param {string} petName
  */
-function sectionTitleForModule(moduleId, profile) {
-  if (moduleId.startsWith('pet-')) {
-    const petName = String(
-      /** @type {{ name?: string } | undefined} */ (profile?.petCare)?.name ?? ''
-    ).trim();
-    return petName || 'Your pet';
-  }
-  return ARRIVAL_PREP_MODULE_META[moduleId]?.title ?? moduleId;
+function petSectionMeta(moduleId, petName) {
+  const meta = ARRIVAL_PREP_MODULE_META[moduleId];
+  return {
+    icon: meta?.icon ?? '🐾',
+    title: petName.trim() || 'Your pet'
+  };
 }
 
 /**
@@ -117,26 +120,53 @@ export function buildArrivalPrepChecklist(profile) {
   const title = arrivalPrepChecklistTitle(useCase);
   if (!title) return null;
 
-  const activeModules = getActiveArrivalPrepModules(profile);
-  const activeSet = new Set(activeModules);
-  const checkedSet = new Set(normalizeArrivalPrepProfile(profile?.arrivalPrep).checkedTaskIds);
+  const activeFixed = new Set(getActiveFixedModules(profile));
+  const pets = listPets(profile?.petCare);
+  const arrivalPrep = normalizeArrivalPrepProfile(profile?.arrivalPrep);
+  const checkedSet = new Set(arrivalPrep.checkedTaskIds);
   const isAirbnb = useCase === 'airbnb';
 
   /** @type {Map<string, ArrivalPrepTask[]>} */
-  const tasksByModule = new Map();
+  const tasksBySection = new Map();
+
+  /** @param {string} sectionId @param {ArrivalPrepTask} task */
+  function addTask(sectionId, task) {
+    const list = tasksBySection.get(sectionId) ?? [];
+    list.push(task);
+    tasksBySection.set(sectionId, list);
+  }
 
   for (const task of ARRIVAL_PREP_TASKS) {
-    const moduleId = task.modules.find((entry) => activeSet.has(entry));
-    if (!moduleId) continue;
-    if (moduleId === 'before' && isAirbnb && task.airbnb !== true) continue;
+    const moduleId = task.modules.find((entry) => activeFixed.has(entry));
+    if (moduleId) {
+      if (moduleId === 'before' && isAirbnb && task.airbnb !== true) continue;
+      addTask(moduleId, {
+        id: task.id,
+        label: task.label,
+        checked: checkedSet.has(task.id)
+      });
+      continue;
+    }
 
-    const list = tasksByModule.get(moduleId) ?? [];
-    list.push({
-      id: task.id,
-      label: task.label,
-      checked: checkedSet.has(task.id)
+    for (const pet of pets) {
+      const petModule = detectPetSpeciesModule(pet.species);
+      if (!task.modules.includes(petModule)) continue;
+      const sectionId = `pet-${pet.id}`;
+      addTask(sectionId, {
+        id: buildArrivalPrepTaskId(task.id, pet.id),
+        label: task.label,
+        checked: checkedSet.has(buildArrivalPrepTaskId(task.id, pet.id))
+      });
+    }
+  }
+
+  for (const custom of arrivalPrep.customTasks) {
+    addTask(custom.sectionId, {
+      id: custom.id,
+      label: custom.label,
+      checked: checkedSet.has(custom.id),
+      custom: true
     });
-    tasksByModule.set(moduleId, list);
   }
 
   /** @type {ArrivalPrepSection[]} */
@@ -144,20 +174,42 @@ export function buildArrivalPrepChecklist(profile) {
   /** @type {string[]} */
   const taskIds = [];
 
-  for (const moduleId of ARRIVAL_PREP_MODULE_ORDER) {
-    const tasks = tasksByModule.get(moduleId);
-    if (!tasks?.length) continue;
-    const meta = ARRIVAL_PREP_MODULE_META[moduleId];
+  /** @param {string} sectionId @param {string} icon @param {string} sectionTitle */
+  function pushSection(sectionId, icon, sectionTitle) {
+    const tasks = tasksBySection.get(sectionId);
+    if (!tasks?.length) return;
     const completeCount = tasks.filter((task) => task.checked).length;
     taskIds.push(...tasks.map((task) => task.id));
     sections.push({
-      id: moduleId,
-      icon: meta?.icon ?? '•',
-      title: sectionTitleForModule(moduleId, profile),
+      id: sectionId,
+      icon,
+      title: sectionTitle,
       tasks,
       completeCount,
       totalCount: tasks.length
     });
+  }
+
+  if (activeFixed.has('home')) {
+    const meta = ARRIVAL_PREP_MODULE_META.home;
+    pushSection('home', meta.icon, meta.title);
+  }
+  if (activeFixed.has('sitter')) {
+    const meta = ARRIVAL_PREP_MODULE_META.sitter;
+    pushSection('sitter', meta.icon, meta.title);
+  }
+  for (const pet of pets) {
+    const moduleId = detectPetSpeciesModule(pet.species);
+    const { icon, title: sectionTitle } = petSectionMeta(moduleId, pet.name);
+    pushSection(`pet-${pet.id}`, icon, sectionTitle);
+  }
+  if (activeFixed.has('garden')) {
+    const meta = ARRIVAL_PREP_MODULE_META.garden;
+    pushSection('garden', meta.icon, meta.title);
+  }
+  if (activeFixed.has('before')) {
+    const meta = ARRIVAL_PREP_MODULE_META.before;
+    pushSection('before', meta.icon, meta.title);
   }
 
   const totalCount = taskIds.length;

@@ -41,6 +41,12 @@ export const OWNER_SETTINGS_SECTIONS = [
     ownerOnly: true
   },
   {
+    id: 'pet-care',
+    label: 'Pet care',
+    description: 'Add or update pets for sitters — you can add more pets over time.',
+    ownerOnly: true
+  },
+  {
     id: 'bins',
     label: 'Bin reminders',
     description: 'Collection reminders for guests and where bins are collected from.',

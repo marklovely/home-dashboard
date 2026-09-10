@@ -1,3 +1,4 @@
+import { primaryPet } from './petCare.js';
 import { getSiteProfileState } from '../services/siteProfileService.js';
 
 /**
@@ -5,10 +6,7 @@ import { getSiteProfileState } from '../services/siteProfileService.js';
  * @param {string} [fallback='Pet care']
  */
 export function getPetDisplayName(fallback = 'Pet care') {
-  const petCare = getSiteProfileState()?.profile?.petCare;
-  if (petCare && typeof petCare === 'object' && petCare.hasPets) {
-    const name = String(petCare.name ?? '').trim();
-    if (name) return name;
-  }
+  const pet = primaryPet(getSiteProfileState()?.profile?.petCare);
+  if (pet?.name.trim()) return pet.name.trim();
   return fallback;
 }
