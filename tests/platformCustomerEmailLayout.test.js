@@ -1,32 +1,34 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildBrandedAccountOtpEmail,
-  customerEmailLogoUrl,
+  brandedEmailLogoAttachment,
   EMAIL_BRAND,
+  EMAIL_LOGO_CONTENT_ID,
   wrapBrandedCustomerEmail
 } from '../functions/api/platform/platformCustomerEmailLayout.js';
 import { buildCustomerEmail, buildReferrerRewardEmail } from '../functions/api/platform/platformCustomerEmail.js';
 
 describe('branded customer email layout', () => {
-  it('uses the marketing site logo and brand colours', () => {
+  it('embeds the logo via CID (marketing site is Access-gated)', () => {
     const html = wrapBrandedCustomerEmail({
       origin: 'https://lovely-home.co.uk',
       title: 'Test title',
       preheader: 'Preview text',
       paragraphs: ['Hello there.']
     });
-    expect(customerEmailLogoUrl('https://lovely-home.co.uk')).toBe(
-      'https://lovely-home.co.uk/favicon.png'
-    );
-    expect(html).toContain('https://lovely-home.co.uk/favicon.png');
+    expect(html).toContain(`cid:${EMAIL_LOGO_CONTENT_ID}`);
+    expect(html).not.toContain('favicon.png');
     expect(html).toContain(EMAIL_BRAND.accent);
     expect(html).toContain(EMAIL_BRAND.bg);
     expect(html).toContain('Lovely Home');
     expect(html).toContain('Test title');
     expect(html).toContain('Hello there.');
+    const attachment = brandedEmailLogoAttachment();
+    expect(attachment.content_id).toBe(EMAIL_LOGO_CONTENT_ID);
+    expect(attachment.content.length).toBeGreaterThan(100);
   });
 
-  it('renders primary and secondary action buttons', () => {
+  it('renders bulletproof primary and secondary buttons', () => {
     const html = wrapBrandedCustomerEmail({
       origin: 'https://lovely-home.co.uk',
       title: 'Actions',
@@ -38,7 +40,9 @@ describe('branded customer email layout', () => {
     });
     expect(html).toContain('https://example.com/primary');
     expect(html).toContain('https://example.com/secondary');
-    expect(html).toContain(`background:${EMAIL_BRAND.accent}`);
+    expect(html).toContain(`bgcolor="${EMAIL_BRAND.accent}"`);
+    expect(html).toContain(`bgcolor="${EMAIL_BRAND.card}"`);
+    expect(html).toContain('font-weight:700');
   });
 
   it('builds lifecycle emails with html and plain-text fallbacks', () => {

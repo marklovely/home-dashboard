@@ -304,7 +304,13 @@ describe('maybeSendCustomerLifecycleEmail', () => {
     expect(body.text).toBeTruthy();
     expect(body.html).toContain('Lovely Home');
     expect(body.html).toContain('#2f5a43');
-    expect(body.html).toContain('favicon.png');
+    expect(body.html).toContain('cid:lovely-home-mark');
+    expect(body.attachments).toEqual([
+      expect.objectContaining({
+        content_id: 'lovely-home-mark',
+        filename: 'lovely-home-mark.png'
+      })
+    ]);
 
     const stored = await db.prepare('SELECT * FROM site_billing WHERE site_id = ?').bind('rose').first();
     expect(stored.signup_email_sent_at).toBeTruthy();
