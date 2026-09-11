@@ -76,17 +76,39 @@ export function resolvePlanTierFromSubscription(env, mode, subscription) {
 /**
  * @param {PlanTier} plan
  */
+export function planFeatures(plan) {
+  if (plan === 'free') {
+    return { bins: false, smartHome: false, weather: true };
+  }
+  return { bins: true, smartHome: true, weather: true };
+}
+
+/**
+ * @param {PlanTier} plan
+ */
 export function planLimits(plan) {
+  const features = planFeatures(plan);
   if (plan === 'free') {
     return {
       maxGuides: FREE_PLAN_MAX_GUIDES,
-      maxStays: FREE_PLAN_MAX_STAYS
+      maxStays: FREE_PLAN_MAX_STAYS,
+      features
     };
   }
   return {
     maxGuides: null,
-    maxStays: null
+    maxStays: null,
+    features
   };
+}
+
+/**
+ * @param {PlanTier | string | null | undefined} plan
+ * @param {'bins' | 'smartHome' | 'weather'} feature
+ */
+export function planFeatureEnabled(plan, feature) {
+  const features = planFeatures(normalizePlanTier(plan));
+  return Boolean(features[feature]);
 }
 
 /**

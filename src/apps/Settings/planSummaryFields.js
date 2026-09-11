@@ -69,6 +69,11 @@ export function createPlanSummarySection(context) {
     section.hidden = false;
     label.textContent = summary.planLabel;
     detail.textContent = formatPlanUsageLine(summary) ?? '';
+    if (summary.plan === 'free') {
+      detail.textContent = [detail.textContent, 'Lovely Home+ adds bin reminders and Alexa home controls.']
+        .filter(Boolean)
+        .join(' ');
+    }
     upgradeLink.href = summary.upgradeUrl;
     accountLink.href = summary.accountUrl;
     upgradeLink.hidden = summary.plan === 'plus';

@@ -6,6 +6,7 @@ import { getEffectiveSitterAccessState } from '../lib/sitterSchedule.js';
 import { isControlAllowedForRole } from '../lib/controlPermissions.js';
 import { ensureControlActionAllowed } from '../lib/controlRateLimitClient.js';
 import { identityForLogs } from '../lib/auditLog.js';
+import { fetchHubPlanStatus, planFeatureBlockedMessage } from '../lib/hubPlanLimits.js';
 
 /**
  * @param {Request} request
@@ -36,6 +37,12 @@ export async function handleButtonPress(request, buttonParam, env, correlationId
     return jsonError(gate.status, gate.code, 'Authentication required.', { correlationId });
   }
   const auth = gate.access;
+
+  const plan = await fetchHubPlanStatus(env, request, fetchImpl);
+  const blocked = planFeatureBlockedMessage(plan, 'smartHome');
+  if (blocked) {
+    return jsonError(403, blocked.error, blocked.message, { correlationId, upgradeUrl: blocked.upgradeUrl });
+  }
 
   const effectiveRole = gate.session.mode === 'owner' ? auth.role : 'house-sitter';
 

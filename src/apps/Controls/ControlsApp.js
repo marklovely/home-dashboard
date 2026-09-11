@@ -6,6 +6,8 @@ import { isSitterControlsDisclosed } from '../../services/sitterControlsService.
 import { subscribeToSitterControls } from '../../services/sitterControlsService.js';
 import { mountSitterControlsGrid } from '../../widgets/Controls/sitterControlsGrid.js';
 import { getWidgetById } from '../../services/widgetRegistry.js';
+import { isHubPlanFeatureEnabled } from '../../services/hubPlanFeatures.js';
+import { createPlanFeatureLockedPanel } from '../../components/Plan/planFeatureLockedPanel.js';
 
 /**
  * @param {Node} mounted
@@ -25,6 +27,12 @@ function collectMountedNodes(mounted) {
 export function mountControlsApp(viewport, context) {
   const page = document.createElement('div');
   page.className = 'app-page controls-app';
+
+  if (!isHubPlanFeatureEnabled('smartHome')) {
+    page.append(createPlanFeatureLockedPanel('smartHome'));
+    viewport.replaceChildren(page);
+    return;
+  }
 
   if (!isControlsConfigured(context.config)) {
     const panel = document.createElement('section');

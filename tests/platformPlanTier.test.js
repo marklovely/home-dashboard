@@ -5,6 +5,8 @@ import {
   buildPublicHubPlanStatus,
   isZeroAmountStripePrice,
   planLimitState,
+  planFeatureEnabled,
+  planFeatures,
   planLimits,
   planTierFromBillingRow,
   resolvePlanTierFromPriceId,
@@ -42,8 +44,23 @@ describe('platformPlanTier', () => {
   });
 
   it('returns Free limits and unlimited Plus limits', () => {
-    expect(planLimits('free')).toEqual({ maxGuides: 2, maxStays: 2 });
-    expect(planLimits('plus')).toEqual({ maxGuides: null, maxStays: null });
+    expect(planLimits('free')).toEqual({
+      maxGuides: 2,
+      maxStays: 2,
+      features: { bins: false, smartHome: false, weather: true }
+    });
+    expect(planLimits('plus')).toEqual({
+      maxGuides: null,
+      maxStays: null,
+      features: { bins: true, smartHome: true, weather: true }
+    });
+  });
+
+  it('gates bins and smart home on Free while keeping weather', () => {
+    expect(planFeatures('free')).toEqual({ bins: false, smartHome: false, weather: true });
+    expect(planFeatureEnabled('free', 'weather')).toBe(true);
+    expect(planFeatureEnabled('free', 'bins')).toBe(false);
+    expect(planFeatureEnabled('plus', 'smartHome')).toBe(true);
   });
 
   it('tracks soft-limit state for guide templates and stays', () => {
@@ -75,6 +92,7 @@ describe('platformPlanTier', () => {
     expect(payload.plan).toBe('free');
     expect(payload.planLabel).toBe('Free');
     expect(payload.limits.maxGuides).toBe(2);
+    expect(payload.limits.features).toEqual({ bins: false, smartHome: false, weather: true });
     expect(payload.guidesExplainer).toContain('guide templates');
     expect(payload.upgradeUrl).toBe('https://lovely-home.co.uk/account?upgrade=test-cottage-free');
     expect(accountUpgradeUrl(env, 'test-cottage-free')).toBe(

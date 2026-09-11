@@ -3,6 +3,7 @@ import { clearHouseSettings } from '../lib/houseSettings.js';
 import { clearHubSecrets, getHubSecretsStatus, HUB_SECRET_KEYS, setHubSecrets } from '../lib/hubSecrets.js';
 import { applySitterStaySchedule } from '../lib/sitterSchedule.js';
 import { clearSitterStays } from '../lib/sitterStays.js';
+import { fetchHubPlanStatus, planFeatureBlockedMessage } from '../lib/hubPlanLimits.js';
 import { getSiteProfile, resetSiteProfile, updateSiteProfile } from '../lib/siteProfile.js';
 import { clearGuideCatalog, isHouseGuideSeeded, requireHouseGuideDb } from '../houseGuide/repository.js';
 import { jsonError, methodNotAllowed } from '../lib/errors.js';
@@ -82,6 +83,17 @@ export async function handleSiteProfilePatch(request, env, correlationId) {
 
   if (!body || typeof body !== 'object') {
     return jsonError(400, 'BAD_REQUEST', 'Expected a JSON object.', { correlationId });
+  }
+
+  if (body.binSchedule && typeof body.binSchedule === 'object') {
+    const plan = await fetchHubPlanStatus(env, request);
+    const blocked = planFeatureBlockedMessage(plan, 'bins');
+    if (blocked) {
+      return Response.json(blocked, {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+      });
+    }
   }
 
   try {

@@ -67,6 +67,7 @@ export async function handleHubPlanUsage(request, env, fetchImpl = fetch) {
     plan: plan.plan,
     planLabel: plan.planLabel,
     limits: plan.limits,
+    features: plan.features,
     usage,
     limitState,
     guidesExplainer: plan.guidesExplainer ?? null,

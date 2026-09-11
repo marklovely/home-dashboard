@@ -327,7 +327,10 @@ describe('marketing site pages', () => {
     expect(html).toMatch(/House guides/);
     expect(html).toMatch(/Scheduled stays/);
     expect(html).toMatch(/Time-controlled access/);
-    expect(html).toMatch(/Smart-home features/);
+    expect(html).toMatch(/Weather forecast/);
+    expect(html).toMatch(/Bin collection reminders/);
+    expect(html).toMatch(/Alexa home controls/);
+    expect(html).toMatch(/plan-compare-no/);
     expect(readPage('index.html')).toMatch(/\/pricing#compare/);
   });
 

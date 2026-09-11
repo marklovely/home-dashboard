@@ -87,6 +87,62 @@ function platformApiBase(env) {
  * @param {Request} request
  * @param {typeof fetch} [fetchImpl]
  */
+const PLUS_PLAN_FEATURES = { bins: true, smartHome: true, weather: true };
+const FREE_PLAN_FEATURES = { bins: false, smartHome: false, weather: true };
+
+/**
+ * @param {'free' | 'plus'} plan
+ */
+export function planFeaturesForTier(plan) {
+  return plan === 'free' ? FREE_PLAN_FEATURES : PLUS_PLAN_FEATURES;
+}
+
+/**
+ * @param {{ plan?: string, features?: { bins?: boolean, smartHome?: boolean, weather?: boolean } }} plan
+ * @param {'bins' | 'smartHome' | 'weather'} feature
+ */
+export function planFeatureEnabled(plan, feature) {
+  if (plan.plan === 'plus') return true;
+  const features = plan.features ?? planFeaturesForTier(plan.plan === 'free' ? 'free' : 'plus');
+  return Boolean(features[feature]);
+}
+
+/**
+ * @param {{ plan?: string, features?: { bins?: boolean, smartHome?: boolean, weather?: boolean }, upgradeUrl?: string }} plan
+ * @param {'bins' | 'smartHome'} feature
+ */
+export function planFeatureBlockedMessage(plan, feature) {
+  if (planFeatureEnabled(plan, feature)) return null;
+  const upgradeUrl = String(plan.upgradeUrl ?? 'https://lovely-home.co.uk/pricing');
+  if (feature === 'bins') {
+    return {
+      error: 'PLAN_FEATURE',
+      message: 'Bin reminders require Lovely Home+. Upgrade from your account page.',
+      upgradeUrl
+    };
+  }
+  return {
+    error: 'PLAN_FEATURE',
+    message: 'Home controls require Lovely Home+. Upgrade from your account page.',
+    upgradeUrl
+  };
+}
+
+/**
+ * @param {unknown} payload
+ */
+function parsePlanFeaturesFromPayload(payload) {
+  const features = payload?.limits?.features ?? payload?.features ?? {};
+  const plan = payload?.plan === 'free' ? 'free' : 'plus';
+  return plan === 'plus'
+    ? PLUS_PLAN_FEATURES
+    : {
+        bins: Boolean(features.bins),
+        smartHome: Boolean(features.smartHome),
+        weather: features.weather !== false
+      };
+}
+
 export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
   const siteId = siteIdFromHubRequest(request);
   if (!siteId) {
@@ -94,7 +150,8 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
       ok: true,
       plan: 'plus',
       planLabel: 'Lovely Home+',
-      limits: { maxGuides: null, maxStays: null }
+      limits: { maxGuides: null, maxStays: null },
+      features: PLUS_PLAN_FEATURES
     };
   }
 
@@ -108,19 +165,22 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
         ok: false,
         plan: 'plus',
         planLabel: 'Lovely Home+',
-        limits: { maxGuides: null, maxStays: null }
+        limits: { maxGuides: null, maxStays: null },
+        features: PLUS_PLAN_FEATURES
       };
     }
     const payload = await response.json();
+    const plan = payload.plan === 'free' ? 'free' : 'plus';
     return {
       ok: true,
-      plan: payload.plan === 'free' ? 'free' : 'plus',
-      planLabel: String(payload.planLabel ?? (payload.plan === 'free' ? 'Free' : 'Lovely Home+')),
+      plan,
+      planLabel: String(payload.planLabel ?? (plan === 'free' ? 'Free' : 'Lovely Home+')),
       limits: {
         maxGuides:
           payload.limits?.maxGuides == null ? null : Number(payload.limits.maxGuides),
         maxStays: payload.limits?.maxStays == null ? null : Number(payload.limits.maxStays)
       },
+      features: parsePlanFeaturesFromPayload(payload),
       guidesExplainer: payload.guidesExplainer ? String(payload.guidesExplainer) : null,
       upgradeUrl: String(payload.upgradeUrl ?? 'https://lovely-home.co.uk/pricing'),
       downgradeUrl: payload.downgradeUrl ? String(payload.downgradeUrl) : null,
@@ -131,7 +191,8 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
       ok: false,
       plan: 'plus',
       planLabel: 'Lovely Home+',
-      limits: { maxGuides: null, maxStays: null }
+      limits: { maxGuides: null, maxStays: null },
+      features: PLUS_PLAN_FEATURES
     };
   }
 }
