@@ -122,11 +122,15 @@ export function wrapBrandedCustomerEmail(input) {
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${EMAIL_BRAND.bg}" style="background-color:${EMAIL_BRAND.bg};">` +
     `<tr><td align="center" style="padding:32px 16px;">` +
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${EMAIL_BRAND.card}" style="max-width:560px;background-color:${EMAIL_BRAND.card};border:1px solid ${EMAIL_BRAND.border};border-radius:12px;">` +
-    `<tr><td bgcolor="${EMAIL_BRAND.bgSoft}" style="padding:28px 32px 12px;text-align:center;background-color:${EMAIL_BRAND.bgSoft};">` +
-    `<img src="cid:${EMAIL_LOGO_CONTENT_ID}" width="64" height="64" alt="Lovely Home" style="display:block;margin:0 auto;border:0;width:64px;height:64px;">` +
-    `<div style="margin-top:12px;font-family:${EMAIL_BRAND.fontDisplay};font-size:24px;line-height:1.2;color:${EMAIL_BRAND.accent};">Lovely Home</div>` +
-    `<div style="margin-top:4px;font-family:${EMAIL_BRAND.fontSans};font-size:13px;color:${EMAIL_BRAND.muted};">Your private household hub</div>` +
+    `<tr><td bgcolor="${EMAIL_BRAND.bgSoft}" style="padding:36px 32px 24px;background-color:${EMAIL_BRAND.bgSoft};">` +
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">` +
+    `<tr><td align="center" style="text-align:center;">` +
+    `<img src="cid:${EMAIL_LOGO_CONTENT_ID}" width="120" height="120" alt="Lovely Home" style="display:block;margin:0 auto;border:0;width:120px;height:120px;max-width:120px;">` +
     `</td></tr>` +
+    `<tr><td align="center" style="padding-top:16px;text-align:center;">` +
+    `<div style="font-family:${EMAIL_BRAND.fontDisplay};font-size:28px;line-height:1.2;color:${EMAIL_BRAND.accent};">Lovely Home</div>` +
+    `<div style="margin-top:6px;font-family:${EMAIL_BRAND.fontSans};font-size:14px;line-height:1.4;color:${EMAIL_BRAND.muted};">Your private household hub</div>` +
+    `</td></tr></table></td></tr>` +
     `<tr><td style="padding:20px 32px 8px;">` +
     `<h1 style="margin:0 0 16px;font-family:${EMAIL_BRAND.fontDisplay};font-size:26px;line-height:1.25;color:${EMAIL_BRAND.text};">${escapeHtmlEmail(input.title)}</h1>` +
     paragraphs +
