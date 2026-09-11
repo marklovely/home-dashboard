@@ -429,6 +429,133 @@ export async function createBillingCheckoutSession(env, input) {
 }
 
 /**
+ * Stripe Checkout for an existing Free hub upgrading to Lovely Home+.
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {{
+ *   siteId: string;
+ *   customerId: string;
+ *   priorSubscriptionId: string;
+ *   successUrl: string;
+ *   cancelUrl: string;
+ *   billingInterval?: string;
+ *   priceId?: string;
+ *   mode?: 'test' | 'live';
+ * }} input
+ */
+export async function createUpgradeCheckoutSession(env, input) {
+  const db = getPlatformBillingDb(env);
+  const mode = input.mode ?? (await getStripeMode(db));
+  const creds = stripeCredentialsForMode(env, mode);
+  const secretKey = creds.secretKey;
+  const billingInterval = input.billingInterval ?? 'month';
+  const priceId = input.priceId?.trim() || resolveStripePriceId(env, billingInterval, mode);
+  if (!secretKey) {
+    return { ok: false, error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe billing is not configured.' };
+  }
+  if (!priceId) {
+    const yearly = ['year', 'yearly', 'annual'].includes(String(billingInterval).trim().toLowerCase());
+    return {
+      ok: false,
+      error: 'STRIPE_PRICE_NOT_CONFIGURED',
+      message: yearly
+        ? 'Yearly billing is not configured yet. Choose monthly or contact support.'
+        : 'Stripe billing is not configured.'
+    };
+  }
+
+  const siteId = input.siteId.trim().toLowerCase();
+  const customerId = String(input.customerId ?? '').trim();
+  const priorSubscriptionId = String(input.priorSubscriptionId ?? '').trim();
+  if (!siteId || !customerId || !priorSubscriptionId) {
+    return {
+      ok: false,
+      error: 'INVALID_INPUT',
+      message: 'siteId, customerId, and priorSubscriptionId are required.'
+    };
+  }
+
+  /** @type {Record<string, string>} */
+  const metadata = {
+    site_id: siteId,
+    upgrade_from: 'free',
+    prior_subscription_id: priorSubscriptionId
+  };
+
+  /** @type {Record<string, unknown>} */
+  const sessionParams = {
+    mode: 'subscription',
+    customer: customerId,
+    success_url: input.successUrl,
+    cancel_url: input.cancelUrl,
+    payment_method_collection: 'always',
+    managed_payments: { enabled: false },
+    automatic_tax: { enabled: false },
+    line_items: [{ price: priceId, quantity: 1 }],
+    subscription_data: {
+      metadata: { ...metadata }
+    },
+    metadata: { ...metadata }
+  };
+
+  const session = await stripeApiRequest(secretKey, 'POST', '/checkout/sessions', sessionParams);
+
+  return {
+    ok: true,
+    sessionId: String(session.id ?? ''),
+    url: String(session.url ?? '')
+  };
+}
+
+/**
+ * Cancel the prior Free subscription after a successful upgrade checkout.
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {{
+ *   priorSubscriptionId: string;
+ *   newSubscriptionId?: string | null;
+ *   siteId?: string | null;
+ *   mode?: 'test' | 'live';
+ * }} input
+ */
+export async function cancelPriorSubscriptionAfterUpgrade(env, input) {
+  const priorSubscriptionId = String(input.priorSubscriptionId ?? '').trim();
+  const newSubscriptionId = String(input.newSubscriptionId ?? '').trim();
+  if (!priorSubscriptionId) {
+    return { ok: true, action: 'prior_subscription_skipped' };
+  }
+  if (newSubscriptionId && priorSubscriptionId === newSubscriptionId) {
+    return { ok: true, action: 'prior_subscription_same_as_new' };
+  }
+
+  const db = getPlatformBillingDb(env);
+  const mode = input.mode ?? (await getStripeMode(db));
+  const secretKey = stripeCredentialsForMode(env, mode).secretKey;
+  if (!secretKey) {
+    return {
+      ok: false,
+      action: 'prior_subscription_cancel_failed',
+      error: 'STRIPE_NOT_CONFIGURED'
+    };
+  }
+
+  try {
+    await stripeApiRequest(
+      secretKey,
+      'DELETE',
+      `/subscriptions/${encodeURIComponent(priorSubscriptionId)}`
+    );
+    return { ok: true, action: 'prior_subscription_canceled', siteId: input.siteId ?? null };
+  } catch (error) {
+    return {
+      ok: false,
+      action: 'prior_subscription_cancel_failed',
+      error: error instanceof Error ? error.message : 'unknown'
+    };
+  }
+}
+
+/**
  * Create a Stripe Customer and £0 subscription for the Free plan (no Checkout).
  *
  * @param {Record<string, string | undefined>} env
@@ -845,6 +972,8 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
 
   /** @type {Record<string, unknown> | undefined} */
   let referral;
+  /** @type {Record<string, unknown> | undefined} */
+  let upgrade;
   if (eventType === 'checkout.session.completed' && env) {
     const metadata = /** @type {Record<string, unknown>} */ (object.metadata ?? {});
     const referralCode = metadata.referral_code ? String(metadata.referral_code) : '';
@@ -855,6 +984,13 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
         refereeSiteId: billingPatch.siteId,
         referralCode,
         referrerSiteId
+      });
+    }
+    if (metadata.upgrade_from === 'free' && metadata.prior_subscription_id) {
+      upgrade = await cancelPriorSubscriptionAfterUpgrade(env, {
+        priorSubscriptionId: String(metadata.prior_subscription_id),
+        newSubscriptionId: billingPatch.subscriptionId,
+        siteId: billingPatch.siteId
       });
     }
   }
@@ -917,7 +1053,8 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     ...(provision ? { provision } : {}),
     ...(deprovision ? { deprovision } : {}),
     ...(email ? { email } : {}),
-    ...(referral ? { referral } : {})
+    ...(referral ? { referral } : {}),
+    ...(upgrade ? { upgrade } : {})
   };
 }
 

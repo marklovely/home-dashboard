@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  accountUpgradeUrl,
   buildPublicHubPlanStatus,
   isZeroAmountStripePrice,
   planLimits,
@@ -44,14 +45,31 @@ describe('platformPlanTier', () => {
   });
 
   it('builds a public hub plan payload', () => {
-    const payload = buildPublicHubPlanStatus({
-      plan_tier: 'free',
-      status: 'active'
-    });
+    const env = { MARKETING_SITE_ORIGIN: 'https://lovely-home.co.uk' };
+    const payload = buildPublicHubPlanStatus(
+      {
+        plan_tier: 'free',
+        status: 'active'
+      },
+      Date.now(),
+      { env, siteId: 'test-cottage-free' }
+    );
     expect(payload.plan).toBe('free');
     expect(payload.planLabel).toBe('Free');
     expect(payload.limits.maxGuides).toBe(2);
-    expect(payload.upgradeUrl).toContain('/pricing');
+    expect(payload.upgradeUrl).toBe('https://lovely-home.co.uk/account?upgrade=test-cottage-free');
+    expect(accountUpgradeUrl(env, 'test-cottage-free')).toBe(
+      'https://lovely-home.co.uk/account?upgrade=test-cottage-free'
+    );
+  });
+
+  it('points Plus hubs at the account page instead of pricing', () => {
+    const payload = buildPublicHubPlanStatus(
+      { plan_tier: 'plus', status: 'active' },
+      Date.now(),
+      { env: { MARKETING_SITE_ORIGIN: 'https://lovely-home.co.uk' }, siteId: 'kitchen-home' }
+    );
+    expect(payload.upgradeUrl).toBe('https://lovely-home.co.uk/account');
   });
 
   it('defaults missing plan_tier to plus', () => {

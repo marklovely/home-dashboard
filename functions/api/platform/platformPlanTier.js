@@ -1,4 +1,5 @@
 import { resolveStripeFreePriceId } from './platformBilling.js';
+import { marketingSiteOrigin } from './platformPublicSignup.js';
 
 /** @typedef {'free' | 'plus'} PlanTier */
 
@@ -96,12 +97,28 @@ export function planTierFromBillingRow(row) {
 }
 
 /**
+ * Account page URL for upgrading an existing Free hub to Lovely Home+.
+ *
+ * @param {Record<string, string | undefined>} [env]
+ * @param {string | null | undefined} siteId
+ */
+export function accountUpgradeUrl(env = {}, siteId) {
+  const base = marketingSiteOrigin(env);
+  const normalized = String(siteId ?? '')
+    .trim()
+    .toLowerCase();
+  if (!normalized) return `${base}/account`;
+  return `${base}/account?upgrade=${encodeURIComponent(normalized)}`;
+}
+
+/**
  * Public hub plan payload for owner UI and worker limit checks.
  *
  * @param {{ plan_tier?: string | null, status?: string | null, trial_end?: number | null } | null | undefined} row
  * @param {number} [nowMs]
+ * @param {{ env?: Record<string, string | undefined>; siteId?: string | null }} [options]
  */
-export function buildPublicHubPlanStatus(row, nowMs = Date.now()) {
+export function buildPublicHubPlanStatus(row, nowMs = Date.now(), options = {}) {
   const status = String(row?.status ?? '');
   const trialEnd = row?.trial_end == null ? null : Number(row.trial_end);
   const trialEndMs = Number.isFinite(trialEnd) && trialEnd > 0 ? trialEnd : null;
@@ -109,6 +126,7 @@ export function buildPublicHubPlanStatus(row, nowMs = Date.now()) {
   const plan = planTierFromBillingRow(row);
   const limits = planLimits(plan);
   const planLabel = plan === 'free' ? 'Free' : 'Lovely Home+';
+  const accountUrl = `${marketingSiteOrigin(options.env ?? {})}/account`;
 
   return {
     plan,
@@ -116,7 +134,7 @@ export function buildPublicHubPlanStatus(row, nowMs = Date.now()) {
     limits,
     trialing,
     trialEnd: trialing ? trialEndMs : null,
-    upgradeUrl: 'https://lovely-home.co.uk/pricing',
-    accountUrl: 'https://lovely-home.co.uk/account'
+    upgradeUrl: plan === 'free' ? accountUpgradeUrl(options.env, options.siteId) : accountUrl,
+    accountUrl
   };
 }

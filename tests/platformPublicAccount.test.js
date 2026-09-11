@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as platformBilling from '../functions/api/platform/platformBilling.js';
 import {
   ACCOUNT_GENERIC_OTP_MESSAGE,
   ACCOUNT_OTP_MAX_ATTEMPTS,
@@ -7,6 +8,7 @@ import {
   handleAccountOtpRequest,
   handleAccountPortal,
   handleAccountSession,
+  handleAccountUpgradeCheckout,
   handleAccountVerify,
   hashAccountSecret,
   normalizeAccountEmail,
@@ -134,9 +136,27 @@ describe('public account helpers', () => {
       siteId: 'kitchen-home',
       hubUrl: 'https://kitchen-home.lovely-hub.com',
       status: 'trialing',
+      plan: 'plus',
       trialEnd: 1_700_000_000_000,
       canManageBilling: true,
+      canUpgrade: false,
       canRefer: false
+    });
+  });
+
+  it('marks free hubs as upgradeable on the account payload', () => {
+    expect(
+      publicAccountHubFromRow({
+        site_id: 'test-cottage-free',
+        status: 'active',
+        plan_tier: 'free',
+        stripe_customer_id: 'cus_free',
+        stripe_subscription_id: 'sub_free'
+      })
+    ).toMatchObject({
+      plan: 'free',
+      canUpgrade: true,
+      canManageBilling: true
     });
   });
 
@@ -199,8 +219,10 @@ describe('account OTP and portal', () => {
         siteId: 'kitchen-home',
         hubUrl: 'https://kitchen-home.lovely-hub.com',
         status: 'trialing',
+        plan: 'plus',
         trialEnd: 1_700_000_000_000,
         canManageBilling: true,
+        canUpgrade: false,
         canRefer: false
       }
     ]);
@@ -280,6 +302,55 @@ describe('account OTP and portal', () => {
     });
     expect(wrong.status).toBe(401);
     expect(db.sessions.size).toBe(0);
+  });
+
+  it('starts upgrade checkout for a free hub', async () => {
+    const checkoutSpy = vi.spyOn(platformBilling, 'createUpgradeCheckoutSession').mockResolvedValue({
+      ok: true,
+      url: 'https://checkout.stripe.com/upgrade',
+      sessionId: 'cs_upgrade'
+    });
+    const db = createAccountDb([
+      {
+        site_id: 'test-cottage-free',
+        status: 'active',
+        plan_tier: 'free',
+        stripe_customer_id: 'cus_free',
+        stripe_subscription_id: 'sub_free',
+        owner_email: 'owner@example.com'
+      }
+    ]);
+    await handleAccountOtpRequest(
+      env,
+      /** @type {D1Database} */ (db),
+      { email: 'owner@example.com', clientIp: '203.0.113.20' },
+      { sendEmail: async () => ({ ok: true, id: 'x' }), generateCode: () => '888888' }
+    );
+    const verified = await handleAccountVerify(env, /** @type {D1Database} */ (db), {
+      email: 'owner@example.com',
+      code: '888888'
+    });
+    const upgrade = await handleAccountUpgradeCheckout(
+      env,
+      /** @type {D1Database} */ (db),
+      {
+        sessionToken: String(verified.body.sessionToken),
+        siteId: 'test-cottage-free',
+        billingInterval: 'year'
+      }
+    );
+    expect(upgrade.status).toBe(200);
+    expect(upgrade.body.checkoutUrl).toBe('https://checkout.stripe.com/upgrade');
+    expect(checkoutSpy).toHaveBeenCalledWith(
+      env,
+      expect.objectContaining({
+        siteId: 'test-cottage-free',
+        customerId: 'cus_free',
+        priorSubscriptionId: 'sub_free',
+        billingInterval: 'year'
+      })
+    );
+    checkoutSpy.mockRestore();
   });
 
   it('locks out after too many wrong codes', async () => {
