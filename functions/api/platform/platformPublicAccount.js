@@ -21,6 +21,7 @@ import {
   sendDowngradeConfirmationEmail,
   sendResendEmail
 } from './platformCustomerEmail.js';
+import { buildBrandedAccountOtpEmail } from './platformCustomerEmailLayout.js';
 import { marketingSiteOrigin } from './platformPublicSignup.js';
 import { consumeSignupAttempt, hashSignupClientKey } from './platformSignupGuards.js';
 import { turnstileSiteKey, verifyTurnstileToken } from './platformSignupTurnstile.js';
@@ -289,18 +290,16 @@ export async function handleAccountOtpRequest(env, db, input, deps = {}) {
     .run();
 
   const sendEmail = deps.sendEmail ?? sendResendEmail;
+  const otpMail = buildBrandedAccountOtpEmail({
+    origin: marketingSiteOrigin(env),
+    code,
+    accountUrl: accountPageUrl(env)
+  });
   const sent = await sendEmail(
     env,
     {
       to: email,
-      subject: 'Your Lovely Home account code',
-      text: [
-        `Your Lovely Home sign-in code is ${code}.`,
-        '',
-        'It expires in 10 minutes. If you did not request this, you can ignore the email.',
-        '',
-        `Manage your hub: ${accountPageUrl(env)}`
-      ].join('\n')
+      ...otpMail
     },
     deps.fetchImpl
   );
