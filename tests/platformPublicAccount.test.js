@@ -13,6 +13,7 @@ import {
   hashAccountSecret,
   normalizeAccountEmail,
   publicAccountHubFromRow,
+  publicAccountHubsFromRows,
   timingSafeEqual
 } from '../functions/api/platform/platformPublicAccount.js';
 
@@ -142,6 +143,36 @@ describe('public account helpers', () => {
       canUpgrade: false,
       canRefer: false
     });
+  });
+
+  it('resolves plan tier from Stripe when building account hub cards', async () => {
+    const resolveSpy = vi.spyOn(
+      await import('../functions/api/platform/platformPublicHubPlan.js'),
+      'resolveBillingRowPlanTier'
+    );
+    resolveSpy.mockResolvedValue({
+      site_id: 'test-cottage-free',
+      status: 'active',
+      plan_tier: 'free',
+      stripe_customer_id: 'cus_free',
+      stripe_subscription_id: 'sub_free'
+    });
+    const hubs = await publicAccountHubsFromRows(
+      env,
+      /** @type {D1Database} */ ({ prepare: () => ({ bind: () => ({ run: async () => ({}) }) }) }),
+      [
+        {
+          site_id: 'test-cottage-free',
+          status: 'active',
+          plan_tier: null,
+          stripe_customer_id: 'cus_free',
+          stripe_subscription_id: 'sub_free'
+        }
+      ]
+    );
+    expect(hubs[0]?.canUpgrade).toBe(true);
+    expect(hubs[0]?.plan).toBe('free');
+    resolveSpy.mockRestore();
   });
 
   it('marks free hubs as upgradeable on the account payload', () => {

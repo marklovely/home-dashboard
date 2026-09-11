@@ -112,6 +112,22 @@ export function publicAccountHubFromRow(row) {
 }
 
 /**
+ * Resolve plan tier from Stripe when D1 is stale, then build public hub cards.
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {D1Database} db
+ * @param {Record<string, unknown>[]} rows
+ */
+export async function publicAccountHubsFromRows(env, db, rows) {
+  const hubs = [];
+  for (const row of rows) {
+    const resolved = (await resolveBillingRowPlanTier(env, db, row)) ?? row;
+    hubs.push(publicAccountHubFromRow(resolved));
+  }
+  return hubs;
+}
+
+/**
  * @param {Record<string, string | undefined>} env
  * @param {string} siteId
  */
@@ -355,7 +371,7 @@ export async function handleAccountVerify(env, db, input, deps = {}) {
       ok: true,
       sessionToken: token,
       email,
-      hubs: rows.map(publicAccountHubFromRow),
+      hubs: await publicAccountHubsFromRows(env, db, rows),
       expiresAt: nowMs + ACCOUNT_SESSION_TTL_MS
     }
   };
@@ -469,18 +485,12 @@ export async function handleAccountSession(env, db, input, deps = {}) {
     body: {
       ok: true,
       email: session.email,
-      hubs: rows.map(publicAccountHubFromRow),
+      hubs: await publicAccountHubsFromRows(env, db, rows),
       expiresAt: session.expiresAt
     }
   };
 }
 
-/**
- * @param {Record<string, string | undefined>} env
- * @param {D1Database | null | undefined} db
- * @param {{ sessionToken: string; siteId: string; billingInterval?: string }} input
- * @param {{ nowMs?: number }} [deps]
- */
 /**
  * @param {Record<string, string | undefined>} env
  * @param {D1Database | null | undefined} db
