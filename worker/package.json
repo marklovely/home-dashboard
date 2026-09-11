@@ -28,10 +28,7 @@
     "secrets:larchmount": "bash scripts/print-env-secrets-checklist.sh larchmount",
     "deploy:test-lovely": "node scripts/check-env-provisioned.mjs test-lovely && wrangler deploy --env test-lovely",
     "d1:migrate:test-lovely": "node scripts/check-env-provisioned.mjs test-lovely && wrangler d1 migrations apply lovely-home-appliance-manuals-test-lovely --remote --env test-lovely",
-    "secrets:test-lovely": "bash scripts/print-env-secrets-checklist.sh test-lovely",
-    "deploy:test-free": "node scripts/check-env-provisioned.mjs test-free && wrangler deploy --env test-free",
-    "d1:migrate:test-free": "node scripts/check-env-provisioned.mjs test-free && wrangler d1 migrations apply lovely-home-appliance-manuals-test-free --remote --env test-free",
-    "secrets:test-free": "bash scripts/print-env-secrets-checklist.sh test-free"
+    "secrets:test-lovely": "bash scripts/print-env-secrets-checklist.sh test-lovely"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.19.0",
