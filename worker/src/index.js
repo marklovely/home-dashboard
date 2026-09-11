@@ -28,6 +28,7 @@ import { handleHouseGuidesCollection } from './routes/houseGuidesRoute.js';
 import { handleHubPlanUsage } from './routes/hubPlanRoute.js';
 import { handleSiteBackup } from './routes/siteBackup.js';
 import { handlePlatformSiteArchive } from './routes/platformSiteArchive.js';
+import { handlePlatformSiteRestore } from './routes/platformSiteRestore.js';
 import { handleSiteSetup } from './routes/siteSetupRoute.js';
 import { handleBrandingLogo } from './routes/brandingRoute.js';
 import { handleDeviceSession } from './routes/deviceSessionRoute.js';
@@ -98,7 +99,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       url.pathname === '/api/house-settings/sitter-stays' ||
       url.pathname.startsWith('/api/house-settings/sitter-stays/') ||
       (url.pathname.startsWith('/api/button/') && request.method === 'POST') ||
-      url.pathname === '/api/platform/site-archive');
+      url.pathname === '/api/platform/site-archive' ||
+      url.pathname === '/api/platform/site-restore');
 
   try {
     if (url.pathname === '/api/health' && request.method === 'GET') {
@@ -173,6 +175,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleSitterStayItem(request, env, url, fetchBound);
     } else if (url.pathname === '/api/platform/site-archive') {
       response = await handlePlatformSiteArchive(request, env, correlationId);
+    } else if (url.pathname === '/api/platform/site-restore') {
+      response = await handlePlatformSiteRestore(request, env, correlationId);
     } else if (
       url.pathname === '/api/site/backup' ||
       url.pathname === '/api/site/restore' ||

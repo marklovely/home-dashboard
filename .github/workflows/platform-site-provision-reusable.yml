@@ -67,6 +67,9 @@ jobs:
       CUSTOMER_EMAIL_FROM: ${{ secrets.CUSTOMER_EMAIL_FROM }}
       HUB_PROXY_SECRETS_JSON: ${{ secrets.HUB_PROXY_SECRETS_JSON }}
       PLATFORM_SITE_ARCHIVE_SECRET: ${{ secrets.PLATFORM_SITE_ARCHIVE_SECRET }}
+      PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID: ${{ secrets.PLATFORM_HEALTH_CF_ACCESS_CLIENT_ID }}
+      PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET: ${{ secrets.PLATFORM_HEALTH_CF_ACCESS_CLIENT_SECRET }}
+      PLATFORM_ARCHIVE_R2_BUCKET: lovely-home-hub-archives
       GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
       OS_PLACES_API_KEY: ${{ secrets.OS_PLACES_API_KEY }}
       AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_R2_ACCESS_KEY_ID }}
@@ -142,6 +145,11 @@ jobs:
           if [ "${{ inputs.skip_pages }}" = "true" ]; then ARGS+=( --skip-pages ); fi
           if [ "${{ inputs.skip_platform_admin }}" = "true" ]; then ARGS+=( --skip-platform-admin ); fi
           node scripts/provision-hub-site.mjs "${ARGS[@]}"
+
+      - name: Restore hub from platform archive
+        env:
+          SITE_ID: ${{ inputs.site_id }}
+        run: node scripts/restore-hub-site-from-archive.mjs "$SITE_ID"
 
       - name: Snapshot provisioned registry files
         id: snapshot
