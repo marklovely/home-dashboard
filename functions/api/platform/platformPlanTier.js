@@ -6,6 +6,10 @@ import { marketingSiteOrigin } from './platformPublicSignup.js';
 export const FREE_PLAN_MAX_GUIDES = 2;
 export const FREE_PLAN_MAX_STAYS = 2;
 
+/** Short copy: two guide templates, unlimited content inside each. */
+export const FREE_PLAN_GUIDES_EXPLAINER =
+  'Two separate guide templates for your home (for example House Sitter Guide and Pet Care Guide). Each guide can hold unlimited topics and details — the limit is templates, not pages inside them.';
+
 /**
  * @param {PlanTier | string | null | undefined} tier
  */
@@ -86,6 +90,24 @@ export function planLimits(plan) {
 }
 
 /**
+ * Soft-limit state for Free plan usage (block new creates at cap; keep existing over cap).
+ *
+ * @param {PlanTier | string | null | undefined} plan
+ * @param {{ guides?: number, stays?: number } | null | undefined} usage
+ */
+export function planLimitState(plan, usage) {
+  const limits = planLimits(normalizePlanTier(plan));
+  const guides = Number(usage?.guides ?? 0);
+  const stays = Number(usage?.stays ?? 0);
+  return {
+    atGuideLimit: limits.maxGuides != null && guides >= limits.maxGuides,
+    atStayLimit: limits.maxStays != null && stays >= limits.maxStays,
+    overGuideLimit: limits.maxGuides != null && guides > limits.maxGuides,
+    overStayLimit: limits.maxStays != null && stays > limits.maxStays
+  };
+}
+
+/**
  * @param {{ plan_tier?: string | null, status?: string | null } | null | undefined} row
  * @returns {PlanTier}
  */
@@ -112,6 +134,21 @@ export function accountUpgradeUrl(env = {}, siteId) {
 }
 
 /**
+ * Account page URL for downgrading an existing Plus hub to Free.
+ *
+ * @param {Record<string, string | undefined>} [env]
+ * @param {string | null | undefined} siteId
+ */
+export function accountDowngradeUrl(env = {}, siteId) {
+  const base = marketingSiteOrigin(env);
+  const normalized = String(siteId ?? '')
+    .trim()
+    .toLowerCase();
+  if (!normalized) return `${base}/account`;
+  return `${base}/account?downgrade=${encodeURIComponent(normalized)}`;
+}
+
+/**
  * Public hub plan payload for owner UI and worker limit checks.
  *
  * @param {{ plan_tier?: string | null, status?: string | null, trial_end?: number | null } | null | undefined} row
@@ -132,9 +169,11 @@ export function buildPublicHubPlanStatus(row, nowMs = Date.now(), options = {}) 
     plan,
     planLabel,
     limits,
+    guidesExplainer: plan === 'free' ? FREE_PLAN_GUIDES_EXPLAINER : null,
     trialing,
     trialEnd: trialing ? trialEndMs : null,
     upgradeUrl: plan === 'free' ? accountUpgradeUrl(options.env, options.siteId) : accountUrl,
+    downgradeUrl: plan === 'plus' ? accountDowngradeUrl(options.env, options.siteId) : null,
     accountUrl
   };
 }

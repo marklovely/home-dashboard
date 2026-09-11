@@ -121,7 +121,9 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
           payload.limits?.maxGuides == null ? null : Number(payload.limits.maxGuides),
         maxStays: payload.limits?.maxStays == null ? null : Number(payload.limits.maxStays)
       },
+      guidesExplainer: payload.guidesExplainer ? String(payload.guidesExplainer) : null,
       upgradeUrl: String(payload.upgradeUrl ?? 'https://lovely-home.co.uk/pricing'),
+      downgradeUrl: payload.downgradeUrl ? String(payload.downgradeUrl) : null,
       accountUrl: String(payload.accountUrl ?? 'https://lovely-home.co.uk/account')
     };
   } catch {

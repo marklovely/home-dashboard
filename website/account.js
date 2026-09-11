@@ -26,6 +26,9 @@
   const SESSION_EXPIRED_MESSAGE = 'You have been signed out. Enter your email for a new code.';
   const pageParams = new URLSearchParams(window.location.search);
   const pendingUpgradeSiteId = (pageParams.get('upgrade') || '').trim().toLowerCase();
+  const pendingDowngradeSiteId = (pageParams.get('downgrade') || '').trim().toLowerCase();
+  const FREE_GUIDES_EXPLAINER =
+    'Two separate guide templates for your home (for example House Sitter Guide and Pet Care Guide). Each guide can hold unlimited topics — the limit is templates, not pages inside them.';
 
   restoreSession();
   initChallenge();
@@ -251,12 +254,21 @@
     }
     renderHubCards(hubs, sessionToken);
     if (pageParams.get('upgraded') === '1') {
-      showAlert('Lovely Home+ is active — unlimited guides and scheduled stays.', 'info');
+      showAlert('Lovely Home+ is active — unlimited guide templates and scheduled stays.', 'info');
+    } else if (pageParams.get('downgraded') === '1') {
+      showAlert(
+        'Your hub is on the Free plan again. Existing guides and stays stay as they are; you can add up to two guide templates and two scheduled stays going forward.',
+        'info'
+      );
     } else if (pageParams.get('upgrade_canceled') === '1') {
       showAlert('Checkout was canceled. You can upgrade anytime from here.', 'info');
     }
     if (pendingUpgradeSiteId) {
       const card = hubsEl.querySelector('[data-upgrade-site="' + pendingUpgradeSiteId + '"]');
+      card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    if (pendingDowngradeSiteId) {
+      const card = hubsEl.querySelector('[data-downgrade-site="' + pendingDowngradeSiteId + '"]');
       card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
@@ -278,6 +290,13 @@
         openUpgradeCheckout(sessionToken, siteId, button);
       });
     });
+    hubsEl.querySelectorAll('[data-downgrade-free]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const siteId = button.getAttribute('data-downgrade-free');
+        if (!siteId) return;
+        openDowngradeToFree(sessionToken, siteId, button);
+      });
+    });
     bindReferralActions(sessionToken);
   }
 
@@ -285,12 +304,25 @@
     const canceled = hub.status === 'canceled';
     const trial = formatTrial(hub.trialEnd);
     const status = statusCopy(hub);
+    const downgradeBlock =
+      hub.canDowngrade && !canceled
+        ? '<div class="account-downgrade" data-downgrade-site="' +
+          escapeHtml(hub.siteId) +
+          '">' +
+          '<p class="signup-note"><strong>Switch to Free plan</strong> — ' +
+          escapeHtml(FREE_GUIDES_EXPLAINER) +
+          ' Plus two scheduled stays. Your hub stays live; existing content is kept (soft limits — you cannot add more until you are under the cap or upgrade again).</p>' +
+          '<button type="button" class="btn btn-secondary btn-block" data-downgrade-free="' +
+          escapeHtml(hub.siteId) +
+          '">Switch to Free plan</button>' +
+          '</div>'
+        : '';
     const upgradeBlock =
       hub.canUpgrade && !canceled
         ? '<div class="account-upgrade" data-upgrade-site="' +
           escapeHtml(hub.siteId) +
           '">' +
-          '<p class="signup-note"><strong>Upgrade to Lovely Home+</strong> — unlimited guides and scheduled stays. Card required at secure Stripe checkout.</p>' +
+          '<p class="signup-note"><strong>Upgrade to Lovely Home+</strong> — unlimited guide templates and scheduled stays. Card required at secure Stripe checkout.</p>' +
           '<div class="account-referral-plan">' +
           '<label><input type="radio" name="upgrade-plan-' +
           escapeHtml(hub.siteId) +
@@ -336,7 +368,7 @@
             '<p class="signup-note muted"><strong>Refer a friend</strong> — unlocks after your first paid invoice.</p>' +
             '</div>'
         : '';
-    const backupReminder = !canceled
+    const backupReminder = !canceled && !hub.canDowngrade
       ? '<div class="account-backup-reminder" role="note">' +
         '<p class="account-backup-reminder__title"><strong>Before you cancel on Stripe</strong></p>' +
         '<p class="account-backup-reminder__body">Download a <strong>full backup</strong> from your hub while it is still live — it includes photos and appliance PDFs. Our platform archive on cancel is guide JSON only.</p>' +
@@ -348,12 +380,10 @@
       : '';
     const manage =
       hub.canManageBilling && !hub.canUpgrade
-        ? '<button type="button" class="btn ' +
-          (canceled ? 'btn-secondary' : 'btn-primary') +
-          ' btn-block" data-portal-site="' +
+        ? '<button type="button" class="btn btn-secondary btn-block" data-portal-site="' +
           escapeHtml(hub.siteId) +
           '">' +
-          (canceled ? 'View invoices on Stripe' : 'Manage billing on Stripe') +
+          (canceled ? 'View invoices on Stripe' : 'Invoices & card on Stripe') +
           '</button>'
         : hub.canManageBilling
           ? ''
@@ -364,9 +394,11 @@
     const body = canceled
       ? '<p>This subscription is cancelled, so Stripe has no live plan to change — only invoices and the saved card. Create a new home at lovely-home.co.uk/signup if you want the hub back.</p>'
       : hub.canUpgrade
-        ? '<p>Your hub is on the Free plan — up to two guides and two scheduled stays. Upgrade to Lovely Home+ when you need more.</p>'
-        : '<p>This is your private household hub. Guests sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
-          '<p>Cancel anytime from Stripe; the hub stays up until the end of the current billing period, then we archive the house guide JSON and take the site down. Download a full backup from Settings before cancelling if you want photos and PDFs — our platform archive is guide JSON only.</p>';
+        ? '<p>Your hub is on the Free plan — ' + escapeHtml(FREE_GUIDES_EXPLAINER) + ' Plus two scheduled stays. Upgrade to Lovely Home+ when you need more templates or stays.</p>'
+        : hub.canDowngrade
+          ? '<p>Your hub is on Lovely Home+. Switch to the Free plan below to stop Plus billing while keeping the hub live (soft limits apply). To <strong>close the hub entirely</strong>, use Invoices &amp; card on Stripe and cancel the subscription there — that archives the site after the billing period ends.</p>'
+          : '<p>This is your private household hub. Guests sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
+            '<p>Cancel anytime from Stripe; the hub stays up until the end of the current billing period, then we archive the house guide JSON and take the site down. Download a full backup from Settings before cancelling if you want photos and PDFs — our platform archive is guide JSON only.</p>';
     return (
       '<article class="account-hub-card">' +
         '<p class="account-hub-status' +
@@ -381,6 +413,7 @@
           openHub +
           manage +
         '</div>' +
+        downgradeBlock +
         upgradeBlock +
         referralBlock +
       '</article>'
@@ -459,6 +492,39 @@
   /**
    * @param {{ siteId: string, hubUrl?: string, status?: string } | undefined} hub
    */
+  async function openDowngradeToFree(sessionToken, siteId, button) {
+    clearAlert();
+    const confirmed = window.confirm(
+      'Switch to the Free plan?\n\n' +
+        FREE_GUIDES_EXPLAINER +
+        '\n\nPlus two scheduled stays. Your hub stays live. Existing guides and stays are kept; you will not be able to add more until you are under the Free limits or upgrade again.\n\nPlus billing stops immediately (no partial-month refund).'
+    );
+    if (!confirmed) return;
+    setBusy(button, true);
+    try {
+      const response = await fetch(apiBase + '/api/public/account/downgrade-to-free', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ sessionToken, siteId })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        clearStoredSession();
+        showSignIn(SESSION_EXPIRED_MESSAGE);
+        return;
+      }
+      if (!response.ok) {
+        showAlert(payload.message || 'Could not switch to the Free plan. Email support@lovely-home.co.uk.', 'error');
+        return;
+      }
+      window.location.href = '/account?downgraded=1&site=' + encodeURIComponent(siteId);
+    } catch {
+      showAlert('Network error — check your connection and try again.', 'error');
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
   async function openUpgradeCheckout(sessionToken, siteId, button) {
     clearAlert();
     setBusy(button, true);

@@ -139,7 +139,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Yes. The Free plan is free forever for one home, with up to two guides and two scheduled stays. All audience types — house sitter, pet sitter, guest, Airbnb, tenant, family, and more — are available on Free. Upgrade to Lovely Home+ only when you want unlimited guides and scheduled stays."
+          "text": "Yes. The Free plan is free forever for one home, with up to two guide templates and two scheduled stays. A guide template is a separate experience for your home (for example House Sitter Guide and Pet Care Guide) — there is no limit on topics or details inside each guide. All audience types are available on Free. Upgrade to Lovely Home+ when you want unlimited templates and stays."
         },
         {
           "type": "h4",
@@ -203,7 +203,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Your hub stays on the Free plan with its limits — two guides and two scheduled stays. Cancel from your account page or by emailing support. If you cancel the hub entirely, access continues until the end of any paid period, then the hub is taken down and archived."
+          "text": "Switch to the Free plan from lovely-home.co.uk/account — your hub stays live with soft limits (keep existing content; add up to two guide templates and two scheduled stays going forward). To close the hub entirely, cancel the subscription on Stripe from the account page; access continues until the end of the billing period, then the site is archived."
         },
         {
           "type": "h4",

@@ -9,7 +9,15 @@ let cachedPlanSummary = null;
  *   planLabel: string,
  *   limits: { maxGuides: number | null, maxStays: number | null },
  *   usage: { guides: number, stays: number },
+ *   limitState?: {
+ *     atGuideLimit: boolean,
+ *     atStayLimit: boolean,
+ *     overGuideLimit: boolean,
+ *     overStayLimit: boolean
+ *   },
+ *   guidesExplainer?: string | null,
  *   upgradeUrl: string,
+ *   downgradeUrl?: string | null,
  *   accountUrl: string
  * }} HubPlanSummary
  */
@@ -45,7 +53,10 @@ export async function fetchHubPlanSummary(fetchImpl = fetch) {
         guides: Number(payload.usage?.guides ?? 0),
         stays: Number(payload.usage?.stays ?? 0)
       },
+      limitState: payload.limitState ?? undefined,
+      guidesExplainer: payload.guidesExplainer ?? null,
       upgradeUrl: String(payload.upgradeUrl ?? 'https://lovely-home.co.uk/pricing'),
+      downgradeUrl: payload.downgradeUrl ?? null,
       accountUrl: String(payload.accountUrl ?? 'https://lovely-home.co.uk/account')
     };
     return cachedPlanSummary;
@@ -69,17 +80,24 @@ export function getCachedHubPlanSummary() {
 export function formatPlanUsageLine(summary) {
   if (!summary) return null;
   if (summary.plan === 'plus') {
-    return 'Lovely Home+ — unlimited guides and scheduled stays';
+    return 'Lovely Home+ — unlimited guide templates and scheduled stays';
   }
   const guidePart =
     summary.limits.maxGuides == null
-      ? `${summary.usage.guides} guides`
-      : `${summary.usage.guides} of ${summary.limits.maxGuides} guides`;
+      ? `${summary.usage.guides} guide templates`
+      : `${summary.usage.guides} of ${summary.limits.maxGuides} guide templates`;
   const stayPart =
     summary.limits.maxStays == null
       ? `${summary.usage.stays} stays`
       : `${summary.usage.stays} of ${summary.limits.maxStays} scheduled stays`;
-  return `Free plan — ${guidePart}, ${stayPart}`;
+  const base = `Free plan — ${guidePart}, ${stayPart}`;
+  if (summary.limitState?.overGuideLimit || summary.limitState?.overStayLimit) {
+    return `${base}. You can keep existing content; delete extras or upgrade to add more.`;
+  }
+  if (summary.limitState?.atGuideLimit || summary.limitState?.atStayLimit) {
+    return `${base}. At the Free limit — upgrade for more.`;
+  }
+  return base;
 }
 
 /** @internal */

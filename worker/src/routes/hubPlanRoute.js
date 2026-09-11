@@ -2,6 +2,30 @@ import { requireOwnerIdentity } from '../lib/deviceSessionAuth.js';
 import { fetchHubPlanStatus } from '../lib/hubPlanLimits.js';
 import { countHouseGuides, requireHouseGuidesDb } from '../houseGuide/houseGuides.js';
 
+const FREE_PLAN_MAX_GUIDES = 2;
+const FREE_PLAN_MAX_STAYS = 2;
+
+/**
+ * @param {'free' | 'plus'} plan
+ * @param {{ guides: number, stays: number }} usage
+ */
+function buildLimitState(plan, usage) {
+  if (plan !== 'free') {
+    return {
+      atGuideLimit: false,
+      atStayLimit: false,
+      overGuideLimit: false,
+      overStayLimit: false
+    };
+  }
+  return {
+    atGuideLimit: usage.guides >= FREE_PLAN_MAX_GUIDES,
+    atStayLimit: usage.stays >= FREE_PLAN_MAX_STAYS,
+    overGuideLimit: usage.guides > FREE_PLAN_MAX_GUIDES,
+    overStayLimit: usage.stays > FREE_PLAN_MAX_STAYS
+  };
+}
+
 /**
  * @param {Record<string, string | undefined>} env
  */
@@ -36,12 +60,18 @@ export async function handleHubPlanUsage(request, env, fetchImpl = fetch) {
   const guideCount = await countHouseGuides(db);
   const stayCount = await countActiveStays(env);
 
+  const usage = { guides: guideCount, stays: stayCount };
+  const limitState = buildLimitState(plan.plan, usage);
+
   return Response.json({
     plan: plan.plan,
     planLabel: plan.planLabel,
     limits: plan.limits,
-    usage: { guides: guideCount, stays: stayCount },
+    usage,
+    limitState,
+    guidesExplainer: plan.guidesExplainer ?? null,
     upgradeUrl: plan.upgradeUrl,
+    downgradeUrl: plan.downgradeUrl ?? null,
     accountUrl: plan.accountUrl
   });
 }

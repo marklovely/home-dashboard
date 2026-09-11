@@ -47,12 +47,15 @@ export function createPlanSummarySection(context) {
   const guidesList = document.createElement('ul');
   guidesList.className = 'settings-plan-guides__list';
 
+  const guidesNote = document.createElement('p');
+  guidesNote.className = 'settings-plan-guides__note muted';
+
   const addGuideForm = document.createElement('form');
   addGuideForm.className = 'settings-plan-guides__form';
   addGuideForm.innerHTML =
-    '<label class="form-field"><span>New guide title</span><input type="text" name="title" maxlength="80" placeholder="Guest guide"></label><button type="submit" class="button-secondary">Add house guide</button>';
+    '<label class="form-field"><span>New guide template</span><input type="text" name="title" maxlength="80" placeholder="House Sitter Guide"></label><button type="submit" class="button-secondary">Add guide template</button>';
 
-  guidesWrap.append(guidesHeading, guidesList, addGuideForm);
+  guidesWrap.append(guidesHeading, guidesNote, guidesList, addGuideForm);
   actions.append(upgradeLink, accountLink);
   card.append(label, detail, actions, guidesWrap);
   section.append(heading, card);
@@ -70,6 +73,21 @@ export function createPlanSummarySection(context) {
     accountLink.href = summary.accountUrl;
     upgradeLink.hidden = summary.plan === 'plus';
     guidesWrap.hidden = false;
+    guidesNote.textContent =
+      summary.guidesExplainer ??
+      (summary.plan === 'free'
+        ? 'Free includes two separate guide templates (unlimited topics inside each).'
+        : '');
+    guidesNote.hidden = !guidesNote.textContent;
+    const atGuideLimit = summary.limitState?.atGuideLimit ?? false;
+    addGuideForm.hidden = summary.plan === 'plus' ? false : atGuideLimit;
+    const submitButton = addGuideForm.querySelector('button[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = atGuideLimit;
+      submitButton.title = atGuideLimit
+        ? 'Free plan limit reached — delete a guide template or upgrade to add more.'
+        : '';
+    }
 
     try {
       const response = await fetch('/api/house-guides', { headers: { Accept: 'application/json' } });

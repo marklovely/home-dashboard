@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  accountDowngradeUrl,
   accountUpgradeUrl,
   buildPublicHubPlanStatus,
   isZeroAmountStripePrice,
+  planLimitState,
   planLimits,
   planTierFromBillingRow,
   resolvePlanTierFromPriceId,
@@ -44,6 +46,22 @@ describe('platformPlanTier', () => {
     expect(planLimits('plus')).toEqual({ maxGuides: null, maxStays: null });
   });
 
+  it('tracks soft-limit state for guide templates and stays', () => {
+    expect(planLimitState('free', { guides: 1, stays: 2 })).toEqual({
+      atGuideLimit: false,
+      atStayLimit: true,
+      overGuideLimit: false,
+      overStayLimit: false
+    });
+    expect(planLimitState('free', { guides: 4, stays: 1 })).toEqual({
+      atGuideLimit: true,
+      atStayLimit: false,
+      overGuideLimit: true,
+      overStayLimit: false
+    });
+    expect(planLimitState('plus', { guides: 99, stays: 99 }).atGuideLimit).toBe(false);
+  });
+
   it('builds a public hub plan payload', () => {
     const env = { MARKETING_SITE_ORIGIN: 'https://lovely-home.co.uk' };
     const payload = buildPublicHubPlanStatus(
@@ -57,6 +75,7 @@ describe('platformPlanTier', () => {
     expect(payload.plan).toBe('free');
     expect(payload.planLabel).toBe('Free');
     expect(payload.limits.maxGuides).toBe(2);
+    expect(payload.guidesExplainer).toContain('guide templates');
     expect(payload.upgradeUrl).toBe('https://lovely-home.co.uk/account?upgrade=test-cottage-free');
     expect(accountUpgradeUrl(env, 'test-cottage-free')).toBe(
       'https://lovely-home.co.uk/account?upgrade=test-cottage-free'
@@ -70,6 +89,11 @@ describe('platformPlanTier', () => {
       { env: { MARKETING_SITE_ORIGIN: 'https://lovely-home.co.uk' }, siteId: 'kitchen-home' }
     );
     expect(payload.upgradeUrl).toBe('https://lovely-home.co.uk/account');
+    expect(payload.downgradeUrl).toBe('https://lovely-home.co.uk/account?downgrade=kitchen-home');
+    expect(accountDowngradeUrl({ MARKETING_SITE_ORIGIN: 'https://lovely-home.co.uk' }, 'kitchen-home')).toBe(
+      'https://lovely-home.co.uk/account?downgrade=kitchen-home'
+    );
+    expect(payload.guidesExplainer).toBeNull();
   });
 
   it('defaults missing plan_tier to plus', () => {

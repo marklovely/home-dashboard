@@ -27,7 +27,7 @@ export async function handleHouseGuidesCollection(request, env, fetchImpl = fetc
       return Response.json(
         {
           error: 'PLAN_LIMIT',
-          message: `Free plan includes up to ${plan.limits.maxGuides} house guides. Upgrade to Lovely Home+ for unlimited.`,
+          message: `Free plan includes up to ${plan.limits.maxGuides} guide templates (unlimited topics inside each). Upgrade to Lovely Home+ for unlimited.`,
           upgradeUrl: plan.upgradeUrl
         },
         { status: 403 }

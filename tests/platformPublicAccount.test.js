@@ -8,6 +8,7 @@ import {
   handleAccountOtpRequest,
   handleAccountPortal,
   handleAccountSession,
+  handleAccountDowngradeToFree,
   handleAccountUpgradeCheckout,
   handleAccountVerify,
   hashAccountSecret,
@@ -131,6 +132,7 @@ describe('public account helpers', () => {
         status: 'trialing',
         trial_end: 1_700_000_000_000,
         stripe_customer_id: 'cus_secret',
+        stripe_subscription_id: 'sub_plus',
         owner_email: 'owner@example.com'
       })
     ).toEqual({
@@ -141,7 +143,24 @@ describe('public account helpers', () => {
       trialEnd: 1_700_000_000_000,
       canManageBilling: true,
       canUpgrade: false,
+      canDowngrade: true,
       canRefer: false
+    });
+  });
+
+  it('marks plus hubs as downgradeable on the account payload', () => {
+    expect(
+      publicAccountHubFromRow({
+        site_id: 'kitchen-home',
+        status: 'active',
+        plan_tier: 'plus',
+        stripe_customer_id: 'cus_plus',
+        stripe_subscription_id: 'sub_plus'
+      })
+    ).toMatchObject({
+      plan: 'plus',
+      canDowngrade: true,
+      canUpgrade: false
     });
   });
 
@@ -254,6 +273,7 @@ describe('account OTP and portal', () => {
         trialEnd: 1_700_000_000_000,
         canManageBilling: true,
         canUpgrade: false,
+        canDowngrade: false,
         canRefer: false
       }
     ]);
@@ -382,6 +402,55 @@ describe('account OTP and portal', () => {
       })
     );
     checkoutSpy.mockRestore();
+  });
+
+  it('downgrades a plus hub to free without opening Stripe Checkout', async () => {
+    const downgradeSpy = vi.spyOn(platformBilling, 'downgradePlusToFreeSubscription').mockResolvedValue({
+      ok: true,
+      subscriptionId: 'sub_free_new',
+      status: 'active',
+      cancel: { ok: true, action: 'prior_subscription_canceled' }
+    });
+    const db = createAccountDb([
+      {
+        site_id: 'kitchen-home',
+        status: 'active',
+        plan_tier: 'plus',
+        stripe_customer_id: 'cus_plus',
+        stripe_subscription_id: 'sub_plus',
+        owner_email: 'owner@example.com'
+      }
+    ]);
+    await handleAccountOtpRequest(
+      env,
+      /** @type {D1Database} */ (db),
+      { email: 'owner@example.com', clientIp: '203.0.113.21' },
+      { sendEmail: async () => ({ ok: true, id: 'x' }), generateCode: () => '777777' }
+    );
+    const verified = await handleAccountVerify(env, /** @type {D1Database} */ (db), {
+      email: 'owner@example.com',
+      code: '777777'
+    });
+    const downgrade = await handleAccountDowngradeToFree(
+      env,
+      /** @type {D1Database} */ (db),
+      {
+        sessionToken: String(verified.body.sessionToken),
+        siteId: 'kitchen-home'
+      }
+    );
+    expect(downgrade.status).toBe(200);
+    expect(downgrade.body.plan).toBe('free');
+    expect(downgradeSpy).toHaveBeenCalledWith(
+      env,
+      db,
+      expect.objectContaining({
+        siteId: 'kitchen-home',
+        customerId: 'cus_plus',
+        priorSubscriptionId: 'sub_plus'
+      })
+    );
+    downgradeSpy.mockRestore();
   });
 
   it('locks out after too many wrong codes', async () => {
