@@ -8,6 +8,7 @@ import {
   handleAccountOtpRequest,
   handleAccountPortal,
   handleAccountSession,
+  handleAccountLogout,
   handleAccountCloseHub,
   handleAccountDowngradeToFree,
   handleAccountUpgradeCheckout,
@@ -51,6 +52,10 @@ function createAccountDb(hubs = []) {
             for (const [hash, row] of [...sessions.entries()]) {
               if (Number(row.expires_at) <= now) sessions.delete(hash);
             }
+          }
+          if (sql.includes('DELETE FROM account_sessions WHERE token_hash')) {
+            const deleted = sessions.delete(String(bound[0]));
+            return { meta: { changes: deleted ? 1 : 0 } };
           }
           if (sql.includes('INSERT INTO signup_attempts')) {
             const key = `${bound[0]}:${bound[1]}`;
@@ -318,6 +323,34 @@ describe('account OTP and portal', () => {
     expect(restored.status).toBe(200);
     expect(restored.body.hubs).toEqual(verified.body.hubs);
     expect(restored.body.email).toBe('owner@example.com');
+  });
+
+  it('revokes the session on logout', async () => {
+    const db = createAccountDb([
+      {
+        site_id: 'kitchen-home',
+        status: 'active',
+        plan_tier: 'plus',
+        stripe_customer_id: 'cus_kitchen',
+        stripe_subscription_id: 'sub_kitchen',
+        owner_email: 'owner@example.com'
+      }
+    ]);
+    await handleAccountOtpRequest(
+      env,
+      /** @type {D1Database} */ (db),
+      { email: 'owner@example.com', clientIp: '203.0.113.23' },
+      { sendEmail: async () => ({ ok: true, id: 'x' }), generateCode: () => '999999' }
+    );
+    const verified = await handleAccountVerify(env, /** @type {D1Database} */ (db), {
+      email: 'owner@example.com',
+      code: '999999'
+    });
+    const token = String(verified.body.sessionToken);
+    const logout = await handleAccountLogout(/** @type {D1Database} */ (db), { sessionToken: token });
+    expect(logout.status).toBe(200);
+    const expired = await handleAccountSession(env, /** @type {D1Database} */ (db), { sessionToken: token });
+    expect(expired.status).toBe(401);
   });
 
   it('tells the owner they were signed out when the session has expired', async () => {

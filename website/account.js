@@ -155,7 +155,7 @@
         expiresAt: payload.expiresAt
       });
       await loadAccountCapabilities();
-      showHubs(payload.hubs || [], payload.sessionToken);
+      showHubs(payload.hubs || [], payload.sessionToken, payload.email);
     } catch {
       showAlert('Network error — check your connection and try again.', 'error');
     } finally {
@@ -194,7 +194,7 @@
         expiresAt: payload.expiresAt
       });
       await loadAccountCapabilities();
-      showHubs(payload.hubs || [], stored.sessionToken);
+      showHubs(payload.hubs || [], stored.sessionToken, payload.email);
     } catch {
       // Leave the sign-in form if the restore request fails.
     }
@@ -237,7 +237,7 @@
     else clearAlert();
   }
 
-  async function showHubs(hubs, sessionToken) {
+  async function showHubs(hubs, sessionToken, signedInEmail) {
     await Promise.all([loadAccountCapabilities(), loadMarketingPricingCopy()]);
     emailForm.hidden = true;
     codeForm.hidden = true;
@@ -248,11 +248,16 @@
         ? 'Billing changes open on Stripe. Referral links appear once your first invoice is paid.'
         : 'We could not find a hub for that email.';
     }
+    const email = String(signedInEmail || readStoredSession()?.email || '').trim();
     if (!hubs.length) {
-      hubsEl.innerHTML = '<p class="signup-note muted">If you just signed up, wait a minute and try again. Otherwise email support@lovely-home.co.uk.</p>';
+      renderSignedInShell(
+        '<p class="signup-note muted">If you just signed up, wait a minute and try again. Otherwise email support@lovely-home.co.uk.</p>',
+        sessionToken,
+        email
+      );
       return;
     }
-    renderHubCards(hubs, sessionToken);
+    renderHubCards(hubs, sessionToken, email);
     if (pageParams.get('upgraded') === '1') {
       showAlert('Lovely Home+ is active — unlimited guide templates and scheduled stays.', 'info');
     } else if (pageParams.get('downgraded') === '1') {
@@ -278,8 +283,49 @@
     }
   }
 
-  function renderHubCards(hubs, sessionToken) {
-    hubsEl.innerHTML = hubs.map((hub) => renderHub(hub)).join('');
+  /**
+   * @param {string} bodyHtml
+   * @param {string} sessionToken
+   * @param {string} signedInEmail
+   */
+  function renderSignedInShell(bodyHtml, sessionToken, signedInEmail) {
+    hubsEl.innerHTML =
+      '<div class="account-signed-in">' +
+      '<p class="account-signed-in__meta">Signed in as <strong>' +
+      escapeHtml(signedInEmail || 'your account') +
+      '</strong></p>' +
+      '<button type="button" class="btn btn-secondary account-signed-in__sign-out" data-account-sign-out>Log out</button>' +
+      '</div>' +
+      bodyHtml;
+    hubsEl.querySelector('[data-account-sign-out]')?.addEventListener('click', () => {
+      signOut(sessionToken);
+    });
+  }
+
+  async function signOut(sessionToken) {
+    clearAlert();
+    const button = hubsEl.querySelector('[data-account-sign-out]');
+    setBusy(button, true);
+    try {
+      if (sessionToken) {
+        await fetch(apiBase + '/api/public/account/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ sessionToken })
+        });
+      }
+    } catch {
+      // Local sign-out still proceeds if the network request fails.
+    } finally {
+      setBusy(button, false);
+    }
+    clearStoredSession();
+    pendingEmail = '';
+    showSignIn('You have been signed out.');
+  }
+
+  function renderHubCards(hubs, sessionToken, signedInEmail) {
+    renderSignedInShell(hubs.map((hub) => renderHub(hub)).join(''), sessionToken, signedInEmail);
     hubsEl.querySelectorAll('[data-portal-site]').forEach((button) => {
       button.addEventListener('click', () => {
         const siteId = button.getAttribute('data-portal-site');

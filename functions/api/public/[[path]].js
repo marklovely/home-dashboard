@@ -22,6 +22,7 @@ import {
   handleAccountPortal,
   handleAccountReferralCode,
   handleAccountSession,
+  handleAccountLogout,
   handleAccountCloseHub,
   handleAccountDowngradeToFree,
   handleAccountUpgradeCheckout,
@@ -215,6 +216,14 @@ export async function onRequest(context) {
   if (suffix === 'account/session' && request.method === 'POST') {
     const body = await readJsonBody(request);
     const result = await handleAccountSession(pagesEnv, getPlatformBillingDb(env), {
+      sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim()
+    });
+    return Response.json(result.body, { status: result.status, headers: cors });
+  }
+
+  if (suffix === 'account/logout' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handleAccountLogout(getPlatformBillingDb(env), {
       sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim()
     });
     return Response.json(result.body, { status: result.status, headers: cors });
