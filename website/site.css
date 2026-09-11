@@ -2015,6 +2015,15 @@ html.nav-open {
   }
 }
 
+@media (min-width: 768px) {
+  .pricing-plans-grid.pricing-plans-grid--home {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 72rem;
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+}
+
 .pricing-details-panel {
   margin-bottom: 2.5rem;
 }
