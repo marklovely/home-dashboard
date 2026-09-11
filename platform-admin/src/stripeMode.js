@@ -106,7 +106,7 @@ function openStripeModeConfirm(options) {
           ${
             goingLive
               ? `<li>Marketing signup will use <strong>live</strong> prices.</li>
-                 <li>After the trial, Stripe will charge real cards.</li>
+                 <li>Stripe will charge real cards on Lovely Home+ signups.</li>
                  <li>Existing test-mode <code>cus_</code> / <code>sub_</code> rows will not work on live keys.</li>
                  <li>GitHub variable <code>STRIPE_MODE</code> will be set to <code>live</code>.</li>`
               : `<li>Marketing signup will use <strong>test</strong> prices again.</li>

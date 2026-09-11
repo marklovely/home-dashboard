@@ -301,8 +301,7 @@ describe('platform public signup', () => {
       baseEnv,
       expect.objectContaining({
         siteId: 'smith',
-        successUrl: 'https://lovely-home.co.uk/signup-success?site=smith&returning=1',
-        skipTrial: true
+        successUrl: 'https://lovely-home.co.uk/signup-success?site=smith&returning=1'
       })
     );
   });
@@ -435,7 +434,7 @@ describe('platform public signup', () => {
     vi.mocked(resolveIntroOfferForSignup).mockResolvedValue({
       apply: true,
       interval: 'month',
-      benefit: '25% off each of your first two months (starting on your first invoice after the trial)'
+      benefit: '25% off each of your first two months (on your first paid invoice)'
     });
     vi.mocked(createBillingCheckoutSession).mockResolvedValue({
       ok: true,

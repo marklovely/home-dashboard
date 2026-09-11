@@ -9,8 +9,8 @@ export const OWNER_HELP_SECTIONS = [
     title: 'Set it up',
     keywords: [
       'setup',
-      'trial',
       'wizard',
+      'signup',
       'url',
       'tablet',
       'fully kiosk',
@@ -25,7 +25,7 @@ export const OWNER_HELP_SECTIONS = [
     blocks: [
       {
         type: 'p',
-        text: 'Your hub is a private web address. Send it to guests on their phone, or open it on a wall tablet if you have one. Use the {billingTrialDays}-day trial to fill in the House Guide — not a complimentary stay. No hardware to buy.'
+        text: 'Your hub is a private web address. Send it to guests on their phone, or open it on a wall tablet if you have one. Start on the Free plan or upgrade to Lovely Home+ when you need more — then fill in the House Guide. No hardware to buy.'
       },
       {
         type: 'h4',
@@ -41,7 +41,7 @@ export const OWNER_HELP_SECTIONS = [
       },
       {
         type: 'h4',
-        text: 'After you start a trial'
+        text: 'After you sign up'
       },
       {
         type: 'ol',
@@ -360,7 +360,7 @@ export const OWNER_HELP_SECTIONS = [
         items: [
           'Download a full backup while the hub is still live — lovely-home.co.uk/account opens Stripe for billing; it does not download backups for you.',
           'After a paid period ends, we take down the live hub and keep a platform archive of guide JSON only — not your photos or appliance PDFs.',
-          'To use the same hub name again later, start a new trial at lovely-home.co.uk/signup and restore your backup file on the new hub.'
+          'To use the same hub name again later, create a new home at lovely-home.co.uk/signup and restore your backup file on the new hub.'
         ]
       },
       {

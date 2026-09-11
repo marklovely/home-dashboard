@@ -26,21 +26,11 @@ function jsonResponse(payload) {
   return { ok: true, status: 200, json: async () => payload };
 }
 
-const pricingResponse = { billingTrialDays: 7, trialDays: 7 };
-
 /**
  * @param {(url: string, init?: RequestInit) => Promise<{ ok: boolean, status?: number, json?: () => Promise<unknown> }>} hubHandler
  */
 function stubSignupSuccessFetch(hubHandler) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (url, init) => {
-      if (String(url).includes('/api/public/signup/pricing')) {
-        return jsonResponse(pricingResponse);
-      }
-      return hubHandler(url, init);
-    })
-  );
+  vi.stubGlobal('fetch', vi.fn(async (url, init) => hubHandler(url, init)));
 }
 
 const provisioning = {
@@ -74,7 +64,7 @@ describe('signup success provisioning status', () => {
 
     expect(document.getElementById('hub-progress').dataset.state).toBe('provisioning');
     expect(document.getElementById('success-heading').textContent).toBe("Thank you — we're building your hub");
-    expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Trial started');
+    expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Signup complete');
     expect(document.getElementById('hub-progress-title').textContent).toMatch(/Deploying your hub now/i);
     expect(document.getElementById('hub-progress-note').textContent).toMatch(/10 minutes/i);
     expect(document.getElementById('open-hub-btn').hidden).toBe(true);
@@ -96,7 +86,7 @@ describe('signup success provisioning status', () => {
 
     expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Welcome back');
     expect(document.getElementById('success-heading').textContent).toBe("Thank you — we're reinstating your hub");
-    expect(document.getElementById('success-lead').textContent).toMatch(/active again/i);
+    expect(document.getElementById('success-lead').textContent).toMatch(/reinstating your home/i);
     expect(document.getElementById('hub-progress-title').textContent).toMatch(/Reinstating your hub now/i);
   });
 
@@ -131,7 +121,7 @@ describe('signup success provisioning status', () => {
     expect(document.getElementById('success-heading').textContent).toBe('Success — your hub is now ready');
     expect(document.title).toBe('Lovely Home — Your hub is ready');
     expect(document.getElementById('success-wait-banner').hidden).toBe(true);
-    expect(document.getElementById('success-lead').textContent).toMatch(/finished building/i);
+    expect(document.getElementById('success-lead').textContent).toMatch(/is ready/i);
     expect(openBtn.hidden).toBe(false);
     expect(openBtn.getAttribute('href')).toBe('https://blundell.lovely-hub.com/');
     expect(document.getElementById('hub-link').getAttribute('href')).toBe('https://blundell.lovely-hub.com/');
@@ -151,7 +141,7 @@ describe('signup success provisioning status', () => {
 
     expect(document.getElementById('hub-progress').dataset.state).toBe('unknown');
     expect(document.getElementById('open-hub-btn').hidden).toBe(false);
-    expect(globalThis.fetch).toHaveBeenCalledTimes(4);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
   });
 
   it('stops on a failed registry instead of waiting for a hub that will never exist', async () => {

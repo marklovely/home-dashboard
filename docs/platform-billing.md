@@ -77,9 +77,9 @@ Local dev API (`scripts/platform-admin-dev-api.mjs`) does not yet mirror billing
 
 ## Operator API (Access-protected)
 
-### Create Checkout session (7-day trial, card at signup)
+### Create Checkout session (Lovely Home+, card at signup)
 
-Trial length is `TRIAL_PERIOD_DAYS` in `functions/api/platform/platformBilling.js` (currently **7**), sent as Stripe `subscription_data.trial_period_days`. It is not set on the Price in the Stripe Dashboard.
+Lovely Home+ Checkout collects a card and starts an **active** subscription — there is no trial period. Use the **Free** plan for a no-card tryout.
 
 ```http
 POST /api/platform/billing/checkout
@@ -120,11 +120,9 @@ Single-use opaque links (`LH-XXXX-XXXX`) generated from [account.html](https://l
 | Monthly | £5 off each of the first **two** paid months | **£10** Stripe account credit |
 | Yearly | **£15** off the first year | **£15** Stripe account credit |
 
-Trial length stays **7 days** — referrals never extend the trial.
+**Referrer eligibility:** you can **generate** referral links only after **your own first paid invoice** (`referrer_eligible_at` on `site_billing`).
 
-**Referrer eligibility:** you can **generate** referral links only after **your own first paid invoice** (`referrer_eligible_at` on `site_billing`). Trial-only accounts cannot refer — that blocks self-referral abuse (second email + referral discount while both hubs are still on trial).
-
-**Timing:** referee discounts apply on Stripe invoices after the trial (coupon on the subscription). Referrer **credit** is added on the referee's **first paid invoice** (`invoice.paid`), not at checkout. A referral link created before the referrer paid is rejected at signup once eligibility is enforced.
+**Timing:** referee discounts apply on Stripe invoices (coupon on the subscription). Referrer **credit** is added on the referee's **first paid invoice** (`invoice.paid`), not at checkout. A referral link created before the referrer paid is rejected at signup once eligibility is enforced.
 
 Each generated link is **single-use**. Referrers can keep **multiple unused links** active (for inviting several people).
 
@@ -271,11 +269,11 @@ node scripts/apply-platform-billing-migration.mjs
 
 Operator API: `GET` / `POST /api/platform/marketing-pricing` (POST `{ "reset": true }` clears overrides).
 
-**Help & FAQ:** owner help source (`src/help/ownerSections.js`) uses placeholders such as `{billingTrialDays}`, `{introMonthlyBenefit}`, and `{referralMonthlyReferee}`. The marketing Help page and embedded FAQ lists load `GET /api/public/signup/pricing` and substitute live copy at runtime. After editing owner help, run `npm run build:website-help` so `website/help-data.js` stays in sync.
+**Help & FAQ:** owner help source (`src/help/ownerSections.js`) uses placeholders such as `{introMonthlyBenefit}` and `{referralMonthlyReferee}`. The marketing Help page and embedded FAQ lists load `GET /api/public/signup/pricing` and substitute live copy at runtime. After editing owner help, run `npm run build:website-help` so `website/help-data.js` stays in sync.
 
-## Slice 2 — provision on trialing (shipped)
+## Slice 2 — provision on paid signup (shipped)
 
-When Stripe sends `checkout.session.completed` or `customer.subscription.created` with status **trialing**:
+When Stripe sends `checkout.session.completed` or `customer.subscription.created` with status **active** (legacy rows may still show **trialing**):
 
 1. Platform D1 billing row is upserted (as before).
 2. If the site is in `platform-manifest.json` but has **no Terraform contract** yet, the platform dispatches [`platform-site-provision.yml`](../.github/workflows/platform-site-provision.yml) via `PLATFORM_GITHUB_TOKEN`.
@@ -365,7 +363,7 @@ When `public_signup_enabled = true`, Terraform also creates a **Zero Trust bypas
 | `/api/public/contact/status` | GET | Whether the Support contact form can send mail (`enabled`) plus optional Turnstile site key |
 | `/api/public/contact` | POST | Support contact form `{ name, email, subject, message, hub?, turnstileToken? }` — emails `support@lovely-home.co.uk` via Resend |
 
-**Nothing is provisioned until Stripe confirms the trial.** Signup only reserves the slug
+**Nothing is provisioned until Stripe confirms payment.** Signup only reserves the slug
 and opens Checkout; the registry PR is dispatched from the webhook:
 
 1. `POST /api/public/signup` — Turnstile check (if configured) → per-IP rate limit → slug

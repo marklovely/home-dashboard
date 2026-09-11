@@ -284,7 +284,6 @@
    * @param {Record<string, unknown>} pricing
    */
   function applyMetaDescriptions(pricing) {
-    const trialDays = Number(pricing.trialDays) || 7;
     const monthlyLabel = pricing.monthlyLabel ? String(pricing.monthlyLabel) : '';
     const yearlyLabel = pricing.yearlyLabel ? String(pricing.yearlyLabel) : '';
     if (!monthlyLabel || !yearlyLabel) return;

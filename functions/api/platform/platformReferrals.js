@@ -627,7 +627,7 @@ export async function createReferralCodeForSite(db, env, input) {
       body: {
         error: 'REFERRAL_NOT_ELIGIBLE',
         message:
-          'Referral links unlock after your first paid invoice (when your trial ends). Cancelled or unpaid hubs cannot refer.'
+          'Referral links unlock after your first paid invoice. Cancelled or unpaid hubs cannot refer.'
       }
     };
   }

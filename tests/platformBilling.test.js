@@ -9,7 +9,6 @@ import {
   resolveStripeFreePriceId,
   stripeTimestampToMs,
   timingSafeEqualHex,
-  TRIAL_PERIOD_DAYS,
   validateBillingSiteId,
   verifyStripeWebhookSignature
 } from '../functions/api/platform/platformBilling.js';
@@ -30,10 +29,6 @@ describe('platform billing helpers', () => {
     expect(validateBillingSiteId('kitchen_home')).toMatch(/hyphens/i);
     expect(validateBillingSiteId('')).toBeTruthy();
     expect(validateBillingSiteId('Bad')).toBeTruthy();
-  });
-
-  it('uses a 7-day Stripe trial', () => {
-    expect(TRIAL_PERIOD_DAYS).toBe(7);
   });
 
   it('resolves the free Stripe price id from env', () => {
@@ -63,13 +58,13 @@ describe('platform billing helpers', () => {
     const entries = encodeStripeFormEntries({
       mode: 'subscription',
       line_items: [{ price: 'price_123', quantity: 1 }],
-      subscription_data: { trial_period_days: TRIAL_PERIOD_DAYS, metadata: { site_id: 'smith' } }
+      subscription_data: { metadata: { site_id: 'smith' } }
     });
     const params = Object.fromEntries(entries);
     expect(params.mode).toBe('subscription');
     expect(params['line_items[0][price]']).toBe('price_123');
-    expect(params['subscription_data[trial_period_days]']).toBe(String(TRIAL_PERIOD_DAYS));
     expect(params['subscription_data[metadata][site_id]']).toBe('smith');
+    expect(params['subscription_data[trial_period_days]']).toBeUndefined();
   });
 
   it('converts Stripe unix timestamps to ms', () => {
@@ -259,7 +254,7 @@ describe('resolveBillingOwnerEmail', () => {
 });
 
 describe('handleStripeBillingEvent', () => {
-  it('records checkout.session.completed as trialing', async () => {
+  it('records checkout.session.completed as active', async () => {
     const db = /** @type {D1Database} */ (createBillingDbMock());
     const result = await handleStripeBillingEvent(db, {
       id: 'evt_checkout_1',
@@ -280,7 +275,7 @@ describe('handleStripeBillingEvent', () => {
       site_id: 'smith',
       stripe_customer_id: 'cus_123',
       stripe_subscription_id: 'sub_123',
-      status: 'trialing',
+      status: 'active',
       owner_email: 'owner@example.com'
     });
   });

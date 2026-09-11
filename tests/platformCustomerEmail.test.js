@@ -20,9 +20,7 @@ describe('customer lifecycle email copy', () => {
     expect(
       lifecycleEmailKindForEvent({ eventType: 'customer.subscription.created', status: 'trialing' })
     ).toBe('signup');
-    expect(lifecycleEmailKindForEvent({ eventType: 'customer.subscription.trial_will_end' })).toBe(
-      'trial_ending'
-    );
+    expect(lifecycleEmailKindForEvent({ eventType: 'customer.subscription.trial_will_end' })).toBeNull();
     expect(lifecycleEmailKindForEvent({ eventType: 'invoice.payment_failed' })).toBe('past_due');
     expect(lifecycleEmailKindForEvent({ eventType: 'customer.subscription.deleted' })).toBe('canceled');
     expect(
@@ -33,21 +31,23 @@ describe('customer lifecycle email copy', () => {
     ).toBeNull();
   });
 
-  it('builds a Lovely Home+ trial signup confirmation with the hub URL', () => {
+  it('builds a Lovely Home+ signup confirmation with the hub URL', () => {
     const mail = buildCustomerEmail({
       kind: 'signup',
       siteId: 'rose-cottage',
       planTier: 'plus',
-      status: 'trialing'
+      status: 'active'
     });
-    expect(mail.subject).toContain('Lovely Home+ trial');
+    expect(mail.subject).toContain('Lovely Home+ hub');
     expect(mail.text).toContain(customerHubUrl('rose-cottage'));
     expect(mail.text).toContain('signup-success?site=rose-cottage');
     expect(mail.text).toContain('/account');
-    expect(mail.text).toMatch(/7-day Lovely Home\+ trial/i);
+    expect(mail.text).toMatch(/subscription is active/i);
+    expect(mail.text).toMatch(/card on file is billed/i);
     expect(mail.text).toMatch(/sitter, tenant, Airbnb guest/i);
     expect(mail.text).toMatch(/wall tablet is optional/i);
     expect(mail.text).not.toMatch(/Lovely Home Free plan/i);
+    expect(mail.text).not.toMatch(/trial/i);
   });
 
   it('builds a Free signup confirmation without trial wording', () => {
