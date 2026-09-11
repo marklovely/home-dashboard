@@ -122,6 +122,10 @@ describe('marketing site pages', () => {
     expect(js).not.toMatch(/Sitters sign in with Cloudflare email codes/);
     expect(js).toMatch(/target="_blank" rel="noopener noreferrer"/);
     expect(js).toMatch(/How to back up/);
+    expect(js).toMatch(/Close hub permanently/);
+    expect(js).toMatch(/\/api\/public\/account\/close-hub/);
+    expect(js).toMatch(/hub\.plan === 'plus'/);
+    expect(js).toMatch(/canCloseHub/);
     expect(html).toMatch(/Stripe cannot show a backup reminder inside their portal/);
   });
 

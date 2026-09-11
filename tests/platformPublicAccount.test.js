@@ -8,6 +8,7 @@ import {
   handleAccountOtpRequest,
   handleAccountPortal,
   handleAccountSession,
+  handleAccountCloseHub,
   handleAccountDowngradeToFree,
   handleAccountUpgradeCheckout,
   handleAccountVerify,
@@ -144,7 +145,8 @@ describe('public account helpers', () => {
       canManageBilling: true,
       canUpgrade: false,
       canDowngrade: true,
-      canRefer: false
+      canRefer: false,
+      canCloseHub: false
     });
   });
 
@@ -222,6 +224,7 @@ describe('public account helpers', () => {
     ).toMatchObject({
       plan: 'free',
       canUpgrade: true,
+      canCloseHub: true,
       canManageBilling: true
     });
   });
@@ -290,7 +293,8 @@ describe('account OTP and portal', () => {
         canManageBilling: true,
         canUpgrade: false,
         canDowngrade: false,
-        canRefer: false
+        canRefer: false,
+        canCloseHub: false
       }
     ]);
 
@@ -421,6 +425,10 @@ describe('account OTP and portal', () => {
   });
 
   it('downgrades a plus hub to free without opening Stripe Checkout', async () => {
+    const emailSpy = vi.spyOn(
+      await import('../functions/api/platform/platformCustomerEmail.js'),
+      'sendDowngradeConfirmationEmail'
+    ).mockResolvedValue({ ok: true, action: 'email_downgrade_sent' });
     const downgradeSpy = vi.spyOn(platformBilling, 'downgradePlusToFreeSubscription').mockResolvedValue({
       ok: true,
       subscriptionId: 'sub_free_new',
@@ -466,7 +474,63 @@ describe('account OTP and portal', () => {
         priorSubscriptionId: 'sub_plus'
       })
     );
+    expect(emailSpy).toHaveBeenCalledWith(
+      env,
+      expect.objectContaining({
+        siteId: 'kitchen-home',
+        ownerEmail: 'owner@example.com'
+      })
+    );
     downgradeSpy.mockRestore();
+    emailSpy.mockRestore();
+  });
+
+  it('closes a free hub and enqueues teardown', async () => {
+    const closeSpy = vi.spyOn(platformBilling, 'closeFreeHubSubscription').mockResolvedValue({
+      ok: true,
+      deprovision: { ok: true, action: 'deprovision_dispatched' }
+    });
+    const db = createAccountDb([
+      {
+        site_id: 'test-cottage-free',
+        status: 'active',
+        plan_tier: 'free',
+        stripe_customer_id: 'cus_free',
+        stripe_subscription_id: 'sub_free',
+        owner_email: 'owner@example.com',
+        provision_dispatched_at: Date.now()
+      }
+    ]);
+    await handleAccountOtpRequest(
+      env,
+      /** @type {D1Database} */ (db),
+      { email: 'owner@example.com', clientIp: '203.0.113.22' },
+      { sendEmail: async () => ({ ok: true, id: 'x' }), generateCode: () => '888888' }
+    );
+    const verified = await handleAccountVerify(env, /** @type {D1Database} */ (db), {
+      email: 'owner@example.com',
+      code: '888888'
+    });
+    const closed = await handleAccountCloseHub(
+      env,
+      /** @type {D1Database} */ (db),
+      { sites: { 'test-cottage-free': { terraform: true } } },
+      {
+        sessionToken: String(verified.body.sessionToken),
+        siteId: 'test-cottage-free'
+      }
+    );
+    expect(closed.status).toBe(200);
+    expect(closed.body.status).toBe('canceled');
+    expect(closeSpy).toHaveBeenCalledOnce();
+    expect(closeSpy.mock.calls[0]?.[3]).toMatchObject({
+      siteId: 'test-cottage-free',
+      customerId: 'cus_free',
+      subscriptionId: 'sub_free',
+      ownerEmail: 'owner@example.com',
+      mode: 'test'
+    });
+    closeSpy.mockRestore();
   });
 
   it('locks out after too many wrong codes', async () => {

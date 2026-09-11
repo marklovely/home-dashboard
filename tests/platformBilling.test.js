@@ -6,6 +6,7 @@ import {
   createFreeSubscriptionOnCustomer,
   createUpgradeCheckoutSession,
   customerHasActiveSiteSubscription,
+  closeFreeHubSubscription,
   downgradePlusToFreeSubscription,
   encodeStripeFormEntries,
   handleStripeBillingEvent,
@@ -194,6 +195,68 @@ describe('platform billing helpers', () => {
       status: 'active',
       plan_tier: 'free'
     });
+    vi.unstubAllGlobals();
+  });
+
+  it('closes a free hub by canceling Stripe and enqueueing teardown', async () => {
+    const db = /** @type {D1Database} */ ({
+      prepare(sql) {
+        return {
+          bind(...args) {
+            return {
+              async run() {
+                return { meta: { changes: 1 } };
+              },
+              async first() {
+                if (sql.includes('SELECT') && args[0] === 'kitchen-home') {
+                  return {
+                    site_id: 'kitchen-home',
+                    stripe_customer_id: 'cus_free',
+                    stripe_subscription_id: 'sub_free',
+                    status: 'active',
+                    plan_tier: 'free',
+                    owner_email: 'owner@example.com',
+                    provision_dispatched_at: Date.now()
+                  };
+                }
+                return null;
+              }
+            };
+          }
+        };
+      }
+    });
+    const queue = { send: vi.fn(async () => ({})) };
+    const fetchMock = vi.fn(async (url, init) => {
+      if (String(url).includes('/subscriptions/sub_free') && init?.method === 'DELETE') {
+        return { ok: true, json: async () => ({ id: 'sub_free', status: 'canceled' }) };
+      }
+      if (String(url).includes('api.resend.com')) {
+        return { ok: true, json: async () => ({ id: 'email_1' }) };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await closeFreeHubSubscription(
+      {
+        STRIPE_SECRET_KEY: 'sk_test',
+        RESEND_API_KEY: 're_test',
+        HUB_PROVISION_QUEUE: queue
+      },
+      db,
+      { sites: { 'kitchen-home': { siteId: 'kitchen-home', contract: { d1_database_id: 'abc' } } } },
+      {
+        siteId: 'kitchen-home',
+        customerId: 'cus_free',
+        subscriptionId: 'sub_free',
+        ownerEmail: 'owner@example.com',
+        mode: 'test'
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(queue.send).toHaveBeenCalledWith({ siteId: 'kitchen-home', action: 'teardown' });
     vi.unstubAllGlobals();
   });
 

@@ -34,6 +34,17 @@ describe('customer lifecycle email copy', () => {
     ).toBeNull();
   });
 
+  it('builds a downgrade confirmation for Plus to Free', () => {
+    const mail = buildCustomerEmail({
+      kind: 'downgrade',
+      siteId: 'test-cottage-free'
+    });
+    expect(mail.subject).toContain('Free plan');
+    expect(mail.text).toContain(customerHubUrl('test-cottage-free'));
+    expect(mail.text).toMatch(/two guide templates/i);
+    expect(mail.text).toMatch(/Upgrade or close hub/i);
+  });
+
   it('builds a Lovely Home+ upgrade confirmation without provisioning copy', () => {
     const mail = buildCustomerEmail({
       kind: 'upgrade',

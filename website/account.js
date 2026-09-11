@@ -260,6 +260,11 @@
         'Your hub is on the Free plan again. Existing guides and stays stay as they are; you can add up to two guide templates and two scheduled stays going forward.',
         'info'
       );
+    } else if (pageParams.get('closed') === '1') {
+      showAlert(
+        'Your hub is closing. We emailed confirmation — download a full backup from Settings if you have not already.',
+        'info'
+      );
     } else if (pageParams.get('upgrade_canceled') === '1') {
       showAlert('Checkout was canceled. You can upgrade anytime from here.', 'info');
     }
@@ -295,6 +300,14 @@
         const siteId = button.getAttribute('data-downgrade-free');
         if (!siteId) return;
         openDowngradeToFree(sessionToken, siteId, button);
+      });
+    });
+    hubsEl.querySelectorAll('[data-close-hub]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const siteId = button.getAttribute('data-close-hub');
+        if (!siteId) return;
+        const hub = hubs.find((entry) => entry.siteId === siteId);
+        openCloseHub(sessionToken, siteId, hub, button);
       });
     });
     bindReferralActions(sessionToken);
@@ -368,16 +381,28 @@
             '<p class="signup-note muted"><strong>Refer a friend</strong> — unlocks after your first paid invoice.</p>' +
             '</div>'
         : '';
-    const backupReminder = !canceled && !hub.canDowngrade
-      ? '<div class="account-backup-reminder" role="note">' +
-        '<p class="account-backup-reminder__title"><strong>Before you cancel on Stripe</strong></p>' +
-        '<p class="account-backup-reminder__body">Download a <strong>full backup</strong> from your hub while it is still live — it includes photos and appliance PDFs. Our platform archive on cancel is guide JSON only.</p>' +
-        '<p class="account-backup-reminder__links">' +
-        '<a href="' + escapeHtml(hub.hubUrl) + '"' + newTabAttrs() + '>Open hub</a>' +
-        ' · <a href="/help#owner/backup-restore"' + newTabAttrs() + '>How to back up</a>' +
-        '</p>' +
-        '</div>'
-      : '';
+    const backupReminder =
+      !canceled && hub.plan === 'plus'
+        ? '<div class="account-backup-reminder" role="note">' +
+          '<p class="account-backup-reminder__title"><strong>Before you cancel on Stripe</strong></p>' +
+          '<p class="account-backup-reminder__body">Download a <strong>full backup</strong> from your hub while it is still live — it includes photos and appliance PDFs. Our platform archive on cancel is guide JSON only.</p>' +
+          '<p class="account-backup-reminder__links">' +
+          '<a href="' + escapeHtml(hub.hubUrl) + '"' + newTabAttrs() + '>Open hub</a>' +
+          ' · <a href="/help#owner/backup-restore"' + newTabAttrs() + '>How to back up</a>' +
+          '</p>' +
+          '</div>'
+        : '';
+    const closeHubBlock =
+      hub.canCloseHub && !canceled
+        ? '<div class="account-close-hub" data-close-site="' +
+          escapeHtml(hub.siteId) +
+          '">' +
+          '<p class="signup-note"><strong>Close hub permanently</strong> — takes the site down and archives guide JSON only. Download a full backup first if you want photos and appliance PDFs.</p>' +
+          '<button type="button" class="btn btn-danger btn-block" data-close-hub="' +
+          escapeHtml(hub.siteId) +
+          '">Close hub permanently</button>' +
+          '</div>'
+        : '';
     const manage =
       hub.canManageBilling && !hub.canUpgrade
         ? '<button type="button" class="btn btn-secondary btn-block" data-portal-site="' +
@@ -394,7 +419,9 @@
     const body = canceled
       ? '<p>This subscription is cancelled, so Stripe has no live plan to change — only invoices and the saved card. Create a new home at lovely-home.co.uk/signup if you want the hub back.</p>'
       : hub.canUpgrade
-        ? '<p>Your hub is on the Free plan — ' + escapeHtml(FREE_GUIDES_EXPLAINER) + ' Plus two scheduled stays. Upgrade to Lovely Home+ when you need more templates or stays.</p>'
+        ? '<p>Your hub is on the Free plan — ' +
+          escapeHtml(FREE_GUIDES_EXPLAINER) +
+          ' Plus two scheduled stays. Upgrade to Lovely Home+ when you need more templates or stays. To <strong>close the hub entirely</strong>, use Close hub permanently below (after backing up).</p>'
         : hub.canDowngrade
           ? '<p>Your hub is on Lovely Home+. Switch to the Free plan below to stop Plus billing while keeping the hub live (soft limits apply). To <strong>close the hub entirely</strong>, use Invoices &amp; card on Stripe and cancel the subscription there — that archives the site after the billing period ends.</p>'
           : '<p>This is your private household hub. Guests sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
@@ -416,6 +443,7 @@
         downgradeBlock +
         upgradeBlock +
         referralBlock +
+        closeHubBlock +
       '</article>'
     );
   }
@@ -492,6 +520,38 @@
   /**
    * @param {{ siteId: string, hubUrl?: string, status?: string } | undefined} hub
    */
+  /**
+   * @param {{ siteId: string, hubUrl?: string } | undefined} hub
+   */
+  async function openCloseHub(sessionToken, siteId, hub, button) {
+    clearAlert();
+    const confirmed = await confirmCloseHub(hub);
+    if (!confirmed) return;
+    setBusy(button, true);
+    try {
+      const response = await fetch(apiBase + '/api/public/account/close-hub', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ sessionToken, siteId })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        clearStoredSession();
+        showSignIn(SESSION_EXPIRED_MESSAGE);
+        return;
+      }
+      if (!response.ok) {
+        showAlert(payload.message || 'Could not close the hub. Email support@lovely-home.co.uk.', 'error');
+        return;
+      }
+      window.location.href = '/account?closed=1&site=' + encodeURIComponent(siteId);
+    } catch {
+      showAlert('Network error — check your connection and try again.', 'error');
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
   async function openDowngradeToFree(sessionToken, siteId, button) {
     clearAlert();
     const confirmed = await confirmDowngradeToFree();
@@ -692,6 +752,7 @@
    *   bodyHtml: string;
    *   cancelLabel?: string;
    *   confirmLabel: string;
+   *   confirmClass?: string;
    *   onConfirm?: () => void;
    * }} options
    */
@@ -719,7 +780,9 @@
         '<button type="button" class="btn btn-secondary" data-account-dialog="cancel">' +
         escapeHtml(options.cancelLabel || 'Not now') +
         '</button>' +
-        '<button type="button" class="btn btn-primary" data-account-dialog="confirm">' +
+        '<button type="button" class="btn ' +
+        escapeHtml(options.confirmClass || 'btn-primary') +
+        '" data-account-dialog="confirm">' +
         escapeHtml(options.confirmLabel) +
         '</button>' +
         '</div>';
@@ -755,6 +818,27 @@
       );
 
       dialog.querySelector('[data-account-dialog="confirm"]')?.focus();
+    });
+  }
+
+  /**
+   * @param {{ hubUrl?: string } | undefined} hub
+   */
+  function confirmCloseHub(hub) {
+    const hubUrl = String(hub?.hubUrl || '').trim();
+    return openAccountDialog({
+      title: 'Close hub permanently?',
+      bodyHtml:
+        '<p>This takes down your live hub and archives guide JSON only — photos and appliance PDFs are not kept on our platform.</p>' +
+        '<p><strong>Download a full backup first</strong> from Settings if you want to keep everything.</p>' +
+        '<p class="account-backup-dialog__links">' +
+        (hubUrl ? '<a href="' + escapeHtml(hubUrl) + '"' + newTabAttrs() + '>Open hub → Settings → Utilities</a> · ' : '') +
+        '<a href="/help#owner/backup-restore"' + newTabAttrs() + '>How to back up</a>' +
+        '</p>' +
+        '<p>This cannot be undone from your account — you would need to sign up again for a new hub.</p>',
+      cancelLabel: 'Keep hub',
+      confirmLabel: 'Close hub permanently',
+      confirmClass: 'btn-danger'
     });
   }
 
