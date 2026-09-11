@@ -10,6 +10,7 @@
 
 - Signup lifecycle email copy distinguishes Lovely Home Free (no trial) from Lovely Home+ (7-day trial for first-time signups)
 - Returning households: Free reinstates at no charge; Lovely Home+ Checkout skips the trial and bills immediately
+- Plus signup confirmation email resolves the owner inbox from the signup reservation or Stripe Customer when Checkout webhooks omit `customer_details.email`; send mail before registry/provision dispatch
 
 ### Testing
 

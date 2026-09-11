@@ -1,9 +1,11 @@
 import { createHmac } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  checkoutSessionOwnerEmail,
   encodeStripeFormEntries,
   handleStripeBillingEvent,
   mapStripeSubscriptionStatus,
+  resolveBillingOwnerEmail,
   resolveStripeFreePriceId,
   stripeTimestampToMs,
   timingSafeEqualHex,
@@ -41,6 +43,20 @@ describe('platform billing helpers', () => {
     };
     expect(resolveStripeFreePriceId(env, 'test')).toBe('price_free_test');
     expect(resolveStripeFreePriceId(env, 'live')).toBe('price_free_live');
+  });
+
+  it('reads checkout owner email from customer_details or customer_email', () => {
+    expect(
+      checkoutSessionOwnerEmail({
+        customer_details: { email: 'Owner@Example.com' }
+      })
+    ).toBe('owner@example.com');
+    expect(
+      checkoutSessionOwnerEmail({
+        customer_email: 'practice@example.com'
+      })
+    ).toBe('practice@example.com');
+    expect(checkoutSessionOwnerEmail({ customer: 'cus_123' })).toBeNull();
   });
 
   it('encodes nested Stripe form params', () => {
@@ -190,6 +206,56 @@ function createBillingDbMock() {
     }
   };
 }
+
+describe('resolveBillingOwnerEmail', () => {
+  it('falls back to the signup reservation and Stripe customer email', async () => {
+    const db = /** @type {D1Database} */ ({
+      prepare(sql) {
+        return {
+          bind(...args) {
+            return {
+              async first() {
+                if (sql.includes('FROM signup_slug_reservations')) {
+                  expect(args[0]).toBe('smith');
+                  return { owner_email: 'reserved@example.com' };
+                }
+                return null;
+              }
+            };
+          }
+        };
+      }
+    });
+
+    const fromReservation = await resolveBillingOwnerEmail(
+      db,
+      { STRIPE_SECRET_KEY: 'sk_test_abc' },
+      { siteId: 'smith', customerId: 'cus_123' }
+    );
+    expect(fromReservation).toBe('reserved@example.com');
+
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ email: 'stripe@example.com' })
+    }));
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = fetchImpl;
+    try {
+      const fromStripe = await resolveBillingOwnerEmail(
+        db,
+        { STRIPE_SECRET_KEY: 'sk_test_abc' },
+        { siteId: 'rose', customerId: 'cus_rose', mode: 'test' }
+      );
+      expect(fromStripe).toBe('stripe@example.com');
+      expect(fetchImpl).toHaveBeenCalledWith(
+        'https://api.stripe.com/v1/customers/cus_rose',
+        expect.objectContaining({ method: 'GET' })
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
 
 describe('handleStripeBillingEvent', () => {
   it('records checkout.session.completed as trialing', async () => {

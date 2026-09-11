@@ -1,7 +1,7 @@
 import { maybeDispatchBillingProvision } from './platformBillingProvision.js';
 import { maybeDispatchBillingDeprovision } from './platformBillingDeprovision.js';
 import { maybeDispatchSignupRegistry } from './platformBillingRegistry.js';
-import { releaseSignupReservation } from './platformSignupGuards.js';
+import { getActiveSignupReservation, releaseSignupReservation } from './platformSignupGuards.js';
 import { getSiteFromManifest } from './platformApi.js';
 import { resetBillingCycleFlags, shouldResetBillingCycleFlags } from './platformBillingLifecycle.js';
 import { maybeSendCustomerLifecycleEmail } from './platformCustomerEmail.js';
@@ -187,6 +187,108 @@ export function encodeStripeFormEntries(object, prefix = '') {
  * @param {string} path
  * @param {Record<string, unknown>} [params]
  */
+/**
+ * @param {unknown} session
+ */
+export function checkoutSessionOwnerEmail(session) {
+  const object = /** @type {Record<string, unknown>} */ (session ?? {});
+  const details = object.customer_details;
+  if (details && typeof details === 'object') {
+    const email = String(/** @type {{ email?: string }} */ (details).email ?? '')
+      .trim()
+      .toLowerCase();
+    if (email.includes('@')) return email;
+  }
+  const customerEmail = String(object.customer_email ?? '')
+    .trim()
+    .toLowerCase();
+  return customerEmail.includes('@') ? customerEmail : null;
+}
+
+/**
+ * Resolve the household owner inbox for lifecycle email and billing rows.
+ *
+ * @param {D1Database} db
+ * @param {Record<string, string | undefined>} env
+ * @param {{
+ *   siteId: string;
+ *   customerId?: string | null;
+ *   ownerEmail?: string | null;
+ *   existingBilling?: { owner_email?: string | null } | null;
+ *   mode?: 'test' | 'live';
+ * }} input
+ */
+export async function resolveBillingOwnerEmail(db, env, input) {
+  /** @type {Array<string | null | undefined>} */
+  const candidates = [input.ownerEmail, input.existingBilling?.owner_email];
+  for (const value of candidates) {
+    const email = String(value ?? '')
+      .trim()
+      .toLowerCase();
+    if (email.includes('@')) return email;
+  }
+
+  const siteId = String(input.siteId ?? '').trim();
+  if (siteId) {
+    const reservation = await getActiveSignupReservation(db, siteId);
+    const reserved = String(reservation?.owner_email ?? '')
+      .trim()
+      .toLowerCase();
+    if (reserved.includes('@')) return reserved;
+  }
+
+  const customerId = String(input.customerId ?? '').trim();
+  if (!customerId) return null;
+
+  const mode = input.mode ?? (await getStripeMode(db));
+  const secretKey = stripeCredentialsForMode(env, mode).secretKey;
+  if (!secretKey) return null;
+
+  try {
+    const customer = await stripeApiRequest(
+      secretKey,
+      'GET',
+      `/customers/${encodeURIComponent(customerId)}`
+    );
+    const email = String(customer.email ?? '')
+      .trim()
+      .toLowerCase();
+    return email.includes('@') ? email : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {'test' | 'live'} stripeMode
+ * @param {string} eventType
+ * @param {Record<string, unknown>} object
+ */
+export async function resolvePlanTierForBillingEvent(env, stripeMode, eventType, object) {
+  if (eventType.startsWith('customer.subscription.')) {
+    return resolvePlanTierFromSubscription(env, stripeMode, object);
+  }
+  if (eventType !== 'checkout.session.completed') return null;
+
+  const subscriptionId = String(object.subscription ?? '').trim();
+  if (!subscriptionId) return 'plus';
+
+  const secretKey = stripeCredentialsForMode(env, stripeMode).secretKey;
+  if (!secretKey) return 'plus';
+
+  try {
+    const subscription = await stripeApiRequest(
+      secretKey,
+      'GET',
+      `/subscriptions/${encodeURIComponent(subscriptionId)}`
+    );
+    return resolvePlanTierFromSubscription(env, stripeMode, subscription) ?? 'plus';
+  } catch {
+    return 'plus';
+  }
+}
+
 export async function stripeApiRequest(secretKey, method, path, params = {}) {
   const entries = encodeStripeFormEntries(params);
   const body = new URLSearchParams(entries).toString();
@@ -594,11 +696,7 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     billingPatch.customerId = object.customer ? String(object.customer) : null;
     billingPatch.subscriptionId = object.subscription ? String(object.subscription) : null;
     billingPatch.status = 'trialing';
-    billingPatch.ownerEmail = object.customer_details
-      ? String(/** @type {{ email?: string }} */ (object.customer_details).email ?? '') || null
-      : object.customer_email
-        ? String(object.customer_email)
-        : null;
+    billingPatch.ownerEmail = checkoutSessionOwnerEmail(object);
   } else if (eventType === 'customer.subscription.trial_will_end') {
     const parsed = parseStripeSubscription(object);
     let existingForTrial = parsed.siteId ? await getSiteBilling(db, parsed.siteId) : null;
@@ -679,10 +777,26 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
 
   const env = context.env;
   const stripeMode = env ? await getStripeMode(db) : 'test';
+  const resolvedOwnerEmail =
+    env && billingPatch.siteId
+      ? await resolveBillingOwnerEmail(db, env, {
+          siteId: billingPatch.siteId,
+          customerId: billingPatch.customerId,
+          ownerEmail: billingPatch.ownerEmail,
+          existingBilling,
+          mode: stripeMode
+        })
+      : billingPatch.ownerEmail ?? existingBilling?.owner_email ?? null;
+  if (resolvedOwnerEmail) {
+    billingPatch.ownerEmail = resolvedOwnerEmail;
+  }
+
   const planTier =
-    eventType.startsWith('customer.subscription.') && env
-      ? resolvePlanTierFromSubscription(env, stripeMode, object)
-      : null;
+    env && billingPatch.siteId
+      ? (await resolvePlanTierForBillingEvent(env, stripeMode, eventType, object)) ??
+        existingBilling?.plan_tier ??
+        (eventType === 'checkout.session.completed' ? 'plus' : null)
+      : existingBilling?.plan_tier ?? null;
 
   await upsertSiteBilling(db, {
     site_id: billingPatch.siteId,
@@ -690,12 +804,41 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     stripe_subscription_id: billingPatch.subscriptionId,
     status: billingPatch.status,
     trial_end: billingPatch.trialEnd,
-    owner_email: billingPatch.ownerEmail ?? existingBilling?.owner_email ?? null,
+    owner_email: resolvedOwnerEmail ?? existingBilling?.owner_email ?? null,
     plan_tier: planTier ?? existingBilling?.plan_tier ?? null
   });
 
   if (billingPatch.status === 'canceled') {
     await applyHubNameHoldAfterCancel(db, billingPatch.siteId);
+  }
+
+  /** @type {Record<string, unknown> | undefined} */
+  let email;
+  if (env) {
+    const billingAfterUpsert = await getSiteBilling(db, billingPatch.siteId);
+    const emailResult = await maybeSendCustomerLifecycleEmail(
+      env,
+      db,
+      {
+        eventType,
+        status: billingPatch.status,
+        siteId: billingPatch.siteId,
+        ownerEmail: billingPatch.ownerEmail ?? billingAfterUpsert?.owner_email ?? null,
+        trialEnd: billingPatch.trialEnd ?? billingAfterUpsert?.trial_end ?? null,
+        planTier: planTier ?? billingAfterUpsert?.plan_tier ?? null,
+        priorBilling: existingBilling,
+        existingBilling: billingAfterUpsert
+      },
+      context.fetchImpl
+    );
+    email = emailResult;
+    if (!emailResult.ok) {
+      return {
+        ok: false,
+        error: emailResult.error ?? 'EMAIL_SEND_FAILED',
+        message: emailResult.message
+      };
+    }
   }
 
   /** @type {Record<string, unknown> | undefined} */
@@ -767,35 +910,6 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
         ok: false,
         error: deprovisionResult.error ?? 'DEPROVISION_DISPATCH_FAILED',
         message: deprovisionResult.message
-      };
-    }
-  }
-
-  /** @type {Record<string, unknown> | undefined} */
-  let email;
-  if (env) {
-    const billingAfter = await getSiteBilling(db, billingPatch.siteId);
-    const emailResult = await maybeSendCustomerLifecycleEmail(
-      env,
-      db,
-      {
-        eventType,
-        status: billingPatch.status,
-        siteId: billingPatch.siteId,
-        ownerEmail: billingPatch.ownerEmail ?? billingAfter?.owner_email ?? null,
-        trialEnd: billingPatch.trialEnd ?? billingAfter?.trial_end ?? null,
-        planTier: planTier ?? billingAfter?.plan_tier ?? null,
-        priorBilling: existingBilling,
-        existingBilling: billingAfter
-      },
-      context.fetchImpl
-    );
-    email = emailResult;
-    if (!emailResult.ok) {
-      return {
-        ok: false,
-        error: emailResult.error ?? 'EMAIL_SEND_FAILED',
-        message: emailResult.message
       };
     }
   }
