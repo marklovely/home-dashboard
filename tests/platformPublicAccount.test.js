@@ -164,6 +164,22 @@ describe('public account helpers', () => {
     });
   });
 
+  it('hides referrals on Free even when the owner previously paid', () => {
+    expect(
+      publicAccountHubFromRow({
+        site_id: 'test-cottage-free',
+        status: 'active',
+        plan_tier: 'free',
+        stripe_customer_id: 'cus_free',
+        stripe_subscription_id: 'sub_free',
+        referrer_eligible_at: 1_700_000_000_000
+      })
+    ).toMatchObject({
+      plan: 'free',
+      canRefer: false
+    });
+  });
+
   it('resolves plan tier from Stripe when building account hub cards', async () => {
     const resolveSpy = vi.spyOn(
       await import('../functions/api/platform/platformPublicHubPlan.js'),
