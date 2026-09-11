@@ -71,3 +71,12 @@ jobs:
             exit 1
           fi
           node scripts/commit-site-registry-onto-main.mjs "$ACTION" "$SITE_ID"
+
+      - name: Delete registry snapshot branch
+        if: success()
+        env:
+          PLATFORM_GITHUB_TOKEN: ${{ secrets.PLATFORM_GITHUB_TOKEN }}
+          SITE_ID: ${{ inputs.site_id }}
+          ACTION: ${{ inputs.action }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: node scripts/delete-hub-registry-snapshot-branch.mjs "$ACTION" "$SITE_ID"

@@ -9,6 +9,7 @@ import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hubRegistrySnapshotBranch } from './lib/hub-registry-snapshot-branch.mjs';
 import { REGISTRY_OVERLAY_FILES } from './lib/overlay-site-registry.mjs';
 import { validateSiteId } from './lib/site-registry.mjs';
 
@@ -27,7 +28,7 @@ if (!token || !repository) {
   process.exit(1);
 }
 
-const branch = `platform/hub-${action}-${siteId}`;
+const branch = hubRegistrySnapshotBranch(/** @type {'record' | 'drop'} */ (action), siteId);
 execFileSync('git', ['config', 'user.name', 'github-actions[bot]'], { cwd: root, stdio: 'inherit' });
 execFileSync('git', ['config', 'user.email', 'github-actions[bot]@users.noreply.github.com'], {
   cwd: root,
