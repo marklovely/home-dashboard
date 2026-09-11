@@ -511,6 +511,40 @@ export async function handleAccountSession(env, db, input, deps = {}) {
 }
 
 /**
+ * @param {D1Database} db
+ * @param {string} sessionToken
+ */
+export async function revokeAccountSession(db, sessionToken) {
+  const token = String(sessionToken ?? '').trim();
+  if (!token) return false;
+  const tokenHash = await hashAccountSecret(token);
+  const result = await db
+    .prepare('DELETE FROM account_sessions WHERE token_hash = ?')
+    .bind(tokenHash)
+    .run();
+  return Number(result?.meta?.changes ?? 0) > 0;
+}
+
+/**
+ * @param {D1Database | null | undefined} db
+ * @param {{ sessionToken?: string }} input
+ */
+export async function handleAccountLogout(db, input) {
+  if (!db) {
+    return {
+      status: 503,
+      body: { error: 'BILLING_DB_NOT_CONFIGURED', message: 'Account sign-in is not available right now.' }
+    };
+  }
+
+  await revokeAccountSession(db, String(input.sessionToken ?? '').trim());
+  return {
+    status: 200,
+    body: { ok: true, message: 'You have been signed out.' }
+  };
+}
+
+/**
  * @param {Record<string, string | undefined>} env
  * @param {D1Database | null | undefined} db
  * @param {{ sessionToken: string; siteId: string; billingInterval?: string }} input
