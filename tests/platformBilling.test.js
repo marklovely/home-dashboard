@@ -4,6 +4,7 @@ import {
   cancelPriorSubscriptionAfterUpgrade,
   checkoutSessionOwnerEmail,
   createUpgradeCheckoutSession,
+  customerHasActiveSiteSubscription,
   encodeStripeFormEntries,
   handleStripeBillingEvent,
   mapStripeSubscriptionStatus,
@@ -373,6 +374,98 @@ describe('handleStripeBillingEvent', () => {
       site_id: 'practice',
       status: 'active'
     });
+  });
+
+  it('detects a replacement active subscription for the same site', async () => {
+    const fetchMock = vi.fn(async (url) => {
+      if (String(url).includes('/subscriptions?')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: [
+              {
+                id: 'sub_plus',
+                metadata: { site_id: 'test-cottage-free' }
+              }
+            ]
+          })
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const hasReplacement = await customerHasActiveSiteSubscription(
+      { STRIPE_SECRET_KEY: 'sk_test' },
+      'test',
+      'cus_free',
+      'test-cottage-free',
+      'sub_free'
+    );
+    expect(hasReplacement).toBe(true);
+    vi.unstubAllGlobals();
+  });
+
+  it('ignores subscription.deleted when Stripe still has an active Plus subscription for the site', async () => {
+    const db = /** @type {D1Database} */ (createBillingDbMock());
+    const fetchMock = vi.fn(async (url) => {
+      if (String(url).includes('/subscriptions?')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: [{ id: 'sub_plus', metadata: { site_id: 'test-cottage-free' } }]
+          })
+        };
+      }
+      return { ok: true, json: async () => ({ id: 'evt', url: 'https://example.com' }) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await handleStripeBillingEvent(
+      db,
+      {
+        id: 'evt_upgrade_checkout_race',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            customer: 'cus_free',
+            subscription: 'sub_plus',
+            metadata: { site_id: 'test-cottage-free' },
+            customer_details: { email: 'owner@example.com' }
+          }
+        }
+      },
+      { env: { STRIPE_SECRET_KEY: 'sk_test', STRIPE_PRICE_ID: 'price_plus_month', STRIPE_PRICE_ID_FREE: 'price_free_test' } }
+    );
+
+    const deleted = await handleStripeBillingEvent(
+      db,
+      {
+        id: 'evt_free_sub_deleted_race',
+        type: 'customer.subscription.deleted',
+        data: {
+          object: {
+            id: 'sub_free',
+            customer: 'cus_free',
+            status: 'canceled',
+            metadata: { site_id: 'test-cottage-free' },
+            items: { data: [{ price: { id: 'price_free_test', unit_amount: 0 } }] }
+          }
+        }
+      },
+      { env: { STRIPE_SECRET_KEY: 'sk_test', STRIPE_PRICE_ID: 'price_plus_month', STRIPE_PRICE_ID_FREE: 'price_free_test' } }
+    );
+
+    expect(deleted).toEqual({ ok: true, action: 'superseded_subscription_deleted_ignored' });
+    const stored = await db
+      .prepare('SELECT * FROM site_billing WHERE site_id = ?')
+      .bind('test-cottage-free')
+      .first();
+    expect(stored).toMatchObject({
+      stripe_subscription_id: 'sub_plus',
+      status: 'active'
+    });
+    vi.unstubAllGlobals();
   });
 
   it('ignores subscription.deleted for a superseded free subscription after upgrade', async () => {
