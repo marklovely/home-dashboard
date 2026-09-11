@@ -362,9 +362,9 @@ HOME_LONGITUDE = "-0.1278"
 
 CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
 
-ACCESS_PAGES_APP_ID = "2c2ceef9-12eb-43f0-95b3-c6c14ac18847"
+ACCESS_PAGES_APP_ID = "0bcf6b94-62d9-4b12-98f8-cecc225d0022"
 
-ACCESS_WORKER_APP_ID = "0d565fe1-8b71-4f03-9408-0f08be042159"
+ACCESS_WORKER_APP_ID = "c025f108-f84f-4b9a-8841-dc32a83bbbe7"
 
 [[env.test-cottage-free.durable_objects.bindings]]
 name = "OWNER_AUTH_LIMITER"
@@ -381,13 +381,13 @@ bucket_name = "lovely-home-appliance-guides-test-cottage-free"
 [[env.test-cottage-free.d1_databases]]
 binding = "APPLIANCE_MANUALS_DB"
 database_name = "lovely-home-appliance-manuals-test-cottage-free"
-database_id = "09c21d11-3f09-4dfb-af61-26d7147e8eca"
+database_id = "067a1b0f-18e9-4a6c-866d-06c2b3eda2f0"
 migrations_dir = "migrations"
 
 [[env.test-cottage-free.d1_databases]]
 binding = "HOUSE_GUIDE_DB"
 database_name = "lovely-home-appliance-manuals-test-cottage-free"
-database_id = "09c21d11-3f09-4dfb-af61-26d7147e8eca"
+database_id = "067a1b0f-18e9-4a6c-866d-06c2b3eda2f0"
 migrations_dir = "migrations"
 
 [[env.test-cottage-free.r2_buckets]]
