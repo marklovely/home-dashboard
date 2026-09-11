@@ -30,7 +30,8 @@ export const STRING_FIELD_TO_ENV = {
   stripe_intro_coupon_monthly_live: 'STRIPE_INTRO_COUPON_MONTHLY_LIVE',
   stripe_intro_coupon_yearly_live: 'STRIPE_INTRO_COUPON_YEARLY_LIVE',
   resend_api_key: 'RESEND_API_KEY',
-  customer_email_from: 'CUSTOMER_EMAIL_FROM'
+  customer_email_from: 'CUSTOMER_EMAIL_FROM',
+  platform_site_archive_secret: 'PLATFORM_SITE_ARCHIVE_SECRET'
 };
 
 /** Hub tfvars keys synced by scripts/sync-stripe-coupon-github-secrets.mjs */

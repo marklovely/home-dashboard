@@ -269,6 +269,10 @@ const resendApiKey = process.env.RESEND_API_KEY?.trim() ?? '';
 if (resendApiKey) {
   lines.push(`resend_api_key = "${escapeHcl(resendApiKey)}"`, '');
 }
+const platformSiteArchiveSecret = process.env.PLATFORM_SITE_ARCHIVE_SECRET?.trim() ?? '';
+if (platformSiteArchiveSecret) {
+  lines.push(`platform_site_archive_secret = "${escapeHcl(platformSiteArchiveSecret)}"`, '');
+}
 const customerEmailFrom = process.env.CUSTOMER_EMAIL_FROM?.trim() ?? '';
 if (customerEmailFrom) {
   lines.push(`customer_email_from = "${escapeHcl(customerEmailFrom)}"`, '');
