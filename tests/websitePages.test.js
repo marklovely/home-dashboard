@@ -187,7 +187,7 @@ describe('marketing site pages', () => {
     expect(home).toMatch(/Before arrival/);
     expect(home).toMatch(/During the stay/);
     expect(home).toMatch(/After departure/);
-    expect(home).toMatch(/One home\. Everyone who needs it/);
+    expect(home).toMatch(/Your home\. Everyone who needs it\./);
 
     const included = readPage('included.html');
     expect(included).toMatch(/guide two weeks before/);
