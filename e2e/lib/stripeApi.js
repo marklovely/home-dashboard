@@ -87,27 +87,59 @@ export function uniqueOwnerEmail(baseEmail, siteId) {
 }
 
 /**
+ * @param {Record<string, unknown>} row
+ * @param {string} siteId
+ */
+function subscriptionMatchesSite(row, siteId) {
+  return (
+    String(row.metadata?.site_id ?? '') === siteId || String(row.metadata?.siteId ?? '') === siteId
+  );
+}
+
+/**
+ * Find a Stripe subscription for a lifecycle hub by owner email and site metadata.
+ *
+ * @param {string} secretKey
+ * @param {string} email
+ * @param {string} siteId
+ * @param {{ statuses?: string[] }} [options]
+ */
+export async function findHubSubscription(secretKey, email, siteId, options = {}) {
+  const statuses = options.statuses ?? ['trialing', 'active'];
+  const customers = await stripeRequest(secretKey, 'GET', '/customers', { email, limit: 10 });
+  const list = Array.isArray(customers.data) ? customers.data : [];
+  for (const customer of list) {
+    for (const status of statuses) {
+      const subscriptions = await stripeRequest(secretKey, 'GET', '/subscriptions', {
+        customer: customer.id,
+        status,
+        limit: 10
+      });
+      const match = (subscriptions.data ?? []).find((row) => subscriptionMatchesSite(row, siteId));
+      if (match) return match;
+    }
+    if (list.length === 1) {
+      for (const status of statuses) {
+        const subscriptions = await stripeRequest(secretKey, 'GET', '/subscriptions', {
+          customer: customer.id,
+          status,
+          limit: 10
+        });
+        const fallback = (subscriptions.data ?? [])[0];
+        if (fallback) return fallback;
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * @param {string} secretKey
  * @param {string} email
  * @param {string} siteId
  */
 export async function findTrialingSubscription(secretKey, email, siteId) {
-  const customers = await stripeRequest(secretKey, 'GET', '/customers', { email, limit: 10 });
-  const list = Array.isArray(customers.data) ? customers.data : [];
-  for (const customer of list) {
-    const subscriptions = await stripeRequest(secretKey, 'GET', '/subscriptions', {
-      customer: customer.id,
-      status: 'trialing',
-      limit: 10
-    });
-    const match = (subscriptions.data ?? []).find(
-      (row) => String(row.metadata?.site_id ?? '') === siteId || String(row.metadata?.siteId ?? '') === siteId
-    );
-    if (match) return match;
-    const fallback = (subscriptions.data ?? [])[0];
-    if (fallback && list.length === 1) return fallback;
-  }
-  return null;
+  return findHubSubscription(secretKey, email, siteId, { statuses: ['trialing'] });
 }
 
 /**

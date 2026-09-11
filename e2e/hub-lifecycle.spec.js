@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   cancelSubscriptionNow,
-  findTrialingSubscription,
+  findHubSubscription,
   startTestTrialFromCheckoutSession,
   uniqueOwnerEmail,
   waitForCheckoutSessionComplete
@@ -18,7 +18,22 @@ const TEARDOWN_TIMEOUT_MS = 40 * 60 * 1000;
 
 test.describe.configure({ mode: 'serial' });
 
-test('signup, wait for hub, cancel trial, confirm teardown', async ({ page }) => {
+test('free signup, wait for hub, cancel subscription, confirm teardown', async () => {
+  await runLifecycleTest({ plan: 'free' });
+});
+
+test('plus signup via checkout, wait for hub, cancel trial, confirm teardown', async ({ page }) => {
+  test.skip(
+    String(process.env.E2E_SIGNUP_PLAN ?? 'free').trim().toLowerCase() !== 'plus',
+    'Set E2E_SIGNUP_PLAN=plus to run the Lovely Home+ checkout lifecycle.'
+  );
+  await runLifecycleTest({ plan: 'plus', page });
+});
+
+/**
+ * @param {{ plan: 'free' | 'plus'; page?: import('@playwright/test').Page }} options
+ */
+async function runLifecycleTest({ plan, page }) {
   assertTestModeOnly();
   const secretKey = process.env.STRIPE_SECRET_KEY?.trim() || '';
   const ownerEmailBase = process.env.E2E_OWNER_EMAIL?.trim() || '';
@@ -30,33 +45,44 @@ test('signup, wait for hub, cancel trial, confirm teardown', async ({ page }) =>
   const ownerEmail = uniqueOwnerEmail(ownerEmailBase, siteId);
   test.info().annotations.push({ type: 'siteId', description: siteId });
   test.info().annotations.push({ type: 'ownerEmail', description: ownerEmail });
+  test.info().annotations.push({ type: 'plan', description: plan });
 
-  const checkoutUrl = await startSignupCheckout(siteId, ownerEmail);
-  const sessionId = parseCheckoutSessionId(checkoutUrl);
-  if (!sessionId.startsWith('cs_test_')) {
-    throw new Error(`Signup Checkout URL did not contain a test session id: ${checkoutUrl}`);
-  }
+  if (plan === 'free') {
+    const signup = await startSignup(siteId, ownerEmail, 'free');
+    expect(signup.plan).toBe('free');
+    expect(signup.successUrl).toContain(`site=${siteId}`);
+    expect(signup.checkoutUrl).toBeUndefined();
+  } else {
+    if (!page) {
+      throw new Error('Plus lifecycle requires a Playwright page fixture.');
+    }
+    const checkoutUrl = await startSignupCheckout(siteId, ownerEmail);
+    const sessionId = parseCheckoutSessionId(checkoutUrl);
+    if (!sessionId.startsWith('cs_test_')) {
+      throw new Error(`Signup Checkout URL did not contain a test session id: ${checkoutUrl}`);
+    }
 
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-  });
-  await page.goto(checkoutUrl);
-  await completeStripeTestCheckout(page);
-  const hosted = await waitForCheckoutSessionComplete(secretKey, sessionId, 20_000).catch(() => null);
-  if (!hosted) {
-    await clickStartTrial(page);
-    const retried = await waitForCheckoutSessionComplete(secretKey, sessionId, 40_000).catch(() => null);
-    if (!retried) {
-      test.info().annotations.push({
-        type: 'checkout',
-        description: 'Hosted Checkout stayed open; started the trial via the Stripe API'
-      });
-      await startTestTrialFromCheckoutSession(secretKey, {
-        sessionId,
-        siteId,
-        customerEmail: ownerEmail,
-        priceId: process.env.STRIPE_PRICE_ID?.trim() || ''
-      });
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    });
+    await page.goto(checkoutUrl);
+    await completeStripeTestCheckout(page);
+    const hosted = await waitForCheckoutSessionComplete(secretKey, sessionId, 20_000).catch(() => null);
+    if (!hosted) {
+      await clickStartTrial(page);
+      const retried = await waitForCheckoutSessionComplete(secretKey, sessionId, 40_000).catch(() => null);
+      if (!retried) {
+        test.info().annotations.push({
+          type: 'checkout',
+          description: 'Hosted Checkout stayed open; started the trial via the Stripe API'
+        });
+        await startTestTrialFromCheckoutSession(secretKey, {
+          sessionId,
+          siteId,
+          customerEmail: ownerEmail,
+          priceId: process.env.STRIPE_PRICE_ID?.trim() || ''
+        });
+      }
     }
   }
 
@@ -70,7 +96,8 @@ test('signup, wait for hub, cancel trial, confirm teardown', async ({ page }) =>
   expect(live.looksLikeHub).toBe(true);
   expect(live.registered).toBe(true);
 
-  const subscription = await waitForSubscription(secretKey, ownerEmail, siteId);
+  const expectedStatuses = plan === 'free' ? ['active'] : ['trialing', 'active'];
+  const subscription = await waitForSubscription(secretKey, ownerEmail, siteId, expectedStatuses);
   expect(subscription?.id).toMatch(/^sub_/);
   await cancelSubscriptionNow(secretKey, subscription.id);
 
@@ -80,7 +107,7 @@ test('signup, wait for hub, cancel trial, confirm teardown', async ({ page }) =>
   expect(gone.ready).toBe(false);
   expect(gone.registered).toBe(false);
   expect(gone.looksLikeHub).toBe(false);
-});
+}
 
 function assertTestModeOnly() {
   const mode = String(process.env.STRIPE_MODE ?? 'test').trim().toLowerCase();
@@ -100,26 +127,43 @@ function randomSlug() {
 /**
  * @param {string} siteId
  * @param {string} customerEmail
+ * @param {'free' | 'plus'} plan
  */
-async function startSignupCheckout(siteId, customerEmail) {
+async function startSignup(siteId, customerEmail, plan) {
+  /** @type {Record<string, string>} */
+  const body = { siteId, customerEmail, plan };
+  if (plan === 'plus') {
+    body.billingInterval = 'month';
+  }
+
   const response = await fetch(`${PLATFORM_API_ORIGIN}/api/public/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({
-      siteId,
-      customerEmail,
-      billingInterval: 'month'
-    })
+    body: JSON.stringify(body)
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(payload.message ?? `Signup failed (${response.status}): ${payload.error ?? 'unknown'}`);
   }
-  const checkoutUrl = String(payload.checkoutUrl ?? payload.url ?? '').trim();
-  if (!checkoutUrl) {
+
+  return {
+    plan: String(payload.plan ?? plan),
+    successUrl: String(payload.successUrl ?? '').trim(),
+    checkoutUrl: String(payload.checkoutUrl ?? payload.url ?? '').trim() || undefined,
+    subscriptionId: String(payload.subscriptionId ?? '').trim() || undefined
+  };
+}
+
+/**
+ * @param {string} siteId
+ * @param {string} customerEmail
+ */
+async function startSignupCheckout(siteId, customerEmail) {
+  const signup = await startSignup(siteId, customerEmail, 'plus');
+  if (!signup.checkoutUrl) {
     throw new Error('Signup did not return a Stripe Checkout URL.');
   }
-  return checkoutUrl;
+  return signup.checkoutUrl;
 }
 
 /**
@@ -207,13 +251,16 @@ async function waitForHubStatus(siteId, timeoutMs, isDone) {
  * @param {string} secretKey
  * @param {string} email
  * @param {string} siteId
+ * @param {string[]} expectedStatuses
  */
-async function waitForSubscription(secretKey, email, siteId) {
+async function waitForSubscription(secretKey, email, siteId, expectedStatuses) {
   const started = Date.now();
   while (Date.now() - started < 120_000) {
-    const subscription = await findTrialingSubscription(secretKey, email, siteId);
+    const subscription = await findHubSubscription(secretKey, email, siteId, { statuses: expectedStatuses });
     if (subscription?.id) return subscription;
     await new Promise((resolve) => setTimeout(resolve, 5_000));
   }
-  throw new Error(`Could not find a trialing Stripe subscription for ${siteId} (${email}).`);
+  throw new Error(
+    `Could not find a Stripe subscription (${expectedStatuses.join(', ')}) for ${siteId} (${email}).`
+  );
 }

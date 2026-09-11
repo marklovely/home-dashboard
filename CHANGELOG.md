@@ -10,6 +10,9 @@
 
 - Signup lifecycle email copy distinguishes Lovely Home Free (no trial) from Lovely Home+ (7-day trial for first-time signups)
 - Returning households: Free reinstates at no charge; Lovely Home+ Checkout skips the trial and bills immediately
+### Testing
+
+- Hub lifecycle Playwright run defaults to Lovely Home Free (API signup, active subscription teardown); Plus Checkout path runs when `E2E_SIGNUP_PLAN=plus`
 
 ## 3.1.0
 
