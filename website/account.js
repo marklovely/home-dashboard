@@ -28,7 +28,7 @@
   const pendingUpgradeSiteId = (pageParams.get('upgrade') || '').trim().toLowerCase();
   const pendingDowngradeSiteId = (pageParams.get('downgrade') || '').trim().toLowerCase();
   const FREE_GUIDES_EXPLAINER =
-    'Two separate guide templates for your home (for example House Sitter Guide and Pet Care Guide). Each guide can hold unlimited topics — the limit is templates, not pages inside them.';
+    'Two guide templates, two areas per guide, and two scheduled stays on Free. Delete any extras in Guide Editor before switching from Lovely Home+.';
 
   restoreSession();
   initChallenge();
@@ -363,6 +363,22 @@
     const canceled = hub.status === 'canceled';
     const trial = formatTrial(hub.trialEnd);
     const status = statusCopy(hub);
+    const downgradeBlocked =
+      hub.canDowngrade &&
+      (hub.downgradeEligible === false ||
+        (hub.downgradeBlockers && hub.downgradeBlockers.length > 0));
+    const downgradeCheckPending =
+      hub.canDowngrade && hub.downgradeEligible == null && !hub.downgradeCheckError;
+    const downgradeBlockersHtml =
+      hub.downgradeBlockers && hub.downgradeBlockers.length
+        ? '<ul class="account-downgrade-blockers">' +
+          hub.downgradeBlockers
+            .map(function (blocker) {
+              return '<li>' + escapeHtml(formatDowngradeBlocker(blocker)) + '</li>';
+            })
+            .join('') +
+          '</ul>'
+        : '';
     const downgradeBlock =
       hub.canDowngrade && !canceled
         ? '<div class="account-downgrade" data-downgrade-site="' +
@@ -370,8 +386,24 @@
           '">' +
           '<p class="signup-note"><strong>Switch to Free plan</strong> — ' +
           escapeHtml(FREE_GUIDES_EXPLAINER) +
-          ' Plus two scheduled stays. Your hub stays live; existing content is kept (soft limits — you cannot add more until you are under the cap or upgrade again).</p>' +
-          '<button type="button" class="btn btn-primary btn-block" data-downgrade-free="' +
+          ' Your hub stays live; Plus billing stops immediately (no partial-month refund).</p>' +
+          (hub.downgradeCheckError
+            ? '<p class="signup-note muted">' +
+              escapeHtml(hub.downgradeCheckError) +
+              ' Try again shortly or email support@lovely-home.co.uk.</p>'
+            : '') +
+          (downgradeBlocked
+            ? '<p class="signup-note"><strong>Before you can switch:</strong> open Guide Editor in your hub and delete extras until you are within Free limits.</p>' +
+              downgradeBlockersHtml
+            : '') +
+          (downgradeCheckPending
+            ? '<p class="signup-note muted">Checking hub usage…</p>'
+            : '') +
+          '<button type="button" class="btn btn-primary btn-block"' +
+          (downgradeBlocked || downgradeCheckPending || hub.downgradeCheckError
+            ? ' disabled aria-disabled="true"'
+            : '') +
+          ' data-downgrade-free="' +
           escapeHtml(hub.siteId) +
           '">Switch to Free plan</button>' +
           '</div>'
@@ -768,6 +800,46 @@
     return ' target="_blank" rel="noopener noreferrer"';
   }
 
+  function formatDowngradeBlocker(blocker) {
+    if (!blocker || typeof blocker !== 'object') return '';
+    const count = Number(blocker.count || 0);
+    const limit = Number(blocker.limit || 0);
+    const overBy = Math.max(0, count - limit);
+    if (blocker.kind === 'guides') {
+      return (
+        'You have ' +
+        count +
+        ' guide templates — delete ' +
+        overBy +
+        ' to reach the Free limit of ' +
+        limit +
+        '.'
+      );
+    }
+    if (blocker.kind === 'stays') {
+      return (
+        'You have ' +
+        count +
+        ' scheduled stays — delete ' +
+        overBy +
+        ' to reach the Free limit of ' +
+        limit +
+        '.'
+      );
+    }
+    const guideLabel = String(blocker.guideTitle || blocker.guideId || 'A guide').trim() || 'A guide';
+    return (
+      guideLabel +
+      ' has ' +
+      count +
+      ' areas — delete ' +
+      overBy +
+      ' to reach ' +
+      limit +
+      ' per guide on Free.'
+    );
+  }
+
   function escapeHtml(value) {
     return String(value ?? '')
       .replace(/&/g, '&amp;')
@@ -895,7 +967,7 @@
         '<p>' +
         escapeHtml(FREE_GUIDES_EXPLAINER) +
         '</p>' +
-        '<p>Plus two scheduled stays. Your hub stays live. Existing guides and stays are kept; you cannot add more until you are under the Free limits or upgrade again.</p>' +
+        '<p>You must already be within Free limits — two guide templates, two areas per guide, and two scheduled stays. Delete extras in Guide Editor first if needed.</p>' +
         '<p><strong>Plus billing stops immediately</strong> (no partial-month refund). Refer a friend returns when you upgrade to Lovely Home+ again.</p>',
       cancelLabel: 'Keep Lovely Home+',
       confirmLabel: 'Switch to Free'

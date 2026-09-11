@@ -1743,6 +1743,16 @@ html.nav-open {
   gap: 0.55rem;
 }
 
+.account-downgrade-blockers {
+  margin: 0.75rem 0 0;
+  padding-left: 1.15rem;
+  color: var(--muted);
+}
+
+.account-downgrade-blockers li + li {
+  margin-top: 0.35rem;
+}
+
 .account-hub-actions .btn-primary,
 .account-downgrade .btn-primary,
 .account-referral .btn-primary,

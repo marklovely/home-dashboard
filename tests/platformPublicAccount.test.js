@@ -150,6 +150,10 @@ describe('public account helpers', () => {
       canManageBilling: true,
       canUpgrade: false,
       canDowngrade: true,
+      downgradeEligible: null,
+      downgradeBlockers: [],
+      downgradeBlockerSummary: null,
+      downgradeCheckError: null,
       canRefer: false,
       canCloseHub: false
     });
@@ -457,7 +461,65 @@ describe('account OTP and portal', () => {
     checkoutSpy.mockRestore();
   });
 
+  it('blocks downgrade when hub usage exceeds Free limits', async () => {
+    const usageSpy = vi.spyOn(
+      await import('../functions/api/platform/platformHubDowngradeEligibility.js'),
+      'fetchHubFreeDowngradeUsage'
+    ).mockResolvedValue({
+      ok: true,
+      usage: {
+        guides: 1,
+        stays: 0,
+        categoriesByGuide: [{ guideId: 'default', guideTitle: 'House guide', count: 5 }]
+      }
+    });
+    const db = createAccountDb([
+      {
+        site_id: 'kitchen-home',
+        status: 'active',
+        plan_tier: 'plus',
+        stripe_customer_id: 'cus_plus',
+        stripe_subscription_id: 'sub_plus',
+        owner_email: 'owner@example.com'
+      }
+    ]);
+    await handleAccountOtpRequest(
+      env,
+      /** @type {D1Database} */ (db),
+      { email: 'owner@example.com', clientIp: '203.0.113.20' },
+      { sendEmail: async () => ({ ok: true, id: 'x' }), generateCode: () => '666666' }
+    );
+    const verified = await handleAccountVerify(env, /** @type {D1Database} */ (db), {
+      email: 'owner@example.com',
+      code: '666666'
+    });
+    const downgrade = await handleAccountDowngradeToFree(
+      env,
+      /** @type {D1Database} */ (db),
+      {
+        sessionToken: String(verified.body.sessionToken),
+        siteId: 'kitchen-home'
+      },
+      { manifest: {} }
+    );
+    expect(downgrade.status).toBe(409);
+    expect(downgrade.body.error).toBe('DOWNGRADE_OVER_FREE_LIMITS');
+    expect(String(downgrade.body.message)).toContain('areas');
+    usageSpy.mockRestore();
+  });
+
   it('downgrades a plus hub to free without opening Stripe Checkout', async () => {
+    const usageSpy = vi.spyOn(
+      await import('../functions/api/platform/platformHubDowngradeEligibility.js'),
+      'fetchHubFreeDowngradeUsage'
+    ).mockResolvedValue({
+      ok: true,
+      usage: {
+        guides: 1,
+        stays: 0,
+        categoriesByGuide: [{ guideId: 'default', guideTitle: 'House guide', count: 2 }]
+      }
+    });
     const emailSpy = vi.spyOn(
       await import('../functions/api/platform/platformCustomerEmail.js'),
       'sendDowngradeConfirmationEmail'
@@ -494,7 +556,8 @@ describe('account OTP and portal', () => {
       {
         sessionToken: String(verified.body.sessionToken),
         siteId: 'kitchen-home'
-      }
+      },
+      { manifest: {} }
     );
     expect(downgrade.status).toBe(200);
     expect(downgrade.body.plan).toBe('free');
@@ -516,6 +579,7 @@ describe('account OTP and portal', () => {
     );
     downgradeSpy.mockRestore();
     emailSpy.mockRestore();
+    usageSpy.mockRestore();
   });
 
   it('closes a free hub and enqueues teardown', async () => {
