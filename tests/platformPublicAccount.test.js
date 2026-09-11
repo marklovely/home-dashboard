@@ -302,6 +302,10 @@ describe('account OTP and portal', () => {
         canManageBilling: true,
         canUpgrade: false,
         canDowngrade: false,
+        downgradeEligible: null,
+        downgradeBlockers: [],
+        downgradeBlockerSummary: null,
+        downgradeCheckError: null,
         canRefer: false,
         canCloseHub: false
       }
