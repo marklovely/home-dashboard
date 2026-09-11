@@ -2,6 +2,7 @@ import { renderIcon } from '../../components/icons/renderIcon.js';
 import { createOwnerHelpButton } from '../../components/HelpGuide/ownerHelp.js';
 import { createSitterHelpButton } from '../../components/HelpGuide/sitterHelp.js';
 import { mountBinAlertBannerHost } from '../../services/binAlertBannerSync.js';
+import { isPlanLockedHomeApp } from '../../services/hubPlanFeatures.js';
 
 /**
  * @param {import('../types/app.js').App} app
@@ -11,6 +12,9 @@ function createLauncherCard(app, onSelect) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'home-launcher-card';
+  if (isPlanLockedHomeApp(app.id)) {
+    button.classList.add('home-launcher-card--plan-locked');
+  }
   button.style.setProperty('--accent', app.accent ?? '#7eab90');
   button.setAttribute('aria-label', `${app.title}. ${app.description}`);
 

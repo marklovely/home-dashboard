@@ -1,5 +1,9 @@
 import { getStarterGuideCatalog } from './starterGuideTemplates.js';
 import { formatPetNames, normalizePetCare, primaryPet } from '../../../lib/petCare.js';
+import { getCachedHubPlanFeatures } from '../../../services/hubPlanFeatures.js';
+
+/** Starter areas included on Free; Lovely Home+ keeps the full template. */
+export const FREE_STARTER_MAX_CATEGORIES = 2;
 
 /** @typedef {{
  *   hasPets?: boolean,
@@ -136,6 +140,11 @@ export function buildStarterGuideCatalog(useCase, profile) {
     }
   } else {
     removeCategory(catalog, 'pets');
+  }
+
+  const plan = getCachedHubPlanFeatures()?.plan ?? 'plus';
+  if (plan === 'free' && (catalog.categories?.length ?? 0) > FREE_STARTER_MAX_CATEGORIES) {
+    catalog.categories = catalog.categories.slice(0, FREE_STARTER_MAX_CATEGORIES);
   }
 
   return catalog;

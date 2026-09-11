@@ -128,4 +128,13 @@ export function planFeatureLockedCopy(feature) {
   };
 }
 
+/**
+ * @param {string} appId
+ */
+export function isPlanLockedHomeApp(appId) {
+  if (appId === 'bins') return !isHubPlanFeatureEnabled('bins');
+  if (appId === 'controls') return !isHubPlanFeatureEnabled('smartHome');
+  return false;
+}
+
 export { DEFAULT_PLUS_FEATURES };

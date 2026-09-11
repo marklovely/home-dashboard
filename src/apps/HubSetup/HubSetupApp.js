@@ -39,7 +39,8 @@ import {
   shouldConfirmPropertyAddressChange
 } from '../../lib/propertyAddressChange.js';
 import { clearBinAlertDismissal } from '../../services/binAlertDismissalService.js';
-import { isHubPlanFeatureEnabled } from '../../services/hubPlanFeatures.js';
+import { getCachedHubPlanFeatures, isHubPlanFeatureEnabled } from '../../services/hubPlanFeatures.js';
+import { FREE_STARTER_MAX_CATEGORIES } from '../../content/houseguide/templates/buildStarterGuideCatalog.js';
 import { createPlanFeatureLockedPanel } from '../../components/Plan/planFeatureLockedPanel.js';
 import {
   fetchHubSecretsConfigured,
@@ -540,7 +541,12 @@ function mountHubSetupWizard(viewport, context) {
       );
       const starterSummary = document.createElement('p');
       starterSummary.className = 'hub-setup-starter-summary subtle';
-      starterSummary.textContent = `Includes: ${starterTemplate.summary}. Based on your choice in step 1 (${USE_CASE_OPTIONS.find((option) => option.value === selectedUseCase)?.label ?? 'Owner only'}).`;
+      const plan = getCachedHubPlanFeatures()?.plan ?? 'plus';
+      const starterAreaNote =
+        plan === 'free'
+          ? `Free includes ${FREE_STARTER_MAX_CATEGORIES} starter areas — upgrade to Lovely Home+ for the full template.`
+          : 'Lovely Home+ includes every starter area in the template.';
+      starterSummary.textContent = `Includes: ${starterTemplate.summary}. ${starterAreaNote} Based on your choice in step 1 (${USE_CASE_OPTIONS.find((option) => option.value === selectedUseCase)?.label ?? 'Owner only'}).`;
 
       const starterRow = document.createElement('div');
       starterRow.className = 'hub-setup-action-row';

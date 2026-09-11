@@ -1,8 +1,43 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import { getFallbackGuideCatalog } from '../src/content/houseguide/providers/jsonGuideProvider.js';
-import { buildStarterGuideCatalog } from '../src/content/houseguide/templates/buildStarterGuideCatalog.js';
+import {
+  buildStarterGuideCatalog,
+  FREE_STARTER_MAX_CATEGORIES
+} from '../src/content/houseguide/templates/buildStarterGuideCatalog.js';
+import { setHubPlanFeaturesForTests } from '../src/services/hubPlanFeatures.js';
 
 describe('buildStarterGuideCatalog', () => {
+  beforeEach(() => {
+    setHubPlanFeaturesForTests(null);
+  });
+
+  it('keeps only two starter areas on Free', () => {
+    setHubPlanFeaturesForTests({
+      plan: 'free',
+      planLabel: 'Free',
+      features: { bins: false, smartHome: false, weather: true },
+      upgradeUrl: 'https://lovely-home.co.uk/account'
+    });
+    const catalog = buildStarterGuideCatalog('owner', {});
+    expect(catalog.categories).toHaveLength(FREE_STARTER_MAX_CATEGORIES);
+    expect(catalog.categories?.map((category) => category.id)).toEqual([
+      'getting-started',
+      'home-notes'
+    ]);
+  });
+
+  it('keeps every starter area on Lovely Home+', () => {
+    setHubPlanFeaturesForTests({
+      plan: 'plus',
+      planLabel: 'Lovely Home+',
+      features: { bins: true, smartHome: true, weather: true },
+      upgradeUrl: 'https://lovely-home.co.uk/account'
+    });
+    const catalog = buildStarterGuideCatalog('owner', {});
+    expect(catalog.categories?.length ?? 0).toBeGreaterThan(FREE_STARTER_MAX_CATEGORIES);
+    expect(catalog.categories?.some((category) => category.id === 'safety-notes')).toBe(true);
+  });
+
   it('removes pets when sitter flow has no pets', () => {
     const catalog = buildStarterGuideCatalog('housesitter', {
       petCare: { hasPets: false }
