@@ -42,3 +42,11 @@ sites:
     terraform: true
     zone_name: lovely-hub.com
     attach_hub_api_binding: true
+
+  test-free:
+    hostname: test-free.lovely-hub.com
+    hub_environment: test-free
+    vanilla: false
+    terraform: true
+    zone_name: lovely-hub.com
+    attach_hub_api_binding: true
