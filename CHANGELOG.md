@@ -2,9 +2,42 @@
 
 ## Unreleased
 
+### Infrastructure
+
+- Reduce R2 Class A operations from the Terraform remote state backend (`workspace_key_prefix`, `skip_s3_checksum`); shared init args in `scripts/lib/terraform-r2-backend-init-args.sh`
+
 ## 3.1.0
 
-Changes land here before the next tagged release.
+Free vs Lovely Home+ plans, marketing repositioning, and hub plan visibility with enforced limits.
+
+### Plans and billing
+
+- Store `plan_tier` on platform billing (`free` | `plus`); public `hub-plan-status` API for workers
+- Free plan: up to **2 house guides** and **2 scheduled stays**; Plus unlimited
+- Free signup without Stripe Checkout (£0 subscription + hub provision); Plus stays on Checkout
+- Hub header plan badge and Settings → **Your plan** with usage counts and add-guide form
+- Stripe webhooks and lazy backfill set tier from price id; zero-amount prices count as Free
+
+### Marketing site
+
+- Reposition Lovely Home as a digital home hub; Free vs Lovely Home+ pricing comparison
+- Signup UX: Free is the default; Lovely Home+ behind an expand
+- Updated help, support, and common-questions copy for hub reclaim and billing
+
+### Hub app and platform
+
+- Multi-guide schema (`house_guides` table); create a second guide from Settings
+- Arrival prep: dedicated owner app, multi-pet support, custom tasks, stay-linked archive
+- Shell navigation and sitter-mode discoverability improvements
+- Settings no longer stuck loading when site profile syncs
+- CD — Hub Pages: build once, wrangler-deploy on demand; CI stays on every push
+- Platform admin: marketing site OTP gate toggle fix
+- Plan badge: resolve site id through Pages proxy (`X-Hub-Pages-Host`)
+
+### Infrastructure
+
+- `npm run d1:migrate:all -- --exclude prod` skips legacy top-level worker D1 (database removed)
+- Split Terraform state and hub lifecycle work carried forward from 3.0.0 line
 
 ## 3.0.0
 

@@ -194,6 +194,7 @@ You no longer maintain a separate “CI only” state file — laptop and GitHub
 | `Access Denied` on init | R2 token needs Object Read & Write on the state bucket |
 | Plan wants to recreate everything | State file not migrated — re-run `terraform init -migrate-state` and confirm `yes` |
 | `backend.hcl` not found | Run `cp` from Step D; file lives at `terraform/environments/backend.hcl` |
+| R2 **Class A** bill spiked on `lovely-home-terraform-state` | Terraform’s S3 backend lists `env:/` on every init/plan by default. Use `workspace_key_prefix = "workspaces"` in `backend.hcl` (see `backend.hcl.example`) and re-run `terraform init -reconfigure`. In R2, delete stray `env:/` objects if any were created by old workspace experiments. CI picks up the prefix via `scripts/terraform-init-r2.sh`. |
 
 ---
 
