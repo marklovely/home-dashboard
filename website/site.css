@@ -829,6 +829,35 @@ html.nav-open {
   max-width: 52rem;
 }
 
+@media (min-width: 900px) {
+  .pricing-plans-grid--home {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 68rem;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 899px) {
+  .pricing-plans-grid--home {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pricing-plans-grid--home .pricing-card:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.pricing-savings-line {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.88rem;
+}
+
+.pricing-card-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
 .pricing-dual-line--small {
   font-size: 0.95rem;
   margin: 0 0 0.75rem;
