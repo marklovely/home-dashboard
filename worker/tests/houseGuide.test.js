@@ -1,7 +1,68 @@
 import { describe, expect, it } from 'vitest';
-import { assembleGuideCatalog } from '../src/houseGuide/assembleCatalog.js';
+import { assembleGuideCatalog, toPublicGuideCategory } from '../src/houseGuide/assembleCatalog.js';
+import {
+  countGuideCategories,
+  createGuideCategory,
+  GUIDE_CATEGORY_ACCENT_PALETTE
+} from '../src/houseGuide/repository.js';
 import { sanitizeGuideActions } from '../src/houseGuide/sanitize.js';
 import { createEmptyGuideBlock } from '../../src/apps/HouseGuideEditor/guideEditorBlockDefaults.js';
+
+/**
+ * @returns {D1Database}
+ */
+function createGuideCategoryTestDb() {
+  /** @type {Record<string, Record<string, unknown>>} */
+  const categories = {};
+
+  return /** @type {D1Database} */ ({
+    prepare(sql) {
+      const normalized = sql.replace(/\s+/g, ' ').trim();
+
+      const statement = {
+        bind(...args) {
+          return {
+            async first() {
+              if (normalized.startsWith('SELECT * FROM guide_categories WHERE id = ?')) {
+                const id = String(args[0]);
+                return categories[id] ?? null;
+              }
+              if (normalized.startsWith('SELECT COUNT(*) AS count FROM guide_categories')) {
+                const count = Object.values(categories).filter(
+                  (row) => row.id !== 'appliance-manuals'
+                ).length;
+                return { count };
+              }
+              if (normalized.startsWith('SELECT MAX(sort_order) AS max_order FROM guide_categories')) {
+                const orders = Object.values(categories).map((row) => Number(row.sort_order ?? 0));
+                return { max_order: orders.length ? Math.max(...orders) : null };
+              }
+              return null;
+            },
+            async run() {
+              if (normalized.startsWith('INSERT INTO guide_categories')) {
+                categories[String(args[0])] = {
+                  id: args[0],
+                  title: args[1],
+                  card_subtitle: args[2],
+                  icon_id: args[3],
+                  accent: args[4],
+                  search_terms: args[5],
+                  sort_order: args[6],
+                  published: args[7],
+                  updated_at: args[8],
+                  guide_id: args[9]
+                };
+              }
+            }
+          };
+        }
+      };
+
+      return statement;
+    }
+  });
+}
 
 describe('assembleGuideCatalog', () => {
   it('builds published catalog for sitters', () => {
@@ -146,6 +207,35 @@ describe('assembleGuideCatalog', () => {
       includeDraftBlocks: true
     });
     expect(catalog.categories[0]?.topics[0]?.blocks[0]?.content).toBe('Draft copy');
+  });
+});
+
+describe('guide categories', () => {
+  it('creates a category with palette accent and counts editable areas', async () => {
+    const db = createGuideCategoryTestDb();
+    expect(await countGuideCategories(db)).toBe(0);
+
+    const created = await createGuideCategory(db, {
+      id: 'kitchen',
+      title: 'Kitchen',
+      cardSubtitle: 'Appliances'
+    });
+    expect(created?.id).toBe('kitchen');
+    expect(toPublicGuideCategory(created, []).accent).toBe(GUIDE_CATEGORY_ACCENT_PALETTE[0]);
+    expect(await countGuideCategories(db)).toBe(1);
+
+    const conflict = await createGuideCategory(db, {
+      id: 'kitchen',
+      title: 'Kitchen again'
+    });
+    expect(conflict).toEqual({ conflict: true });
+  });
+
+  it('excludes appliance-manuals from the editable area count', async () => {
+    const db = createGuideCategoryTestDb();
+    await createGuideCategory(db, { id: 'appliance-manuals', title: 'Manuals' });
+    await createGuideCategory(db, { id: 'kitchen', title: 'Kitchen' });
+    expect(await countGuideCategories(db)).toBe(1);
   });
 });
 

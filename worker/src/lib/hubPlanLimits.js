@@ -1,4 +1,5 @@
 const DEFAULT_PLATFORM_API = 'https://platform.lovely-home.co.uk';
+export const FREE_PLAN_MAX_CATEGORIES = 2;
 
 const HUB_ORIGIN_RE =
   /^https:\/\/([a-z][a-z0-9_-]{0,31})\.(lovely-hub\.com|lovely-home\.co\.uk)$/i;
@@ -150,7 +151,7 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
       ok: true,
       plan: 'plus',
       planLabel: 'Lovely Home+',
-      limits: { maxGuides: null, maxStays: null },
+      limits: { maxGuides: null, maxStays: null, maxCategories: null },
       features: PLUS_PLAN_FEATURES
     };
   }
@@ -165,7 +166,7 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
         ok: false,
         plan: 'plus',
         planLabel: 'Lovely Home+',
-        limits: { maxGuides: null, maxStays: null },
+        limits: { maxGuides: null, maxStays: null, maxCategories: null },
         features: PLUS_PLAN_FEATURES
       };
     }
@@ -178,7 +179,9 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
       limits: {
         maxGuides:
           payload.limits?.maxGuides == null ? null : Number(payload.limits.maxGuides),
-        maxStays: payload.limits?.maxStays == null ? null : Number(payload.limits.maxStays)
+        maxStays: payload.limits?.maxStays == null ? null : Number(payload.limits.maxStays),
+        maxCategories:
+          payload.limits?.maxCategories == null ? null : Number(payload.limits.maxCategories)
       },
       features: parsePlanFeaturesFromPayload(payload),
       guidesExplainer: payload.guidesExplainer ? String(payload.guidesExplainer) : null,
@@ -191,7 +194,7 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
       ok: false,
       plan: 'plus',
       planLabel: 'Lovely Home+',
-      limits: { maxGuides: null, maxStays: null },
+      limits: { maxGuides: null, maxStays: null, maxCategories: null },
       features: PLUS_PLAN_FEATURES
     };
   }
@@ -204,6 +207,16 @@ export async function fetchHubPlanStatus(env, request, fetchImpl = fetch) {
  */
 export function planLimitExceeded(plan, count, kind) {
   const max = kind === 'guide' ? plan.limits?.maxGuides : plan.limits?.maxStays;
+  if (max == null || !Number.isFinite(max)) return false;
+  return count >= max;
+}
+
+/**
+ * @param {{ limits?: { maxCategories?: number | null } }} plan
+ * @param {number} count
+ */
+export function planCategoryLimitExceeded(plan, count) {
+  const max = plan.limits?.maxCategories;
   if (max == null || !Number.isFinite(max)) return false;
   return count >= max;
 }

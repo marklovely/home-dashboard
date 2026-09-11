@@ -141,6 +141,22 @@ export async function loadAssembledGuideCatalog(db, options = {}) {
 
 /**
  * @param {Record<string, unknown>} row
+ * @param {import('./types.js').GuideTopicDto[]} [topics]
+ */
+export function toPublicGuideCategory(row, topics = []) {
+  return {
+    id: String(row.id),
+    title: String(row.title),
+    cardSubtitle: String(row.card_subtitle),
+    iconId: String(row.icon_id),
+    accent: String(row.accent),
+    searchTerms: parseJsonArray(row.search_terms),
+    topics
+  };
+}
+
+/**
+ * @param {Record<string, unknown>} row
  */
 export function toPublicGuideTopic(row) {
   return {

@@ -1,4 +1,5 @@
 import {
+  createHouseGuideCategory,
   createHouseGuideTopic,
   deleteHouseGuideMedia,
   deleteHouseGuideTopic,
@@ -261,6 +262,18 @@ export async function saveHouseGuideSettings(patch, fetchImpl = fetch) {
  */
 export async function createNewHouseGuideTopic(input, fetchImpl = fetch) {
   const result = await createHouseGuideTopic(input, { fetchImpl });
+  if (result.ok) {
+    await refreshGuideContent(fetchImpl, { draft: true, force: true });
+  }
+  return result;
+}
+
+/**
+ * @param {Record<string, unknown>} input
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function createNewHouseGuideCategory(input, fetchImpl = fetch) {
+  const result = await createHouseGuideCategory(input, { fetchImpl });
   if (result.ok) {
     await refreshGuideContent(fetchImpl, { draft: true, force: true });
   }

@@ -193,9 +193,18 @@ body.guide-editor-is-reordering .guide-editor-drag-handle {
 .guide-editor-drag-handle:active {
   cursor: grabbing;
 }
+.house-guide-editor-plan-limit-copy {
+  margin: 0;
+}
+.house-guide-editor-plan-limit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 .house-guide-editor-reorder-hint {
   margin: 0;
 }
+.house-guide-editor-new-area,
 .house-guide-editor-new-topic {
   display: grid;
   gap: 12px;

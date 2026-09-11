@@ -1,7 +1,14 @@
 import { jsonError, methodNotAllowed } from '../lib/errors.js';
 import { requireAnyDeviceSession, requireOwnerDeviceMode } from '../lib/deviceSessionAuth.js';
-import { loadAssembledGuideCatalog, toPublicGuideMedia, toPublicGuideTopic } from '../houseGuide/assembleCatalog.js';
 import {
+  loadAssembledGuideCatalog,
+  toPublicGuideCategory,
+  toPublicGuideMedia,
+  toPublicGuideTopic
+} from '../houseGuide/assembleCatalog.js';
+import {
+  countGuideCategories,
+  createGuideCategory,
   createGuideTopic,
   countDraftGuideTopics,
   deleteGuideMedia,
@@ -19,6 +26,7 @@ import {
   updateGuideSettings,
   updateGuideTopic
 } from '../houseGuide/repository.js';
+import { fetchHubPlanStatus, planCategoryLimitExceeded } from '../lib/hubPlanLimits.js';
 import {
   generateGuideMediaObjectKey,
   getGuideMediaObject,
@@ -89,6 +97,11 @@ export async function handleHouseGuide(request, url, env, correlationId) {
     }
 
     if (segments[0] === 'categories') {
+      if (segments.length === 1) {
+        if (request.method === 'POST') return createCategory(request, env, correlationId);
+        return methodNotAllowed(correlationId);
+      }
+
       const categoryId = segments[1];
       const action = segments[2];
       if (action === 'reorder-topics') {
@@ -395,6 +408,84 @@ async function patchSettings(request, env, correlationId) {
     },
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   );
+}
+
+/**
+ * @param {unknown} value
+ */
+function sanitizeAccent(value) {
+  const text = String(value ?? '').trim();
+  if (/^#[0-9a-f]{3,8}$/i.test(text)) return text;
+  return null;
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} correlationId
+ */
+async function createCategory(request, env, correlationId) {
+  const ownerGate = await requireOwnerDeviceMode(request, env);
+  if (!ownerGate.ok) {
+    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError(400, 'BAD_REQUEST', 'Invalid JSON body.', { correlationId });
+  }
+
+  const id = sanitizeMediaId(String(body.id ?? ''));
+  const title = sanitizeRequiredText(body.title, 120);
+  const cardSubtitle = sanitizeRequiredText(body.cardSubtitle, 160) ?? '';
+  const iconId = sanitizeMediaId(String(body.iconId ?? 'book-open')) ?? 'book-open';
+  const accent = body.accent !== undefined ? sanitizeAccent(body.accent) : undefined;
+  if (body.accent !== undefined && !accent) {
+    return jsonError(400, 'BAD_REQUEST', 'Accent must be a hex colour (for example #6ea8ff).', {
+      correlationId
+    });
+  }
+
+  if (!id) {
+    return jsonError(400, 'BAD_REQUEST', 'Area id is required (letters, numbers, hyphens).', { correlationId });
+  }
+  if (!title) return jsonError(400, 'BAD_REQUEST', 'Title is required.', { correlationId });
+  if (id === 'appliance-manuals') {
+    return jsonError(400, 'BAD_REQUEST', 'That area id is reserved.', { correlationId });
+  }
+
+  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
+  const plan = await fetchHubPlanStatus(env, request);
+  const categoryCount = await countGuideCategories(db);
+  if (planCategoryLimitExceeded(plan, categoryCount)) {
+    return jsonError(
+      403,
+      'PLAN_LIMIT',
+      `Free plan includes up to ${plan.limits.maxCategories} areas per guide. Upgrade to Lovely Home+ for unlimited.`,
+      { correlationId, upgradeUrl: plan.upgradeUrl }
+    );
+  }
+
+  const created = await createGuideCategory(db, {
+    id,
+    title,
+    cardSubtitle,
+    iconId,
+    accent: accent ?? undefined,
+    searchTerms: sanitizeStringArray(body.searchTerms ?? [])
+  });
+
+  if (!created) return jsonError(500, 'INTERNAL_ERROR', 'Could not create area.', { correlationId });
+  if (created.conflict) {
+    return jsonError(409, 'CONFLICT', 'An area with that id already exists.', { correlationId });
+  }
+
+  return Response.json(toPublicGuideCategory(created, []), {
+    status: 201,
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
 
 /**
