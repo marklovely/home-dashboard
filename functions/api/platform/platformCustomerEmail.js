@@ -225,7 +225,7 @@ export function buildCustomerEmail(input) {
     const text = [
       `Your Lovely Home hub ${hubUrl} is now on the Free plan.`,
       '',
-      'You can add up to two guide templates and two scheduled stays going forward. Existing guides and stays stay as they are (soft limits — you cannot add more until you are under the cap or upgrade again).',
+      'You can add up to two guide templates, two areas per guide, and two scheduled stays on Free.',
       '',
       `Open your hub: ${hubUrl}`,
       `Upgrade or close hub: ${accountUrl}`,
@@ -240,7 +240,7 @@ export function buildCustomerEmail(input) {
       title: 'You are on the Free plan',
       paragraphs: [
         `Your Lovely Home hub ${hubLabel} is now on the Free plan.`,
-        'You can add up to two guide templates and two scheduled stays going forward. Existing guides and stays stay as they are (soft limits — you cannot add more until you are under the cap or upgrade again).'
+        'You can add up to two guide templates, two areas per guide, and two scheduled stays on Free.'
       ],
       actions: [
         { label: 'Open your hub', href: hubUrl, primary: true },

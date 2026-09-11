@@ -209,7 +209,7 @@ export async function onRequest(context) {
     const result = await handleAccountVerify(pagesEnv, getPlatformBillingDb(env), {
       email: String(body.email ?? '').trim(),
       code: String(body.code ?? '').trim()
-    });
+    }, { manifest });
     return Response.json(result.body, { status: result.status, headers: cors });
   }
 
@@ -217,7 +217,7 @@ export async function onRequest(context) {
     const body = await readJsonBody(request);
     const result = await handleAccountSession(pagesEnv, getPlatformBillingDb(env), {
       sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim()
-    });
+    }, { manifest });
     return Response.json(result.body, { status: result.status, headers: cors });
   }
 
@@ -253,7 +253,7 @@ export async function onRequest(context) {
     const result = await handleAccountDowngradeToFree(pagesEnv, getPlatformBillingDb(env), {
       sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim(),
       siteId: String(body.siteId ?? body.site_id ?? '').trim()
-    });
+    }, { manifest });
     return Response.json(result.body, { status: result.status, headers: cors });
   }
 

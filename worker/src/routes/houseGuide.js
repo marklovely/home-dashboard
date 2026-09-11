@@ -465,7 +465,8 @@ async function createCategory(request, env, correlationId) {
 
   const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
   const plan = await fetchHubPlanStatus(env, request);
-  const categoryCount = await countGuideCategories(db);
+  const guideId = String(body.guideId ?? body.guide ?? 'default').trim() || 'default';
+  const categoryCount = await countGuideCategories(db, guideId);
   if (planCategoryLimitExceeded(plan, categoryCount)) {
     return Response.json(
       {
@@ -482,6 +483,7 @@ async function createCategory(request, env, correlationId) {
 
   const created = await createGuideCategory(db, {
     id,
+    guideId,
     title,
     cardSubtitle,
     iconId,

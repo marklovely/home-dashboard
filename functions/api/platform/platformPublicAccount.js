@@ -13,6 +13,11 @@ import {
   stripeApiRequest
 } from './platformBilling.js';
 import { resolveBillingRowPlanTier } from './platformPublicHubPlan.js';
+import {
+  evaluateFreeDowngradeEligibility,
+  summarizeFreeDowngradeBlockers
+} from './freePlanDowngradeEligibility.js';
+import { fetchHubFreeDowngradeUsage } from './platformHubDowngradeEligibility.js';
 import { planTierFromBillingRow } from './platformPlanTier.js';
 import { getActiveStripeCredentials } from './platformStripeMode.js';
 import {
@@ -97,12 +102,21 @@ export function timingSafeEqual(left, right) {
 
 /**
  * @param {Record<string, unknown>} row
+ * @param {{ downgradeCheck?: ReturnType<typeof evaluateFreeDowngradeEligibility> | null; downgradeCheckError?: string | null }} [options]
  */
-export function publicAccountHubFromRow(row) {
+export function publicAccountHubFromRow(row, options = {}) {
   const siteId = String(row.site_id ?? '');
   const status = String(row.status ?? '');
   const plan = planTierFromBillingRow(row);
   const canManageBilling = Boolean(String(row.stripe_customer_id ?? '').trim());
+  const canDowngrade =
+    plan === 'plus' &&
+    (status === 'active' || status === 'trialing') &&
+    canManageBilling &&
+    Boolean(String(row.stripe_subscription_id ?? '').trim());
+  const downgradeCheck = options.downgradeCheck ?? null;
+  const downgradeCheckError = options.downgradeCheckError ?? null;
+
   return {
     siteId,
     hubUrl: customerHubUrl(siteId),
@@ -115,11 +129,14 @@ export function publicAccountHubFromRow(row) {
       status === 'active' &&
       canManageBilling &&
       Boolean(String(row.stripe_subscription_id ?? '').trim()),
-    canDowngrade:
-      plan === 'plus' &&
-      (status === 'active' || status === 'trialing') &&
-      canManageBilling &&
-      Boolean(String(row.stripe_subscription_id ?? '').trim()),
+    canDowngrade,
+    downgradeEligible: canDowngrade ? (downgradeCheck?.eligible ?? null) : null,
+    downgradeBlockers: canDowngrade && downgradeCheck?.blockers?.length ? downgradeCheck.blockers : [],
+    downgradeBlockerSummary:
+      canDowngrade && downgradeCheck && !downgradeCheck.eligible
+        ? summarizeFreeDowngradeBlockers(downgradeCheck.blockers)
+        : null,
+    downgradeCheckError: canDowngrade ? downgradeCheckError : null,
     canRefer:
       plan === 'plus' &&
       (status === 'active' || status === 'trialing') &&
@@ -138,14 +155,39 @@ export function publicAccountHubFromRow(row) {
  * @param {Record<string, string | undefined>} env
  * @param {D1Database} db
  * @param {Record<string, unknown>[]} rows
+ * @param {{ manifest?: object | null; fetchImpl?: typeof fetch }} [options]
  */
-export async function publicAccountHubsFromRows(env, db, rows) {
-  const hubs = [];
+export async function publicAccountHubsFromRows(env, db, rows, options = {}) {
+  const manifest = options.manifest ?? null;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const resolvedRows = [];
   for (const row of rows) {
-    const resolved = (await resolveBillingRowPlanTier(env, db, row)) ?? row;
-    hubs.push(publicAccountHubFromRow(resolved));
+    resolvedRows.push((await resolveBillingRowPlanTier(env, db, row)) ?? row);
   }
-  return hubs;
+
+  const downgradeChecks = await Promise.all(
+    resolvedRows.map(async (row) => {
+      const hub = publicAccountHubFromRow(row);
+      if (!hub.canDowngrade) {
+        return { downgradeCheck: null, downgradeCheckError: null };
+      }
+      const usageResult = await fetchHubFreeDowngradeUsage(env, manifest, hub.siteId, fetchImpl);
+      if (!usageResult.ok) {
+        return {
+          downgradeCheck: null,
+          downgradeCheckError: usageResult.message ?? 'Could not verify hub usage.'
+        };
+      }
+      return {
+        downgradeCheck: evaluateFreeDowngradeEligibility(usageResult.usage),
+        downgradeCheckError: null
+      };
+    })
+  );
+
+  return resolvedRows.map((row, index) =>
+    publicAccountHubFromRow(row, downgradeChecks[index] ?? {})
+  );
 }
 
 /**
@@ -317,7 +359,7 @@ export async function handleAccountOtpRequest(env, db, input, deps = {}) {
  * @param {Record<string, string | undefined>} env
  * @param {D1Database | null | undefined} db
  * @param {{ email: string; code: string }} input
- * @param {{ nowMs?: number }} [deps]
+ * @param {{ nowMs?: number; manifest?: object | null; fetchImpl?: typeof fetch }} [deps]
  */
 export async function handleAccountVerify(env, db, input, deps = {}) {
   const email = normalizeAccountEmail(input.email);
@@ -390,7 +432,10 @@ export async function handleAccountVerify(env, db, input, deps = {}) {
       ok: true,
       sessionToken: token,
       email,
-      hubs: await publicAccountHubsFromRows(env, db, rows),
+      hubs: await publicAccountHubsFromRows(env, db, rows, {
+        manifest: deps.manifest ?? null,
+        fetchImpl: deps.fetchImpl ?? fetch
+      }),
       expiresAt: nowMs + ACCOUNT_SESSION_TTL_MS
     }
   };
@@ -479,7 +524,7 @@ export async function handleAccountPortal(env, db, input, deps = {}) {
  * @param {Record<string, string | undefined>} env
  * @param {D1Database | null | undefined} db
  * @param {{ sessionToken: string }} input
- * @param {{ nowMs?: number }} [deps]
+ * @param {{ nowMs?: number; manifest?: object | null; fetchImpl?: typeof fetch }} [deps]
  */
 export async function handleAccountSession(env, db, input, deps = {}) {
   if (!db) {
@@ -504,7 +549,10 @@ export async function handleAccountSession(env, db, input, deps = {}) {
     body: {
       ok: true,
       email: session.email,
-      hubs: await publicAccountHubsFromRows(env, db, rows),
+      hubs: await publicAccountHubsFromRows(env, db, rows, {
+        manifest: deps.manifest ?? null,
+        fetchImpl: deps.fetchImpl ?? fetch
+      }),
       expiresAt: session.expiresAt
     }
   };
@@ -548,7 +596,7 @@ export async function handleAccountLogout(db, input) {
  * @param {Record<string, string | undefined>} env
  * @param {D1Database | null | undefined} db
  * @param {{ sessionToken: string; siteId: string; billingInterval?: string }} input
- * @param {{ nowMs?: number }} [deps]
+ * @param {{ nowMs?: number; manifest?: object | null; fetchImpl?: typeof fetch }} [deps]
  */
 export async function handleAccountDowngradeToFree(env, db, input, deps = {}) {
   if (!db) {
@@ -627,6 +675,39 @@ export async function handleAccountDowngradeToFree(env, db, input, deps = {}) {
     };
   }
 
+  const fetchImpl = deps.fetchImpl ?? fetch;
+  const usageResult = await fetchHubFreeDowngradeUsage(
+    env,
+    deps.manifest ?? null,
+    siteId,
+    fetchImpl
+  );
+  if (!usageResult.ok) {
+    return {
+      status: 503,
+      body: {
+        error: usageResult.error ?? 'DOWNGRADE_USAGE_UNAVAILABLE',
+        message:
+          usageResult.message ??
+          'Could not verify hub usage before switching to Free. Try again shortly.'
+      }
+    };
+  }
+
+  const eligibility = evaluateFreeDowngradeEligibility(usageResult.usage);
+  if (!eligibility.eligible) {
+    return {
+      status: 409,
+      body: {
+        error: 'DOWNGRADE_OVER_FREE_LIMITS',
+        message: summarizeFreeDowngradeBlockers(eligibility.blockers),
+        blockers: eligibility.blockers,
+        usage: eligibility.usage,
+        limits: eligibility.limits
+      }
+    };
+  }
+
   const stripe = await getActiveStripeCredentials(env, db);
   try {
     const result = await downgradePlusToFreeSubscription(env, db, {
@@ -656,7 +737,7 @@ export async function handleAccountDowngradeToFree(env, db, input, deps = {}) {
         siteId,
         plan: 'free',
         message:
-          'Your hub is now on the Free plan. Existing guides and stays stay as they are; you can add up to two guide templates and two scheduled stays going forward.'
+          'Your hub is now on the Free plan. You can add up to two guide templates, two areas per guide, and two scheduled stays on Free.'
       }
     };
   } catch (error) {
