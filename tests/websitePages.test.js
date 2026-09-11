@@ -113,6 +113,8 @@ describe('marketing site pages', () => {
     expect(js).toMatch(/\/api\/public\/account\/otp/);
     expect(js).toMatch(/\/api\/public\/account\/portal/);
     expect(js).toMatch(/\/api\/public\/account\/session/);
+    expect(js).toMatch(/Log out/);
+    expect(js).toMatch(/\/api\/public\/account\/logout/);
     expect(js).toMatch(/localStorage\.setItem\(SESSION_KEY/);
     expect(js).toMatch(/You have been signed out/);
     expect(js).toMatch(/Cancelled — this hub has ended/);
