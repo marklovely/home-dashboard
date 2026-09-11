@@ -397,3 +397,58 @@ bucket_name = "lovely-home-guide-media-test-cottage-free"
 [[env.test-cottage-free.r2_buckets]]
 binding = "BRAND_MEDIA"
 bucket_name = "lovely-home-media"
+
+# ---------------------------------------------------------------------------
+# E2e-tknekh8s environment — Terraform-managed (see docs/platform-terraform.md)
+# Provision: terraform apply + node scripts/sync-wrangler-from-terraform.mjs e2e-tknekh8s
+# ---------------------------------------------------------------------------
+
+[env.e2e-tknekh8s]
+name = "lovely-home-hub-api-e2e-tknekh8s"
+
+[env.e2e-tknekh8s.vars]
+HUB_ENVIRONMENT = "e2e-tknekh8s"
+
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://e2e-tknekh8s.lovely-hub.com,https://home-dashboard-e2e-tknekh8s.pages.dev,https://*.home-dashboard-e2e-tknekh8s.pages.dev,https://*.pages.dev"
+
+HOME_LATITUDE = "51.5074"
+
+HOME_LONGITUDE = "-0.1278"
+
+CLOUDFLARE_ACCOUNT_ID = "2c810bbed7e633623b99ae7c51dd0aa2"
+
+ACCESS_PAGES_APP_ID = "fb40c155-ade0-4b74-9ead-20afb3c94be7"
+
+ACCESS_WORKER_APP_ID = "dce4c630-dbe1-4ad5-8499-e5b78a7e3c43"
+
+[[env.e2e-tknekh8s.durable_objects.bindings]]
+name = "OWNER_AUTH_LIMITER"
+class_name = "OwnerAuthLimiter"
+
+[[env.e2e-tknekh8s.durable_objects.bindings]]
+name = "CONTROL_ACTION_LIMITER"
+class_name = "ControlActionLimiter"
+
+[[env.e2e-tknekh8s.r2_buckets]]
+binding = "APPLIANCE_GUIDES"
+bucket_name = "lovely-home-appliance-guides-e2e-tknekh8s"
+
+[[env.e2e-tknekh8s.d1_databases]]
+binding = "APPLIANCE_MANUALS_DB"
+database_name = "lovely-home-appliance-manuals-e2e-tknekh8s"
+database_id = "d07ac3f9-0d5d-4b59-bb3e-011048b091a6"
+migrations_dir = "migrations"
+
+[[env.e2e-tknekh8s.d1_databases]]
+binding = "HOUSE_GUIDE_DB"
+database_name = "lovely-home-appliance-manuals-e2e-tknekh8s"
+database_id = "d07ac3f9-0d5d-4b59-bb3e-011048b091a6"
+migrations_dir = "migrations"
+
+[[env.e2e-tknekh8s.r2_buckets]]
+binding = "GUIDE_MEDIA"
+bucket_name = "lovely-home-guide-media-e2e-tknekh8s"
+
+[[env.e2e-tknekh8s.r2_buckets]]
+binding = "BRAND_MEDIA"
+bucket_name = "lovely-home-media"
