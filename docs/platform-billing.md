@@ -320,7 +320,7 @@ The same `site_id` can go through multiple billing cycles (throwaway test hubs, 
 | **Resume** before period end (`cancel_at_period_end` cleared) | `subscription.updated` → status stays `trialing` / `active`; no deprovision. |
 | **Duplicate** `subscription.deleted` webhooks | Second event skipped via `already_dispatched` once D1 status is `canceled`. |
 
-Archive JSON in R2 is kept across cycles for optional restore ([platform-site-archive.md](./platform-site-archive.md)); automated restore on re-subscribe is not wired yet.
+Archive JSON in R2 is kept across cycles for restore ([platform-site-archive.md](./platform-site-archive.md)). After reprovision CI succeeds, `scripts/restore-hub-site-from-archive.mjs` loads the billing `archive_r2_key` from platform R2 and calls `POST /api/platform/site-restore` on the hub Worker (same shared secret as pre-deprovision export).
 
 ## Slice 3 — public signup (in progress)
 
@@ -439,7 +439,3 @@ bash scripts/deploy-lovely-home-website.sh
 ```
 
 Platform admin deploys from GitHub on `main`; run `terraform apply` to push env vars, or `bash scripts/deploy-platform-admin.sh` for Functions-only updates.
-
-### Still to do
-
-- Automated restore from archive on re-subscribe

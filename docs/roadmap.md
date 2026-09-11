@@ -214,7 +214,7 @@ flowchart LR
 | Item | Notes |
 |------|--------|
 | Suspend | Full backup → deprovision → retain `site_id` + archive pointer |
-| Resubscribe | Provision + `POST /api/site/restore` (or wizard restore) from platform R2 |
+| Resubscribe | Provision CI restores from platform R2 (`restore-hub-site-from-archive.mjs`); wizard restore remains available |
 | CI hook after provision | Automated restore from `{site_id}/latest.json` (not built yet) |
 | Media on restore | Phase 1: JSON only — photos/PDFs re-uploaded by owner |
 

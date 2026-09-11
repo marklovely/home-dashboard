@@ -105,8 +105,15 @@ Or GitHub Actions → **Platform sync archive GitHub secrets**.
 ## Restore on reactivate
 
 1. Provision hub (same `site_id`).
-2. Platform job or operator calls `POST /api/site/restore` with archived JSON (future: automated hook after provision CI).
-3. Owner signs in; photos/PDFs re-uploaded if needed.
+2. Provision CI runs `node scripts/restore-hub-site-from-archive.mjs <site_id>` when `site_billing.archive_r2_key` is set and `archive_restored_at` is null. The script reads the JSON from platform R2 and calls `POST /api/platform/site-restore` on the hub Worker (`X-Platform-Site-Archive-Secret`, optional Access service token).
+3. Operators can still call `POST /api/site/restore` from owner device mode or use the setup wizard restore step.
+4. Owner signs in; photos/PDFs re-uploaded if needed.
+
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/api/platform/site-restore` on the **Worker** | Same as site archive — `X-Platform-Site-Archive-Secret` |
+
+Billing deprovision clears `archive_restored_at` when it stores a new `archive_r2_key`.
 
 ## Related
 

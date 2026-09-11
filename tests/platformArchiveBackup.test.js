@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PLATFORM_ARCHIVE_R2_BUCKET_NAME, wranglerR2ObjectPutArgs } from '../scripts/lib/platform-archive-storage.mjs';
 import { parsePlatformHealthServiceTokenFromState } from '../scripts/lib/platform-archive-github-secrets.mjs';
-import { resolveHubArchiveUrl } from '../scripts/lib/hub-archive-url.mjs';
+import { resolveHubArchiveUrl, resolveHubPlatformApiUrl } from '../scripts/lib/hub-archive-url.mjs';
 import { hubPagesPlatformPathUnavailable } from '../functions/lib/hubPagesPlatformPath.js';
 
 describe('platform archive bucket name', () => {
@@ -76,11 +76,30 @@ describe('resolveHubArchiveUrl', () => {
   it('returns null when neither origin is present', () => {
     expect(resolveHubArchiveUrl({})).toEqual({ url: null, via: null });
   });
+
+  it('builds site-restore URLs on the Worker origin', () => {
+    expect(
+      resolveHubPlatformApiUrl(
+        {
+          worker_api_origin: 'https://lovely-home-hub-api-kitchen-home.example.workers.dev/',
+          hostname: 'kitchen-home.lovely-hub.com'
+        },
+        'site-restore'
+      )
+    ).toEqual({
+      url: 'https://lovely-home-hub-api-kitchen-home.example.workers.dev/api/platform/site-restore',
+      via: 'worker'
+    });
+  });
 });
 
 describe('hubPagesPlatformPathUnavailable', () => {
   it('lets site-archive proxy to the Worker on hub Pages', () => {
     expect(hubPagesPlatformPathUnavailable('platform/site-archive')).toBe(false);
+  });
+
+  it('lets site-restore proxy to the Worker on hub Pages', () => {
+    expect(hubPagesPlatformPathUnavailable('platform/site-restore')).toBe(false);
   });
 
   it('still 503s other platform operator routes on hub Pages', () => {
@@ -152,6 +171,39 @@ describe('prune-hub-pages-functions', () => {
     } finally {
       rmSync(dest, { recursive: true, force: true });
     }
+  });
+});
+
+describe('restore-hub-site-from-archive', () => {
+  it('refuses to run without PLATFORM_SITE_ARCHIVE_SECRET', () => {
+    const result = spawnSync(
+      process.execPath,
+      [join(process.cwd(), 'scripts/restore-hub-site-from-archive.mjs'), 'rosies'],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PLATFORM_SITE_ARCHIVE_SECRET: ''
+        }
+      }
+    );
+    expect(result.status).toBe(1);
+    expect(`${result.stderr}${result.stdout}`).toMatch(/PLATFORM_SITE_ARCHIVE_SECRET/);
+  });
+});
+
+describe('platform site provision restore hook', () => {
+  it('runs archive restore after provision', () => {
+    const yml = readFileSync(
+      join(process.cwd(), '.github/workflows/platform-site-provision-reusable.yml'),
+      'utf8'
+    );
+    expect(yml).toMatch(/Restore hub from platform archive/);
+    expect(yml).toMatch(/node scripts\/restore-hub-site-from-archive\.mjs "\$SITE_ID"/);
+    const provisionAt = yml.indexOf('node scripts/provision-hub-site.mjs');
+    const restoreAt = yml.indexOf('restore-hub-site-from-archive.mjs');
+    expect(provisionAt).toBeGreaterThan(-1);
+    expect(restoreAt).toBeGreaterThan(provisionAt);
   });
 });
 

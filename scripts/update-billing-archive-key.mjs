@@ -18,7 +18,7 @@ if (!siteId || !archiveR2Key) {
 }
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const sql = `UPDATE site_billing SET archive_r2_key = '${archiveR2Key.replace(/'/g, "''")}', updated_at = ${Date.now()} WHERE site_id = '${siteId.replace(/'/g, "''")}';`;
+const sql = `UPDATE site_billing SET archive_r2_key = '${archiveR2Key.replace(/'/g, "''")}', archive_restored_at = NULL, updated_at = ${Date.now()} WHERE site_id = '${siteId.replace(/'/g, "''")}';`;
 
 execFileSync(
   'npx',
