@@ -6,6 +6,10 @@
 
 - Reduce R2 Class A operations from the Terraform remote state backend (`workspace_key_prefix`, `skip_s3_checksum`); shared init args in `scripts/lib/terraform-r2-backend-init-args.sh`
 
+### Testing
+
+- Hub lifecycle Playwright run defaults to Lovely Home Free (API signup, active subscription teardown); Plus Checkout path runs when `E2E_SIGNUP_PLAN=plus`
+
 ## 3.1.0
 
 Free vs Lovely Home+ plans, marketing repositioning, and hub plan visibility with enforced limits.

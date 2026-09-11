@@ -2,7 +2,12 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { encodeStripeFormEntries, priceIdFromCheckoutSession, uniqueOwnerEmail } from '../e2e/lib/stripeApi.js';
+import {
+  encodeStripeFormEntries,
+  findHubSubscription,
+  priceIdFromCheckoutSession,
+  uniqueOwnerEmail
+} from '../e2e/lib/stripeApi.js';
 import { checkoutHasFinished, isStripeHostedCheckoutUrl, parseCheckoutSessionId } from '../e2e/lib/stripeCheckout.js';
 import {
   isStripeLiveSecret,
@@ -80,6 +85,40 @@ platform_operator_emails = ["ops@example.com"]
     expect(checkoutHasFinished('https://lovely-home.cloudflareaccess.com/cdn-cgi/access/login')).toBe(true);
     expect(parseCheckoutSessionId('https://checkout.stripe.com/c/pay/cs_test_abcDEF123')).toBe('cs_test_abcDEF123');
     expect(parseCheckoutSessionId('https://lovely-home.co.uk/signup')).toBe('');
+  });
+
+  it('findHubSubscription searches trialing and active subscriptions by site metadata', async () => {
+    /** @type {Record<string, string>} */
+    const calls = {};
+    const fetchImpl = async (/** @type {string | URL} */ url) => {
+      const href = String(url);
+      if (href.includes('/customers?')) {
+        return new Response(JSON.stringify({ data: [{ id: 'cus_1' }] }), { status: 200 });
+      }
+      if (href.includes('/subscriptions?') && href.includes('status=trialing')) {
+        calls.trialing = href;
+        return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      }
+      if (href.includes('/subscriptions?') && href.includes('status=active')) {
+        calls.active = href;
+        return new Response(
+          JSON.stringify({ data: [{ id: 'sub_free', metadata: { site_id: 'e2e-abc' } }] }),
+          { status: 200 }
+        );
+      }
+      return new Response(JSON.stringify({ data: [] }), { status: 200 });
+    };
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = fetchImpl;
+    try {
+      const match = await findHubSubscription('sk_test_abc', 'owner@example.com', 'e2e-abc');
+      expect(match?.id).toBe('sub_free');
+      expect(calls.trialing).toContain('status=trialing');
+      expect(calls.active).toContain('status=active');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   it('encodes nested Stripe form fields and reads a Checkout price id', () => {

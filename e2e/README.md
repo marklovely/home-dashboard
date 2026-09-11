@@ -2,14 +2,23 @@
 
 On-demand Playwright coverage for the real signup path. **Not part of `npm test` or PR CI.** Never run against live Stripe.
 
-It creates a throwaway hub (`e2e-` + random), pays with the Stripe **test** card `4242…`, waits until `GET /api/public/hub-status/{siteId}` reports a live `hub-shell`, cancels the trial via the Stripe API, then waits until the hub is gone. Signup provision and cancel teardown are queued (not GitHub create-PRs).
+The default run exercises **Lovely Home Free** (`plan: free`): API signup without hosted Checkout, wait until `GET /api/public/hub-status/{siteId}` reports a live `hub-shell`, cancel the Stripe subscription via the API, then wait until the hub is gone. Signup provision and cancel teardown are queued (not GitHub create-PRs).
 
-Provisioning plus teardown often takes **25–80 minutes**.
+Set `E2E_SIGNUP_PLAN=plus` to also run the **Lovely Home+** path (hosted Checkout + trial card). That second test is skipped by default because it is slower and flakier under Playwright.
+
+Provisioning plus teardown often takes **25–80 minutes** per plan exercised.
 
 ## Local
 
 ```bash
 npx playwright install chromium
+npm run test:lifecycle
+```
+
+Lovely Home+ checkout coverage:
+
+```bash
+export E2E_SIGNUP_PLAN=plus
 npm run test:lifecycle
 ```
 
@@ -21,6 +30,7 @@ You can still override:
 export STRIPE_SECRET_KEY=sk_test_...
 export E2E_OWNER_EMAIL=you@example.com
 export STRIPE_MODE=test
+export E2E_SIGNUP_PLAN=free   # or plus
 npm run test:lifecycle
 ```
 
@@ -28,10 +38,13 @@ Optional:
 
 - `PLATFORM_API_ORIGIN` (default `https://platform.lovely-home.co.uk`)
 - `MARKETING_ORIGIN` (default `https://lovely-home.co.uk`)
+- `STRIPE_PRICE_ID` — only needed for the Plus checkout fallback when hosted Checkout stays open
 
-The spec posts to `/api/public/signup` (Access-bypassed) then drives hosted Checkout in the browser. It types the test card and waits for the Stripe Checkout session to become `complete`. The success-page redirect is optional — Access or a stuck Processing spinner must not fail the run. If Onelink Checkout stays `open` (Playwright often cannot finish that hosted form), the spec expires the session and starts the same 7-day trial via the Stripe API with `metadata.site_id`, so provision still runs. Then it polls hub-status until the hub SPA is live. `registered` follows billing (trialing/active), not a lagging platform Pages manifest. After cancel it waits until the hostname is gone. Hub Access OTP is not attempted.
+The Free spec posts to `/api/public/signup` with `plan: free` and polls hub-status until the hub SPA is live. The Plus spec posts with `plan: plus`, drives hosted Checkout in the browser, and falls back to the Stripe API if Checkout stays open. `registered` follows billing (`active` for Free, `trialing`/`active` for Plus), not a lagging platform Pages manifest. After cancel it waits until the hostname is gone. Hub Access OTP is not attempted.
 
 `e2e-…` slugs skip Turnstile and are rejected while the platform Stripe mode is **live**.
+
+Per-site Terraform state for customer hubs lives at `home-dashboard/customers/{siteId}.tfstate` in R2. Deprovision empties that state via `terraform destroy` but leaves the object in place (or you can delete empty files manually).
 
 ## GitHub Actions
 
@@ -42,5 +55,13 @@ The spec posts to `/api/public/signup` (Access-bypassed) then drives hosted Chec
 | `STRIPE_SECRET_KEY` | secret | Test key only |
 | `E2E_OWNER_EMAIL` | secret | Inbox you control; the run uses `you+e2e-….@` |
 | `STRIPE_MODE` | variable | Must be `test`. The job fails if it is `live` |
+
+Optional workflow input:
+
+| Input | Default | Purpose |
+|-------|---------|---------|
+| `signup_plan` | `free` | `free` runs the Free lifecycle only; `plus` also runs the Checkout lifecycle |
+
+`STRIPE_PRICE_ID` is only required when `signup_plan` is `plus`.
 
 Do not add this workflow to `pull_request`.

@@ -2,6 +2,15 @@ name: Hub lifecycle (Stripe test)
 
 on:
   workflow_dispatch:
+    inputs:
+      signup_plan:
+        description: free = API signup only; plus = also run hosted Checkout lifecycle
+        required: false
+        default: free
+        type: choice
+        options:
+          - free
+          - plus
 
 concurrency:
   group: hub-lifecycle-${{ github.run_id }}
@@ -18,6 +27,7 @@ jobs:
       STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
       STRIPE_MODE: ${{ vars.STRIPE_MODE }}
       E2E_OWNER_EMAIL: ${{ secrets.E2E_OWNER_EMAIL }}
+      E2E_SIGNUP_PLAN: ${{ inputs.signup_plan || 'free' }}
       PLATFORM_API_ORIGIN: https://platform.lovely-home.co.uk
       MARKETING_ORIGIN: https://lovely-home.co.uk
     steps:
@@ -53,6 +63,11 @@ jobs:
           esac
           if [ -z "${E2E_OWNER_EMAIL:-}" ]; then
             echo "::error::Add repo secret E2E_OWNER_EMAIL."
+            exit 1
+          fi
+          PLAN="$(printf '%s' "${E2E_SIGNUP_PLAN:-free}" | tr '[:upper:]' '[:lower:]')"
+          if [ "$PLAN" = "plus" ] && [ -z "${STRIPE_PRICE_ID:-}" ]; then
+            echo "::error::STRIPE_PRICE_ID is required when signup_plan is plus."
             exit 1
           fi
 
