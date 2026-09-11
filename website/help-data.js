@@ -139,7 +139,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Yes. The Free plan is free forever for one home, with up to two guide templates and two scheduled stays. Each guide can include up to two areas on Free (unlimited topics inside each area). All audience types are available on Free. Bin reminders and Alexa home controls require Lovely Home+. Upgrade when you want unlimited templates, stays, areas, bin reminders, or home controls."
+          "text": "Yes. The Free plan is free forever for one home, with up to two guide templates and two scheduled stays. A guide template is a separate experience for your home (for example House Sitter Guide and Pet Care Guide) — there is no limit on topics or details inside each guide. All audience types are available on Free. Upgrade to Lovely Home+ when you want unlimited templates and stays."
         },
         {
           "type": "h4",
@@ -147,7 +147,7 @@ export const PUBLIC_HELP_CATALOG = {
         },
         {
           "type": "p",
-          "text": "Lovely Home is the digital home hub for your home — guides, weather, routines, and scheduled access for whoever needs the home. Bin reminders and Alexa home controls are on Lovely Home+. Owners keep the full view. House sitters, pet sitters, guests, holiday-let visitors, tenants, and family each get an experience suited to them, from the same hub."
+          "text": "Lovely Home is the digital home hub for your home — guides, bins, weather, routines, and scheduled access for whoever needs the home. Owners keep the full view. House sitters, pet sitters, guests, holiday-let visitors, tenants, and family each get an experience suited to them, from the same hub."
         },
         {
           "type": "h4",

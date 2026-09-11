@@ -183,7 +183,7 @@ describe('marketing site pages', () => {
 
   it('explains scheduled stays: guide early, secrets on the stay, access after checkout', () => {
     const home = readPage('index.html');
-    expect(home).toMatch(/Information at the right time/);
+    expect(home).toMatch(/The right information\. At the right time\./);
     expect(home).toMatch(/Before arrival/);
     expect(home).toMatch(/During the stay/);
     expect(home).toMatch(/After departure/);
@@ -344,7 +344,7 @@ describe('marketing site pages', () => {
     const home = readPage('index.html');
     expect(home).toMatch(/Free forever/);
     expect(home).toMatch(/Lovely Home\+/);
-    expect(home).toMatch(/Create your free home/);
+    expect(home).toMatch(/Create your free Home Hub/);
     const pricingJs = readFileSync(join(website, 'pricing.js'), 'utf8');
     expect(pricingJs).toMatch(/£4\.99\/month/);
     expect(pricingJs).toMatch(/£44\.99\/year/);
