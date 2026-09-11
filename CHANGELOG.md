@@ -5,6 +5,7 @@
 ### Infrastructure
 
 - Reduce R2 Class A operations from the Terraform remote state backend (`workspace_key_prefix`, `skip_s3_checksum`); shared init args in `scripts/lib/terraform-r2-backend-init-args.sh`
+- Delete ephemeral `platform/hub-record-*` / `platform/hub-drop-*` snapshot branches after registry overlay; add `scripts/prune-hub-registry-snapshot-branches.mjs` for one-off cleanup
 
 ### Billing and email
 
