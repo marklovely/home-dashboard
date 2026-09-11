@@ -5,6 +5,9 @@
  * the platform Pages project — the Stripe webhook still succeeds without it.
  */
 
+import { normalizePlanTier } from './platformPlanTier.js';
+import { isReturningBillingSignup } from './platformHubNameHold.js';
+
 export const CUSTOMER_EMAIL_KINDS = /** @type {const} */ ([
   'signup',
   'trial_ending',
@@ -93,10 +96,42 @@ export function lifecycleEmailKindForEvent(input) {
 
 /**
  * @param {{
+ *   hubUrl: string;
+ *   successUrl: string;
+ *   accountUrl: string;
+ *   returning?: boolean;
+ * }} input
+ */
+function sharedSignupLines(input) {
+  const intro = input.returning
+    ? 'Welcome back. We are reinstating your Lovely Home hub now — it can take up to 10 minutes, often faster when queues are clear.'
+    : 'We are setting up your Lovely Home hub now — it can take up to 10 minutes, often faster when queues are clear.';
+
+  return [
+    intro,
+    '',
+    `Your hub: ${input.hubUrl}`,
+    `Watch progress: ${input.successUrl}`,
+    '',
+    'Sign in with this email address. Cloudflare will send a one-time code.',
+    '',
+    'Fill in the house guide, then share the URL with whoever is staying — a sitter, tenant, Airbnb guest, or anyone else in the home. A wall tablet is optional; nothing extra to buy.',
+    '',
+    `Manage billing and your plan: ${input.accountUrl}`,
+    '',
+    'Questions: support@lovely-home.co.uk'
+  ];
+}
+
+/**
+ * @param {{
  *   kind: CustomerEmailKind;
  *   siteId: string;
  *   trialEnd?: number | null;
  *   marketingOrigin?: string;
+ *   planTier?: string | null;
+ *   returning?: boolean;
+ *   status?: string | null;
  * }} input
  */
 export function buildCustomerEmail(input) {
@@ -106,12 +141,42 @@ export function buildCustomerEmail(input) {
   const successUrl = `${origin}/signup-success?site=${encodeURIComponent(siteId)}`;
   const accountUrl = `${origin}/account`;
   const trialDate = formatUkDate(input.trialEnd);
+  const plan = normalizePlanTier(input.planTier);
+  const returning = Boolean(input.returning);
+  const status = String(input.status ?? '');
 
   if (input.kind === 'signup') {
+    const shared = sharedSignupLines({ hubUrl, successUrl, accountUrl, returning });
+
+    if (plan === 'free') {
+      const planLine = returning
+        ? 'Your Lovely Home Free plan is active again at no charge.'
+        : 'Your Lovely Home Free plan is active at no charge. Upgrade to Lovely Home+ any time from your account page.';
+      return {
+        subject: returning
+          ? `Welcome back — ${siteId}.lovely-hub.com`
+          : `Your Lovely Home hub — ${siteId}.lovely-hub.com`,
+        text: [...shared.slice(0, -3), planLine, ...shared.slice(-3)].join('\n')
+      };
+    }
+
+    if (returning || status === 'active') {
+      return {
+        subject: `Welcome back — ${siteId}.lovely-hub.com`,
+        text: [
+          ...shared.slice(0, 1),
+          '',
+          ...shared.slice(2, -3),
+          'Your Lovely Home+ subscription is active. Your card on file is billed at the plan you chose.',
+          ...shared.slice(-3)
+        ].join('\n')
+      };
+    }
+
     return {
-      subject: `Your Lovely Home hub — ${siteId}.lovely-hub.com`,
+      subject: `Your Lovely Home+ trial — ${siteId}.lovely-hub.com`,
       text: [
-        'Your 7-day trial has started. We are setting up your private household hub now — it can take up to 10 minutes, often faster when queues are clear.',
+        'Your 7-day Lovely Home+ trial has started. We are setting up your private household hub now — it can take up to 10 minutes, often faster when queues are clear.',
         '',
         `Your hub: ${hubUrl}`,
         `Watch progress: ${successUrl}`,
@@ -120,7 +185,7 @@ export function buildCustomerEmail(input) {
         '',
         'Use the week to fill in the house guide, then share the URL with whoever is staying — a sitter, tenant, Airbnb guest, or anyone else in the home. A wall tablet is optional; nothing extra to buy.',
         '',
-        'You are not charged today. After the trial your card is billed at the plan you chose. Cancel from your account page before the trial ends to pay nothing:',
+        'You are not charged today. After the trial your card is billed at the Lovely Home+ plan you chose. Cancel from your account page before the trial ends to pay nothing:',
         accountUrl,
         '',
         'Questions: support@lovely-home.co.uk'
@@ -131,9 +196,9 @@ export function buildCustomerEmail(input) {
   if (input.kind === 'trial_ending') {
     const when = trialDate ? ` on ${trialDate}` : ' soon';
     return {
-      subject: `Your Lovely Home trial ends${trialDate ? ` on ${trialDate}` : ' soon'}`,
+      subject: `Your Lovely Home+ trial ends${trialDate ? ` on ${trialDate}` : ' soon'}`,
       text: [
-        `Your trial for ${hubUrl} ends${when}. If you do nothing, your card will be charged then.`,
+        `Your Lovely Home+ trial for ${hubUrl} ends${when}. If you do nothing, your card will be charged then.`,
         '',
         `To cancel and pay nothing, open ${accountUrl} (we email you a code), or write to support@lovely-home.co.uk.`,
         '',
@@ -162,7 +227,7 @@ export function buildCustomerEmail(input) {
       '',
       'If you want to keep your house guide, photos, appliance manuals, and home details, download a password-encrypted full backup from Settings while the hub is still up.',
       '',
-      `Your hub name (${siteId}.lovely-hub.com) stays reserved for you for 12 months if you resubscribe.`,
+      `Your hub name (${siteId}.lovely-hub.com) stays reserved for you for 12 months if you resubscribe on Lovely Home Free or Lovely Home+.`,
       '',
       'Questions: support@lovely-home.co.uk'
     ].join('\n')
@@ -363,6 +428,9 @@ export async function sendResendEmail(env, message, fetchImpl = fetch) {
  *   siteId: string;
  *   ownerEmail?: string | null;
  *   trialEnd?: number | null;
+ *   planTier?: string | null;
+ *   returning?: boolean;
+ *   priorBilling?: { [key: string]: unknown } | null;
  *   existingBilling?: { [key: string]: unknown } | null;
  * }} input
  * @param {typeof fetch} [fetchImpl]
@@ -394,11 +462,27 @@ export async function maybeSendCustomerLifecycleEmail(env, db, input, fetchImpl 
     return { ok: true, action: 'email_already_sent' };
   }
 
+  const priorBilling = input.priorBilling ?? input.existingBilling ?? null;
+  const returning =
+    input.returning ??
+    isReturningBillingSignup(
+      priorBilling && typeof priorBilling === 'object' ? priorBilling : null,
+      to
+    );
+  const planTier =
+    input.planTier ??
+    (input.existingBilling && typeof input.existingBilling === 'object'
+      ? String(input.existingBilling.plan_tier ?? '')
+      : null);
+
   const built = buildCustomerEmail({
     kind,
     siteId: input.siteId,
     trialEnd: input.trialEnd,
-    marketingOrigin: marketingSiteOrigin(env)
+    marketingOrigin: marketingSiteOrigin(env),
+    planTier,
+    returning,
+    status: input.status
   });
   const sent = await sendResendEmail(env, { to, ...built }, fetchImpl);
   if (!sent.ok) {

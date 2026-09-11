@@ -6,6 +6,7 @@ import {
   hubNameHeldUntil,
   isHubNameHeld,
   isHubReclaimSignup,
+  isReturningBillingSignup,
   ownerEmailMatchesBilling
 } from '../functions/api/platform/platformHubNameHold.js';
 
@@ -68,6 +69,33 @@ describe('platformHubNameHold', () => {
         { sites: { smith: { siteId: 'smith' } } },
         'smith',
         'owner@example.com'
+      )
+    ).toBe(false);
+  });
+
+  it('detects returning billing from prior deprovision or archive', () => {
+    const now = Date.now();
+    expect(
+      isReturningBillingSignup(
+        {
+          status: 'active',
+          owner_email: 'owner@example.com',
+          deprovision_dispatched_at: now - 1000,
+          created_at: now - 86_400_000
+        },
+        'owner@example.com',
+        now
+      )
+    ).toBe(true);
+    expect(
+      isReturningBillingSignup(
+        {
+          status: 'active',
+          owner_email: 'owner@example.com',
+          created_at: now - 1000
+        },
+        'owner@example.com',
+        now
       )
     ).toBe(false);
   });
