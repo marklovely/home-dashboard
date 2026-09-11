@@ -31,7 +31,10 @@
     "secrets:test-lovely": "bash scripts/print-env-secrets-checklist.sh test-lovely",
     "deploy:test-cottage-free": "node scripts/check-env-provisioned.mjs test-cottage-free && wrangler deploy --env test-cottage-free",
     "d1:migrate:test-cottage-free": "node scripts/check-env-provisioned.mjs test-cottage-free && wrangler d1 migrations apply lovely-home-appliance-manuals-test-cottage-free --remote --env test-cottage-free",
-    "secrets:test-cottage-free": "bash scripts/print-env-secrets-checklist.sh test-cottage-free"
+    "secrets:test-cottage-free": "bash scripts/print-env-secrets-checklist.sh test-cottage-free",
+    "deploy:e2e-z8jk1gqz": "node scripts/check-env-provisioned.mjs e2e-z8jk1gqz && wrangler deploy --env e2e-z8jk1gqz",
+    "d1:migrate:e2e-z8jk1gqz": "node scripts/check-env-provisioned.mjs e2e-z8jk1gqz && wrangler d1 migrations apply lovely-home-appliance-manuals-e2e-z8jk1gqz --remote --env e2e-z8jk1gqz",
+    "secrets:e2e-z8jk1gqz": "bash scripts/print-env-secrets-checklist.sh e2e-z8jk1gqz"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.19.0",

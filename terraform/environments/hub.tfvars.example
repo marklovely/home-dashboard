@@ -260,4 +260,13 @@ sites = {
 
 
 
+  e2e-z8jk1gqz = {
+    hostname        = "e2e-z8jk1gqz.lovely-hub.com"
+    hub_environment = "e2e-z8jk1gqz"
+    vanilla         = false
+    terraform       = true
+    zone_name       = "lovely-hub.com"
+    attach_hub_api_binding = false # first apply only; set true after Worker deploy
+  }
+
 }
