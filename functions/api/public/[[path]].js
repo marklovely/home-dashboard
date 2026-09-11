@@ -22,6 +22,7 @@ import {
   handleAccountPortal,
   handleAccountReferralCode,
   handleAccountSession,
+  handleAccountCloseHub,
   handleAccountDowngradeToFree,
   handleAccountUpgradeCheckout,
   handleAccountVerify,
@@ -241,6 +242,15 @@ export async function onRequest(context) {
   if (suffix === 'account/downgrade-to-free' && request.method === 'POST') {
     const body = await readJsonBody(request);
     const result = await handleAccountDowngradeToFree(pagesEnv, getPlatformBillingDb(env), {
+      sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim(),
+      siteId: String(body.siteId ?? body.site_id ?? '').trim()
+    });
+    return Response.json(result.body, { status: result.status, headers: cors });
+  }
+
+  if (suffix === 'account/close-hub' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handleAccountCloseHub(pagesEnv, getPlatformBillingDb(env), manifest, {
       sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim(),
       siteId: String(body.siteId ?? body.site_id ?? '').trim()
     });

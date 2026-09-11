@@ -11,6 +11,7 @@ import { isReturningBillingSignup } from './platformHubNameHold.js';
 export const CUSTOMER_EMAIL_KINDS = /** @type {const} */ ([
   'signup',
   'upgrade',
+  'downgrade',
   'past_due',
   'canceled'
 ]);
@@ -155,6 +156,22 @@ export function buildCustomerEmail(input) {
         '',
         `Open your hub: ${hubUrl}`,
         `Manage billing: ${accountUrl}`,
+        '',
+        'Questions: support@lovely-home.co.uk'
+      ].join('\n')
+    };
+  }
+
+  if (input.kind === 'downgrade') {
+    return {
+      subject: `Your hub is on the Free plan — ${siteId}.lovely-hub.com`,
+      text: [
+        `Your Lovely Home hub ${hubUrl} is now on the Free plan.`,
+        '',
+        'You can add up to two guide templates and two scheduled stays going forward. Existing guides and stays stay as they are (soft limits — you cannot add more until you are under the cap or upgrade again).',
+        '',
+        `Open your hub: ${hubUrl}`,
+        `Upgrade or close hub: ${accountUrl}`,
         '',
         'Questions: support@lovely-home.co.uk'
       ].join('\n')
@@ -477,4 +494,38 @@ export async function maybeSendCustomerLifecycleEmail(env, db, input, fetchImpl 
   }
 
   return { ok: true, action: `email_${kind}_sent` };
+}
+
+/**
+ * Sent immediately after a Plus→Free downgrade (API path, not a Stripe webhook).
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {{
+ *   siteId: string;
+ *   ownerEmail?: string | null;
+ * }} input
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function sendDowngradeConfirmationEmail(env, input, fetchImpl = fetch) {
+  if (!customerEmailConfigured(env)) {
+    return { ok: true, action: 'email_not_configured' };
+  }
+
+  const to = String(input.ownerEmail ?? '')
+    .trim()
+    .toLowerCase();
+  if (!to || !to.includes('@')) {
+    return { ok: true, action: 'email_missing_recipient' };
+  }
+
+  const built = buildCustomerEmail({
+    kind: 'downgrade',
+    siteId: input.siteId,
+    marketingOrigin: marketingSiteOrigin(env)
+  });
+  const sent = await sendResendEmail(env, { to, ...built }, fetchImpl);
+  if (!sent.ok) {
+    return { ok: false, error: sent.error, message: sent.message };
+  }
+  return { ok: true, action: 'email_downgrade_sent' };
 }

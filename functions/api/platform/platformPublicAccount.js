@@ -6,6 +6,7 @@
  */
 
 import {
+  closeFreeHubSubscription,
   createUpgradeCheckoutSession,
   downgradePlusToFreeSubscription,
   listSiteBillingByOwnerEmail,
@@ -14,7 +15,12 @@ import {
 import { resolveBillingRowPlanTier } from './platformPublicHubPlan.js';
 import { planTierFromBillingRow } from './platformPlanTier.js';
 import { getActiveStripeCredentials } from './platformStripeMode.js';
-import { customerEmailConfigured, customerHubUrl, sendResendEmail } from './platformCustomerEmail.js';
+import {
+  customerEmailConfigured,
+  customerHubUrl,
+  sendDowngradeConfirmationEmail,
+  sendResendEmail
+} from './platformCustomerEmail.js';
 import { marketingSiteOrigin } from './platformPublicSignup.js';
 import { consumeSignupAttempt, hashSignupClientKey } from './platformSignupGuards.js';
 import { turnstileSiteKey, verifyTurnstileToken } from './platformSignupTurnstile.js';
@@ -116,7 +122,12 @@ export function publicAccountHubFromRow(row) {
     canRefer:
       plan === 'plus' &&
       (status === 'active' || status === 'trialing') &&
-      isReferrerEligible(row)
+      isReferrerEligible(row),
+    canCloseHub:
+      plan === 'free' &&
+      status === 'active' &&
+      canManageBilling &&
+      Boolean(String(row.stripe_subscription_id ?? '').trim())
   };
 }
 
@@ -601,6 +612,10 @@ export async function handleAccountDowngradeToFree(env, db, input, deps = {}) {
         }
       };
     }
+
+    const ownerEmail = resolvedRow.owner_email ? String(resolvedRow.owner_email) : session.email;
+    await sendDowngradeConfirmationEmail(env, { siteId, ownerEmail });
+
     return {
       status: 200,
       body: {
@@ -617,6 +632,129 @@ export async function handleAccountDowngradeToFree(env, db, input, deps = {}) {
       body: {
         error: 'DOWNGRADE_FAILED',
         message: error instanceof Error ? error.message : 'Could not switch to the Free plan.'
+      }
+    };
+  }
+}
+
+/**
+ * @param {Record<string, string | undefined>} env
+ * @param {D1Database | null | undefined} db
+ * @param {object} manifest
+ * @param {{ sessionToken: string; siteId: string }} input
+ * @param {{ nowMs?: number }} [deps]
+ */
+export async function handleAccountCloseHub(env, db, manifest, input, deps = {}) {
+  if (!db) {
+    return {
+      status: 503,
+      body: { error: 'BILLING_DB_NOT_CONFIGURED', message: 'Billing is not available right now.' }
+    };
+  }
+
+  const nowMs = deps.nowMs ?? Date.now();
+  const siteId = String(input.siteId ?? '')
+    .trim()
+    .toLowerCase();
+  const token = String(input.sessionToken ?? '').trim();
+  if (!siteId) {
+    return {
+      status: 400,
+      body: { error: 'INVALID_INPUT', message: 'siteId is required.' }
+    };
+  }
+
+  const session = await loadAccountSession(db, token, nowMs);
+  if (!session) {
+    return {
+      status: 401,
+      body: { error: 'INVALID_SESSION', message: ACCOUNT_SESSION_EXPIRED_MESSAGE }
+    };
+  }
+
+  const rows = await listSiteBillingByOwnerEmail(db, session.email);
+  const row = rows.find((item) => String(item.site_id) === siteId);
+  if (!row) {
+    return {
+      status: 404,
+      body: { error: 'HUB_NOT_FOUND', message: 'We could not find that hub on your account.' }
+    };
+  }
+
+  const resolvedRow = (await resolveBillingRowPlanTier(env, db, row)) ?? row;
+  const plan = planTierFromBillingRow(resolvedRow);
+  const status = String(resolvedRow.status ?? '');
+  const customerId = String(resolvedRow.stripe_customer_id ?? '').trim();
+  const subscriptionId = String(resolvedRow.stripe_subscription_id ?? '').trim();
+
+  if (
+    resolvedRow.owner_email &&
+    session.email &&
+    normalizeAccountEmail(resolvedRow.owner_email) !== session.email
+  ) {
+    return {
+      status: 403,
+      body: { error: 'FORBIDDEN', message: 'That hub does not belong to this account.' }
+    };
+  }
+
+  if (plan !== 'free' || status !== 'active') {
+    return {
+      status: 409,
+      body: {
+        error: 'CLOSE_NOT_AVAILABLE',
+        message:
+          plan !== 'free'
+            ? 'Switch to the Free plan first, or cancel Lovely Home+ from Stripe to close the hub.'
+            : 'This hub is not active anymore.'
+      }
+    };
+  }
+
+  if (!customerId || !subscriptionId) {
+    return {
+      status: 503,
+      body: {
+        error: 'CLOSE_NOT_READY',
+        message: 'Billing is not linked yet. Email support@lovely-home.co.uk.'
+      }
+    };
+  }
+
+  const stripe = await getActiveStripeCredentials(env, db);
+  try {
+    const result = await closeFreeHubSubscription(env, db, manifest, {
+      siteId,
+      customerId,
+      subscriptionId,
+      ownerEmail: resolvedRow.owner_email ? String(resolvedRow.owner_email) : session.email,
+      mode: stripe.mode
+    });
+    if (!result.ok) {
+      return {
+        status: 503,
+        body: {
+          error: result.error ?? 'CLOSE_FAILED',
+          message: result.message ?? 'Could not close the hub.'
+        }
+      };
+    }
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        siteId,
+        status: 'canceled',
+        message:
+          'Your hub is closing. Download a full backup first if you have not already — we archive guide JSON only after teardown.'
+      }
+    };
+  } catch (error) {
+    return {
+      status: 502,
+      body: {
+        error: 'CLOSE_FAILED',
+        message: error instanceof Error ? error.message : 'Could not close the hub.'
       }
     };
   }

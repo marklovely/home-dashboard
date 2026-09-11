@@ -731,6 +731,97 @@ export async function downgradePlusToFreeSubscription(env, db, input) {
 }
 
 /**
+ * Cancel a Free-plan hub and enqueue teardown (owner-initiated close).
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {D1Database} db
+ * @param {object} manifest
+ * @param {{
+ *   siteId: string;
+ *   customerId: string;
+ *   subscriptionId: string;
+ *   ownerEmail?: string | null;
+ *   mode?: 'test' | 'live';
+ * }} input
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function closeFreeHubSubscription(env, db, manifest, input, fetchImpl = fetch) {
+  const siteId = input.siteId.trim().toLowerCase();
+  const customerId = String(input.customerId ?? '').trim();
+  const subscriptionId = String(input.subscriptionId ?? '').trim();
+  if (!siteId || !customerId || !subscriptionId) {
+    return {
+      ok: false,
+      error: 'INVALID_INPUT',
+      message: 'siteId, customerId, and subscriptionId are required.'
+    };
+  }
+
+  const existingBilling = await getSiteBilling(db, siteId);
+  const mode = input.mode ?? (await getStripeMode(db));
+  const secretKey = stripeCredentialsForMode(env, mode).secretKey;
+  if (!secretKey) {
+    return { ok: false, error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe is not configured.' };
+  }
+
+  try {
+    await stripeApiRequest(
+      secretKey,
+      'DELETE',
+      `/subscriptions/${encodeURIComponent(subscriptionId)}`
+    );
+  } catch (error) {
+    return {
+      ok: false,
+      error: 'STRIPE_CANCEL_FAILED',
+      message: error instanceof Error ? error.message : 'Could not cancel the subscription.'
+    };
+  }
+
+  await upsertSiteBilling(db, {
+    site_id: siteId,
+    stripe_customer_id: customerId,
+    stripe_subscription_id: subscriptionId,
+    status: 'canceled',
+    owner_email: input.ownerEmail ?? existingBilling?.owner_email ?? null,
+    plan_tier: 'free'
+  });
+  await applyHubNameHoldAfterCancel(db, siteId);
+
+  const deprovision = await maybeDispatchBillingDeprovision(env, db, manifest, {
+    siteId,
+    eventType: 'customer.subscription.deleted',
+    status: 'canceled',
+    existingBilling
+  });
+  if (!deprovision.ok) {
+    return {
+      ok: false,
+      error: deprovision.error ?? 'DEPROVISION_DISPATCH_FAILED',
+      message: deprovision.message ?? 'Could not enqueue hub teardown.'
+    };
+  }
+
+  const billingAfter = await getSiteBilling(db, siteId);
+  await maybeSendCustomerLifecycleEmail(
+    env,
+    db,
+    {
+      eventType: 'customer.subscription.deleted',
+      status: 'canceled',
+      siteId,
+      ownerEmail: input.ownerEmail ?? billingAfter?.owner_email ?? null,
+      planTier: 'free',
+      priorBilling: existingBilling,
+      existingBilling: billingAfter
+    },
+    fetchImpl
+  );
+
+  return { ok: true, deprovision };
+}
+
+/**
  * Create a Stripe Customer and £0 subscription for the Free plan (no Checkout).
  *
  * @param {Record<string, string | undefined>} env
