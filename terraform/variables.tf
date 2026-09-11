@@ -300,6 +300,13 @@ variable "resend_api_key" {
   description = "Resend API key for customer lifecycle emails (signup, trial ending, payment failed, cancelled). Omit until mail is enabled."
 }
 
+variable "platform_site_archive_secret" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Shared secret for platform Pages → hub Worker platform routes (archive export, downgrade usage). Same value as GitHub PLATFORM_SITE_ARCHIVE_SECRET."
+}
+
 variable "customer_email_from" {
   type        = string
   default     = ""

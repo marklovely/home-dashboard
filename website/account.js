@@ -363,12 +363,7 @@
     const canceled = hub.status === 'canceled';
     const trial = formatTrial(hub.trialEnd);
     const status = statusCopy(hub);
-    const downgradeBlocked =
-      hub.canDowngrade &&
-      (hub.downgradeEligible === false ||
-        (hub.downgradeBlockers && hub.downgradeBlockers.length > 0));
-    const downgradeCheckPending =
-      hub.canDowngrade && hub.downgradeEligible == null && !hub.downgradeCheckError;
+    const downgradeBlocked = hub.canDowngrade && hub.downgradeEligible === false;
     const downgradeBlockersHtml =
       hub.downgradeBlockers && hub.downgradeBlockers.length
         ? '<ul class="account-downgrade-blockers">' +
@@ -396,13 +391,8 @@
             ? '<p class="signup-note"><strong>Before you can switch:</strong> open Guide Editor in your hub and delete extras until you are within Free limits.</p>' +
               downgradeBlockersHtml
             : '') +
-          (downgradeCheckPending
-            ? '<p class="signup-note muted">Checking hub usage…</p>'
-            : '') +
           '<button type="button" class="btn btn-primary btn-block"' +
-          (downgradeBlocked || downgradeCheckPending || hub.downgradeCheckError
-            ? ' disabled aria-disabled="true"'
-            : '') +
+          (downgradeBlocked ? ' disabled aria-disabled="true"' : '') +
           ' data-downgrade-free="' +
           escapeHtml(hub.siteId) +
           '">Switch to Free plan</button>' +

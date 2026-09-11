@@ -1753,6 +1753,12 @@ html.nav-open {
   margin-top: 0.35rem;
 }
 
+.account-downgrade .btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .account-hub-actions .btn-primary,
 .account-downgrade .btn-primary,
 .account-referral .btn-primary,

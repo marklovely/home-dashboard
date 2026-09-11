@@ -220,6 +220,12 @@ locals {
         value = var.resend_api_key
       }
     } : {},
+    var.platform_site_archive_secret != "" ? {
+      PLATFORM_SITE_ARCHIVE_SECRET = {
+        type  = "secret_text"
+        value = var.platform_site_archive_secret
+      }
+    } : {},
     var.customer_email_from != "" ? {
       CUSTOMER_EMAIL_FROM = {
         type  = "plain_text"

@@ -128,6 +128,7 @@ module "platform_admin" {
   turnstile_site_key                  = var.turnstile_site_key
   turnstile_secret_key                = var.turnstile_secret_key
   resend_api_key                      = var.resend_api_key
+  platform_site_archive_secret        = var.platform_site_archive_secret
   customer_email_from                 = var.customer_email_from
   pages_preview_deployments_enabled   = var.pages_preview_deployments_enabled
 }
