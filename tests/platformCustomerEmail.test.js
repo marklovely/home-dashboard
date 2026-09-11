@@ -18,6 +18,9 @@ describe('customer lifecycle email copy', () => {
   it('maps Stripe events to a single mail kind', () => {
     expect(lifecycleEmailKindForEvent({ eventType: 'checkout.session.completed' })).toBe('signup');
     expect(
+      lifecycleEmailKindForEvent({ eventType: 'checkout.session.completed', upgradeFromFree: true })
+    ).toBe('upgrade');
+    expect(
       lifecycleEmailKindForEvent({ eventType: 'customer.subscription.created', status: 'trialing' })
     ).toBe('signup');
     expect(lifecycleEmailKindForEvent({ eventType: 'customer.subscription.trial_will_end' })).toBeNull();
@@ -29,6 +32,18 @@ describe('customer lifecycle email copy', () => {
     expect(
       lifecycleEmailKindForEvent({ eventType: 'customer.subscription.updated', status: 'active' })
     ).toBeNull();
+  });
+
+  it('builds a Lovely Home+ upgrade confirmation without provisioning copy', () => {
+    const mail = buildCustomerEmail({
+      kind: 'upgrade',
+      siteId: 'test-cottage-free'
+    });
+    expect(mail.subject).toContain('Lovely Home+ is active');
+    expect(mail.text).toContain(customerHubUrl('test-cottage-free'));
+    expect(mail.text).toMatch(/unlimited guide templates/i);
+    expect(mail.text).not.toMatch(/setting up your Lovely Home hub/i);
+    expect(mail.text).not.toMatch(/signup-success/i);
   });
 
   it('builds a Lovely Home+ signup confirmation with the hub URL', () => {
@@ -161,13 +176,14 @@ function createBillingDbMock() {
             webhookEvents.add(String(bound[0]));
           }
           if (sql.includes('UPDATE site_billing SET') && sql.includes('_email_sent_at')) {
-            const column = sql.includes('signup_email_sent_at')
-              ? 'signup_email_sent_at'
-              : sql.includes('trial_ending_email_sent_at')
-                ? 'trial_ending_email_sent_at'
-                : sql.includes('past_due_email_sent_at')
-                  ? 'past_due_email_sent_at'
-                  : 'canceled_email_sent_at';
+            const column =
+              [
+                'signup_email_sent_at',
+                'upgrade_email_sent_at',
+                'trial_ending_email_sent_at',
+                'past_due_email_sent_at',
+                'canceled_email_sent_at'
+              ].find((name) => sql.includes(name)) ?? 'canceled_email_sent_at';
             if (sql.includes(`${column} = NULL`)) {
               const siteId = String(bound[1]);
               const row = siteBilling.get(siteId);
@@ -483,6 +499,69 @@ describe('handleStripeBillingEvent sends signup mail', () => {
 
     expect(result.ok).toBe(true);
     expect(result.email).toEqual({ ok: true, action: 'email_signup_sent' });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends upgrade confirmation when checkout metadata marks a Free to Plus upgrade', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: 'email_upgrade_1' })
+    }));
+    const db = /** @type {D1Database} */ (createBillingDbMock());
+    await db
+      .prepare(
+        `INSERT INTO site_billing (
+        site_id, stripe_customer_id, stripe_subscription_id, status,
+        trial_end, archive_r2_key, owner_email, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        'test-cottage-free',
+        'cus_free',
+        'sub_free',
+        'active',
+        null,
+        null,
+        'owner@example.com',
+        1,
+        1
+      )
+      .run();
+    await markCustomerEmailSent(db, 'test-cottage-free', 'signup_email_sent_at');
+
+    const result = await handleStripeBillingEvent(
+      db,
+      {
+        id: 'evt_upgrade_mail',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            customer: 'cus_free',
+            subscription: 'sub_plus',
+            metadata: {
+              site_id: 'test-cottage-free',
+              upgrade_from: 'free',
+              prior_subscription_id: 'sub_free'
+            },
+            customer_details: { email: 'owner@example.com' }
+          }
+        }
+      },
+      {
+        env: {
+          RESEND_API_KEY: 're_test',
+          STRIPE_SECRET_KEY: 'sk_test',
+          STRIPE_PRICE_ID: 'price_plus_month',
+          STRIPE_PRICE_ID_FREE: 'price_free_test'
+        },
+        fetchImpl: /** @type {typeof fetch} */ (fetchImpl)
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.email).toEqual({ ok: true, action: 'email_upgrade_sent' });
+    const payload = JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body ?? '{}'));
+    expect(payload.subject).toMatch(/Lovely Home\+ is active/i);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 

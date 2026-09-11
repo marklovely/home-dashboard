@@ -34,6 +34,7 @@ import { getStripeMode, stripeCredentialsForMode, stripeSetConfigured } from './
  *   deprovision_dispatched_at: number | null;
  *   deprovision_last_error: string | null;
  *   signup_email_sent_at: number | null;
+ *   upgrade_email_sent_at: number | null;
  *   trial_ending_email_sent_at: number | null;
  *   past_due_email_sent_at: number | null;
  *   canceled_email_sent_at: number | null;
@@ -709,6 +710,11 @@ export async function downgradePlusToFreeSubscription(env, db, input) {
     plan_tier: 'free'
   });
 
+  await db
+    .prepare('UPDATE site_billing SET upgrade_email_sent_at = NULL, updated_at = ? WHERE site_id = ?')
+    .bind(Date.now(), siteId)
+    .run();
+
   const cancel = await cancelPriorSubscriptionAfterUpgrade(env, {
     priorSubscriptionId,
     newSubscriptionId: freeSub.subscriptionId,
@@ -1130,6 +1136,12 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
   let email;
   if (env) {
     const billingAfterUpsert = await getSiteBilling(db, billingPatch.siteId);
+    const checkoutMetadata =
+      eventType === 'checkout.session.completed'
+        ? /** @type {Record<string, unknown>} */ (object.metadata ?? {})
+        : null;
+    const upgradeFromFree =
+      checkoutMetadata != null && String(checkoutMetadata.upgrade_from ?? '') === 'free';
     const emailResult = await maybeSendCustomerLifecycleEmail(
       env,
       db,
@@ -1140,6 +1152,7 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
         ownerEmail: billingPatch.ownerEmail ?? billingAfterUpsert?.owner_email ?? null,
         trialEnd: billingPatch.trialEnd ?? billingAfterUpsert?.trial_end ?? null,
         planTier: planTier ?? billingAfterUpsert?.plan_tier ?? null,
+        upgradeFromFree,
         priorBilling: existingBilling,
         existingBilling: billingAfterUpsert
       },
