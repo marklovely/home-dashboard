@@ -7,6 +7,7 @@
 
 import { normalizePlanTier } from './platformPlanTier.js';
 import { isReturningBillingSignup } from './platformHubNameHold.js';
+import { wrapBrandedCustomerEmail } from './platformCustomerEmailLayout.js';
 
 export const CUSTOMER_EMAIL_KINDS = /** @type {const} */ ([
   'signup',
@@ -137,6 +138,51 @@ function sharedSignupLines(input) {
  *   status?: string | null;
  * }} input
  */
+/**
+ * @param {{
+ *   subject: string;
+ *   text: string;
+ *   origin: string;
+ *   preheader: string;
+ *   title: string;
+ *   paragraphs: string[];
+ *   actions?: Array<{ label: string; href: string; primary?: boolean }>;
+ * }} input
+ */
+function brandedCustomerEmailMessage(input) {
+  return {
+    subject: input.subject,
+    text: input.text,
+    html: wrapBrandedCustomerEmail({
+      origin: input.origin,
+      preheader: input.preheader,
+      title: input.title,
+      paragraphs: input.paragraphs,
+      actions: input.actions
+    })
+  };
+}
+
+/**
+ * @param {{
+ *   hubUrl: string;
+ *   successUrl: string;
+ *   accountUrl: string;
+ *   returning?: boolean;
+ * }} input
+ */
+function signupEmailParagraphs(input) {
+  const intro = input.returning
+    ? 'Welcome back. We are reinstating your Lovely Home hub now — it can take up to 10 minutes, often faster when queues are clear.'
+    : 'We are setting up your Lovely Home hub now — it can take up to 10 minutes, often faster when queues are clear.';
+
+  return [
+    intro,
+    'Sign in with this email address. Cloudflare will send a one-time code.',
+    'Fill in the house guide, then share the URL with whoever is staying — a sitter, tenant, Airbnb guest, or anyone else in the home. A wall tablet is optional; nothing extra to buy.'
+  ];
+}
+
 export function buildCustomerEmail(input) {
   const siteId = String(input.siteId);
   const hubUrl = customerHubUrl(siteId);
@@ -145,91 +191,155 @@ export function buildCustomerEmail(input) {
   const accountUrl = `${origin}/account`;
   const plan = normalizePlanTier(input.planTier);
   const returning = Boolean(input.returning);
+  const hubLabel = `${siteId}.lovely-hub.com`;
 
   if (input.kind === 'upgrade') {
-    return {
-      subject: `Lovely Home+ is active — ${siteId}.lovely-hub.com`,
-      text: [
-        `Thanks for upgrading ${hubUrl} to Lovely Home+.`,
-        '',
-        'You now have unlimited guide templates and scheduled stays. There is no limit on topics or details inside each guide.',
-        '',
-        `Open your hub: ${hubUrl}`,
-        `Manage billing: ${accountUrl}`,
-        '',
-        'Questions: support@lovely-home.co.uk'
-      ].join('\n')
-    };
+    const text = [
+      `Thanks for upgrading ${hubUrl} to Lovely Home+.`,
+      '',
+      'You now have unlimited guide templates and scheduled stays. There is no limit on topics or details inside each guide.',
+      '',
+      `Open your hub: ${hubUrl}`,
+      `Manage billing: ${accountUrl}`,
+      '',
+      'Questions: support@lovely-home.co.uk'
+    ].join('\n');
+    return brandedCustomerEmailMessage({
+      subject: `Lovely Home+ is active — ${hubLabel}`,
+      text,
+      origin,
+      preheader: 'Lovely Home+ is now active on your hub.',
+      title: 'Lovely Home+ is active',
+      paragraphs: [
+        `Thanks for upgrading ${hubLabel} to Lovely Home+.`,
+        'You now have unlimited guide templates and scheduled stays. There is no limit on topics or details inside each guide.'
+      ],
+      actions: [
+        { label: 'Open your hub', href: hubUrl, primary: true },
+        { label: 'Manage billing', href: accountUrl, primary: false }
+      ]
+    });
   }
 
   if (input.kind === 'downgrade') {
-    return {
-      subject: `Your hub is on the Free plan — ${siteId}.lovely-hub.com`,
-      text: [
-        `Your Lovely Home hub ${hubUrl} is now on the Free plan.`,
-        '',
-        'You can add up to two guide templates and two scheduled stays going forward. Existing guides and stays stay as they are (soft limits — you cannot add more until you are under the cap or upgrade again).',
-        '',
-        `Open your hub: ${hubUrl}`,
-        `Upgrade or close hub: ${accountUrl}`,
-        '',
-        'Questions: support@lovely-home.co.uk'
-      ].join('\n')
-    };
+    const text = [
+      `Your Lovely Home hub ${hubUrl} is now on the Free plan.`,
+      '',
+      'You can add up to two guide templates and two scheduled stays going forward. Existing guides and stays stay as they are (soft limits — you cannot add more until you are under the cap or upgrade again).',
+      '',
+      `Open your hub: ${hubUrl}`,
+      `Upgrade or close hub: ${accountUrl}`,
+      '',
+      'Questions: support@lovely-home.co.uk'
+    ].join('\n');
+    return brandedCustomerEmailMessage({
+      subject: `Your hub is on the Free plan — ${hubLabel}`,
+      text,
+      origin,
+      preheader: 'Your hub is now on the Lovely Home Free plan.',
+      title: 'You are on the Free plan',
+      paragraphs: [
+        `Your Lovely Home hub ${hubLabel} is now on the Free plan.`,
+        'You can add up to two guide templates and two scheduled stays going forward. Existing guides and stays stay as they are (soft limits — you cannot add more until you are under the cap or upgrade again).'
+      ],
+      actions: [
+        { label: 'Open your hub', href: hubUrl, primary: true },
+        { label: 'Account & billing', href: accountUrl, primary: false }
+      ]
+    });
   }
 
   if (input.kind === 'signup') {
     const shared = sharedSignupLines({ hubUrl, successUrl, accountUrl, returning });
+    const signupParagraphs = signupEmailParagraphs({ hubUrl, successUrl, accountUrl, returning });
 
     if (plan === 'free') {
       const planLine = returning
         ? 'Your Lovely Home Free plan is active again at no charge.'
         : 'Your Lovely Home Free plan is active at no charge. Upgrade to Lovely Home+ any time from your account page.';
-      return {
-        subject: returning
-          ? `Welcome back — ${siteId}.lovely-hub.com`
-          : `Your Lovely Home hub — ${siteId}.lovely-hub.com`,
-        text: [...shared.slice(0, -3), planLine, ...shared.slice(-3)].join('\n')
-      };
+      const subject = returning ? `Welcome back — ${hubLabel}` : `Your Lovely Home hub — ${hubLabel}`;
+      const title = returning ? 'Welcome back' : 'Your hub is on its way';
+      return brandedCustomerEmailMessage({
+        subject,
+        text: [...shared.slice(0, -3), planLine, ...shared.slice(-3)].join('\n'),
+        origin,
+        preheader: returning ? 'Welcome back to Lovely Home.' : 'We are setting up your Lovely Home hub.',
+        title,
+        paragraphs: [signupParagraphs[0], planLine, ...signupParagraphs.slice(1)],
+        actions: [
+          { label: 'Watch setup progress', href: successUrl, primary: true },
+          { label: 'Open your hub', href: hubUrl, primary: false },
+          { label: 'Manage account', href: accountUrl, primary: false }
+        ]
+      });
     }
 
-    const plusSubject = returning
-      ? `Welcome back — ${siteId}.lovely-hub.com`
-      : `Your Lovely Home+ hub — ${siteId}.lovely-hub.com`;
+    const plusSubject = returning ? `Welcome back — ${hubLabel}` : `Your Lovely Home+ hub — ${hubLabel}`;
     const plusPlanLine = returning
       ? 'Your Lovely Home+ subscription is active again. Your card on file is billed at the plan you chose.'
       : 'Your Lovely Home+ subscription is active. Your card on file is billed at the plan you chose.';
-    return {
+    return brandedCustomerEmailMessage({
       subject: plusSubject,
-      text: [...shared.slice(0, -3), plusPlanLine, ...shared.slice(-3)].join('\n')
-    };
+      text: [...shared.slice(0, -3), plusPlanLine, ...shared.slice(-3)].join('\n'),
+      origin,
+      preheader: returning ? 'Welcome back to Lovely Home+.' : 'Your Lovely Home+ hub is being set up.',
+      title: returning ? 'Welcome back' : 'Your Lovely Home+ hub is on its way',
+      paragraphs: [signupParagraphs[0], plusPlanLine, ...signupParagraphs.slice(1)],
+      actions: [
+        { label: 'Watch setup progress', href: successUrl, primary: true },
+        { label: 'Open your hub', href: hubUrl, primary: false },
+        { label: 'Manage account', href: accountUrl, primary: false }
+      ]
+    });
   }
 
   if (input.kind === 'past_due') {
-    return {
-      subject: `We could not take payment for ${siteId}.lovely-hub.com`,
-      text: [
-        `Stripe could not charge the card on file for ${hubUrl}. Your hub stays up while Stripe retries.`,
-        '',
-        `Update the card at ${accountUrl} (we email you a code), or write to support@lovely-home.co.uk.`,
-        '',
-        `Open your hub: ${hubUrl}`
-      ].join('\n')
-    };
+    const text = [
+      `Stripe could not charge the card on file for ${hubUrl}. Your hub stays up while Stripe retries.`,
+      '',
+      `Update the card at ${accountUrl} (we email you a code), or write to support@lovely-home.co.uk.`,
+      '',
+      `Open your hub: ${hubUrl}`
+    ].join('\n');
+    return brandedCustomerEmailMessage({
+      subject: `We could not take payment for ${hubLabel}`,
+      text,
+      origin,
+      preheader: 'Please update the card on file for your Lovely Home hub.',
+      title: 'Payment could not be taken',
+      paragraphs: [
+        `Stripe could not charge the card on file for ${hubLabel}. Your hub stays up while Stripe retries.`,
+        'Update the card from your account page — we email you a sign-in code — or write to support@lovely-home.co.uk.'
+      ],
+      actions: [
+        { label: 'Update billing', href: accountUrl, primary: true },
+        { label: 'Open your hub', href: hubUrl, primary: false }
+      ]
+    });
   }
 
-  return {
-    subject: `Your Lovely Home hub ${siteId}.lovely-hub.com is ending`,
-    text: [
-      `Your subscription for ${hubUrl} has ended. The live hub will be taken down.`,
-      '',
+  const text = [
+    `Your subscription for ${hubUrl} has ended. The live hub will be taken down.`,
+    '',
+    'If you want to keep your house guide, photos, appliance manuals, and home details, download a password-encrypted full backup from Settings while the hub is still up.',
+    '',
+    `Your hub name (${hubLabel}) stays reserved for you for 12 months if you resubscribe on Lovely Home Free or Lovely Home+.`,
+    '',
+    'Questions: support@lovely-home.co.uk'
+  ].join('\n');
+  return brandedCustomerEmailMessage({
+    subject: `Your Lovely Home hub ${hubLabel} is ending`,
+    text,
+    origin,
+    preheader: 'Your Lovely Home hub subscription has ended.',
+    title: 'Your hub is closing',
+    paragraphs: [
+      `Your subscription for ${hubLabel} has ended. The live hub will be taken down.`,
       'If you want to keep your house guide, photos, appliance manuals, and home details, download a password-encrypted full backup from Settings while the hub is still up.',
-      '',
-      `Your hub name (${siteId}.lovely-hub.com) stays reserved for you for 12 months if you resubscribe on Lovely Home Free or Lovely Home+.`,
-      '',
-      'Questions: support@lovely-home.co.uk'
-    ].join('\n')
-  };
+      `Your hub name (${hubLabel}) stays reserved for you for 12 months if you resubscribe on Lovely Home Free or Lovely Home+.`
+    ],
+    actions: [{ label: 'Open your hub', href: hubUrl, primary: true }]
+  });
 }
 
 /**
@@ -255,18 +365,33 @@ export function buildReferrerRewardEmail(input) {
   const accountUrl = `${origin}/account`;
   const hubUrl = customerHubUrl(referrerSiteId);
 
+  const text = [
+    `Thanks for referring a friend to Lovely Home — we added ${credit} credit to your billing account.`,
+    '',
+    'Stripe applies that balance automatically to your next invoice (you may see “Applied balance” on upcoming payments). Manage billing any time:',
+    accountUrl,
+    '',
+    `Your hub: ${hubUrl}`,
+    '',
+    'Questions: support@lovely-home.co.uk'
+  ].join('\n');
+
   return {
     subject: `You earned ${credit} Lovely Home referral credit`,
-    text: [
-      `Thanks for referring a friend to Lovely Home — we added ${credit} credit to your billing account.`,
-      '',
-      'Stripe applies that balance automatically to your next invoice (you may see “Applied balance” on upcoming payments). Manage billing any time:',
-      accountUrl,
-      '',
-      `Your hub: ${hubUrl}`,
-      '',
-      'Questions: support@lovely-home.co.uk'
-    ].join('\n')
+    text,
+    html: wrapBrandedCustomerEmail({
+      origin,
+      preheader: `You earned ${credit} referral credit on Lovely Home.`,
+      title: 'Referral credit added',
+      paragraphs: [
+        `Thanks for referring a friend to Lovely Home — we added ${credit} credit to your billing account.`,
+        'Stripe applies that balance automatically to your next invoice (you may see “Applied balance” on upcoming payments).'
+      ],
+      actions: [
+        { label: 'Manage billing', href: accountUrl, primary: true },
+        { label: 'Open your hub', href: hubUrl, primary: false }
+      ]
+    })
   };
 }
 
@@ -377,7 +502,7 @@ export async function clearCustomerEmailSent(db, siteId, column) {
 
 /**
  * @param {Record<string, string | undefined>} env
- * @param {{ to: string; subject: string; text: string; replyTo?: string }} message
+ * @param {{ to: string; subject: string; text: string; html?: string; replyTo?: string }} message
  * @param {typeof fetch} [fetchImpl]
  */
 export async function sendResendEmail(env, message, fetchImpl = fetch) {
@@ -393,6 +518,9 @@ export async function sendResendEmail(env, message, fetchImpl = fetch) {
     subject: message.subject,
     text: message.text
   };
+  if (message.html) {
+    payload.html = message.html;
+  }
   if (message.replyTo) {
     payload.reply_to = [message.replyTo];
   }

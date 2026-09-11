@@ -301,6 +301,10 @@ describe('maybeSendCustomerLifecycleEmail', () => {
     expect(body.to).toEqual(['owner@example.com']);
     expect(body.from).toContain('support@lovely-home.co.uk');
     expect(body.subject).toContain('rose.lovely-hub.com');
+    expect(body.text).toBeTruthy();
+    expect(body.html).toContain('Lovely Home');
+    expect(body.html).toContain('#2f5a43');
+    expect(body.html).toContain('favicon.png');
 
     const stored = await db.prepare('SELECT * FROM site_billing WHERE site_id = ?').bind('rose').first();
     expect(stored.signup_email_sent_at).toBeTruthy();
