@@ -30,6 +30,7 @@ import { handleHubPlanFeatures } from './routes/hubPlanFeaturesRoute.js';
 import { handleSiteBackup } from './routes/siteBackup.js';
 import { handlePlatformSiteArchive } from './routes/platformSiteArchive.js';
 import { handlePlatformDowngradeEligibility } from './routes/platformDowngradeEligibility.js';
+import { handlePlatformThirdPartyUsage } from './routes/platformThirdPartyUsage.js';
 import { handlePlatformSiteRestore } from './routes/platformSiteRestore.js';
 import { handleSiteSetup } from './routes/siteSetupRoute.js';
 import { handleBrandingLogo } from './routes/brandingRoute.js';
@@ -103,7 +104,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       (url.pathname.startsWith('/api/button/') && request.method === 'POST') ||
       url.pathname === '/api/platform/site-archive' ||
       url.pathname === '/api/platform/site-restore' ||
-      url.pathname === '/api/platform/downgrade-eligibility');
+      url.pathname === '/api/platform/downgrade-eligibility' ||
+      url.pathname === '/api/platform/third-party-usage');
 
   try {
     if (url.pathname === '/api/health' && request.method === 'GET') {
@@ -180,6 +182,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handlePlatformSiteArchive(request, env, correlationId);
     } else if (url.pathname === '/api/platform/downgrade-eligibility') {
       response = await handlePlatformDowngradeEligibility(request, env, correlationId);
+    } else if (url.pathname === '/api/platform/third-party-usage') {
+      response = await handlePlatformThirdPartyUsage(request, env, correlationId);
     } else if (url.pathname === '/api/platform/site-restore') {
       response = await handlePlatformSiteRestore(request, env, correlationId);
     } else if (

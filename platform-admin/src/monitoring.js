@@ -29,6 +29,7 @@ export function renderMonitoringView(data) {
     <div class="monitoring-grid">
       ${renderIntegrationsPanel(integrations)}
       ${renderCloudflarePanel(data.cloudflare ?? {}, links)}
+      ${renderThirdPartyPanel(data.thirdParty ?? {}, links)}
       ${renderBillingPanel(data.billing ?? {}, links)}
       ${renderMarketingPanel(data.marketing ?? {}, links)}
       ${renderAutomationPanel(data.automation ?? {}, links)}
@@ -49,6 +50,7 @@ export function renderMonitoringView(data) {
       <div class="link-row">
         ${renderLinkChip('Cloudflare account', links.cloudflare)}
         ${renderLinkChip('Cloudflare billing', links.cloudflareBilling)}
+        ${renderLinkChip('OS Data Hub', links.osDataHub)}
         ${renderLinkChip('Workers & Pages', links.cloudflareWorkers)}
         ${renderLinkChip('D1', links.cloudflareD1)}
         ${renderLinkChip('R2', links.cloudflareR2)}
@@ -109,6 +111,9 @@ function renderIntegrationsPanel(integrations) {
  */
 function renderCloudflarePanel(cloudflare, links) {
   const storage = /** @type {Record<string, unknown>} */ (cloudflare.storage ?? {});
+  const billing = /** @type {Record<string, unknown>} */ (cloudflare.billing ?? {});
+  const billingUsage = /** @type {Record<string, unknown>} */ (billing.usage ?? {});
+  const billingSummary = /** @type {Record<string, unknown>} */ (billingUsage.summary ?? {});
   const inventory = /** @type {Record<string, unknown> | null} */ (cloudflare.inventory ?? null);
   const d1Match = /** @type {Record<string, unknown>} */ (cloudflare.d1Match ?? {});
   const plan = /** @type {Record<string, unknown>} */ (cloudflare.plan ?? {});
@@ -156,17 +161,111 @@ function renderCloudflarePanel(cloudflare, links) {
     inventoryHtml = `<p class="muted">${escapeHtml(String(inventory.error))}</p>`;
   }
 
+  let billingHtml = '';
+  if (billingUsage.ok) {
+    const products = Array.isArray(billingSummary.products) ? billingSummary.products : [];
+    const range = /** @type {Record<string, unknown>} */ (billing.range ?? {});
+    billingHtml = `
+      <div class="monitoring-subsection">
+        <h3>Billable usage (${escapeHtml(String(range.label ?? 'this month'))})</h3>
+        <p class="monitoring-cost-total">
+          Total <strong>${escapeHtml(formatMoney(Number(billingSummary.totalCost ?? 0), String(billingSummary.currency ?? 'GBP')))}</strong>
+        </p>
+        ${
+          products.length
+            ? `<ul class="monitoring-list">${products
+                .slice(0, 6)
+                .map((product) => {
+                  const row = /** @type {Record<string, unknown>} */ (product);
+                  const quantity =
+                    row.quantity != null && row.unit
+                      ? ` · ${escapeHtml(String(row.quantity))} ${escapeHtml(String(row.unit))}`
+                      : '';
+                  return `<li>${escapeHtml(String(row.label ?? 'Usage'))} — <strong>${escapeHtml(formatMoney(Number(row.cost ?? 0), String(billingSummary.currency ?? 'GBP')))}</strong>${quantity}</li>`;
+                })
+                .join('')}</ul>`
+            : '<p class="muted">No billable usage rows returned for this period yet.</p>'
+        }
+        <p class="muted monitoring-note">Updated daily by Cloudflare. Token needs Billing: Read.</p>
+      </div>
+    `;
+  } else if (billingUsage.message || billing.message) {
+    billingHtml = `
+      <div class="monitoring-subsection">
+        <h3>Billable usage</h3>
+        <p class="muted">${escapeHtml(String(billingUsage.message ?? billing.message ?? 'Not available'))}</p>
+      </div>
+    `;
+  }
+
   return `
     <section class="panel monitoring-panel">
       <div class="panel-head">
         <h2>Cloudflare</h2>
         ${renderLinkChip('Open dashboard', links.cloudflare)}
+        ${renderLinkChip('Billing', links.cloudflareBilling)}
       </div>
+      ${billingHtml}
       ${storageHtml}
       ${inventoryHtml}
       <p class="muted monitoring-note">${escapeHtml(formatPlanLimitsNote(plan))}</p>
     </section>
   `;
+}
+
+/**
+ * @param {Record<string, unknown>} thirdParty
+ * @param {Record<string, string | null>} links
+ */
+function renderThirdPartyPanel(thirdParty, links) {
+  const osPlaces = /** @type {Record<string, unknown>} */ (thirdParty.osPlaces ?? {});
+
+  const topHubs = Array.isArray(osPlaces.hubs)
+    ? osPlaces.hubs.filter((hub) => Number(/** @type {Record<string, unknown>} */ (hub).monthCalls) > 0).slice(0, 5)
+    : [];
+
+  return `
+    <section class="panel monitoring-panel">
+      <div class="panel-head">
+        <h2>Third-party APIs</h2>
+        ${renderLinkChip('OS Data Hub', links.osDataHub)}
+      </div>
+      <ul class="monitoring-list">
+        <li>OS Places (UPRN lookups) — <strong>${escapeHtml(String(osPlaces.monthTotal ?? 0))}</strong> calls this month</li>
+        <li>Lifetime total across hubs — <strong>${escapeHtml(String(osPlaces.lifetimeTotal ?? 0))}</strong></li>
+        <li>Hubs reporting — <strong>${escapeHtml(String(osPlaces.reachableHubs ?? 0))}</strong> / ${escapeHtml(String(osPlaces.hubCount ?? 0))}</li>
+      </ul>
+      ${
+        topHubs.length
+          ? `<ul class="monitoring-list">${topHubs
+              .map((hub) => {
+                const row = /** @type {Record<string, unknown>} */ (hub);
+                return `<li>${escapeHtml(String(row.siteId))} — ${escapeHtml(String(row.monthCalls))} this month</li>`;
+              })
+              .join('')}</ul>`
+          : '<p class="muted">No OS Places calls recorded yet. Counters start after hub Workers with usage tracking are deployed.</p>'
+      }
+      <p class="muted monitoring-note">OS Data Hub has no public usage API — these counts are recorded per hub when UPRN lookup runs. Check OS Data Hub dashboard for official quota.</p>
+    </section>
+  `;
+}
+
+/**
+ * @param {number} amount
+ * @param {string} currency
+ */
+function formatMoney(amount, currency) {
+  if (!Number.isFinite(amount)) return '—';
+  try {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: currency || 'GBP',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency}`;
+  }
 }
 
 /**

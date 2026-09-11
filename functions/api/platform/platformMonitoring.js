@@ -3,6 +3,7 @@ import {
   fetchSiteHealth
 } from './platformApi.js';
 import { getPlatformBillingDb, listSiteBilling, platformBillingDbConfigured } from './platformBilling.js';
+import { fetchCloudflareBillingSummary } from './platformCloudflareBilling.js';
 import {
   cloudflareUsageApiConfigured,
   fetchAccountResourceInventory,
@@ -11,6 +12,7 @@ import {
   resolveCloudflareAccountId,
   resolveCloudflarePlanLimits
 } from './platformCloudflareUsage.js';
+import { aggregateThirdPartyUsage } from './platformThirdPartyUsage.js';
 import { githubAutomationConfigured, githubRepo, listRecentWorkflowRuns } from './platformGitHub.js';
 import { getPublicPlanPricing } from './platformPublicPricing.js';
 import { platformHealthAuthConfigured } from './platformHealthFetch.js';
@@ -176,6 +178,8 @@ export async function buildMonitoringSummary(manifest, env) {
 
   const [
     storage,
+    cloudflareBilling,
+    thirdPartyUsage,
     stripe,
     billingRows,
     openSubscriptions,
@@ -183,6 +187,8 @@ export async function buildMonitoringSummary(manifest, env) {
     hubHealthRows
   ] = await Promise.all([
     fetchAccountStorageSummary(manifest, env),
+    fetchCloudflareBillingSummary(manifest, env),
+    aggregateThirdPartyUsage(manifest, env),
     describeStripeMode(env, billingDb),
     billingDb ? listSiteBilling(billingDb) : Promise.resolve([]),
     countOpenBillingSubscriptions(billingDb),
@@ -293,12 +299,14 @@ export async function buildMonitoringSummary(manifest, env) {
     },
     cloudflare: {
       storage,
+      billing: cloudflareBilling,
       inventory,
       d1Match,
       plan,
       freeTier: FREE_TIER_LIMITS,
       dashboardUrl: accountId ? `https://dash.cloudflare.com/${accountId}` : null
     },
+    thirdParty: thirdPartyUsage,
     billing: {
       stripe,
       openSubscriptions,
@@ -327,6 +335,7 @@ export async function buildMonitoringSummary(manifest, env) {
       cloudflareWorkers: accountId ? `https://dash.cloudflare.com/${accountId}/workers-and-pages` : null,
       cloudflareD1: accountId ? `https://dash.cloudflare.com/${accountId}/workers/d1` : null,
       cloudflareR2: accountId ? `https://dash.cloudflare.com/${accountId}/r2/overview` : null,
+      osDataHub: 'https://osdatahub.os.uk/',
       stripe: stripe.mode === 'live' ? 'https://dashboard.stripe.com' : 'https://dashboard.stripe.com/test',
       githubActions: githubRepo(env)
         ? `https://github.com/${githubRepo(env)}/actions`

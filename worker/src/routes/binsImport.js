@@ -68,7 +68,8 @@ export async function handleBinsImportSchedule(request, env, fetchImpl = fetch) 
     const uprnResult = await resolveUprnFromAddress(
       { postcode, line1, line2, city },
       resolveOsPlacesConfig(env).apiKey,
-      fetchImpl
+      fetchImpl,
+      env
     );
     if (!uprnResult.ok) {
       return Response.json(

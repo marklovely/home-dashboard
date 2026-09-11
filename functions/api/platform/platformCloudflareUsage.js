@@ -159,7 +159,7 @@ export function normalizeD1DatabaseUsage(database) {
  * @param {string} path
  * @param {PlatformEnv} env
  */
-async function cloudflareApiGet(path, env) {
+export async function cloudflareApiGet(path, env) {
   const token = env.PLATFORM_CF_API_TOKEN?.trim();
   if (!token) {
     throw new Error('PLATFORM_CF_API_TOKEN is not configured.');
