@@ -1,4 +1,9 @@
 import { getSiteFromManifest } from './platformApi.js';
+import {
+  describeHealthFetchResponse,
+  fetchWithPlatformHealthAuth,
+  platformHealthAuthConfigured
+} from './platformHealthFetch.js';
 
 /**
  * @param {object | null | undefined} manifest
@@ -36,25 +41,53 @@ export async function fetchHubFreeDowngradeUsage(env, manifest, siteId, fetchImp
     return {
       ok: false,
       error: 'NOT_CONFIGURED',
-      message: 'Downgrade usage checks are not configured.'
+      message:
+        'Downgrade usage checks are not configured on the platform yet. Email support@lovely-home.co.uk if this persists.'
+    };
+  }
+
+  if (!platformHealthAuthConfigured(env)) {
+    return {
+      ok: false,
+      error: 'ACCESS_NOT_CONFIGURED',
+      message:
+        'Hub usage checks need platform health auth. Run platform admin Terraform apply if this persists.'
     };
   }
 
   const origin = resolveHubWorkerApiOrigin(manifest, siteId, env);
+  const url = `${origin}/api/platform/downgrade-eligibility`;
+
   try {
-    const response = await fetchImpl(`${origin}/api/platform/downgrade-eligibility`, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        'X-Platform-Site-Archive-Secret': secret
-      }
-    });
+    const response = await fetchWithPlatformHealthAuth(
+      url,
+      env,
+      {
+        method: 'GET',
+        headers: {
+          'X-Platform-Site-Archive-Secret': secret
+        }
+      },
+      fetchImpl
+    );
+
+    const accessBlocked = describeHealthFetchResponse(response, env);
+    if (accessBlocked) {
+      return {
+        ok: false,
+        error: accessBlocked.error ?? 'ACCESS_BLOCKED',
+        message: 'Could not reach your hub to verify usage (Access blocked). Try again shortly.'
+      };
+    }
 
     if (!response.ok) {
       return {
         ok: false,
         error: 'HUB_USAGE_UNAVAILABLE',
-        message: 'Could not read hub usage right now. Try again shortly.'
+        message:
+          response.status === 404
+            ? 'Your hub needs a platform update before downgrade checks work. Email support@lovely-home.co.uk.'
+            : 'Could not read hub usage right now. Try again shortly.'
       };
     }
 

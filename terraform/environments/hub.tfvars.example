@@ -88,6 +88,9 @@ platform_admin = {
   pages_name = "home-dashboard-platform"
 }
 
+# Same value as GitHub PLATFORM_SITE_ARCHIVE_SECRET — lets the account page verify hub usage before Plus→Free downgrade.
+# platform_site_archive_secret = "…"
+
 sites = {
 
 

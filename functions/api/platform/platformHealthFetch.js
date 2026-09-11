@@ -23,8 +23,9 @@ export function platformHealthAuthConfigured(env) {
  * @param {string} url
  * @param {Record<string, string | undefined>} env
  * @param {RequestInit} [init]
+ * @param {typeof fetch} [fetchImpl]
  */
-export async function fetchWithPlatformHealthAuth(url, env, init = {}) {
+export async function fetchWithPlatformHealthAuth(url, env, init = {}, fetchImpl = fetch) {
   const auth = platformHealthServiceAuth(env);
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
@@ -32,7 +33,7 @@ export async function fetchWithPlatformHealthAuth(url, env, init = {}) {
     headers.set('CF-Access-Client-Id', auth.clientId);
     headers.set('CF-Access-Client-Secret', auth.clientSecret);
   }
-  return fetch(url, { ...init, headers, redirect: 'manual' });
+  return fetchImpl(url, { ...init, headers, redirect: 'manual' });
 }
 
 /**
