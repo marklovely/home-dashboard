@@ -40,7 +40,7 @@ Optional:
 - `MARKETING_ORIGIN` (default `https://lovely-home.co.uk`)
 - `STRIPE_PRICE_ID` — only needed for the Plus checkout fallback when hosted Checkout stays open
 
-The Free spec posts to `/api/public/signup` with `plan: free` and polls hub-status until the hub SPA is live. The Plus spec posts with `plan: plus`, drives hosted Checkout in the browser, and falls back to the Stripe API if Checkout stays open. `registered` follows billing (`active` for Free, `trialing`/`active` for Plus), not a lagging platform Pages manifest. After cancel it waits until the hostname is gone. Hub Access OTP is not attempted.
+The Free spec posts to `/api/public/signup` with `plan: free` and polls hub-status until the hub SPA is live. The Plus spec posts with `plan: plus`, opens hosted Checkout, selects the **Card** payment method (Stripe’s accordion hides card fields until then), and falls back to the Stripe API if card inputs never appear or Checkout stays open. `registered` follows billing (`active` for Free, `trialing`/`active` for Plus), not a lagging platform Pages manifest. After cancel it waits until the hostname is gone. Hub Access OTP is not attempted.
 
 `e2e-…` slugs skip Turnstile and are rejected while the platform Stripe mode is **live**.
 
