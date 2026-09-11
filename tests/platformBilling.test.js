@@ -1,7 +1,9 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  cancelPriorSubscriptionAfterUpgrade,
   checkoutSessionOwnerEmail,
+  createUpgradeCheckoutSession,
   encodeStripeFormEntries,
   handleStripeBillingEvent,
   mapStripeSubscriptionStatus,
@@ -76,6 +78,62 @@ describe('platform billing helpers', () => {
     expect(timingSafeEqualHex('abcd', 'abcd')).toBe(true);
     expect(timingSafeEqualHex('abcd', 'abce')).toBe(false);
     expect(timingSafeEqualHex('abcd', 'abc')).toBe(false);
+  });
+
+  it('creates upgrade checkout with prior subscription metadata', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: 'cs_upgrade', url: 'https://checkout.stripe.com/upgrade' })
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await createUpgradeCheckoutSession(
+      {
+        STRIPE_SECRET_KEY: 'sk_test',
+        STRIPE_PRICE_ID: 'price_plus_month'
+      },
+      {
+        siteId: 'test-cottage-free',
+        customerId: 'cus_free',
+        priorSubscriptionId: 'sub_free',
+        successUrl: 'https://lovely-home.co.uk/account?upgraded=1',
+        cancelUrl: 'https://lovely-home.co.uk/account?upgrade_canceled=1',
+        mode: 'test'
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.url).toBe('https://checkout.stripe.com/upgrade');
+    const body = String(fetchMock.mock.calls[0]?.[1]?.body ?? '');
+    expect(body).toContain('customer=cus_free');
+    expect(body).toContain('prior_subscription_id');
+    expect(body).toContain('upgrade_from');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('cancels the prior free subscription after upgrade', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: 'sub_free', status: 'canceled' })
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await cancelPriorSubscriptionAfterUpgrade(
+      { STRIPE_SECRET_KEY: 'sk_test' },
+      {
+        priorSubscriptionId: 'sub_free',
+        newSubscriptionId: 'sub_plus',
+        siteId: 'test-cottage-free',
+        mode: 'test'
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.action).toBe('prior_subscription_canceled');
+    expect(fetchMock.mock.calls[0]?.[0]).toContain('/subscriptions/sub_free');
+
+    vi.unstubAllGlobals();
   });
 });
 

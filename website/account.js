@@ -24,6 +24,8 @@
   const SESSION_KEY = 'lovelyAccountSession';
   const BACKUP_PROMPT_KEY = 'lovelyAccountBackupPromptDismissed';
   const SESSION_EXPIRED_MESSAGE = 'You have been signed out. Enter your email for a new code.';
+  const pageParams = new URLSearchParams(window.location.search);
+  const pendingUpgradeSiteId = (pageParams.get('upgrade') || '').trim().toLowerCase();
 
   restoreSession();
   initChallenge();
@@ -57,6 +59,15 @@
   /**
    * @param {'month' | 'year'} interval
    */
+  function plusUpgradeRadioLabel(interval) {
+    const monthly = marketingPricing?.monthly?.label;
+    const yearly = marketingPricing?.yearly?.label;
+    const prefix = interval === 'year' ? 'Yearly' : 'Monthly';
+    if (interval === 'year' && yearly) return prefix + ' (' + yearly + ')';
+    if (interval === 'month' && monthly) return prefix + ' (' + monthly + ')';
+    return prefix;
+  }
+
   function referralPlanRadioLabel(interval) {
     const referral =
       marketingPricing?.referral && typeof marketingPricing.referral === 'object'
@@ -239,6 +250,15 @@
       return;
     }
     renderHubCards(hubs, sessionToken);
+    if (pageParams.get('upgraded') === '1') {
+      showAlert('Lovely Home+ is active — unlimited guides and scheduled stays.', 'info');
+    } else if (pageParams.get('upgrade_canceled') === '1') {
+      showAlert('Checkout was canceled. You can upgrade anytime from here.', 'info');
+    }
+    if (pendingUpgradeSiteId) {
+      const card = hubsEl.querySelector('[data-upgrade-site="' + pendingUpgradeSiteId + '"]');
+      card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
   function renderHubCards(hubs, sessionToken) {
@@ -251,13 +271,43 @@
         openPortal(sessionToken, siteId, hub, button);
       });
     });
+    hubsEl.querySelectorAll('[data-upgrade-checkout]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const siteId = button.getAttribute('data-upgrade-checkout');
+        if (!siteId) return;
+        openUpgradeCheckout(sessionToken, siteId, button);
+      });
+    });
     bindReferralActions(sessionToken);
   }
 
   function renderHub(hub) {
     const canceled = hub.status === 'canceled';
     const trial = formatTrial(hub.trialEnd);
-    const status = statusCopy(hub.status, trial);
+    const status = statusCopy(hub);
+    const upgradeBlock =
+      hub.canUpgrade && !canceled
+        ? '<div class="account-upgrade" data-upgrade-site="' +
+          escapeHtml(hub.siteId) +
+          '">' +
+          '<p class="signup-note"><strong>Upgrade to Lovely Home+</strong> — unlimited guides and scheduled stays. Card required at secure Stripe checkout.</p>' +
+          '<div class="account-referral-plan">' +
+          '<label><input type="radio" name="upgrade-plan-' +
+          escapeHtml(hub.siteId) +
+          '" value="month" checked> ' +
+          escapeHtml(plusUpgradeRadioLabel('month')) +
+          '</label>' +
+          '<label><input type="radio" name="upgrade-plan-' +
+          escapeHtml(hub.siteId) +
+          '" value="year"> ' +
+          escapeHtml(plusUpgradeRadioLabel('year')) +
+          '</label>' +
+          '</div>' +
+          '<button type="button" class="btn btn-primary btn-block" data-upgrade-checkout="' +
+          escapeHtml(hub.siteId) +
+          '">Continue to secure checkout</button>' +
+          '</div>'
+        : '';
     const referralBlock =
       referralsEnabled && !canceled && hub.canManageBilling
         ? hub.canRefer
@@ -296,22 +346,27 @@
         '</p>' +
         '</div>'
       : '';
-    const manage = hub.canManageBilling
-      ? '<button type="button" class="btn ' +
-        (canceled ? 'btn-secondary' : 'btn-primary') +
-        ' btn-block" data-portal-site="' +
-        escapeHtml(hub.siteId) +
-        '">' +
-        (canceled ? 'View invoices on Stripe' : 'Manage billing on Stripe') +
-        '</button>'
-      : '<p class="signup-note muted">Billing is not linked yet. Email support@lovely-home.co.uk.</p>';
+    const manage =
+      hub.canManageBilling && !hub.canUpgrade
+        ? '<button type="button" class="btn ' +
+          (canceled ? 'btn-secondary' : 'btn-primary') +
+          ' btn-block" data-portal-site="' +
+          escapeHtml(hub.siteId) +
+          '">' +
+          (canceled ? 'View invoices on Stripe' : 'Manage billing on Stripe') +
+          '</button>'
+        : hub.canManageBilling
+          ? ''
+          : '<p class="signup-note muted">Billing is not linked yet. Email support@lovely-home.co.uk.</p>';
     const openHub = canceled
       ? ''
       : '<a class="btn btn-secondary btn-block" href="' + escapeHtml(hub.hubUrl) + '"' + newTabAttrs() + '>Open hub</a>';
     const body = canceled
       ? '<p>This subscription is cancelled, so Stripe has no live plan to change — only invoices and the saved card. Create a new home at lovely-home.co.uk/signup if you want the hub back.</p>'
-      : '<p>This is your private household hub. Guests sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
-        '<p>Cancel anytime from Stripe; the hub stays up until the end of the current billing period, then we archive the house guide JSON and take the site down. Download a full backup from Settings before cancelling if you want photos and PDFs — our platform archive is guide JSON only.</p>';
+      : hub.canUpgrade
+        ? '<p>Your hub is on the Free plan — up to two guides and two scheduled stays. Upgrade to Lovely Home+ when you need more.</p>'
+        : '<p>This is your private household hub. Guests sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
+          '<p>Cancel anytime from Stripe; the hub stays up until the end of the current billing period, then we archive the house guide JSON and take the site down. Download a full backup from Settings before cancelling if you want photos and PDFs — our platform archive is guide JSON only.</p>';
     return (
       '<article class="account-hub-card">' +
         '<p class="account-hub-status' +
@@ -326,6 +381,7 @@
           openHub +
           manage +
         '</div>' +
+        upgradeBlock +
         referralBlock +
       '</article>'
     );
@@ -403,6 +459,35 @@
   /**
    * @param {{ siteId: string, hubUrl?: string, status?: string } | undefined} hub
    */
+  async function openUpgradeCheckout(sessionToken, siteId, button) {
+    clearAlert();
+    setBusy(button, true);
+    try {
+      const planInput = hubsEl.querySelector('input[name="upgrade-plan-' + siteId + '"]:checked');
+      const billingInterval = planInput && planInput.value === 'year' ? 'year' : 'month';
+      const response = await fetch(apiBase + '/api/public/account/upgrade-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ sessionToken, siteId, billingInterval })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        clearStoredSession();
+        showSignIn(SESSION_EXPIRED_MESSAGE);
+        return;
+      }
+      if (!response.ok || !payload.checkoutUrl) {
+        showAlert(payload.message || 'Could not start upgrade checkout. Email support@lovely-home.co.uk.', 'error');
+        return;
+      }
+      window.location.href = payload.checkoutUrl;
+    } catch {
+      showAlert('Network error — check your connection and try again.', 'error');
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
   async function openPortal(sessionToken, siteId, hub, button) {
     clearAlert();
     if (hub && hub.status !== 'canceled' && !readBackupPromptDismissed()) {
@@ -434,9 +519,12 @@
     }
   }
 
-  function statusCopy(status, trial) {
+  function statusCopy(hub) {
+    const status = hub.status;
+    const trial = formatTrial(hub.trialEnd);
+    if (hub.plan === 'free' && status === 'active') return 'Free plan';
     if (status === 'trialing') return trial ? 'Legacy trial — first charge ' + trial : 'Legacy trial';
-    if (status === 'active') return 'Active subscription';
+    if (status === 'active') return 'Lovely Home+';
     if (status === 'past_due') return 'Payment failed — update the card on Stripe';
     if (status === 'canceled') return 'Cancelled — this hub has ended';
     return 'Hub status: ' + status;

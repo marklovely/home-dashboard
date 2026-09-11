@@ -22,6 +22,7 @@ import {
   handleAccountPortal,
   handleAccountReferralCode,
   handleAccountSession,
+  handleAccountUpgradeCheckout,
   handleAccountVerify,
   publicAccountStatus
 } from '../platform/platformPublicAccount.js';
@@ -92,7 +93,7 @@ export async function onRequest(context) {
     const db = getPlatformBillingDb(env);
     const row =
       db && pagesEnv ? await getSiteBillingWithPlanTier(pagesEnv, db, hubCors.siteId) : null;
-    return Response.json(buildPublicHubPlanStatus(row), {
+    return Response.json(buildPublicHubPlanStatus(row, Date.now(), { env: pagesEnv, siteId: hubCors.siteId }), {
       headers: { ...hubCors.headers, 'Cache-Control': 'no-store' }
     });
   }
@@ -222,6 +223,16 @@ export async function onRequest(context) {
     const result = await handleAccountPortal(pagesEnv, getPlatformBillingDb(env), {
       sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim(),
       siteId: String(body.siteId ?? body.site_id ?? '').trim()
+    });
+    return Response.json(result.body, { status: result.status, headers: cors });
+  }
+
+  if (suffix === 'account/upgrade-checkout' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handleAccountUpgradeCheckout(pagesEnv, getPlatformBillingDb(env), {
+      sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim(),
+      siteId: String(body.siteId ?? body.site_id ?? '').trim(),
+      billingInterval: String(body.billingInterval ?? body.billing_interval ?? 'month').trim()
     });
     return Response.json(result.body, { status: result.status, headers: cors });
   }
