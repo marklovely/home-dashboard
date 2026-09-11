@@ -7,7 +7,7 @@
 
 import { normalizePlanTier } from './platformPlanTier.js';
 import { isReturningBillingSignup } from './platformHubNameHold.js';
-import { wrapBrandedCustomerEmail } from './platformCustomerEmailLayout.js';
+import { brandedEmailLogoAttachment, wrapBrandedCustomerEmail } from './platformCustomerEmailLayout.js';
 
 export const CUSTOMER_EMAIL_KINDS = /** @type {const} */ ([
   'signup',
@@ -520,6 +520,7 @@ export async function sendResendEmail(env, message, fetchImpl = fetch) {
   };
   if (message.html) {
     payload.html = message.html;
+    payload.attachments = [brandedEmailLogoAttachment()];
   }
   if (message.replyTo) {
     payload.reply_to = [message.replyTo];
