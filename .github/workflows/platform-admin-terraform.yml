@@ -68,6 +68,7 @@ jobs:
       TF_STATE_R2_ENDPOINT: ${{ secrets.TF_STATE_R2_ENDPOINT }}
       TERRAFORM_STACK: platform
       TF_VAR_terraform_stack: platform
+      TF_VAR_platform_site_archive_secret: ${{ secrets.PLATFORM_SITE_ARCHIVE_SECRET }}
     steps:
       - uses: actions/checkout@v4
 
