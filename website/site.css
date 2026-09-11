@@ -824,26 +824,8 @@ html.nav-open {
   margin-bottom: 0.35rem;
 }
 
-.pricing-plans-grid--home,
 .pricing-plans-grid--tiers {
   max-width: 52rem;
-}
-
-@media (min-width: 900px) {
-  .pricing-plans-grid--home {
-    grid-template-columns: repeat(3, 1fr);
-    max-width: 68rem;
-  }
-}
-
-@media (min-width: 640px) and (max-width: 899px) {
-  .pricing-plans-grid--home {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .pricing-plans-grid--home .pricing-card:first-child {
-    grid-column: 1 / -1;
-  }
 }
 
 .pricing-savings-line {
