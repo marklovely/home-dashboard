@@ -16,6 +16,8 @@ import {
   canManageHouseGuideContent,
   createNewHouseGuideCategory,
   createNewHouseGuideTopic,
+  removeHouseGuideCategory,
+  saveHouseGuideCategory,
   getActiveGuideCatalog,
   getGuideContentState,
   importBundledGuideToCloud,
@@ -453,6 +455,10 @@ function createEditorShell(context) {
           view = 'categories';
           activeCategoryId = null;
           renderMain();
+        }, () => {
+          view = 'categories';
+          activeCategoryId = null;
+          renderMain();
         }, (topicId) => {
           activeTopicId = topicId;
           const topic = getGuideTopic(topicId);
@@ -685,11 +691,11 @@ function renderCategoryPicker(context, onOpen) {
  * @param {string} categoryId
  * @param {import('../../types/app.js').ShellContext} context
  * @param {() => void} onBack
- * @param {(topicId: string) => void} onOpen
+ * @param {() => void} onDeleted
  * @param {(topicId: string) => void} onOpen
  * @param {() => void} onRevert
  */
-function renderTopicPicker(categoryId, context, onBack, onOpen, onRevert) {
+function renderTopicPicker(categoryId, context, onBack, onDeleted, onOpen, onRevert) {
   const category = getGuideCategory(categoryId);
   const panel = document.createElement('section');
   panel.className = 'house-guide-editor-picker';
@@ -703,6 +709,98 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRevert) {
   const heading = document.createElement('h3');
   heading.className = 'guide-section-heading';
   heading.textContent = category?.title ?? 'Topics';
+
+  let areaTitle = category?.title ?? '';
+  let areaSubtitle = category?.cardSubtitle ?? '';
+
+  const areaDetails = document.createElement('details');
+  areaDetails.className = 'house-guide-editor-area-settings';
+  const areaSummary = document.createElement('summary');
+  areaSummary.textContent = 'Area details';
+  const areaForm = document.createElement('div');
+  areaForm.className = 'house-guide-editor-area-form';
+
+  const titleInput = /** @type {HTMLInputElement} */ (
+    createEditorField('Area title', areaTitle, (value) => {
+      areaTitle = value;
+    }).querySelector('input')
+  );
+
+  const subtitleInput = /** @type {HTMLInputElement} */ (
+    createEditorField('Card subtitle', areaSubtitle, (value) => {
+      areaSubtitle = value;
+    }).querySelector('input')
+  );
+
+  areaForm.append(
+    titleInput.closest('label'),
+    subtitleInput.closest('label')
+  );
+
+  const areaActions = document.createElement('div');
+  areaActions.className = 'house-guide-editor-area-actions';
+
+  const saveAreaButton = document.createElement('button');
+  saveAreaButton.type = 'button';
+  saveAreaButton.className = 'button-secondary';
+  saveAreaButton.textContent = 'Save area';
+  saveAreaButton.addEventListener('click', () => {
+    if (!areaTitle.trim()) {
+      showToast(context.toast, 'Area title is required.');
+      return;
+    }
+    void withAsyncButtonFeedback(saveAreaButton, 'Saving…', async () => {
+      const result = await saveHouseGuideCategory(categoryId, {
+        title: areaTitle.trim(),
+        cardSubtitle: areaSubtitle.trim()
+      });
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Could not save area.');
+        return;
+      }
+      heading.textContent = areaTitle.trim();
+      showToast(context.toast, 'Area saved.');
+      onRevert();
+    });
+  });
+
+  const deleteAreaButton = document.createElement('button');
+  deleteAreaButton.type = 'button';
+  deleteAreaButton.className = 'button-secondary button-danger';
+  deleteAreaButton.textContent = 'Delete area';
+  deleteAreaButton.addEventListener('click', () => {
+    const topicCount = category?.topics?.length ?? 0;
+    const topicNote =
+      topicCount === 0
+        ? 'This area has no topics.'
+        : topicCount === 1
+          ? 'This will permanently delete 1 topic in this area.'
+          : `This will permanently delete ${topicCount} topics in this area.`;
+    void (async () => {
+      const confirmed = await showConfirmDialog({
+        title: 'Delete area?',
+        message: `${topicNote} This cannot be undone.`,
+        confirmLabel: 'Delete area',
+        cancelLabel: 'Keep area',
+        danger: true
+      });
+      if (!confirmed) return;
+
+      void withAsyncButtonFeedback(deleteAreaButton, 'Deleting…', async () => {
+        const result = await removeHouseGuideCategory(categoryId);
+        if (!result.ok) {
+          showToast(context.toast, result.message || 'Could not delete area.');
+          return;
+        }
+        showToast(context.toast, 'Area deleted.');
+        onDeleted();
+      });
+    })();
+  });
+
+  areaActions.append(saveAreaButton, deleteAreaButton);
+  areaForm.append(areaActions);
+  areaDetails.append(areaSummary, areaForm);
 
   const reorderHint = document.createElement('p');
   reorderHint.className = 'subtle house-guide-editor-reorder-hint';
@@ -850,7 +948,7 @@ function renderTopicPicker(categoryId, context, onBack, onOpen, onRevert) {
   });
   addSection.append(createButton);
 
-  panel.append(back, heading, reorderHint, list, addSection);
+  panel.append(back, heading, areaDetails, reorderHint, list, addSection);
   return panel;
 }
 

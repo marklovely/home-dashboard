@@ -206,11 +206,12 @@ export const GUIDE_EDITOR_HELP_SECTIONS = [
   {
     id: 'topic-management',
     title: 'Topics & areas',
-    keywords: ['create', 'reorder', 'delete', 'drag', 'new topic'],
+    keywords: ['create', 'reorder', 'delete', 'drag', 'new topic', 'rename', 'area'],
     blocks: [
       {
         type: 'ul',
         items: [
+          'Areas — open an area, expand Area details to rename it or delete it (deleting an area removes all topics inside).',
           'Create — form at the bottom of an area’s topic list; new topics start unpublished.',
           'Reorder — drag topics within an area.',
           'Delete — bottom of topic editor; permanent after confirmation.'

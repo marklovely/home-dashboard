@@ -10,6 +10,7 @@ import {
   countGuideCategories,
   createGuideCategory,
   createGuideTopic,
+  deleteGuideCategory,
   countDraftGuideTopics,
   deleteGuideMedia,
   deleteGuideTopic,
@@ -23,6 +24,7 @@ import {
   publishGuideTopic,
   reorderGuideTopicsInCategory,
   requireHouseGuideDb,
+  updateGuideCategory,
   updateGuideSettings,
   updateGuideTopic
 } from '../houseGuide/repository.js';
@@ -104,6 +106,11 @@ export async function handleHouseGuide(request, url, env, correlationId) {
 
       const categoryId = segments[1];
       const action = segments[2];
+      if (segments.length === 2 && categoryId) {
+        if (request.method === 'PATCH') return patchCategory(request, env, categoryId, correlationId);
+        if (request.method === 'DELETE') return removeCategory(request, env, categoryId, correlationId);
+        return methodNotAllowed(correlationId);
+      }
       if (action === 'reorder-topics') {
         if (segments.length !== 3 || !categoryId) {
           return jsonError(404, 'NOT_FOUND', 'Route not found.', { correlationId });
@@ -489,6 +496,87 @@ async function createCategory(request, env, correlationId) {
 
   return Response.json(toPublicGuideCategory(created, []), {
     status: 201,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} categoryId
+ * @param {string} correlationId
+ */
+async function patchCategory(request, env, categoryId, correlationId) {
+  const ownerGate = await requireOwnerDeviceMode(request, env);
+  if (!ownerGate.ok) {
+    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError(400, 'BAD_REQUEST', 'Invalid JSON body.', { correlationId });
+  }
+
+  const title = body.title !== undefined ? sanitizeRequiredText(body.title, 120) : undefined;
+  if (body.title !== undefined && !title) {
+    return jsonError(400, 'BAD_REQUEST', 'Title is required.', { correlationId });
+  }
+
+  const cardSubtitle =
+    body.cardSubtitle !== undefined ? sanitizeRequiredText(body.cardSubtitle, 160) ?? '' : undefined;
+  const iconId =
+    body.iconId !== undefined ? sanitizeMediaId(String(body.iconId ?? '')) ?? 'book-open' : undefined;
+  const accent = body.accent !== undefined ? sanitizeAccent(body.accent) : undefined;
+  if (body.accent !== undefined && !accent) {
+    return jsonError(400, 'BAD_REQUEST', 'Accent must be a hex colour (for example #6ea8ff).', {
+      correlationId
+    });
+  }
+
+  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
+  const updated = await updateGuideCategory(db, categoryId, {
+    title,
+    cardSubtitle,
+    iconId,
+    accent: accent ?? undefined,
+    searchTerms: body.searchTerms !== undefined ? sanitizeStringArray(body.searchTerms) : undefined,
+    updatedAt: new Date().toISOString()
+  });
+
+  if (!updated) return jsonError(404, 'NOT_FOUND', 'Area not found.', { correlationId });
+  if (updated.reserved) {
+    return jsonError(400, 'BAD_REQUEST', 'That area cannot be edited here.', { correlationId });
+  }
+
+  return Response.json(toPublicGuideCategory(updated, []), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+/**
+ * @param {Request} request
+ * @param {Record<string, unknown>} env
+ * @param {string} categoryId
+ * @param {string} correlationId
+ */
+async function removeCategory(request, env, categoryId, correlationId) {
+  const ownerGate = await requireOwnerDeviceMode(request, env);
+  if (!ownerGate.ok) {
+    return jsonError(ownerGate.status ?? 403, ownerGate.code ?? 'FORBIDDEN', 'Forbidden.', { correlationId });
+  }
+
+  const db = requireHouseGuideDb(env.HOUSE_GUIDE_DB);
+  const removed = await deleteGuideCategory(db, categoryId);
+  if (!removed) return jsonError(404, 'NOT_FOUND', 'Area not found.', { correlationId });
+  if (removed.reserved) {
+    return jsonError(400, 'BAD_REQUEST', 'That area cannot be deleted here.', { correlationId });
+  }
+
+  return Response.json({ ok: true, id: categoryId }, {
+    status: 200,
     headers: { 'Content-Type': 'application/json' }
   });
 }

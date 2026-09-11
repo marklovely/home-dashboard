@@ -275,6 +275,68 @@ export async function createHouseGuideCategory(input, { fetchImpl = fetch } = {}
 }
 
 /**
+ * @param {string} categoryId
+ * @param {Record<string, unknown>} patch
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function patchHouseGuideCategory(categoryId, patch, { fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Could not save area.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl(`/api/house-guide/categories/${encodeURIComponent(categoryId)}`),
+      withApiCredentials({
+        method: 'PATCH',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch)
+      })
+    );
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+    }
+
+    const data = await response.json();
+    return { ok: true, status: response.status, message: '', data };
+  } catch {
+    return { ok: false, status: 503, message: 'Could not save area.', data: null };
+  }
+}
+
+/**
+ * @param {string} categoryId
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
+export async function deleteHouseGuideCategory(categoryId, { fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Could not delete area.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl(`/api/house-guide/categories/${encodeURIComponent(categoryId)}`),
+      withApiCredentials({
+        method: 'DELETE',
+        headers: { Accept: 'application/json' }
+      })
+    );
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+    }
+
+    const data = await response.json();
+    return { ok: true, status: 200, message: '', data };
+  } catch {
+    return { ok: false, status: 503, message: 'Could not delete area.', data: null };
+  }
+}
+
+/**
  * @param {Record<string, unknown>} input
  * @param {{ fetchImpl?: typeof fetch }} [options]
  */

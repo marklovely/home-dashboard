@@ -204,6 +204,23 @@ body.guide-editor-is-reordering .guide-editor-drag-handle {
 .house-guide-editor-reorder-hint {
   margin: 0;
 }
+.house-guide-editor-area-settings {
+  margin-bottom: 12px;
+}
+.house-guide-editor-area-settings summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.house-guide-editor-area-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.house-guide-editor-area-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 .house-guide-editor-new-area,
 .house-guide-editor-new-topic {
   display: grid;
