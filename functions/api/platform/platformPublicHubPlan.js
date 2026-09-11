@@ -11,7 +11,6 @@ import { getStripeMode, stripeCredentialsForMode } from './platformStripeMode.js
  */
 export async function resolveBillingRowPlanTier(env, db, row) {
   if (!row?.site_id || !row.stripe_subscription_id) return row;
-  if (row.plan_tier === 'free' || row.plan_tier === 'plus') return row;
 
   const mode = await getStripeMode(db);
   const secretKey = stripeCredentialsForMode(env, mode).secretKey;
@@ -25,6 +24,7 @@ export async function resolveBillingRowPlanTier(env, db, row) {
     );
     const tier = resolvePlanTierFromSubscription(env, mode, subscription);
     if (!tier) return row;
+    if (tier === row.plan_tier) return row;
     await upsertSiteBilling(db, {
       site_id: row.site_id,
       stripe_customer_id: String(row.stripe_customer_id ?? ''),
