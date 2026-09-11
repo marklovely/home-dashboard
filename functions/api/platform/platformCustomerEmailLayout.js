@@ -93,6 +93,24 @@ function emailActionsHtml(actions) {
   return `<div style="margin:20px 0 4px;">${actions.map((action) => emailButtonHtml(action)).join('')}</div>`;
 }
 
+/** Gmail centres images reliably when the logo sits in a nested table with align="center". */
+function emailHeaderLockupHtml() {
+  return (
+    `<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">` +
+    `<tr><td align="center" bgcolor="${EMAIL_BRAND.bgSoft}" style="padding:36px 32px 24px;text-align:center;background-color:${EMAIL_BRAND.bgSoft};">` +
+    `<table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" width="120" style="margin:0 auto;">` +
+    `<tr><td align="center" width="120" style="width:120px;text-align:center;">` +
+    `<img src="cid:${EMAIL_LOGO_CONTENT_ID}" width="120" height="120" alt="Lovely Home" border="0" align="middle" style="width:120px;height:120px;max-width:120px;border:0;outline:none;text-decoration:none;display:inline-block;vertical-align:middle;">` +
+    `</td></tr></table>` +
+    `<table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin:16px auto 0;">` +
+    `<tr><td align="center" style="text-align:center;">` +
+    `<div style="font-family:${EMAIL_BRAND.fontDisplay};font-size:28px;line-height:1.2;color:${EMAIL_BRAND.accent};">Lovely Home</div>` +
+    `<div style="margin-top:6px;font-family:${EMAIL_BRAND.fontSans};font-size:14px;line-height:1.4;color:${EMAIL_BRAND.muted};">Your private household hub</div>` +
+    `</td></tr></table>` +
+    `</td></tr></table>`
+  );
+}
+
 /**
  * @param {{
  *   origin: string;
@@ -122,15 +140,7 @@ export function wrapBrandedCustomerEmail(input) {
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${EMAIL_BRAND.bg}" style="background-color:${EMAIL_BRAND.bg};">` +
     `<tr><td align="center" style="padding:32px 16px;">` +
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${EMAIL_BRAND.card}" style="max-width:560px;background-color:${EMAIL_BRAND.card};border:1px solid ${EMAIL_BRAND.border};border-radius:12px;">` +
-    `<tr><td bgcolor="${EMAIL_BRAND.bgSoft}" style="padding:36px 32px 24px;background-color:${EMAIL_BRAND.bgSoft};">` +
-    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">` +
-    `<tr><td align="center" style="text-align:center;">` +
-    `<img src="cid:${EMAIL_LOGO_CONTENT_ID}" width="120" height="120" alt="Lovely Home" style="display:block;margin:0 auto;border:0;width:120px;height:120px;max-width:120px;">` +
-    `</td></tr>` +
-    `<tr><td align="center" style="padding-top:16px;text-align:center;">` +
-    `<div style="font-family:${EMAIL_BRAND.fontDisplay};font-size:28px;line-height:1.2;color:${EMAIL_BRAND.accent};">Lovely Home</div>` +
-    `<div style="margin-top:6px;font-family:${EMAIL_BRAND.fontSans};font-size:14px;line-height:1.4;color:${EMAIL_BRAND.muted};">Your private household hub</div>` +
-    `</td></tr></table></td></tr>` +
+    `<tr><td>${emailHeaderLockupHtml()}</td></tr>` +
     `<tr><td style="padding:20px 32px 8px;">` +
     `<h1 style="margin:0 0 16px;font-family:${EMAIL_BRAND.fontDisplay};font-size:26px;line-height:1.25;color:${EMAIL_BRAND.text};">${escapeHtmlEmail(input.title)}</h1>` +
     paragraphs +
