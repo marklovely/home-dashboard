@@ -10,6 +10,7 @@ import { isReturningBillingSignup } from './platformHubNameHold.js';
 
 export const CUSTOMER_EMAIL_KINDS = /** @type {const} */ ([
   'signup',
+  'upgrade',
   'past_due',
   'canceled'
 ]);
@@ -19,6 +20,7 @@ export const CUSTOMER_EMAIL_KINDS = /** @type {const} */ ([
 /** @type {Record<CustomerEmailKind, string>} */
 export const CUSTOMER_EMAIL_SENT_COLUMNS = {
   signup: 'signup_email_sent_at',
+  upgrade: 'upgrade_email_sent_at',
   past_due: 'past_due_email_sent_at',
   canceled: 'canceled_email_sent_at'
 };
@@ -74,6 +76,7 @@ export function formatUkDate(ms) {
  * @param {{
  *   eventType: string;
  *   status?: string;
+ *   upgradeFromFree?: boolean;
  * }} input
  * @returns {CustomerEmailKind | null}
  */
@@ -81,7 +84,9 @@ export function lifecycleEmailKindForEvent(input) {
   const eventType = String(input.eventType ?? '');
   const status = String(input.status ?? '');
 
-  if (eventType === 'checkout.session.completed') return 'signup';
+  if (eventType === 'checkout.session.completed') {
+    return input.upgradeFromFree ? 'upgrade' : 'signup';
+  }
   if (eventType === 'customer.subscription.created' && (status === 'trialing' || status === 'active')) {
     return 'signup';
   }
@@ -139,6 +144,22 @@ export function buildCustomerEmail(input) {
   const accountUrl = `${origin}/account`;
   const plan = normalizePlanTier(input.planTier);
   const returning = Boolean(input.returning);
+
+  if (input.kind === 'upgrade') {
+    return {
+      subject: `Lovely Home+ is active — ${siteId}.lovely-hub.com`,
+      text: [
+        `Thanks for upgrading ${hubUrl} to Lovely Home+.`,
+        '',
+        'You now have unlimited guide templates and scheduled stays. There is no limit on topics or details inside each guide.',
+        '',
+        `Open your hub: ${hubUrl}`,
+        `Manage billing: ${accountUrl}`,
+        '',
+        'Questions: support@lovely-home.co.uk'
+      ].join('\n')
+    };
+  }
 
   if (input.kind === 'signup') {
     const shared = sharedSignupLines({ hubUrl, successUrl, accountUrl, returning });
@@ -390,6 +411,7 @@ export async function sendResendEmail(env, message, fetchImpl = fetch) {
  *   trialEnd?: number | null;
  *   planTier?: string | null;
  *   returning?: boolean;
+ *   upgradeFromFree?: boolean;
  *   priorBilling?: { [key: string]: unknown } | null;
  *   existingBilling?: { [key: string]: unknown } | null;
  * }} input
@@ -400,7 +422,11 @@ export async function maybeSendCustomerLifecycleEmail(env, db, input, fetchImpl 
     return { ok: true, action: 'email_not_configured' };
   }
 
-  const kind = lifecycleEmailKindForEvent({ eventType: input.eventType, status: input.status });
+  const kind = lifecycleEmailKindForEvent({
+    eventType: input.eventType,
+    status: input.status,
+    upgradeFromFree: input.upgradeFromFree
+  });
   if (!kind) {
     return { ok: true, action: 'email_not_applicable' };
   }
