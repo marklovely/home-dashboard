@@ -6,6 +6,11 @@
 
 - Reduce R2 Class A operations from the Terraform remote state backend (`workspace_key_prefix`, `skip_s3_checksum`); shared init args in `scripts/lib/terraform-r2-backend-init-args.sh`
 
+### Billing and email
+
+- Signup lifecycle email copy distinguishes Lovely Home Free (no trial) from Lovely Home+ (7-day trial for first-time signups)
+- Returning households: Free reinstates at no charge; Lovely Home+ Checkout skips the trial and bills immediately
+
 ## 3.1.0
 
 Free vs Lovely Home+ plans, marketing repositioning, and hub plan visibility with enforced limits.

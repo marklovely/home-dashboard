@@ -47,6 +47,10 @@ vi.mock('../functions/api/platform/platformIntroOffer.js', () => ({
   resolveIntroOfferForSignup: vi.fn(async () => ({ apply: false }))
 }));
 
+vi.mock('../functions/api/platform/platformCustomerEmail.js', () => ({
+  maybeSendCustomerLifecycleEmail: vi.fn(async () => ({ ok: true, action: 'email_not_configured' }))
+}));
+
 import { dispatchSiteManageWorkflow } from '../functions/api/platform/platformGitHub.js';
 import {
   createBillingCheckoutSession,
@@ -297,7 +301,8 @@ describe('platform public signup', () => {
       baseEnv,
       expect.objectContaining({
         siteId: 'smith',
-        successUrl: 'https://lovely-home.co.uk/signup-success?site=smith&returning=1'
+        successUrl: 'https://lovely-home.co.uk/signup-success?site=smith&returning=1',
+        skipTrial: true
       })
     );
   });

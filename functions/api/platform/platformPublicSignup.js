@@ -33,6 +33,7 @@ import {
   validateReferralForSignup
 } from './platformReferrals.js';
 import { resolveIntroOfferForSignup } from './platformIntroOffer.js';
+import { maybeSendCustomerLifecycleEmail } from './platformCustomerEmail.js';
 
 /** Reserved slugs — internal hubs and common DNS names. */
 export const PUBLIC_SIGNUP_BLOCKED_SITE_IDS = new Set([
@@ -468,6 +469,18 @@ export async function handlePublicHubSignup(env, input) {
       };
     }
 
+    const billingAfterFreeSignup = await getSiteBilling(billingDb, siteId);
+    await maybeSendCustomerLifecycleEmail(env, billingDb, {
+      eventType: 'customer.subscription.created',
+      status: freeSubscription.status,
+      siteId,
+      ownerEmail: customerEmail,
+      planTier: 'free',
+      returning,
+      priorBilling: existingBilling,
+      existingBilling: billingAfterFreeSignup
+    });
+
     const reservation = await reserveSignupSlug(billingDb, {
       siteId,
       ownerEmail: customerEmail,
@@ -506,7 +519,8 @@ export async function handlePublicHubSignup(env, input) {
     mode: stripeMode,
     referralCode: referralValidation.referral?.code,
     referrerSiteId: referralValidation.referral?.referrerSiteId,
-    applyIntroOffer: introOffer.apply
+    applyIntroOffer: introOffer.apply,
+    skipTrial: returning
   });
 
   if (!checkout.ok) {

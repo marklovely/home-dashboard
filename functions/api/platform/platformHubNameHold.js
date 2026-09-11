@@ -48,11 +48,37 @@ export function isHubReclaimSignup(existingBilling, manifest, siteId, ownerEmail
   if (getSiteFromManifest(manifest, siteId)) return false;
   if (!ownerEmailMatchesBilling(ownerEmail, existingBilling.owner_email)) return false;
 
-  const status = String(existingBilling.status ?? '');
+  return isReturningBillingSignup(existingBilling, ownerEmail);
+}
+
+/**
+ * Household had billing here before (reclaim / resubscribe), including after deprovision.
+ *
+ * @param {{
+ *   status?: string | null;
+ *   owner_email?: string | null;
+ *   slug_held_until?: number | null;
+ *   deprovision_dispatched_at?: number | null;
+ *   archive_r2_key?: string | null;
+ *   created_at?: number | null;
+ * } | null | undefined} priorBilling
+ * @param {string | null | undefined} ownerEmail
+ * @param {number} [nowMs]
+ */
+export function isReturningBillingSignup(priorBilling, ownerEmail, nowMs = Date.now()) {
+  if (!priorBilling) return false;
+  if (!ownerEmailMatchesBilling(ownerEmail, priorBilling.owner_email)) return false;
+
+  const status = String(priorBilling.status ?? '');
   if (status === 'canceled') return true;
-  if (existingBilling.deprovision_dispatched_at) return true;
-  if (isHubNameHeld(existingBilling)) return true;
-  if (String(existingBilling.archive_r2_key ?? '').trim()) return true;
+  if (priorBilling.deprovision_dispatched_at) return true;
+  if (isHubNameHeld(priorBilling, nowMs)) return true;
+  if (String(priorBilling.archive_r2_key ?? '').trim()) return true;
+
+  const createdAt = Number(priorBilling.created_at ?? 0);
+  if (Number.isFinite(createdAt) && createdAt > 0 && createdAt < nowMs - 60_000) {
+    return true;
+  }
 
   return false;
 }

@@ -236,6 +236,7 @@ export function defaultCheckoutUrls(env, platformHostname) {
  *   referralCode?: string;
  *   referrerSiteId?: string;
  *   applyIntroOffer?: boolean;
+ *   skipTrial?: boolean;
  * }} input
  */
 export async function createBillingCheckoutSession(env, input) {
@@ -282,7 +283,7 @@ export async function createBillingCheckoutSession(env, input) {
     automatic_tax: { enabled: false },
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: TRIAL_PERIOD_DAYS,
+      ...(input.skipTrial ? {} : { trial_period_days: TRIAL_PERIOD_DAYS }),
       metadata: { ...metadata }
     },
     metadata: { ...metadata }
@@ -783,6 +784,8 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
         siteId: billingPatch.siteId,
         ownerEmail: billingPatch.ownerEmail ?? billingAfter?.owner_email ?? null,
         trialEnd: billingPatch.trialEnd ?? billingAfter?.trial_end ?? null,
+        planTier: planTier ?? billingAfter?.plan_tier ?? null,
+        priorBilling: existingBilling,
         existingBilling: billingAfter
       },
       context.fetchImpl

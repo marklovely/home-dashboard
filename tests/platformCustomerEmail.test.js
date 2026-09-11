@@ -33,14 +33,59 @@ describe('customer lifecycle email copy', () => {
     ).toBeNull();
   });
 
-  it('builds a signup confirmation with the hub URL', () => {
-    const mail = buildCustomerEmail({ kind: 'signup', siteId: 'rose-cottage' });
-    expect(mail.subject).toContain('rose-cottage.lovely-hub.com');
+  it('builds a Lovely Home+ trial signup confirmation with the hub URL', () => {
+    const mail = buildCustomerEmail({
+      kind: 'signup',
+      siteId: 'rose-cottage',
+      planTier: 'plus',
+      status: 'trialing'
+    });
+    expect(mail.subject).toContain('Lovely Home+ trial');
     expect(mail.text).toContain(customerHubUrl('rose-cottage'));
     expect(mail.text).toContain('signup-success?site=rose-cottage');
     expect(mail.text).toContain('/account');
+    expect(mail.text).toMatch(/7-day Lovely Home\+ trial/i);
     expect(mail.text).toMatch(/sitter, tenant, Airbnb guest/i);
     expect(mail.text).toMatch(/wall tablet is optional/i);
+    expect(mail.text).not.toMatch(/Lovely Home Free plan/i);
+  });
+
+  it('builds a Free signup confirmation without trial wording', () => {
+    const mail = buildCustomerEmail({
+      kind: 'signup',
+      siteId: 'rose-cottage',
+      planTier: 'free',
+      status: 'active'
+    });
+    expect(mail.text).toMatch(/Lovely Home Free plan is active at no charge/i);
+    expect(mail.text).not.toMatch(/7-day/i);
+    expect(mail.text).not.toMatch(/trial/i);
+  });
+
+  it('builds welcome-back copy for a returning Plus household billed immediately', () => {
+    const mail = buildCustomerEmail({
+      kind: 'signup',
+      siteId: 'smith',
+      planTier: 'plus',
+      status: 'active',
+      returning: true
+    });
+    expect(mail.subject).toMatch(/Welcome back/i);
+    expect(mail.text).toMatch(/Welcome back/i);
+    expect(mail.text).toMatch(/card on file is billed/i);
+    expect(mail.text).not.toMatch(/7-day/i);
+  });
+
+  it('builds welcome-back copy for a returning Free household', () => {
+    const mail = buildCustomerEmail({
+      kind: 'signup',
+      siteId: 'smith',
+      planTier: 'free',
+      status: 'active',
+      returning: true
+    });
+    expect(mail.text).toMatch(/Lovely Home Free plan is active again at no charge/i);
+    expect(mail.text).not.toMatch(/trial/i);
   });
 
   it('formats trial end dates in the UK', () => {
