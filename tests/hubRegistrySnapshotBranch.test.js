@@ -19,7 +19,7 @@ describe('hub registry snapshot branches', () => {
   });
 
   it('rejects invalid site ids', () => {
-    expect(() => hubRegistrySnapshotBranch('record', 'Bad')).toThrow(/Invalid site id/i);
+    expect(() => hubRegistrySnapshotBranch('record', 'Bad')).toThrow(/Site id must start with a letter/i);
   });
 });
 
