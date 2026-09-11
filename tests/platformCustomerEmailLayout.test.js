@@ -17,6 +17,8 @@ describe('branded customer email layout', () => {
       paragraphs: ['Hello there.']
     });
     expect(html).toContain(`cid:${EMAIL_LOGO_CONTENT_ID}`);
+    expect(html).toContain('width="120"');
+    expect(html).toContain('align="center"');
     expect(html).not.toContain('favicon.png');
     expect(html).toContain(EMAIL_BRAND.accent);
     expect(html).toContain(EMAIL_BRAND.bg);
