@@ -935,6 +935,11 @@ html.nav-open {
   background: color-mix(in srgb, var(--accent) 8%, var(--card));
 }
 
+.plan-compare-no {
+  color: var(--muted, #64748b);
+  font-weight: 600;
+}
+
 .plan-compare-yes {
   display: inline-flex;
   align-items: center;

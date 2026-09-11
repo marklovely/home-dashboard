@@ -58,6 +58,8 @@ import {
 import { createCameraSettingsFields } from './createCameraSettingsFields.js';
 import { createSitterScheduleBanner, createSitterStaysSection } from './sitterStaysFields.js';
 import { createPlanSummarySection } from './planSummaryFields.js';
+import { isHubPlanFeatureEnabled } from '../../services/hubPlanFeatures.js';
+import { createPlanFeatureLockedPanel } from '../../components/Plan/planFeatureLockedPanel.js';
 import {
   syncSitterAccessEmailsFromServer
 } from '../../services/sitterAccessEmailsService.js';
@@ -700,6 +702,11 @@ function createBinReminderFields(context, onRefresh) {
   const wrap = document.createElement('div');
   wrap.className = 'settings-options settings-options--stacked';
 
+  if (!isHubPlanFeatureEnabled('bins')) {
+    wrap.append(createPlanFeatureLockedPanel('bins'));
+    return wrap;
+  }
+
   const profile = buildHomeDetailsFormProfile(getSiteProfileState()?.profile ?? {});
   const schedule = binsPanelDraftSchedule ?? readBinScheduleFromProfile(profile);
   binsPanelDraftSchedule = null;
@@ -1063,6 +1070,11 @@ function createSitterSecretsToggle(context) {
 function createSitterControlsToggle(context) {
   const subsection = document.createElement('div');
   subsection.className = 'settings-subsection';
+
+  if (!isHubPlanFeatureEnabled('smartHome')) {
+    subsection.append(createPlanFeatureLockedPanel('smartHome'));
+    return subsection;
+  }
 
   const title = document.createElement('p');
   title.className = 'settings-subsection-title';

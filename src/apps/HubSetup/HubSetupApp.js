@@ -39,6 +39,8 @@ import {
   shouldConfirmPropertyAddressChange
 } from '../../lib/propertyAddressChange.js';
 import { clearBinAlertDismissal } from '../../services/binAlertDismissalService.js';
+import { isHubPlanFeatureEnabled } from '../../services/hubPlanFeatures.js';
+import { createPlanFeatureLockedPanel } from '../../components/Plan/planFeatureLockedPanel.js';
 import {
   fetchHubSecretsConfigured,
   getHubDisplayName,
@@ -496,18 +498,27 @@ function mountHubSetupWizard(viewport, context) {
     } else if (stepId === 'access') {
       body.append(guestFields.wrap);
     } else if (stepId === 'bins') {
-      const selectedUseCase = useCase.select.value;
-      if (selectedUseCase !== binsPanelUseCase) {
-        const schedule = binFields.readBinSchedule();
-        binsPanelUseCase = selectedUseCase;
-        binFields = createBinScheduleHubPanel(
-          { ...getSiteProfileState()?.profile, binSchedule: schedule },
-          selectedUseCase,
-          binPanelOptions()
+      if (!isHubPlanFeatureEnabled('bins')) {
+        body.append(
+          createSetupIntro(
+            'You can skip this step on the Free plan. Upgrade to Lovely Home+ anytime to add council bin reminders on the home screen.'
+          ),
+          createPlanFeatureLockedPanel('bins')
         );
+      } else {
+        const selectedUseCase = useCase.select.value;
+        if (selectedUseCase !== binsPanelUseCase) {
+          const schedule = binFields.readBinSchedule();
+          binsPanelUseCase = selectedUseCase;
+          binFields = createBinScheduleHubPanel(
+            { ...getSiteProfileState()?.profile, binSchedule: schedule },
+            selectedUseCase,
+            binPanelOptions()
+          );
+        }
+        body.append(binFields.wrap);
+        binFields.refreshWhenVisible?.();
       }
-      body.append(binFields.wrap);
-      binFields.refreshWhenVisible?.();
     } else if (stepId === 'calendar') {
       body.append(calendarFields.wrap);
     } else if (stepId === 'guide') {
@@ -731,6 +742,9 @@ function mountHubSetupWizard(viewport, context) {
         }
 
         if (stepId === 'bins') {
+          if (!isHubPlanFeatureEnabled('bins')) {
+            // Skip bin setup on Free — continue to the next wizard step.
+          } else {
           const subContinue = binFields.handleContinue();
           if (subContinue === true) {
             renderStep();
@@ -762,6 +776,7 @@ function mountHubSetupWizard(viewport, context) {
               `Bin reminders saved (${savedCount} collection date${savedCount === 1 ? '' : 's'}).`,
               4000
             );
+          }
           }
         }
 

@@ -1,4 +1,5 @@
 import { getBinCollectionAlert } from './binCollectionService.js';
+import { isHubPlanFeatureEnabled } from './hubPlanFeatures.js';
 import { subscribeToBinAlertDismissal } from './binAlertDismissalService.js';
 import { createBinAlertBanner } from '../apps/Home/createBinAlertBanner.js';
 
@@ -15,6 +16,11 @@ export function mountBinAlertBannerHost(host, navigate, options = {}) {
   let unsubscribe = null;
 
   function sync() {
+    if (!isHubPlanFeatureEnabled('bins')) {
+      host.replaceChildren();
+      host.hidden = true;
+      return;
+    }
     const alert = getBinCollectionAlert(new Date(), { houseSitter: options.houseSitter ?? false });
     if (!alert) {
       host.replaceChildren();

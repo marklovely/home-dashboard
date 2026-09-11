@@ -26,6 +26,8 @@ import {
   getCollectionInformationCopy,
   getMissedBinNote
 } from './binCollectionCopy.js';
+import { isHubPlanFeatureEnabled } from '../../services/hubPlanFeatures.js';
+import { createPlanFeatureLockedPanel } from '../../components/Plan/planFeatureLockedPanel.js';
 
 /**
  * @param {HTMLElement} host
@@ -208,6 +210,13 @@ function appendGardenMaterialList(list, items, kind) {
  */
 function mountBinsApp(viewport, context) {
   viewport.replaceChildren();
+  if (!isHubPlanFeatureEnabled('bins')) {
+    const page = document.createElement('section');
+    page.className = 'app-page bins-app';
+    page.append(createPlanFeatureLockedPanel('bins'));
+    viewport.append(page);
+    return;
+  }
   const houseSitter = isHouseSitterMode();
   const asOf = new Date();
   const ownerScheduleLink = createOwnerScheduleLink(context);

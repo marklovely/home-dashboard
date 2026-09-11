@@ -1,4 +1,6 @@
 import { triggerVirtualButton } from '../../api/virtualButtons.js';
+import { isOwnerUserMode } from '../../auth/userMode.js';
+import { isHubPlanFeatureEnabled } from '../../services/hubPlanFeatures.js';
 import { showToast } from '../../js/modules/toast.js';
 import { runRoutineButtonAction } from '../Alexa/routineButtonFeedback.js';
 
@@ -11,6 +13,15 @@ import { runRoutineButtonAction } from '../Alexa/routineButtonFeedback.js';
  */
 export function runGuideAction(action, context, openTopic, element) {
   if (action.type === 'alexa') {
+    if (!isHubPlanFeatureEnabled('smartHome')) {
+      showToast(
+        context.toast,
+        isOwnerUserMode()
+          ? 'Alexa routines require Lovely Home+. Upgrade from Settings → Your plan.'
+          : 'Alexa routines are not available on this home.'
+      );
+      return false;
+    }
     if (!navigator.onLine) {
       showToast(context.toast, 'You are offline');
       return false;

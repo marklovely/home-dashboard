@@ -1,5 +1,6 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
 import { resolveCouncilHint } from '../bins/councilHint.js';
+import { fetchHubPlanStatus, planFeatureBlockedMessage } from '../lib/hubPlanLimits.js';
 
 /**
  * @param {Request} request
@@ -10,6 +11,12 @@ export async function handleBinsCouncilHint(request, env, fetchImpl = fetch) {
   const gate = await requireAnyDeviceSession(request, env);
   if (!gate.ok) {
     return Response.json({ error: gate.code }, { status: gate.status });
+  }
+
+  const plan = await fetchHubPlanStatus(env, request, fetchImpl);
+  const blocked = planFeatureBlockedMessage(plan, 'bins');
+  if (blocked) {
+    return Response.json(blocked, { status: 403 });
   }
 
   const postcode = new URL(request.url).searchParams.get('postcode')?.trim() ?? '';

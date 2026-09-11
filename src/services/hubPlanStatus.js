@@ -1,5 +1,6 @@
 import { isDemoHubEnvironment } from '../auth/hubEnvironment.js';
 import { isHouseSitterExperience } from '../auth/userMode.js';
+import { applyHubPlanFeaturesFromSummary } from './hubPlanFeatures.js';
 /** @type {import('./hubPlanStatus.js').HubPlanSummary | null} */
 let cachedPlanSummary = null;
 
@@ -8,6 +9,7 @@ let cachedPlanSummary = null;
  *   plan: 'free' | 'plus',
  *   planLabel: string,
  *   limits: { maxGuides: number | null, maxStays: number | null },
+ *   features?: { bins: boolean, smartHome: boolean, weather: boolean },
  *   usage: { guides: number, stays: number },
  *   limitState?: {
  *     atGuideLimit: boolean,
@@ -49,6 +51,11 @@ export async function fetchHubPlanSummary(fetchImpl = fetch) {
         maxGuides: payload.limits?.maxGuides ?? null,
         maxStays: payload.limits?.maxStays ?? null
       },
+      features: {
+        bins: payload.plan === 'plus' ? true : Boolean(payload.features?.bins),
+        smartHome: payload.plan === 'plus' ? true : Boolean(payload.features?.smartHome),
+        weather: payload.features?.weather !== false
+      },
       usage: {
         guides: Number(payload.usage?.guides ?? 0),
         stays: Number(payload.usage?.stays ?? 0)
@@ -59,6 +66,7 @@ export async function fetchHubPlanSummary(fetchImpl = fetch) {
       downgradeUrl: payload.downgradeUrl ?? null,
       accountUrl: String(payload.accountUrl ?? 'https://lovely-home.co.uk/account')
     };
+    applyHubPlanFeaturesFromSummary(cachedPlanSummary);
     return cachedPlanSummary;
   } catch {
     cachedPlanSummary = null;

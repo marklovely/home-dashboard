@@ -26,6 +26,7 @@ import {
 import { handleSitterStayItem, handleSitterStaysCollection } from './routes/sitterStaysRoute.js';
 import { handleHouseGuidesCollection } from './routes/houseGuidesRoute.js';
 import { handleHubPlanUsage } from './routes/hubPlanRoute.js';
+import { handleHubPlanFeatures } from './routes/hubPlanFeaturesRoute.js';
 import { handleSiteBackup } from './routes/siteBackup.js';
 import { handlePlatformSiteArchive } from './routes/platformSiteArchive.js';
 import { handlePlatformSiteRestore } from './routes/platformSiteRestore.js';
@@ -194,6 +195,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       response = await handleHouseGuidesCollection(request, env, fetchBound);
     } else if (url.pathname === '/api/hub/plan-usage') {
       response = await handleHubPlanUsage(request, env, fetchBound);
+    } else if (url.pathname === '/api/hub/plan-features') {
+      response = await handleHubPlanFeatures(request, env, fetchBound);
     } else if (url.pathname.startsWith('/api/house-guide')) {
       response = await handleHouseGuide(request, url, env, correlationId);
     } else if (url.pathname.startsWith('/api/button/') && request.method === 'POST') {

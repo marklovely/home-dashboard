@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { planLimitExceeded, siteIdFromHubRequest } from '../worker/src/lib/hubPlanLimits.js';
+import {
+  planFeatureEnabled,
+  planLimitExceeded,
+  siteIdFromHubRequest
+} from '../worker/src/lib/hubPlanLimits.js';
 
 describe('hubPlanLimits', () => {
   it('extracts site id from hub Origin', () => {
@@ -15,6 +19,18 @@ describe('hubPlanLimits', () => {
       }
     });
     expect(siteIdFromHubRequest(request)).toBe('test-cottage-free');
+  });
+
+  it('disables bins and smart home on Free plan feature flags', () => {
+    const freePlan = {
+      plan: 'free',
+      features: { bins: false, smartHome: false, weather: true }
+    };
+    expect(planFeatureEnabled(freePlan, 'weather')).toBe(true);
+    expect(planFeatureEnabled(freePlan, 'bins')).toBe(false);
+    expect(planFeatureEnabled({ plan: 'plus', features: { bins: true, smartHome: true, weather: true } }, 'bins')).toBe(
+      true
+    );
   });
 
   it('detects when a free-plan limit is reached', () => {

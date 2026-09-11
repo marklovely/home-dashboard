@@ -1,4 +1,5 @@
 import { requireAnyDeviceSession } from '../lib/deviceSessionAuth.js';
+import { fetchHubPlanStatus, planFeatureBlockedMessage } from '../lib/hubPlanLimits.js';
 import { resolveUprnFromAddress } from '../bins/osPlacesUprn.js';
 import { resolveOsPlacesConfig } from '../lib/osPlaces.js';
 import { parseBinDatesWithAi } from '../bins/parseDatesAi.js';
@@ -14,6 +15,12 @@ export async function handleBinsImportSchedule(request, env, fetchImpl = fetch) 
   const gate = await requireAnyDeviceSession(request, env);
   if (!gate.ok) {
     return Response.json({ error: gate.code }, { status: gate.status });
+  }
+
+  const plan = await fetchHubPlanStatus(env, request, fetchImpl);
+  const blocked = planFeatureBlockedMessage(plan, 'bins');
+  if (blocked) {
+    return Response.json(blocked, { status: 403 });
   }
 
   if (request.method !== 'POST') {
@@ -117,6 +124,12 @@ export async function handleBinsParseDates(request, env) {
   const gate = await requireAnyDeviceSession(request, env);
   if (!gate.ok) {
     return Response.json({ error: gate.code }, { status: gate.status });
+  }
+
+  const plan = await fetchHubPlanStatus(env, request);
+  const blocked = planFeatureBlockedMessage(plan, 'bins');
+  if (blocked) {
+    return Response.json(blocked, { status: 403 });
   }
 
   if (request.method !== 'POST') {
