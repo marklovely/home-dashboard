@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  planCategoryLimitExceeded,
   planFeatureEnabled,
   planLimitExceeded,
   siteIdFromHubRequest
@@ -38,5 +39,12 @@ describe('hubPlanLimits', () => {
     expect(planLimitExceeded(freePlan, 2, 'guide')).toBe(true);
     expect(planLimitExceeded(freePlan, 1, 'stay')).toBe(false);
     expect(planLimitExceeded({ limits: { maxGuides: null, maxStays: null } }, 99, 'stay')).toBe(false);
+  });
+
+  it('detects when the free-plan area limit is reached', () => {
+    const freePlan = { limits: { maxCategories: 2 } };
+    expect(planCategoryLimitExceeded(freePlan, 2)).toBe(true);
+    expect(planCategoryLimitExceeded(freePlan, 1)).toBe(false);
+    expect(planCategoryLimitExceeded({ limits: { maxCategories: null } }, 99)).toBe(false);
   });
 });

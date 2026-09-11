@@ -247,6 +247,37 @@ export async function uploadHouseGuideMedia(formData, { fetchImpl = fetch } = {}
  * @param {Record<string, unknown>} input
  * @param {{ fetchImpl?: typeof fetch }} [options]
  */
+export async function createHouseGuideCategory(input, { fetchImpl = fetch } = {}) {
+  await ensureApiBaseUrl();
+  if (!isApiConfigured()) {
+    return { ok: false, status: 503, message: 'Could not create area.', data: null };
+  }
+
+  try {
+    const response = await fetchImpl(
+      buildApiUrl('/api/house-guide/categories'),
+      withApiCredentials({
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify(input)
+      })
+    );
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: await readErrorMessage(response), data: null };
+    }
+
+    const data = await response.json();
+    return { ok: true, status: response.status, message: '', data };
+  } catch {
+    return { ok: false, status: 503, message: 'Could not create area.', data: null };
+  }
+}
+
+/**
+ * @param {Record<string, unknown>} input
+ * @param {{ fetchImpl?: typeof fetch }} [options]
+ */
 export async function createHouseGuideTopic(input, { fetchImpl = fetch } = {}) {
   await ensureApiBaseUrl();
   if (!isApiConfigured()) {

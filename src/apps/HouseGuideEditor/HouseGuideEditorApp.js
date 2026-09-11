@@ -10,8 +10,11 @@ import {
   listGuideCategories,
   listGuideTopics
 } from '../../services/guideService.js';
+import { FREE_STARTER_MAX_CATEGORIES } from '../../content/houseguide/templates/buildStarterGuideCatalog.js';
+import { getCachedHubPlanFeatures } from '../../services/hubPlanFeatures.js';
 import {
   canManageHouseGuideContent,
+  createNewHouseGuideCategory,
   createNewHouseGuideTopic,
   getActiveGuideCatalog,
   getGuideContentState,
@@ -434,11 +437,13 @@ function createEditorShell(context) {
     syncDraftBadge();
 
     if (view === 'categories') {
-      main.append(renderCategoryPicker((categoryId) => {
-        activeCategoryId = categoryId;
-        view = 'topics';
-        renderMain();
-      }));
+      main.append(
+        renderCategoryPicker(context, (categoryId) => {
+          activeCategoryId = categoryId;
+          view = 'topics';
+          renderMain();
+        })
+      );
       return;
     }
 
@@ -533,9 +538,17 @@ function createEditorShell(context) {
 }
 
 /**
+ * @returns {import('../../types/guideContent.js').GuideCategory[]}
+ */
+function listEditableGuideCategories() {
+  return listGuideCategories().filter((category) => category.id !== 'appliance-manuals');
+}
+
+/**
+ * @param {import('../../types/app.js').ShellContext} context
  * @param {(categoryId: string) => void} onOpen
  */
-function renderCategoryPicker(onOpen) {
+function renderCategoryPicker(context, onOpen) {
   const panel = document.createElement('section');
   panel.className = 'house-guide-editor-picker';
 
@@ -546,8 +559,9 @@ function renderCategoryPicker(onOpen) {
   const grid = document.createElement('div');
   grid.className = 'guide-category-grid';
 
-  for (const category of listGuideCategories()) {
-    if (category.id === 'appliance-manuals') continue;
+  const editableCategories = listEditableGuideCategories();
+
+  for (const category of editableCategories) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'guide-category-card house-guide-editor-category-card';
@@ -560,12 +574,110 @@ function renderCategoryPicker(onOpen) {
   if (!grid.children.length) {
     const empty = document.createElement('p');
     empty.className = 'house-guide-editor-empty subtle';
-    empty.textContent = 'No guide areas found. Use “Copy current guide to cloud” on first setup.';
+    empty.textContent = 'No guide areas yet — add your first area below.';
     panel.append(heading, empty);
+  } else {
+    panel.append(heading, grid);
+  }
+
+  const plan = getCachedHubPlanFeatures();
+  const maxCategories = plan?.plan === 'free' ? FREE_STARTER_MAX_CATEGORIES : null;
+  const atCategoryLimit = maxCategories != null && editableCategories.length >= maxCategories;
+
+  const addSection = document.createElement('section');
+  addSection.className = 'house-guide-editor-new-area';
+
+  const addHeading = document.createElement('h4');
+  addHeading.className = 'house-guide-editor-blocks-title';
+  addHeading.textContent = 'Add a new area';
+
+  if (atCategoryLimit) {
+    const limitCopy = document.createElement('p');
+    limitCopy.className = 'subtle house-guide-editor-plan-limit-copy';
+    limitCopy.textContent = `Free includes ${FREE_STARTER_MAX_CATEGORIES} areas per guide. Upgrade to Lovely Home+ for unlimited areas.`;
+
+    const actions = document.createElement('div');
+    actions.className = 'house-guide-editor-plan-limit-actions';
+    if (plan?.upgradeUrl) {
+      const upgradeLink = document.createElement('a');
+      upgradeLink.className = 'button-secondary';
+      upgradeLink.href = plan.upgradeUrl;
+      upgradeLink.target = '_blank';
+      upgradeLink.rel = 'noopener noreferrer';
+      upgradeLink.textContent = 'Upgrade to Lovely Home+';
+      actions.append(upgradeLink);
+    }
+    addSection.append(addHeading, limitCopy, actions);
+    panel.append(addSection);
     return panel;
   }
 
-  panel.append(heading, grid);
+  let newCategoryId = '';
+  let newTitle = '';
+  let newSubtitle = '';
+  let idManuallyEdited = false;
+
+  const titleField = createEditorField('Title', '', (value) => {
+    newTitle = value;
+    if (!idManuallyEdited) {
+      newCategoryId = slugFromTitle(value);
+      idInput.value = newCategoryId;
+    }
+  });
+
+  const advancedDetails = document.createElement('details');
+  advancedDetails.className = 'house-guide-editor-meta-advanced';
+  const advancedSummary = document.createElement('summary');
+  advancedSummary.textContent = 'Advanced';
+
+  const idField = createEditorField('Area id', '', (value) => {
+    newCategoryId = value;
+    idManuallyEdited = true;
+  });
+  const idInput = /** @type {HTMLInputElement} */ (idField.querySelector('input'));
+  idInput.placeholder = 'e.g. kitchen';
+
+  const idHint = document.createElement('p');
+  idHint.className = 'subtle house-guide-editor-manual-hint';
+  idHint.textContent =
+    'Generated from the title unless you edit it here. Use letters, numbers, and hyphens only.';
+
+  advancedDetails.append(
+    advancedSummary,
+    idField,
+    idHint,
+    createEditorField('Card subtitle', '', (value) => {
+      newSubtitle = value;
+    })
+  );
+
+  const createButton = document.createElement('button');
+  createButton.type = 'button';
+  createButton.className = 'button-primary';
+  createButton.textContent = 'Create area';
+  createButton.addEventListener('click', () => {
+    const categoryId = (newCategoryId || slugFromTitle(newTitle)).trim();
+    if (!categoryId || !newTitle.trim()) {
+      showToast(context.toast, 'Title and area id are required.');
+      return;
+    }
+    void withAsyncButtonFeedback(createButton, 'Creating…', async () => {
+      const result = await createNewHouseGuideCategory({
+        id: categoryId,
+        title: newTitle.trim(),
+        cardSubtitle: newSubtitle.trim()
+      });
+      if (!result.ok) {
+        showToast(context.toast, result.message || 'Could not create area.');
+        return;
+      }
+      showToast(context.toast, 'Area created.');
+      onOpen(categoryId);
+    });
+  });
+
+  addSection.append(addHeading, titleField, advancedDetails, createButton);
+  panel.append(addSection);
   return panel;
 }
 

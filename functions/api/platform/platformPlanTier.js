@@ -5,10 +5,11 @@ import { marketingSiteOrigin } from './platformPublicSignup.js';
 
 export const FREE_PLAN_MAX_GUIDES = 2;
 export const FREE_PLAN_MAX_STAYS = 2;
+export const FREE_PLAN_MAX_CATEGORIES = 2;
 
-/** Short copy: two guide templates, unlimited content inside each. */
+/** Short copy: two guide templates; two areas per guide on Free. */
 export const FREE_PLAN_GUIDES_EXPLAINER =
-  'Two separate guide templates for your home (for example House Sitter Guide and Pet Care Guide). Each guide can hold unlimited topics and details — the limit is templates, not pages inside them.';
+  'Two separate guide templates for your home (for example House Sitter Guide and Pet Care Guide). Each guide can include up to two areas on Free — Lovely Home+ is unlimited.';
 
 /**
  * @param {PlanTier | string | null | undefined} tier
@@ -92,12 +93,14 @@ export function planLimits(plan) {
     return {
       maxGuides: FREE_PLAN_MAX_GUIDES,
       maxStays: FREE_PLAN_MAX_STAYS,
+      maxCategories: FREE_PLAN_MAX_CATEGORIES,
       features
     };
   }
   return {
     maxGuides: null,
     maxStays: null,
+    maxCategories: null,
     features
   };
 }

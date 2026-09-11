@@ -47,11 +47,13 @@ describe('platformPlanTier', () => {
     expect(planLimits('free')).toEqual({
       maxGuides: 2,
       maxStays: 2,
+      maxCategories: 2,
       features: { bins: false, smartHome: false, weather: true }
     });
     expect(planLimits('plus')).toEqual({
       maxGuides: null,
       maxStays: null,
+      maxCategories: null,
       features: { bins: true, smartHome: true, weather: true }
     });
   });

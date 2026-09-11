@@ -765,6 +765,24 @@ body.is-bins-route .app-viewport > .bins-app {
 }
 .home-launcher-card:active { transform: scale(0.985); filter: brightness(1.06); }
 .home-launcher-card:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+
+.home-launcher-card--plan-locked {
+  opacity: 0.52;
+  filter: grayscale(0.35);
+}
+
+.home-launcher-card--plan-locked .home-launcher-icon,
+.home-launcher-card--plan-locked .home-launcher-title,
+.home-launcher-card--plan-locked .home-launcher-live-title,
+.home-launcher-card--plan-locked .home-launcher-live-subtitle {
+  opacity: 0.95;
+}
+
+.home-launcher-card--plan-locked:hover,
+.home-launcher-card--plan-locked:active {
+  opacity: 0.68;
+  filter: grayscale(0.2);
+}
 .home-launcher-icon {
   width: 52px;
   height: 52px;

@@ -78,6 +78,16 @@ describe('propertyAddressChange', () => {
     ).toBe(true);
   });
 
+  it('does not confirm a plain address change when no bin data exists yet', () => {
+    expect(
+      shouldConfirmPropertyAddressChange(
+        { line1: 'Old', postcode: 'AA1 1AA' },
+        { line1: 'New', postcode: 'BB2 2BB' },
+        {}
+      )
+    ).toBe(false);
+  });
+
   it('plans bin schedule clearing when profile has collection dates', () => {
     const plan = planPropertyAddressChange({
       previousAddress: { line1: 'Old', postcode: 'AA1 1AA' },

@@ -381,6 +381,72 @@ export async function getGuideCategoryById(db, categoryId) {
 }
 
 /**
+ * Count editable guide areas (excludes the appliance-manuals bucket).
+ *
+ * @param {D1Database} db
+ * @param {string} [guideId]
+ */
+export async function countGuideCategories(db, guideId = 'default') {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS count FROM guide_categories WHERE guide_id = ? AND id != 'appliance-manuals'`
+    )
+    .bind(guideId)
+    .first();
+  return Number(row?.count ?? 0);
+}
+
+/** @type {readonly string[]} */
+export const GUIDE_CATEGORY_ACCENT_PALETTE = [
+  '#6ea8ff',
+  '#f4b64f',
+  '#7dd3a0',
+  '#c084fc',
+  '#fb7185',
+  '#38bdf8'
+];
+
+/**
+ * @param {D1Database} db
+ * @param {Object} input
+ */
+export async function createGuideCategory(db, input) {
+  const existing = await getGuideCategoryById(db, input.id);
+  if (existing) return { conflict: true };
+
+  const guideId = String(input.guideId ?? 'default').trim() || 'default';
+  const maxRow = await db
+    .prepare(`SELECT MAX(sort_order) AS max_order FROM guide_categories WHERE guide_id = ?`)
+    .bind(guideId)
+    .first();
+  const sortOrder = Number(maxRow?.max_order ?? -1) + 1;
+  const paletteIndex = sortOrder % GUIDE_CATEGORY_ACCENT_PALETTE.length;
+  const now = new Date().toISOString();
+
+  await db
+    .prepare(
+      `INSERT INTO guide_categories (
+        id, title, card_subtitle, icon_id, accent, search_terms, sort_order, published, updated_at, guide_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(
+      input.id,
+      input.title,
+      input.cardSubtitle ?? '',
+      input.iconId ?? 'book-open',
+      input.accent ?? GUIDE_CATEGORY_ACCENT_PALETTE[paletteIndex],
+      JSON.stringify(input.searchTerms ?? []),
+      sortOrder,
+      1,
+      now,
+      guideId
+    )
+    .run();
+
+  return getGuideCategoryById(db, input.id);
+}
+
+/**
  * @param {D1Database} db
  * @param {Object} input
  */

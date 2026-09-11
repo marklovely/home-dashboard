@@ -8,6 +8,7 @@ import { getHubDisplayName, getSiteProfileState, subscribeToSiteProfile } from '
 import { formatStayDate } from '../../services/sitterStaysService.js';
 import { getWeatherSnapshot } from '../../services/homeWeatherSnapshot.js';
 import { mountBinAlertBannerHost } from '../../services/binAlertBannerSync.js';
+import { isPlanLockedHomeApp } from '../../services/hubPlanFeatures.js';
 
 /** @type {Record<string, { headline: string, teaser?: string, teaserFromSummary?: 'title' | 'subtitle' }>} */
 const ESSENTIAL_CARD_COPY = {
@@ -59,6 +60,7 @@ function createLauncherCard(app, onSelect, options = {}) {
   button.className = 'home-launcher-card';
   if (options.essential) button.classList.add('home-launcher-card--essential');
   if (options.secondary) button.classList.add('sitter-info-card');
+  if (isPlanLockedHomeApp(app.id)) button.classList.add('home-launcher-card--plan-locked');
   button.style.setProperty('--accent', app.accent ?? '#7eab90');
   const titleText = getAppDisplayTitle(app);
   button.setAttribute('aria-label', `${titleText}. ${app.description}`);

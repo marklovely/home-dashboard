@@ -96,7 +96,7 @@ export function shouldConfirmPropertyAddressChange(previousAddress, nextAddress,
   if (!hasPropertyAddress(previousAddress)) {
     return false;
   }
-  return hasLocationSensitiveBinData(readBinScheduleFromProfile(profile)) || hasPropertyAddress(nextAddress);
+  return hasLocationSensitiveBinData(readBinScheduleFromProfile(profile));
 }
 
 export function planPropertyAddressChange({ previousAddress, nextAddress, profile }) {
