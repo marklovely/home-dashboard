@@ -344,6 +344,73 @@
           "done": null
         }
       ]
+    },
+    "test-cottage-paid": {
+      "siteId": "test-cottage-paid",
+      "hostname": "test-cottage-paid.lovely-hub.com",
+      "hubEnvironment": "test-cottage-paid",
+      "vanilla": false,
+      "terraform": true,
+      "attachHubApiBinding": true,
+      "protected": false,
+      "hasOwnerEmails": false,
+      "demoPublic": false,
+      "accessEnabled": true,
+      "pagesProject": "home-dashboard-test-cottage-paid",
+      "workerName": "lovely-home-hub-api-test-cottage-paid",
+      "pagesUrl": "https://test-cottage-paid.lovely-hub.com",
+      "workerApiOrigin": "https://lovely-home-hub-api-test-cottage-paid.mark-lovely67.workers.dev",
+      "contract": {
+        "access_aud_combined": "e067445550e6de55e5cef669875b4053f907638fa30d7fab45edff80aab1a358,920e43198e738fbb7dc52ea0fff672fa2b897a44c189d20a1b0f80e8e858f2f6",
+        "access_enabled": true,
+        "access_pages_app_id": "e32eb731-a39a-45d4-ac1c-2bf4f9f9ef8d",
+        "access_pages_aud": "920e43198e738fbb7dc52ea0fff672fa2b897a44c189d20a1b0f80e8e858f2f6",
+        "access_worker_app_id": "f6c9291c-c2ee-4b80-a24a-f67226d2eda8",
+        "access_worker_aud": "e067445550e6de55e5cef669875b4053f907638fa30d7fab45edff80aab1a358",
+        "cf_access_team_domain": "lovely-home",
+        "d1_database_id": "cab40ccf-fe97-4a2d-b611-bba7130b1978",
+        "d1_database_name": "lovely-home-appliance-manuals-test-cottage-paid",
+        "default_latitude": "51.5074",
+        "default_longitude": "-0.1278",
+        "hostname": "test-cottage-paid.lovely-hub.com",
+        "hub_environment": "test-cottage-paid",
+        "pages_project": "home-dashboard-test-cottage-paid",
+        "pages_url": "https://test-cottage-paid.lovely-hub.com",
+        "r2_guides_bucket": "lovely-home-appliance-guides-test-cottage-paid",
+        "r2_media_bucket": "lovely-home-guide-media-test-cottage-paid",
+        "site_id": "test-cottage-paid",
+        "vanilla": false,
+        "worker_api_origin": "https://lovely-home-hub-api-test-cottage-paid.mark-lovely67.workers.dev",
+        "worker_hostname": "lovely-home-hub-api-test-cottage-paid.mark-lovely67.workers.dev",
+        "worker_name": "lovely-home-hub-api-test-cottage-paid"
+      },
+      "provisioning": [
+        {
+          "id": "terraform",
+          "label": "Terraform contract in platform manifest",
+          "done": true
+        },
+        {
+          "id": "worker",
+          "label": "Worker deployed (Wrangler)",
+          "done": null
+        },
+        {
+          "id": "pages",
+          "label": "Pages production deployment",
+          "done": null
+        },
+        {
+          "id": "hub-api",
+          "label": "HUB_API Pages binding",
+          "done": null
+        },
+        {
+          "id": "access-probe",
+          "label": "Access + API probe healthy",
+          "done": null
+        }
+      ]
     }
   }
 }
