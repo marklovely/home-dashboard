@@ -86,7 +86,7 @@ describe('signup success provisioning status', () => {
 
     expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Welcome back');
     expect(document.getElementById('success-heading').textContent).toBe("Thank you — we're reinstating your hub");
-    expect(document.getElementById('success-lead').textContent).toMatch(/active again/i);
+    expect(document.getElementById('success-lead').textContent).toMatch(/reinstating your home/i);
     expect(document.getElementById('hub-progress-title').textContent).toMatch(/Reinstating your hub now/i);
   });
 
@@ -121,7 +121,7 @@ describe('signup success provisioning status', () => {
     expect(document.getElementById('success-heading').textContent).toBe('Success — your hub is now ready');
     expect(document.title).toBe('Lovely Home — Your hub is ready');
     expect(document.getElementById('success-wait-banner').hidden).toBe(true);
-    expect(document.getElementById('success-lead').textContent).toMatch(/finished building/i);
+    expect(document.getElementById('success-lead').textContent).toMatch(/is ready/i);
     expect(openBtn.hidden).toBe(false);
     expect(openBtn.getAttribute('href')).toBe('https://blundell.lovely-hub.com/');
     expect(document.getElementById('hub-link').getAttribute('href')).toBe('https://blundell.lovely-hub.com/');
@@ -141,7 +141,7 @@ describe('signup success provisioning status', () => {
 
     expect(document.getElementById('hub-progress').dataset.state).toBe('unknown');
     expect(document.getElementById('open-hub-btn').hidden).toBe(false);
-    expect(globalThis.fetch).toHaveBeenCalledTimes(4);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
   });
 
   it('stops on a failed registry instead of waiting for a hub that will never exist', async () => {
