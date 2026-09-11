@@ -1,4 +1,4 @@
-import { getPlatformBillingDb, stripeApiRequest, TRIAL_PERIOD_DAYS } from './platformBilling.js';
+import { getPlatformBillingDb, stripeApiRequest } from './platformBilling.js';
 import { describeIntroOffer } from './platformIntroOffer.js';
 import {
   applyMarketingPricingOverrides,
@@ -257,7 +257,6 @@ export async function getPublicPlanPricing(env) {
   const merged = applyMarketingPricingOverrides(withIntro, overrides);
   return {
     ...merged,
-    billingTrialDays: TRIAL_PERIOD_DAYS,
     displayCopy: buildPublicDisplayCopy(merged, overrides)
   };
 }
@@ -271,7 +270,6 @@ export function buildPublicDisplayCopy(pricing, overrides) {
   const referral = pricing.referral ?? defaultReferralDisplayCopy(overrides);
   return {
     trialDays: pricing.trialDays,
-    billingTrialDays: TRIAL_PERIOD_DAYS,
     monthlyLabel: pricing.monthlyLabel,
     yearlyLabel: pricing.yearlyLabel,
     checkoutSummary: pricing.checkoutSummary,

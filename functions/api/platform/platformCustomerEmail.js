@@ -10,7 +10,6 @@ import { isReturningBillingSignup } from './platformHubNameHold.js';
 
 export const CUSTOMER_EMAIL_KINDS = /** @type {const} */ ([
   'signup',
-  'trial_ending',
   'past_due',
   'canceled'
 ]);
@@ -20,7 +19,6 @@ export const CUSTOMER_EMAIL_KINDS = /** @type {const} */ ([
 /** @type {Record<CustomerEmailKind, string>} */
 export const CUSTOMER_EMAIL_SENT_COLUMNS = {
   signup: 'signup_email_sent_at',
-  trial_ending: 'trial_ending_email_sent_at',
   past_due: 'past_due_email_sent_at',
   canceled: 'canceled_email_sent_at'
 };
@@ -87,7 +85,6 @@ export function lifecycleEmailKindForEvent(input) {
   if (eventType === 'customer.subscription.created' && (status === 'trialing' || status === 'active')) {
     return 'signup';
   }
-  if (eventType === 'customer.subscription.trial_will_end') return 'trial_ending';
   if (eventType === 'invoice.payment_failed') return 'past_due';
   if (eventType === 'customer.subscription.deleted') return 'canceled';
   if (eventType === 'customer.subscription.updated' && status === 'canceled') return 'canceled';
@@ -140,10 +137,8 @@ export function buildCustomerEmail(input) {
   const origin = (input.marketingOrigin || DEFAULT_MARKETING_ORIGIN).replace(/\/$/, '');
   const successUrl = `${origin}/signup-success?site=${encodeURIComponent(siteId)}`;
   const accountUrl = `${origin}/account`;
-  const trialDate = formatUkDate(input.trialEnd);
   const plan = normalizePlanTier(input.planTier);
   const returning = Boolean(input.returning);
-  const status = String(input.status ?? '');
 
   if (input.kind === 'signup') {
     const shared = sharedSignupLines({ hubUrl, successUrl, accountUrl, returning });
@@ -160,50 +155,15 @@ export function buildCustomerEmail(input) {
       };
     }
 
-    if (returning || status === 'active') {
-      return {
-        subject: `Welcome back — ${siteId}.lovely-hub.com`,
-        text: [
-          ...shared.slice(0, 1),
-          '',
-          ...shared.slice(2, -3),
-          'Your Lovely Home+ subscription is active. Your card on file is billed at the plan you chose.',
-          ...shared.slice(-3)
-        ].join('\n')
-      };
-    }
-
+    const plusSubject = returning
+      ? `Welcome back — ${siteId}.lovely-hub.com`
+      : `Your Lovely Home+ hub — ${siteId}.lovely-hub.com`;
+    const plusPlanLine = returning
+      ? 'Your Lovely Home+ subscription is active again. Your card on file is billed at the plan you chose.'
+      : 'Your Lovely Home+ subscription is active. Your card on file is billed at the plan you chose.';
     return {
-      subject: `Your Lovely Home+ trial — ${siteId}.lovely-hub.com`,
-      text: [
-        'Your 7-day Lovely Home+ trial has started. We are setting up your private household hub now — it can take up to 10 minutes, often faster when queues are clear.',
-        '',
-        `Your hub: ${hubUrl}`,
-        `Watch progress: ${successUrl}`,
-        '',
-        'Sign in with this email address. Cloudflare will send a one-time code.',
-        '',
-        'Use the week to fill in the house guide, then share the URL with whoever is staying — a sitter, tenant, Airbnb guest, or anyone else in the home. A wall tablet is optional; nothing extra to buy.',
-        '',
-        'You are not charged today. After the trial your card is billed at the Lovely Home+ plan you chose. Cancel from your account page before the trial ends to pay nothing:',
-        accountUrl,
-        '',
-        'Questions: support@lovely-home.co.uk'
-      ].join('\n')
-    };
-  }
-
-  if (input.kind === 'trial_ending') {
-    const when = trialDate ? ` on ${trialDate}` : ' soon';
-    return {
-      subject: `Your Lovely Home+ trial ends${trialDate ? ` on ${trialDate}` : ' soon'}`,
-      text: [
-        `Your Lovely Home+ trial for ${hubUrl} ends${when}. If you do nothing, your card will be charged then.`,
-        '',
-        `To cancel and pay nothing, open ${accountUrl} (we email you a code), or write to support@lovely-home.co.uk.`,
-        '',
-        `Open your hub: ${hubUrl}`
-      ].join('\n')
+      subject: plusSubject,
+      text: [...shared.slice(0, -3), plusPlanLine, ...shared.slice(-3)].join('\n')
     };
   }
 

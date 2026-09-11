@@ -1,5 +1,5 @@
 /**
- * Live hub provisioning status for the trial success page.
+ * Live hub provisioning status for the signup success page.
  *
  * A hub takes roughly ten minutes to build, so the page polls the platform
  * instead of asking buyers to keep retrying the URL. The address stays as
@@ -46,7 +46,6 @@
   const hostname = siteId + '.lovely-hub.com';
   const hubUrl = 'https://' + hostname + '/';
   const startedAt = Date.now();
-  let billingTrialDays = 7;
 
   let timer = null;
   let giveUpTimer = null;
@@ -59,26 +58,7 @@
   hubBlock.hidden = false;
   progress.hidden = false;
 
-  function trialPhrase() {
-    return billingTrialDays + '-day trial';
-  }
-
-  async function loadBillingTrialDays() {
-    try {
-      const response = await fetch(apiBase + '/api/public/signup/pricing', {
-        headers: { Accept: 'application/json' }
-      });
-      if (!response.ok) return;
-      const pricing = await response.json();
-      const days = Number(pricing.billingTrialDays ?? pricing.trialDays);
-      if (Number.isFinite(days) && days > 0) billingTrialDays = days;
-    } catch {
-      /* keep default */
-    }
-  }
-
-  async function init() {
-    await loadBillingTrialDays();
+  function init() {
     applyIntroCopy();
     void poll();
     giveUpTimer = setTimeout(() => {
@@ -171,14 +151,12 @@
         'Lovely Home — Welcome back'
       );
       lead.textContent =
-        'Your ' +
-        trialPhrase() +
-        ' is active again for ' +
+        'We are reinstating your home at ' +
         hostname +
-        '. We are rebuilding your hub — up to 10 minutes, often faster. Leave this page open and we will tell you when it is live again.';
+        '. Rebuilding the hub takes up to 10 minutes, often faster. Leave this page open and we will tell you when it is live again.';
       if (successSteps) {
         successSteps.innerHTML =
-          '<li>Stripe confirms your trial — you are not charged today.</li>' +
+          '<li>Signup is confirmed — your plan is active again.</li>' +
           '<li>We register your hub again and run the automated build (up to 10 minutes, often faster).</li>' +
           '<li>DNS, hosting, and your owner sign-in are provisioned.</li>' +
           '<li>This page shows an Open button and a QR code as soon as your hub answers.</li>';
@@ -186,16 +164,14 @@
       return;
     }
 
-    setPageHeading('Trial started', "Thank you — we're building your hub", 'Lovely Home — Trial started');
+    setPageHeading('Signup complete', "Thank you — we're building your hub", 'Lovely Home — Setting up your hub');
     lead.textContent =
-      'Your ' +
-      trialPhrase() +
-      ' is active for ' +
+      'We are setting up your home at ' +
       hostname +
       '. Building a hub takes up to 10 minutes — often faster — leave this page open and it will tell you the moment yours is live.';
     if (successSteps) {
       successSteps.innerHTML =
-        '<li>Stripe confirms your trial — you are not charged today.</li>' +
+        '<li>Signup is confirmed — Lovely Home Free or Lovely Home+ depending on the plan you chose.</li>' +
         '<li>We register your hub and run the automated build (up to 10 minutes, often faster).</li>' +
         '<li>DNS, hosting, and your owner sign-in are provisioned.</li>' +
         '<li>This page shows an Open button and a QR code as soon as your hub answers.</li>';
@@ -220,16 +196,12 @@
       returning ? 'Lovely Home — Welcome back' : 'Lovely Home — Your hub is ready'
     );
     lead.textContent = returning
-      ? 'Your ' +
-        trialPhrase() +
-        ' is active again for ' +
+      ? 'Your home at ' +
         hostname +
-        '. Your hub is live again — sign in and restore your backup when you are ready.'
-      : 'Your ' +
-        trialPhrase() +
-        ' is active for ' +
+        ' is live again — sign in and restore your backup when you are ready.'
+      : 'Your home at ' +
         hostname +
-        '. Your hub finished building — use the trial to set it up before guests arrive.';
+        ' is ready — run the setup wizard and share the URL when you are ready.';
     setTitle(returning ? 'Your hub is live again' : 'Your hub is live', false);
     progressNote.textContent = 'Open it below and run the setup wizard — or scan the code on the device you want to use.';
     hubLink.href = hubUrl;
@@ -250,14 +222,12 @@
       'Lovely Home — Hub setup failed'
     );
     lead.textContent = invalidName
-      ? 'Your card was not charged, but this hub address cannot be used. Pick a name with letters, numbers, or hyphens — no underscores.'
-      : 'Your ' +
-        trialPhrase() +
-        ' started, but we could not finish building this hub. You have not been charged. Email support@lovely-home.co.uk with this address and we will complete it.';
+      ? 'This hub address cannot be used. Pick a name with letters, numbers, or hyphens — no underscores. Contact support@lovely-home.co.uk if you were charged in error.'
+      : 'Signup went through, but we could not finish building this hub. Email support@lovely-home.co.uk with this address and we will complete it.';
     setTitle(invalidName ? 'Hub address cannot be used' : 'Hub setup did not finish', false);
     progressNote.textContent =
       (payload?.message || 'We could not finish building your hub.') +
-      ' You can try a different address below, then cancel this trial from the Stripe email if you still have one.';
+      ' You can try a different address below, or cancel from your Stripe receipt or account page.';
     hubLink.removeAttribute('href');
     openBtn.hidden = true;
     showRetry();
@@ -274,14 +244,12 @@
       'Lovely Home — Hub setup delayed'
     );
     lead.textContent =
-      'Your ' +
-      trialPhrase() +
-      ' is active for ' +
+      'We could not confirm whether ' +
       hostname +
-      ', but this page could not confirm the hub is live. Email support@lovely-home.co.uk with this address and we will finish it.';
+      ' is live yet. Email support@lovely-home.co.uk with this address and we will finish setup.';
     setTitle('We could not confirm your hub is live', false);
     progressNote.textContent =
-      'Do not keep waiting here. Send us the hub address above and we will complete the setup. You have not been charged.';
+      'Do not keep waiting here. Send us the hub address above and we will complete the setup.';
     hubLink.removeAttribute('href');
     openBtn.hidden = true;
     showRetry();

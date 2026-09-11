@@ -41,9 +41,6 @@ import { getStripeMode, stripeCredentialsForMode, stripeSetConfigured } from './
  *   updated_at: number;
  * }} SiteBillingRow */
 
-/** Card-required trial length sent to Stripe Checkout (`subscription_data.trial_period_days`). */
-export const TRIAL_PERIOD_DAYS = 7;
-
 const SITE_ID_RE = /^[a-z][a-z0-9-]{0,31}$/;
 
 /**
@@ -338,7 +335,6 @@ export function defaultCheckoutUrls(env, platformHostname) {
  *   referralCode?: string;
  *   referrerSiteId?: string;
  *   applyIntroOffer?: boolean;
- *   skipTrial?: boolean;
  * }} input
  */
 export async function createBillingCheckoutSession(env, input) {
@@ -385,7 +381,6 @@ export async function createBillingCheckoutSession(env, input) {
     automatic_tax: { enabled: false },
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      ...(input.skipTrial ? {} : { trial_period_days: TRIAL_PERIOD_DAYS }),
       metadata: { ...metadata }
     },
     metadata: { ...metadata }
@@ -695,7 +690,7 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     billingPatch.siteId = metadata.site_id ? String(metadata.site_id) : null;
     billingPatch.customerId = object.customer ? String(object.customer) : null;
     billingPatch.subscriptionId = object.subscription ? String(object.subscription) : null;
-    billingPatch.status = 'trialing';
+    billingPatch.status = 'active';
     billingPatch.ownerEmail = checkoutSessionOwnerEmail(object);
   } else if (eventType === 'customer.subscription.trial_will_end') {
     const parsed = parseStripeSubscription(object);

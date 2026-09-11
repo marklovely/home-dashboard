@@ -283,7 +283,7 @@
             '<div class="account-referral-result" hidden></div>' +
             '</div>'
           : '<div class="account-referral account-referral--locked">' +
-            '<p class="signup-note muted"><strong>Refer a friend</strong> — unlocks after your first paid invoice (when your trial ends). That stops trial-only self-referrals for discounts.</p>' +
+            '<p class="signup-note muted"><strong>Refer a friend</strong> — unlocks after your first paid invoice.</p>' +
             '</div>'
         : '';
     const backupReminder = !canceled
@@ -309,9 +309,9 @@
       ? ''
       : '<a class="btn btn-secondary btn-block" href="' + escapeHtml(hub.hubUrl) + '"' + newTabAttrs() + '>Open hub</a>';
     const body = canceled
-      ? '<p>This subscription is cancelled, so Stripe has no live plan to change — only invoices and the saved card. Start a new trial if you want the hub back.</p>'
+      ? '<p>This subscription is cancelled, so Stripe has no live plan to change — only invoices and the saved card. Create a new home at lovely-home.co.uk/signup if you want the hub back.</p>'
       : '<p>This is your private household hub. Guests sign in with Cloudflare email codes. Your card stays with Stripe — we never see the number.</p>' +
-        '<p>Cancel before the trial ends and you pay nothing. After a paid period, cancel anytime; the hub stays up until that period ends, then we archive the house guide JSON and take the site down. Download a full backup from Settings before cancelling if you want photos and PDFs — our platform archive is guide JSON only.</p>';
+        '<p>Cancel anytime from Stripe; the hub stays up until the end of the current billing period, then we archive the house guide JSON and take the site down. Download a full backup from Settings before cancelling if you want photos and PDFs — our platform archive is guide JSON only.</p>';
     return (
       '<article class="account-hub-card">' +
         '<p class="account-hub-status' +
@@ -435,8 +435,8 @@
   }
 
   function statusCopy(status, trial) {
-    if (status === 'trialing') return trial ? 'Trial — first charge ' + trial : 'Trial — you are not charged today';
-    if (status === 'active') return 'Paid subscription';
+    if (status === 'trialing') return trial ? 'Legacy trial — first charge ' + trial : 'Legacy trial';
+    if (status === 'active') return 'Active subscription';
     if (status === 'past_due') return 'Payment failed — update the card on Stripe';
     if (status === 'canceled') return 'Cancelled — this hub has ended';
     return 'Hub status: ' + status;

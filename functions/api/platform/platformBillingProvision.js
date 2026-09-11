@@ -35,8 +35,8 @@ export function siteHasTerraformContract(manifestSite) {
 export function shouldDispatchBillingProvision(input) {
   const { eventType, status, siteId, existingBilling, manifestSite } = input;
 
-  if (status !== 'trialing') {
-    return { dispatch: false, reason: 'not_trialing' };
+  if (status !== 'active' && status !== 'trialing') {
+    return { dispatch: false, reason: 'not_paid' };
   }
   if (!BILLING_PROVISION_TRIGGER_EVENTS.includes(eventType)) {
     return { dispatch: false, reason: 'event_type' };
@@ -63,7 +63,7 @@ export function shouldDispatchBillingProvision(input) {
   if (siteHasTerraformContract(manifestSite)) {
     return { dispatch: false, reason: 'already_provisioned' };
   }
-  return { dispatch: true, reason: 'trialing_needs_provision' };
+  return { dispatch: true, reason: 'paid_needs_provision' };
 }
 
 /**

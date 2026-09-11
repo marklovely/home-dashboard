@@ -129,7 +129,6 @@ describe('platform public pricing', () => {
     expect(pricing.monthlyLabel).toBe('£9.99/month');
     expect(pricing.yearlyLabel).toBe('£99.00/year');
     expect(pricing.annualSavingsPercent).toBe(17);
-    expect(pricing.billingTrialDays).toBe(7);
     expect(pricing.displayCopy?.monthlyLabel).toBe('£9.99/month');
     expect(pricing.displayCopy?.referralMonthlyReferee).toMatch(/£2\.50 off/);
   });
@@ -148,7 +147,6 @@ describe('platform public pricing', () => {
       'Household Hub'
     );
     const displayCopy = buildPublicDisplayCopy(pricing, {});
-    expect(displayCopy.billingTrialDays).toBe(7);
     expect(displayCopy.introMonthlyBenefit).toMatch(/25%/);
     expect(displayCopy.referralMonthlyReferrer).toMatch(/£5 account credit/);
   });

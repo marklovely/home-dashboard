@@ -86,7 +86,7 @@ export async function typeStripeField(locator, value) {
 export async function clickStripeCheckoutSubmit(page) {
   const submit = page
     .getByTestId('hosted-payment-submit-button')
-    .or(page.getByRole('button', { name: /start trial|subscribe|pay/i }));
+    .or(page.getByRole('button', { name: /subscribe|pay/i }));
   await submit.first().waitFor({ state: 'visible', timeout: 30_000 });
   await submit.first().scrollIntoViewIfNeeded();
   await submit.first().click({ timeout: 10_000 }).catch(async () => {

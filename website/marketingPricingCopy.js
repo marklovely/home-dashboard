@@ -41,12 +41,7 @@ export function buildPlaceholderMap(pricing) {
     pricing?.introOffer && typeof pricing.introOffer === 'object'
       ? /** @type {Record<string, unknown>} */ (pricing.introOffer)
       : {};
-  const billingTrialDays =
-    displayCopy.billingTrialDays ?? pricing?.billingTrialDays ?? pricing?.trialDays ?? 7;
-
   return {
-    billingTrialDays: String(billingTrialDays),
-    trialDays: String(displayCopy.trialDays ?? pricing?.trialDays ?? billingTrialDays),
     monthlyLabel: String(displayCopy.monthlyLabel ?? pricing?.monthlyLabel ?? ''),
     yearlyLabel: String(displayCopy.yearlyLabel ?? pricing?.yearlyLabel ?? ''),
     introMonthlyBenefit: String(displayCopy.introMonthlyBenefit ?? intro.monthlyBenefit ?? ''),
@@ -94,15 +89,6 @@ export function buildPricingMetaDescription(pricing) {
     map.yearlyLabel +
     ' for unlimited guides and scheduled stays.'
   );
-}
-
-/**
- * @param {Record<string, unknown> | null | undefined} pricing
- */
-export function billingTrialDays(pricing) {
-  const map = buildPlaceholderMap(pricing);
-  const parsed = Number(map.billingTrialDays);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 7;
 }
 
 /**

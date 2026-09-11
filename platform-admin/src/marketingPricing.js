@@ -50,14 +50,13 @@ export function renderMarketingPricingPanel(data, billingDbConfigured) {
           ${hasOverrides ? '<span class="panel-fold-summary-trailing"><span class="badge badge-ok">Custom copy</span></span>' : ''}
         </summary>
         <div class="panel-fold-body">
-          <p class="muted">Edit what lovely-home.co.uk shows for prices, trials, intro offer, and referrals. <strong>Stripe checkout still uses your configured price IDs and coupons</strong> — change those in Stripe and Terraform. Display-only overrides are stored in D1.</p>
+          <p class="muted">Edit what lovely-home.co.uk shows for prices, intro offer, and referrals. <strong>Stripe checkout still uses your configured price IDs and coupons</strong> — change those in Stripe and Terraform. Display-only overrides are stored in D1.</p>
           <p class="marketing-pricing-message" id="marketing-pricing-message" hidden></p>
           <form class="marketing-pricing-form" id="marketing-pricing-form">
             <div class="form-section">
               <h3 class="form-section__title">Core pricing</h3>
               <div class="form-grid">
                 ${renderField('productName', 'Product name', effective.productName, stripe.productName)}
-                ${renderField('trialDays', 'Trial days (display)', effective.trialDays, stripe.trialDays, 'number')}
                 ${renderField('monthlyLabel', 'Monthly label', effective.monthlyLabel, stripe.monthlyLabel)}
                 ${renderField('yearlyLabel', 'Yearly label', effective.yearlyLabel, stripe.yearlyLabel)}
                 ${renderField('annualSavingsLabel', 'Annual savings line', effective.annualSavingsLabel, stripe.annualSavingsLabel, 'text', true)}

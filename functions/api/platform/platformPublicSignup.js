@@ -5,7 +5,6 @@ import {
   getSiteBilling,
   stripeBillingConfigured,
   stripeFreePriceConfigured,
-  TRIAL_PERIOD_DAYS,
   upsertSiteBilling,
   validateBillingSiteId
 } from './platformBilling.js';
@@ -198,7 +197,7 @@ export async function checkPublicSignupSlug(manifest, siteId, billingDb, options
 }
 
 /**
- * Start a trial: verify the request, hold the slug, and hand back a Stripe
+ * Start signup: verify the request, hold the slug, and hand back a Stripe
  * Checkout URL. Nothing is provisioned here — the registry entry is created
  * from the Stripe webhook once payment details are confirmed, so an abandoned
  * or hostile signup cannot build infrastructure.
@@ -519,8 +518,7 @@ export async function handlePublicHubSignup(env, input) {
     mode: stripeMode,
     referralCode: referralValidation.referral?.code,
     referrerSiteId: referralValidation.referral?.referrerSiteId,
-    applyIntroOffer: introOffer.apply,
-    skipTrial: returning
+    applyIntroOffer: introOffer.apply
   });
 
   if (!checkout.ok) {
@@ -572,7 +570,6 @@ export async function handlePublicHubSignup(env, input) {
       siteId,
       hostname,
       plan: 'plus',
-      trialDays: TRIAL_PERIOD_DAYS,
       checkoutUrl: checkout.url,
       sessionId: checkout.sessionId,
       reservedUntil: reservation.expiresAt ?? null,

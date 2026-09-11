@@ -177,7 +177,7 @@ export async function waitForCheckoutSessionComplete(secretKey, sessionId, timeo
     const status = String(last.status ?? '');
     if (status === 'complete') return last;
     if (status === 'expired') {
-      throw new Error(`Stripe Checkout session ${sessionId} expired before the trial started.`);
+      throw new Error(`Stripe Checkout session ${sessionId} expired before the subscription started.`);
     }
     await new Promise((resolve) => setTimeout(resolve, 3_000));
   }
@@ -209,18 +209,18 @@ export async function expireCheckoutSession(secretKey, sessionId) {
 
 /**
  * Hosted Checkout (Onelink) can sit on Processing forever under Playwright.
- * Expire the open session and start the same trial via the API so provision still runs.
+ * Expire the open session and start the same subscription via the API so provision still runs.
  *
  * @param {string} secretKey
  * @param {{ sessionId: string; siteId: string; customerEmail: string; priceId?: string }} input
  */
-export async function startTestTrialFromCheckoutSession(secretKey, input) {
+export async function startTestSubscriptionFromCheckoutSession(secretKey, input) {
   const session = await getCheckoutSession(secretKey, input.sessionId, { 'expand[]': 'line_items' });
   if (String(session.status ?? '') === 'complete') return session;
 
   const priceId = input.priceId?.trim() || priceIdFromCheckoutSession(session);
   if (!priceId) {
-    throw new Error('Cannot start a test trial without a Stripe price id from Checkout or STRIPE_PRICE_ID.');
+    throw new Error('Cannot start a test subscription without a Stripe price id from Checkout or STRIPE_PRICE_ID.');
   }
 
   if (String(session.status ?? '') !== 'expired') {
@@ -245,7 +245,6 @@ export async function startTestTrialFromCheckoutSession(secretKey, input) {
   return stripeRequest(secretKey, 'POST', '/subscriptions', {
     customer: customer.id,
     items: [{ price: priceId }],
-    trial_period_days: 7,
     default_payment_method: paymentMethod.id,
     metadata: { site_id: input.siteId },
     payment_settings: { save_default_payment_method: 'on_subscription' }

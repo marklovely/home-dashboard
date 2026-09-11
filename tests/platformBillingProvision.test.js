@@ -19,7 +19,18 @@ describe('billing provision helpers', () => {
     expect(siteHasTerraformContract({ contract: null })).toBe(false);
   });
 
-  it('dispatches for trialing checkout when site lacks infrastructure', () => {
+  it('dispatches for active checkout when site lacks infrastructure', () => {
+    const decision = shouldDispatchBillingProvision({
+      eventType: 'checkout.session.completed',
+      status: 'active',
+      siteId: 'practice',
+      existingBilling: null,
+      manifestSite: { siteId: 'practice', contract: null }
+    });
+    expect(decision).toEqual({ dispatch: true, reason: 'paid_needs_provision' });
+  });
+
+  it('still dispatches for legacy trialing subscriptions', () => {
     const decision = shouldDispatchBillingProvision({
       eventType: 'checkout.session.completed',
       status: 'trialing',
@@ -27,7 +38,7 @@ describe('billing provision helpers', () => {
       existingBilling: null,
       manifestSite: { siteId: 'practice', contract: null }
     });
-    expect(decision).toEqual({ dispatch: true, reason: 'trialing_needs_provision' });
+    expect(decision).toEqual({ dispatch: true, reason: 'paid_needs_provision' });
   });
 
   it('skips when site already has terraform contract', () => {

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   cancelSubscriptionNow,
   findHubSubscription,
-  startTestTrialFromCheckoutSession,
+  startTestSubscriptionFromCheckoutSession,
   uniqueOwnerEmail,
   waitForCheckoutSessionComplete
 } from './lib/stripeApi.js';
@@ -27,7 +27,7 @@ test('free signup, wait for hub, cancel subscription, confirm teardown', async (
   await runLifecycleTest({ plan: 'free' });
 });
 
-test('plus signup via checkout, wait for hub, cancel trial, confirm teardown', async ({ page }) => {
+test('plus signup via checkout, wait for hub, cancel subscription, confirm teardown', async ({ page }) => {
   test.skip(
     String(process.env.E2E_SIGNUP_PLAN ?? 'free').trim().toLowerCase() !== 'plus',
     'Set E2E_SIGNUP_PLAN=plus to run the Lovely Home+ checkout lifecycle.'
@@ -79,10 +79,10 @@ async function runLifecycleTest({ plan, page }) {
       test.info().annotations.push({
         type: 'checkout',
         description: browserCheckout
-          ? 'Hosted Checkout stayed open after submit; started the trial via the Stripe API'
-          : 'Card fields were not available in hosted Checkout; started the trial via the Stripe API'
+          ? 'Hosted Checkout stayed open after submit; started the subscription via the Stripe API'
+          : 'Card fields were not available in hosted Checkout; started the subscription via the Stripe API'
       });
-      await startTestTrialFromCheckoutSession(secretKey, {
+      await startTestSubscriptionFromCheckoutSession(secretKey, {
         sessionId,
         siteId,
         customerEmail: ownerEmail,
@@ -101,7 +101,7 @@ async function runLifecycleTest({ plan, page }) {
   expect(live.looksLikeHub).toBe(true);
   expect(live.registered).toBe(true);
 
-  const expectedStatuses = plan === 'free' ? ['active'] : ['trialing', 'active'];
+  const expectedStatuses = ['active'];
   const subscription = await waitForSubscription(secretKey, ownerEmail, siteId, expectedStatuses);
   expect(subscription?.id).toMatch(/^sub_/);
   await cancelSubscriptionNow(secretKey, subscription.id);

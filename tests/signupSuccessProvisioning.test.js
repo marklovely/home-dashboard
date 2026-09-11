@@ -26,21 +26,11 @@ function jsonResponse(payload) {
   return { ok: true, status: 200, json: async () => payload };
 }
 
-const pricingResponse = { billingTrialDays: 7, trialDays: 7 };
-
 /**
  * @param {(url: string, init?: RequestInit) => Promise<{ ok: boolean, status?: number, json?: () => Promise<unknown> }>} hubHandler
  */
 function stubSignupSuccessFetch(hubHandler) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (url, init) => {
-      if (String(url).includes('/api/public/signup/pricing')) {
-        return jsonResponse(pricingResponse);
-      }
-      return hubHandler(url, init);
-    })
-  );
+  vi.stubGlobal('fetch', vi.fn(async (url, init) => hubHandler(url, init)));
 }
 
 const provisioning = {
@@ -74,7 +64,7 @@ describe('signup success provisioning status', () => {
 
     expect(document.getElementById('hub-progress').dataset.state).toBe('provisioning');
     expect(document.getElementById('success-heading').textContent).toBe("Thank you — we're building your hub");
-    expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Trial started');
+    expect(document.getElementById('success-eyebrow').textContent.trim()).toBe('Signup complete');
     expect(document.getElementById('hub-progress-title').textContent).toMatch(/Deploying your hub now/i);
     expect(document.getElementById('hub-progress-note').textContent).toMatch(/10 minutes/i);
     expect(document.getElementById('open-hub-btn').hidden).toBe(true);

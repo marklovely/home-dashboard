@@ -83,7 +83,7 @@ export function renderSiteBilling(site, billing, options) {
       <div class="billing">
         <span class="billing-label">Billing</span>
         <span class="billing-muted">No subscription</span>
-        <button type="button" class="btn btn-small" data-billing-checkout="${escapeHtml(siteId)}">Start 7-day trial</button>
+        <button type="button" class="btn btn-small" data-billing-checkout="${escapeHtml(siteId)}">Start Plus subscription</button>
       </div>
     `;
   }
@@ -137,7 +137,7 @@ export function renderSiteBilling(site, billing, options) {
       <span class="badge ${badgeClass}">${escapeHtml(billingStatusLabel(status))}</span>
       ${trialEnd && status === 'trialing' ? `<span class="billing-meta">trial ends ${escapeHtml(trialEnd)}</span>` : ''}
       ${ownerEmail ? `<span class="billing-meta">${escapeHtml(ownerEmail)}</span>` : ''}
-      ${showStartTrial ? `<button type="button" class="btn btn-small btn-ghost" data-billing-checkout="${escapeHtml(siteId)}">Start new trial</button>` : ''}
+      ${showStartTrial ? `<button type="button" class="btn btn-small btn-ghost" data-billing-checkout="${escapeHtml(siteId)}">Start Plus subscription</button>` : ''}
     </div>
     ${provisionHint}
     ${deprovisionHint}
