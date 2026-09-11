@@ -556,6 +556,57 @@ export async function cancelPriorSubscriptionAfterUpgrade(env, input) {
 }
 
 /**
+ * True when the customer still has another active/trialing subscription for the site
+ * (e.g. Plus checkout completed before the old Free subscription.deleted webhook).
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {'test' | 'live'} mode
+ * @param {string} customerId
+ * @param {string} siteId
+ * @param {string | null | undefined} excludeSubscriptionId
+ */
+export async function customerHasActiveSiteSubscription(
+  env,
+  mode,
+  customerId,
+  siteId,
+  excludeSubscriptionId
+) {
+  const secretKey = stripeCredentialsForMode(env, mode).secretKey;
+  const normalizedSiteId = String(siteId ?? '')
+    .trim()
+    .toLowerCase();
+  const excluded = String(excludeSubscriptionId ?? '').trim();
+  if (!secretKey || !customerId || !normalizedSiteId) return false;
+
+  for (const status of ['active', 'trialing']) {
+    const query = new URLSearchParams(
+      encodeStripeFormEntries({
+        customer: customerId,
+        status,
+        limit: 100
+      })
+    ).toString();
+    const payload = await stripeApiRequest(
+      secretKey,
+      'GET',
+      query ? `/subscriptions?${query}` : '/subscriptions'
+    );
+    const rows = Array.isArray(payload.data) ? payload.data : [];
+    for (const subscription of rows) {
+      const subscriptionId = String(subscription.id ?? '').trim();
+      if (excluded && subscriptionId === excluded) continue;
+      const metadata = /** @type {Record<string, unknown>} */ (subscription.metadata ?? {});
+      const metadataSiteId = String(metadata.site_id ?? '')
+        .trim()
+        .toLowerCase();
+      if (metadataSiteId === normalizedSiteId) return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Create a Stripe Customer and £0 subscription for the Free plan (no Checkout).
  *
  * @param {Record<string, string | undefined>} env
@@ -866,6 +917,9 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
 
   const existingBilling = await getSiteBilling(db, billingPatch.siteId);
 
+  const env = context.env;
+  const stripeMode = env ? await getStripeMode(db) : 'test';
+
   if (
     eventType.startsWith('customer.subscription.') &&
     existingBilling?.stripe_subscription_id &&
@@ -874,6 +928,23 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
   ) {
     await markWebhookEventProcessed(db, eventId, eventType);
     return { ok: true, action: 'stale_subscription_ignored' };
+  }
+
+  if (
+    eventType === 'customer.subscription.deleted' &&
+    env &&
+    billingPatch.customerId &&
+    billingPatch.siteId &&
+    (await customerHasActiveSiteSubscription(
+      env,
+      stripeMode,
+      billingPatch.customerId,
+      billingPatch.siteId,
+      billingPatch.subscriptionId
+    ))
+  ) {
+    await markWebhookEventProcessed(db, eventId, eventType);
+    return { ok: true, action: 'superseded_subscription_deleted_ignored' };
   }
 
   const manifest = context.manifest;
@@ -907,8 +978,6 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     };
   }
 
-  const env = context.env;
-  const stripeMode = env ? await getStripeMode(db) : 'test';
   const resolvedOwnerEmail =
     env && billingPatch.siteId
       ? await resolveBillingOwnerEmail(db, env, {
