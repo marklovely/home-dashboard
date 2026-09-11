@@ -378,7 +378,7 @@ describe('handleStripeBillingEvent', () => {
 
   it('detects a replacement active subscription for the same site', async () => {
     const fetchMock = vi.fn(async (url) => {
-      if (String(url).includes('/subscriptions?')) {
+      if (String(url).includes('/subscriptions')) {
         return {
           ok: true,
           json: async () => ({
@@ -408,6 +408,19 @@ describe('handleStripeBillingEvent', () => {
 
   it('ignores subscription.deleted when Stripe still has an active Plus subscription for the site', async () => {
     const db = /** @type {D1Database} */ (createBillingDbMock());
+    await handleStripeBillingEvent(db, {
+      id: 'evt_free_signup',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          customer: 'cus_free',
+          subscription: 'sub_free',
+          metadata: { site_id: 'test-cottage-free' },
+          customer_details: { email: 'owner@example.com' }
+        }
+      }
+    });
+
     const fetchMock = vi.fn(async (url) => {
       if (String(url).includes('/subscriptions?')) {
         return {
@@ -417,26 +430,18 @@ describe('handleStripeBillingEvent', () => {
           })
         };
       }
-      return { ok: true, json: async () => ({ id: 'evt', url: 'https://example.com' }) };
+      if (String(url).includes('/subscriptions/sub_')) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: 'sub_free',
+            items: { data: [{ price: { id: 'price_free_test', unit_amount: 0 } }] }
+          })
+        };
+      }
+      return { ok: true, json: async () => ({}) };
     });
     vi.stubGlobal('fetch', fetchMock);
-
-    await handleStripeBillingEvent(
-      db,
-      {
-        id: 'evt_upgrade_checkout_race',
-        type: 'checkout.session.completed',
-        data: {
-          object: {
-            customer: 'cus_free',
-            subscription: 'sub_plus',
-            metadata: { site_id: 'test-cottage-free' },
-            customer_details: { email: 'owner@example.com' }
-          }
-        }
-      },
-      { env: { STRIPE_SECRET_KEY: 'sk_test', STRIPE_PRICE_ID: 'price_plus_month', STRIPE_PRICE_ID_FREE: 'price_free_test' } }
-    );
 
     const deleted = await handleStripeBillingEvent(
       db,
@@ -462,7 +467,7 @@ describe('handleStripeBillingEvent', () => {
       .bind('test-cottage-free')
       .first();
     expect(stored).toMatchObject({
-      stripe_subscription_id: 'sub_plus',
+      stripe_subscription_id: 'sub_free',
       status: 'active'
     });
     vi.unstubAllGlobals();

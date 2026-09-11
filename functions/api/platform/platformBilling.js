@@ -580,11 +580,18 @@ export async function customerHasActiveSiteSubscription(
   if (!secretKey || !customerId || !normalizedSiteId) return false;
 
   for (const status of ['active', 'trialing']) {
-    const payload = await stripeApiRequest(secretKey, 'GET', '/subscriptions', {
-      customer: customerId,
-      status,
-      limit: 100
-    });
+    const query = new URLSearchParams(
+      encodeStripeFormEntries({
+        customer: customerId,
+        status,
+        limit: 100
+      })
+    ).toString();
+    const payload = await stripeApiRequest(
+      secretKey,
+      'GET',
+      query ? `/subscriptions?${query}` : '/subscriptions'
+    );
     const rows = Array.isArray(payload.data) ? payload.data : [];
     for (const subscription of rows) {
       const subscriptionId = String(subscription.id ?? '').trim();
