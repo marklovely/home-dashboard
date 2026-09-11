@@ -10,6 +10,10 @@
 
 - Signup lifecycle email copy distinguishes Lovely Home Free (no trial) from Lovely Home+ (7-day trial for first-time signups)
 - Returning households: Free reinstates at no charge; Lovely Home+ Checkout skips the trial and bills immediately
+
+### Testing
+
+- Plus lifecycle Playwright: expand Stripe’s Card payment method, search iframes for card fields, and fall back to the Stripe API when hosted Checkout cannot be filled; skip the Free test when `E2E_SIGNUP_PLAN=plus`
 ### Testing
 
 - Hub lifecycle Playwright run defaults to Lovely Home Free (API signup, active subscription teardown); Plus Checkout path runs when `E2E_SIGNUP_PLAN=plus`

@@ -7,6 +7,7 @@ import {
   waitForCheckoutSessionComplete
 } from './lib/stripeApi.js';
 import { parseCheckoutSessionId } from './lib/stripeCheckout.js';
+import { tryCompleteStripeHostedCheckout } from './lib/stripeHostedCheckout.js';
 import { isStripeTestSecret, stripeTestSecretProblem } from './lib/loadLifecycleEnv.js';
 
 const PLATFORM_API_ORIGIN = (process.env.PLATFORM_API_ORIGIN || 'https://platform.lovely-home.co.uk').replace(
@@ -19,6 +20,10 @@ const TEARDOWN_TIMEOUT_MS = 40 * 60 * 1000;
 test.describe.configure({ mode: 'serial' });
 
 test('free signup, wait for hub, cancel subscription, confirm teardown', async () => {
+  test.skip(
+    String(process.env.E2E_SIGNUP_PLAN ?? 'free').trim().toLowerCase() === 'plus',
+    'Skipped when E2E_SIGNUP_PLAN=plus — running Lovely Home+ checkout only.'
+  );
   await runLifecycleTest({ plan: 'free' });
 });
 
@@ -65,24 +70,24 @@ async function runLifecycleTest({ plan, page }) {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
     });
-    await page.goto(checkoutUrl);
-    await completeStripeTestCheckout(page);
-    const hosted = await waitForCheckoutSessionComplete(secretKey, sessionId, 20_000).catch(() => null);
+    await page.goto(checkoutUrl, { waitUntil: 'domcontentloaded' });
+    const browserCheckout = await tryCompleteStripeHostedCheckout(page);
+    let hosted = browserCheckout
+      ? await waitForCheckoutSessionComplete(secretKey, sessionId, 30_000).catch(() => null)
+      : null;
     if (!hosted) {
-      await clickStartTrial(page);
-      const retried = await waitForCheckoutSessionComplete(secretKey, sessionId, 40_000).catch(() => null);
-      if (!retried) {
-        test.info().annotations.push({
-          type: 'checkout',
-          description: 'Hosted Checkout stayed open; started the trial via the Stripe API'
-        });
-        await startTestTrialFromCheckoutSession(secretKey, {
-          sessionId,
-          siteId,
-          customerEmail: ownerEmail,
-          priceId: process.env.STRIPE_PRICE_ID?.trim() || ''
-        });
-      }
+      test.info().annotations.push({
+        type: 'checkout',
+        description: browserCheckout
+          ? 'Hosted Checkout stayed open after submit; started the trial via the Stripe API'
+          : 'Card fields were not available in hosted Checkout; started the trial via the Stripe API'
+      });
+      await startTestTrialFromCheckoutSession(secretKey, {
+        sessionId,
+        siteId,
+        customerEmail: ownerEmail,
+        priceId: process.env.STRIPE_PRICE_ID?.trim() || ''
+      });
     }
   }
 
@@ -164,59 +169,6 @@ async function startSignupCheckout(siteId, customerEmail) {
     throw new Error('Signup did not return a Stripe Checkout URL.');
   }
   return signup.checkoutUrl;
-}
-
-/**
- * @param {import('@playwright/test').Page} page
- */
-async function completeStripeTestCheckout(page) {
-  const cardNumber = page.getByRole('textbox', { name: /card number/i });
-  await cardNumber.waitFor({ timeout: 60_000 });
-  await typeStripeField(cardNumber, '4242424242424242');
-  await typeStripeField(page.getByRole('textbox', { name: /expiration/i }), '1234');
-  await typeStripeField(page.getByRole('textbox', { name: /cvc/i }), '123');
-
-  const name = page.getByRole('textbox', { name: /cardholder name|full name/i });
-  if (await name.count()) {
-    await name.fill('Lifecycle Test');
-  }
-  const postcode = page.getByRole('textbox', { name: /postal code|postcode/i });
-  if (await postcode.count()) {
-    await postcode.fill('SW1A 1AA');
-  }
-
-  const visa = page.getByText(/current card brand is visa/i);
-  if (await visa.count()) {
-    await visa.first().waitFor({ state: 'visible', timeout: 15_000 });
-  }
-
-  await clickStartTrial(page);
-}
-
-/**
- * @param {import('@playwright/test').Page} page
- */
-async function clickStartTrial(page) {
-  const startTrial = page
-    .getByTestId('hosted-payment-submit-button')
-    .or(page.getByRole('button', { name: /start trial/i }));
-  await startTrial.first().waitFor({ state: 'visible', timeout: 30_000 });
-  await startTrial.first().scrollIntoViewIfNeeded();
-  await startTrial.first().click({ timeout: 10_000 }).catch(async () => {
-    await startTrial.first().click({ force: true });
-  });
-}
-
-/**
- * Stripe hosted Checkout often ignores a single `.fill()` — type so its listeners fire.
- *
- * @param {import('@playwright/test').Locator} locator
- * @param {string} value
- */
-async function typeStripeField(locator, value) {
-  await locator.click();
-  await locator.fill('');
-  await locator.pressSequentially(value, { delay: 25 });
 }
 
 /**
