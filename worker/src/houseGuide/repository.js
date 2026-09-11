@@ -448,6 +448,50 @@ export async function createGuideCategory(db, input) {
 
 /**
  * @param {D1Database} db
+ * @param {string} categoryId
+ * @param {Object} patch
+ */
+export async function updateGuideCategory(db, categoryId, patch) {
+  const existing = await getGuideCategoryById(db, categoryId);
+  if (!existing) return null;
+  if (categoryId === 'appliance-manuals') return { reserved: true };
+
+  await db
+    .prepare(
+      `UPDATE guide_categories SET
+        title = ?, card_subtitle = ?, icon_id = ?, accent = ?, search_terms = ?, updated_at = ?
+      WHERE id = ?`
+    )
+    .bind(
+      patch.title ?? existing.title,
+      patch.cardSubtitle !== undefined ? patch.cardSubtitle : existing.card_subtitle,
+      patch.iconId ?? existing.icon_id,
+      patch.accent ?? existing.accent,
+      patch.searchTerms !== undefined ? JSON.stringify(patch.searchTerms) : existing.search_terms,
+      patch.updatedAt ?? new Date().toISOString(),
+      categoryId
+    )
+    .run();
+
+  return getGuideCategoryById(db, categoryId);
+}
+
+/**
+ * @param {D1Database} db
+ * @param {string} categoryId
+ */
+export async function deleteGuideCategory(db, categoryId) {
+  const existing = await getGuideCategoryById(db, categoryId);
+  if (!existing) return null;
+  if (categoryId === 'appliance-manuals') return { reserved: true };
+
+  await db.prepare(`DELETE FROM guide_topics WHERE category_id = ?`).bind(categoryId).run();
+  await db.prepare(`DELETE FROM guide_categories WHERE id = ?`).bind(categoryId).run();
+  return existing;
+}
+
+/**
+ * @param {D1Database} db
  * @param {Object} input
  */
 export async function createGuideTopic(db, input) {

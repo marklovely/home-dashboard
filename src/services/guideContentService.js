@@ -1,11 +1,13 @@
 import {
   createHouseGuideCategory,
   createHouseGuideTopic,
+  deleteHouseGuideCategory,
   deleteHouseGuideMedia,
   deleteHouseGuideTopic,
   fetchHouseGuideCatalog,
   fetchHouseGuideMediaLibrary,
   importHouseGuideCatalog,
+  patchHouseGuideCategory,
   patchHouseGuideSettings,
   patchHouseGuideTopic,
   publishAllHouseGuideTopics,
@@ -274,6 +276,31 @@ export async function createNewHouseGuideTopic(input, fetchImpl = fetch) {
  */
 export async function createNewHouseGuideCategory(input, fetchImpl = fetch) {
   const result = await createHouseGuideCategory(input, { fetchImpl });
+  if (result.ok) {
+    await refreshGuideContent(fetchImpl, { draft: true, force: true });
+  }
+  return result;
+}
+
+/**
+ * @param {string} categoryId
+ * @param {Record<string, unknown>} patch
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function saveHouseGuideCategory(categoryId, patch, fetchImpl = fetch) {
+  const result = await patchHouseGuideCategory(categoryId, patch, { fetchImpl });
+  if (result.ok) {
+    await refreshGuideContent(fetchImpl, { draft: true, force: true });
+  }
+  return result;
+}
+
+/**
+ * @param {string} categoryId
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function removeHouseGuideCategory(categoryId, fetchImpl = fetch) {
+  const result = await deleteHouseGuideCategory(categoryId, { fetchImpl });
   if (result.ok) {
     await refreshGuideContent(fetchImpl, { draft: true, force: true });
   }

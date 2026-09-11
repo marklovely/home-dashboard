@@ -3,7 +3,9 @@ import { assembleGuideCatalog, toPublicGuideCategory } from '../src/houseGuide/a
 import {
   countGuideCategories,
   createGuideCategory,
-  GUIDE_CATEGORY_ACCENT_PALETTE
+  deleteGuideCategory,
+  GUIDE_CATEGORY_ACCENT_PALETTE,
+  updateGuideCategory
 } from '../src/houseGuide/repository.js';
 import { sanitizeGuideActions } from '../src/houseGuide/sanitize.js';
 import { createEmptyGuideBlock } from '../../src/apps/HouseGuideEditor/guideEditorBlockDefaults.js';
@@ -14,6 +16,8 @@ import { createEmptyGuideBlock } from '../../src/apps/HouseGuideEditor/guideEdit
 function createGuideCategoryTestDb() {
   /** @type {Record<string, Record<string, unknown>>} */
   const categories = {};
+  /** @type {Record<string, Record<string, unknown>>} */
+  const topics = {};
 
   return /** @type {D1Database} */ ({
     prepare(sql) {
@@ -52,6 +56,34 @@ function createGuideCategoryTestDb() {
                   published: args[7],
                   updated_at: args[8],
                   guide_id: args[9]
+                };
+              }
+              if (normalized.startsWith('UPDATE guide_categories SET')) {
+                const id = String(args[6]);
+                const existing = categories[id];
+                if (!existing) return;
+                categories[id] = {
+                  ...existing,
+                  title: args[0],
+                  card_subtitle: args[1],
+                  icon_id: args[2],
+                  accent: args[3],
+                  search_terms: args[4],
+                  updated_at: args[5]
+                };
+              }
+              if (normalized.startsWith('DELETE FROM guide_topics WHERE category_id = ?')) {
+                for (const [id, row] of Object.entries(topics)) {
+                  if (row.category_id === args[0]) delete topics[id];
+                }
+              }
+              if (normalized.startsWith('DELETE FROM guide_categories WHERE id = ?')) {
+                delete categories[String(args[0])];
+              }
+              if (normalized.startsWith('INSERT INTO guide_topics')) {
+                topics[String(args[0])] = {
+                  id: args[0],
+                  category_id: args[1]
                 };
               }
             }
@@ -236,6 +268,42 @@ describe('guide categories', () => {
     await createGuideCategory(db, { id: 'appliance-manuals', title: 'Manuals' });
     await createGuideCategory(db, { id: 'kitchen', title: 'Kitchen' });
     expect(await countGuideCategories(db)).toBe(1);
+  });
+
+  it('renames an area and blocks edits to appliance-manuals', async () => {
+    const db = createGuideCategoryTestDb();
+    await createGuideCategory(db, { id: 'kitchen', title: 'Kitchen', cardSubtitle: 'Cook' });
+    await createGuideCategory(db, { id: 'appliance-manuals', title: 'Manuals' });
+
+    const updated = await updateGuideCategory(db, 'kitchen', {
+      title: 'Kitchen & dining',
+      cardSubtitle: 'Cook and eat'
+    });
+    expect(updated?.title).toBe('Kitchen & dining');
+    expect(toPublicGuideCategory(updated, []).cardSubtitle).toBe('Cook and eat');
+    expect(await updateGuideCategory(db, 'appliance-manuals', { title: 'Nope' })).toEqual({
+      reserved: true
+    });
+  });
+
+  it('deletes an area and its topics', async () => {
+    const db = createGuideCategoryTestDb();
+    await createGuideCategory(db, { id: 'appliance-manuals', title: 'Manuals' });
+    await createGuideCategory(db, { id: 'kitchen', title: 'Kitchen' });
+    await db
+      .prepare(
+        `INSERT INTO guide_topics (
+          id, category_id, title, subtitle, summary, search_terms, appliance_manual_terms,
+          blocks, published_blocks, actions, sort_order, published, has_draft, audience, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind('dishwasher', 'kitchen', 'Dishwasher', 'Use', 'Summary', '[]', null, '[]', '[]', '[]', 0, 1, 0, 'guest', 'now')
+      .run();
+
+    const removed = await deleteGuideCategory(db, 'kitchen');
+    expect(removed?.id).toBe('kitchen');
+    expect(await countGuideCategories(db)).toBe(0);
+    expect(await deleteGuideCategory(db, 'appliance-manuals')).toEqual({ reserved: true });
   });
 });
 
