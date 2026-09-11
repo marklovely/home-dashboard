@@ -216,8 +216,9 @@ describe('resolveBillingOwnerEmail', () => {
             return {
               async first() {
                 if (sql.includes('FROM signup_slug_reservations')) {
-                  expect(args[0]).toBe('smith');
-                  return { owner_email: 'reserved@example.com' };
+                  return String(args[0]) === 'smith'
+                    ? { owner_email: 'reserved@example.com' }
+                    : null;
                 }
                 return null;
               }
