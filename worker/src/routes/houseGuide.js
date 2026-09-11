@@ -460,11 +460,16 @@ async function createCategory(request, env, correlationId) {
   const plan = await fetchHubPlanStatus(env, request);
   const categoryCount = await countGuideCategories(db);
   if (planCategoryLimitExceeded(plan, categoryCount)) {
-    return jsonError(
-      403,
-      'PLAN_LIMIT',
-      `Free plan includes up to ${plan.limits.maxCategories} areas per guide. Upgrade to Lovely Home+ for unlimited.`,
-      { correlationId, upgradeUrl: plan.upgradeUrl }
+    return Response.json(
+      {
+        error: {
+          code: 'PLAN_LIMIT',
+          message: `Free plan includes up to ${plan.limits.maxCategories} areas per guide. Upgrade to Lovely Home+ for unlimited.`,
+          correlationId,
+          upgradeUrl: plan.upgradeUrl
+        }
+      },
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
