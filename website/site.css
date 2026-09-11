@@ -825,7 +825,7 @@ html.nav-open {
 }
 
 .pricing-plans-grid--tiers {
-  max-width: 52rem;
+  max-width: 72rem;
 }
 
 .pricing-savings-line {
@@ -2016,7 +2016,8 @@ html.nav-open {
 }
 
 @media (min-width: 768px) {
-  .pricing-plans-grid.pricing-plans-grid--home {
+  .pricing-plans-grid.pricing-plans-grid--home,
+  .pricing-plans-grid.pricing-plans-grid--tiers {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     max-width: 72rem;
     gap: 1.25rem;
