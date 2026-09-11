@@ -866,6 +866,16 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
 
   const existingBilling = await getSiteBilling(db, billingPatch.siteId);
 
+  if (
+    eventType.startsWith('customer.subscription.') &&
+    existingBilling?.stripe_subscription_id &&
+    billingPatch.subscriptionId &&
+    String(existingBilling.stripe_subscription_id) !== String(billingPatch.subscriptionId)
+  ) {
+    await markWebhookEventProcessed(db, eventId, eventType);
+    return { ok: true, action: 'stale_subscription_ignored' };
+  }
+
   const manifest = context.manifest;
   const manifestSite = manifest ? getSiteFromManifest(manifest, billingPatch.siteId) : null;
   const cycleReset = shouldResetBillingCycleFlags({

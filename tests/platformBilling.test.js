@@ -375,6 +375,46 @@ describe('handleStripeBillingEvent', () => {
     });
   });
 
+  it('ignores subscription.deleted for a superseded free subscription after upgrade', async () => {
+    const db = /** @type {D1Database} */ (createBillingDbMock());
+    await handleStripeBillingEvent(db, {
+      id: 'evt_upgrade_checkout',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          customer: 'cus_free',
+          subscription: 'sub_plus',
+          metadata: { site_id: 'test-cottage-free', upgrade_from: 'free', prior_subscription_id: 'sub_free' },
+          customer_details: { email: 'owner@example.com' }
+        }
+      }
+    });
+
+    const deleted = await handleStripeBillingEvent(db, {
+      id: 'evt_free_sub_deleted',
+      type: 'customer.subscription.deleted',
+      data: {
+        object: {
+          id: 'sub_free',
+          customer: 'cus_free',
+          status: 'canceled',
+          metadata: { site_id: 'test-cottage-free' },
+          items: { data: [{ price: { id: 'price_free_test', unit_amount: 0 } }] }
+        }
+      }
+    });
+
+    expect(deleted).toEqual({ ok: true, action: 'stale_subscription_ignored' });
+    const stored = await db
+      .prepare('SELECT * FROM site_billing WHERE site_id = ?')
+      .bind('test-cottage-free')
+      .first();
+    expect(stored).toMatchObject({
+      stripe_subscription_id: 'sub_plus',
+      status: 'active'
+    });
+  });
+
   it('ignores duplicate webhook event ids', async () => {
     const db = /** @type {D1Database} */ (createBillingDbMock());
     const event = {
