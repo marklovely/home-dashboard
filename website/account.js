@@ -312,7 +312,7 @@
           '<p class="signup-note"><strong>Switch to Free plan</strong> — ' +
           escapeHtml(FREE_GUIDES_EXPLAINER) +
           ' Plus two scheduled stays. Your hub stays live; existing content is kept (soft limits — you cannot add more until you are under the cap or upgrade again).</p>' +
-          '<button type="button" class="btn btn-secondary btn-block" data-downgrade-free="' +
+          '<button type="button" class="btn btn-primary btn-block" data-downgrade-free="' +
           escapeHtml(hub.siteId) +
           '">Switch to Free plan</button>' +
           '</div>'
@@ -341,7 +341,7 @@
           '</div>'
         : '';
     const referralBlock =
-      referralsEnabled && !canceled && hub.canManageBilling
+      referralsEnabled && !canceled && hub.canManageBilling && hub.plan === 'plus'
         ? hub.canRefer
           ? '<div class="account-referral" data-referral-site="' +
             escapeHtml(hub.siteId) +
@@ -359,7 +359,7 @@
             escapeHtml(referralPlanRadioLabel('year')) +
             '</label>' +
             '</div>' +
-            '<button type="button" class="btn btn-secondary btn-block" data-referral-generate="' +
+            '<button type="button" class="btn btn-primary btn-block" data-referral-generate="' +
             escapeHtml(hub.siteId) +
             '">Generate referral link</button>' +
             '<div class="account-referral-result" hidden></div>' +
@@ -390,7 +390,7 @@
           : '<p class="signup-note muted">Billing is not linked yet. Email support@lovely-home.co.uk.</p>';
     const openHub = canceled
       ? ''
-      : '<a class="btn btn-secondary btn-block" href="' + escapeHtml(hub.hubUrl) + '"' + newTabAttrs() + '>Open hub</a>';
+      : '<a class="btn btn-primary btn-block" href="' + escapeHtml(hub.hubUrl) + '"' + newTabAttrs() + '>Open hub</a>';
     const body = canceled
       ? '<p>This subscription is cancelled, so Stripe has no live plan to change — only invoices and the saved card. Create a new home at lovely-home.co.uk/signup if you want the hub back.</p>'
       : hub.canUpgrade
@@ -494,11 +494,7 @@
    */
   async function openDowngradeToFree(sessionToken, siteId, button) {
     clearAlert();
-    const confirmed = window.confirm(
-      'Switch to the Free plan?\n\n' +
-        FREE_GUIDES_EXPLAINER +
-        '\n\nPlus two scheduled stays. Your hub stays live. Existing guides and stays are kept; you will not be able to add more until you are under the Free limits or upgrade again.\n\nPlus billing stops immediately (no partial-month refund).'
-    );
+    const confirmed = await confirmDowngradeToFree();
     if (!confirmed) return;
     setBusy(button, true);
     try {
@@ -691,14 +687,16 @@
   }
 
   /**
-   * Stripe Customer Portal cannot show a custom message before cancellation — only
-   * after (via deep links) or on our site before redirecting.
-   *
-   * @param {{ hubUrl?: string }} hub
+   * @param {{
+   *   title: string;
+   *   bodyHtml: string;
+   *   cancelLabel?: string;
+   *   confirmLabel: string;
+   *   onConfirm?: () => void;
+   * }} options
    */
-  function confirmBeforeStripe(hub) {
+  function openAccountDialog(options) {
     return new Promise((resolve) => {
-      const hubUrl = String(hub.hubUrl || '').trim();
       const overlay = document.createElement('div');
       overlay.className = 'account-backup-dialog';
       overlay.setAttribute('role', 'presentation');
@@ -707,25 +705,23 @@
       dialog.className = 'account-backup-dialog__panel';
       dialog.setAttribute('role', 'dialog');
       dialog.setAttribute('aria-modal', 'true');
-      dialog.setAttribute('aria-labelledby', 'account-backup-dialog-title');
+      const titleId = 'account-dialog-title-' + String(Date.now());
+      dialog.setAttribute('aria-labelledby', titleId);
 
       dialog.innerHTML =
-        '<h2 id="account-backup-dialog-title" class="account-backup-dialog__title">Opening Stripe billing</h2>' +
-        '<p>Stripe handles card updates and cancellation. Stripe does not let us show a backup reminder inside their portal.</p>' +
-        '<p><strong>Planning to cancel?</strong> Download a full backup from your hub first — it includes photos and appliance PDFs.</p>' +
-        '<p class="account-backup-dialog__links">' +
-        (hubUrl ? '<a href="' + escapeHtml(hubUrl) + '"' + newTabAttrs() + '>Open hub → Settings → Utilities</a> · ' : '') +
-        '<a href="/help#owner/backup-restore"' + newTabAttrs() + '>How to back up</a>' +
-        '</p>' +
-        '<label class="account-backup-dialog__skip">' +
-        '<input type="checkbox" id="account-backup-dialog-skip"> Don\u2019t show this again' +
-        '</label>' +
+        '<h2 id="' +
+        titleId +
+        '" class="account-backup-dialog__title">' +
+        escapeHtml(options.title) +
+        '</h2>' +
+        options.bodyHtml +
         '<div class="account-backup-dialog__actions">' +
-        '<button type="button" class="btn btn-secondary" data-backup-dialog="cancel">Not now</button>' +
-        (hubUrl
-          ? '<a class="btn btn-secondary" href="' + escapeHtml(hubUrl) + '"' + newTabAttrs() + '>Open hub first</a>'
-          : '') +
-        '<button type="button" class="btn btn-primary" data-backup-dialog="continue">Continue to Stripe</button>' +
+        '<button type="button" class="btn btn-secondary" data-account-dialog="cancel">' +
+        escapeHtml(options.cancelLabel || 'Not now') +
+        '</button>' +
+        '<button type="button" class="btn btn-primary" data-account-dialog="confirm">' +
+        escapeHtml(options.confirmLabel) +
+        '</button>' +
         '</div>';
 
       overlay.appendChild(dialog);
@@ -734,10 +730,6 @@
       const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
       function close(result) {
-        const skip = dialog.querySelector('#account-backup-dialog-skip');
-        if (result && skip instanceof HTMLInputElement && skip.checked) {
-          writeBackupPromptDismissed();
-        }
         overlay.remove();
         previouslyFocused?.focus();
         resolve(Boolean(result));
@@ -746,8 +738,11 @@
       overlay.addEventListener('click', (event) => {
         if (event.target === overlay) close(false);
       });
-      dialog.querySelector('[data-backup-dialog="cancel"]')?.addEventListener('click', () => close(false));
-      dialog.querySelector('[data-backup-dialog="continue"]')?.addEventListener('click', () => close(true));
+      dialog.querySelector('[data-account-dialog="cancel"]')?.addEventListener('click', () => close(false));
+      dialog.querySelector('[data-account-dialog="confirm"]')?.addEventListener('click', () => {
+        options.onConfirm?.();
+        close(true);
+      });
       document.addEventListener(
         'keydown',
         function onKeydown(event) {
@@ -759,7 +754,52 @@
         { once: true }
       );
 
-      dialog.querySelector('[data-backup-dialog="continue"]')?.focus();
+      dialog.querySelector('[data-account-dialog="confirm"]')?.focus();
+    });
+  }
+
+  function confirmDowngradeToFree() {
+    return openAccountDialog({
+      title: 'Switch to the Free plan?',
+      bodyHtml:
+        '<p>' +
+        escapeHtml(FREE_GUIDES_EXPLAINER) +
+        '</p>' +
+        '<p>Plus two scheduled stays. Your hub stays live. Existing guides and stays are kept; you cannot add more until you are under the Free limits or upgrade again.</p>' +
+        '<p><strong>Plus billing stops immediately</strong> (no partial-month refund). Refer a friend returns when you upgrade to Lovely Home+ again.</p>',
+      cancelLabel: 'Keep Lovely Home+',
+      confirmLabel: 'Switch to Free'
+    });
+  }
+
+  /**
+   * Stripe Customer Portal cannot show a custom message before cancellation — only
+   * after (via deep links) or on our site before redirecting.
+   *
+   * @param {{ hubUrl?: string }} hub
+   */
+  function confirmBeforeStripe(hub) {
+    const hubUrl = String(hub.hubUrl || '').trim();
+    return openAccountDialog({
+      title: 'Opening Stripe billing',
+      bodyHtml:
+        '<p>Stripe handles card updates and cancellation. Stripe does not let us show a backup reminder inside their portal.</p>' +
+        '<p><strong>Planning to cancel?</strong> Download a full backup from your hub first — it includes photos and appliance PDFs.</p>' +
+        '<p class="account-backup-dialog__links">' +
+        (hubUrl ? '<a href="' + escapeHtml(hubUrl) + '"' + newTabAttrs() + '>Open hub → Settings → Utilities</a> · ' : '') +
+        '<a href="/help#owner/backup-restore"' + newTabAttrs() + '>How to back up</a>' +
+        '</p>' +
+        '<label class="account-backup-dialog__skip">' +
+        '<input type="checkbox" id="account-backup-dialog-skip"> Don\u2019t show this again' +
+        '</label>',
+      cancelLabel: 'Not now',
+      confirmLabel: 'Continue to Stripe',
+      onConfirm: () => {
+        const skip = document.querySelector('#account-backup-dialog-skip');
+        if (skip instanceof HTMLInputElement && skip.checked) {
+          writeBackupPromptDismissed();
+        }
+      }
     });
   }
 })();

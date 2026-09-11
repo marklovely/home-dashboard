@@ -113,7 +113,10 @@ export function publicAccountHubFromRow(row) {
       (status === 'active' || status === 'trialing') &&
       canManageBilling &&
       Boolean(String(row.stripe_subscription_id ?? '').trim()),
-    canRefer: isReferrerEligible(row)
+    canRefer:
+      plan === 'plus' &&
+      (status === 'active' || status === 'trialing') &&
+      isReferrerEligible(row)
   };
 }
 

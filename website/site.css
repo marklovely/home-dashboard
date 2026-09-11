@@ -1696,9 +1696,20 @@ html.nav-open {
   gap: 0.55rem;
 }
 
+.account-hub-actions .btn-primary,
+.account-downgrade .btn-primary,
+.account-referral .btn-primary,
+.account-upgrade .btn-primary {
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
 @media (min-width: 480px) {
   .account-backup-dialog__actions {
     grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+
+  .account-backup-dialog__actions .btn-primary {
+    order: 2;
   }
 }
 
