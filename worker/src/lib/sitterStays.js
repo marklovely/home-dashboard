@@ -236,7 +236,7 @@ export async function createSitterStay(env, input, options = {}) {
         return {
           ok: false,
           code: 'PLAN_LIMIT',
-          message: `Free plan includes up to ${plan.limits.maxStays} scheduled stays. Upgrade to Lovely Home+ for unlimited.`,
+          message: `Free plan includes up to ${plan.limits.maxStays} scheduled stays. Upgrade to Lovely Home+ for unlimited stays.`,
           upgradeUrl: plan.upgradeUrl
         };
       }

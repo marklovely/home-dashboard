@@ -22,6 +22,7 @@ import {
   handleAccountPortal,
   handleAccountReferralCode,
   handleAccountSession,
+  handleAccountDowngradeToFree,
   handleAccountUpgradeCheckout,
   handleAccountVerify,
   publicAccountStatus
@@ -233,6 +234,15 @@ export async function onRequest(context) {
       sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim(),
       siteId: String(body.siteId ?? body.site_id ?? '').trim(),
       billingInterval: String(body.billingInterval ?? body.billing_interval ?? 'month').trim()
+    });
+    return Response.json(result.body, { status: result.status, headers: cors });
+  }
+
+  if (suffix === 'account/downgrade-to-free' && request.method === 'POST') {
+    const body = await readJsonBody(request);
+    const result = await handleAccountDowngradeToFree(pagesEnv, getPlatformBillingDb(env), {
+      sessionToken: String(body.sessionToken ?? body.session_token ?? '').trim(),
+      siteId: String(body.siteId ?? body.site_id ?? '').trim()
     });
     return Response.json(result.body, { status: result.status, headers: cors });
   }

@@ -607,6 +607,124 @@ export async function customerHasActiveSiteSubscription(
 }
 
 /**
+ * Create a £0 Free subscription on an existing Stripe customer (no Checkout).
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {{
+ *   customerId: string;
+ *   siteId: string;
+ *   priorSubscriptionId?: string | null;
+ *   downgradeFrom?: 'plus' | null;
+ *   mode?: 'test' | 'live';
+ * }} input
+ */
+export async function createFreeSubscriptionOnCustomer(env, input) {
+  const db = getPlatformBillingDb(env);
+  const mode = input.mode ?? (await getStripeMode(db));
+  const secretKey = stripeCredentialsForMode(env, mode).secretKey;
+  const priceId = resolveStripeFreePriceId(env, mode);
+  if (!secretKey) {
+    return { ok: false, error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe billing is not configured.' };
+  }
+  if (!priceId) {
+    return {
+      ok: false,
+      error: 'STRIPE_FREE_PRICE_NOT_CONFIGURED',
+      message: 'Free plan billing is not configured yet. Contact support.'
+    };
+  }
+
+  const siteId = input.siteId.trim().toLowerCase();
+  const customerId = String(input.customerId ?? '').trim();
+  const priorSubscriptionId = String(input.priorSubscriptionId ?? '').trim();
+  if (!siteId || !customerId) {
+    return { ok: false, error: 'INVALID_INPUT', message: 'siteId and customerId are required.' };
+  }
+
+  /** @type {Record<string, string>} */
+  const metadata = { site_id: siteId };
+  if (input.downgradeFrom === 'plus' && priorSubscriptionId) {
+    metadata.downgrade_from = 'plus';
+    metadata.prior_subscription_id = priorSubscriptionId;
+  }
+
+  const subscription = await stripeApiRequest(secretKey, 'POST', '/subscriptions', {
+    customer: customerId,
+    items: [{ price: priceId, quantity: 1 }],
+    metadata: { ...metadata }
+  });
+
+  return {
+    ok: true,
+    customerId,
+    subscriptionId: String(subscription.id ?? ''),
+    status: mapStripeSubscriptionStatus(subscription.status),
+    trialEnd: stripeTimestampToMs(subscription.trial_end)
+  };
+}
+
+/**
+ * Switch an active Plus hub to the Free plan without hub teardown.
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {D1Database} db
+ * @param {{
+ *   siteId: string;
+ *   customerId: string;
+ *   priorSubscriptionId: string;
+ *   ownerEmail?: string | null;
+ *   mode?: 'test' | 'live';
+ * }} input
+ */
+export async function downgradePlusToFreeSubscription(env, db, input) {
+  const siteId = input.siteId.trim().toLowerCase();
+  const customerId = String(input.customerId ?? '').trim();
+  const priorSubscriptionId = String(input.priorSubscriptionId ?? '').trim();
+  if (!siteId || !customerId || !priorSubscriptionId) {
+    return {
+      ok: false,
+      error: 'INVALID_INPUT',
+      message: 'siteId, customerId, and priorSubscriptionId are required.'
+    };
+  }
+
+  const freeSub = await createFreeSubscriptionOnCustomer(env, {
+    siteId,
+    customerId,
+    priorSubscriptionId,
+    downgradeFrom: 'plus',
+    mode: input.mode
+  });
+  if (!freeSub.ok) {
+    return freeSub;
+  }
+
+  await upsertSiteBilling(db, {
+    site_id: siteId,
+    stripe_customer_id: customerId,
+    stripe_subscription_id: freeSub.subscriptionId,
+    status: freeSub.status,
+    trial_end: freeSub.trialEnd ?? null,
+    owner_email: input.ownerEmail ?? null,
+    plan_tier: 'free'
+  });
+
+  const cancel = await cancelPriorSubscriptionAfterUpgrade(env, {
+    priorSubscriptionId,
+    newSubscriptionId: freeSub.subscriptionId,
+    siteId,
+    mode: input.mode
+  });
+
+  return {
+    ok: true,
+    subscriptionId: freeSub.subscriptionId,
+    status: freeSub.status,
+    cancel
+  };
+}
+
+/**
  * Create a Stripe Customer and £0 subscription for the Free plan (no Checkout).
  *
  * @param {Record<string, string | undefined>} env
@@ -621,16 +739,8 @@ export async function createFreeBillingSubscription(env, input) {
   const mode = input.mode ?? (await getStripeMode(db));
   const creds = stripeCredentialsForMode(env, mode);
   const secretKey = creds.secretKey;
-  const priceId = resolveStripeFreePriceId(env, mode);
   if (!secretKey) {
     return { ok: false, error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe billing is not configured.' };
-  }
-  if (!priceId) {
-    return {
-      ok: false,
-      error: 'STRIPE_FREE_PRICE_NOT_CONFIGURED',
-      message: 'Free plan billing is not configured yet. Contact support.'
-    };
   }
 
   const siteId = input.siteId.trim();
@@ -647,18 +757,21 @@ export async function createFreeBillingSubscription(env, input) {
     metadata: { ...metadata }
   });
 
-  const subscription = await stripeApiRequest(secretKey, 'POST', '/subscriptions', {
-    customer: String(customer.id ?? ''),
-    items: [{ price: priceId, quantity: 1 }],
-    metadata: { ...metadata }
+  const freeSub = await createFreeSubscriptionOnCustomer(env, {
+    customerId: String(customer.id ?? ''),
+    siteId,
+    mode
   });
+  if (!freeSub.ok) {
+    return freeSub;
+  }
 
   return {
     ok: true,
     customerId: String(customer.id ?? ''),
-    subscriptionId: String(subscription.id ?? ''),
-    status: mapStripeSubscriptionStatus(subscription.status),
-    trialEnd: stripeTimestampToMs(subscription.trial_end)
+    subscriptionId: freeSub.subscriptionId,
+    status: freeSub.status,
+    trialEnd: freeSub.trialEnd
   };
 }
 
@@ -1053,6 +1166,8 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
   let referral;
   /** @type {Record<string, unknown> | undefined} */
   let upgrade;
+  /** @type {Record<string, unknown> | undefined} */
+  let downgrade;
   if (eventType === 'checkout.session.completed' && env) {
     const metadata = /** @type {Record<string, unknown>} */ (object.metadata ?? {});
     const referralCode = metadata.referral_code ? String(metadata.referral_code) : '';
@@ -1067,6 +1182,17 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     }
     if (metadata.upgrade_from === 'free' && metadata.prior_subscription_id) {
       upgrade = await cancelPriorSubscriptionAfterUpgrade(env, {
+        priorSubscriptionId: String(metadata.prior_subscription_id),
+        newSubscriptionId: billingPatch.subscriptionId,
+        siteId: billingPatch.siteId
+      });
+    }
+  }
+
+  if (eventType === 'customer.subscription.created' && env) {
+    const metadata = /** @type {Record<string, unknown>} */ (object.metadata ?? {});
+    if (metadata.downgrade_from === 'plus' && metadata.prior_subscription_id) {
+      downgrade = await cancelPriorSubscriptionAfterUpgrade(env, {
         priorSubscriptionId: String(metadata.prior_subscription_id),
         newSubscriptionId: billingPatch.subscriptionId,
         siteId: billingPatch.siteId
@@ -1133,7 +1259,8 @@ export async function handleStripeBillingEvent(db, event, context = {}) {
     ...(deprovision ? { deprovision } : {}),
     ...(email ? { email } : {}),
     ...(referral ? { referral } : {}),
-    ...(upgrade ? { upgrade } : {})
+    ...(upgrade ? { upgrade } : {}),
+    ...(downgrade ? { downgrade } : {})
   };
 }
 

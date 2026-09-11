@@ -7,6 +7,7 @@
 
 import {
   createUpgradeCheckoutSession,
+  downgradePlusToFreeSubscription,
   listSiteBillingByOwnerEmail,
   stripeApiRequest
 } from './platformBilling.js';
@@ -105,6 +106,11 @@ export function publicAccountHubFromRow(row) {
     canUpgrade:
       plan === 'free' &&
       status === 'active' &&
+      canManageBilling &&
+      Boolean(String(row.stripe_subscription_id ?? '').trim()),
+    canDowngrade:
+      plan === 'plus' &&
+      (status === 'active' || status === 'trialing') &&
       canManageBilling &&
       Boolean(String(row.stripe_subscription_id ?? '').trim()),
     canRefer: isReferrerEligible(row)
@@ -497,6 +503,122 @@ export async function handleAccountSession(env, db, input, deps = {}) {
  * @param {{ sessionToken: string; siteId: string; billingInterval?: string }} input
  * @param {{ nowMs?: number }} [deps]
  */
+export async function handleAccountDowngradeToFree(env, db, input, deps = {}) {
+  if (!db) {
+    return {
+      status: 503,
+      body: { error: 'BILLING_DB_NOT_CONFIGURED', message: 'Billing is not available right now.' }
+    };
+  }
+
+  const nowMs = deps.nowMs ?? Date.now();
+  const siteId = String(input.siteId ?? '')
+    .trim()
+    .toLowerCase();
+  const token = String(input.sessionToken ?? '').trim();
+  if (!siteId) {
+    return {
+      status: 400,
+      body: { error: 'INVALID_INPUT', message: 'siteId is required.' }
+    };
+  }
+
+  const session = await loadAccountSession(db, token, nowMs);
+  if (!session) {
+    return {
+      status: 401,
+      body: { error: 'INVALID_SESSION', message: ACCOUNT_SESSION_EXPIRED_MESSAGE }
+    };
+  }
+
+  const rows = await listSiteBillingByOwnerEmail(db, session.email);
+  const row = rows.find((item) => String(item.site_id) === siteId);
+  if (!row) {
+    return {
+      status: 404,
+      body: { error: 'HUB_NOT_FOUND', message: 'We could not find that hub on your account.' }
+    };
+  }
+
+  const resolvedRow = (await resolveBillingRowPlanTier(env, db, row)) ?? row;
+  const plan = planTierFromBillingRow(resolvedRow);
+  const status = String(resolvedRow.status ?? '');
+  const customerId = String(resolvedRow.stripe_customer_id ?? '').trim();
+  const priorSubscriptionId = String(resolvedRow.stripe_subscription_id ?? '').trim();
+
+  if (
+    resolvedRow.owner_email &&
+    session.email &&
+    normalizeAccountEmail(resolvedRow.owner_email) !== session.email
+  ) {
+    return {
+      status: 403,
+      body: { error: 'FORBIDDEN', message: 'That hub does not belong to this account.' }
+    };
+  }
+
+  if (plan !== 'plus' || (status !== 'active' && status !== 'trialing')) {
+    return {
+      status: 409,
+      body: {
+        error: 'DOWNGRADE_NOT_AVAILABLE',
+        message:
+          plan === 'free'
+            ? 'This hub is already on the Free plan.'
+            : 'This hub cannot be switched to Free right now. Email support@lovely-home.co.uk.'
+      }
+    };
+  }
+
+  if (!customerId || !priorSubscriptionId) {
+    return {
+      status: 503,
+      body: {
+        error: 'DOWNGRADE_NOT_READY',
+        message: 'Billing is not linked yet. Email support@lovely-home.co.uk.'
+      }
+    };
+  }
+
+  const stripe = await getActiveStripeCredentials(env, db);
+  try {
+    const result = await downgradePlusToFreeSubscription(env, db, {
+      siteId,
+      customerId,
+      priorSubscriptionId,
+      ownerEmail: resolvedRow.owner_email ? String(resolvedRow.owner_email) : session.email,
+      mode: stripe.mode
+    });
+    if (!result.ok) {
+      return {
+        status: 503,
+        body: {
+          error: result.error ?? 'DOWNGRADE_FAILED',
+          message: result.message ?? 'Could not switch to the Free plan.'
+        }
+      };
+    }
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        siteId,
+        plan: 'free',
+        message:
+          'Your hub is now on the Free plan. Existing guides and stays stay as they are; you can add up to two guide templates and two scheduled stays going forward.'
+      }
+    };
+  } catch (error) {
+    return {
+      status: 502,
+      body: {
+        error: 'DOWNGRADE_FAILED',
+        message: error instanceof Error ? error.message : 'Could not switch to the Free plan.'
+      }
+    };
+  }
+}
+
 export async function handleAccountUpgradeCheckout(env, db, input, deps = {}) {
   const stripe = await getActiveStripeCredentials(env, db);
   if (!stripe.configured) {

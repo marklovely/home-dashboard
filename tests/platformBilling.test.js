@@ -3,8 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   cancelPriorSubscriptionAfterUpgrade,
   checkoutSessionOwnerEmail,
+  createFreeSubscriptionOnCustomer,
   createUpgradeCheckoutSession,
   customerHasActiveSiteSubscription,
+  downgradePlusToFreeSubscription,
   encodeStripeFormEntries,
   handleStripeBillingEvent,
   mapStripeSubscriptionStatus,
@@ -113,6 +115,88 @@ describe('platform billing helpers', () => {
     vi.unstubAllGlobals();
   });
 
+  it('creates a free subscription on an existing customer for downgrade', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: 'sub_free_new', status: 'active', trial_end: null })
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await createFreeSubscriptionOnCustomer(
+      {
+        STRIPE_SECRET_KEY: 'sk_test',
+        STRIPE_PRICE_ID_FREE: 'price_free_test'
+      },
+      {
+        customerId: 'cus_plus',
+        siteId: 'kitchen-home',
+        priorSubscriptionId: 'sub_plus',
+        downgradeFrom: 'plus',
+        mode: 'test'
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.subscriptionId).toBe('sub_free_new');
+    const body = String(fetchMock.mock.calls[0]?.[1]?.body ?? '');
+    expect(body).toContain('downgrade_from');
+    expect(body).toContain('prior_subscription_id');
+    vi.unstubAllGlobals();
+  });
+
+  it('downgrades Plus to Free without leaving billing on the canceled Plus sub', async () => {
+    const db = /** @type {D1Database} */ (createBillingDbMock());
+    await db
+      .prepare(
+        `INSERT INTO site_billing (site_id, stripe_customer_id, stripe_subscription_id, status, plan_tier, owner_email, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind('kitchen-home', 'cus_plus', 'sub_plus', 'active', 'plus', 'owner@example.com', 1, 1)
+      .run();
+
+    const fetchMock = vi.fn(async (url, init) => {
+      if (String(url).includes('/subscriptions') && init?.method === 'POST') {
+        return {
+          ok: true,
+          json: async () => ({ id: 'sub_free_new', status: 'active', trial_end: null })
+        };
+      }
+      if (String(url).includes('/subscriptions/sub_plus') && init?.method === 'DELETE') {
+        return { ok: true, json: async () => ({ id: 'sub_plus', status: 'canceled' }) };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await downgradePlusToFreeSubscription(
+      {
+        STRIPE_SECRET_KEY: 'sk_test',
+        STRIPE_PRICE_ID_FREE: 'price_free_test'
+      },
+      db,
+      {
+        siteId: 'kitchen-home',
+        customerId: 'cus_plus',
+        priorSubscriptionId: 'sub_plus',
+        ownerEmail: 'owner@example.com',
+        mode: 'test'
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.subscriptionId).toBe('sub_free_new');
+    const stored = await db
+      .prepare('SELECT * FROM site_billing WHERE site_id = ?')
+      .bind('kitchen-home')
+      .first();
+    expect(stored).toMatchObject({
+      stripe_subscription_id: 'sub_free_new',
+      status: 'active',
+      plan_tier: 'free'
+    });
+    vi.unstubAllGlobals();
+  });
+
   it('cancels the prior free subscription after upgrade', async () => {
     const fetchMock = vi.fn(async () => ({
       ok: true,
@@ -182,6 +266,8 @@ function createBillingDbMock() {
         },
         async run() {
           if (sql.includes('INSERT INTO site_billing')) {
+            const hasPlanTier = sql.includes('plan_tier');
+            const existing = siteBilling.get(String(bound[0]));
             const [
               site_id,
               stripe_customer_id,
@@ -190,10 +276,13 @@ function createBillingDbMock() {
               trial_end,
               archive_r2_key,
               owner_email,
-              created_at,
-              updated_at
+              planOrCreated,
+              createdOrUpdated,
+              updatedAt
             ] = bound;
-            const existing = siteBilling.get(String(site_id));
+            const plan_tier = hasPlanTier ? planOrCreated : existing?.plan_tier ?? null;
+            const created_at = hasPlanTier ? createdOrUpdated : planOrCreated;
+            const updated_at = hasPlanTier ? updatedAt : createdOrUpdated;
             siteBilling.set(String(site_id), {
               site_id,
               stripe_customer_id,
@@ -202,6 +291,7 @@ function createBillingDbMock() {
               trial_end,
               archive_r2_key,
               owner_email,
+              plan_tier,
               created_at: existing?.created_at ?? created_at,
               updated_at
             });
