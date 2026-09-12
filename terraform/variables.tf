@@ -307,6 +307,24 @@ variable "platform_site_archive_secret" {
   description = "Shared secret for platform Pages → hub Worker platform routes (archive export, downgrade usage). Same value as GitHub PLATFORM_SITE_ARCHIVE_SECRET."
 }
 
+variable "os_places_usage_baseline" {
+  type        = number
+  default     = 20
+  description = "OS Places calls already consumed on OS Data Hub before platform tracking (shown on Monitoring)."
+}
+
+variable "os_places_trial_end" {
+  type        = string
+  default     = "2026-11-09"
+  description = "ISO date when the OS Places trial ends (Monitoring tab countdown)."
+}
+
+variable "os_places_trial_days" {
+  type        = number
+  default     = 60
+  description = "OS Places trial length in days for Monitoring display."
+}
+
 variable "customer_email_from" {
   type        = string
   default     = ""

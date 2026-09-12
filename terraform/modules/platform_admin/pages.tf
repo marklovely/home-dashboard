@@ -226,6 +226,24 @@ locals {
         value = var.platform_site_archive_secret
       }
     } : {},
+    var.os_places_usage_baseline >= 0 ? {
+      OS_PLACES_USAGE_BASELINE = {
+        type  = "plain_text"
+        value = tostring(var.os_places_usage_baseline)
+      }
+    } : {},
+    var.os_places_trial_end != "" ? {
+      OS_PLACES_TRIAL_END = {
+        type  = "plain_text"
+        value = var.os_places_trial_end
+      }
+    } : {},
+    var.os_places_trial_days > 0 ? {
+      OS_PLACES_TRIAL_DAYS = {
+        type  = "plain_text"
+        value = tostring(var.os_places_trial_days)
+      }
+    } : {},
     var.customer_email_from != "" ? {
       CUSTOMER_EMAIL_FROM = {
         type  = "plain_text"

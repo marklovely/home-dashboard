@@ -4,6 +4,11 @@ import {
   platformHealthAuthConfigured
 } from './platformHealthFetch.js';
 import { resolveHubWorkerApiOrigin } from './platformHubDowngradeEligibility.js';
+import {
+  applyOsPlacesUsageBaseline,
+  describeOsPlacesTrial,
+  resolveOsPlacesUsageBaseline
+} from './osPlacesMonitoring.js';
 
 /**
  * @param {Record<string, string | undefined>} env
@@ -130,6 +135,9 @@ export async function aggregateThirdPartyUsage(manifest, env, fetchImpl = fetch)
     hubs.push({ siteId: row.siteId, lifetime, monthCalls });
   }
 
+  const adjusted = applyOsPlacesUsageBaseline(env, { lifetimeTotal, monthTotal });
+  const trial = describeOsPlacesTrial(env);
+
   return {
     checkedAt: new Date().toISOString(),
     month,
@@ -137,10 +145,16 @@ export async function aggregateThirdPartyUsage(manifest, env, fetchImpl = fetch)
       configuredOnPlatform: Boolean(env.PLATFORM_SITE_ARCHIVE_SECRET?.trim()),
       reachableHubs,
       hubCount: terraformSites.length,
-      lifetimeTotal,
-      monthTotal,
+      baseline: adjusted.baseline,
+      lifetimeTotal: adjusted.lifetimeTotal,
+      monthTotal: adjusted.monthTotal,
+      trackedLifetimeTotal: adjusted.trackedLifetimeTotal,
+      trackedMonthTotal: adjusted.trackedMonthTotal,
+      trial,
       hubs: hubs.sort((a, b) => b.monthCalls - a.monthCalls || a.siteId.localeCompare(b.siteId))
     },
     dashboardUrl: 'https://osdatahub.os.uk/'
   };
 }
+
+export { resolveOsPlacesUsageBaseline, describeOsPlacesTrial, applyOsPlacesUsageBaseline };

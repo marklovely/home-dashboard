@@ -91,6 +91,11 @@ platform_admin = {
 # Same value as GitHub PLATFORM_SITE_ARCHIVE_SECRET — lets the account page verify hub usage before Plus→Free downgrade.
 # platform_site_archive_secret = "…"
 
+# OS Places monitoring on platform admin (Monitoring tab).
+# os_places_usage_baseline = 20
+# os_places_trial_end      = "2026-11-09"
+# os_places_trial_days     = 60
+
 sites = {
 
 

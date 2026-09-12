@@ -219,10 +219,22 @@ function renderCloudflarePanel(cloudflare, links) {
  */
 function renderThirdPartyPanel(thirdParty, links) {
   const osPlaces = /** @type {Record<string, unknown>} */ (thirdParty.osPlaces ?? {});
+  const trial = /** @type {Record<string, unknown> | null} */ (osPlaces.trial ?? null);
+  const baseline = Number(osPlaces.baseline ?? 0);
+  const trackedMonth = Number(osPlaces.trackedMonthTotal ?? 0);
 
   const topHubs = Array.isArray(osPlaces.hubs)
     ? osPlaces.hubs.filter((hub) => Number(/** @type {Record<string, unknown>} */ (hub).monthCalls) > 0).slice(0, 5)
     : [];
+
+  const trialHtml = trial
+    ? `<li class="${trial.expired ? 'bad' : trial.daysRemaining <= 14 ? 'warn' : 'ok'}">${escapeHtml(formatOsPlacesTrial(trial))}</li>`
+    : '';
+
+  const baselineNote =
+    baseline > 0
+      ? ` Includes ${escapeHtml(String(baseline))} pre-tracking calls from OS Data Hub${trackedMonth > 0 ? ` plus ${escapeHtml(String(trackedMonth))} tracked on hubs.` : '.'}`
+      : '';
 
   return `
     <section class="panel monitoring-panel">
@@ -232,7 +244,8 @@ function renderThirdPartyPanel(thirdParty, links) {
       </div>
       <ul class="monitoring-list">
         <li>OS Places (UPRN lookups) — <strong>${escapeHtml(String(osPlaces.monthTotal ?? 0))}</strong> calls this month</li>
-        <li>Lifetime total across hubs — <strong>${escapeHtml(String(osPlaces.lifetimeTotal ?? 0))}</strong></li>
+        <li>Lifetime total — <strong>${escapeHtml(String(osPlaces.lifetimeTotal ?? 0))}</strong></li>
+        ${trialHtml}
         <li>Hubs reporting — <strong>${escapeHtml(String(osPlaces.reachableHubs ?? 0))}</strong> / ${escapeHtml(String(osPlaces.hubCount ?? 0))}</li>
       </ul>
       ${
@@ -240,14 +253,29 @@ function renderThirdPartyPanel(thirdParty, links) {
           ? `<ul class="monitoring-list">${topHubs
               .map((hub) => {
                 const row = /** @type {Record<string, unknown>} */ (hub);
-                return `<li>${escapeHtml(String(row.siteId))} — ${escapeHtml(String(row.monthCalls))} this month</li>`;
+                return `<li>${escapeHtml(String(row.siteId))} — ${escapeHtml(String(row.monthCalls))} tracked this month</li>`;
               })
               .join('')}</ul>`
-          : '<p class="muted">No OS Places calls recorded yet. Counters start after hub Workers with usage tracking are deployed.</p>'
+          : trackedMonth === 0
+            ? '<p class="muted">No hub-tracked OS Places calls yet — totals include the configured baseline only until Workers with usage tracking are deployed.</p>'
+            : ''
       }
-      <p class="muted monitoring-note">OS Data Hub has no public usage API — these counts are recorded per hub when UPRN lookup runs. Check OS Data Hub dashboard for official quota.</p>
+      <p class="muted monitoring-note">OS Data Hub has no public usage API.${baselineNote} Check OS Data Hub dashboard for official quota.</p>
     </section>
   `;
+}
+
+/**
+ * @param {Record<string, unknown>} trial
+ */
+function formatOsPlacesTrial(trial) {
+  const days = Number(trial.trialDays ?? 60);
+  const remaining = Number(trial.daysRemaining ?? 0);
+  const endsLabel = String(trial.endsLabel ?? trial.endsAt ?? '');
+  if (trial.expired) {
+    return `OS Places trial ended on ${endsLabel}`;
+  }
+  return `OS Places ${days}-day trial — ${remaining} day${remaining === 1 ? '' : 's'} left · ends ${endsLabel}`;
 }
 
 /**
