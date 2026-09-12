@@ -28,16 +28,38 @@ if (!body.success) {
   process.exit(1);
 }
 const rows = Array.isArray(body.result) ? body.result : [];
-console.log('OK:', rows.length, 'usage row(s)');
-if (rows[0]) {
+console.log('OK:', rows.length, 'usage row(s) for', process.argv[2], 'to', process.argv[3]);
+if (rows.length === 0) {
+  console.log('     (No billable rows yet — normal on free tier or early in the month.)');
+} else {
   const row = rows[0];
   console.log('Sample:', row.x_BillableMetricName ?? row.ChargeDescription ?? row.ServiceName ?? 'row');
 }
-" "$raw"
+" "$raw" "$FROM" "$TO"
 }
 
-probe "/accounts/${ACCOUNT_ID}/billable-usage" "Billable usage v1"
-probe "/accounts/${ACCOUNT_ID}/billable/usage" "Billable usage v2 (restricted)"
+echo "Date range: $FROM to $TO"
+echo ""
+
+V1_OK=0
+if probe "/accounts/${ACCOUNT_ID}/billable-usage" "Billable usage v1 (use this — Monitoring relies on it)"; then
+  V1_OK=1
+fi
 
 echo ""
-echo "If v1 OK but Monitoring still fails, retry deployment on home-dashboard-platform."
+echo "==> Billable usage v2 (restricted — ignore if this fails)"
+if probe "/accounts/${ACCOUNT_ID}/billable/usage" "Billable usage v2"; then
+  echo "     v2 also works on this account (unusual)."
+else
+  echo "     Expected on most accounts — v2 needs restricted access. v1 is enough."
+fi
+
+echo ""
+if [[ "$V1_OK" -eq 1 ]]; then
+  echo "Token billing access: OK (Account → Billing → Read is working)."
+  echo "If Monitoring still shows a permission error, merge PR #451 and retry deployment on home-dashboard-platform."
+  echo "The live platform may still be calling v2 first on old code."
+else
+  echo "Token billing access: NOT OK — add Account → Billing → Read, update GitHub PLATFORM_CF_API_TOKEN, terraform apply, redeploy Pages."
+  exit 1
+fi
