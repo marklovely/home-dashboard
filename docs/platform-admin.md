@@ -109,7 +109,7 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 
 - Overview strip — site count, health breakdown, open Stripe subscriptions, account storage
 - **Cloudflare** — month-to-date **billable usage** (Workers, R2, D1, etc. via Cloudflare Billable Usage API), account R2/D1 storage, D1 database count vs plan limit (10 on Workers Free, 50,000 on Workers Paid), R2 bucket / Worker script / Pages project inventory
-- **Third-party APIs** — OS Places UPRN lookup counts aggregated from hub Workers (official quota still on [OS Data Hub](https://osdatahub.os.uk/))
+- **Third-party APIs** — OS Places UPRN counts (hub-tracked + `OS_PLACES_USAGE_BASELINE` for pre-tracking usage), trial countdown (`OS_PLACES_TRIAL_END`, `OS_PLACES_TRIAL_DAYS`); official quota on [OS Data Hub](https://osdatahub.os.uk/)
 - **Billing** — Stripe mode, subscription counts by status
 - **Marketing & signup** — homepage, pricing API, and signup status probes
 - **GitHub automation** — recent `platform-site-manage` workflow runs
