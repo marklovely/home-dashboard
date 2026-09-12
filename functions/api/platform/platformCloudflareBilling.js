@@ -84,8 +84,8 @@ export function summarizeBillableUsageRows(rows) {
     const existing = byLabel.get(label) ?? {
       label,
       cost: 0,
-      quantity: quantityInfo?.quantity ?? null,
-      unit: quantityInfo?.unit ?? null
+      quantity: null,
+      unit: null
     };
     existing.cost += cost;
     if (quantityInfo?.quantity != null) {
