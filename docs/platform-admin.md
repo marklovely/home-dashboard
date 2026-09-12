@@ -108,14 +108,15 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 **Monitoring** aggregates a platform-wide snapshot in one request (`GET /api/platform/monitoring/summary`):
 
 - Overview strip — site count, health breakdown, open Stripe subscriptions, account storage
-- **Cloudflare** — account R2/D1 storage, D1 database count vs plan limit (10 on Workers Free, 50,000 on Workers Paid), R2 bucket / Worker script / Pages project inventory
+- **Cloudflare** — month-to-date **billable usage** (Workers, R2, D1, etc. via Cloudflare Billable Usage API), account R2/D1 storage, D1 database count vs plan limit (10 on Workers Free, 50,000 on Workers Paid), R2 bucket / Worker script / Pages project inventory
+- **Third-party APIs** — OS Places UPRN lookup counts aggregated from hub Workers (official quota still on [OS Data Hub](https://osdatahub.os.uk/))
 - **Billing** — Stripe mode, subscription counts by status
 - **Marketing & signup** — homepage, pricing API, and signup status probes
 - **GitHub automation** — recent `platform-site-manage` workflow runs
 - **Hub health matrix** — worker, HUB_API binding, and Access probe for every manifest site
 - External dashboard links (Cloudflare, Stripe, GitHub Actions, marketing site)
 
-Set `PLATFORM_CF_API_TOKEN` (Account Read, D1 Read, R2 Read, Pages Edit, **Access: Apps and Policies Edit**) and `CLOUDFLARE_ACCOUNT_ID` on the platform Pages project (`platform_cf_api_token` in Terraform). Usage is fetched server-side via the Cloudflare API when you click Check usage. The same token updates the marketing-site OTP list.
+Set `PLATFORM_CF_API_TOKEN` (Account Read, D1 Read, R2 Read, Pages Edit, **Billing Read**, **Access: Apps and Policies Edit**) and `CLOUDFLARE_ACCOUNT_ID` on the platform Pages project (`platform_cf_api_token` in Terraform). Storage usage is fetched when you click Check usage; billable costs load on the Monitoring tab (updated daily by Cloudflare). The same token updates the marketing-site OTP list.
 
 ## Marketing site OTP list
 

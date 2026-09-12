@@ -1,4 +1,5 @@
 import { OS_PLACES_API_BASE } from '../lib/osPlaces.js';
+import { recordOsPlacesApiCall } from '../lib/thirdPartyApiUsage.js';
 import {
   formatAddressSearchTerm,
   normalizeUkPostcode,
@@ -62,8 +63,9 @@ function osPlacesFailureMessage(status, detail) {
  * @param {Record<string, string>} params
  * @param {string} apiKey
  * @param {typeof fetch} fetchImpl
+ * @param {Record<string, string | undefined>} [env]
  */
-async function fetchOsPlaces(path, params, apiKey, fetchImpl) {
+async function fetchOsPlaces(path, params, apiKey, fetchImpl, env) {
   const url = new URL(`${OS_PLACES_API_BASE}${path}`);
   url.searchParams.set('key', apiKey);
   url.searchParams.set('format', 'JSON');
@@ -74,6 +76,10 @@ async function fetchOsPlaces(path, params, apiKey, fetchImpl) {
   const response = await fetchImpl(url.toString(), {
     headers: { Accept: 'application/json' }
   });
+
+  if (env) {
+    await recordOsPlacesApiCall(env).catch(() => {});
+  }
 
   if (!response.ok) {
     return {
@@ -96,8 +102,9 @@ async function fetchOsPlaces(path, params, apiKey, fetchImpl) {
  * @param {{ postcode?: string, line1?: string, line2?: string, city?: string }} address
  * @param {string | undefined} apiKey
  * @param {typeof fetch} fetchImpl
+ * @param {Record<string, string | undefined>} [env]
  */
-export async function resolveUprnFromAddress(address, apiKey, fetchImpl = fetch) {
+export async function resolveUprnFromAddress(address, apiKey, fetchImpl = fetch, env) {
   const key = String(apiKey ?? '').trim();
   if (!key) {
     return {
@@ -128,7 +135,7 @@ export async function resolveUprnFromAddress(address, apiKey, fetchImpl = fetch)
   let lastStatus = 0;
 
   for (const attempt of attempts) {
-    const result = await fetchOsPlaces(attempt.path, attempt.params, key, fetchImpl);
+    const result = await fetchOsPlaces(attempt.path, attempt.params, key, fetchImpl, env);
     if (!result.ok) {
       lastError = result.error;
       lastStatus = result.status;

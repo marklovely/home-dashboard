@@ -69,7 +69,8 @@ export async function handleAddressResolveUprn(request, env, fetchImpl = fetch) 
       postcode: String(body?.postcode ?? '').trim()
     },
     osPlaces.apiKey,
-    fetchImpl
+    fetchImpl,
+    env
   );
 
   if (!result.ok) {
