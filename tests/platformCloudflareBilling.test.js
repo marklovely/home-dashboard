@@ -44,7 +44,14 @@ describe('platformCloudflareBilling', () => {
     expect(summary.currency).toBe('GBP');
     expect(summary.products).toHaveLength(2);
     expect(summary.products[0]).toMatchObject({
-      label: 'Workers Standard Requests',
+      label: 'R2 Storage',
+      cost: 2.5,
+      quantity: 12,
+      unit: 'GB'
+    });
+    expect(
+      summary.products.find((product) => product.label === 'Workers Standard Requests')
+    ).toMatchObject({
       cost: 2,
       quantity: 1500,
       unit: 'Requests'
