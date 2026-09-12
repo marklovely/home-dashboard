@@ -174,8 +174,10 @@ export async function cloudflareApiGet(path, env) {
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok || body.success === false) {
-    const message = body.errors?.[0]?.message ?? `Cloudflare API error (${response.status})`;
-    throw new Error(message);
+    const error = body.errors?.[0];
+    const message = error?.message ?? `Cloudflare API error (${response.status})`;
+    const code = String(error?.code ?? '').trim();
+    throw new Error(code ? `${code}: ${message}` : message);
   }
 
   return body.result;
