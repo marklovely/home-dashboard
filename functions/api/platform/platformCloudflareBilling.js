@@ -142,12 +142,14 @@ export async function fetchAccountBillableUsage(accountId, env, range = currentM
   const query = params.toString();
   const suffix = query ? `?${query}` : '';
 
+  // v1 is the documented self-serve endpoint; v2 is restricted on many accounts.
   const paths = [
-    `/accounts/${encodeURIComponent(accountId)}/billable/usage${suffix}`,
-    `/accounts/${encodeURIComponent(accountId)}/billable-usage${suffix}`
+    `/accounts/${encodeURIComponent(accountId)}/billable-usage${suffix}`,
+    `/accounts/${encodeURIComponent(accountId)}/billable/usage${suffix}`
   ];
 
-  let lastError = '';
+  /** @type {string[]} */
+  const errors = [];
   for (const path of paths) {
     try {
       const result = await cloudflareApiGet(path, env);
@@ -160,22 +162,24 @@ export async function fetchAccountBillableUsage(accountId, env, range = currentM
         apiPath: path.split('?')[0]
       };
     } catch (error) {
-      lastError = error instanceof Error ? error.message : String(error);
-      if (!/not found|404|unknown/i.test(lastError)) {
-        break;
-      }
+      errors.push(error instanceof Error ? error.message : String(error));
     }
   }
 
-  const permissionHint = /auth|permission|forbidden|403/i.test(lastError)
-    ? ' Add Billing: Read to PLATFORM_CF_API_TOKEN (Account → Billing → Read).'
+  const lastError = errors.at(-1) ?? 'Could not load Cloudflare billable usage.';
+  const permissionHint = errors.some((message) => /permission|forbidden|403|insufficient/i.test(message))
+    ? ' The token on home-dashboard-platform needs Account → Billing → Read. If you edited permissions in Cloudflare, update the GitHub PLATFORM_CF_API_TOKEN secret to that same token (or recreate it), run Platform admin Terraform, then retry deployment on home-dashboard-platform.'
     : '';
 
   return {
     ok: false,
     error: 'CF_BILLING_API_ERROR',
-    message: `${lastError || 'Could not load Cloudflare billable usage.'}${permissionHint}`,
-    range
+    message: `${lastError}${permissionHint}`,
+    range,
+    attempts: paths.map((path, index) => ({
+      path: path.split('?')[0],
+      error: errors[index] ?? null
+    }))
   };
 }
 

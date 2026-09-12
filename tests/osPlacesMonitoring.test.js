@@ -6,10 +6,20 @@ import {
 } from '../functions/api/platform/osPlacesMonitoring.js';
 
 describe('osPlacesMonitoring', () => {
-  it('reads usage baseline from platform env', () => {
-    expect(resolveOsPlacesUsageBaseline({})).toBe(0);
+  it('reads usage baseline from platform env with built-in default', () => {
+    expect(resolveOsPlacesUsageBaseline({})).toBe(20);
     expect(resolveOsPlacesUsageBaseline({ OS_PLACES_USAGE_BASELINE: '20' })).toBe(20);
-    expect(resolveOsPlacesUsageBaseline({ OS_PLACES_USAGE_BASELINE: '-1' })).toBe(0);
+    expect(resolveOsPlacesUsageBaseline({ OS_PLACES_USAGE_BASELINE: '0' })).toBe(0);
+    expect(resolveOsPlacesUsageBaseline({ OS_PLACES_USAGE_BASELINE: '-1' })).toBe(20);
+  });
+
+  it('shows trial details by default', () => {
+    const trial = describeOsPlacesTrial({}, new Date('2026-09-12T12:00:00Z'));
+    expect(trial).toMatchObject({
+      trialDays: 60,
+      endsAt: '2026-11-09',
+      daysRemaining: 58
+    });
   });
 
   it('applies baseline to hub totals once at platform level', () => {

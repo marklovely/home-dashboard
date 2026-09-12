@@ -116,7 +116,7 @@ bash scripts/deploy-platform-admin.sh   # only if Functions/UI changed
 - **Hub health matrix** — worker, HUB_API binding, and Access probe for every manifest site
 - External dashboard links (Cloudflare, Stripe, GitHub Actions, marketing site)
 
-Set `PLATFORM_CF_API_TOKEN` (Account Read, D1 Read, R2 Read, Pages Edit, **Billing Read**, **Access: Apps and Policies Edit**) and `CLOUDFLARE_ACCOUNT_ID` on the platform Pages project (`platform_cf_api_token` in Terraform). Storage usage is fetched when you click Check usage; billable costs load on the Monitoring tab (updated daily by Cloudflare). The same token updates the marketing-site OTP list.
+Set `PLATFORM_CF_API_TOKEN` (Account Read, D1 Read, R2 Read, Pages Edit, **Account → Billing → Read**, **Access: Apps and Policies Edit**) and `CLOUDFLARE_ACCOUNT_ID` on the platform Pages project (`platform_cf_api_token` in Terraform). Storage usage is fetched when you click Check usage; billable costs load on the Monitoring tab (updated daily by Cloudflare). After changing the token or Terraform env vars, **retry deployment** on `home-dashboard-platform` so Pages Functions pick them up. Verify billing access locally with `bash scripts/verify-platform-billing-env.sh`. The same token updates the marketing-site OTP list.
 
 ## Marketing site OTP list
 

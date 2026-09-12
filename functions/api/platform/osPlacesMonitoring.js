@@ -1,13 +1,21 @@
 /** @typedef {Record<string, string | undefined>} PlatformEnv */
 
+export const DEFAULT_OS_PLACES_USAGE_BASELINE = 20;
+export const DEFAULT_OS_PLACES_TRIAL_END = '2026-11-09';
+export const DEFAULT_OS_PLACES_TRIAL_DAYS = 60;
+
 /**
  * @param {PlatformEnv} env
  */
 export function resolveOsPlacesUsageBaseline(env) {
-  const raw = String(env.OS_PLACES_USAGE_BASELINE ?? '').trim();
-  if (!raw) return 0;
-  const baseline = Number(raw);
-  return Number.isFinite(baseline) && baseline >= 0 ? baseline : 0;
+  const raw = env.OS_PLACES_USAGE_BASELINE;
+  if (raw === undefined || raw === null || String(raw).trim() === '') {
+    return DEFAULT_OS_PLACES_USAGE_BASELINE;
+  }
+  const baseline = Number(String(raw).trim());
+  return Number.isFinite(baseline) && baseline >= 0
+    ? baseline
+    : DEFAULT_OS_PLACES_USAGE_BASELINE;
 }
 
 /**
@@ -15,13 +23,13 @@ export function resolveOsPlacesUsageBaseline(env) {
  * @param {Date} [now]
  */
 export function describeOsPlacesTrial(env, now = new Date()) {
-  const endsAt = String(env.OS_PLACES_TRIAL_END ?? '').trim();
+  const endsAt = String(env.OS_PLACES_TRIAL_END ?? DEFAULT_OS_PLACES_TRIAL_END).trim();
   if (!endsAt) return null;
 
   const end = new Date(endsAt);
   if (Number.isNaN(end.getTime())) return null;
 
-  const trialDaysRaw = Number(env.OS_PLACES_TRIAL_DAYS ?? '60');
+  const trialDaysRaw = Number(env.OS_PLACES_TRIAL_DAYS ?? String(DEFAULT_OS_PLACES_TRIAL_DAYS));
   const trialDays = Number.isFinite(trialDaysRaw) && trialDaysRaw > 0 ? trialDaysRaw : 60;
   const daysRemaining = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86_400_000));
 
